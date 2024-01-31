@@ -21,7 +21,6 @@ class RateImportClass implements ToCollection
                 $currencyCodeIndex = array_search('Currency_Code', array_keys($rate_data_arr));
                 $rate_data = array_slice($rate_data_arr, ($currencyCodeIndex + 1));
                 $rate_data = array_filter($rate_data);
-
                 $insert_data = [
                     "dest_city_name" => $data['Destination_City_Name'],
                     "dest_airport_code" => $data['Destination_Airport_Code'],

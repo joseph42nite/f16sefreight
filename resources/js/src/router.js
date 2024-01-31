@@ -10,15 +10,9 @@ export default new Router({
       component: () => import("@/view/layout/Layout"),
       children: [
         {
-          path: "user-details/:id?/:page_count?/:start?/:end?/:status?",
-          name: "user-user-details",
-          component: () => import("@/view/pages/UserDetails.vue"),
-          meta: { userType: 'user' }
-        },
-        {
-          path: "account",
-          name: "user-account",
-          component: () => import("@/view/pages/Account.vue"),
+          path: "rate",
+          name: "user-rate",
+          component: () => import("@/view/pages/Rate.vue"),
           meta: { userType: 'user' }
         },
       ]

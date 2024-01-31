@@ -29,8 +29,7 @@ Route::post('/register', [UserController::class,'register']);
 Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::post('logout', [UserController::class,'logout']);
     Route::post('verify', [UserController::class,'me']);
-    Route::put('upadte-detail', [UserController::class,'personal_update']);
-    Route::put('update-password', [UserController::class,'update_password']);
+    Route::post('get-rate', [RateController::class,'index']);
 });
 
 // =================superAdmin section==========================
@@ -50,7 +49,7 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     Route::post('/import-excel', [RateController::class,'rateImport']);
 });
 
-Route::post('/Forgotpassword',[PasswordResetRequestController::class,'sendEmail']);
+Route::post('/Forgotpassword12',[PasswordResetRequestController::class,'sendEmail']);
 Route::post('/check-forgot-token',[PasswordResetRequestController::class,'check_token']);
 Route::post('ForgotpasswordActual',[PasswordResetRequestController::class,'forgot_password_actual']);
 

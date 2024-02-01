@@ -33,6 +33,7 @@
             <div class="row" style="margin-top: 6%;">
                 <div class="col-12 col-md-8">
                     <div class="rate-area mr-1">
+                        <span @click="copyToClipboard()" class="copy-cls">copy</span>
                         <table class="table">
                             <thead>
                                 <tr>
@@ -43,24 +44,11 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(rate, index) in rate_data" :key="index">
-                                    <td style="vertical-align: middle;">{{ rate.carrier_code + "(" + rate.carrier_prefix +
+                                    <td>{{ rate.carrier_code + "(" + rate.carrier_prefix +
                                         ")" }}</td>
-                                    <td style="vertical-align: middle;">{{ rate.product_name }}</td>
+                                    <td>{{ rate.product_name }}</td>
                                     <td>
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <td>Quantity</td>
-                                                    <td>Price</td>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="(q_r, index) in rate.my_rate" :key="index">
-                                                    <td>{{ index }}</td>
-                                                    <td>{{ q_r }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                        {{ Object.keys(rate.my_rate)[0] }} : {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -85,17 +73,17 @@ export default {
     data() {
         return {
             search_form: new Form({
-                from: '',
-                to: '',
-                selected_quantity: '',
-                quantity: "",
+                from: 'BLR',
+                to: 'ABQ',
+                selected_quantity: 'custom',
+                quantity: "55 kg",
             }),
             rate_data: '',
         }
     },
     methods: {
         get_rate() {
-            this.rate_data='';
+            this.rate_data = '';
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
                     for (let i = 0; i < data.length; i++) {
@@ -109,15 +97,18 @@ export default {
                             data[i]['my_rate']['Normal'] = rate_data['Normal'];
                         }
                         else {
-                            let user_quantity = this.search_form.quantity;
-                            user_quantity = user_quantity.trim();
-                            for (let key in rate_data) {
-                                let value = rate_data[key];
-                                if (key == 'Minimum' || key == 'Normal') { }
+                            let user_quantity = parseInt(this.search_form.quantity);
+                            let keys = Object.keys(rate_data);
+                            for (let j = 0; j < keys.length; j++) {
+                                if (keys[j] == 'Minimum' || keys[j] == 'Normal') { }
                                 else {
-                                    let db_quantity = parseInt(key);
-                                    if (user_quantity <= db_quantity) {
-                                        data[i]['my_rate'][key] = rate_data[key];
+                                    let from_key = parseInt(keys[j]);
+                                    let to_key = 1000000;
+                                    if ((j + 1) < keys.length)
+                                        to_key = parseInt(keys[j + 1]);
+                                    if (user_quantity >= from_key && user_quantity < to_key) {
+                                        let rate_key = keys[j];
+                                        data[i]['my_rate'][rate_key] = rate_data[rate_key];
                                         break;
                                     }
                                 }
@@ -127,7 +118,31 @@ export default {
                     this.rate_data = data;
                 })
                 .catch(err => { });
-        }
+        },
+        copyToClipboard() {
+            let clip_arr=[];
+            for(let i=0;i<this.rate_data.length;i++){
+                let currentData = {};
+                currentData.Sl=i+1;
+                currentData.Airline=`${this.rate_data[i].carrier_code}(${this.rate_data[i].carrier_prefix})`;
+                currentData.ProductType=this.rate_data[i].product_name;
+                currentData.QuantityPrice=`${Object.keys(this.rate_data[i].my_rate)[0]} : ${this.rate_data[i].my_rate[Object.keys(this.rate_data[i].my_rate)[0]]}`;
+                clip_arr.push(currentData);
+            }
+            const headers = Object.keys(clip_arr[0]);
+            const headerRow = headers.join('\t\t\t');
+            const dataRows = clip_arr.map(row => Object.values(row).join('\t\t')).join('\n');
+            const tableText = `${headerRow}\n\n${dataRows}`;
+    
+            const textarea = document.createElement('textarea');
+            textarea.value = tableText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            $('.copy-cls').html('Copid.');
+        },
     }
 }
 </script>
@@ -154,5 +169,12 @@ export default {
     border-radius: 10px;
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     padding: 3%;
+}
+.copy-cls{
+    cursor: pointer;
+    color: white;
+    background: gainsboro;
+    border-radius: 5px;
+    padding: 5px;
 }
 </style>

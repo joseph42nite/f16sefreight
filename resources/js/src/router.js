@@ -7,6 +7,7 @@ export default new Router({
     //-----------users route-------------------
     {
       path: "/",
+      redirect: "/rate",
       component: () => import("@/view/layout/Layout"),
       children: [
         {

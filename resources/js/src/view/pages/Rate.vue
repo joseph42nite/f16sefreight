@@ -7,11 +7,11 @@
             <div class="row mt-5">
                 <div class="col-12 col-md-3">
                     <label for="dist_form">From</label>
-                    <input type="text" class="form-control" v-model="search_form.from">
+                    <treeselect :options="location" :value="search_form.from" v-model="search_form.from" :multiple="false" :searchable="true" :normalizer="normalizer"></treeselect>
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">To</label>
-                    <input type="text" class="form-control" v-model="search_form.to">
+                    <treeselect :options="location" :value="search_form.to" v-model="search_form.to" :multiple="false" :searchable="true" :normalizer="normalizer"></treeselect>
                 </div>
                 <div class="col-12 col-md-3" v-if="search_form.selected_quantity != 'custom'">
                     <label for="dist_form">Weights</label>
@@ -48,7 +48,8 @@
                                         ")" }}</td>
                                     <td>{{ rate.product_name }}</td>
                                     <td>
-                                        {{ Object.keys(rate.my_rate)[0] }} : {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
+                                        {{ Object.keys(rate.my_rate)[0] }} : {{ rate.my_rate[Object.keys(rate.my_rate)[0]]
+                                        }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -68,17 +69,20 @@
 </template>
 <script>
 import ApiService from "@/core/services/api.service";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
+import { mapGetters } from "vuex";
 export default {
     name: "Rate",
     data() {
         return {
             search_form: new Form({
-                from: 'BLR',
-                to: 'ABQ',
-                selected_quantity: 'custom',
-                quantity: "55 kg",
+                from: null,
+                to: null,
+                selected_quantity: '',
+                quantity: "",
             }),
             rate_data: '',
+            location: [],
         }
     },
     methods: {
@@ -99,16 +103,28 @@ export default {
                         else {
                             let user_quantity = parseInt(this.search_form.quantity);
                             let keys = Object.keys(rate_data);
+                            let is_first_quantity_get = 0;
+                            let first_quantity = 0;
                             for (let j = 0; j < keys.length; j++) {
                                 if (keys[j] == 'Minimum' || keys[j] == 'Normal') { }
                                 else {
                                     let from_key = parseInt(keys[j]);
+                                    if (!is_first_quantity_get) {
+                                        first_quantity = from_key;
+                                        is_first_quantity_get = 1;
+                                    }
+
                                     let to_key = 1000000;
                                     if ((j + 1) < keys.length)
                                         to_key = parseInt(keys[j + 1]);
+
                                     if (user_quantity >= from_key && user_quantity < to_key) {
                                         let rate_key = keys[j];
                                         data[i]['my_rate'][rate_key] = rate_data[rate_key];
+                                        break;
+                                    }
+                                    if (user_quantity < first_quantity) {
+                                        data[i]['my_rate']['Normal'] = rate_data['Normal'];
                                         break;
                                     }
                                 }
@@ -120,20 +136,20 @@ export default {
                 .catch(err => { });
         },
         copyToClipboard() {
-            let clip_arr=[];
-            for(let i=0;i<this.rate_data.length;i++){
+            let clip_arr = [];
+            for (let i = 0; i < this.rate_data.length; i++) {
                 let currentData = {};
-                currentData.Sl=i+1;
-                currentData.Airline=`${this.rate_data[i].carrier_code}(${this.rate_data[i].carrier_prefix})`;
-                currentData.ProductType=this.rate_data[i].product_name;
-                currentData.QuantityPrice=`${Object.keys(this.rate_data[i].my_rate)[0]} : ${this.rate_data[i].my_rate[Object.keys(this.rate_data[i].my_rate)[0]]}`;
+                currentData.Sl = i + 1;
+                currentData.Airline = `${this.rate_data[i].carrier_code}(${this.rate_data[i].carrier_prefix})`;
+                currentData.ProductType = this.rate_data[i].product_name;
+                currentData.QuantityPrice = `${Object.keys(this.rate_data[i].my_rate)[0]} : ${this.rate_data[i].my_rate[Object.keys(this.rate_data[i].my_rate)[0]]}`;
                 clip_arr.push(currentData);
             }
             const headers = Object.keys(clip_arr[0]);
             const headerRow = headers.join('\t\t\t');
             const dataRows = clip_arr.map(row => Object.values(row).join('\t\t')).join('\n');
             const tableText = `${headerRow}\n\n${dataRows}`;
-    
+
             const textarea = document.createElement('textarea');
             textarea.value = tableText;
             document.body.appendChild(textarea);
@@ -143,12 +159,37 @@ export default {
 
             $('.copy-cls').html('Copid.');
         },
+        getLocation() {
+            ApiService.get(`/user/get-location`)
+                .then(({ data }) => {
+                    data.forEach((element) => {
+                        this.location.push({
+                            value: element["iata_code"],
+                            name: element["destination"],
+                        });
+                    });
+                })
+        },
+        normalizer(node) {
+            return {
+                id: node.value,
+                label: node.name,
+            };
+        },
+    },
+    mounted(){
+        this.getLocation();
+        if(this.current_user)
+         this.search_form.from=this.current_user.origin_airport_code
+    },
+    computed: {
+    ...mapGetters({ current_user: 'currentUser' }),
     }
 }
 </script>
 <style>
 .search-area {
-    background: #ffeaa7;
+    background: gainsboro;
     padding: 3%;
     border-radius: 10px;
 }
@@ -170,7 +211,8 @@ export default {
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     padding: 3%;
 }
-.copy-cls{
+
+.copy-cls {
     cursor: pointer;
     color: white;
     background: gainsboro;

@@ -29,4 +29,14 @@ class RateController extends Controller
         $rate_data=Rate::where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->get();
         return json_encode($rate_data);
     }
+
+    public function getAirlineList(){
+        $data=Rate::select('carrier_code', 'carrier_prefix')->distinct()->get();
+        return json_encode($data);
+    }
+
+    public function deleteRate($carrier_code,$carrier_prefix){
+        Rate::where('carrier_code', $carrier_code)->where('carrier_prefix', $carrier_prefix)->delete();
+        echo "data deleted successful";
+    }
 }

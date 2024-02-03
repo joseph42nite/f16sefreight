@@ -15,7 +15,12 @@ class LoginController extends Controller
         if (! $token = auth()->guard($guard)->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        return json_encode(['token'=>$token,'user'=>auth()->guard($guard)->user(),'role'=>$role]);
+        $user_data=auth()->guard($guard)->user();
+        if($user_data->is_active!=1){
+            auth()->guard($guard)->logout();
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        return json_encode(['token'=>$token,'user'=>$user_data,'role'=>$role]);
     }
     public function login_superadmin()
     {

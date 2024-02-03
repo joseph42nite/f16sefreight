@@ -36,6 +36,18 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "location-import",
+          name: "superadmin-ImportLocation",
+          component: () => import("@/view/superadmin/ImportLocation.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "delete-rate",
+          name: "superadmin-DeleteRate",
+          component: () => import("@/view/superadmin/DeleteRate.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "new-users/:id?",
           name: "superadmin-newusers",
           component: () => import("@/view/superadmin/NewUsers.vue"),

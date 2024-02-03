@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index($id=0){
         if($id)
-          $data=User::where([['id',$id]])->take(1)->get()->toArray();
+          $data=User::where([['id',$id]])->limit(1)->get()->toArray();
         else
           $data=User::all()->toArray();
         
@@ -22,6 +22,8 @@ class UserController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
+            'company_name' => ['required', 'string', 'max:100'],
+            'origin_airport_code' => ['required', 'string', 'max:10'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
         ]);
@@ -31,6 +33,8 @@ class UserController extends Controller
         }
         $user=new User();
         $user->name=$request->name;
+        $user->origin_airport_code=$request->origin_airport_code;
+        $user->company_name=$request->company_name;
         $user->email=$request->email;
         $user->password=Hash::make($request->password);
         $user->save();
@@ -50,6 +54,8 @@ class UserController extends Controller
     public function update(Request $request,$id){
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
+            'company_name' => ['required', 'string', 'max:100'],
+            'origin_airport_code' => ['required', 'string', 'max:10'],
         ]);
 
         if ($validator->fails()) {
@@ -57,6 +63,9 @@ class UserController extends Controller
         }
         $user=User::find($id);
         $user->name=$request->name;
+        $user->company_name=$request->company_name;
+        $user->origin_airport_code=$request->origin_airport_code;
+        $user->is_active=$request->is_active;
         $user->save();
         if($user){
             return response()->json(['status'=>true]);

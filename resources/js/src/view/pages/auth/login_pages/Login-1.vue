@@ -39,10 +39,10 @@
               <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password"
                 ref="password" v-model="form.password" autocomplete="off" placeholder="Password" />
             </div>
-            <!-- <div class="">
+            <div class="">
               <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('.login-forgot','.login-signin')" style="cursor: pointer;">Forgot
                 Password ?</a>
-            </div> -->
+            </div>
             <div>
               <button class="btn font-weight-bolder font-size-h6 py-3 w-100 mt-7 text-white btn-color" type="submit">Login
               </button>
@@ -51,7 +51,7 @@
         </div>
         <!--end::Signin-->
         <!--begin::Forgot-->
-        <div class="login-form login-forgot" style="display: none;">
+        <div class="login-forgot" style="display: none;">
           <!--begin::Form-->
           <form class="form" novalidate="novalidate" id="kt_login_forgot_form" ref="kt_login_forgot_form"
             @submit.prevent="requestResetPassword">
@@ -68,7 +68,7 @@
             <div class="text-danger mt-2 ml-2" v-if="check_email">Invalid email.</div>
             <div class="form-group">
               <input class="form-control form-control-solid h-auto py-3 px-2 rounded-lg font-size-h6" type="email"
-                placeholder="Email address" name="email" autocomplete="off" v-model="email" />
+                placeholder="Email address" name="email" autocomplete="off" id="forget_email" />
             </div>
             <div class="form-group d-flex flex-wrap pb-lg-0">
               <button type="submit" id="kt_login_forgot_submit"
@@ -103,10 +103,10 @@ export default {
   name: "login-1",
   data() {
     return {
+      forget_email:'dsgc',
       show_modal:false,
       email_send: false,
       check_email: false,
-      email: '',
       // Remove this dummy login info
       form: {
         email: "",
@@ -134,7 +134,8 @@ export default {
       $(hide_form).css('display','none');
     },
     requestResetPassword() {
-      axios.post("/Forgotpassword", { email: this.email }).then(result => {
+      const forget_email=$('#forget_email').val();
+      axios.post("/Forgotpassword", { email: forget_email }).then(result => {
         this.email_send = true;
         this.check_email = false;
       })

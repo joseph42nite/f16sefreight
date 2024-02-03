@@ -1,6 +1,6 @@
 <template>
     <div class="mt-10 p-5">
-        <h2>Upload rate here</h2>
+        <h2>Import location here</h2>
         <div>
             <input type="file" ref="fileInput" @change="handleFileUpload" />
             <button @click="uploadFile" id="upload_btn">Upload</button>
@@ -13,10 +13,9 @@
 <script>
 import ApiService from "@/core/services/api.service";
 export default {
-    name: "superadmin-ImportExcel",
+    name: "superadmin-ImportLocation",
     data() {
         return {
-            action: 'import_excel',
             file: null,
         };
     },
@@ -29,7 +28,7 @@ export default {
             $('#upload_btn').html("wait...");
             let formData = new FormData();
             formData.append('file', this.file);
-            ApiService.post(`/superadmin/import-excel`, formData, { headers: { 'Content-Type': 'multipart/form-data',},})
+            ApiService.post(`/superadmin/import-loctaion`, formData, { headers: { 'Content-Type': 'multipart/form-data',},})
             .then(({ data }) => {
                 this.file=null;
                 $('#upload_btn').html('Upload')

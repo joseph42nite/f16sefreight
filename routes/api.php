@@ -7,6 +7,7 @@ use App\Http\Controllers\superAdmin\SuperAdminController;
 use App\Http\Controllers\PasswordResetRequestController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RateController;
+use App\Http\Controllers\LocationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -30,6 +31,7 @@ Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::post('logout', [UserController::class,'logout']);
     Route::post('verify', [UserController::class,'me']);
     Route::post('get-rate', [RateController::class,'index']);
+    Route::get('/get-location', [LocationController::class,'getLocation']);
 });
 
 // =================superAdmin section==========================
@@ -47,9 +49,15 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     Route::delete('/user/{id?}', [UserController::class,'delete']);
     //rate related work by admin
     Route::post('/import-excel', [RateController::class,'rateImport']);
+    Route::get('/get-airline-list', [RateController::class,'getAirlineList']);
+    Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}', [RateController::class,'deleteRate']);
+
+    //loctaion related work
+    Route::post('/import-loctaion', [LocationController::class,'importData']);
+    Route::get('/get-location', [LocationController::class,'getLocation']);
 });
 
-Route::post('/Forgotpassword12',[PasswordResetRequestController::class,'sendEmail']);
+Route::post('/Forgotpassword',[PasswordResetRequestController::class,'sendEmail']);
 Route::post('/check-forgot-token',[PasswordResetRequestController::class,'check_token']);
 Route::post('ForgotpasswordActual',[PasswordResetRequestController::class,'forgot_password_actual']);
 

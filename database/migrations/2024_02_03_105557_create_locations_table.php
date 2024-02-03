@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSuperAdminsTable extends Migration
+class CreateLocationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateSuperAdminsTable extends Migration
      */
     public function up()
     {
-        Schema::create('super_admins', function (Blueprint $table) {
+        Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('destination',50)->nullable();
+            $table->string('iata_code',10)->nullable();
+            $table->string('airport_name',100)->nullable();
+            $table->string('airport_code',100)->nullable();
+            $table->string('country_flag',200)->nullable();
             $table->boolean('is_active')->default(true);
-            $table->rememberToken();
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ class CreateSuperAdminsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('super_admins');
+        Schema::dropIfExists('locations');
     }
 }

@@ -33,6 +33,23 @@
           <has-error :form="user_form" field="email"></has-error>
         </b-form-group>
         </div>
+        <b-form-group>
+          <b-form-input
+            id="input-1"
+            v-model="user_form.company_name"
+            type="text"
+            required
+            placeholder="Company name"
+            class="mx-1 input-box"
+            :class="{ 'is-invalid': user_form.errors.has('company_name') }"
+          ></b-form-input>
+          <has-error :form="user_form" field="company_name"></has-error>
+        </b-form-group>
+        <b-form-group>
+          <b-input-group class="input-group-merge">
+             <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect>
+          </b-input-group>
+        </b-form-group>
         <b-form-group v-if="action=='Add'">
           <b-form-input
             id="input-5"
@@ -45,6 +62,9 @@
           ></b-form-input>
           <has-error :form="user_form" field="password"></has-error>
         </b-form-group>
+        <b-form-group v-if="action=='Edit'">
+          <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Block User</span><span v-else>Unblock User</span>
+        </b-form-group>
         <has-error :form="user_form" field="is_admin"></has-error>
         <div class="alert alert-success mt-3" role="alert" id="fade">
           <span class="font-weight-bolder font-size-h6">Saved Successfully</span>
@@ -56,6 +76,7 @@
 </template>
 <script>
 import ApiService from "@/core/services/api.service";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 export default {
   data() {
     return {
@@ -63,9 +84,13 @@ export default {
         id:"",
         name: "",
         email: "",
+        origin_airport_code:null,
+        company_name:'',
         password: "",
+        is_active:"",
       }),
       action: 'Add',
+      location:[],
     };
   },
   methods: {
@@ -94,8 +119,26 @@ export default {
           this.user_form.fill(data[0])
         })
     },
+    getLocation(){
+      ApiService.get(`/superadmin/get-location`)
+        .then(({ data }) => {
+          data.forEach((element) => {
+            this.location.push({
+              value: element["iata_code"],
+              name: element["destination"],
+            });
+          });
+        })
+    },
+    normalizer(node) {
+      return {
+        id: node.value,
+        label: node.name,
+      };
+    },
   },
   mounted(){
+   this.getLocation();
    if(this.get_item){
       this.getData(this.get_item);
       this.action='Edit';

@@ -24,6 +24,9 @@
               <template #cell(index)="data">
                 {{ data.index + 1 }}
               </template>
+              <template #cell(is_active)="data">
+                <span v-if="data.is_active==1">Active</span><span v-else>InActive</span>
+              </template>
               <template #cell(action)="data">
               <b-button variant="success"><router-link :to="'/superadmin/new-users/'+data.item['id']" class="text-white">Edit</router-link></b-button>
                <b-button variant="danger" v-on:click="delete_user(data.item['id'])">Delete</b-button>
@@ -49,6 +52,9 @@ export default {
         {label:'Sl',key:'index'},
         {label:'Name',key:"name"},
         {label:'Email address',key:"email"},
+        {label:'Company',key:"company_name"},
+        {label:'Status',key:"is_active"},
+        {label:'Today login count',key:"daily_login_count"},
         {label:"Action",key:"action"}
         ],
       items: [],

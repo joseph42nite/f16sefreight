@@ -19,11 +19,9 @@ class UserController extends Controller
         return json_encode($data);
     }
     public function register(Request $request){
-
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'string', 'max:100'],
-            'origin_airport_code' => ['required', 'string', 'max:10'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
         ]);
@@ -43,7 +41,7 @@ class UserController extends Controller
         $role->email=$request->email;
         $role->role='user';
         $role->save();
-
+        
         if($user){
             return response()->json(['user'=>$user,'status'=>true]);
         }
@@ -55,7 +53,6 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'string', 'max:100'],
-            'origin_airport_code' => ['required', 'string', 'max:10'],
         ]);
 
         if ($validator->fails()) {
@@ -105,9 +102,16 @@ class UserController extends Controller
         User::where('id', $id)->update(['password'=>Hash::make($request->password)]);
         return json_encode(['status'=>true,'message'=>"Password updated successful"]);
     }
-    public function me()
+    public function me(Request $request)
     {
-        return response()->json(auth()->guard('user-api')->user());
+        $user_data=auth()->guard('user-api')->user();
+        if($request->token==$user_data->latest_token){
+            return response()->json($user_data);
+        }
+        else{
+            auth()->guard('user-api')->logout();
+           return response()->json(['error' => 'Unauthorized'], 401);
+        } 
     }
 
     public function logout()

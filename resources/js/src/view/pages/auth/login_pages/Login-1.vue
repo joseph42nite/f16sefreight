@@ -12,7 +12,8 @@
             <!-- Right aligned nav items -->
             <b-navbar-nav class="ml-auto">
               <b-navbar-nav>
-                <b-nav-item @click="show_modal=true">Login</b-nav-item>
+                <b-nav-item @click="firstPopUp('login_signin','login_signup')">Login</b-nav-item>
+                <b-nav-item @click="firstPopUp('login_signup','login_signin')">SignUp</b-nav-item>
               </b-navbar-nav>
             </b-navbar-nav>
           </b-collapse>
@@ -23,7 +24,7 @@
     <b-modal id="login-modal" v-model="show_modal" :hide-footer="true">
       <div class="d-flex flex-column-fluid flex-center">
         <!--begin::Signin-->
-        <div class="login-form login-signin w-100">
+        <div class="login-form login-signin w-100" v-if="check_show.login_signin">
           <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="login()">
             <div class="pb-5 pt-lg-0 pt-5 text-center">
               <h1>Login</h1>
@@ -31,17 +32,17 @@
             </div>
             <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or
                 password</span></div>
+            <div class="p-3 text-center" v-else-if="errors == 'Blocked'"><span class="text-danger h6">You can't login. Contact admin</span></div>
             <div class="form-group">
-              <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email"
-                v-model="form.email" placeholder="Email address" />
+              <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email" placeholder="Email address" id="login_email" />
             </div>
             <div class="form-group">
-              <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password"
-                ref="password" v-model="form.password" autocomplete="off" placeholder="Password" />
+              <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password" ref="password" autocomplete="off" placeholder="Password" id="login_password" />
             </div>
-            <div class="">
-              <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('.login-forgot','.login-signin')" style="cursor: pointer;">Forgot
-                Password ?</a>
+            <div class="d-flex" style="float: right;">
+              <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('login_forgot','login_signin','login_signup')" style="cursor: pointer;">Forgot
+                Password ?</a>&nbsp;/&nbsp;
+                <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('login_signup','login_signin','login_forgot')" style="cursor: pointer;">SignUp</a>
             </div>
             <div>
               <button class="btn font-weight-bolder font-size-h6 py-3 w-100 mt-7 text-white btn-color" type="submit">Login
@@ -51,8 +52,7 @@
         </div>
         <!--end::Signin-->
         <!--begin::Forgot-->
-        <div class="login-forgot" style="display: none;">
-          <!--begin::Form-->
+        <div class="login-forgot" v-if="check_show.login_forgot">
           <form class="form" novalidate="novalidate" id="kt_login_forgot_form" ref="kt_login_forgot_form"
             @submit.prevent="requestResetPassword">
             <div class="pb-5 pt-lg-0 pt-5">
@@ -77,13 +77,49 @@
               </button>
               <button type="button" id="kt_login_forgot_cancel"
                 class="btn font-weight-bolder font-size-h6 px-12 btn-color text-white py-3 my-3"
-                @click="showForm('.login-signin','.login-forgot')">
+                @click="showForm('login_signin','login_forgot','login_signup')">
                 Cancel
               </button>
             </div>
           </form>
         </div>
         <!--end::Forgot-->
+        <!--begin::Signin-->
+        <div class="login-form login-signup w-100" v-if="check_show.login_signup">
+          <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="register()">
+            <div class="pb-5 pt-lg-0 pt-5 text-center">
+              <h1>SignUp Here</h1>
+            </div>
+            <div class="form-group">
+              <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="name" ref="name"
+                id="r_name" placeholder="Enter your name" />
+                <span id="name" class="error-cls"></span>
+            </div>
+            <div class="form-group">
+              <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email"
+                id="r_email" placeholder="Enter email address" />
+                <span id="email" class="error-cls"></span>
+            </div>
+            <div class="form-group">
+              <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="company_name" ref="company_name"
+                id="r_company_name" placeholder="Enter Compnay name"/>
+                <span id="company_name" class="error-cls"></span>
+            </div>
+            <div class="form-group">
+              <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password"
+                ref="password" id="r_password" autocomplete="off" placeholder="Password"/>
+            </div>
+            <span id="password" class="error-cls"></span>
+            <div class="">
+              <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('login_signin','login_forgot','login_signup')" style="cursor: pointer;">Login</a>
+            </div>
+            <div>
+              <button class="btn font-weight-bolder font-size-h6 py-3 w-100 mt-7 text-white btn-color" type="submit">SignUp
+              </button>
+            </div>
+          </form>
+        </div>
+        <!--end::Signin-->
       </div>
     </b-modal>
   </div>
@@ -98,19 +134,26 @@
 import axios from 'axios';
 import { mapGetters, mapState } from "vuex";
 import { LOGIN, LOGOUT } from "@/core/services/store/auth.module";
+import ApiService from "@/core/services/api.service";
 
 export default {
   name: "login-1",
   data() {
     return {
-      forget_email:'dsgc',
+      forget_email:'',
       show_modal:false,
       email_send: false,
       check_email: false,
-      // Remove this dummy login info
-      form: {
+      user_form:{
+        name: "",
         email: "",
-        password: ""
+        company_name:'',
+        password: "",
+      },
+      check_show:{
+        login_signin:false,
+        login_signup:false,
+        login_forgot:false,
       }
     };
   },
@@ -129,9 +172,15 @@ export default {
   mounted() {
   },
   methods: {
-    showForm(show_form,hide_form) {
-      $(show_form).css('display','block');
-      $(hide_form).css('display','none');
+    showForm(show_form,hide_form1,hide_form2) {
+       this.check_show[show_form]=true;
+       this.check_show[hide_form1]=false;
+       this.check_show[hide_form2]=false;
+    },
+    firstPopUp(show_form,hide_form){
+      this.show_modal=true;
+      this.check_show[show_form]=true;
+      this.check_show[hide_form]=false;
     },
     requestResetPassword() {
       const forget_email=$('#forget_email').val();
@@ -145,9 +194,33 @@ export default {
         })
     },
     login(){
-      const email=this.form.email;
-      const password=this.form.password;
+      const email=$('#login_email').val();
+      const password=$('#login_password').val();
       this.$store.dispatch(LOGIN, {email, password})
+    },
+    register(){
+      this.user_form.name=$('#r_name').val();
+      this.user_form.email=$('#r_email').val();
+      this.user_form.company_name=$('#r_company_name').val();
+      this.user_form.password=$('#r_password').val();
+      axios.post("/register",this.user_form)
+      .then(result => {
+        const email=this.user_form.email;
+        const password=this.user_form.password
+        if(result.data.status)
+        this.$store.dispatch(LOGIN, {email, password})
+      })
+      .catch(({ response }) => {
+        let errors_1=response.data.errors;
+        let dummpy_user_from=this.user_form;
+        for (const [key, value] of Object.entries(errors_1)) {
+            $(`#${key}`).html(value);
+            delete dummpy_user_from[key];
+        }
+        for (const [key, value] of Object.entries(dummpy_user_from)) {
+             $(`#${key}`).html("");
+        } 
+      });
     }
   },
 };
@@ -175,5 +248,8 @@ export default {
   .image-div {
     height: 70%;
   }
+}
+.error-cls{
+  color: #E84342;
 }
 </style>

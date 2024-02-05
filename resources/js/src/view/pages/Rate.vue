@@ -23,6 +23,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-3" v-if="search_form.selected_quantity == 'custom'">
+                    <label for="dist_form">Weights</label>
                     <input type="text" class="form-control" placeholder="Enter quantity" v-model="search_form.quantity">
                 </div>
                 <div class="col-12 col-md-3">
@@ -34,9 +35,11 @@
                 <div class="col-12 col-md-8">
                     <div class="rate-area mr-1">
                         <span @click="copyToClipboard()" class="copy-cls">copy</span>
+                        <input type="number" v-model="extra_comission" @keyup="extraComission()" >
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th>#</th>
                                     <th>Airline</th>
                                     <th>Product Type</th>
                                     <th>Quantity/Price</th>
@@ -44,6 +47,7 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(rate, index) in rate_data" :key="index">
+                                    <td><input type="checkbox" @change="selcted_column(index)" :id="'selected_'+index"></td>
                                     <td>{{ rate.carrier_code + "(" + rate.carrier_prefix +
                                         ")" }}</td>
                                     <td>{{ rate.product_name }}</td>
@@ -77,12 +81,15 @@ export default {
         return {
             search_form: new Form({
                 from: null,
-                to: null,
-                selected_quantity: '',
-                quantity: "",
+                to: 'ABJ',
+                selected_quantity: 'custom',
+                quantity: "100",
             }),
             rate_data: '',
+            rate_data_copy:{},
             location: [],
+            extra_comission:'',
+            last_extra_comission:'',
         }
     },
     methods: {
@@ -137,27 +144,41 @@ export default {
         },
         copyToClipboard() {
             let clip_arr = [];
-            for (let i = 0; i < this.rate_data.length; i++) {
-                let currentData = {};
-                currentData.Sl = i + 1;
-                currentData.Airline = `${this.rate_data[i].carrier_code}(${this.rate_data[i].carrier_prefix})`;
-                currentData.ProductType = this.rate_data[i].product_name;
-                currentData.QuantityPrice = `${Object.keys(this.rate_data[i].my_rate)[0]} : ${this.rate_data[i].my_rate[Object.keys(this.rate_data[i].my_rate)[0]]}`;
-                clip_arr.push(currentData);
+            let arr_len=Object.entries(this.rate_data_copy).length;
+            if(arr_len){
+                for (let i = 0; i < arr_len; i++) {
+                    let currentData = {};
+                    currentData.Sl = i + 1;
+                    currentData.Airline = `${this.rate_data_copy[i].carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
+                    currentData.ProductType = this.rate_data_copy[i].product_name;
+                    currentData.QuantityPrice = `${Object.keys(this.rate_data_copy[i].my_rate)[0]} : ${this.rate_data_copy[i].my_rate[Object.keys(this.rate_data_copy[i].my_rate)[0]]}`;
+                    clip_arr.push(currentData);
+                }
+                const headers = Object.keys(clip_arr[0]);
+                const headerRow = headers.join('\t\t\t');
+                const dataRows = clip_arr.map(row => Object.values(row).join('\t\t')).join('\n');
+                const tableText = `${headerRow}\n\n${dataRows}`;
+
+                const textarea = document.createElement('textarea');
+                textarea.value = tableText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                $('.copy-cls').html('Copid.');
             }
-            const headers = Object.keys(clip_arr[0]);
-            const headerRow = headers.join('\t\t\t');
-            const dataRows = clip_arr.map(row => Object.values(row).join('\t\t')).join('\n');
-            const tableText = `${headerRow}\n\n${dataRows}`;
-
-            const textarea = document.createElement('textarea');
-            textarea.value = tableText;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
-            $('.copy-cls').html('Copid.');
+            else{
+                alert("Select data for copy");
+            }    
+        },
+        selcted_column(index){
+            const checkbox = $(`#selected_${index}`);
+            const isChecked = checkbox.prop('checked');
+            if(isChecked)
+               this.rate_data_copy[index]=this.rate_data[index];
+            else
+               delete this.rate_data_copy[index];
         },
         getLocation() {
             ApiService.get(`/user/get-location`)
@@ -165,7 +186,7 @@ export default {
                     data.forEach((element) => {
                         this.location.push({
                             value: element["iata_code"],
-                            name: element["destination"],
+                            name: element["iata_code"] + " (" + element["destination"] + ")",
                         });
                     });
                 })
@@ -176,6 +197,15 @@ export default {
                 label: node.name,
             };
         },
+        extraComission(){
+            for(let i=0; i<this.rate_data.length;i++){
+                let obj_key=Object.keys(this.rate_data[i].my_rate)[0];
+                if(this.last_extra_comission)
+                this.rate_data[i].my_rate[obj_key]=parseInt(this.rate_data[i].my_rate[obj_key])-parseInt(this.last_extra_comission);
+                if(this.extra_comission)
+                this.rate_data[i].my_rate[obj_key]=parseInt(this.rate_data[i].my_rate[obj_key])+parseInt(this.extra_comission);
+            }
+        }
     },
     mounted(){
         this.getLocation();
@@ -184,7 +214,12 @@ export default {
     },
     computed: {
     ...mapGetters({ current_user: 'currentUser' }),
+    },
+    watch: {
+    extra_comission(newValue, oldValue) {
+      this.last_extra_comission = oldValue;
     }
+  }
 }
 </script>
 <style>

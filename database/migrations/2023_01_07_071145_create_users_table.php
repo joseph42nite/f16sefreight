@@ -19,9 +19,12 @@ class CreateUsersTable extends Migration
             $table->string('email')->unique();
             $table->string('company_name',100)->nullable();
             $table->string('origin_airport_code',10)->nullable();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('is_active')->default(true);
+            $table->string('latest_token')->nullable();
+            $table->tinyInteger('daily_login_count')->nullable();
+            $table->date('current_date')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -45,6 +45,18 @@
           ></b-form-input>
           <has-error :form="user_form" field="company_name"></has-error>
         </b-form-group>
+        <b-form-group v-if="action=='Edit'">
+          <b-form-input
+            id="input-1"
+            v-model="user_form.daily_login_count"
+            type="number"
+            required
+            placeholder="Today login count"
+            class="mx-1 input-box"
+            :class="{ 'is-invalid': user_form.errors.has('daily_login_count') }"
+          ></b-form-input>
+          <has-error :form="user_form" field="daily_login_count"></has-error>
+        </b-form-group>
         <b-form-group>
           <b-input-group class="input-group-merge">
              <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect>
@@ -63,7 +75,7 @@
           <has-error :form="user_form" field="password"></has-error>
         </b-form-group>
         <b-form-group v-if="action=='Edit'">
-          <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Block User</span><span v-else>Unblock User</span>
+          <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Active</span><span v-else>In</span>
         </b-form-group>
         <has-error :form="user_form" field="is_admin"></has-error>
         <div class="alert alert-success mt-3" role="alert" id="fade">
@@ -86,6 +98,7 @@ export default {
         email: "",
         origin_airport_code:null,
         company_name:'',
+        daily_login_count:'',
         password: "",
         is_active:"",
       }),

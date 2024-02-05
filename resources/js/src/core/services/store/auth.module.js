@@ -49,7 +49,7 @@ const actions = {
           resolve(data);
         })
         .catch(({ response }) => {
-          context.commit(SET_ERROR, 'Unauthorized');
+          context.commit(SET_ERROR, response.data.error);
         });
     });
   },
@@ -60,7 +60,9 @@ const actions = {
     let token=JwtService.getToken();
     if (token && token!='undefined') {
       ApiService.setHeader();
-      ApiService.post(`/${userType.userType}/verify`)
+      let token_data={};
+      token_data.token=token;
+      ApiService.post(`/${userType.userType}/verify`,token_data)
         .then(({ data }) => {
           context.commit(SET_AUTH, data);
         })

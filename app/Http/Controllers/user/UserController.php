@@ -62,6 +62,7 @@ class UserController extends Controller
         $user->name=$request->name;
         $user->company_name=$request->company_name;
         $user->origin_airport_code=$request->origin_airport_code;
+        $user->daily_login_count=$request->daily_login_count;
         $user->is_active=$request->is_active;
         $user->save();
         if($user){

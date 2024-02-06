@@ -75,7 +75,7 @@
           <has-error :form="user_form" field="password"></has-error>
         </b-form-group>
         <b-form-group v-if="action=='Edit'">
-          <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Active</span><span v-else>In</span>
+          <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Active</span><span v-else>InActive</span>
         </b-form-group>
         <has-error :form="user_form" field="is_admin"></has-error>
         <div class="alert alert-success mt-3" role="alert" id="fade">
@@ -138,7 +138,7 @@ export default {
           data.forEach((element) => {
             this.location.push({
               value: element["iata_code"],
-              name: element["destination"],
+              name: element["iata_code"] + " (" + element["destination"] + ")",
             });
           });
         })

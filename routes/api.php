@@ -25,8 +25,11 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 
 // =================user section==========================
-//user login and register
+//user register
 Route::post('/register', [UserController::class,'register']);
+Route::get('/get-location', [LocationController::class,'getLocation']);
+
+
 Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::post('logout', [UserController::class,'logout']);
     Route::post('verify', [UserController::class,'me']);

@@ -25,7 +25,7 @@
                 {{ data.index + 1 }}
               </template>
               <template #cell(is_active)="data">
-                <span v-if="data.is_active==1">Active</span><span v-else>InActive</span>
+                <span v-if="data.item['is_active']==1">Active</span><span v-else>InActive</span>
               </template>
               <template #cell(action)="data">
               <b-button variant="success"><router-link :to="'/superadmin/new-users/'+data.item['id']" class="text-white">Edit</router-link></b-button>

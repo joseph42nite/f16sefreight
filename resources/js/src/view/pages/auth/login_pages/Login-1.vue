@@ -106,6 +106,10 @@
                 <span id="company_name" class="error-cls"></span>
             </div>
             <div class="form-group">
+              <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect>
+                <span id="company_name" class="error-cls"></span>
+            </div>
+            <div class="form-group">
               <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password"
                 ref="password" id="r_password" autocomplete="off" placeholder="Password"/>
             </div>
@@ -135,6 +139,7 @@ import axios from 'axios';
 import { mapGetters, mapState } from "vuex";
 import { LOGIN, LOGOUT } from "@/core/services/store/auth.module";
 import ApiService from "@/core/services/api.service";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: "login-1",
@@ -149,12 +154,14 @@ export default {
         email: "",
         company_name:'',
         password: "",
+        origin_airport_code:null,
       },
       check_show:{
         login_signin:false,
         login_signup:false,
         login_forgot:false,
-      }
+      },
+      location:[],
     };
   },
   computed: {
@@ -179,6 +186,10 @@ export default {
     },
     firstPopUp(show_form,hide_form){
       this.show_modal=true;
+      console.log(this.location.length);
+      if(show_form=='login_signup' && !this.location.length){
+        this.getLocation();
+      }
       this.check_show[show_form]=true;
       this.check_show[hide_form]=false;
     },
@@ -221,7 +232,24 @@ export default {
              $(`#${key}`).html("");
         } 
       });
-    }
+    },
+    getLocation(){
+      ApiService.get(`/get-location`)
+        .then(({ data }) => {
+          data.forEach((element) => {
+            this.location.push({
+              value: element["iata_code"],
+              name: element["iata_code"] + " (" + element["destination"] + ")",
+            });
+          });
+        })
+    },
+    normalizer(node) {
+      return {
+        id: node.value,
+        label: node.name,
+      };
+    },
   },
 };
 </script>

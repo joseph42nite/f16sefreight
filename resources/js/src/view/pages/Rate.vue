@@ -13,20 +13,21 @@
                     <label for="dist_form">To</label>
                     <treeselect :options="location" :value="search_form.to" v-model="search_form.to" :multiple="false" :searchable="true" :normalizer="normalizer"></treeselect>
                 </div>
-                <div class="col-12 col-md-3" v-if="search_form.selected_quantity != 'custom'">
-                    <label for="dist_form">Weights</label>
-                    <select name="" id="" class="form-control" v-model="search_form.selected_quantity">
-                        <option value="">Select quantity</option>
-                        <option value="Minimum">Minimum</option>
-                        <option value="Normal">Normal</option>
-                        <option value="custom">Custom quantity</option>
-                    </select>
-                </div>
                 <div class="col-12 col-md-3" v-if="search_form.selected_quantity == 'custom'">
-                    <label for="dist_form">Weights</label>
-                    <input type="text" class="form-control" placeholder="Enter quantity" v-model="search_form.quantity">
+                    <label for="dist_form">Weight in kg</label>
+                    <input type="text" @keyup="isNumber()" class="form-control" placeholder="Enter quantity" v-model="search_form.quantity">
+                    <span class="err_cls" id="quantity_msg"></span>
                 </div>
                 <div class="col-12 col-md-3">
+                    <label for="dist_form">Weights Type</label>
+                    <select name="" id="selected_quantity_1" class="form-control" v-model="search_form.selected_quantity">
+                        <option value="custom">Custom</option>
+                        <option value="Minimum">Minimum</option>
+                        <option value="Normal">Normal</option>
+                        <!-- <option value="all">All</option> -->
+                    </select>
+                </div>
+                <div class="col-12 mt-3 text-right">
                     <button class="btn btn1" @click="get_rate()">Rates</button>
                 </div>
             </div>
@@ -83,7 +84,7 @@ export default {
                 from: null,
                 to: 'ABJ',
                 selected_quantity: 'custom',
-                quantity: "100",
+                quantity: "",
             }),
             rate_data: '',
             rate_data_copy:{},
@@ -93,6 +94,15 @@ export default {
         }
     },
     methods: {
+        isNumber(){
+            if (isNaN(this.search_form.quantity)) {
+               $('#quantity_msg').html("Select Weight type Normal/Minimum");
+               $('#selected_quantity_1').css('border', '1px solid #c0392b');
+            } else {
+                $('#quantity_msg').html("");
+                $('#selected_quantity_1').css('border','none');
+            }
+        },
         get_rate() {
             this.rate_data = '';
             this.search_form.post(`/user/get-rate`)
@@ -107,7 +117,7 @@ export default {
                         else if (this.search_form.selected_quantity == 'Normal') {
                             data[i]['my_rate']['Normal'] = rate_data['Normal'];
                         }
-                        else {
+                        else if(this.search_form.selected_quantity=='custom') {
                             let user_quantity = parseInt(this.search_form.quantity);
                             let keys = Object.keys(rate_data);
                             let is_first_quantity_get = 0;
@@ -253,5 +263,8 @@ export default {
     background: gainsboro;
     border-radius: 5px;
     padding: 5px;
+}
+.err_cls{
+    color: #c0392b;
 }
 </style>

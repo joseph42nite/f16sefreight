@@ -347,7 +347,7 @@
           <hr style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
           <div class="row text-white">
             <div class="col-4">
-              <h6>© 2024 by F16s EFS Pvt Ltd</h6>
+              <h6>© 2024 by F16s EFS Pvt Ltd </h6>
             </div>
             <div class="col-4 text-center">
               <h6>Cookie Policy</h6>

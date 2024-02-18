@@ -353,7 +353,7 @@
               <h6>Cookie Policy</h6>
             </div>
             <div class="col-4 text-right">
-              <h6>Privacy Policy</h6>
+              <h6>Privacy Policy </h6>
             </div>
           </div>
         </div>

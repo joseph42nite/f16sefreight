@@ -8,6 +8,8 @@ use App\Http\Controllers\PasswordResetRequestController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\AmsController;
+use App\Http\Controllers\SettingController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -34,7 +36,8 @@ Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::post('logout', [UserController::class,'logout']);
     Route::post('verify', [UserController::class,'me']);
     Route::post('get-rate', [RateController::class,'index']);
-    Route::get('/get-location', [LocationController::class,'getLocation']);
+    Route::get('get-location', [LocationController::class,'getLocation']);
+    Route::get('get-notice', [SettingController::class,'getNotice']);
 });
 
 // =================superAdmin section==========================
@@ -58,6 +61,13 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     //loctaion related work
     Route::post('/import-loctaion', [LocationController::class,'importData']);
     Route::get('/get-location', [LocationController::class,'getLocation']);
+
+    //ams related work
+    Route::post('/import-ams', [AmsController::class,'importData']);
+    Route::post('/get-ams', [AmsController::class,'getAms']);
+
+    Route::get('get-notice', [SettingController::class,'getNotice']);
+    Route::put('update-notice', [SettingController::class,'update']);
 });
 
 Route::post('/Forgotpassword',[PasswordResetRequestController::class,'sendEmail']);

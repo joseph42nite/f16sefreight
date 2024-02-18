@@ -78,6 +78,32 @@
         </a>
       </li>
     </router-link>
+    <router-link
+      to="/superadmin/ams-import"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+    >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/custome/menu-icons/list.svg"
+            alt="branch users icon"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">Import Ams</span>
+        </a>
+      </li>
+    </router-link>
     <router-link to="/superadmin/delete-rate" v-slot="{ href, navigate, isActive, isExactActive }">
       <li
         aria-haspopup="true"
@@ -92,6 +118,23 @@
           <img src="/media/custome/menu-icons/list.svg" alt="branch users icon" class="img-fluid" width="18" height="18"/>
           &nbsp;&nbsp;&nbsp;
           <span class="menu-text">Delete Rate</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link to="/superadmin/setting" v-slot="{ href, navigate, isActive, isExactActive }">
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img src="/media/custome/menu-icons/list.svg" alt="branch users icon" class="img-fluid" width="18" height="18"/>
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">Setting</span>
         </a>
       </li>
     </router-link>

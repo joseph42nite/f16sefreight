@@ -78,6 +78,16 @@ export default new Router({
       name: "Password Forgot Form",
       component: () => import("@/view/PasswordForgotForm"),
     },
+    {
+      name: "About Us",
+      path: "/about-us",
+      component: () =>import("@/view/pages/AboutUs"),
+    },
+    {
+      name: "Contact Us",
+      path: "/contact-us",
+      component: () =>import("@/view/pages/ContactUs"),
+    },
     //-----------for admin login-------------------
     // {
     //   path: "/admin/",

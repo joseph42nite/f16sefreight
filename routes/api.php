@@ -38,6 +38,7 @@ Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::post('get-rate', [RateController::class,'index']);
     Route::get('get-location', [LocationController::class,'getLocation']);
     Route::get('get-notice', [SettingController::class,'getNotice']);
+    Route::get('/get-ams', [AmsController::class,'getAms']);
 });
 
 // =================superAdmin section==========================
@@ -64,7 +65,7 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
 
     //ams related work
     Route::post('/import-ams', [AmsController::class,'importData']);
-    Route::post('/get-ams', [AmsController::class,'getAms']);
+    Route::delete('/delete-ams', [AmsController::class,'delete']);
 
     Route::get('get-notice', [SettingController::class,'getNotice']);
     Route::put('update-notice', [SettingController::class,'update']);

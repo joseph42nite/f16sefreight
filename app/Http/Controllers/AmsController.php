@@ -14,6 +14,11 @@ class AmsController extends Controller
         Excel::import(new AmsImportClass, $file);
     }
     public function getAms(Request $request){
-        return $request->all();
+        $data=Ams::all(['carrier_code','carrier_prefix','fsc','scc','misc','mawb','hawb']);
+        return json_encode($data);
+    }
+    public function delete(){
+        Ams::truncate();
+        return "delete successfull";
     }
 }

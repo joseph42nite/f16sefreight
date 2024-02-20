@@ -2,58 +2,29 @@
     <div class="main-page w-100">
         <div class="search-area" style="margin-top: 5%">
             <div>
-                <img
-                    src="/media/custome/aakash-logo.png"
-                    alt="aakash logo"
-                    width="100"
-                    height="100"
-                    class="img-fluid"
-                />
+                <img src="/media/custome/aakash-logo.png" alt="aakash logo" width="100" height="100" class="img-fluid" />
             </div>
             <div class="row mt-5">
                 <div class="col-12 col-md-3">
                     <label for="dist_form">From</label>
-                    <treeselect
-                        :options="location"
-                        :value="search_form.from"
-                        v-model="search_form.from"
-                        :multiple="false"
-                        :searchable="true"
-                        :normalizer="normalizer"
-                    ></treeselect>
+                    <treeselect :options="location" :value="search_form.from" v-model="search_form.from" :multiple="false"
+                        :searchable="true" :normalizer="normalizer"></treeselect>
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">To</label>
-                    <treeselect
-                        :options="location"
-                        :value="search_form.to"
-                        v-model="search_form.to"
-                        :multiple="false"
-                        :searchable="true"
-                        :normalizer="normalizer"
-                    ></treeselect>
+                    <treeselect :options="location" :value="search_form.to" v-model="search_form.to" :multiple="false"
+                        :searchable="true" :normalizer="normalizer"></treeselect>
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">Weight in kg</label>
-                    <input
-                        type="text"
-                        @keyup="isNumber()"
-                        class="form-control"
-                        placeholder="Enter quantity"
-                        v-model="search_form.quantity"
-                        :readonly="search_form.selected_quantity != 'custom'"
-                    />
+                    <input type="text" @keyup="isNumber()" class="form-control" placeholder="Enter quantity"
+                        v-model="search_form.quantity" :readonly="search_form.selected_quantity != 'custom'" />
                     <span class="err_cls" id="quantity_msg"></span>
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">Weights Type</label>
-                    <select
-                        name=""
-                        id="selected_quantity_1"
-                        class="form-control"
-                        v-model="search_form.selected_quantity"
-                        @change="check_rate_type()"
-                    >
+                    <select name="" id="selected_quantity_1" class="form-control" v-model="search_form.selected_quantity"
+                        @change="check_rate_type()">
                         <option value="custom">Custom</option>
                         <option value="Minimum">Minimum</option>
                         <option value="Normal">Normal</option>
@@ -66,65 +37,27 @@
             </div>
             <!-- display area code -->
             <div class="row" style="margin-top: 6%">
-                <div
-                    :class="
-                        is_all_rate ? 'col-12 col-md-12' : 'col-12 col-md-8'
-                    "
-                >
+                <div :class="is_all_rate ? 'col-12 col-md-12' : 'col-12 col-md-8'
+                    ">
                     <div class="rate-area mr-1">
-                        <span
-                            @click="copyToClipboard()"
-                            class="copy-cls"
-                            v-if="!is_all_rate"
-                            >copy</span
-                        >
-                        <input
-                            type="number"
-                            v-model="extra_comission"
-                            @keyup="extraComission()"
-                            v-if="!is_all_rate"
-                        />
-                        <select
-                            name="profit_type"
-                            id="profit_type"
-                            v-model="profit_type"
-                            @change="
-                                get_rate();
-                                extra_comission = 0;
-                                last_extra_comission = 0;
-                            "
-                            v-if="!is_all_rate"
-                        >
+                        <span @click="copyToClipboard()" class="copy-cls" v-if="!is_all_rate">Export</span>
+                        <input type="number" v-model="extra_comission" @keyup="extraComission()" v-if="!is_all_rate" />
+                        <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0;
+                        last_extra_comission = 0;
+                        final_extra_comission = 0;
+                        " v-if="!is_all_rate">
                             <option value="total">Total profit</option>
                             <option value="per_kg">-/kg</option>
                         </select>
-                        <vue-excel-xlsx
-                            :data="items"
-                            :columns="fields"
-                            :file-name="'rate'"
-                            :file-type="'xlsx'"
-                            :sheet-name="'rate'"
-                            v-if="is_all_rate"
-                        >
-                            <button
-                                class="btn create_btn font-weight-bold py-2 text-white"
-                            >
+                        <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
+                            :sheet-name="'rate'" v-if="is_all_rate">
+                            <button class="btn create_btn font-weight-bold py-2 text-white">
                                 Export rate
                             </button>
                         </vue-excel-xlsx>
-                        <b-table
-                            :bordered="true"
-                            responsive
-                            :items="items"
-                            :fields="fields"
-                            style="white-space: nowrap"
-                            primary-key="id"
-                            :filter="filter"
-                            :current-page="currentPage"
-                            :per-page="perPage"
-                            @filtered="onFiltered"
-                            v-if="is_all_rate"
-                        >
+                        <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
+                            primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
+                            @filtered="onFiltered" v-if="is_all_rate">
                             <!-- <template #cell(index)="data">
                                 {{ data.index + 1 }}
                             </template> -->
@@ -135,20 +68,15 @@
                                     <th>#</th>
                                     <th>Airline</th>
                                     <th>Product Type</th>
-                                    <th>Quantity/Price</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Extra Profit</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr
-                                    v-for="(rate, index) in rate_data"
-                                    :key="index"
-                                >
+                                <tr v-for="(rate, index) in rate_data" :key="index">
                                     <td>
-                                        <input
-                                            type="checkbox"
-                                            @change="selcted_column(index)"
-                                            :id="'selected_' + index"
-                                        />
+                                        <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
                                     </td>
                                     <td>
                                         {{
@@ -160,12 +88,13 @@
                                     </td>
                                     <td>{{ rate.product_name }}</td>
                                     <td>
-                                        {{ Object.keys(rate.my_rate)[0] }} :
-                                        {{
-                                            rate.my_rate[
-                                                Object.keys(rate.my_rate)[0]
-                                            ]
-                                        }}
+                                        {{ Object.keys(rate.my_rate)[0] }}
+                                    </td>
+                                    <td>
+                                        {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
+                                    </td>
+                                    <td>
+                                        {{ final_extra_comission }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -174,13 +103,14 @@
                 </div>
                 <div class="col-12 col-md-4" v-if="!is_all_rate">
                     <div class="rate-area ml-1">
-                        <h1>
-                            Lorem, ipsum dolor sit amet consectetur adipisicing
-                            elit. Dicta blanditiis pariatur dolor necessitatibus
-                        </h1>
+                        <div>
+                            <span>FSC : <span>{{ ams_arr.fsc }}</span></span><br>
+                            <span>MISC : <span>{{ ams_arr.misc }}</span></span><br>
+                            <span>AMS : <span>{{ ams_arr.ams }}</span></span><br>
+                        </div>
                         <hr>
                         <div>
-                            <h4 class="text-danger">Notice:</h4><span>{{user_notice_1}}</span>
+                            <h4 class="text-danger">Notice:</h4><span>{{ user_notice_1 }}</span>
                         </div>
                     </div>
                 </div>
@@ -207,9 +137,16 @@ export default {
             location: [],
             extra_comission: "",
             last_extra_comission: "",
+            final_extra_comission: 0,
             profit_type: "total",
             is_all_rate: false,
-            user_notice_1:'',
+            user_notice_1: '',
+            all_ams:[],
+            ams_arr:{
+                fsc:'',
+                misc:'',
+                ams:'',
+            },
             fields: [
                 { label: "Sl", key: "index", field: "index" },
                 { label: "Airline", key: "carrier_code", field: "carrier_code" },
@@ -234,9 +171,17 @@ export default {
                 $("#selected_quantity_1").css("border", "none");
             }
         },
-        get_notice(){
+        get_notice() {
             ApiService.get(`/user/get-notice`).then(({ data }) => {
-                this.user_notice_1=data[0].user_notice_1;
+                this.user_notice_1 = data[0].user_notice_1;
+            });
+        },
+        get_asm() {
+            ApiService.get(`/user/get-ams`).then(({ data }) => {
+                for(let i=0;i<data.length;i++){
+                    this.all_ams[data[i].carrier_code]={};
+                    this.all_ams[data[i].carrier_code]=data[i];
+                }
             });
         },
         get_rate() {
@@ -332,30 +277,21 @@ export default {
                         this.rate_data = data;
                     }
                 })
-                .catch((err) => {});
+                .catch((err) => { });
         },
         copyToClipboard() {
             let clip_arr = [];
             let arr_len = Object.entries(this.rate_data_copy).length;
-            ApiService.post(`/user/get-ams`, {
-                data: this.rate_data_copy,
-            }).then(({ data }) => {
-                console.log(data);
-            });
+            let carrier_code='';
             if (arr_len) {
                 for (let i = 0; i < arr_len; i++) {
                     let currentData = {};
+                    carrier_code=this.rate_data_copy[i].carrier_code;
                     currentData.Sl = i + 1;
-                    currentData.Airline = `${this.rate_data_copy[i].carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
-                    currentData.ProductType =
-                        this.rate_data_copy[i].product_name;
-                    currentData.QuantityPrice = `${
-                        Object.keys(this.rate_data_copy[i].my_rate)[0]
-                    } : ${
-                        this.rate_data_copy[i].my_rate[
-                            Object.keys(this.rate_data_copy[i].my_rate)[0]
-                        ]
-                    }`;
+                    currentData.Airline = `${carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
+                    currentData.ProductType = this.rate_data_copy[i].product_name;
+                    currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
+                    currentData.Price = `${this.rate_data_copy[i].my_rate[Object.keys(this.rate_data_copy[i].my_rate)[0]] + parseFloat(this.final_extra_comission)}++ SC: ${this.all_ams[carrier_code].fsc} + ${this.all_ams[carrier_code].misc} + AMS : ${parseInt(this.all_ams[carrier_code].mawb)+parseInt(this.all_ams[carrier_code].hawb)}`;
                     clip_arr.push(currentData);
                 }
                 const headers = Object.keys(clip_arr[0]);
@@ -371,16 +307,20 @@ export default {
                 textarea.select();
                 document.execCommand("copy");
                 document.body.removeChild(textarea);
-                $(".copy-cls").html("Copid.");
+                $(".copy-cls").html("Exported.");
             } else {
-                alert("Select data for copy");
+                alert("Select data for Export");
             }
         },
-        selcted_column(index) {
+        selcted_column(index,carrier_code) {
             const checkbox = $(`#selected_${index}`);
             const isChecked = checkbox.prop("checked");
             if (isChecked) this.rate_data_copy[index] = this.rate_data[index];
             else delete this.rate_data_copy[index];
+
+            this.ams_arr.fsc=this.all_ams[carrier_code].fsc;
+            this.ams_arr.misc=this.all_ams[carrier_code].misc;
+            this.ams_arr.ams=parseInt(this.all_ams[carrier_code].hawb)+parseInt(this.all_ams[carrier_code].mawb);
         },
         getLocation() {
             ApiService.get(`/user/get-location`).then(({ data }) => {
@@ -403,6 +343,14 @@ export default {
             };
         },
         extraComission() {
+            if (this.profit_type == "total") {
+                let add_profit = this.extra_comission / this.search_form.quantity;
+                this.final_extra_comission = add_profit.toFixed(2);
+            } else if (this.profit_type == "per_kg") {
+                this.final_extra_comission = this.extra_comission;
+            }
+        },
+        extraComission2() {
             for (let i = 0; i < this.rate_data.length; i++) {
                 let obj_key = Object.keys(this.rate_data[i].my_rate)[0];
                 if (parseInt(this.last_extra_comission) > 0) {
@@ -435,9 +383,9 @@ export default {
                 }
             }
         },
-        check_rate_type(){
-            if(this.search_form.selected_quantity=='all')
-              this.is_all_rate=true;
+        check_rate_type() {
+            if (this.search_form.selected_quantity == 'all')
+                this.is_all_rate = true;
         },
         onFiltered(filteredItems) {
             this.totalRows = filteredItems.length;
@@ -447,6 +395,7 @@ export default {
     mounted() {
         this.getLocation();
         this.get_notice();
+        this.get_asm();
         if (this.current_user)
             this.search_form.from = this.current_user.origin_airport_code;
     },
@@ -492,6 +441,7 @@ export default {
     border-radius: 5px;
     padding: 5px;
 }
+
 .err_cls {
     color: #c0392b;
 }

@@ -57,6 +57,16 @@
           ></b-form-input>
           <has-error :form="user_form" field="daily_login_count"></has-error>
         </b-form-group>
+        <b-form-group v-if="action=='Edit'">
+          <b-form-input
+            id="input-1"
+            v-model="user_form.plan_expiry_date"
+            type="date"
+            class="mx-1 input-box"
+            :class="{ 'is-invalid': user_form.errors.has('plan_expiry_date') }"
+          ></b-form-input>
+          <has-error :form="user_form" field="plan_expiry_date"></has-error>
+        </b-form-group>
         <b-form-group>
           <b-input-group class="input-group-merge">
              <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect>
@@ -101,6 +111,7 @@ export default {
         daily_login_count:'',
         password: "",
         is_active:"",
+        plan_expiry_date:'',
       }),
       action: 'Add',
       location:[],

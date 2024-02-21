@@ -16,7 +16,7 @@ class RateImportClass implements ToCollection
         $headers = $collection->shift()->toArray();
         foreach ($collection as $col) {
             $data = array_combine($headers, $col->toArray());
-            if (!empty($data['Destination_City_Name']) || !empty($data['Carrier_Prefix']) || !empty($data['Currency_Code'])) {
+            if (!empty($data['Carrier_Prefix']) || !empty($data['Currency_Code'])) {
                 $rate_data_arr = $data;
                 $currencyCodeIndex = array_search('Currency_Code', array_keys($rate_data_arr));
                 $rate_data = array_slice($rate_data_arr, ($currencyCodeIndex + 1));

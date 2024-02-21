@@ -68,7 +68,8 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     Route::delete('/delete-ams', [AmsController::class,'delete']);
 
     Route::get('get-notice', [SettingController::class,'getNotice']);
-    Route::put('update-notice', [SettingController::class,'update']);
+    Route::post('add-notice', [SettingController::class,'insert']);
+    Route::post('delete-notice', [SettingController::class,'delete']);
 });
 
 Route::post('/Forgotpassword',[PasswordResetRequestController::class,'sendEmail']);

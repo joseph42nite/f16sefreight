@@ -1,10 +1,10 @@
 <template>
     <div class="main-page w-100">
-        <div class="search-area" style="margin-top: 5%">
+        <div class="search-area" style="margin-top: 2%">
             <div>
                 <img src="/media/custome/aakash-logo.png" alt="aakash logo" width="100" height="100" class="img-fluid" />
             </div>
-            <div class="row mt-5">
+            <div class="row mt-3">
                 <div class="col-12 col-md-3">
                     <label for="dist_form">From</label>
                     <treeselect :options="location" :value="search_form.from" v-model="search_form.from" :multiple="false"
@@ -21,7 +21,7 @@
                         v-model="search_form.quantity" :readonly="search_form.selected_quantity != 'custom'" />
                     <span class="err_cls" id="quantity_msg"></span>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                     <label for="dist_form">Weights Type</label>
                     <select name="" id="selected_quantity_1" class="form-control" v-model="search_form.selected_quantity"
                         @change="check_rate_type()">
@@ -31,12 +31,12 @@
                         <option value="all">All Rate</option>
                     </select>
                 </div>
-                <div class="col-12 mt-3 text-right">
+                <div class="col-12 col-md-1">
                     <button class="btn btn1" @click="get_rate()">Rates</button>
                 </div>
             </div>
             <!-- display area code -->
-            <div class="row" style="margin-top: 6%">
+            <div class="row" style="margin-top: 2%">
                 <div :class="is_all_rate ? 'col-12 col-md-12' : 'col-12 col-md-8'
                     ">
                     <div class="rate-area mr-1">
@@ -45,6 +45,7 @@
                         <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0;
                         last_extra_comission = 0;
                         final_extra_comission = 0;
+                        get_rate();
                         " v-if="!is_all_rate">
                             <option value="total">Total profit</option>
                             <option value="per_kg">-/kg</option>
@@ -70,7 +71,7 @@
                                     <th>Product Type</th>
                                     <th>Quantity</th>
                                     <th>Price</th>
-                                    <th>Extra Profit</th>
+                                    <th>Added Profit</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -93,8 +94,8 @@
                                     <td>
                                         {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
                                     </td>
-                                    <td>
-                                        {{ final_extra_comission }}
+                                    <td style="color: #ee5253;">
+                                        {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -105,12 +106,17 @@
                     <div class="rate-area ml-1">
                         <div>
                             <span>FSC : <span>{{ ams_arr.fsc }}</span></span><br>
+                            <span>SCC : <span>{{ ams_arr.scc }}</span></span><br>
+                            <span>XRAY : <span>{{ ams_arr.xray }}</span></span><br>
                             <span>MISC : <span>{{ ams_arr.misc }}</span></span><br>
-                            <span>AMS : <span>{{ ams_arr.ams }}</span></span><br>
+                            <span>CTG : <span>{{ ams_arr.ctg }}</span></span><br>
+                            <span>AWB FEE : <span>{{ ams_arr.awb_fee }}</span></span><br>
+                            <span>MAWB : <span>{{ ams_arr.mawb }}</span></span><br>
+                            <span>HAWB : <span>{{ ams_arr.hawb }}</span></span><br>
                         </div>
                         <hr>
-                        <div>
-                            <h4 class="text-danger">Notice:</h4><span>{{ user_notice_1 }}</span>
+                        <div v-if="user_notice" class="d-flex">
+                            <h4 class="text-danger">Notice:</h4><span>{{ user_notice }}</span>
                         </div>
                     </div>
                 </div>
@@ -137,15 +143,20 @@ export default {
             location: [],
             extra_comission: "",
             last_extra_comission: "",
-            final_extra_comission: 0,
             profit_type: "total",
             is_all_rate: false,
-            user_notice_1: '',
+            all_user_notice: [],
+            user_notice:'',
             all_ams:[],
             ams_arr:{
                 fsc:'',
+                scc:'',
+                xray:'',
                 misc:'',
-                ams:'',
+                ctg:'',
+                awb_fee:'',
+                mawb:'',
+                hawb:'',
             },
             fields: [
                 { label: "Sl", key: "index", field: "index" },
@@ -173,7 +184,10 @@ export default {
         },
         get_notice() {
             ApiService.get(`/user/get-notice`).then(({ data }) => {
-                this.user_notice_1 = data[0].user_notice_1;
+                for(let i=0;i<data.length;i++){
+                    this.all_user_notice[data[i].carrier_code]={};
+                    this.all_user_notice[data[i].carrier_code]=data[i];
+                }
             });
         },
         get_asm() {
@@ -221,30 +235,18 @@ export default {
                             let arr_data = data[i].rate_range;
                             let rate_data = JSON.parse(arr_data, true);
                             data[i]["my_rate"] = {};
-                            if (
-                                this.search_form.selected_quantity == "Minimum"
-                            ) {
-                                data[i]["my_rate"]["Minimum"] =
-                                    rate_data["Minimum"];
-                            } else if (
-                                this.search_form.selected_quantity == "Normal"
-                            ) {
-                                data[i]["my_rate"]["Normal"] =
-                                    rate_data["Normal"];
-                            } else if (
-                                this.search_form.selected_quantity == "custom"
-                            ) {
-                                let user_quantity = parseInt(
-                                    this.search_form.quantity
-                                );
+                            data[i]["my_rate_2"] = {};
+                            if (this.search_form.selected_quantity == "Minimum") {
+                                data[i]["my_rate"]["Minimum"] =rate_data["Minimum"];
+                            } else if (this.search_form.selected_quantity == "Normal") {
+                                data[i]["my_rate"]["Normal"] = rate_data["Normal"];
+                            } else if ( this.search_form.selected_quantity == "custom") {
+                                let user_quantity = parseInt(this.search_form.quantity);
                                 let keys = Object.keys(rate_data);
                                 let is_first_quantity_get = 0;
                                 let first_quantity = 0;
                                 for (let j = 0; j < keys.length; j++) {
-                                    if (
-                                        keys[j] == "Minimum" ||
-                                        keys[j] == "Normal"
-                                    ) {
+                                    if (keys[j] == "Minimum" ||keys[j] == "Normal") {
                                     } else {
                                         let from_key = parseInt(keys[j]);
                                         if (!is_first_quantity_get) {
@@ -273,6 +275,7 @@ export default {
                                     }
                                 }
                             }
+                            data[i]["my_rate_2"] = JSON.parse(JSON.stringify(data[i]['my_rate']));
                         }
                         this.rate_data = data;
                     }
@@ -291,7 +294,23 @@ export default {
                     currentData.Airline = `${carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
                     currentData.ProductType = this.rate_data_copy[i].product_name;
                     currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
-                    currentData.Price = `${this.rate_data_copy[i].my_rate[Object.keys(this.rate_data_copy[i].my_rate)[0]] + parseFloat(this.final_extra_comission)}++ SC: ${this.all_ams[carrier_code].fsc} + ${this.all_ams[carrier_code].misc} + AMS : ${parseInt(this.all_ams[carrier_code].mawb)+parseInt(this.all_ams[carrier_code].hawb)}`;
+                    currentData.Price = `${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
+                    if(this.all_ams[carrier_code].fsc)
+                      currentData.Price+=`${this.all_ams[carrier_code].fsc} (FCS) + `;
+                    if(this.all_ams[carrier_code].misc)
+                      currentData.Price+=`${this.all_ams[carrier_code].misc} (MISC) + `; 
+                    if(this.all_ams[carrier_code].xray)
+                      currentData.Price+=`${this.all_ams[carrier_code].xray} (XRAY) + `; 
+                    if(this.all_ams[carrier_code].scc)
+                      currentData.Price+=`${this.all_ams[carrier_code].scc} (SCC) + `;
+                    if(this.all_ams[carrier_code].ctg)
+                      currentData.Price+=`${this.all_ams[carrier_code].ctg} (CTG) + `;
+                    if(this.all_ams[carrier_code].awb_fee)
+                      currentData.Price+=`${this.all_ams[carrier_code].awb_fee} (AWB FEE)`; 
+                    if(this.all_ams[carrier_code].mawb)
+                      currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) +`;
+                    if(this.all_ams[carrier_code].hawb)
+                      currentData.Price+=`${this.all_ams[carrier_code].hawb} (HAWB)`;             
                     clip_arr.push(currentData);
                 }
                 const headers = Object.keys(clip_arr[0]);
@@ -299,7 +318,7 @@ export default {
                 const dataRows = clip_arr
                     .map((row) => Object.values(row).join("\t\t"))
                     .join("\n");
-                const tableText = `${headerRow}\n\n${dataRows}`;
+                const tableText = `${dataRows}`;   //${headerRow}\n\n   removed header
 
                 const textarea = document.createElement("textarea");
                 textarea.value = tableText;
@@ -315,12 +334,40 @@ export default {
         selcted_column(index,carrier_code) {
             const checkbox = $(`#selected_${index}`);
             const isChecked = checkbox.prop("checked");
-            if (isChecked) this.rate_data_copy[index] = this.rate_data[index];
-            else delete this.rate_data_copy[index];
+            if (isChecked) 
+              this.rate_data_copy[index] = this.rate_data[index];
+            else 
+              delete this.rate_data_copy[index];
 
+            this.ams_arr.fsc="";
+            this.ams_arr.scc="";
+            this.ams_arr.xray="";
+            this.ams_arr.misc="";
+            this.ams_arr.ctg="";
+            this.ams_arr.awb_fee="";
+            this.ams_arr.mawb="";
+            this.ams_arr.hawb="";
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].fsc)  
             this.ams_arr.fsc=this.all_ams[carrier_code].fsc;
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].scc)
+            this.ams_arr.scc=this.all_ams[carrier_code].scc;
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].xray)
+            this.ams_arr.xray=this.all_ams[carrier_code].xray;
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].misc)
             this.ams_arr.misc=this.all_ams[carrier_code].misc;
-            this.ams_arr.ams=parseInt(this.all_ams[carrier_code].hawb)+parseInt(this.all_ams[carrier_code].mawb);
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].ctg)
+            this.ams_arr.ctg=this.all_ams[carrier_code].ctg;
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].awb_fee)
+            this.ams_arr.awb_fee=this.all_ams[carrier_code].awb_fee;
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].mawb)
+            this.ams_arr.mawb=this.all_ams[carrier_code].mawb;
+            if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].hawb)
+            this.ams_arr.hawb=this.all_ams[carrier_code].hawb;
+
+            //for notice
+            this.user_notice='';
+            if(this.all_user_notice[carrier_code])
+              this.user_notice=this.all_user_notice[carrier_code].user_notice_1;
         },
         getLocation() {
             ApiService.get(`/user/get-location`).then(({ data }) => {
@@ -343,42 +390,22 @@ export default {
             };
         },
         extraComission() {
-            if (this.profit_type == "total") {
-                let add_profit = this.extra_comission / this.search_form.quantity;
-                this.final_extra_comission = add_profit.toFixed(2);
-            } else if (this.profit_type == "per_kg") {
-                this.final_extra_comission = this.extra_comission;
-            }
-        },
-        extraComission2() {
             for (let i = 0; i < this.rate_data.length; i++) {
-                let obj_key = Object.keys(this.rate_data[i].my_rate)[0];
+                let obj_key = Object.keys(this.rate_data[i].my_rate_2)[0];
                 if (parseInt(this.last_extra_comission) > 0) {
                     if (this.profit_type == "total") {
-                        let add_profit =
-                            parseInt(this.last_extra_comission) /
-                            parseInt(this.search_form.quantity);
-                        this.rate_data[i].my_rate[obj_key] =
-                            parseInt(this.rate_data[i].my_rate[obj_key]) -
-                            parseInt(add_profit);
+                        let add_profit =parseInt(this.last_extra_comission) / parseInt(this.search_form.quantity);
+                        this.rate_data[i].my_rate_2[obj_key] =parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(add_profit);
                     } else if (this.profit_type == "per_kg") {
-                        this.rate_data[i].my_rate[obj_key] =
-                            parseInt(this.rate_data[i].my_rate[obj_key]) -
-                            parseInt(this.last_extra_comission);
+                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(this.last_extra_comission);
                     }
                 }
                 if (parseInt(this.extra_comission) > 0) {
                     if (this.profit_type == "total") {
-                        let add_profit =
-                            parseInt(this.extra_comission) /
-                            parseInt(this.search_form.quantity);
-                        this.rate_data[i].my_rate[obj_key] =
-                            parseInt(this.rate_data[i].my_rate[obj_key]) +
-                            parseInt(add_profit);
+                        let add_profit = parseInt(this.extra_comission) / parseInt(this.search_form.quantity);
+                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(add_profit);
                     } else if (this.profit_type == "per_kg") {
-                        this.rate_data[i].my_rate[obj_key] =
-                            parseInt(this.rate_data[i].my_rate[obj_key]) +
-                            parseInt(this.extra_comission);
+                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(this.extra_comission);
                     }
                 }
             }

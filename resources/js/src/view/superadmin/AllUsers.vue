@@ -27,6 +27,9 @@
               <template #cell(is_active)="data">
                 <span v-if="data.item['is_active']==1">Active</span><span v-else>InActive</span>
               </template>
+              <template #cell(plan_status)="data">
+                  <span v-if="data.item['plan_expiry_date']>=current_date">Active</span><span v-else class="text-danger">Expired</span>
+              </template>
               <template #cell(action)="data">
               <b-button variant="success"><router-link :to="'/superadmin/new-users/'+data.item['id']" class="text-white">Edit</router-link></b-button>
                <b-button variant="danger" v-on:click="delete_user(data.item['id'])">Delete</b-button>
@@ -55,9 +58,12 @@ export default {
         {label:'Company',key:"company_name"},
         {label:'Status',key:"is_active"},
         {label:'Today login count',key:"daily_login_count"},
+        {label:'Plan expiry date',key:"plan_expiry_date"},
+        {label:'Plan status',key:"plan_status"},
         {label:"Action",key:"action"}
         ],
       items: [],
+      current_date:'',
       filter: null,
       totalRows: 0,
       currentPage: 1,
@@ -90,6 +96,7 @@ export default {
   },
   mounted(){
      this.get_users();
+     this.current_date = new Date().toISOString().slice(0, 10);
   },
 };
 </script>

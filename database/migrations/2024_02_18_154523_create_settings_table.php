@@ -15,6 +15,7 @@ class CreateSettingsTable extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
+            $table->string('carrier_code',10);
             $table->string('user_notice_1',500);
             $table->timestamps();
         });

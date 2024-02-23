@@ -24,6 +24,7 @@ class CreateUsersTable extends Migration
             $table->string('latest_token')->nullable();
             $table->tinyInteger('daily_login_count')->nullable();
             $table->date('current_date')->nullable();
+            $table->date('plan_expiry_date')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

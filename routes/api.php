@@ -10,6 +10,7 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\AmsController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\ReportController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -38,7 +39,8 @@ Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::post('get-rate', [RateController::class,'index']);
     Route::get('get-location', [LocationController::class,'getLocation']);
     Route::get('get-notice', [SettingController::class,'getNotice']);
-    Route::get('/get-ams', [AmsController::class,'getAms']);
+    Route::get('get-ams', [AmsController::class,'getAms']);
+    Route::post('report', [ReportController::class,'insert']);
 });
 
 // =================superAdmin section==========================
@@ -62,6 +64,7 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     //loctaion related work
     Route::post('/import-loctaion', [LocationController::class,'importData']);
     Route::get('/get-location', [LocationController::class,'getLocation']);
+    Route::delete('/delete-location', [LocationController::class,'delete']);
 
     //ams related work
     Route::post('/import-ams', [AmsController::class,'importData']);

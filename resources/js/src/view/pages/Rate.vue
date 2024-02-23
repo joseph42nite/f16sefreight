@@ -1,8 +1,10 @@
 <template>
     <div class="main-page w-100">
         <div class="search-area" style="margin-top: 2%">
-            <div>
+            <div class="d-flex justify-content-between">
                 <img src="/media/custome/aakash-logo.png" alt="aakash logo" width="100" height="100" class="img-fluid" />
+                {{ report_popup }}
+                <a href="javascript:void(0)" @click="report_popup=true">Report here</a>
             </div>
             <div class="row mt-3">
                 <div class="col-12 col-md-3">
@@ -122,6 +124,21 @@
                 </div>
             </div>
         </div>
+        <b-modal id="login-modal" v-model="report_popup" :hide-footer="true">
+            <div class="w-100">
+                <div class="form-group">
+                    <label for="report_title">Report title</label>
+                    <input type="text" id="report_title" v-model="report_arr.title" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="report_description">Report description</label>
+                    <textarea name="report_description" id="report_description" cols="30" rows="3" v-model="report_arr.description" class="form-control"></textarea>
+                </div>
+                <div class="text-center">
+                    <button class="btn font-weight-bolder btn-primary py-3" @click="submit_report()">Submit</button>
+                </div>
+            </div>
+        </b-modal>    
     </div>
 </template>
 <script>
@@ -147,6 +164,7 @@ export default {
             is_all_rate: false,
             all_user_notice: [],
             user_notice:'',
+            report_popup:false,
             all_ams:[],
             ams_arr:{
                 fsc:'',
@@ -163,6 +181,10 @@ export default {
                 { label: "Airline", key: "carrier_code", field: "carrier_code" },
                 { label: "Product Type", key: "product_name", field: "product_name" },
             ],
+            report_arr:new Form({
+                title:'',
+                description:'',
+            }),
             items: [],
             filter: null,
             totalRows: 0,
@@ -172,6 +194,14 @@ export default {
         };
     },
     methods: {
+        submit_report(){
+            this.report_arr.post(`/user/report`).then(({ data }) => {
+                this.report_popup=false;
+                this.report_arr.title="";
+                this.report_arr.description="";
+                alert("report submited successfull. Thank you");
+            });
+        },
         isNumber() {
             if (isNaN(this.search_form.quantity)) {
                 $("#quantity_msg").html("Select Weight type Normal/Minimum");
@@ -283,53 +313,55 @@ export default {
                 .catch((err) => { });
         },
         copyToClipboard() {
-            let clip_arr = [];
-            let arr_len = Object.entries(this.rate_data_copy).length;
-            let carrier_code='';
-            if (arr_len) {
-                for (let i = 0; i < arr_len; i++) {
-                    let currentData = {};
-                    carrier_code=this.rate_data_copy[i].carrier_code;
-                    currentData.Sl = i + 1;
-                    currentData.Airline = `${carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
-                    currentData.ProductType = this.rate_data_copy[i].product_name;
-                    currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
-                    currentData.Price = `${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
-                    if(this.all_ams[carrier_code].fsc)
-                      currentData.Price+=`${this.all_ams[carrier_code].fsc} (FCS) + `;
-                    if(this.all_ams[carrier_code].misc)
-                      currentData.Price+=`${this.all_ams[carrier_code].misc} (MISC) + `; 
-                    if(this.all_ams[carrier_code].xray)
-                      currentData.Price+=`${this.all_ams[carrier_code].xray} (XRAY) + `; 
-                    if(this.all_ams[carrier_code].scc)
-                      currentData.Price+=`${this.all_ams[carrier_code].scc} (SCC) + `;
-                    if(this.all_ams[carrier_code].ctg)
-                      currentData.Price+=`${this.all_ams[carrier_code].ctg} (CTG) + `;
-                    if(this.all_ams[carrier_code].awb_fee)
-                      currentData.Price+=`${this.all_ams[carrier_code].awb_fee} (AWB FEE)`; 
-                    if(this.all_ams[carrier_code].mawb)
-                      currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) +`;
-                    if(this.all_ams[carrier_code].hawb)
-                      currentData.Price+=`${this.all_ams[carrier_code].hawb} (HAWB)`;             
-                    clip_arr.push(currentData);
-                }
-                const headers = Object.keys(clip_arr[0]);
-                const headerRow = headers.join("\t\t\t");
-                const dataRows = clip_arr
-                    .map((row) => Object.values(row).join("\t\t"))
-                    .join("\n");
-                const tableText = `${dataRows}`;   //${headerRow}\n\n   removed header
+            if(confirm("This rate can be wrong. confirm it from official website")){
+                let clip_arr = [];
+                let arr_len = Object.entries(this.rate_data_copy).length;
+                let carrier_code='';
+                if (arr_len) {
+                    for (let i in this.rate_data_copy) {
+                        let currentData = {};
+                        carrier_code=this.rate_data_copy[i].carrier_code;
+                        currentData.Sl = i + 1;
+                        currentData.Airline = `${carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
+                        currentData.ProductType = this.rate_data_copy[i].product_name;
+                        currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
+                        currentData.Price = `${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
+                        if(this.all_ams[carrier_code].fsc)
+                        currentData.Price+=`${this.all_ams[carrier_code].fsc} (FCS)`;
+                        if(this.all_ams[carrier_code].misc)
+                        currentData.Price+=` + ${this.all_ams[carrier_code].misc} (MISC)`; 
+                        if(this.all_ams[carrier_code].xray)
+                        currentData.Price+=` + ${this.all_ams[carrier_code].xray} (XRAY)`; 
+                        if(this.all_ams[carrier_code].scc)
+                        currentData.Price+=` + ${this.all_ams[carrier_code].scc} (SCC)`;
+                        if(this.all_ams[carrier_code].ctg)
+                        currentData.Price+=` + ${this.all_ams[carrier_code].ctg} (CTG)`;
+                        if(this.all_ams[carrier_code].awb_fee)
+                        currentData.Price+=` + ${this.all_ams[carrier_code].awb_fee} (AWB FEE)`; 
+                        if(this.all_ams[carrier_code].mawb)
+                        currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) +`;
+                        if(this.all_ams[carrier_code].hawb)
+                        currentData.Price+=`${this.all_ams[carrier_code].hawb} (HAWB)`;             
+                        clip_arr.push(currentData);
+                    }
+                    const headers = Object.keys(clip_arr[0]);
+                    const headerRow = headers.join("\t\t\t");
+                    const dataRows = clip_arr
+                        .map((row) => Object.values(row).join("\t\t"))
+                        .join("\n");
+                    const tableText = `${dataRows}`;   //${headerRow}\n\n   removed header
 
-                const textarea = document.createElement("textarea");
-                textarea.value = tableText;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand("copy");
-                document.body.removeChild(textarea);
-                $(".copy-cls").html("Exported.");
-            } else {
-                alert("Select data for Export");
-            }
+                    const textarea = document.createElement("textarea");
+                    textarea.value = tableText;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                    $(".copy-cls").html("Exported.");
+                } else {
+                    alert("Select data for Export");
+                }
+            }   
         },
         selcted_column(index,carrier_code) {
             const checkbox = $(`#selected_${index}`);
@@ -413,6 +445,8 @@ export default {
         check_rate_type() {
             if (this.search_form.selected_quantity == 'all')
                 this.is_all_rate = true;
+            else
+                this.is_all_rate = false; 
         },
         onFiltered(filteredItems) {
             this.totalRows = filteredItems.length;
@@ -437,6 +471,10 @@ export default {
 };
 </script>
 <style>
+.rate-area{
+    height: 320px;
+    overflow-y: auto;
+}
 .search-area {
     background: gainsboro;
     padding: 3%;

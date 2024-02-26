@@ -17,15 +17,19 @@ class LoginController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
         $user_data=auth()->guard($guard)->user();
+        $current_date=date("Y-m-d");
         //for user valid login check
         // ($user_data->is_active==0 || $user_data->daily_login_count>2) && $role=='user'
         if(0){
             auth()->guard($guard)->logout();
             return response()->json(['error' => 'Blocked'], 401);
         }
+        if($role=='user' && $user_data->plan_expiry_date<$current_date){
+            auth()->guard($guard)->logout();
+            return response()->json(['error' => 'Expired'], 401);
+        }
         
         //for stope multiple login
-        $current_date=date("Y-m-d");
         if($current_date==$user_data->current_date && $role=='user')
             User::where('id',$user_data->id)->update(['latest_token'=>$token,'daily_login_count'=>$user_data->daily_login_count+1,'current_date'=>$current_date]);
         elseif($role=='user')

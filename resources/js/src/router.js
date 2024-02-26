@@ -42,6 +42,18 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "ams-import",
+          name: "superadmin-ImportAms",
+          component: () => import("@/view/superadmin/ImportAms.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "setting",
+          name: "superadmin-Setting",
+          component: () => import("@/view/superadmin/Setting.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "delete-rate",
           name: "superadmin-DeleteRate",
           component: () => import("@/view/superadmin/DeleteRate.vue"),

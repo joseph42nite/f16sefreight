@@ -1,17 +1,17 @@
 <template>
     <div class="mt-10 p-5 d-flex justify-content-between">
-        <div>
-            <h2>Import location here</h2>
+        <div class="">
+            <h2>Import Ams here</h2>
             <div>
                 <input type="file" ref="fileInput" @change="handleFileUpload" />
-                <button @click="uploadFile" id="upload_btn">Upload</button>
+                <button @click="uploadFile" id="upload_btn" class="btn btn-primary">Upload</button>
             </div>
             <div class="alert alert-success mt-3" role="alert" id="fade">
                 <span class="font-weight-bolder font-size-h6">Upload Successfully</span>
             </div>
         </div>
         <div>
-            <button class="btn btn-danger" @click="delete_data()">Delete All Location</button>
+            <button class="btn btn-danger" @click="delete_data()">Delete All AMS</button>
         </div>
     </div>
 </template>
@@ -33,7 +33,7 @@ export default {
             $('#upload_btn').html("wait...");
             let formData = new FormData();
             formData.append('file', this.file);
-            ApiService.post(`/superadmin/import-loctaion`, formData, { headers: { 'Content-Type': 'multipart/form-data', }, })
+            ApiService.post(`/superadmin/import-ams`, formData, { headers: { 'Content-Type': 'multipart/form-data', }, })
                 .then(({ data }) => {
                     this.file = null;
                     $('#upload_btn').html('Upload')
@@ -43,10 +43,10 @@ export default {
                 .catch(err => { });
         },
         delete_data() {
-            if (window.confirm("Do you want to delete all Location data?")) {
-                ApiService.delete(`/superadmin/delete-location`)
+            if (window.confirm("Do you want to delete all AMS data?")) {
+                ApiService.delete(`/superadmin/delete-ams`)
                     .then(({ data }) => {
-                        alert("data delete successfull. Now please import the location data quick");
+                        alert("data delete successfull. Now please import the AMS data quick");
                     })
                     .catch(err => { });
             }

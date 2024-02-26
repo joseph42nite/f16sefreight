@@ -18,4 +18,8 @@ class LocationController extends Controller
         $data = Location::all(['destination', 'iata_code']);
         return json_encode($data);
     }
+    public function delete(Request $request){
+        Location::truncate();
+        return "delete successfull";
+    }
 }

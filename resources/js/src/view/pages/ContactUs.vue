@@ -1,12 +1,11 @@
 <template>
   <div class="bg-white">
     <div class="home-banner">
-      <div class="wrap d-flex flex-column justify-content-between" style="height: 50vh;">
+      <div class="wrap d-flex flex-column justify-content-between" style="" @mouseover="isHovered = true" @mouseleave="isHovered = false">
         <nav class="navbar navbar-expand-lg navbar-dark bg-transparent w-100">
           <div class="container-fluid">
             <div class="p-2-3 text-white">
-              <h1 class="logo_text">F16s</h1>
-              <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6>
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="orange logo" style="width: 100%;">
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
               data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
@@ -14,7 +13,7 @@
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse menu" id="navbarSupportedContent">
-              <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+              <ul class="navbar-nav mx-auto mb-2 mb-lg-0" style="font-size: medium;">
                 <li class="nav-item mx-3">
                   <router-link to="/login" class="text-white">Home</router-link>
                 </li>
@@ -28,8 +27,8 @@
                   <router-link to="/rules/about" class="text-white">Rate</router-link>
                 </li> -->
               </ul>
-              <ul>
-                <li><button @click="firstPopUp('login_signin', 'login_signup')" class="btn btn-danger">Login</button></li>
+              <ul style="font-size: medium;">
+                <li><button @click="firstPopUp('login_signin', 'login_signup')" class="plain-button">Login</button></li>
                 <li><button @click="firstPopUp('login_signup', 'login_signin')" class="btn btn-danger">Sign up</button>
                 </li>
               </ul>
@@ -38,7 +37,7 @@
         </nav>
         <div class="banner"></div>
       </div>
-      <div class="p-2-3 text-white container p-0" style="margin-top: 3%;">
+      <div class="p-2-3 text-white container p-0" style="margin-top: 30%;">
         <div class="col-5 home-block bottomright mt-5" style="width:45%">
           <h1 class="text-white h1_text" style="font-weight:500;font-size: 60px;">Contact Us</h1>
           <h3 class="mt-5">Get in Touch, Let's Elevate Your Logistics Experience Together</h3>
@@ -163,48 +162,51 @@
 
     <template>
       <div class="container" style="background-color: rgba(213, 179, 176, 0.2); margin-top: 10rem; border-radius: 13px;box-shadow: 0px 0px 10px #80808080;">
-        <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">We'd Love to Hear from You</h1>
+        <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">We'd Love To Hear From You</h1>
         <div class="container">
           <div class="row">
-            <!-- Left side: Contact Form -->
             <div class="col-md-8 mt-10">
               <div class="contact">
                   <div>
-                    <b-form>
+                    <div v-if="showSuccessMessage" class="alert alert-success" role="alert">
+                      Thanks for contacting us will reached you soon!
+                    </div>
+                    <b-form @submit="onSubmit">
                       <label class="sr-only" for="input-5">First Name</label>
+                      <b-input-group class="mb-5 mr-sm-2 mb-sm-0 mt-10">
                       <b-form-input
                         id="input-5"
-                        class="mb-5 mr-sm-2 mb-sm-0 mt-10"
-                        placeholder="First Name"
+                       
+                        placeholder="First Name" v-model="form.first_name" 
+                        :class="{ 'is-invalid': form.errors.has('first_name') }"
                       ></b-form-input>
-
+                    </b-input-group>
                       <label class="sr-only" for="input-4">Last Name</label>
                       <b-input-group class="mb-5 mr-sm-2 mb-sm-0 mt-10">
-                        <b-form-input id="input-4" placeholder="Last Name"></b-form-input>
+                        <b-form-input id="input-4" placeholder="Last Name" v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"></b-form-input>
                       </b-input-group>
                       <label class="sr-only" for="input-1">Email</label>
                       <b-form-input
                         id="input-1"
                         class="mb-5 mr-sm-5 mb-sm-0 mt-10"
-                        placeholder="Email">
+                        placeholder="Email" v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }">
                       </b-form-input>
 
                       <label class="sr-only" for="input-2">Phone</label>
                       <b-input-group class="mb-5 mr-sm-2 mb-sm-0 mt-10">
-                        <b-form-input id="input-2" placeholder="Phone"></b-form-input>
+                        <b-form-input id="input-2" placeholder="Phone" v-model="form.phone" :class="{ 'is-invalid': form.errors.has('phone') }"></b-form-input>
                       </b-input-group>
-                      <b-form-textarea class="mt-10"
+                      <b-form-textarea class="mt-10" style="grid-column: span 2 !important;"
                         id="textarea"
                         placeholder="Message"
                         rows="3"
-                        max-rows="6"
+                        max-rows="6" v-model="form.message" :class="{ 'is-invalid': form.errors.has('message') }"
                       ></b-form-textarea>
+                      <p class="mt-10 mb-10" style="width: 70%;">
+                        <button class="login-btn" type="submit">Submit</button>
+                      </p>
                     </b-form>
                   </div>
-                  <!-- <p class="mt-10 mb-10">
-                    <button class="btn btn-danger">Submit</button>
-                  </p> -->
-                <!-- </form> -->
               </div>
             </div>
 
@@ -226,9 +228,17 @@
     </template>
 
     <template>
-      <div style="padding-bottom: 10rem;">
-        <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">Our Headquaters</h1>
+      <div style="padding-bottom: 6rem;">
+        <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x mb-10 mt-10">Our Headquaters</h1>
         <div class="container mb-10">
+          <iframe
+        width="100%"
+        height="600"
+        frameborder="0"
+        style="border:0;border-radius: 13px;"
+        src="https://maps.google.com/maps?q=bangalore&t=&z=13&ie=UTF8&iwloc=&output=embed"
+        allowfullscreen
+      ></iframe>
         </div>
       </div>
     </template>
@@ -238,10 +248,10 @@
       <div class="mt-10" style="background-color: #320400;">
         <div class="container">
           <div class="row back-b text-white p-8">
-            <div class="col-3 col-md-3">
-              <h1 class="logo_text">F16s</h1>
-              <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6>
-              <!-- <img src="/media/custome/orange-logo.png" alt="orange logo" style="width: 50%;"> -->
+            <div class="col-3 col-md-3 mt-5">
+              <!-- <h1 class="logo_text">F16s</h1> -->
+              <!-- <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6> -->
+              <img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;">
               <div class="mt-6">
                 <img src="/media/custome/home/linkedin.png" alt="">
               </div>
@@ -293,9 +303,6 @@
               </div>
             </div>
           </div>
-          <!-- <div class="row back-b text-white justify-content-center p-3">
-          <strong class="text-white"><i class="fas fa-copyright"></i> Copyright reserved Orangetheory Fitness</strong>
-          </div> -->
         </div>
       </div>
     </template>
@@ -315,7 +322,6 @@ import { mapGetters, mapState } from "vuex";
 import { LOGIN, LOGOUT } from "@/core/services/store/auth.module";
 import ApiService from "@/core/services/api.service";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
-
 export default {
   // name: "About Us",
   data() {
@@ -336,6 +342,18 @@ export default {
         login_signup: false,
         login_forgot: false,
       },
+      logoSrc: "/media/custome/logo.png",
+      blackLogoSrc: "/media/custome/black-logo.png",
+      isHovered: false,
+      form: new Form ({
+        // id: '',
+        first_name: '',
+        last_name: '',
+        phone: '',
+        email: '',
+        message: ''
+      }),
+      showSuccessMessage: false,
       location: [],
     };
   },
@@ -352,6 +370,7 @@ export default {
     }
   },
   mounted() {
+    
   },
   methods: {
     showForm(show_form, hide_form1, hide_form2) {
@@ -425,12 +444,45 @@ export default {
         label: node.name,
       };
     },
+    onSubmit(event) {
+      event.preventDefault();
+        axios.post('/contact', this.form.data())
+        .then(({ data }) => {
+            console.log('contact created successfully:', data);
+            this.showSuccessMessage = true;
+            setTimeout(() => {
+              this.showSuccessMessage = false;
+            }, 5000);
+            this.form.reset();
+        })
+        .catch(error => {
+            console.error('Error creating contact:', error.response.data);
+        });
+    },
+    toggleLogo(isHovered) {
+      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
+    }, 
   },
 };
 </script>
 <style scoped>
+.wrap:hover{
+  background-color: #923B33;
+}
+.wrap:hover .btn.btn-danger {
+  background-color: white;
+  color: #923B33;
+}
+.plain-button {
+  border: none;
+  background: none;
+  margin-top: 7%;
+  text-align: center;
+  color: white;
+  cursor: pointer;
+}
 .btn-color {
-  background: #00A1E4;
+  background: #923B33;
 }
 
 .image-div {
@@ -489,7 +541,7 @@ export default {
       padding: 2.5% 3% 2.5% 1.8%;
   } */
 .p-2-3 {
-  padding: 2% 3%;
+  padding: 1% 3%;
 }
 /* .wrap:hover{
   background: #923B33;
@@ -712,11 +764,16 @@ ul li a {
 .contact form .full {
   grid-column: 1 / 3;
 }
-.contact form button,
+.contact form button{
+  width: 100%;
+  padding: 1em;
+  border: 1px solid #e7e7e7;
+  border-radius: 4px;
+}
 .contact form input,
 .contact form textarea {
   width: 100%;
-  padding: 1em;
+  padding: 2em;
   border: 1px solid #e7e7e7;
   border-radius: 4px;
 }
@@ -765,5 +822,3 @@ ul li a {
   }
 }
 </style>
-  <!-- 14% 10% 10% 10% / 100% 10% 10% 42%
- -->

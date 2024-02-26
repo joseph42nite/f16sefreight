@@ -1,18 +1,17 @@
 <template>
     <div class="bg-white">
       <div class="home-banner">
-        <div class="wrap d-flex flex-column justify-content-between" style="height: 50vh;">
+        <div class="wrap d-flex flex-column justify-content-between" style="" @mouseover="isHovered = true" @mouseleave="isHovered = false">
           <nav class="navbar navbar-expand-lg navbar-dark bg-transparent w-100">
             <div class="container-fluid">
               <div class="p-2-3 text-white">
-                <h1 class="logo_text">F16s</h1>
-                <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6>
+                <img :src="isHovered ? blackLogoSrc : logoSrc" alt="orange logo" style="width: 100%;">
               </div>
               <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
               </button>
               <div class="collapse navbar-collapse menu" id="navbarSupportedContent">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0" style="font-size: medium;">
                  <li class="nav-item mx-3">
                       <router-link to="/login" class="text-white">Home</router-link>
                   </li>
@@ -26,8 +25,8 @@
                       <router-link to="/rules/about" class="text-white">Rate</router-link>
                   </li> -->
                 </ul>
-                <ul>
-                  <li><button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button></li>
+                <ul style="font-size: medium;">
+                  <li><button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button></li>
                   <li><button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button></li>
                 </ul>
               </div>
@@ -35,14 +34,14 @@
           </nav>
           <div class="banner"></div>
         </div>
-        <div class="p-2-3 text-white container p-0" style="margin-top: 3%;">
+        <div class="p-2-3 text-white container p-0" style="margin-top: 25%;">
           <div class="col-5 home-block bottomright" style="width:45%">
             <h1 class="text-white h1_text" style="font-weight:500;font-size: 56px;">Learn About Our Company</h1>
             <h4 class="mt-5">Empowering Commerce, Connecting Continents: Unveiling the Essence of F16s</h4>
           </div>
         </div>
       </div>
-      <b-modal id="login-modal" v-model="show_modal" :hide-footer="true">
+      <b-modal id="login-modal" v-model="show_modal" :hide-footer="true" style="background-color: rgba(213, 179, 176, 0.2);">
         <div class="d-flex flex-column-fluid flex-center">
           <!--begin::Signin-->
           <div class="login-form login-signin w-100" v-if="check_show.login_signin">
@@ -243,10 +242,8 @@
         <div style="background-color: #320400;">
           <div class="container">
           <div class="row back-b text-white p-8">
-            <div class="col-3 col-md-3">
-              <h1 class="logo_text">F16s</h1>
-              <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6>
-              <!-- <img src="/media/custome/orange-logo.png" alt="orange logo" style="width: 50%;"> -->
+            <div class="col-3 col-md- mt-5">
+              <img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;">
               <div class="mt-6">
                 <img src="/media/custome/home/linkedin.png" alt="">
               </div>
@@ -270,7 +267,6 @@
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 item-align-right">
-              <!-- <h2>CONTACT US</h2> -->
               <div class="row d-flex">
                 <div class="col-sm-1 mx-3">
                   <img src="/media/custome/home/location.png" width="60" alt="Location">
@@ -298,9 +294,6 @@
               </div>
             </div>
           </div>
-          <!-- <div class="row back-b text-white justify-content-center p-3">
-          <strong class="text-white"><i class="fas fa-copyright"></i> Copyright reserved Orangetheory Fitness</strong>
-          </div> -->
         </div>
         </div>
       </template>
@@ -342,6 +335,9 @@
           login_signup:false,
           login_forgot:false,
         },
+        logoSrc: "/media/custome/logo.png",
+        blackLogoSrc: "/media/custome/black-logo.png",
+        isHovered: false,
         location:[],
       };
     },
@@ -431,13 +427,31 @@
           label: node.name,
         };
       },
+      toggleLogo(isHovered) {
+      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
+    },
     },
       // components: { directive }
   };
   </script>
   <style scoped>
-  .btn-color {
-    background: #00A1E4;
+.wrap:hover{
+  background-color: #923B33;
+}
+.wrap:hover .btn.btn-danger {
+  background-color: white;
+  color: #923B33;
+}
+.plain-button {
+  border: none;
+  background: none;
+  margin-top: 7%;
+  text-align: center;
+  color: white;
+  cursor: pointer;
+}
+.btn-color {
+    background: #923B33;
   }
   
   .image-div {
@@ -491,7 +505,7 @@
 } */
  
   .p-2-3{
-      padding: 2% 3%;
+      padding: 1% 3%;
   }
   .login-btn{
       background: #923B33;

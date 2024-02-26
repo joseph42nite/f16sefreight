@@ -1,5 +1,7 @@
 <?php
 // auth()->guard('admin-api')->user()->id;
+
+use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\user\UserController;
@@ -66,6 +68,7 @@ Route::post('ForgotpasswordActual',[PasswordResetRequestController::class,'forgo
 
 //common login
 Route::post('/login', [LoginController::class,'login']);
+Route::post('/contact',[ContactController::class,'store']);
 
 
 

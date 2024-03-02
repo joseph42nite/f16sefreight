@@ -10,8 +10,8 @@ class Location extends Model
     protected $fillable = [
         'destination',
         'iata_code',
-        'airport_name',
-        'airport_code',
-        'country_flag',
+        'country_code',
+        'region',
+        'zone',
     ];
 }

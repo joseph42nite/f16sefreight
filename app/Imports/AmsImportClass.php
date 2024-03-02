@@ -17,8 +17,13 @@ class AmsImportClass implements ToCollection
         foreach ($collection as $col) {
             $data = array_combine($headers, $col->toArray());
             $insert_data=[
-                'carrier_code'=>$data['carrier_code'],
-                'carrier_prefix'=>$data['carrier_prefix'],
+                'carrier_code'=>$data['Carrier_Code'],
+                'carrier_prefix'=>$data['Carrier_Prefix'],
+                'region'=>$data['Region'],
+                'dest_airport_code'=>$data['Destination_Airport_Code'],
+                'dest_country'=>$data['Destination_Country'],
+                'country_code'=>$data['Country_Code'],
+                'haul'=>$data['Haul'],
                 'fsc'=>$data['fsc'],
                 'scc'=>$data['scc'],
                 'xray'=>$data['xray'],
@@ -28,7 +33,7 @@ class AmsImportClass implements ToCollection
                 'mawb'=>$data['mawb'],
                 'hawb'=>$data['hawb'],
             ];
-            if(!empty($data['carrier_code']) && !empty($data['mawb']))
+            if(!empty($data['Carrier_Code']))
             Ams::create($insert_data);
         }
     }

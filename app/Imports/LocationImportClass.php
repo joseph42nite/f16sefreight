@@ -18,10 +18,13 @@ class LocationImportClass implements ToCollection
         foreach ($collection as $col) {
             $data = array_combine($headers, $col->toArray());
             $insert_data=[
-                'destination'=>$data['destination'],
-                'iata_code'=>$data['iata_code'],
+                'destination'=>$data['Destionation_Airport_name'],
+                'iata_code'=>$data['Destionation_Airport_Code'],
+                'country_code'=>$data['Country_Code'],
+                'region'=>$data['Region'],
+                'zone'=>$data['Zone'],
             ];
-            if(!empty($data['destination']) && !empty($data['iata_code']))
+            if(!empty($data['Destionation_Airport_name']) && !empty($data['Destionation_Airport_Code']))
             Location::create($insert_data);
         }
     }

@@ -22,14 +22,13 @@ class RateImportClass implements ToCollection
                 $rate_data = array_slice($rate_data_arr, ($currencyCodeIndex + 1));
                 $rate_data = array_filter($rate_data);
                 $insert_data = [
-                    "dest_city_name" => $data['Destination_City_Name'],
-                    "dest_airport_code" => $data['Destination_Airport_Code'],
+                    "dest_airport_code" => $data['Destionation_Airport_Code'],
+                    "zone" => $data['Zone'],
                     "carrier_code" => $data['Carrier_Code'],
                     "carrier_prefix" => $data['Carrier_Prefix'],
                     "product_name" => $data['Product_Name'],
+                    "online_offline" => $data['Online_Offline'],
                     "dgr" => $data['DGR'],
-                    "effective_from" => $data['Effective_From'],
-                    "effective_to" => $data['Effective_To'],
                     "origin_country_code" => $data['Origin_Country_Code'],
                     "origin_airport_code" => $data['Origin_Airport_Code'],
                     "currency_code" => $data['Currency_Code'],

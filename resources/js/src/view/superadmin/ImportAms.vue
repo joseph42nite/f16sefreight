@@ -10,9 +10,9 @@
                 <span class="font-weight-bolder font-size-h6">Upload Successfully</span>
             </div>
         </div>
-        <div>
+        <!-- <div>
             <button class="btn btn-danger" @click="delete_data()">Delete All AMS</button>
-        </div>
+        </div> -->
     </div>
 </template>
 <script>

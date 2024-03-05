@@ -243,7 +243,8 @@ export default {
             let rate_index = 3;
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
-                    this.searched_country_code=data.country_code.country_code;
+                    this.searched_country_code=data.country_code;
+                    console.log(data);
                     data=data.rates;
                     if (this.is_all_rate) {
                         for (let i = 0; i < data.length; i++) {

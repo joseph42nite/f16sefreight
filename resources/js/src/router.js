@@ -60,6 +60,12 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "delete-ams",
+          name: "superadmin-DeleteAms",
+          component: () => import("@/view/superadmin/DeleteAms.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "new-users/:id?",
           name: "superadmin-newusers",
           component: () => import("@/view/superadmin/NewUsers.vue"),

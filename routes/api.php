@@ -70,7 +70,8 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
 
     //ams related work
     Route::post('/import-ams', [AmsController::class,'importData']);
-    Route::delete('/delete-ams', [AmsController::class,'delete']);
+    Route::get('/get-ams-list', [AmsController::class,'getAmsList']);
+    Route::delete('/delete-ams/{carrier_code}/{carrier_prefix}', [AmsController::class,'delete']);
 
     Route::get('get-notice', [SettingController::class,'getNotice']);
     Route::post('add-notice', [SettingController::class,'insert']);

@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\RateImportClass;
 use Illuminate\Support\Facades\Validator;
 use App\Rate;
+use App\Location;
 
 class RateController extends Controller
 {
@@ -27,7 +28,10 @@ class RateController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         $rate_data=Rate::where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->get();
-        return json_encode($rate_data);
+        $country=Location::where('iata_code',$request->to)->first(['country_code']);
+        $data['rates']=$rate_data;
+        $data['country_code']=$country;
+        return json_encode($data);
     }
 
     public function getAirlineList(){

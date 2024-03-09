@@ -27,11 +27,12 @@ class RateController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $location_details=Location::where('iata_code',$request->to)->first(['country_code','zone']);
+        $location_details=Location::where('iata_code',$request->to)->first(['country_code','zone','region']);
         $zone=$location_details->zone;
         $rate_data=Rate::where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->orWhere('zone', $zone)->get();
         $data['rates']=$rate_data;
         $data['country_code']=$location_details->country_code;
+        $data['region']=$location_details->region;
         $data['zone']=$zone;
         return json_encode($data);
     }

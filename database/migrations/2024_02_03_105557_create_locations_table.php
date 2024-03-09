@@ -17,9 +17,9 @@ class CreateLocationsTable extends Migration
             $table->id();
             $table->string('destination',50)->nullable();
             $table->string('iata_code',10)->nullable();
-            $table->string('airport_name',100)->nullable();
-            $table->string('airport_code',100)->nullable();
-            $table->string('country_flag',200)->nullable();
+            $table->string('country_code',100)->nullable();
+            $table->string('region',100)->nullable();
+            $table->string('zone',200)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

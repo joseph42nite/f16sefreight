@@ -3,7 +3,6 @@
         <div class="search-area" style="margin-top: 2%">
             <div class="d-flex justify-content-between">
                 <img src="/media/custome/aakash-logo.png" alt="aakash logo" width="100" height="100" class="img-fluid" />
-                {{ report_popup }}
                 <a href="javascript:void(0)" @click="report_popup=true">Report here</a>
             </div>
             <div class="row mt-3">
@@ -167,6 +166,7 @@ export default {
             report_popup:false,
             all_ams:[],
             all_ams_ek:{},
+            all_ams_tg_cx:{},
             ams_arr:{
                 fsc:'',
                 scc:'',
@@ -188,6 +188,7 @@ export default {
             }),
             //exception
             searched_country_code:'',
+            searched_region:'',
             items: [],
             filter: null,
             totalRows: 0,
@@ -230,6 +231,17 @@ export default {
                     if(data[i].carrier_code=='EK'){
                         this.all_ams_ek[data[i].country_code]=data[i];
                     }
+                    else if(data[i].carrier_code=='TG' || data[i].carrier_code=='CX'){
+                        let key="";
+                        if(data[i].dest_airport_code)
+                         key=data[i].dest_airport_code+"_"+data[i].carrier_code;
+                        else if(data[i].country_code)
+                         key=data[i].country_code+"_"+data[i].carrier_code;
+                        else if(data[i].region)
+                         key=data[i].region+"_"+data[i].carrier_code;
+
+                        this.all_ams_tg_cx[key]=data[i];  
+                    }
                     else{
                         this.all_ams[data[i].carrier_code]=data[i];
                     }
@@ -244,7 +256,7 @@ export default {
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
                     this.searched_country_code=data.country_code;
-                    console.log(data);
+                    this.searched_region=data.region;
                     data=data.rates;
                     if (this.is_all_rate) {
                         for (let i = 0; i < data.length; i++) {
@@ -355,6 +367,36 @@ export default {
                             if(this.all_ams_ek[this.searched_country_code].hawb)
                             currentData.Price+=`${this.all_ams_ek[this.searched_country_code].hawb} (HAWB)`; 
                         }
+                        else if(carrier_code=='TG' || carrier_code=='CX'){
+                            let key1=this.search_form.to+"_"+carrier_code;
+                            let key2=this.searched_country_code+"_"+carrier_code;
+                            let key3=this.searched_region+"_"+carrier_code;
+                            let main_key="";
+                            if(this.all_ams_tg_cx.hasOwnProperty(key1))
+                            main_key=key1;
+                            else if(this.all_ams_tg_cx.hasOwnProperty(key2))
+                            main_key=key2;
+                            else if(this.all_ams_tg_cx.hasOwnProperty(key3))
+                            main_key=key3;
+                            if(main_key){
+                                if(this.all_ams_tg_cx[main_key].fsc)
+                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FCS)`;
+                                if(this.all_ams_tg_cx[main_key].misc)
+                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].misc} (MISC)`; 
+                                if(this.all_ams_tg_cx[main_key].xray)
+                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].xray} (XRAY)`; 
+                                if(this.all_ams_tg_cx[main_key].scc)
+                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].scc} (SCC)`;
+                                if(this.all_ams_tg_cx[main_key].ctg)
+                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].ctg} (CTG)`;
+                                if(this.all_ams_tg_cx[main_key].awb_fee)
+                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE)`; 
+                                if(this.all_ams_tg_cx[main_key].mawb)
+                                currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) +`;
+                                if(this.all_ams_tg_cx[main_key].hawb)
+                                currentData.Price+=`${this.all_ams_tg_cx[main_key].hawb} (HAWB)`;
+                            }
+                        }
                         else{
                             if(this.all_ams[carrier_code].fsc)
                             currentData.Price+=`${this.all_ams[carrier_code].fsc} (FCS)`;
@@ -412,40 +454,74 @@ export default {
             this.ams_arr.mawb="";
             this.ams_arr.hawb="";
             if(carrier_code=='EK'){
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].fsc)  
-                this.ams_arr.fsc=this.all_ams_ek[this.searched_country_code].fsc;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].scc)
-                this.ams_arr.scc=this.all_ams_ek[this.searched_country_code].scc;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].xray)
-                this.ams_arr.xray=this.all_ams_ek[this.searched_country_code].xray;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].misc)
-                this.ams_arr.misc=this.all_ams_ek[this.searched_country_code].misc;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].ctg)
-                this.ams_arr.ctg=this.all_ams_ek[this.searched_country_code].ctg;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].awb_fee)
-                this.ams_arr.awb_fee=this.all_ams_ek[this.searched_country_code].awb_fee;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].mawb)
-                this.ams_arr.mawb=this.all_ams_ek[this.searched_country_code].mawb;
-                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code) && this.all_ams_ek[this.searched_country_code].hawb)
-                this.ams_arr.hawb=this.all_ams_ek[this.searched_country_code].hawb;
+                if(this.all_ams_ek.hasOwnProperty(this.searched_country_code)){
+                    if(this.all_ams_ek[this.searched_country_code].fsc)  
+                    this.ams_arr.fsc=this.all_ams_ek[this.searched_country_code].fsc;
+                    if(this.all_ams_ek[this.searched_country_code].scc)
+                    this.ams_arr.scc=this.all_ams_ek[this.searched_country_code].scc;
+                    if(this.all_ams_ek[this.searched_country_code].xray)
+                    this.ams_arr.xray=this.all_ams_ek[this.searched_country_code].xray;
+                    if(this.all_ams_ek[this.searched_country_code].misc)
+                    this.ams_arr.misc=this.all_ams_ek[this.searched_country_code].misc;
+                    if(this.all_ams_ek[this.searched_country_code].ctg)
+                    this.ams_arr.ctg=this.all_ams_ek[this.searched_country_code].ctg;
+                    if(this.all_ams_ek[this.searched_country_code].awb_fee)
+                    this.ams_arr.awb_fee=this.all_ams_ek[this.searched_country_code].awb_fee;
+                    if(this.all_ams_ek[this.searched_country_code].mawb)
+                    this.ams_arr.mawb=this.all_ams_ek[this.searched_country_code].mawb;
+                    if(this.all_ams_ek[this.searched_country_code].hawb)
+                    this.ams_arr.hawb=this.all_ams_ek[this.searched_country_code].hawb;
+                }    
+            }
+            else if(carrier_code=='TG' || carrier_code=='CX'){
+                let key1=this.search_form.to+"_"+carrier_code;
+                let key2=this.searched_country_code+"_"+carrier_code;
+                let key3=this.searched_region+"_"+carrier_code;
+                let main_key="";
+                if(this.all_ams_tg_cx.hasOwnProperty(key1))
+                 main_key=key1;
+                else if(this.all_ams_tg_cx.hasOwnProperty(key2))
+                  main_key=key2;
+                else if(this.all_ams_tg_cx.hasOwnProperty(key3))
+                  main_key=key3;
+                if(main_key){
+                    if(this.all_ams_tg_cx[main_key].fsc)  
+                    this.ams_arr.fsc=this.all_ams_tg_cx[main_key].fsc;
+                    if(this.all_ams_tg_cx[main_key].scc)
+                    this.ams_arr.scc=this.all_ams_tg_cx[main_key].scc;
+                    if(this.all_ams_tg_cx[main_key].xray)
+                    this.ams_arr.xray=this.all_ams_tg_cx[main_key].xray;
+                    if(this.all_ams_tg_cx[main_key].misc)
+                    this.ams_arr.misc=this.all_ams_tg_cx[main_key].misc;
+                    if(this.all_ams_tg_cx[main_key].ctg)
+                    this.ams_arr.ctg=this.all_ams_tg_cx[main_key].ctg;
+                    if(this.all_ams_tg_cx[main_key].awb_fee)
+                    this.ams_arr.awb_fee=this.all_ams_tg_cx[main_key].awb_fee;
+                    if(this.all_ams_tg_cx[main_key].mawb)
+                    this.ams_arr.mawb=this.all_ams_tg_cx[main_key].mawb;
+                    if(this.all_ams_tg_cx[main_key].hawb)
+                    this.ams_arr.hawb=this.all_ams_tg_cx[main_key].hawb;
+                }
             }
             else{
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].fsc)  
-                this.ams_arr.fsc=this.all_ams[carrier_code].fsc;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].scc)
-                this.ams_arr.scc=this.all_ams[carrier_code].scc;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].xray)
-                this.ams_arr.xray=this.all_ams[carrier_code].xray;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].misc)
-                this.ams_arr.misc=this.all_ams[carrier_code].misc;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].ctg)
-                this.ams_arr.ctg=this.all_ams[carrier_code].ctg;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].awb_fee)
-                this.ams_arr.awb_fee=this.all_ams[carrier_code].awb_fee;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].mawb)
-                this.ams_arr.mawb=this.all_ams[carrier_code].mawb;
-                if(this.all_ams.hasOwnProperty(carrier_code) && this.all_ams[carrier_code].hawb)
-                this.ams_arr.hawb=this.all_ams[carrier_code].hawb;
+                if(this.all_ams.hasOwnProperty(carrier_code)){
+                    if(this.all_ams[carrier_code].fsc)  
+                    this.ams_arr.fsc=this.all_ams[carrier_code].fsc;
+                    if(this.all_ams[carrier_code].scc)
+                    this.ams_arr.scc=this.all_ams[carrier_code].scc;
+                    if(this.all_ams[carrier_code].xray)
+                    this.ams_arr.xray=this.all_ams[carrier_code].xray;
+                    if(this.all_ams[carrier_code].misc)
+                    this.ams_arr.misc=this.all_ams[carrier_code].misc;
+                    if(this.all_ams[carrier_code].ctg)
+                    this.ams_arr.ctg=this.all_ams[carrier_code].ctg;
+                    if(this.all_ams[carrier_code].awb_fee)
+                    this.ams_arr.awb_fee=this.all_ams[carrier_code].awb_fee;
+                    if(this.all_ams[carrier_code].mawb)
+                    this.ams_arr.mawb=this.all_ams[carrier_code].mawb;
+                    if(this.all_ams[carrier_code].hawb)
+                    this.ams_arr.hawb=this.all_ams[carrier_code].hawb;
+                }
             }
 
             //for notice

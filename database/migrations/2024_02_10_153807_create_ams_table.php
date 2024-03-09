@@ -17,6 +17,11 @@ class CreateAmsTable extends Migration
             $table->id();
             $table->string('carrier_code',10)->nullable();
             $table->string('carrier_prefix',10)->nullable();
+            $table->string('region',50)->nullable();
+            $table->string('dest_airport_code',50)->nullable();
+            $table->string('dest_country',50)->nullable();
+            $table->string('country_code',50)->nullable();
+            $table->string('haul',50)->nullable();
             $table->string('fsc',10)->nullable();
             $table->string('scc',10)->nullable();
             $table->string('xray',10)->nullable();

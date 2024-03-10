@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white">
-    <div class="home-banner">
+    <!-- <div class="home-banner">
       <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
         <nav class="navbar navbar-expand-lg navbar-dark bg-transparent w-100">
           <div class="container-fluid">
@@ -8,7 +8,7 @@
               <img :src="isHovered ? blackLogoSrc : logoSrc" alt="orange logo" style="width: 100%;">
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
+              <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse menu" id="navbarSupportedContent">
               <ul class="navbar-nav mx-auto mb-2 mb-lg-0" style="font-size: medium;">
@@ -18,13 +18,14 @@
                 <li class="nav-item mx-3">
                   <router-link to="/contact-us" class="text-white">Contact Us</router-link>
                 </li>
-                <!-- <li class="nav-item mx-3">
-                    <router-link to="/rules/about" class="text-white">Rate</router-link>
-                </li> -->
               </ul>
-              <ul style="font-size: medium;">
-                <li><button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button></li>
-                <li><button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button></li>
+              <ul style="font-size: medium;" class="navbar-nav">
+                <li class="nav-item">
+                  <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+                </li>
+                <li class="nav-item">
+                  <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
+                </li>
               </ul>
             </div>
           </div>
@@ -32,14 +33,92 @@
         <div class="banner"></div>
       </div>
       <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
-        <div class="home-block" style="width:45%">
+        <div class="home-block" style="width:100%; max-width: 45rem;">
           <h1 class="text-white h1_text" style="font-weight:500;font-size: 56px;">Reshaping The Future Of Freight Forwarding</h1>
           <h4 class="mt-5">For Online Rates Click On The Below </h4>
           <div class="mt-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
         </div>
       </div>
+    </div> -->
+  <!-- <div class="home-banner">
+    <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
+      <b-navbar toggleable="lg" type="dark" variant="info">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <b-navbar-brand href="#">
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
+            </b-navbar-brand>
+          </div>
+
+          <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+
+          <b-collapse id="nav-collapse" is-nav>
+            <b-navbar-nav class="mx-auto">
+              <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
+              <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
+            </b-navbar-nav>
+
+            <b-navbar-nav class="ml-auto">
+              <b-nav-item>
+                <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+              </b-nav-item>
+              <b-nav-item>
+                <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
+              </b-nav-item>
+            </b-navbar-nav>
+          </b-collapse>
+        </div>
+      </b-navbar>
+      <div class="banner"></div>
     </div>
-    <b-modal id="login-modal" v-model="show_modal" :hide-footer="true">
+    <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
+      <div class="home-block" style="width:100%; max-width: 45rem; padding: 0 15px;">
+        <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1>
+        <h4 class="mt-3 mt-lg-5">For Online Rates Click On The Below </h4>
+        <div class="mt-4 mt-lg-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
+      </div>
+    </div>
+  </div> -->
+  <div class="home-banner">
+    <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
+      <b-navbar toggleable="lg" type="dark" variant="info">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <b-navbar-brand href="#">
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
+            </b-navbar-brand>
+          </div>
+
+          <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+
+          <b-collapse id="nav-collapse" is-nav>
+            <b-navbar-nav class="ml-auto">
+              <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
+              <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
+            </b-navbar-nav>
+
+            <b-navbar-nav class="ml-auto">
+              <b-nav-item>
+                <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+              </b-nav-item>
+              <b-nav-item>
+                <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
+              </b-nav-item>
+            </b-navbar-nav>
+          </b-collapse>
+        </div>
+      </b-navbar>
+      <div class="banner"></div>
+    </div>
+    <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
+      <div class="home-block" style="width:100%; max-width: 45rem; padding: 0 15px;">
+        <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1>
+        <h4 class="mt-3 mt-lg-5">For Online Rates Click On The Below </h4>
+        <div class="mt-4 mt-lg-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
+      </div>
+    </div>
+  </div>
+  <b-modal id="login-modal" v-model="show_modal" :hide-footer="true">
       <div class="d-flex flex-column-fluid flex-center">
         <!--begin::Signin-->
         <div class="login-form login-signin w-100" v-if="check_show.login_signin">
@@ -147,37 +226,42 @@
    
     <template>
       <div class="" style="margin-top: 10%; margin-bottom: 10%;">
-        <div class="row">
-          <div class="col-5 m-0 p-0">
-            <div class="" style="background-color:#D5B3B0; height: 45px !important; border-top-right-radius: 10px;border-bottom-right-radius: 10px;">
-              <div class="col-md-10" style="background-color: #A45B54; height: 45px !important;border-top-right-radius: 10px;border-bottom-right-radius: 10px;"></div>
+        <!-- <div class="row align-items-center flex-column flex-md-row">
+          <div class="col-md-5 col-12 m-0 p-0">
+            <div class="d-flex justify-content-between align-items-center" style="height: 45px; border-top-right-radius: 10px; border-bottom-right-radius: 10px;background-color:#D5B3B0; height: 45px">
+              <div class="col-md-10" style="background-color: #A45B54; height: 45px; border-top-right-radius: 10px; border-bottom-right-radius: 10px;"></div>
             </div>
           </div>
-          <div class="col-sm-1 m-0 p-0 ml-4">
-            <img src="/media/custome/home/flight1.png" alt="" width="70" height="70">
+          <div class="col-1 m-0 p-0 ml-4">
+              <img src="/media/custome/home/flight1.png" alt="" width="70" height="70" class="img-fluid">
+          </div>
+        </div> -->
+        <div class="row align-items-center flex-column flex-md-row d-md-flex d-none d-sm-block">
+          <div class="col-md-5 col-12 m-0 p-0">
+            <div class="d-flex justify-content-between align-items-center" style="height: 45px; border-top-right-radius: 10px; border-bottom-right-radius: 10px;background-color:#D5B3B0; height: 45px">
+              <div class="col-md-10" style="background-color: #A45B54; height: 45px; border-top-right-radius: 10px; border-bottom-right-radius: 10px;"></div>
+            </div>
+          </div>
+          <div class="col-1 m-0 p-0 ml-4">
+            <img src="/media/custome/home/flight1.png" alt="" width="70" height="70" class="img-fluid">
           </div>
         </div>
+
+
         <div class="row">
-          <div class="col-lg-6" >
+          <div class="col-lg-6 mt-2">
             <img class="w-100 shadow" src="/media/custome/home/second.png" style="border-top-right-radius: 15px;border-bottom-right-radius: 15px;"/>
           </div>
           <div class="col-lg-6">
-            <div class="col-10 px-10 mt-0">
-              <h1 class="fw-bolder" style="font-weight: 600; font-size: 42px;">Overview</h1>
+            <div class="col-md-10 px-10 mt-0">
+              <h1 class="fw-bolder fa-4x" style="font-weight: 600;">Overview</h1>
                 <p style="font-weight: 400; font-size: 22px;" class="mt-10">Welcome to F16s, where innovation meets efficiency in the world of freight forwarding. Our commitment to reshaping the future of logistics is at the core of everything we do. As a pioneering force in the industry, we seamlessly connect businesses to a world of possibilities through our cutting-edge solutions.</p>
               </div>
           </div>
         </div>
-        <div style="margin-top: 13rem;" class="row">
+        <div style="margin-top: 13rem;" class="row align-items-center flex-column flex-md-row d-md-flex d-none d-sm-block">
           <div class="col-md-6">
           </div>
-          <!-- <div class="col-md-6 m-0 p-0">
-            <div class="row d-flex">
-              <div class="col-md-12 half-half" style="background-color: #BDCEEE;padding-left: 30rem;">
-                <div class="col-md-12 half-half" style="background-color: #224E9F;"></div>
-              </div>
-            </div>
-          </div> -->
           <div class="col-sm-1 m-0 p-0">
             <img src="/media/custome/home/flight2.png" alt="" width="70" height="70">
           </div>
@@ -190,7 +274,7 @@
         <div class="row">
           <div class=" col-lg-6">
             <div class="container col-10 px-10 mt-0">
-              <h1 class="fw-bolder" style="font-weight: 600; font-size: 42px;">Mission Statement</h1>
+              <h1 class="fw-bolder fa-4x" style="font-weight: 600;">Mission Statement</h1>
                 <p style="font-weight: 400; font-size: 22px;" class="mt-10"> We do right by freight forwarders in India.
                     F16s E-Freight Solutions is committed to making a positive impact, exactly how they took F15 fighter jets and made it better for combat.</p>
                 <div class="mt-10"><router-link to="/login"><button class="login-btn">Learn More</button></router-link></div>
@@ -251,19 +335,19 @@
 
     <template>
       <div class="position-relative">
-      <div class="row align-items-center">
-        <div class="col-1"></div>
-        <div class="col-md-5 mb-4 mb-md-0">
-          <h1 class="pt-lg-20 font-weight-black text-black fa-4x">We Build, We Plan, We Deliver</h1>
-          <p class="fa-2x mt-2">
-            We offer a comprehensive array of services, from data management to analytics and shipment procurement management. You can count on the utmost professionalism in all that we do.
-          </p>
-        </div>
-        <div class="col-md-6" style="right:0">
-          <img src="/media/custome/home/flight_plan.png" alt="flight_plan" class="img-fluid" style="max-height: 100%; width: 100%; margin-right: 0;"> <!-- Adjust margin-right as needed -->
+        <div class="row align-items-center">
+          <div class="col-1"></div>
+          <div class="col-md-5 mb-4 mb-md-0">
+            <h1 class="pt-lg-20 font-weight-black text-black fa-4x">We Build, We Plan, We Deliver</h1>
+            <p class="fa-2x mt-2">
+              We offer a comprehensive array of services, from data management to analytics and shipment procurement management. You can count on the utmost professionalism in all that we do.
+            </p>
+          </div>
+          <div class="col-md-6" style="right:0">
+            <img src="/media/custome/home/flight_plan.png" alt="flight_plan" class="img-fluid" style="max-height: 100%; width: 100%; margin-right: 0;"> <!-- Adjust margin-right as needed -->
+          </div>
         </div>
       </div>
-    </div>
     </template>
 
     <template>
@@ -302,15 +386,15 @@
     <template>
       <div class="mt-lg-30 mb-lg-30">
         <div class="responsive-bg-w-text">
-           <div class="header">
+          <div class="header">
               <h1 class="text-center font-weight-black text-black fa-4x">Get moving now!</h1>
               <p class="text-center" style="font-size: 20px;">Discover the power of efficiency</p>
               <div class="item-center block">
-            <router-link to="/login">
-              <button class="login-btn">Contact</button>
-            </router-link>
+                <router-link to="/contact-us">
+                  <button class="login-btn">Contact</button>
+                </router-link>
+              </div>
           </div>
-           </div>
            
         </div>
       </div>
@@ -330,19 +414,19 @@
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>QUICK LINKS</h2>
             <ul>
-              <li><router-link to="/rules/about">Home</router-link></li>
-              <li><router-link to="/rules/terms">About Us</router-link></li>
-              <li><router-link to="/rules/product">Rates</router-link></li>
-              <li><router-link to="/rules/privacy">Contact Us</router-link></li>
+              <li><router-link to="/login">Home</router-link></li>
+              <li><router-link to="/about-us">About Us</router-link></li>
+              <li><router-link to="/rate">Rates</router-link></li>
+              <li><router-link to="/contact-us">Contact Us</router-link></li>
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>Explore</h2>
             <ul>
-              <li><router-link to="/rules/about">Our Mission</router-link></li>
-              <li><router-link to="/rules/terms">Our Focus Areas</router-link></li>
-              <li><router-link to="/rules/product">Our airline affiliations</router-link></li>
-              <li><router-link to="/rules/privacy">Contact Us</router-link></li>
+              <li><router-link to="/about-us">Our Mission</router-link></li>
+              <li><router-link to="/login">Our Focus Areas</router-link></li>
+              <li><router-link to="/login">Our airline affiliations</router-link></li>
+              <li><router-link to="/contact-us">Contact Us</router-link></li>
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 item-align-right">
@@ -518,6 +602,16 @@ export default {
 };
 </script>
 <style scoped>
+.navbar {
+  background-color: transparent !important;
+}
+.navbar-header {
+  margin-left: 55px;
+  margin-top: 10px;
+}
+.nav-link-custom:hover {
+  color: red !important;
+}
 .wrap:hover{
   background-color: #923B33;
 }
@@ -540,10 +634,87 @@ export default {
 .image-div {
   height: 100%;
 }
+@media (max-width: 768px) {
+  .container {
+    margin-top: 5%;
+    margin-bottom: 5%;
+  }
+  .navbar-header {
+  margin-left: 10px;
+  margin-top: 20px;
+}
+}
+@media (max-width: 576px) {
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
 
+@media (min-width: 992px) {
+  .mt-lg-20 {
+    margin-top: 20%;
+  }
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 32px;
+  }
+  
+  p {
+    font-size: 18px;
+  }
+}
 .text-al {
   text-align: -webkit-center;
 }
+@media (max-width: 767px) {
+  .pt-lg-20 {
+    padding-top: 20px;
+  }
+
+  .mt-15 {
+    margin-top: 15px;
+  }
+
+  .mt-10 {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 575px) {
+  .row.justify-content-md-center {
+    justify-content: center;
+  }
+
+  .col-sm-4 {
+    text-align: center;
+  }
+}
+@media (max-width: 767px) {
+  .col-md-5 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  .fa-4x{
+    margin-top: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+  .fa-2x {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+}
+
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .fa-2x {
+      margin: 15px;
+    }
+  }
 
 @media (min-width: 720px) {}
 
@@ -726,7 +897,22 @@ ul li a{
   color: white;
   margin-top: 12.66%;
 }
+@media (min-width: 768px) and (max-width: 1024px) {
+  .responsive-bg-w-text {
+    padding-bottom: 15%;
+  }
+}
 
+@media (max-width: 767px) {
+  .responsive-bg-w-text {
+    padding-top: 30%;
+    padding-bottom: 40%;
+    font-size: 9px;
+  }
+  .responsive-bg-w-text > .header {
+    margin-top: 15%;
+  }
+}
 .top-background {
     position: fixed;
     top: 0;

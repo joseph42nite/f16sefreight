@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Imports;
+ini_set('max_execution_time', '0');
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;

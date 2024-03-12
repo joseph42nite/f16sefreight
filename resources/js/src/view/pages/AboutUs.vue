@@ -178,7 +178,7 @@
 
   
       <template>
-        <div style="padding-bottom: 10rem;">
+        <div style="padding-bottom: 5rem;">
           <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x f2">Our Mission, Vision And Values</h1>
           <div class="container mb-10">
             <div class="row">
@@ -477,6 +477,25 @@
   margin-left: 10px;
   margin-top: 20px;
 }
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  .responsive-bg-w-text {
+    padding-bottom: 15%;
+  }
+}
+
+@media (max-width: 767px) {
+  .responsive-bg-w-text {
+    padding-top: 30%;
+    padding-bottom: 40%;
+    font-size: 9px;
+  }
+  .responsive-bg-w-text > .header {
+    margin-top: 15%;
+  }
+  .responsive-bg-w-text .block{
+    padding-bottom: 15%;
+  }
 }
 @media (max-width: 576px) {
   .container {

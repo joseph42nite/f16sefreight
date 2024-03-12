@@ -8,13 +8,21 @@
             <div class="row mt-3">
                 <div class="col-12 col-md-3">
                     <label for="dist_form">From</label>
-                    <treeselect :options="location" :value="search_form.from" v-model="search_form.from" :multiple="false"
-                        :searchable="true"></treeselect>
+                    <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                        <input type="text" v-model="searchQuery_from" placeholder="Search source" id="from_id" class="form-control">
+                        <div v-if="isDropdownOpen_from" class="dropdown-options">
+                            <div v-for="(item, index) in filteredLocations_from" :key="index" @click="selectOption_from(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">To</label>
-                    <treeselect :options="location" :value="search_form.to" v-model="search_form.to" :multiple="false"
-                        :searchable="true"></treeselect>
+                    <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                        <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control">
+                        <div v-if="isDropdownOpen_to" class="dropdown-options">
+                            <div v-for="(item, index) in filteredLocations_to" :key="index" @click="selectOption_to(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">Weight in kg</label>
@@ -60,9 +68,6 @@
                         <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
                             primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
                             @filtered="onFiltered" v-if="is_all_rate">
-                            <!-- <template #cell(index)="data">
-                                {{ data.index + 1 }}
-                            </template> -->
                         </b-table>
                         <table class="table" v-else>
                             <thead>
@@ -195,9 +200,46 @@ export default {
             currentPage: 1,
             perPage: 10,
             pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
+
+            searchQuery_from: '',
+            isDropdownOpen_from: false,
+            searchQuery_to: '',
+            isDropdownOpen_to: false,
         };
     },
     methods: {
+        toggleDropdown_from() {
+            this.isDropdownOpen_from = !this.isDropdownOpen_from;
+        },
+        selectOption_from(item) {
+            this.search_form.from = item.iata_code;
+            let source_name= item.destination;
+            let final_set=this.search_form.from+"("+source_name+")";
+            this.searchQuery_from=final_set;
+        },
+        closeDropdown_from(event) {
+            const dropdownContainer_from = this.$refs.dropdownContainer_from;
+            if (!dropdownContainer_from.contains(event.target)) {
+                this.isDropdownOpen_from = false;
+            }
+        },
+
+        toggleDropdown_to() {
+            this.isDropdownOpen_to = !this.isDropdownOpen_to;
+        },
+        selectOption_to(item) {
+            this.search_form.to = item.iata_code;
+            let source_name= item.destination;
+            let final_set=this.search_form.to+"("+source_name+")";
+            this.searchQuery_to=final_set;
+        },
+        closeDropdown_to(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_to;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_to = false;
+            }
+        },
+
         submit_report(){
             this.report_arr.post(`/user/report`).then(({ data }) => {
                 this.report_popup=false;
@@ -531,23 +573,8 @@ export default {
         },
         getLocation() {
             ApiService.get(`/user/get-location`).then(({ data }) => {
-                data.forEach((element) => {
-                    this.location.push({
-                        id: element["iata_code"],
-                        label:
-                            element["iata_code"] +
-                            " (" +
-                            element["destination"] +
-                            ")",
-                    });
-                });
+                this.location=data;
             });
-        },
-        normalizer(node) {
-            return {
-                id: node.value,
-                label: node.name,
-            };
         },
         extraComission() {
             for (let i = 0; i < this.rate_data.length; i++) {
@@ -585,11 +612,40 @@ export default {
         this.getLocation();
         this.get_notice();
         this.get_asm();
-        if (this.current_user)
+        if (this.current_user){
             this.search_form.from = this.current_user.origin_airport_code;
+            this.searchQuery_from = this.current_user.origin_airport_code;
+        }
+
+        window.addEventListener('click', this.closeDropdown_from); 
+        window.addEventListener('click', this.closeDropdown_to);    
     },
     computed: {
         ...mapGetters({ current_user: "currentUser" }),
+        filteredLocations_from() {
+            if (!this.searchQuery_from) {
+                return this.location;
+            }
+            const query = this.searchQuery_from.toLowerCase();
+            return this.location.filter(item => {
+                return (
+                    item.destination.toLowerCase().includes(query) || // Filter by destination
+                    item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
+                );
+            });
+        },
+        filteredLocations_to() {
+            if (!this.searchQuery_to) {
+                return this.location;
+            }
+            const query = this.searchQuery_to.toLowerCase();
+            return this.location.filter(item => {
+                return (
+                    item.destination.toLowerCase().includes(query) || // Filter by destination
+                    item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
+                );
+            });
+        }
     },
     watch: {
         extra_comission(newValue, oldValue) {
@@ -637,5 +693,39 @@ export default {
 
 .err_cls {
     color: #c0392b;
+}
+
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  /* border: solid 1px silver; */
+  border-radius: 5px;
+}
+
+.form-control {
+  width: 100%;
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px; /* Adjust as needed */
+  overflow-y: auto;
+  z-index: 1;
+}
+
+.option {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background-color: #f0f0f0;
 }
 </style>

@@ -69,10 +69,12 @@
         </b-form-group>
         <b-form-group>
           <b-input-group class="input-group-merge">
-            <select name="" id="">
-              <option value="">Select source</option>
-              <option v-for="(item, index) in location" :key="index" :value="item.iata_code">{{ item.destination }}</option>
-            </select> 
+            <div class="custom-dropdown" ref="dropdownContainer" @click="toggleDropdown">
+              <input type="text" v-model="searchQuery" placeholder="Search source" id="from_id" class="form-control">
+              <div v-if="isDropdownOpen" class="dropdown-options">
+                <div v-for="(item, index) in filteredLocations" :key="index" @click="selectOption(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+              </div>
+            </div>
             <!-- <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect> -->
           </b-input-group>
         </b-form-group>
@@ -119,9 +121,26 @@ export default {
       }),
       action: 'Add',
       location:[],
+      searchQuery: '',
+      isDropdownOpen: false,
     };
   },
   methods: {
+    toggleDropdown() {
+      this.isDropdownOpen = !this.isDropdownOpen;
+    },
+    selectOption(item) {
+      this.user_form.origin_airport_code = item.iata_code;
+      let source_name= item.destination;
+      let final_set=this.user_form.origin_airport_code+"("+source_name+")";
+      this.searchQuery=final_set;
+    },
+    closeDropdown(event) {
+      const dropdownContainer = this.$refs.dropdownContainer;
+      if (!dropdownContainer.contains(event.target)) {
+        this.isDropdownOpen = false;
+      }
+    },
     onSubmit(evt) {
       evt.preventDefault();
       if(this.action=='Add'){
@@ -145,6 +164,7 @@ export default {
       ApiService.get(`/superadmin/all-user/${id}`)
         .then(({ data }) => {
           this.user_form.fill(data[0])
+          this.searchQuery=data[0].origin_airport_code;
         })
     },
     getLocation(){
@@ -172,6 +192,7 @@ export default {
       this.getData(this.get_item);
       this.action='Edit';
    }
+   window.addEventListener('click', this.closeDropdown);
   },
   computed: {
     get_item: function(){
@@ -179,6 +200,18 @@ export default {
       return this.$route.params.id;
       else
       return 0;
+    },
+    filteredLocations() {
+      if (!this.searchQuery) {
+        return this.location;
+      }
+      const query = this.searchQuery.toLowerCase();
+      return this.location.filter(item => {
+          return (
+              item.destination.toLowerCase().includes(query) || // Filter by destination
+              item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
+          );
+      });
     }
   },
 };
@@ -195,5 +228,38 @@ export default {
 }
 #fade{
   display: none;
+}
+
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  border: solid 1px silver;
+  border-radius: 5px;
+}
+
+.form-control {
+  width: 100%;
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px; /* Adjust as needed */
+  overflow-y: auto;
+}
+
+.option {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background-color: #f0f0f0;
 }
 </style>

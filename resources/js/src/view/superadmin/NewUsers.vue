@@ -69,7 +69,11 @@
         </b-form-group>
         <b-form-group>
           <b-input-group class="input-group-merge">
-             <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect>
+            <select name="" id="">
+              <option value="">Select source</option>
+              <option v-for="(item, index) in location" :key="index" :value="item.iata_code">{{ item.destination }}</option>
+            </select> 
+            <!-- <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect> -->
           </b-input-group>
         </b-form-group>
         <b-form-group v-if="action=='Add'">
@@ -146,12 +150,13 @@ export default {
     getLocation(){
       ApiService.get(`/superadmin/get-location`)
         .then(({ data }) => {
-          data.forEach((element) => {
-            this.location.push({
-              value: element["iata_code"],
-              name: element["iata_code"] + " (" + element["destination"] + ")",
-            });
-          });
+          this.location=data;
+          // data.forEach((element) => {
+          //   this.location.push({
+          //     value: element["iata_code"],
+          //     name: element["iata_code"] + " (" + element["destination"] + ")",
+          //   });
+          // });
         })
     },
     normalizer(node) {

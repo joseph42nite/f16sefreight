@@ -380,10 +380,10 @@ export default {
                         let currentData = {};
                         carrier_code=this.rate_data_copy[i].carrier_code;
                         // currentData.Sl = index_count;
-                        // currentData.Airline = `${carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
+                        // currentData.Airline = ``;
                         // currentData.ProductType = this.rate_data_copy[i].product_name;
                         // currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
-                        currentData.Price = `${index_count}. ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
+                        currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
                         if(carrier_code=='EK'){
                             if(this.all_ams_ek[this.searched_country_code].fsc)
                             currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC)`;

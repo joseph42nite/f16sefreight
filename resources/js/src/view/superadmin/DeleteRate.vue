@@ -19,7 +19,7 @@ export default {
             filter: null,
             totalRows: 0,
             currentPage: 1,
-            perPage: 10,
+            perPage: 50,
             pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
         };
     },

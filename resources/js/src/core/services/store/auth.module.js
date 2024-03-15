@@ -43,7 +43,7 @@ const actions = {
           context.commit(SET_AUTH, data);
           JwtService.saveToken(data.token); 
           if(data.role=='user')
-            router.push(`/rate`);
+            router.push(`/focusakash`);
           else if(data.role=='superAdmin')
              router.push(`/superadmin/all-users`);
           resolve(data);

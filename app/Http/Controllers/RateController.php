@@ -47,3 +47,5 @@ class RateController extends Controller
         echo "data deleted successful";
     }
 }
+
+//hjhghg

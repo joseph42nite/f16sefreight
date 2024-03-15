@@ -7,11 +7,11 @@ export default new Router({
     //-----------users route-------------------
     {
       path: "/",
-      redirect: "/rate",
+      redirect: "/focusakash",
       component: () => import("@/view/layout/Layout"),
       children: [
         {
-          path: "rate",
+          path: "focusakash",
           name: "user-rate",
           component: () => import("@/view/pages/Rate.vue"),
           meta: { userType: 'user' }

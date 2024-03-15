@@ -8,12 +8,13 @@
             <div class="row mt-3">
                 <div class="col-12 col-md-3">
                     <label for="dist_form">From</label>
-                    <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                    <input type="text" v-model="search_form.from" placeholder="Search source" class="form-control" readonly style="background: lightgrey;">
+                    <!-- <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
                         <input type="text" v-model="searchQuery_from" placeholder="Search source" id="from_id" class="form-control">
                         <div v-if="isDropdownOpen_from" class="dropdown-options">
                             <div v-for="(item, index) in filteredLocations_from" :key="index" @click="selectOption_from(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dist_form">To</label>
@@ -49,22 +50,20 @@
                 <div :class="is_all_rate ? 'col-12 col-md-12' : 'col-12 col-md-8'
                     ">
                     <div class="rate-area mr-1">
-                        <span @click="copyToClipboard()" class="copy-cls" v-if="!is_all_rate">Export</span>
-                        <input type="number" v-model="extra_comission" @keyup="extraComission()" v-if="!is_all_rate" />
-                        <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0;
-                        last_extra_comission = 0;
-                        final_extra_comission = 0;
-                        get_rate();
-                        " v-if="!is_all_rate">
-                            <option value="total">Total profit</option>
-                            <option value="per_kg">-/kg</option>
-                        </select>
-                        <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
-                            :sheet-name="'rate'" v-if="is_all_rate">
-                            <button class="btn create_btn font-weight-bold py-2 text-white">
-                                Export rate
-                            </button>
-                        </vue-excel-xlsx>
+                        <div class="sticky-div">
+                            <span @click="copyToClipboard()" class="copy-cls" v-if="!is_all_rate">Export</span>
+                            <input type="number" v-model="extra_comission" @input="extraComission()" v-if="!is_all_rate" />
+                            <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
+                                <option value="total">Total profit</option>
+                                <option value="per_kg">-/kg</option>
+                            </select>
+                            <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
+                                :sheet-name="'rate'" v-if="is_all_rate">
+                                <button class="btn create_btn font-weight-bold py-2 text-white">
+                                    Export rate
+                                </button>
+                            </vue-excel-xlsx>
+                        </div>
                         <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
                             primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
                             @filtered="onFiltered" v-if="is_all_rate">
@@ -81,18 +80,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(rate, index) in rate_data" :key="index">
+                                <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }">
                                     <td>
                                         <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
                                     </td>
-                                    <td>
-                                        {{
-                                            rate.carrier_code +
-                                            "(" +
-                                            rate.carrier_prefix +
-                                            ")"
-                                        }}
-                                    </td>
+                                    <td> {{ rate.carrier_code +"(" + rate.carrier_prefix +")"}}</td>
                                     <td>{{ rate.product_name }}</td>
                                     <td>
                                         {{ Object.keys(rate.my_rate)[0] }}
@@ -155,7 +147,7 @@ export default {
         return {
             search_form: new Form({
                 from: null,
-                to: "ABJ",
+                to: "",
                 selected_quantity: "custom",
                 quantity: "101",
             }),
@@ -205,6 +197,7 @@ export default {
             isDropdownOpen_from: false,
             searchQuery_to: '',
             isDropdownOpen_to: false,
+            selectedRows: [],
         };
     },
     methods: {
@@ -386,14 +379,14 @@ export default {
                     for (let i in this.rate_data_copy) {
                         let currentData = {};
                         carrier_code=this.rate_data_copy[i].carrier_code;
-                        currentData.Sl = index_count;
-                        currentData.Airline = `${carrier_code}(${this.rate_data_copy[i].carrier_prefix})`;
-                        currentData.ProductType = this.rate_data_copy[i].product_name;
-                        currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
-                        currentData.Price = `${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
+                        // currentData.Sl = index_count;
+                        // currentData.Airline = ``;
+                        // currentData.ProductType = this.rate_data_copy[i].product_name;
+                        // currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
+                        currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
                         if(carrier_code=='EK'){
                             if(this.all_ams_ek[this.searched_country_code].fsc)
-                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FCS)`;
+                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC)`;
                             if(this.all_ams_ek[this.searched_country_code].misc)
                             currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].misc} (MISC)`; 
                             if(this.all_ams_ek[this.searched_country_code].xray)
@@ -422,7 +415,7 @@ export default {
                             main_key=key3;
                             if(main_key){
                                 if(this.all_ams_tg_cx[main_key].fsc)
-                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FCS)`;
+                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC)`;
                                 if(this.all_ams_tg_cx[main_key].misc)
                                 currentData.Price+=` + ${this.all_ams_tg_cx[main_key].misc} (MISC)`; 
                                 if(this.all_ams_tg_cx[main_key].xray)
@@ -441,7 +434,7 @@ export default {
                         }
                         else{
                             if(this.all_ams[carrier_code].fsc)
-                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FCS)`;
+                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC)`;
                             if(this.all_ams[carrier_code].misc)
                             currentData.Price+=` + ${this.all_ams[carrier_code].misc} (MISC)`; 
                             if(this.all_ams[carrier_code].xray)
@@ -486,6 +479,13 @@ export default {
               this.rate_data_copy[index] = this.rate_data[index];
             else 
               delete this.rate_data_copy[index];
+
+            if (this.selectedRows.includes(index)) {
+                const idx = this.selectedRows.indexOf(index);
+                this.selectedRows.splice(idx, 1);
+            } else {
+                this.selectedRows.push(index);
+            }  
 
             this.ams_arr.fsc="";
             this.ams_arr.scc="";
@@ -614,26 +614,23 @@ export default {
         this.get_asm();
         if (this.current_user){
             this.search_form.from = this.current_user.origin_airport_code;
-            this.searchQuery_from = this.current_user.origin_airport_code;
+            // this.searchQuery_from = this.current_user.origin_airport_code;
         }
 
-        window.addEventListener('click', this.closeDropdown_from); 
+        // window.addEventListener('click', this.closeDropdown_from); 
         window.addEventListener('click', this.closeDropdown_to);    
     },
     computed: {
         ...mapGetters({ current_user: "currentUser" }),
-        filteredLocations_from() {
-            if (!this.searchQuery_from) {
-                return this.location;
-            }
-            const query = this.searchQuery_from.toLowerCase();
-            return this.location.filter(item => {
-                return (
-                    item.destination.toLowerCase().includes(query) || // Filter by destination
-                    item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
-                );
-            });
-        },
+        // filteredLocations_from() {
+        //     if (!this.searchQuery_from) {
+        //         return this.location;
+        //     }
+        //     const query = this.searchQuery_from.toLowerCase();
+        //     return this.location.filter(item => {
+        //         return (item.destination.toLowerCase().includes(query) || item.iata_code.toLowerCase().includes(query));
+        //     });
+        // },
         filteredLocations_to() {
             if (!this.searchQuery_to) {
                 return this.location;
@@ -727,5 +724,15 @@ export default {
 
 .option:hover {
   background-color: #f0f0f0;
+}
+.selected-row {
+    background-color: lightblue;
+}
+.sticky-div {
+    position: sticky;
+    top: 1px;
+    background-color: #f1f2f6;
+    padding: 4px 2%;
+    border-radius: 5px;
 }
 </style>

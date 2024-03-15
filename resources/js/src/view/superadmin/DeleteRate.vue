@@ -3,7 +3,7 @@
         <b-table :bordered="true" responsive :fields="fields" :items="items" style="white-space:nowrap" primary-key="id"
             :filter="filter" :current-page="currentPage" :per-page="perPage" @filtered="onFiltered">
             <template #cell(action)="data">
-                <b-button variant="danger" :id="'delete_'+data.item['carrier_code']" v-on:click="deleteRate(data.item['carrier_code'],data.item['carrier_prefix'])">Delete</b-button>
+                <b-button variant="danger" :id="'delete_'+data.item['carrier_code']" v-on:click="deleteRate(data.item['carrier_code'])">Delete</b-button>
             </template>
         </b-table>
     </div>
@@ -14,7 +14,7 @@ export default {
     name: "superadmin-DeleteRate",
     data() {
         return {
-            fields: ['carrier_code', 'carrier_prefix', 'Action'],
+            fields: ['carrier_code', 'Action'],
             items: [],
             filter: null,
             totalRows: 0,
@@ -24,7 +24,7 @@ export default {
         };
     },
     methods: {
-        deleteRate(carrier_code,carrier_prefix){
+        deleteRate(carrier_code,carrier_prefix=0){
             const deleted_btn='#delete_'+carrier_code;
             $(deleted_btn).html("wait...");
             ApiService.delete(`/superadmin/delete-rate/${carrier_code}/${carrier_prefix}`)

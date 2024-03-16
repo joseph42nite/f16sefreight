@@ -5,7 +5,7 @@
         <b-navbar toggleable="lg" type="dark" variant="info">
           <div class="container-fluid">
             <div class="navbar-header">
-              <b-navbar-brand href="#">
+              <b-navbar-brand href="https://f16sefs.in/">
                 <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
               </b-navbar-brand>
             </div>
@@ -21,7 +21,7 @@
 
               <b-navbar-nav class="ml-auto">
                 <b-nav-item>
-                  <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+                  <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
                 </b-nav-item>
                 <b-nav-item>
                   <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
@@ -33,10 +33,13 @@
         <div class="banner"></div>
       </div>
       <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
-        <div class="home-block" style="width:100%; max-width: 45rem; padding: 0 15px;">
-          <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1>
-          <h4 class="mt-3 mt-lg-5">For Online Rates Click On The Below </h4>
-          <div class="mt-4 mt-lg-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
+        <div class="home-block" style="width:100%; padding: 0 15px;">
+          <div class="col-12 col-lg-5 fa-4x p-0 fa4x">
+              Reshaping The Future Of Freight Forwarding
+          </div>
+          <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
+          <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Online Rates Click On The Below </h4>
+          <div class="mt-4 mt-lg-10 px-8 px-lg-0"><button class="login-btn1" @click="firstPopUp('login_signin','login_signup')">Focus Aakash</button></div>
         </div>
       </div>
     </div>
@@ -158,7 +161,11 @@
 
     <template>
       <div class="container" style="background-color: rgba(213, 179, 176, 0.2); margin-top: 10rem; border-radius: 13px;box-shadow: 0px 0px 10px #80808080;">
-        <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">We'd Love To Hear From You</h1>
+        <!-- <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">We'd Love To Hear From You</h1> -->
+        <div class="text-center pt-lg-20 font-weight-black text-black fa-4x">
+            <span class="d-none d-lg-inline">We'd Love To Hear From You</span>
+            <span class="d-lg-none" style="font-size: 22px; font-weight: 600;">We'd Love To Hear From You</span>
+        </div>
         <div class="container">
           <div class="row">
             <div class="col-md-8 mt-10">
@@ -169,7 +176,7 @@
                     </div>
                     <b-form @submit="onSubmit">
                       <label class="sr-only" for="input-5">First Name</label>
-                      <b-input-group class="mb-5 mr-sm-2 mb-sm-0 mt-10">
+                      <b-input-group class="mb-5 mr-sm-2  mb-sm-0 mt-md-10">
                       <b-form-input
                         id="input-5"
                        
@@ -178,27 +185,27 @@
                       ></b-form-input>
                     </b-input-group>
                       <label class="sr-only" for="input-4">Last Name</label>
-                      <b-input-group class="mb-5 mr-sm-2 mb-sm-0 mt-10">
+                      <b-input-group class="mb-5 mr-sm-2  mb-sm-0 mt-md-10">
                         <b-form-input id="input-4" placeholder="Last Name" v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"></b-form-input>
                       </b-input-group>
                       <label class="sr-only" for="input-1">Email</label>
                       <b-form-input
                         id="input-1"
-                        class="mb-5 mr-sm-5 mb-sm-0 mt-10"
+                        class="mb-5 mr-sm-5 mb-sm-0 mt-md-10"
                         placeholder="Email" v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }">
                       </b-form-input>
 
                       <label class="sr-only" for="input-2">Phone</label>
-                      <b-input-group class="mb-5 mr-sm-2 mb-sm-0 mt-10">
+                      <b-input-group class="mb-5 mr-sm-5 mb-sm-0 mt-md-10">
                         <b-form-input id="input-2" placeholder="Phone" v-model="form.phone" :class="{ 'is-invalid': form.errors.has('phone') }"></b-form-input>
                       </b-input-group>
-                      <b-form-textarea class="mt-10" style="grid-column: span 2 !important;"
+                      <b-form-textarea class="mt-md-10" style="grid-column: span 2 !important;"
                         id="textarea"
                         placeholder="Message"
                         rows="3"
                         max-rows="6" v-model="form.message" :class="{ 'is-invalid': form.errors.has('message') }"
                       ></b-form-textarea>
-                      <p class="mt-10 mb-10" style="width: 70%;">
+                      <p class="mt-md-10" style="width: 70%;">
                         <button class="login-btn" type="submit">Submit</button>
                       </p>
                     </b-form>
@@ -210,12 +217,15 @@
             <div class="col-md-4 mt-20 mb-20">
               <div class="company-info">
                 <img src="/media/custome/contact/location.png" alt="Location icon">
-                <h3 class="mx-5 fw-bold mt-5">Bengaluru <br>
-                2nd Cross, Bidarahalli, Virognagar Post, Bangalore- 560 049</h3>
+                <h3 class="mx-5 fw-bold mt-1">F16S E-FRIEGHT SOLUTIONS<br>
+                  PRIVATE LIMITED<br>
+                  NO. 18, 1,2nd CROSS 1st STAGE, MEDHALLI VILLAGE, VIRGONAGAR
+                </h3>
                 <img src="/media/custome/contact/contact.png" alt="Contact Icon">
-                <h3 class="mx-5 fw-bold mt-5">(+91) 8660320019</h3>
+                <h3 class="mx-5 fw-bold mt-1"><a href="tel:8660320019" style="color: black;">(+91)8660320019</a></h3>
                 <img src="/media/custome/contact/mail.png" alt="Mail Icon">
-                <h3 class="mx-5 fw-bold mt-5"><a href="mailto:ops_blr@f16sefs.in" style="color: black;text-decoration: underline;">ops_blr@f16sefs.in</a></h3>
+                <h3 class="mx-5 fw-bold"><a href="mailto:joseph@f16sefs.in" style="color: black;text-decoration: underline;">joseph@16sefs.in</a></h3>
+                <h3 class="mx-5 fw-bold mt-1"><a href="mailto:d.sarkar@f16sefs.in" style="color: black;text-decoration: underline;">d.sarkar@f16sefs.in</a></h3>
               </div>
             </div>
           </div>
@@ -232,7 +242,9 @@
         height="600"
         frameborder="0"
         style="border:0;border-radius: 13px;"
-        src="https://maps.google.com/maps?q=bangalore&t=&z=13&ie=UTF8&iwloc=&output=embed"
+        src="https://maps.google.com/maps?q=F16S E-FRIEGHT SOLUTIONS
+        PRIVATE LIMITED
+NO. 18, 1,2nd CROSS 1st STAGE, MEDHALLI VILLAGE, VIRGONAGAR&t=&z=13&ie=UTF8&iwloc=&output=embed"
         allowfullscreen
       ></iframe>
         </div>
@@ -247,7 +259,7 @@
             <div class="col-3 col-md-3 mt-5">
               <!-- <h1 class="logo_text">F16s</h1> -->
               <!-- <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6> -->
-              <img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;">
+              <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;"></a>
               <div class="mt-6">
                 <img src="/media/custome/home/linkedin.png" alt="">
               </div>
@@ -274,13 +286,19 @@
               <!-- <h2>CONTACT US</h2> -->
               <div class="row d-flex">
                 <div class="col-sm-1 mx-3">
-                  <img src="/media/custome/home/location.png" width="60" alt="Location">
+                  <a>
+                    <img src="/media/custome/home/location.png" width="60" alt="Location">
+                  </a>
                 </div>
                 <div class="col-sm-1 mx-3">
-                  <img src="/media/custome/home/contact.png" width="60" alt="Location">
+                  <a href="tel:8660320019" style="color: black;">
+                    <img src="/media/custome/home/contact.png" width="60" alt="Contact">
+                  </a>
                 </div>
                 <div class="col-sm-1 mx-3">
-                  <img src="/media/custome/home/email.png" width="60" alt="Location">
+                  <a href="mailto:joseph@f16sefs.in">
+                    <img src="/media/custome/home/email.png" width="60" alt="Email">
+                  </a>
                 </div>
               </div>
             </div>
@@ -289,7 +307,7 @@
             <hr style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
             <div class="row text-white">
               <div class="col-4">
-                <h6>© 2024 by F16s EFS Pvt Ltd</h6>
+                <a href="https://f16sefs.in/" style="color: white;"><h6>© 2024 by F16s EFS Pvt Ltd </h6></a>
               </div>
               <div class="col-4 text-center">
                 <h6>Cookie Policy</h6>
@@ -472,6 +490,9 @@ export default {
 .nav-link-custom:hover {
   color: red !important;
 }
+.nav-link-custom {
+  font-size: medium;
+}
 @media (max-width: 768px) {
   .container {
     margin-top: 5%;
@@ -565,6 +586,7 @@ export default {
   text-align: center;
   color: white;
   cursor: pointer;
+  font-size: large;
 }
 .btn-color {
   background: #923B33;
@@ -642,17 +664,17 @@ export default {
   font-size: 20px;
   font-weight: 600;
 }
+.login-btn1{
+    background: #923B33;
+    border: 0;
+    padding: 1% 3%;
+    border-radius: 10px;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
 .login-btn:hover {
     background: #b18480;
-}
-.login-btn1 {
-  background: #923B33;
-  border: 0;
-  padding: 1% 4%;
-  border-radius: 10px;
-  color: white;
-  font-size: 20px;
-  font-weight: 600;
 }
 
 .container {
@@ -828,7 +850,7 @@ ul li a {
 
 .company-info h3,
 .company-info ul {
-  text-align: center;
+  /* text-align: center; */
   margin: 0 0 1rem 0;
 }
 .contact {

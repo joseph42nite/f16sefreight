@@ -84,7 +84,7 @@
       <b-navbar toggleable="lg" type="dark" variant="info">
         <div class="container-fluid">
           <div class="navbar-header">
-            <b-navbar-brand href="#">
+            <b-navbar-brand href="https://f16sefs.in/">
               <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
             </b-navbar-brand>
           </div>
@@ -99,7 +99,7 @@
 
             <b-navbar-nav class="ml-auto">
               <b-nav-item>
-                <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+                <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
               </b-nav-item>
               <b-nav-item>
                 <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
@@ -111,10 +111,13 @@
       <div class="banner"></div>
     </div>
     <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
-      <div class="home-block" style="width:100%; max-width: 45rem; padding: 0 15px;">
-        <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1>
-        <h4 class="mt-3 mt-lg-5">For Online Rates Click On The Below </h4>
-        <div class="mt-4 mt-lg-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
+      <div class="home-block" style="width:100%;padding: 0 5px;">
+        <div class="col-12 col-lg-6 fa-4x p-0 fa4x">
+          Reshaping The Future Of Freight Forwarding
+        </div>
+        <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
+        <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Online Rates Click On The Below </h4>
+        <div class="mt-4 mt-lg-10 px-8 px-lg-0"><button class="login-btn1" @click="firstPopUp('login_signin','login_signup')">Focus Aakash</button></div>
       </div>
     </div>
   </div>
@@ -298,7 +301,7 @@
             <div class="col-md-4">
               <div class="card1 mb-3">
                 <img class="card-img-top" src="/media/custome/home/card1.png" alt="Card image cap" style="object-fit: cover">
-                <div class="product-detail">
+                <div class="product-detail custom-mr">
                   <h5 class="card-title heading text-center fa-2x mt-8 mb-8">FWB/FHL Transmission</h5>
                   <div class="text-center text-white mx-5 mt-10" style="font-size: 20px;font-weight: 300;">
                     <p>With close to 100+ airline affiliations with F16s, we provide seamless EDI transfer for freight forwarders in India. FHL, FWB and E-AWS can be done through our services. Our staffs are trained IATA personnel, and due to our remote working style we have complete data security. </p>
@@ -309,7 +312,7 @@
             <div class="col-md-4">
               <div class="card1 mb-3">
                 <img class="card-img-top" src="/media/custome/home/card3.png" alt="Card image cap" style="object-fit: cover">
-                  <div class="product-detail">
+                  <div class="product-detail custom-mr">
                     <h5 class="card-title heading text-center fa-2x mt-8 mb-8">E- Freight rates</h5>
                     <div class="text-center text-white mx-5 mt-10" style="font-size: 20px;font-weight: 300;">
                     <p>With close to 100+ airline affiliations with F16s, we provide seamless EDI transfer for freight forwarders in India. FHL, FWB and E-AWS can be done through our services. Our staffs are trained IATA personnel, and due to our remote working style we have complete data security. </p>
@@ -320,7 +323,7 @@
             <div class="col-md-4">
               <div class="card1 mb-3">
                 <img class="card-img-top" src="/media/custome/home/card2.png"  alt="Card image cap" style="object-fit: cover">
-                <div class="product-detail">
+                <div class="product-detail custom-mr">
                   <h5 class="card-title heading text-center fa-2x mt-8 mb-8">Cargo And Community</h5>
                   <div class="text-center text-white mx-5 mt-10" style="font-size: 20px;font-weight: 300;">
                     <p>We also are working towards building a cargo community in india, so this highly unorganized sector sees the light of effective communications between different related pages with our online portal.</p>
@@ -338,7 +341,7 @@
         <div class="row align-items-center">
           <div class="col-1"></div>
           <div class="col-md-5 mb-4 mb-md-0">
-            <h1 class="pt-lg-20 font-weight-black text-black fa-4x">We Build, We Plan, We Deliver</h1>
+            <h1 class="pt-lg-20 font-weight-black text-black fa-4x fa4x">We Build, We Plan, We Deliver</h1>
             <p class="fa-2x mt-2">
               We offer a comprehensive array of services, from data management to analytics and shipment procurement management. You can count on the utmost professionalism in all that we do.
             </p>
@@ -376,7 +379,7 @@
           </div>
           <div class="mt-10 item-center block">
             <router-link to="/login">
-              <button class="login-btn">Read More</button>
+              <button class="login-btn1">Read More</button>
             </router-link>
           </div>
         </div>
@@ -406,7 +409,7 @@
         <div class="container">
         <div class="row back-b text-white p-8">
           <div class="col-3 col-md-3 mt-5">
-            <img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;">
+            <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;"></a>
             <div class="mt-6">
               <img src="/media/custome/home/linkedin.png" alt="Linkedin">
             </div>
@@ -430,17 +433,22 @@
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 item-align-right">
-            <!-- <h2>CONTACT US</h2> -->
             <div class="row d-flex">
               <div class="col-sm-1 mx-3">
-                <img src="/media/custome/home/location.png" width="60" alt="Location">
-              </div>
-              <div class="col-sm-1 mx-3">
-                <img src="/media/custome/home/contact.png" width="60" alt="Location">
-              </div>
-              <div class="col-sm-1 mx-3">
-                <img src="/media/custome/home/email.png" width="60" alt="Location">
-              </div>
+                  <a>
+                    <img src="/media/custome/home/location.png" width="60" alt="Location">
+                  </a>
+                </div>
+                <div class="col-sm-1 mx-3">
+                  <a href="tel:8660320019" style="color: black;">
+                    <img src="/media/custome/home/contact.png" width="60" alt="Contact">
+                  </a>
+                </div>
+                <div class="col-sm-1 mx-3">
+                  <a href="mailto:joseph@f16sefs.in">
+                    <img src="/media/custome/home/email.png" width="60" alt="Email">
+                  </a>
+                </div>
             </div>
           </div>
         </div>
@@ -448,7 +456,7 @@
           <hr style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
           <div class="row text-white">
             <div class="col-4">
-              <h6>© 2024 by F16s EFS Pvt Ltd </h6>
+              <a href="https://f16sefs.in/" style="color: white;"><h6>© 2024 by F16s EFS Pvt Ltd </h6></a>
             </div>
             <div class="col-4 text-center">
               <h6>Cookie Policy</h6>
@@ -612,6 +620,9 @@ export default {
 .nav-link-custom:hover {
   color: red !important;
 }
+.nav-link-custom{
+  font-size: medium;
+}
 .wrap:hover{
   background-color: #923B33;
 }
@@ -626,6 +637,7 @@ export default {
   text-align: center;
   color: white;
   cursor: pointer;
+  font-size: large;
 }
 .btn-color {
   background: #923B33;
@@ -699,7 +711,7 @@ export default {
   }
   .fa-4x{
     margin-top: 20px;
-    margin-left: 20px;
+    /* margin-left: 20px; */
     margin-right: 20px;
   }
   .fa-2x {
@@ -708,14 +720,20 @@ export default {
     margin-left: 20px;
     margin-right: 20px;
   }
+  .fa4x{
+    margin-left: 20px;
+  }
 }
-
   @media (min-width: 768px) and (max-width: 1024px) {
     .fa-2x {
       margin: 15px;
     }
   }
-
+  @media (max-width: 576px) { /* Adjust this breakpoint as needed */
+    .custom-mr {
+        margin-right: 10px !important;
+    }
+}
 @media (min-width: 720px) {}
 
 @media (max-width: 720px) {
@@ -768,6 +786,15 @@ background-color: white;
     background: #923B33;
     border: 0;
     padding: 1.5% 6%;
+    border-radius: 10px;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
+.login-btn1{
+    background: #923B33;
+    border: 0;
+    padding: 1% 3%;
     border-radius: 10px;
     color: white;
     font-size: 20px;
@@ -838,12 +865,8 @@ ul li a{
   max-width: 400px;
   position: absolute;
   height: 75px;
-  /* left: 15px;
-  right: 15px; */
   bottom: 1px;
   overflow: hidden;
-  /* padding: 15px; */
-  /* background-color: rgb(9 9 9 / 90%); */
   background-color: white;
   transition: all 0.35s;
   text-align: center;

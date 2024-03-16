@@ -5,7 +5,7 @@
           <b-navbar toggleable="lg" type="dark" variant="info">
             <div class="container-fluid">
               <div class="navbar-header">
-                <b-navbar-brand href="#">
+                <b-navbar-brand href="https://f16sefs.in/">
                   <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
                 </b-navbar-brand>
               </div>
@@ -21,7 +21,7 @@
 
                 <b-navbar-nav class="ml-auto">
                   <b-nav-item>
-                    <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+                    <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
                   </b-nav-item>
                   <b-nav-item>
                     <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
@@ -33,10 +33,13 @@
           <div class="banner"></div>
         </div>
         <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
-          <div class="home-block" style="width:100%; max-width: 45rem; padding: 0 15px;">
-            <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1>
-            <h4 class="mt-3 mt-lg-5">For Online Rates Click On The Below </h4>
-            <div class="mt-4 mt-lg-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
+          <div class="home-block" style="width:100%; padding: 0 15px;">
+            <div class="col-12 col-lg-5 fa-4x p-0 fa4x">
+              Reshaping The Future Of Freight Forwarding
+            </div>
+            <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
+            <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Online Rates Click On The Below </h4>
+            <div class="mt-4 mt-lg-10 px-8 px-lg-0"><button class="login-btn1" @click="firstPopUp('login_signin','login_signup')">Focus Aakash</button></div>
           </div>
         </div>
       </div>
@@ -259,7 +262,7 @@
           <div class="container">
           <div class="row back-b text-white p-8">
             <div class="col-3 col-md- mt-5">
-              <img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;">
+              <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;"></a>
               <div class="mt-6">
                 <img src="/media/custome/home/linkedin.png" alt="">
               </div>
@@ -285,13 +288,19 @@
             <div class="col-3 col-md-3 mt-5 item-align-right">
               <div class="row d-flex">
                 <div class="col-sm-1 mx-3">
-                  <img src="/media/custome/home/location.png" width="60" alt="Location">
+                  <a>
+                    <img src="/media/custome/home/location.png" width="60" alt="Location">
+                  </a>
                 </div>
                 <div class="col-sm-1 mx-3">
-                  <img src="/media/custome/home/contact.png" width="60" alt="Location">
+                  <a href="tel:8660320019" style="color: black;">
+                    <img src="/media/custome/home/contact.png" width="60" alt="Contact">
+                  </a>
                 </div>
                 <div class="col-sm-1 mx-3">
-                  <img src="/media/custome/home/email.png" width="60" alt="Location">
+                  <a href="mailto:joseph@f16sefs.in">
+                    <img src="/media/custome/home/email.png" width="60" alt="Email">
+                  </a>
                 </div>
               </div>
             </div>
@@ -300,7 +309,7 @@
             <hr style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
             <div class="row text-white">
               <div class="col-4">
-                <h6>© 2024 by F16s EFS Pvt Ltd</h6>
+                <a href="https://f16sefs.in/" style="color: white;"><h6>© 2024 by F16s EFS Pvt Ltd </h6></a>
               </div>
               <div class="col-4 text-center">
                 <h6>Cookie Policy</h6>
@@ -465,6 +474,9 @@
   margin-left: 55px;
   margin-top: 10px;
 }
+.nav-link-custom{
+font-size: medium;
+}
 .nav-link-custom:hover {
   color: red !important;
 }
@@ -576,6 +588,7 @@
   text-align: center;
   color: white;
   cursor: pointer;
+  font-size: large;
 }
 .btn-color {
     background: #923B33;
@@ -644,14 +657,14 @@
       font-weight: 600;
   }
   .login-btn1{
-      background: #923B33;
-      border: 0;
-      padding: 1% 4%;
-      border-radius: 10px;
-      color: white;
-      font-size: 20px;
-      font-weight: 600;
-  }
+    background: #923B33;
+    border: 0;
+    padding: 1% 3%;
+    border-radius: 10px;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
   .login-btn:hover {
     background: #b18480;
 }

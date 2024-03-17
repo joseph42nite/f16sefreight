@@ -613,6 +613,7 @@ export default {
         this.get_notice();
         this.get_asm();
         if (this.current_user){
+            console.log(this.current_user)
             this.search_form.from = this.current_user.origin_airport_code;
             // this.searchQuery_from = this.current_user.origin_airport_code;
         }

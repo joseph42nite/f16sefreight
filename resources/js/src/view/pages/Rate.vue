@@ -647,7 +647,7 @@ export default {
             const query = this.searchQuery_to.toLowerCase();
             return this.location.filter(item => {
                 return (
-                    item.destination.toLowerCase().includes(query) || // Filter by destination
+                    // item.destination.toLowerCase().includes(query) || // Filter by destination
                     item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
                 );
             });

@@ -40,7 +40,7 @@ const actions = {
     return new Promise(resolve => {
       ApiService.post("/login", credentials)
         .then(({ data }) => {
-          context.commit(SET_AUTH, data);
+          context.commit(SET_AUTH, data.user);
           JwtService.saveToken(data.token); 
           if(data.role=='user')
             router.push(`/focusakash`);
@@ -98,6 +98,7 @@ const mutations = {
     state.errors = error;
   },
   [SET_AUTH](state, user) {
+    console.log(user);
     state.isAuthenticated = true;
     state.user = user;
     state.errors = {};

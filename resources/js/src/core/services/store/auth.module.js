@@ -8,17 +8,20 @@ export const LOGIN = "login";
 export const LOGOUT = "logout";
 export const REGISTER = "register";
 export const UPDATE_PASSWORD = "updateUser";
+export const UPDATE_Source ="updateSource";
 
 // mutation types
 export const PURGE_AUTH = "logOut";
 export const SET_AUTH = "setUser";
 export const SET_PASSWORD = "setPassword";
+export const SET_Source = "setSource";
 export const SET_ERROR = "setError";
 export const SAVE_FORM_DATA ="saveFormData";
 
 const state = {
   errors: null,
   user: {},
+  user_source:JwtService.getSource(),
   formData: {},
   isAuthenticated: !!JwtService.getToken()
 };
@@ -30,6 +33,9 @@ const getters = {
   currentUser(state) {
     return state.user;
   },
+  userSource(state) {
+    return state.user_source;
+  },
   isAuthenticated(state) {
     return state.isAuthenticated;
   },
@@ -40,10 +46,13 @@ const actions = {
     return new Promise(resolve => {
       ApiService.post("/login", credentials)
         .then(({ data }) => {
-          context.commit(SET_AUTH, data);
+          context.commit(SET_AUTH, data.user);
           JwtService.saveToken(data.token); 
-          if(data.role=='user')
+          if(data.role=='user'){
+            JwtService.saveSource(data.user.origin_airport_code);
+            context.commit(SET_Source, data.user.origin_airport_code);
             router.push(`/focusakash`);
+          }
           else if(data.role=='superAdmin')
              router.push(`/superadmin/all-users`);
           resolve(data);
@@ -88,6 +97,10 @@ const actions = {
       return data;
     });
   },
+  [UPDATE_Source](context, source) {
+      JwtService.saveSource(source);
+      context.commit(SET_Source, source);
+  }
 };
 
 const mutations = {
@@ -96,6 +109,9 @@ const mutations = {
   },
   [SET_ERROR](state, error) {
     state.errors = error;
+  },
+  [SET_Source](state, source) {
+    state.user_source = source;
   },
   [SET_AUTH](state, user) {
     state.isAuthenticated = true;
@@ -109,7 +125,9 @@ const mutations = {
     state.isAuthenticated = false;
     state.user = {};
     state.errors = {};
+    state.user_source ="";
     JwtService.destroyToken();
+    JwtService.destroySource();
   }
 };
 

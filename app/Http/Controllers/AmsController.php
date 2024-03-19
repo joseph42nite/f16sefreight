@@ -18,11 +18,11 @@ class AmsController extends Controller
         return json_encode($data);
     }
     public function getAmsList(){
-        $data=Ams::select('carrier_code', 'carrier_prefix')->distinct()->get();
+        $data=Ams::select('carrier_code')->distinct()->get();
         return json_encode($data);
     }
     public function delete($carrier_code,$carrier_prefix){
-        Ams::where('carrier_code', $carrier_code)->where('carrier_prefix', $carrier_prefix)->delete();
+        Ams::where('carrier_code', $carrier_code)->delete();
         echo "data deleted successful";
     }
 }

@@ -38,12 +38,14 @@ class RateController extends Controller
     }
 
     public function getAirlineList(){
-        $data=Rate::select('carrier_code', 'carrier_prefix')->distinct()->get();
+        $data = Rate::select('carrier_code')->distinct()->get();
         return json_encode($data);
     }
 
     public function deleteRate($carrier_code,$carrier_prefix){
-        Rate::where('carrier_code', $carrier_code)->where('carrier_prefix', $carrier_prefix)->delete();
+        Rate::where('carrier_code', $carrier_code)->delete();
         echo "data deleted successful";
     }
 }
+
+//hjhghg

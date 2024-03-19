@@ -52,7 +52,7 @@
                     <div class="rate-area mr-1">
                         <div class="sticky-div">
                             <span @click="copyToClipboard()" class="copy-cls" v-if="!is_all_rate">Export</span>
-                            <input type="number" v-model="extra_comission" @keyup="extraComission()" v-if="!is_all_rate" />
+                            <input type="number" v-model="extra_comission" @input="extraComission()" v-if="!is_all_rate" />
                             <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
                                 <option value="total">Total profit</option>
                                 <option value="per_kg">-/kg</option>
@@ -96,6 +96,7 @@
                                         {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
                                     </td>
                                 </tr>
+                                <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -187,6 +188,7 @@ export default {
             searched_country_code:'',
             searched_region:'',
             items: [],
+            is_rate_available:true,
             filter: null,
             totalRows: 0,
             currentPage: 1,
@@ -290,6 +292,7 @@ export default {
             let rate_index = 3;
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
+                    $(".copy-cls").html("Export");
                     this.searched_country_code=data.country_code;
                     this.searched_region=data.region;
                     data=data.rates;
@@ -318,51 +321,57 @@ export default {
                         }
                         this.items = items_loop;
                     } else {
-                        for (let i = 0; i < data.length; i++) {
-                            let arr_data = data[i].rate_range;
-                            let rate_data = JSON.parse(arr_data, true);
-                            data[i]["my_rate"] = {};
-                            data[i]["my_rate_2"] = {};
-                            if (this.search_form.selected_quantity == "Minimum") {
-                                data[i]["my_rate"]["Minimum"] =rate_data["Minimum"];
-                            } else if (this.search_form.selected_quantity == "Normal") {
-                                data[i]["my_rate"]["Normal"] = rate_data["Normal"];
-                            } else if ( this.search_form.selected_quantity == "custom") {
-                                let user_quantity = parseInt(this.search_form.quantity);
-                                let keys = Object.keys(rate_data);
-                                let is_first_quantity_get = 0;
-                                let first_quantity = 0;
-                                for (let j = 0; j < keys.length; j++) {
-                                    if (keys[j] == "Minimum" ||keys[j] == "Normal") {
-                                    } else {
-                                        let from_key = parseInt(keys[j]);
-                                        if (!is_first_quantity_get) {
-                                            first_quantity = from_key;
-                                            is_first_quantity_get = 1;
-                                        }
+                        if(data.length){
+                            this.is_rate_available=false;
+                            for (let i = 0; i < data.length; i++) {
+                                let arr_data = data[i].rate_range;
+                                let rate_data = JSON.parse(arr_data, true);
+                                data[i]["my_rate"] = {};
+                                data[i]["my_rate_2"] = {};
+                                if (this.search_form.selected_quantity == "Minimum") {
+                                    data[i]["my_rate"]["Minimum"] =rate_data["Minimum"];
+                                } else if (this.search_form.selected_quantity == "Normal") {
+                                    data[i]["my_rate"]["Normal"] = rate_data["Normal"];
+                                } else if ( this.search_form.selected_quantity == "custom") {
+                                    let user_quantity = parseInt(this.search_form.quantity);
+                                    let keys = Object.keys(rate_data);
+                                    let is_first_quantity_get = 0;
+                                    let first_quantity = 0;
+                                    for (let j = 0; j < keys.length; j++) {
+                                        if (keys[j] == "Minimum" ||keys[j] == "Normal") {
+                                        } else {
+                                            let from_key = parseInt(keys[j]);
+                                            if (!is_first_quantity_get) {
+                                                first_quantity = from_key;
+                                                is_first_quantity_get = 1;
+                                            }
 
-                                        let to_key = 1000000;
-                                        if (j + 1 < keys.length)
-                                            to_key = parseInt(keys[j + 1]);
+                                            let to_key = 1000000;
+                                            if (j + 1 < keys.length)
+                                                to_key = parseInt(keys[j + 1]);
 
-                                        if (
-                                            user_quantity >= from_key &&
-                                            user_quantity < to_key
-                                        ) {
-                                            let rate_key = keys[j];
-                                            data[i]["my_rate"][rate_key] =
-                                                rate_data[rate_key];
-                                            break;
-                                        }
-                                        if (user_quantity < first_quantity) {
-                                            data[i]["my_rate"]["Normal"] =
-                                                rate_data["Normal"];
-                                            break;
+                                            if (
+                                                user_quantity >= from_key &&
+                                                user_quantity < to_key
+                                            ) {
+                                                let rate_key = keys[j];
+                                                data[i]["my_rate"][rate_key] =
+                                                    rate_data[rate_key];
+                                                break;
+                                            }
+                                            if (user_quantity < first_quantity) {
+                                                data[i]["my_rate"]["Normal"] =
+                                                    rate_data["Normal"];
+                                                break;
+                                            }
                                         }
                                     }
                                 }
+                                data[i]["my_rate_2"] = JSON.parse(JSON.stringify(data[i]['my_rate']));
                             }
-                            data[i]["my_rate_2"] = JSON.parse(JSON.stringify(data[i]['my_rate']));
+                        }    
+                        else{
+                            this.is_rate_available=true;
                         }
                         this.rate_data = data;
                     }
@@ -615,8 +624,8 @@ export default {
         this.getLocation();
         this.get_notice();
         this.get_asm();
-        if (this.current_user){
-            this.search_form.from = this.current_user.origin_airport_code;
+        if (this.user_source){
+            this.search_form.from = this.user_source;
             // this.searchQuery_from = this.current_user.origin_airport_code;
         }
 
@@ -624,7 +633,7 @@ export default {
         window.addEventListener('click', this.closeDropdown_to);    
     },
     computed: {
-        ...mapGetters({ current_user: "currentUser" }),
+        ...mapGetters({ current_user: "currentUser", user_source: "userSource"}),
         // filteredLocations_from() {
         //     if (!this.searchQuery_from) {
         //         return this.location;
@@ -641,7 +650,7 @@ export default {
             const query = this.searchQuery_to.toLowerCase();
             return this.location.filter(item => {
                 return (
-                    item.destination.toLowerCase().includes(query) || // Filter by destination
+                    // item.destination.toLowerCase().includes(query) || // Filter by destination
                     item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
                 );
             });

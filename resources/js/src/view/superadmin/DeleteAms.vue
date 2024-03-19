@@ -3,7 +3,7 @@
         <b-table :bordered="true" responsive :fields="fields" :items="items" style="white-space:nowrap" primary-key="id"
             :filter="filter" :current-page="currentPage" :per-page="perPage" @filtered="onFiltered">
             <template #cell(action)="data">
-                <b-button variant="danger" :id="'delete_'+data.item['carrier_code']" v-on:click="deleteAms(data.item['carrier_code'],data.item['carrier_prefix'])">Delete</b-button>
+                <b-button variant="danger" :id="'delete_'+data.item['carrier_code']" v-on:click="deleteAms(data.item['carrier_code'])">Delete</b-button>
             </template>
         </b-table>
     </div>
@@ -14,17 +14,17 @@ export default {
     name: "superadmin-DeleteAms",
     data() {
         return {
-            fields: ['carrier_code', 'carrier_prefix', 'Action'],
+            fields: ['carrier_code', 'Action'],
             items: [],
             filter: null,
             totalRows: 0,
             currentPage: 1,
-            perPage: 10,
+            perPage: 50,
             pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
         };
     },
     methods: {
-        deleteAms(carrier_code,carrier_prefix){
+        deleteAms(carrier_code,carrier_prefix=0){
             const deleted_btn='#delete_'+carrier_code;
             $(deleted_btn).html("wait...");
             ApiService.delete(`/superadmin/delete-ams/${carrier_code}/${carrier_prefix}`)

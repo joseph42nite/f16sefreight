@@ -386,19 +386,19 @@ export default {
                         currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
                         if(carrier_code=='EK'){
                             if(this.all_ams_ek[this.searched_country_code].fsc)
-                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC)`;
+                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC) +`;
                             if(this.all_ams_ek[this.searched_country_code].misc)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].misc} (MISC)`; 
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].misc} (MISC) +`; 
                             if(this.all_ams_ek[this.searched_country_code].xray)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].xray} (XRAY)`; 
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].xray} (XRAY) +`; 
                             if(this.all_ams_ek[this.searched_country_code].scc)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].scc} (SCC)`;
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].scc} (SCC) +`;
                             if(this.all_ams_ek[this.searched_country_code].ctg)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].ctg} (CTG)`;
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].ctg} (CTG) +`;
                             if(this.all_ams_ek[this.searched_country_code].awb_fee)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE)`; 
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE) +`; 
                             if(this.all_ams_ek[this.searched_country_code].mawb)
-                            currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) +`;
+                            currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) + `;
                             if(this.all_ams_ek[this.searched_country_code].hawb)
                             currentData.Price+=`${this.all_ams_ek[this.searched_country_code].hawb} (HAWB)`; 
                         }
@@ -415,41 +415,43 @@ export default {
                             main_key=key3;
                             if(main_key){
                                 if(this.all_ams_tg_cx[main_key].fsc)
-                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC)`;
+                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC) +`;
                                 if(this.all_ams_tg_cx[main_key].misc)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].misc} (MISC)`; 
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].misc} (MISC) +`; 
                                 if(this.all_ams_tg_cx[main_key].xray)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].xray} (XRAY)`; 
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].xray} (XRAY) +`; 
                                 if(this.all_ams_tg_cx[main_key].scc)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].scc} (SCC)`;
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].scc} (SCC) +`;
                                 if(this.all_ams_tg_cx[main_key].ctg)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].ctg} (CTG)`;
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].ctg} (CTG) +`;
                                 if(this.all_ams_tg_cx[main_key].awb_fee)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE)`; 
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE) +`; 
                                 if(this.all_ams_tg_cx[main_key].mawb)
-                                currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) +`;
+                                currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) + `;
                                 if(this.all_ams_tg_cx[main_key].hawb)
                                 currentData.Price+=`${this.all_ams_tg_cx[main_key].hawb} (HAWB)`;
                             }
                         }
                         else{
                             if(this.all_ams[carrier_code].fsc)
-                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC)`;
+                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC) +`;
                             if(this.all_ams[carrier_code].misc)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].misc} (MISC)`; 
+                            currentData.Price+=` ${this.all_ams[carrier_code].misc} (MISC) +`; 
                             if(this.all_ams[carrier_code].xray)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].xray} (XRAY)`; 
+                            currentData.Price+=` ${this.all_ams[carrier_code].xray} (XRAY) +`; 
                             if(this.all_ams[carrier_code].scc)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].scc} (SCC)`;
+                            currentData.Price+=` ${this.all_ams[carrier_code].scc} (SCC) +`;
                             if(this.all_ams[carrier_code].ctg)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].ctg} (CTG)`;
+                            currentData.Price+=` ${this.all_ams[carrier_code].ctg} (CTG) +`;
                             if(this.all_ams[carrier_code].awb_fee)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].awb_fee} (AWB FEE)`; 
+                            currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
                             if(this.all_ams[carrier_code].mawb)
-                            currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) +`;
+                            currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) + `;
                             if(this.all_ams[carrier_code].hawb)
                             currentData.Price+=`${this.all_ams[carrier_code].hawb} (HAWB)`;     
-                        }        
+                        }
+                        currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');
+                        currentData.Price = currentData.Price.replace('+, AMS:', ', AMS:');        
                         clip_arr.push(currentData);
                         index_count++;
                     }
@@ -457,7 +459,7 @@ export default {
                     const headerRow = headers.join("\t\t\t");
                     const dataRows = clip_arr
                         .map((row) => Object.values(row).join("\t\t"))
-                        .join("\n");
+                        .join("\n\n");
                     const tableText = `${dataRows}`;   //${headerRow}\n\n   removed header
 
                     const textarea = document.createElement("textarea");
@@ -590,6 +592,7 @@ export default {
                 if (parseInt(this.extra_comission) > 0) {
                     if (this.profit_type == "total") {
                         let add_profit = parseInt(this.extra_comission) / parseInt(this.search_form.quantity);
+                        console.log(add_profit);
                         this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(add_profit);
                     } else if (this.profit_type == "per_kg") {
                         this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(this.extra_comission);

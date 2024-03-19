@@ -52,7 +52,7 @@
                     <div class="rate-area mr-1">
                         <div class="sticky-div">
                             <span @click="copyToClipboard()" class="copy-cls" v-if="!is_all_rate">Export</span>
-                            <input type="number" v-model="extra_comission" @input="extraComission()" v-if="!is_all_rate" />
+                            <input type="number" v-model="extra_comission" @keyup="extraComission($event)" v-if="!is_all_rate" />
                             <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
                                 <option value="total">Total profit</option>
                                 <option value="per_kg">-/kg</option>
@@ -150,7 +150,7 @@ export default {
                 from: null,
                 to: "",
                 selected_quantity: "custom",
-                quantity: "101",
+                quantity: "200",
             }),
             rate_data: "",
             rate_data_copy: {},
@@ -287,6 +287,7 @@ export default {
         },
         get_rate() {
             this.rate_data = "";
+            this.selectedRows=[];
             let rate_data_loop = [];
             let items_loop = [];
             let rate_index = 3;
@@ -587,27 +588,28 @@ export default {
                 this.location=data;
             });
         },
-        extraComission() {
-            for (let i = 0; i < this.rate_data.length; i++) {
-                let obj_key = Object.keys(this.rate_data[i].my_rate_2)[0];
-                if (parseInt(this.last_extra_comission) > 0) {
-                    if (this.profit_type == "total") {
-                        let add_profit =parseInt(this.last_extra_comission) / parseInt(this.search_form.quantity);
-                        this.rate_data[i].my_rate_2[obj_key] =parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(add_profit);
-                    } else if (this.profit_type == "per_kg") {
-                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(this.last_extra_comission);
+        extraComission(event) {
+            if(event.key==0 || event.key==1 || event.key==2 || event.key==3 || event.key==4 || event.key==4 || event.key==6 || event.key==7 || event.key==8 || event.key==9 || event.key=="Backspace"){
+                for (let i = 0; i < this.rate_data.length; i++) {
+                    let obj_key = Object.keys(this.rate_data[i].my_rate_2)[0];
+                    if (parseInt(this.last_extra_comission) > 0) {
+                        if (this.profit_type == "total") {
+                            let add_profit_1 =parseInt(this.last_extra_comission) / parseInt(this.search_form.quantity);
+                            this.rate_data[i].my_rate_2[obj_key] =parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(add_profit_1);
+                        } else if (this.profit_type == "per_kg") {
+                            this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(this.last_extra_comission);
+                        }
+                    }
+                    if (parseInt(this.extra_comission) > 0) {
+                        if (this.profit_type == "total") {
+                            let add_profit = parseInt(this.extra_comission) / parseInt(this.search_form.quantity);
+                            this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(add_profit);
+                        } else if (this.profit_type == "per_kg") {
+                            this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(this.extra_comission);
+                        }
                     }
                 }
-                if (parseInt(this.extra_comission) > 0) {
-                    if (this.profit_type == "total") {
-                        let add_profit = parseInt(this.extra_comission) / parseInt(this.search_form.quantity);
-                        console.log(add_profit);
-                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(add_profit);
-                    } else if (this.profit_type == "per_kg") {
-                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(this.extra_comission);
-                    }
-                }
-            }
+            }    
         },
         check_rate_type() {
             if (this.search_form.selected_quantity == 'all')
@@ -650,8 +652,7 @@ export default {
             const query = this.searchQuery_to.toLowerCase();
             return this.location.filter(item => {
                 return (
-                    // item.destination.toLowerCase().includes(query) || // Filter by destination
-                    item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
+                    item.iata_code.toLowerCase().includes(query)
                 );
             });
         }

@@ -51,17 +51,23 @@
                     ">
                     <div class="rate-area mr-1">
                         <div class="sticky-div">
-                            <span @click="copyToClipboard()" class="copy-cls" v-if="!is_all_rate">Export</span>
-                            <input type="number" v-model="extra_comission" @input="extraComission()" v-if="!is_all_rate" />
-                            <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
-                                <option value="total">Total profit</option>
-                                <option value="per_kg">-/kg</option>
-                            </select>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate">Export</span>
+                                <div>
+                                    <input type="number" v-model="extra_comission" v-if="!is_all_rate" />
+                                    <span @click="extraComission()" class="copy-cls-css" v-if="!is_all_rate">Add profit</span>
+                                </div>
+                                <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
+                                    <option value="total">Total profit</option>
+                                    <option value="per_kg">-/kg</option>
+                                </select>
+                            </div>
                             <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
                                 :sheet-name="'rate'" v-if="is_all_rate">
-                                <button class="btn create_btn font-weight-bold py-2 text-white">
-                                    Export rate
-                                </button>
+                                <!-- <button class="btn create_btn font-weight-bold py-2 text-dark">
+                                    
+                                </button> -->
+                                <span class="font-weight-bold text-dark" style="padding: 5px;">Export rate</span>
                             </vue-excel-xlsx>
                         </div>
                         <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
@@ -96,6 +102,7 @@
                                         {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
                                     </td>
                                 </tr>
+                                <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -149,7 +156,7 @@ export default {
                 from: null,
                 to: "",
                 selected_quantity: "custom",
-                quantity: "101",
+                quantity: "200",
             }),
             rate_data: "",
             rate_data_copy: {},
@@ -187,6 +194,7 @@ export default {
             searched_country_code:'',
             searched_region:'',
             items: [],
+            is_rate_available:true,
             filter: null,
             totalRows: 0,
             currentPage: 1,
@@ -285,11 +293,13 @@ export default {
         },
         get_rate() {
             this.rate_data = "";
+            this.selectedRows=[];
             let rate_data_loop = [];
             let items_loop = [];
             let rate_index = 3;
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
+                    $(".copy-cls").html("Export");
                     this.searched_country_code=data.country_code;
                     this.searched_region=data.region;
                     data=data.rates;
@@ -318,51 +328,57 @@ export default {
                         }
                         this.items = items_loop;
                     } else {
-                        for (let i = 0; i < data.length; i++) {
-                            let arr_data = data[i].rate_range;
-                            let rate_data = JSON.parse(arr_data, true);
-                            data[i]["my_rate"] = {};
-                            data[i]["my_rate_2"] = {};
-                            if (this.search_form.selected_quantity == "Minimum") {
-                                data[i]["my_rate"]["Minimum"] =rate_data["Minimum"];
-                            } else if (this.search_form.selected_quantity == "Normal") {
-                                data[i]["my_rate"]["Normal"] = rate_data["Normal"];
-                            } else if ( this.search_form.selected_quantity == "custom") {
-                                let user_quantity = parseInt(this.search_form.quantity);
-                                let keys = Object.keys(rate_data);
-                                let is_first_quantity_get = 0;
-                                let first_quantity = 0;
-                                for (let j = 0; j < keys.length; j++) {
-                                    if (keys[j] == "Minimum" ||keys[j] == "Normal") {
-                                    } else {
-                                        let from_key = parseInt(keys[j]);
-                                        if (!is_first_quantity_get) {
-                                            first_quantity = from_key;
-                                            is_first_quantity_get = 1;
-                                        }
+                        if(data.length){
+                            this.is_rate_available=false;
+                            for (let i = 0; i < data.length; i++) {
+                                let arr_data = data[i].rate_range;
+                                let rate_data = JSON.parse(arr_data, true);
+                                data[i]["my_rate"] = {};
+                                data[i]["my_rate_2"] = {};
+                                if (this.search_form.selected_quantity == "Minimum") {
+                                    data[i]["my_rate"]["Minimum"] =rate_data["Minimum"];
+                                } else if (this.search_form.selected_quantity == "Normal") {
+                                    data[i]["my_rate"]["Normal"] = rate_data["Normal"];
+                                } else if ( this.search_form.selected_quantity == "custom") {
+                                    let user_quantity = parseInt(this.search_form.quantity);
+                                    let keys = Object.keys(rate_data);
+                                    let is_first_quantity_get = 0;
+                                    let first_quantity = 0;
+                                    for (let j = 0; j < keys.length; j++) {
+                                        if (keys[j] == "Minimum" ||keys[j] == "Normal") {
+                                        } else {
+                                            let from_key = parseInt(keys[j]);
+                                            if (!is_first_quantity_get) {
+                                                first_quantity = from_key;
+                                                is_first_quantity_get = 1;
+                                            }
 
-                                        let to_key = 1000000;
-                                        if (j + 1 < keys.length)
-                                            to_key = parseInt(keys[j + 1]);
+                                            let to_key = 1000000;
+                                            if (j + 1 < keys.length)
+                                                to_key = parseInt(keys[j + 1]);
 
-                                        if (
-                                            user_quantity >= from_key &&
-                                            user_quantity < to_key
-                                        ) {
-                                            let rate_key = keys[j];
-                                            data[i]["my_rate"][rate_key] =
-                                                rate_data[rate_key];
-                                            break;
-                                        }
-                                        if (user_quantity < first_quantity) {
-                                            data[i]["my_rate"]["Normal"] =
-                                                rate_data["Normal"];
-                                            break;
+                                            if (
+                                                user_quantity >= from_key &&
+                                                user_quantity < to_key
+                                            ) {
+                                                let rate_key = keys[j];
+                                                data[i]["my_rate"][rate_key] =
+                                                    rate_data[rate_key];
+                                                break;
+                                            }
+                                            if (user_quantity < first_quantity) {
+                                                data[i]["my_rate"]["Normal"] =
+                                                    rate_data["Normal"];
+                                                break;
+                                            }
                                         }
                                     }
                                 }
+                                data[i]["my_rate_2"] = JSON.parse(JSON.stringify(data[i]['my_rate']));
                             }
-                            data[i]["my_rate_2"] = JSON.parse(JSON.stringify(data[i]['my_rate']));
+                        }    
+                        else{
+                            this.is_rate_available=true;
                         }
                         this.rate_data = data;
                     }
@@ -383,24 +399,24 @@ export default {
                         // currentData.Airline = ``;
                         // currentData.ProductType = this.rate_data_copy[i].product_name;
                         // currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
-                        currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges:`;
+                        currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges: `;
                         if(carrier_code=='EK'){
                             if(this.all_ams_ek[this.searched_country_code].fsc)
-                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC)`;
+                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC) +`;
                             if(this.all_ams_ek[this.searched_country_code].misc)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].misc} (MISC)`; 
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].misc} (MISC) +`; 
                             if(this.all_ams_ek[this.searched_country_code].xray)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].xray} (XRAY)`; 
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].xray} (XRAY) +`; 
                             if(this.all_ams_ek[this.searched_country_code].scc)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].scc} (SCC)`;
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].scc} (SCC) +`;
                             if(this.all_ams_ek[this.searched_country_code].ctg)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].ctg} (CTG)`;
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].ctg} (CTG) +`;
                             if(this.all_ams_ek[this.searched_country_code].awb_fee)
-                            currentData.Price+=` + ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE)`; 
+                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE) +`; 
                             if(this.all_ams_ek[this.searched_country_code].mawb)
-                            currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) +`;
+                            currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) `;
                             if(this.all_ams_ek[this.searched_country_code].hawb)
-                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].hawb} (HAWB)`; 
+                            currentData.Price+=`+ ${this.all_ams_ek[this.searched_country_code].hawb} (HAWB)`; 
                         }
                         else if(carrier_code=='TG' || carrier_code=='CX'){
                             let key1=this.search_form.to+"_"+carrier_code;
@@ -415,41 +431,44 @@ export default {
                             main_key=key3;
                             if(main_key){
                                 if(this.all_ams_tg_cx[main_key].fsc)
-                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC)`;
+                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC) +`;
                                 if(this.all_ams_tg_cx[main_key].misc)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].misc} (MISC)`; 
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].misc} (MISC) +`; 
                                 if(this.all_ams_tg_cx[main_key].xray)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].xray} (XRAY)`; 
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].xray} (XRAY) +`; 
                                 if(this.all_ams_tg_cx[main_key].scc)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].scc} (SCC)`;
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].scc} (SCC) +`;
                                 if(this.all_ams_tg_cx[main_key].ctg)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].ctg} (CTG)`;
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].ctg} (CTG) +`;
                                 if(this.all_ams_tg_cx[main_key].awb_fee)
-                                currentData.Price+=` + ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE)`; 
+                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE) +`; 
                                 if(this.all_ams_tg_cx[main_key].mawb)
-                                currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) +`;
+                                currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) `;
                                 if(this.all_ams_tg_cx[main_key].hawb)
-                                currentData.Price+=`${this.all_ams_tg_cx[main_key].hawb} (HAWB)`;
+                                currentData.Price+=`+ ${this.all_ams_tg_cx[main_key].hawb} (HAWB)`;
                             }
                         }
                         else{
                             if(this.all_ams[carrier_code].fsc)
-                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC)`;
+                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC) +`;
                             if(this.all_ams[carrier_code].misc)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].misc} (MISC)`; 
+                            currentData.Price+=` ${this.all_ams[carrier_code].misc} (MISC) +`; 
                             if(this.all_ams[carrier_code].xray)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].xray} (XRAY)`; 
+                            currentData.Price+=` ${this.all_ams[carrier_code].xray} (XRAY) +`; 
                             if(this.all_ams[carrier_code].scc)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].scc} (SCC)`;
+                            currentData.Price+=` ${this.all_ams[carrier_code].scc} (SCC) +`;
                             if(this.all_ams[carrier_code].ctg)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].ctg} (CTG)`;
+                            currentData.Price+=` ${this.all_ams[carrier_code].ctg} (CTG) +`;
                             if(this.all_ams[carrier_code].awb_fee)
-                            currentData.Price+=` + ${this.all_ams[carrier_code].awb_fee} (AWB FEE)`; 
+                            currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
                             if(this.all_ams[carrier_code].mawb)
-                            currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) +`;
+                            currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) `;
                             if(this.all_ams[carrier_code].hawb)
-                            currentData.Price+=`${this.all_ams[carrier_code].hawb} (HAWB)`;     
-                        }        
+                            currentData.Price+=`+ ${this.all_ams[carrier_code].hawb} (HAWB)`;     
+                        }
+                        currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');
+                        currentData.Price = currentData.Price.replace('+, AMS:', ', AMS:');
+                        currentData.Price = currentData.Price.replace('  ', ' ');        
                         clip_arr.push(currentData);
                         index_count++;
                     }
@@ -457,7 +476,7 @@ export default {
                     const headerRow = headers.join("\t\t\t");
                     const dataRows = clip_arr
                         .map((row) => Object.values(row).join("\t\t"))
-                        .join("\n");
+                        .join("\n\n");
                     const tableText = `${dataRows}`;   //${headerRow}\n\n   removed header
 
                     const textarea = document.createElement("textarea");
@@ -576,26 +595,45 @@ export default {
                 this.location=data;
             });
         },
-        extraComission() {
+        extraComission(){
             for (let i = 0; i < this.rate_data.length; i++) {
                 let obj_key = Object.keys(this.rate_data[i].my_rate_2)[0];
-                if (parseInt(this.last_extra_comission) > 0) {
-                    if (this.profit_type == "total") {
-                        let add_profit =parseInt(this.last_extra_comission) / parseInt(this.search_form.quantity);
-                        this.rate_data[i].my_rate_2[obj_key] =parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(add_profit);
-                    } else if (this.profit_type == "per_kg") {
-                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(this.last_extra_comission);
-                    }
-                }
                 if (parseInt(this.extra_comission) > 0) {
                     if (this.profit_type == "total") {
-                        let add_profit = parseInt(this.extra_comission) / parseInt(this.search_form.quantity);
-                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(add_profit);
+                        console.log(this.rate_data[i].my_rate[obj_key]);
+                        let add_profit = parseFloat(this.extra_comission) / parseFloat(this.search_form.quantity);
+                        this.rate_data[i].my_rate_2[obj_key] = parseFloat(this.rate_data[i].my_rate[obj_key]) + parseFloat(add_profit);
                     } else if (this.profit_type == "per_kg") {
-                        this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(this.extra_comission);
+                        this.rate_data[i].my_rate_2[obj_key] = parseFloat(this.rate_data[i].my_rate[obj_key]) + parseFloat(this.extra_comission);
                     }
+                    this.rate_data[i].my_rate_2[obj_key]=this.rate_data[i].my_rate_2[obj_key].toFixed(2)
                 }
             }
+        },
+        extraComission2() {
+            // console.log(event.key);
+            // event.key==0 || event.key==1 || event.key==2 || event.key==3 || event.key==4 || event.key==4 || event.key==6 || event.key==7 || event.key==8 || event.key==9 || event.key=="Backspace"
+            if(1){
+                for (let i = 0; i < this.rate_data.length; i++) {
+                    let obj_key = Object.keys(this.rate_data[i].my_rate_2)[0];
+                    if (parseInt(this.last_extra_comission) > 0) {
+                        if (this.profit_type == "total") {
+                            let add_profit_1 =parseInt(this.last_extra_comission) / parseInt(this.search_form.quantity);
+                            this.rate_data[i].my_rate_2[obj_key] =parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(add_profit_1);
+                        } else if (this.profit_type == "per_kg") {
+                            this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) - parseInt(this.last_extra_comission);
+                        }
+                    }
+                    if (parseInt(this.extra_comission) > 0) {
+                        if (this.profit_type == "total") {
+                            let add_profit = parseInt(this.extra_comission) / parseInt(this.search_form.quantity);
+                            this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(add_profit);
+                        } else if (this.profit_type == "per_kg") {
+                            this.rate_data[i].my_rate_2[obj_key] = parseInt(this.rate_data[i].my_rate_2[obj_key]) + parseInt(this.extra_comission);
+                        }
+                    }
+                }
+            }    
         },
         check_rate_type() {
             if (this.search_form.selected_quantity == 'all')
@@ -612,8 +650,8 @@ export default {
         this.getLocation();
         this.get_notice();
         this.get_asm();
-        if (this.current_user){
-            this.search_form.from = this.current_user.origin_airport_code;
+        if (this.user_source){
+            this.search_form.from = this.user_source;
             // this.searchQuery_from = this.current_user.origin_airport_code;
         }
 
@@ -621,7 +659,7 @@ export default {
         window.addEventListener('click', this.closeDropdown_to);    
     },
     computed: {
-        ...mapGetters({ current_user: "currentUser" }),
+        ...mapGetters({ current_user: "currentUser", user_source: "userSource"}),
         // filteredLocations_from() {
         //     if (!this.searchQuery_from) {
         //         return this.location;
@@ -638,8 +676,7 @@ export default {
             const query = this.searchQuery_to.toLowerCase();
             return this.location.filter(item => {
                 return (
-                    item.destination.toLowerCase().includes(query) || // Filter by destination
-                    item.iata_code.toLowerCase().includes(query)      // Filter by iata_code
+                    item.iata_code.toLowerCase().includes(query)
                 );
             });
         }
@@ -680,7 +717,7 @@ export default {
     padding: 3%;
 }
 
-.copy-cls {
+.copy-cls-css {
     cursor: pointer;
     color: white;
     background: gainsboro;

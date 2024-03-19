@@ -206,8 +206,14 @@
                 <span id="company_name" class="error-cls"></span>
             </div>
             <div class="form-group">
-              <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect>
-                <span id="company_name" class="error-cls"></span>
+              <b-input-group class="input-group-merge">
+                <div class="custom-dropdown" ref="dropdownContainer" @click="toggleDropdown">
+                  <input type="text" v-model="searchQuery" placeholder="Search source" id="from_id" class="form-control source-input">
+                  <div v-if="isDropdownOpen" class="dropdown-options">
+                    <div v-for="(item, index) in filteredLocations" :key="index" @click="selectOption(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                  </div>
+                </div>
+              </b-input-group>
             </div>
             <div class="form-group">
               <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password"
@@ -511,6 +517,8 @@ export default {
         login_forgot:false,
       },
       location:[],
+      searchQuery: '',
+      isDropdownOpen: false,
       logoSrc: "/media/custome/logo.png",
       blackLogoSrc: "/media/custome/black-logo.png",
       isHovered: false,
@@ -526,6 +534,17 @@ export default {
       return (
         process.env.BASE_URL + "media/svg/illustrations/login-visual-1.svg"
       );
+    },
+    filteredLocations() {
+      if (!this.searchQuery) {
+        return this.location;
+      }
+      const query = this.searchQuery.toLowerCase();
+      return this.location.filter(item => {
+          return (
+              item.iata_code.toLowerCase().includes(query)
+          );
+      });
     }
   },
   mounted() {
@@ -535,8 +554,24 @@ export default {
         this.scrollToMission(sectionId);
       }
     });
+    window.addEventListener('click', this.closeDropdown);
   },
   methods: {
+    toggleDropdown() {
+      this.isDropdownOpen = !this.isDropdownOpen;
+    },
+    selectOption(item) {
+      this.user_form.origin_airport_code = item.iata_code;
+      let source_name= item.destination;
+      let final_set=this.user_form.origin_airport_code+"("+source_name+")";
+      this.searchQuery=final_set;
+    },
+    closeDropdown(event) {
+      const dropdownContainer = this.$refs.dropdownContainer;
+      if (!dropdownContainer.contains(event.target)) {
+        this.isDropdownOpen = false;
+      }
+    },
     showForm(show_form,hide_form1,hide_form2) {
        this.check_show[show_form]=true;
        this.check_show[hide_form1]=false;
@@ -594,19 +629,8 @@ export default {
     getLocation(){
       ApiService.get(`/get-location`)
         .then(({ data }) => {
-          data.forEach((element) => {
-            this.location.push({
-              value: element["iata_code"],
-              name: element["iata_code"] + " (" + element["destination"] + ")",
-            });
-          });
+          this.location=data;
         })
-    },
-    normalizer(node) {
-      return {
-        id: node.value,
-        label: node.name,
-      };
     },
     toggleLogo(isHovered) {
       this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
@@ -1017,5 +1041,40 @@ grid-area:logo
   }
 .logo img{
   height:100px;
+}
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  border-radius: 5px;
+}
+.source-input{
+  background-color: #EBEDF3 !important;
+  border-color: #EBEDF3;
+  color: #3F4254;
+}
+.form-control {
+  width: 100%;
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px; /* Adjust as needed */
+  overflow-y: auto;
+}
+
+.option {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background-color: #f0f0f0;
 }
 </style>

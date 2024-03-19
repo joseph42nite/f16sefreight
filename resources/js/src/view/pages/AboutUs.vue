@@ -1,6 +1,6 @@
 <template>
     <div class="bg-white">
-      <div class="home-banner">
+      <div class="home-banner" id="about-us">
         <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
           <b-navbar toggleable="lg" type="dark" variant="info">
             <div class="container-fluid">
@@ -24,7 +24,7 @@
                     <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
                   </b-nav-item>
                   <b-nav-item>
-                    <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
+                    <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
                   </b-nav-item>
                 </b-navbar-nav>
               </b-collapse>
@@ -34,10 +34,9 @@
         </div>
         <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
           <div class="home-block" style="width:100%; padding: 0 15px;">
-            <div class="col-12 col-lg-5 fa-4x p-0 fa4x">
+            <div class="col-12 col-lg-6 fa-4x p-0 fa4x">
               Reshaping The Future Of Freight Forwarding
             </div>
-            <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
             <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Online Rates Click On The Below </h4>
             <div class="mt-4 mt-lg-10 px-8 px-lg-0"><button class="login-btn1" @click="firstPopUp('login_signin','login_signup')">Focus Aakash</button></div>
           </div>
@@ -148,21 +147,6 @@
           <!--end::Signin-->
         </div>
       </b-modal>
-
-      <!-- <template>
-        <div class="container" style="margin-top: 10%;">
-          <div class="row">
-            <div class="col-md-6 item-align-center">
-              <h1 class="justify-content pt-lg-30 my-5 font-weight-black text-black fa-4x">About F16s</h1>
-              <p class="fa-2x mt-10">We offer a comprehensive array of services, from the data management to analytics and shipment procurement management. You can count on the utmost professionalism in all that we do.</p>
-            </div>
-            <div class="col-md-6" style="margin-top: 5%;">
-              <img src="/media/custome/about/section.png" alt="flight_plan" width="640">
-            </div>
-          </div>
-        </div>
-      </template> -->
-
       <template>
         <div class="container" style="margin-top: 8%;margin-bottom: 5%;">
           <div class="row">
@@ -181,7 +165,7 @@
 
   
       <template>
-        <div style="padding-bottom: 5rem;">
+        <div style="padding-bottom: 5rem;" id="mission-section">
           <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x f2">Our Mission, Vision And Values</h1>
           <div class="container mb-10">
             <div class="row">
@@ -270,18 +254,18 @@
             <div class="col-3 col-md-3 mt-5 justify-content">
               <h2>QUICK LINKS</h2>
               <ul>
-                <li><router-link to="/login">Home</router-link></li>
-                <li><router-link to="/about-us">About Us</router-link></li>
-                <li><router-link to="/rate">Rates</router-link></li>
-                <li><router-link to="/contact-us">Contact Us</router-link></li>
+                <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
+                <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
+                <li><router-link to="/login">Rates</router-link></li>
+                <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 justify-content">
               <h2>Explore</h2>
               <ul>
-                <li><router-link to="/about-us">Our Mission</router-link></li>
-                <li><router-link to="/login">Our Focus Areas</router-link></li>
-                <li><router-link to="/login">Our airline affiliations</router-link></li>
+                <li @click="scrollToMission('#our-mission')"><router-link to="/#our-mission">Our Mission</router-link></li>
+                <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
+                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
                 <li><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
             </div>
@@ -379,6 +363,12 @@
       }
     },
     mounted() {
+      this.$router.afterEach((to, from) => {
+      const sectionId = to.hash;
+      if (sectionId) {
+        this.scrollToMission(sectionId);
+      }
+    });
     },
     methods: {
       showForm(show_form,hide_form1,hide_form2) {
@@ -453,8 +443,15 @@
         };
       },
       toggleLogo(isHovered) {
-      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
-    },
+        this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
+      },
+    scrollToMission(sectionId) {
+      const section = document.querySelector(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      // this.$router.push({ hash: sectionId });
+    }
     },
       // components: { directive }
   };
@@ -664,6 +661,9 @@ font-size: medium;
     color: white;
     font-size: 20px;
     font-weight: 600;
+}
+.login-btn1:hover{
+  background: #b18480;
 }
   .login-btn:hover {
     background: #b18480;

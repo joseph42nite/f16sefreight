@@ -79,7 +79,7 @@
       </div>
     </div>
   </div> -->
-  <div class="home-banner">
+  <div class="home-banner" id="home">
     <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
       <b-navbar toggleable="lg" type="dark" variant="info">
         <div class="container-fluid">
@@ -102,7 +102,7 @@
                 <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
               </b-nav-item>
               <b-nav-item>
-                <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
+                <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
               </b-nav-item>
             </b-navbar-nav>
           </b-collapse>
@@ -291,7 +291,7 @@
     </template>
 
     <template>
-      <div style="background-color: rgba(213, 179, 176, 0.2); padding-bottom: 10rem; min-height: 100vh;">
+      <div style="background-color: rgba(213, 179, 176, 0.2); padding-bottom: 10rem; min-height: 100vh;" id="focus-areas">
         <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">Our Focus Areas</h1>
         <div class="col-md-6 block">
           <p>We bring our expertise to multiple sectors, developing the industry's future and redefining what is possible, one project at a time.</p>
@@ -354,7 +354,7 @@
     </template>
 
     <template>
-      <div style="background-color: rgba(213, 179, 176, 0.2);padding-bottom: 5rem;">
+      <div style="background-color: rgba(213, 179, 176, 0.2);padding-bottom: 5rem;" id="airline-affiliations">
         <div class="container">
           <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">Our Airline Affiliations</h1>
           <div class="col-md-6 block">
@@ -417,20 +417,20 @@
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>QUICK LINKS</h2>
             <ul>
-              <li><router-link to="/login">Home</router-link></li>
-              <li><router-link to="/about-us">About Us</router-link></li>
-              <li><router-link to="/rate">Rates</router-link></li>
-              <li><router-link to="/contact-us">Contact Us</router-link></li>
+              <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
+              <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
+              <li @click="scrollToMission('#home')"><router-link to="/login">Rates</router-link></li>
+              <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>Explore</h2>
             <ul>
-              <li><router-link to="/about-us">Our Mission</router-link></li>
-              <li><router-link to="/login">Our Focus Areas</router-link></li>
-              <li><router-link to="/login">Our airline affiliations</router-link></li>
-              <li><router-link to="/contact-us">Contact Us</router-link></li>
-            </ul>
+                <li @click="scrollToMission('#our-mission')"><router-link to="#our-mission">Our Mission</router-link></li>
+                <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
+                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
+                <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
+              </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 item-align-right">
             <div class="row d-flex">
@@ -529,6 +529,12 @@ export default {
     }
   },
   mounted() {
+    this.$router.afterEach((to, from) => {
+      const sectionId = to.hash;
+      if (sectionId) {
+        this.scrollToMission(sectionId);
+      }
+    });
   },
   methods: {
     showForm(show_form,hide_form1,hide_form2) {
@@ -605,6 +611,13 @@ export default {
     toggleLogo(isHovered) {
       this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
     },
+     scrollToMission(sectionId) {
+      const section = document.querySelector(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      // this.$router.push({ hash: sectionId });
+    }
   },
     // components: { directive }
 };
@@ -751,6 +764,9 @@ export default {
 
 .body{
 background-color: white;
+}
+.login-btn1:hover{
+  background: #b18480;
 }
 .home-banner { 
   /* The image used */
@@ -925,7 +941,23 @@ ul li a{
     padding-bottom: 15%;
   }
 }
-
+@media(min-width:1000px)and (max-width: 1200px){
+  .card1 
+{
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 20px;
+  /* height: 400px; */
+  transition: .4s all ease-in;
+  border: none;
+  margin: 25px auto;
+  min-width: 300px;
+  border-radius: 13px;
+}
+.product-detail{
+  position: relative;
+}
+}
 @media (max-width: 767px) {
   .responsive-bg-w-text {
     padding-top: 30%;

@@ -1,8 +1,8 @@
 <template>
     <div class="main-page w-100">
-        <div class="search-area" style="margin-top: 2%">
+        <div class="search-area" style="margin-top: 2%;background-color: rgba(213, 179, 176, 0.2);">
             <div class="d-flex justify-content-between">
-                <img src="/media/custome/aakash-logo.png" alt="aakash logo" width="100" height="100" class="img-fluid" />
+                <img src="/media/custome/FocusAkashLogo.png" alt="aakash logo" width="300" height="50" class="img-fluid"/>
                 <a href="javascript:void(0)" @click="report_popup=true">Report here</a>
             </div>
             <div class="row mt-3">
@@ -41,13 +41,13 @@
                         <option value="all">All Rate</option>
                     </select>
                 </div>
-                <div class="col-12 col-md-1">
+                <div class="col-12 col-md-1 mt-7">
                     <button class="btn btn1" @click="get_rate()">Rates</button>
                 </div>
             </div>
             <!-- display area code -->
             <div class="row" style="margin-top: 2%">
-                <div :class="is_all_rate ? 'col-12 col-md-12' : 'col-12 col-md-8'
+                <div :class="is_all_rate ? 'col-12 col-md-12 rate_area' : 'col-12 col-md-8 rate_area'
                     ">
                     <div class="rate-area mr-1">
                         <div class="sticky-div">
@@ -100,7 +100,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="col-12 col-md-4" v-if="!is_all_rate">
+                <div class="col-12 col-md-4 rate_area" v-if="!is_all_rate">
                     <div class="rate-area ml-1">
                         <div>
                             <span>FSC : <span>{{ ams_arr.fsc }}</span></span><br>
@@ -131,7 +131,7 @@
                     <textarea name="report_description" id="report_description" cols="30" rows="3" v-model="report_arr.description" class="form-control"></textarea>
                 </div>
                 <div class="text-center">
-                    <button class="btn font-weight-bolder btn-primary py-3" @click="submit_report()">Submit</button>
+                    <button class="btn font-weight-bolder py-3 btn1" @click="submit_report()">Submit</button>
                 </div>
             </div>
         </b-modal>    
@@ -665,7 +665,7 @@ export default {
 .btn1 {
     background: #c0392b;
     color: white;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
 }
 
@@ -734,5 +734,10 @@ export default {
     background-color: #f1f2f6;
     padding: 4px 2%;
     border-radius: 5px;
+}
+@media (max-width: 768px)  {
+    .rate_area{
+        margin-top: 15px;
+    }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white">
-    <div class="home-banner">
+    <div class="home-banner" id="contact-us">
       <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
         <b-navbar toggleable="lg" type="dark" variant="info">
           <div class="container-fluid">
@@ -24,7 +24,7 @@
                   <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
                 </b-nav-item>
                 <b-nav-item>
-                  <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
+                  <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
                 </b-nav-item>
               </b-navbar-nav>
             </b-collapse>
@@ -34,10 +34,9 @@
       </div>
       <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
         <div class="home-block" style="width:100%; padding: 0 15px;">
-          <div class="col-12 col-lg-5 fa-4x p-0 fa4x">
+          <div class="col-12 col-lg-6 fa-4x p-0 fa4x">
               Reshaping The Future Of Freight Forwarding
           </div>
-          <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
           <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Online Rates Click On The Below </h4>
           <div class="mt-4 mt-lg-10 px-8 px-lg-0"><button class="login-btn1" @click="firstPopUp('login_signin','login_signup')">Focus Aakash</button></div>
         </div>
@@ -161,10 +160,9 @@
 
     <template>
       <div class="container" style="background-color: rgba(213, 179, 176, 0.2); margin-top: 10rem; border-radius: 13px;box-shadow: 0px 0px 10px #80808080;">
-        <!-- <h1 class="text-center pt-lg-20 font-weight-black text-black fa-4x">We'd Love To Hear From You</h1> -->
         <div class="text-center pt-lg-20 font-weight-black text-black fa-4x">
-            <span class="d-none d-lg-inline">We'd Love To Hear From You</span>
-            <span class="d-lg-none" style="font-size: 22px; font-weight: 600;">We'd Love To Hear From You</span>
+          <span class="d-none d-lg-inline">We'd Love To Hear From You</span>
+          <span class="d-lg-none" style="font-size: 22px; font-weight: 600;">We'd Love To Hear From You</span>
         </div>
         <div class="container">
           <div class="row">
@@ -267,19 +265,19 @@ NO. 18, 1,2nd CROSS 1st STAGE, MEDHALLI VILLAGE, VIRGONAGAR&t=&z=13&ie=UTF8&iwlo
             <div class="col-3 col-md-3 mt-5 justify-content">
               <h2>QUICK LINKS</h2>
               <ul>
-                <li><router-link to="/login">Home</router-link></li>
-                <li><router-link to="/about-us">About Us</router-link></li>
-                <li><router-link to="/rate">Rates</router-link></li>
-                <li><router-link to="/contact-us">Contact Us</router-link></li>
+                <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
+                <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
+                <li><router-link to="/login">Rates</router-link></li>
+                <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 justify-content">
               <h2>Explore</h2>
               <ul>
-                <li><router-link to="/about-us">Our Mission</router-link></li>
-                <li><router-link to="/login">Our Focus Areas</router-link></li>
-                <li><router-link to="/login">Our airline affiliations</router-link></li>
-                <li><router-link to="/contact-us">Contact Us</router-link></li>
+                <li @click="scrollToMission('#our-mission')"><router-link to="#our-mission">Our Mission</router-link></li>
+                <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
+                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
+                <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 item-align-right">
@@ -384,7 +382,12 @@ export default {
     }
   },
   mounted() {
-    
+    this.$router.afterEach((to, from) => {
+      const sectionId = to.hash;
+      if (sectionId) {
+        this.scrollToMission(sectionId);
+      }
+    });
   },
   methods: {
     showForm(show_form, hide_form1, hide_form2) {
@@ -476,6 +479,13 @@ export default {
     toggleLogo(isHovered) {
       this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
     }, 
+    scrollToMission(sectionId) {
+      const section = document.querySelector(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      // this.$router.push({ hash: sectionId });
+    }
   },
 };
 </script>
@@ -492,6 +502,9 @@ export default {
 }
 .nav-link-custom {
   font-size: medium;
+}
+.login-btn1:hover{
+  background: #b18480;
 }
 @media (max-width: 768px) {
   .container {

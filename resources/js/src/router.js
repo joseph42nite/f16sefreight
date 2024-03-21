@@ -77,6 +77,12 @@ export default new Router({
           component: () => import("@/view/superadmin/Account.vue"),
           meta: { userType: 'superadmin' }
         },
+        {
+          path: "all-contacts",
+          name: "superadmin-allcontacts",
+          component: () => import("@/view/superadmin/AllContact.vue"),
+          meta: { userType: 'superadmin' }
+        },
       ]
     },
     //-----------for user login-------------------

@@ -2,8 +2,8 @@
     <div class="main-page w-100">
         <div class="search-area" style="margin-top: 2%;background-color: rgba(213, 179, 176, 0.2);">
             <div class="d-flex justify-content-between">
-                <img src="/media/custome/FocusAkashLogo.png" alt="aakash logo" width="300" height="50" class="img-fluid"/>
-                <a href="javascript:void(0)" @click="report_popup=true">Report here</a>
+                <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="300" height="50" class="img-fluid mb-5"/>
+                <!-- <a href="javascript:void(0)" @click="report_popup=true">Report here</a> -->
             </div>
             <div class="row mt-3">
                 <div class="col-12 col-md-3">
@@ -98,9 +98,13 @@
                                     <td>
                                         {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
                                     </td>
-                                    <td style="color: #ee5253;">
+                                    <!-- <td style="color: #ee5253;">
+                                        {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
+                                    </td> -->
+                                    <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
                                         {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
                                     </td>
+
                                 </tr>
                                 <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
                             </tbody>
@@ -110,18 +114,25 @@
                 <div class="col-12 col-md-4 rate_area" v-if="!is_all_rate">
                     <div class="rate-area ml-1">
                         <div>
-                            <span>FSC : <span>{{ ams_arr.fsc }}</span></span><br>
-                            <span>SCC : <span>{{ ams_arr.scc }}</span></span><br>
+                            <span class="d-flex"><span class="d-block" style="width:80px">FSC </span>: {{ ams_arr.fsc }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">SCC </span>: {{ ams_arr.scc }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">XRAY </span>: {{ ams_arr.xray }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">MISC </span>: {{ ams_arr.misc }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">CTG </span>: {{ ams_arr.ctg }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">AWB FEE </span>: {{ ams_arr.awb_fee }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">MAWB </span>: {{ ams_arr.mawb }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px">HAWB : </span>: {{ ams_arr.hawb }}</span>
+                            <!-- <span>SCC : <span>{{ ams_arr.scc }}</span></span><br>
                             <span>XRAY : <span>{{ ams_arr.xray }}</span></span><br>
                             <span>MISC : <span>{{ ams_arr.misc }}</span></span><br>
                             <span>CTG : <span>{{ ams_arr.ctg }}</span></span><br>
                             <span>AWB FEE : <span>{{ ams_arr.awb_fee }}</span></span><br>
                             <span>MAWB : <span>{{ ams_arr.mawb }}</span></span><br>
-                            <span>HAWB : <span>{{ ams_arr.hawb }}</span></span><br>
+                            <span>HAWB : <span>{{ ams_arr.hawb }}</span></span><br> -->
                         </div>
                         <hr>
                         <div v-if="user_notice" class="d-flex">
-                            <h4 class="text-danger">Notice:</h4><span>{{ user_notice }}</span>
+                            <h4 class="text-danger mr-3">Notice: </h4><span>{{ user_notice }}</span>
                         </div>
                     </div>
                 </div>
@@ -763,7 +774,9 @@ export default {
   background-color: #f0f0f0;
 }
 .selected-row {
-    background-color: lightblue;
+    background-color: #cf5244ff;
+    color:white;
+    
 }
 .sticky-div {
     position: sticky;

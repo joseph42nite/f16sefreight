@@ -321,7 +321,8 @@
                   <div class="product-detail custom-mr">
                     <h5 class="card-title heading text-center fa-2x mt-8 mb-8">E- Freight rates</h5>
                     <div class="text-center text-white mx-5 mt-10" style="font-size: 20px;font-weight: 300;">
-                    <p>With close to 100+ airline affiliations with F16s, we provide seamless EDI transfer for freight forwarders in India. FHL, FWB and E-AWS can be done through our services. Our staffs are trained IATA personnel, and due to our remote working style we have complete data security. </p>
+                    <!-- <p>With close to 100+ airline affiliations with F16s, we provide seamless EDI transfer for freight forwarders in India. FHL, FWB and E-AWS can be done through our services. Our staffs are trained IATA personnel, and due to our remote working style we have complete data security. </p> -->
+                    <p>With sophisticated planning, we have developed a service for the IATA agents to reduce their operational timing from 1 minute to 15 secs. Our team has developed a portal where you can check the rates, get the surcharges and AMS all at once. Reducing the redundant part of the job that consumes valuable time.</p>
                   </div>
                   </div>
               </div>

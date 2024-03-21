@@ -36,14 +36,14 @@
 
           <b-collapse id="nav-collapse" is-nav>
             <b-navbar-nav class="ml-auto">
-              <b-nav-item to="/login" class="nav-link-custom">Home</b-nav-item>
-              <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
-              <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
+              <b-nav-item to="/login" class="nav-link-custom text-white">Home</b-nav-item>
+              <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
+              <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
             </b-navbar-nav>
 
             <b-navbar-nav class="ml-auto">
               <b-nav-item>
-                <button class="btn btn-danger">
+                <button class="btn logout" style="background-color: rgb(115 21 12);">
                   <router-link to="#" @click.native="logout" v-slot="{ href, navigate, isActive, isExactActive }">
                     <li
                       aria-haspopup="true"
@@ -55,14 +55,7 @@
                       ]"
                     >
                     <a :href="href" class="menu-link" @click="navigate" style="text-decoration: none;">
-                      <img
-                        src="/media/custome/menu-icons/logout.svg"
-                        alt="logout icon"
-                        class="img-fluid"
-                        width="18"
-                        height="18"
-                      />
-                      &nbsp;&nbsp;&nbsp;
+                     
                       <span class="menu-text">Logout</span>
                     </a>
                     </li>
@@ -70,7 +63,7 @@
                 </button>
                 <!-- <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button> -->
               </b-nav-item>
-              <b-nav-item class="mt-2 nav-link-custom">
+              <b-nav-item class="mt-2 nav-link-custom text-white">
                 {{currentUser.name}}
               </b-nav-item>
             </b-navbar-nav>
@@ -131,6 +124,9 @@ export default {
 .nav-link-custom:hover {
   color: red !important;
 }
+.navbar-nav .nav-link{
+  color: white !important;
+}
 .nav-link-custom{
   font-size: medium;
 }
@@ -140,16 +136,23 @@ export default {
 .wrap:hover.menu-text{
   color:#923B33;
 }
-.wrap:hover .btn.btn-danger {
-  background-color: white;
-  color: #923B33;
+.wrap:hover .btn.logout {
+  background-color: white !important;
+  color: #923B33 !important;
+}
+.wrap:hover .btn.logout .menu-text{
+  color: #923B33 !important;
+}
+.logout:hover {
+  background-color: white !important;
+  color: #923B33 !important;
 }
 a.menu-link{
 text-decoration: none !important;
 color: black;
 }
 .menu-text{
-color: #923B33;
+color: White;
 }
 @media (max-width: 768px) {
   .container {

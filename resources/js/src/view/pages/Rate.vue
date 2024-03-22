@@ -19,7 +19,7 @@
                 <div class="col-12 col-md-3">
                     <label for="dist_form">To</label>
                     <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
-                        <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control">
+                        <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control" autocomplete="off">
                         <div v-if="isDropdownOpen_to" class="dropdown-options">
                             <div v-for="(item, index) in filteredLocations_to" :key="index" @click="selectOption_to(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
                         </div>
@@ -42,7 +42,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-1 mt-7">
-                    <button class="btn btn1" @click="get_rate()">Rates</button>
+                    <button class="btn btn1" @click="get_rate()" id="rate_id">Rates</button>
                 </div>
             </div>
             <!-- display area code -->
@@ -51,7 +51,7 @@
                     ">
                     <div class="rate-area mr-1">
                         <div class="sticky-div">
-                            <div style="display: flex; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; white-space: nowrap;">
                                 <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate">Export</span>
                                 <div>
                                     <input type="number" v-model="extra_comission" v-if="!is_all_rate" />
@@ -70,58 +70,58 @@
                                 <span class="font-weight-bold text-dark" style="padding: 5px;">Export rate</span>
                             </vue-excel-xlsx>
                         </div>
-                        <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
-                            primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
-                            @filtered="onFiltered" v-if="is_all_rate">
-                        </b-table>
-                        <table class="table" v-else>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Airline</th>
-                                    <th>Product Type</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th>Added Profit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }">
-                                    <td>
-                                        <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
-                                    </td>
-                                    <td> {{ rate.carrier_code +"(" + rate.carrier_prefix +")"}}</td>
-                                    <td>{{ rate.product_name }}</td>
-                                    <td>
-                                        {{ Object.keys(rate.my_rate)[0] }}
-                                    </td>
-                                    <td>
-                                        {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
-                                    </td>
-                                    <!-- <td style="color: #ee5253;">
-                                        {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
-                                    </td> -->
-                                    <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
-                                        {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
-                                    </td>
+                            <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
+                                primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
+                                @filtered="onFiltered" v-if="is_all_rate">
+                            </b-table>
+                            <table class="table" v-else>
+                                <thead>
+                                    <tr style="white-space: nowrap;">
+                                        <th>#</th>
+                                        <th>Airline</th>
+                                        <th>Product Type</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Added Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }">
+                                        <td>
+                                            <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
+                                        </td>
+                                        <td> {{ rate.carrier_code +"(" + rate.carrier_prefix +")"}}</td>
+                                        <td>{{ rate.product_name }}</td>
+                                        <td>
+                                            {{ Object.keys(rate.my_rate)[0] }}
+                                        </td>
+                                        <td>
+                                            {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
+                                        </td>
+                                        <!-- <td style="color: #ee5253;">
+                                            {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
+                                        </td> -->
+                                        <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
+                                            {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
+                                        </td>
 
-                                </tr>
-                                <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
-                            </tbody>
-                        </table>
+                                    </tr>
+                                    <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
+                                </tbody>
+                            </table>
                     </div>
                 </div>
                 <div class="col-12 col-md-4 rate_area" v-if="!is_all_rate">
                     <div class="rate-area ml-1">
                         <div>
-                            <span class="d-flex"><span class="d-block" style="width:80px">FSC </span>: {{ ams_arr.fsc }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">SCC </span>: {{ ams_arr.scc }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">XRAY </span>: {{ ams_arr.xray }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">MISC </span>: {{ ams_arr.misc }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">CTG </span>: {{ ams_arr.ctg }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">AWB FEE </span>: {{ ams_arr.awb_fee }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">MAWB </span>: {{ ams_arr.mawb }}</span>
-                            <span class="d-flex"><span class="d-block" style="width:80px">HAWB : </span>: {{ ams_arr.hawb }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FSC :</span> {{ ams_arr.fsc }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">SCC :</span> {{ ams_arr.scc }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">XRAY :</span> {{ ams_arr.xray }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MISC :</span> {{ ams_arr.misc }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">CTG :</span> {{ ams_arr.ctg }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">AWB FEE :</span> {{ ams_arr.awb_fee }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MAWB :</span> {{ ams_arr.mawb }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">HAWB :</span> {{ ams_arr.hawb }}</span>
                             <!-- <span>SCC : <span>{{ ams_arr.scc }}</span></span><br>
                             <span>XRAY : <span>{{ ams_arr.xray }}</span></span><br>
                             <span>MISC : <span>{{ ams_arr.misc }}</span></span><br>
@@ -131,8 +131,9 @@
                             <span>HAWB : <span>{{ ams_arr.hawb }}</span></span><br> -->
                         </div>
                         <hr>
-                        <div v-if="user_notice" class="d-flex">
-                            <h4 class="text-danger mr-3">Notice: </h4><span>{{ user_notice }}</span>
+                        <div v-if="user_notice">
+                            <h2 class="mr-3 text-center" style="color: #cf5244ff;">Notification</h2>
+                            <h4>{{ user_notice }}</h4>
                         </div>
                     </div>
                 </div>
@@ -303,6 +304,7 @@ export default {
             });
         },
         get_rate() {
+            $('#rate_id').html("Loading..");
             this.rate_data = "";
             this.selectedRows=[];
             let rate_data_loop = [];
@@ -310,6 +312,7 @@ export default {
             let rate_index = 3;
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
+                    $('#rate_id').html("Rates");
                     $(".copy-cls").html("Export");
                     this.searched_country_code=data.country_code;
                     this.searched_region=data.region;
@@ -788,6 +791,9 @@ export default {
 @media (max-width: 768px)  {
     .rate_area{
         margin-top: 15px;
+    }
+    .sticky-div{
+        width: 130%;
     }
 }
 </style>

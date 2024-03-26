@@ -4,8 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Test</title>
-    <link rel="icon" href="/media/custome/fav.png" type="image/x-icon">
+    <title>F16s</title>
+    <!-- <link rel="icon" href="/media/custome/logo.png" type="image/x-icon"> -->
     <link rel="stylesheet" href="{{ asset('/css/app.css') }}">
 </head>
 

@@ -20,7 +20,7 @@ class LoginController extends Controller
         $current_date=date("Y-m-d");
         //for user valid login check
         // ($user_data->is_active==0 || $user_data->daily_login_count>2) && $role=='user'
-        if(0){
+        if(($user_data->is_active==0 || $user_data->daily_login_count>2) && $role=='user'){
             auth()->guard($guard)->logout();
             return response()->json(['error' => 'Blocked'], 401);
         }

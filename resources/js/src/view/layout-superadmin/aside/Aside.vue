@@ -29,10 +29,6 @@
           <KTMenu></KTMenu>
         </perfect-scrollbar>
       </div>
-      <div class="position-absolute w-100" style="bottom: 23px;">
-        <div><hr></div>
-        <div class="text-center mt-5">Hello logo</div>
-      </div>
     </div>
   </div>
   <!-- end:: Aside -->

@@ -2,7 +2,7 @@
   <!-- begin:: Aside -->
   <div>
   <div class="brand flex-column-auto" id="kt_brand" ref="kt_brand">
-    <div class="text-white mt-15 mb-2 ml-5">
+    <div class="text-white mt-5 mb-2 ml-5">
         <div><h2 class="text-nowrap">{{currentUser.name}}</h2></div>
         <div><h5 class="text-nowrap">Admin</h5></div>
     </div>

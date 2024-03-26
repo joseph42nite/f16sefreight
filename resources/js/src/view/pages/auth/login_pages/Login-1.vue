@@ -280,7 +280,7 @@
             </div>
           </div>
         </div>
-        <div class="row">
+        <div class="row" id="our-mission">
           <div class=" col-lg-6">
             <div class="container col-10 px-10 mt-0">
               <h1 class="fw-bolder fa-4x" style="font-weight: 600;">Mission Statement</h1>
@@ -426,17 +426,17 @@
             <ul>
               <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
               <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
-              <li @click="scrollToMission('#home')"><router-link to="/login">Rates</router-link></li>
+              <!-- <li @click="scrollToMission('#home')"><router-link to="/login">Rates</router-link></li> -->
               <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>Explore</h2>
             <ul>
-                <li @click="scrollToMission('#our-mission')"><router-link to="#our-mission">Our Mission</router-link></li>
+                <li @click="scrollToMission('#our-mission')"><router-link to="/login">Our Mission</router-link></li>
                 <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
                 <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
-                <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
+                <!-- <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li> -->
               </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 item-align-right">
@@ -675,7 +675,7 @@ export default {
   text-align: center;
   color: white;
   cursor: pointer;
-  font-size: large;
+  font-size: 16px;
 }
 .btn-color {
   background: #923B33;

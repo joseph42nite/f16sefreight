@@ -29,7 +29,7 @@ class RateController extends Controller
         }
         $location_details=Location::where('iata_code',$request->to)->first(['country_code','zone','region']);
         $zone=$location_details->zone;
-        $rate_data=Rate::where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->orWhere('zone', $zone)->get();
+        $rate_data=Rate::where('online_offline',$request->on_off)->where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->orWhere('zone', $zone)->get();
         $data['rates']=$rate_data;
         $data['country_code']=$location_details->country_code;
         $data['region']=$location_details->region;

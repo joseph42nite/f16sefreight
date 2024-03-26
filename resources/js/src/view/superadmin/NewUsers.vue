@@ -70,7 +70,7 @@
         <b-form-group>
           <b-input-group class="input-group-merge">
             <div class="custom-dropdown" ref="dropdownContainer" @click="toggleDropdown">
-              <input type="text" v-model="searchQuery" placeholder="Search source" id="from_id" class="form-control">
+              <input type="text" v-model="searchQuery" placeholder="Search source" id="from_id" class="form-control" autocomplete="off">
               <div v-if="isDropdownOpen" class="dropdown-options">
                 <div v-for="(item, index) in filteredLocations" :key="index" @click="selectOption(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
               </div>

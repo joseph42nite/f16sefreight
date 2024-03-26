@@ -1,28 +1,5 @@
 <template>
   <div v-if="isAuthenticated">
-    <!-- <div class="container"> -->
-      <!-- <div class="row">
-        <div class="w-100">
-          <b-navbar toggleable="lg" type="dark" variant="info">
-            <b-navbar-brand href="#">NavBar</b-navbar-brand>
-            <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
-            <b-collapse id="nav-collapse" is-nav>
-              <b-navbar-nav>
-                <b-nav-item href="#">Link</b-nav-item>
-              </b-navbar-nav>
-              <b-navbar-nav class="ml-auto">
-                <b-navbar-nav>
-                  <b-nav-item>Dhiraj Thakur</b-nav-item>
-                </b-navbar-nav>
-              </b-navbar-nav>
-            </b-collapse>
-          </b-navbar>
-        </div>
-        <transition name="fade-in-up">
-          <router-view />
-        </transition>
-      </div> -->
-      <!-- <div class="home-banner" id="home"> -->
     <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
       <b-navbar toggleable="lg" type="dark" variant="info">
         <div class="container-fluid">
@@ -61,9 +38,8 @@
                     </li>
                   </router-link>
                 </button>
-                <!-- <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button> -->
               </b-nav-item>
-              <b-nav-item class="mt-2 nav-link-custom text-white">
+              <b-nav-item class="mt-2 nav-link-custom text-white" style="font-size: 18px;">
                 {{currentUser.name}}
               </b-nav-item>
             </b-navbar-nav>

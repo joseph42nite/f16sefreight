@@ -99,7 +99,7 @@
 
             <b-navbar-nav class="ml-auto">
               <b-nav-item>
-                <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
+                <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
               </b-nav-item>
               <b-nav-item>
                 <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
@@ -131,7 +131,8 @@
               <!-- <img src="/media/custome/login/main-logo.png" alt="main login image" class="img-fluid" width="100" height="100"> -->
             </div>
             <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or password</span></div>
-            <div class="p-3 text-center" v-else-if="errors == 'Blocked'"><span class="text-danger h6">You can't login. Contact admin</span></div>
+            <div class="p-3 text-center" v-else-if="errors == 'Blocked'"><span class="text-danger h6">Your account is blocked. Contact admin</span></div>
+            <div class="p-3 text-center" v-else-if="errors == 'Daily_Limit'"><span class="text-danger h6">Your daily login limit is exceeded. Login again tomorrow</span></div>
             <div class="p-3 text-center" v-else-if="errors == 'Expired'"><span class="text-danger h6">Your plan is expired. Please renew the plan</span></div>
             <div class="form-group">
               <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email" placeholder="Email address" id="login_email" />
@@ -208,7 +209,7 @@
             <div class="form-group">
               <b-input-group class="input-group-merge">
                 <div class="custom-dropdown" ref="dropdownContainer" @click="toggleDropdown">
-                  <input type="text" v-model="searchQuery" placeholder="Search source" id="from_id" class="form-control source-input">
+                  <input type="text" v-model="searchQuery" placeholder="Search source" id="from_id" class="form-control source-input" autocomplete="off">
                   <div v-if="isDropdownOpen" class="dropdown-options">
                     <div v-for="(item, index) in filteredLocations" :key="index" @click="selectOption(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
                   </div>

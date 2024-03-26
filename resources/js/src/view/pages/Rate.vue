@@ -1,13 +1,13 @@
 <template>
     <div class="main-page w-100">
         <div class="search-area" style="margin-top: 2%;background-color: rgba(213, 179, 176, 0.2);">
-            <div class="d-flex justify-content-between">
+            <div class="text-center">
                 <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="300" height="50" class="img-fluid mb-5"/>
                 <!-- <a href="javascript:void(0)" @click="report_popup=true">Report here</a> -->
             </div>
-            <div class="row mt-3">
-                <div class="col-12 col-md-3">
-                    <label for="dist_form">From</label>
+            <div class="row mt-3 fw-600">
+                <div class="col-12 col-md-2">
+                    <label for="dist_form">Origin</label>
                     <input type="text" v-model="search_form.from" placeholder="Search source" class="form-control" readonly style="background: lightgrey;">
                     <!-- <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
                         <input type="text" v-model="searchQuery_from" placeholder="Search source" id="from_id" class="form-control">
@@ -16,8 +16,8 @@
                         </div>
                     </div> -->
                 </div>
-                <div class="col-12 col-md-3">
-                    <label for="dist_form">To</label>
+                <div class="col-12 col-md-2">
+                    <label for="dist_form">Destination</label>
                     <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
                         <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control" autocomplete="off">
                         <div v-if="isDropdownOpen_to" class="dropdown-options">
@@ -26,13 +26,13 @@
                     </div>
                 </div>
                 <div class="col-12 col-md-3">
-                    <label for="dist_form">Weight in kg</label>
+                    <label for="dist_form">Weight in Kgs</label>
                     <input type="text" @keyup="isNumber()" class="form-control" placeholder="Enter quantity"
                         v-model="search_form.quantity" :readonly="search_form.selected_quantity != 'custom'" />
                     <span class="err_cls" id="quantity_msg"></span>
                 </div>
                 <div class="col-12 col-md-2">
-                    <label for="dist_form">Weights Type</label>
+                    <label for="dist_form">Slab</label>
                     <select name="" id="selected_quantity_1" class="form-control" v-model="search_form.selected_quantity"
                         @change="check_rate_type()">
                         <option value="custom">Custom</option>
@@ -41,7 +41,15 @@
                         <option value="all">All Rate</option>
                     </select>
                 </div>
-                <div class="col-12 col-md-1 mt-7">
+                <div class="col-12 col-md-2">
+                    <label for="on_off">Offline/Online</label>
+                    <select name="" id="on_off" class="form-control" v-model="search_form.on_off">
+                        <option value="">Select mode</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-1 mt-7 text-center">
                     <button class="btn btn1" @click="get_rate()" id="rate_id">Rates</button>
                 </div>
             </div>
@@ -52,29 +60,26 @@
                     <div class="rate-area mr-1">
                         <div class="sticky-div">
                             <div style="display: flex; justify-content: space-between; white-space: nowrap;">
-                                <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate">Export</span>
-                                <div>
+                                <div class="d-flex">
                                     <input type="number" v-model="extra_comission" v-if="!is_all_rate" />
+                                    <select name="profit_type" id="profit_type" class="mx-3" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
+                                        <option value="total">INR</option>
+                                        <option value="per_kg">-/kg</option>
+                                    </select>
                                     <span @click="extraComission()" class="copy-cls-css" v-if="!is_all_rate">Add profit</span>
                                 </div>
-                                <select name="profit_type" id="profit_type" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
-                                    <option value="total">Total profit</option>
-                                    <option value="per_kg">-/kg</option>
-                                </select>
+                                <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate">Export</span>
                             </div>
                             <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
                                 :sheet-name="'rate'" v-if="is_all_rate">
-                                <!-- <button class="btn create_btn font-weight-bold py-2 text-dark">
-                                    
-                                </button> -->
-                                <span class="font-weight-bold text-dark" style="padding: 5px;">Export rate</span>
+                                <span class="font-weight-bold text-dark" style="padding: 5px; ">Export Rate</span>
                             </vue-excel-xlsx>
                         </div>
                             <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
                                 primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
                                 @filtered="onFiltered" v-if="is_all_rate">
                             </b-table>
-                            <table class="table" v-else>
+                            <table class="table mt-2" v-else>
                                 <thead>
                                     <tr style="white-space: nowrap;">
                                         <th>#</th>
@@ -98,9 +103,6 @@
                                         <td>
                                             {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
                                         </td>
-                                        <!-- <td style="color: #ee5253;">
-                                            {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
-                                        </td> -->
                                         <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
                                             {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
                                         </td>
@@ -122,13 +124,6 @@
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">AWB FEE :</span> {{ ams_arr.awb_fee }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MAWB :</span> {{ ams_arr.mawb }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">HAWB :</span> {{ ams_arr.hawb }}</span>
-                            <!-- <span>SCC : <span>{{ ams_arr.scc }}</span></span><br>
-                            <span>XRAY : <span>{{ ams_arr.xray }}</span></span><br>
-                            <span>MISC : <span>{{ ams_arr.misc }}</span></span><br>
-                            <span>CTG : <span>{{ ams_arr.ctg }}</span></span><br>
-                            <span>AWB FEE : <span>{{ ams_arr.awb_fee }}</span></span><br>
-                            <span>MAWB : <span>{{ ams_arr.mawb }}</span></span><br>
-                            <span>HAWB : <span>{{ ams_arr.hawb }}</span></span><br> -->
                         </div>
                         <hr>
                         <div v-if="user_notice">
@@ -153,7 +148,12 @@
                     <button class="btn font-weight-bolder py-3 btn1" @click="submit_report()">Submit</button>
                 </div>
             </div>
-        </b-modal>    
+        </b-modal>
+        <div id="whatsapp-float">
+            <a href="https://wa.me/9718798152" target="_blank" rel="noopener noreferrer">
+                <img src="media/custome/w4.png" alt="WhatsApp">
+            </a>
+        </div>    
     </div>
 </template>
 <script>
@@ -168,7 +168,8 @@ export default {
                 from: null,
                 to: "",
                 selected_quantity: "custom",
-                quantity: "200",
+                quantity: "",
+                on_off:""
             }),
             rate_data: "",
             rate_data_copy: {},
@@ -400,7 +401,7 @@ export default {
                 .catch((err) => { });
         },
         copyToClipboard() {
-            if(confirm("This rate can be wrong. confirm it from official website")){
+            if(confirm("The rates provided are in accordance with the current tariff. For system rates, please contact the respective airlines directly. Should there be any changes in other charges, kindly click on “WhatsApp” button to resolve the issue at the earliest. Always do manual checking before quoting to clients.")){
                 let clip_arr = [];
                 let arr_len = Object.entries(this.rate_data_copy).length;
                 let carrier_code='';
@@ -734,11 +735,13 @@ export default {
 .copy-cls-css {
     cursor: pointer;
     color: white;
-    background: gainsboro;
+    background: #c0392b;
     border-radius: 5px;
-    padding: 5px;
+    padding: 5px 10px;
 }
-
+.fw-600{
+    font-weight:600;
+}
 .err_cls {
     color: #c0392b;
 }
@@ -777,9 +780,8 @@ export default {
   background-color: #f0f0f0;
 }
 .selected-row {
-    background-color: #cf5244ff;
-    color:white;
-    
+    background-color: #ffcccc;
+    font-weight: 600;  
 }
 .sticky-div {
     position: sticky;
@@ -796,4 +798,26 @@ export default {
         width: 130%;
     }
 }
+</style>
+<style>
+    .menu-text{
+        font-size: 14px !important;
+    }
+    #whatsapp-float {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000; /* Ensure it's above other content */
+    }
+
+    #whatsapp-float img {
+        width: 60px; /* Adjust size as needed */
+        height: auto; /* Maintain aspect ratio */
+        border-radius: 50%; /* Circular shape */
+        transition: transform 0.2s; /* Smooth animation */
+    }
+
+    #whatsapp-float img:hover {
+        transform: scale(1.1); /* Scale up on hover */
+    }
 </style>

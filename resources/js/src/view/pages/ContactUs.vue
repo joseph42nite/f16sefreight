@@ -21,7 +21,7 @@
 
               <b-navbar-nav class="ml-auto">
                 <b-nav-item>
-                  <button @click="firstPopUp('login_signin','login_signup')" class="btn btn-danger">Login</button>
+                  <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
                 </b-nav-item>
                 <b-nav-item>
                   <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
@@ -267,7 +267,6 @@ NO. 18, 1,2nd CROSS 1st STAGE, MEDHALLI VILLAGE, VIRGONAGAR&t=&z=13&ie=UTF8&iwlo
               <ul>
                 <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
                 <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
-                <li><router-link to="/login">Rates</router-link></li>
                 <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
             </div>
@@ -277,7 +276,6 @@ NO. 18, 1,2nd CROSS 1st STAGE, MEDHALLI VILLAGE, VIRGONAGAR&t=&z=13&ie=UTF8&iwlo
                 <li @click="scrollToMission('#our-mission')"><router-link to="#our-mission">Our Mission</router-link></li>
                 <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
                 <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
-                <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 item-align-right">

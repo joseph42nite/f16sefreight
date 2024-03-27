@@ -2,11 +2,11 @@
     <div class="main-page w-100">
         <div class="search-area" style="margin-top: 2%;background-color: rgba(213, 179, 176, 0.2);">
             <div class="text-center">
-                <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="300" height="50" class="img-fluid mb-5"/>
+                <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="350" height="50" class="img-fluid mb-5"/>
                 <!-- <a href="javascript:void(0)" @click="report_popup=true">Report here</a> -->
             </div>
             <div class="row mt-3 fw-600">
-                <div class="col-12 col-md-2">
+                <div class="col-12 col-md-3">
                     <label for="dist_form">Origin</label>
                     <input type="text" v-model="search_form.from" placeholder="Search source" class="form-control" readonly style="background: lightgrey;">
                     <!-- <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
@@ -16,7 +16,7 @@
                         </div>
                     </div> -->
                 </div>
-                <div class="col-12 col-md-2">
+                <div class="col-12 col-md-3">
                     <label for="dist_form">Destination</label>
                     <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
                         <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control" autocomplete="off">
@@ -41,23 +41,23 @@
                         <option value="all">All Rate</option>
                     </select>
                 </div>
-                <div class="col-12 col-md-2">
+                <!-- <div class="col-12 col-md-2">
                     <label for="on_off">Offline/Online</label>
                     <select name="" id="on_off" class="form-control" v-model="search_form.on_off">
                         <option value="">Select mode</option>
                         <option value="online">Online</option>
                         <option value="offline">Offline</option>
                     </select>
-                </div>
+                </div> -->
                 <div class="col-12 col-md-1 mt-7 text-center">
                     <button class="btn btn1" @click="get_rate()" id="rate_id">Rates</button>
                 </div>
             </div>
             <!-- display area code -->
             <div class="row" style="margin-top: 2%">
-                <div :class="is_all_rate ? 'col-12 col-md-12 rate_area' : 'col-12 col-md-8 rate_area'
+                <div :class="is_all_rate ? 'col-12 col-md-12 rate_area' : 'col-12 col-md-9 rate_area'
                     ">
-                    <div class="rate-area mr-1">
+                    <div class="rate-area mr-1" style="padding: 0px 3% 3% 3%;">
                         <div class="sticky-div">
                             <div style="display: flex; justify-content: space-between; white-space: nowrap;">
                                 <div class="d-flex">
@@ -66,9 +66,9 @@
                                         <option value="total">INR</option>
                                         <option value="per_kg">-/kg</option>
                                     </select>
-                                    <span @click="extraComission()" class="copy-cls-css" v-if="!is_all_rate">Add profit</span>
+                                    <span @click="extraComission()" class="copy-cls-css" v-if="!is_all_rate" style="background: #c0392b; padding: 5px 5px;">Add profit</span>
                                 </div>
-                                <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate">Export</span>
+                                <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate" style="background: #487eb0; padding: 5px 15px;">Export</span>
                             </div>
                             <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
                                 :sheet-name="'rate'" v-if="is_all_rate">
@@ -85,9 +85,10 @@
                                         <th>#</th>
                                         <th>Airline</th>
                                         <th>Product Type</th>
-                                        <th>Quantity</th>
+                                        <th>Slab</th>
                                         <th>Price</th>
                                         <th>Added Profit</th>
+                                        <th>Offline/Online</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -106,15 +107,15 @@
                                         <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
                                             {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
                                         </td>
-
+                                        <td>{{rate.online_offline}}</td>
                                     </tr>
                                     <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
                                 </tbody>
                             </table>
                     </div>
                 </div>
-                <div class="col-12 col-md-4 rate_area" v-if="!is_all_rate">
-                    <div class="rate-area ml-1">
+                <div class="col-12 col-md-3 rate_area" v-if="!is_all_rate">
+                    <div class="rate-area ml-1" style="padding: 3%;">
                         <div>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FSC :</span> {{ ams_arr.fsc }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">SCC :</span> {{ ams_arr.scc }}</span>
@@ -150,7 +151,7 @@
             </div>
         </b-modal>
         <div id="whatsapp-float">
-            <a href="https://wa.me/9718798152" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/8660320019?text=" target="_blank" rel="noopener noreferrer">
                 <img src="media/custome/w4.png" alt="WhatsApp">
             </a>
         </div>    
@@ -169,7 +170,6 @@ export default {
                 to: "",
                 selected_quantity: "custom",
                 quantity: "",
-                on_off:""
             }),
             rate_data: "",
             rate_data_copy: {},
@@ -500,7 +500,7 @@ export default {
                     textarea.select();
                     document.execCommand("copy");
                     document.body.removeChild(textarea);
-                    $(".copy-cls").html("Exported.");
+                    $(".copy-cls").html("Exported");
                 } else {
                     alert("Select data for Export");
                 }
@@ -729,15 +729,12 @@ export default {
     background: white;
     border-radius: 10px;
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    padding: 3%;
 }
 
 .copy-cls-css {
     cursor: pointer;
     color: white;
-    background: #c0392b;
     border-radius: 5px;
-    padding: 5px 10px;
 }
 .fw-600{
     font-weight:600;

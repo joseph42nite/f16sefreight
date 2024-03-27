@@ -93,6 +93,7 @@
 
           <b-collapse id="nav-collapse" is-nav>
             <b-navbar-nav class="ml-auto">
+              <b-nav-item to="/login" class="nav-link-custom">Home</b-nav-item>
               <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
               <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
             </b-navbar-nav>

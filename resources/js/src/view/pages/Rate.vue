@@ -128,8 +128,8 @@
                         </div>
                         <hr>
                         <div v-if="user_notice">
-                            <h2 class="mr-3 text-center" style="color: #cf5244ff;">Notification</h2>
-                            <h4>{{ user_notice }}</h4>
+                            <h3 class="mr-3 text-center" style="color: #cf5244ff;">Notification</h3>
+                            <h5 v-html="user_notice"></h5>
                         </div>
                     </div>
                 </div>
@@ -151,7 +151,7 @@
             </div>
         </b-modal>
         <div id="whatsapp-float">
-            <a href="https://wa.me/8660320019?text=" target="_blank" rel="noopener noreferrer">
+            <a :href="'//api.whatsapp.com/send?phone=918660320019&text=Name: ' + current_user.name + '%0AEmail: ' + current_user.email + '%0AType your message:%0A'" target="_blank" rel="noopener noreferrer">
                 <img src="media/custome/w4.png" alt="WhatsApp">
             </a>
         </div>    
@@ -416,22 +416,24 @@ export default {
                         // currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
                         currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges: `;
                         if(carrier_code=='EK'){
-                            if(this.all_ams_ek[this.searched_country_code].fsc)
-                            currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC) +`;
-                            if(this.all_ams_ek[this.searched_country_code].misc)
-                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].misc} (MISC) +`; 
-                            if(this.all_ams_ek[this.searched_country_code].xray)
-                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].xray} (XRAY) +`; 
-                            if(this.all_ams_ek[this.searched_country_code].scc)
-                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].scc} (SCC) +`;
-                            if(this.all_ams_ek[this.searched_country_code].ctg)
-                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].ctg} (CTG) +`;
-                            if(this.all_ams_ek[this.searched_country_code].awb_fee)
-                            currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE) +`; 
-                            if(this.all_ams_ek[this.searched_country_code].mawb)
-                            currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) `;
-                            if(this.all_ams_ek[this.searched_country_code].hawb)
-                            currentData.Price+=`+ ${this.all_ams_ek[this.searched_country_code].hawb} (HAWB)`; 
+                            if(this.all_ams_ek[this.searched_country_code]){
+                                if(this.all_ams_ek[this.searched_country_code].fsc)
+                                currentData.Price+=`${this.all_ams_ek[this.searched_country_code].fsc} (FSC) +`;
+                                if(this.all_ams_ek[this.searched_country_code].misc)
+                                currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].misc} (MISC) +`; 
+                                if(this.all_ams_ek[this.searched_country_code].xray)
+                                currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].xray} (XRAY) +`; 
+                                if(this.all_ams_ek[this.searched_country_code].scc)
+                                currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].scc} (SCC) +`;
+                                if(this.all_ams_ek[this.searched_country_code].ctg)
+                                currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].ctg} (CTG) +`;
+                                if(this.all_ams_ek[this.searched_country_code].awb_fee)
+                                currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE) +`; 
+                                if(this.all_ams_ek[this.searched_country_code].mawb)
+                                currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) `;
+                                if(this.all_ams_ek[this.searched_country_code].hawb)
+                                currentData.Price+=`+ ${this.all_ams_ek[this.searched_country_code].hawb} (HAWB)`;
+                            } 
                         }
                         else if(carrier_code=='TG' || carrier_code=='CX'){
                             let key1=this.search_form.to+"_"+carrier_code;
@@ -445,41 +447,45 @@ export default {
                             else if(this.all_ams_tg_cx.hasOwnProperty(key3))
                             main_key=key3;
                             if(main_key){
-                                if(this.all_ams_tg_cx[main_key].fsc)
-                                currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC) +`;
-                                if(this.all_ams_tg_cx[main_key].misc)
-                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].misc} (MISC) +`; 
-                                if(this.all_ams_tg_cx[main_key].xray)
-                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].xray} (XRAY) +`; 
-                                if(this.all_ams_tg_cx[main_key].scc)
-                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].scc} (SCC) +`;
-                                if(this.all_ams_tg_cx[main_key].ctg)
-                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].ctg} (CTG) +`;
-                                if(this.all_ams_tg_cx[main_key].awb_fee)
-                                currentData.Price+=` ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE) +`; 
-                                if(this.all_ams_tg_cx[main_key].mawb)
-                                currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) `;
-                                if(this.all_ams_tg_cx[main_key].hawb)
-                                currentData.Price+=`+ ${this.all_ams_tg_cx[main_key].hawb} (HAWB)`;
+                                if(this.all_ams_tg_cx[main_key]){
+                                    if(this.all_ams_tg_cx[main_key].fsc)
+                                    currentData.Price+=`${this.all_ams_tg_cx[main_key].fsc} (FSC) +`;
+                                    if(this.all_ams_tg_cx[main_key].misc)
+                                    currentData.Price+=` ${this.all_ams_tg_cx[main_key].misc} (MISC) +`; 
+                                    if(this.all_ams_tg_cx[main_key].xray)
+                                    currentData.Price+=` ${this.all_ams_tg_cx[main_key].xray} (XRAY) +`; 
+                                    if(this.all_ams_tg_cx[main_key].scc)
+                                    currentData.Price+=` ${this.all_ams_tg_cx[main_key].scc} (SCC) +`;
+                                    if(this.all_ams_tg_cx[main_key].ctg)
+                                    currentData.Price+=` ${this.all_ams_tg_cx[main_key].ctg} (CTG) +`;
+                                    if(this.all_ams_tg_cx[main_key].awb_fee)
+                                    currentData.Price+=` ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE) +`; 
+                                    if(this.all_ams_tg_cx[main_key].mawb)
+                                    currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) `;
+                                    if(this.all_ams_tg_cx[main_key].hawb)
+                                    currentData.Price+=`+ ${this.all_ams_tg_cx[main_key].hawb} (HAWB)`;
+                                }
                             }
                         }
                         else{
-                            if(this.all_ams[carrier_code].fsc)
-                            currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC) +`;
-                            if(this.all_ams[carrier_code].misc)
-                            currentData.Price+=` ${this.all_ams[carrier_code].misc} (MISC) +`; 
-                            if(this.all_ams[carrier_code].xray)
-                            currentData.Price+=` ${this.all_ams[carrier_code].xray} (XRAY) +`; 
-                            if(this.all_ams[carrier_code].scc)
-                            currentData.Price+=` ${this.all_ams[carrier_code].scc} (SCC) +`;
-                            if(this.all_ams[carrier_code].ctg)
-                            currentData.Price+=` ${this.all_ams[carrier_code].ctg} (CTG) +`;
-                            if(this.all_ams[carrier_code].awb_fee)
-                            currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
-                            if(this.all_ams[carrier_code].mawb)
-                            currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) `;
-                            if(this.all_ams[carrier_code].hawb)
-                            currentData.Price+=`+ ${this.all_ams[carrier_code].hawb} (HAWB)`;     
+                            if(this.all_ams[carrier_code]){
+                                if(this.all_ams[carrier_code].fsc)
+                                currentData.Price+=`${this.all_ams[carrier_code].fsc} (FSC) +`;
+                                if(this.all_ams[carrier_code].misc)
+                                currentData.Price+=` ${this.all_ams[carrier_code].misc} (MISC) +`; 
+                                if(this.all_ams[carrier_code].xray)
+                                currentData.Price+=` ${this.all_ams[carrier_code].xray} (XRAY) +`; 
+                                if(this.all_ams[carrier_code].scc)
+                                currentData.Price+=` ${this.all_ams[carrier_code].scc} (SCC) +`;
+                                if(this.all_ams[carrier_code].ctg)
+                                currentData.Price+=` ${this.all_ams[carrier_code].ctg} (CTG) +`;
+                                if(this.all_ams[carrier_code].awb_fee)
+                                currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
+                                if(this.all_ams[carrier_code].mawb)
+                                currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) `;
+                                if(this.all_ams[carrier_code].hawb)
+                                currentData.Price+=`+ ${this.all_ams[carrier_code].hawb} (HAWB)`;
+                            }
                         }
                         currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');
                         currentData.Price = currentData.Price.replace('+, AMS:', ', AMS:');

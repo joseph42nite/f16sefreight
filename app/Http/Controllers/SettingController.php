@@ -13,7 +13,7 @@ class SettingController extends Controller
     }
     public function insert(Request $request){
         $validator = Validator::make($request->all(), [
-            'message' => ['required', 'string', 'max:500'],
+            'message' => ['required', 'string'],
             'airline' => ['required', 'string', 'max:10'],
         ]);
 

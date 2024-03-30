@@ -169,7 +169,7 @@ export default {
                 from: null,
                 to: "",
                 selected_quantity: "custom",
-                quantity: "",
+                quantity: "200",
             }),
             rate_data: "",
             rate_data_copy: {},
@@ -317,7 +317,28 @@ export default {
                     $(".copy-cls").html("Export");
                     this.searched_country_code=data.country_code;
                     this.searched_region=data.region;
-                    data=data.rates;
+
+                    //for check if data will get on the basis of dist_airport_code are else take it on zone basis
+                    let data_dublicate=data.rates;
+                    data=[];
+                    let carrier_product=[];
+                    for(let d=0;d<data_dublicate.length;d++){
+                        if(data_dublicate[d].dest_airport_code){
+                            data.push(data_dublicate[d]);
+                            const p_t=data_dublicate[d].carrier_code + "__" + data_dublicate[d].product_name;
+                            carrier_product.push(p_t);
+                            data_dublicate.splice(d, 1);
+                            d--;
+                        }
+                    }
+                    for(let d1=0;d1<data_dublicate.length;d1++){
+                        const p_t=data_dublicate[d1].carrier_code + "__" + data_dublicate[d1].product_name;
+                        if (!carrier_product.includes(p_t)) {
+                            data.push(data_dublicate[d1]);
+                        }
+                    }
+                    //end for check if data will get on the basis of dist_airport_code are else take it on zone basis
+
                     if (this.is_all_rate) {
                         for (let i = 0; i < data.length; i++) {
                             items_loop[i] = {};
@@ -372,18 +393,13 @@ export default {
                                             if (j + 1 < keys.length)
                                                 to_key = parseInt(keys[j + 1]);
 
-                                            if (
-                                                user_quantity >= from_key &&
-                                                user_quantity < to_key
-                                            ) {
+                                            if (user_quantity >= from_key && user_quantity < to_key) {
                                                 let rate_key = keys[j];
-                                                data[i]["my_rate"][rate_key] =
-                                                    rate_data[rate_key];
+                                                data[i]["my_rate"][rate_key] = rate_data[rate_key];
                                                 break;
                                             }
                                             if (user_quantity < first_quantity) {
-                                                data[i]["my_rate"]["Normal"] =
-                                                    rate_data["Normal"];
+                                                data[i]["my_rate"]["Normal"] = rate_data["Normal"];
                                                 break;
                                             }
                                         }

@@ -41,14 +41,6 @@
                         <option value="all">All Rate</option>
                     </select>
                 </div>
-                <!-- <div class="col-12 col-md-2">
-                    <label for="on_off">Offline/Online</label>
-                    <select name="" id="on_off" class="form-control" v-model="search_form.on_off">
-                        <option value="">Select mode</option>
-                        <option value="online">Online</option>
-                        <option value="offline">Offline</option>
-                    </select>
-                </div> -->
                 <div class="col-12 col-md-1 mt-7 text-center">
                     <button class="btn btn1" @click="get_rate()" id="rate_id">Rates</button>
                 </div>
@@ -92,7 +84,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }">
+                                    <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }" v-if="rate.my_rate[Object.keys(rate.my_rate)[0]]">
                                         <td>
                                             <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
                                         </td>

@@ -138,8 +138,9 @@
             <div class="form-group">
               <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email" placeholder="Email address" id="login_email" />
             </div>
-            <div class="form-group">
-              <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password" ref="password" autocomplete="off" placeholder="Password" id="login_password" />
+            <div class="form-group d-flex form-control form-control-solid h-auto py-4 px-2 rounded-lg">
+              <input :type="showPass?'password':'text'" name="password" ref="password" autocomplete="off" placeholder="Password" id="login_password" />
+              <span id="show_pass" @click="showPass=!showPass"><span v-if="showPass">Show</span><span v-else>Hide</span></span>
             </div>
             <div class="d-flex" style="float: right;">
               <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('login_forgot','login_signin','login_signup')" style="cursor: pointer;">Forgot
@@ -525,6 +526,7 @@ export default {
       logoSrc: "/media/custome/logo.png",
       blackLogoSrc: "/media/custome/black-logo.png",
       isHovered: false,
+      showPass:true,
     };
   },
   computed: {
@@ -1079,5 +1081,18 @@ grid-area:logo
 
 .option:hover {
   background-color: #f0f0f0;
+}
+#login_password{
+  border: none;
+  background: #F3F6F9;
+  outline: none;
+  width: 100%;
+}
+#show_pass{
+  color: #0984e3;
+  cursor: pointer;
+}
+#login_password::placeholder {
+  color: #B5B5C3;
 }
 </style>

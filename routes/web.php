@@ -4,4 +4,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('{any}', function () {
     return view('welcome');
-})->where('any', '(?!generate-pdf).*$');
+})->where('any', '(?!generate-pdf)(?!test-route).*$');

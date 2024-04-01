@@ -4,7 +4,7 @@
         <div class="d-flex justify-content-between">
             <div>
                 <label for="user_message">User Message</label>
-                <textarea rows="4" cols="50" v-model="msg_form.message"></textarea>
+                <textarea rows="7" cols="100" v-model="msg_form.message"></textarea>
             </div>
             <div>
                 <select v-model="msg_form.airline" class="form-control">

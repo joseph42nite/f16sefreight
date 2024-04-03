@@ -31,7 +31,7 @@ class UserController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         $current_date=date("Y-m-d");
-        $current_date = date("Y-m-d", strtotime($current_date . " +1 month"));
+        $current_date = date("Y-m-d", strtotime($current_date . " +1 week"));
         $user=new User();
         $user->name=$request->name;
         $user->origin_airport_code=$request->origin_airport_code;
@@ -70,6 +70,8 @@ class UserController extends Controller
         $user->daily_login_count=$request->daily_login_count;
         $user->plan_expiry_date=$request->plan_expiry_date;
         $user->is_active=$request->is_active;
+        if(!empty($request->password))
+        $user->password=Hash::make($request->password);
         $user->save();
         if($user){
             return response()->json(['status'=>true]);

@@ -5,7 +5,7 @@
         <div class="container-fluid">
           <div class="navbar-header">
             <b-navbar-brand href="https://f16sefs.in/">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 150px;">
             </b-navbar-brand>
           </div>
 
@@ -62,8 +62,8 @@ export default {
   name: "Layout",
   data(){
     return{
-    logoSrc: "/media/custome/logo.png",
-    blackLogoSrc: "/media/custome/black-logo.png",
+    logoSrc: "/media/custome/logo-1.png",
+    blackLogoSrc: "/media/custome/logo-2.png",
     isHovered: false,
     }
   },
@@ -75,7 +75,7 @@ export default {
   },
   methods: {
     toggleLogo(isHovered) {
-      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
+      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo-1.png";
     },
     hasActiveChildren(match) {
       return this.$route["path"].indexOf(match) !== -1;

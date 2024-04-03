@@ -78,19 +78,21 @@
             <!-- <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect> -->
           </b-input-group>
         </b-form-group>
-        <b-form-group v-if="action=='Add'">
-          <b-form-input
-            id="input-5"
-            v-model="user_form.password"
-            type="password"
-            required
-            placeholder="Password"
-            class="ml-1 input-box"
-            :class="{ 'is-invalid': user_form.errors.has('password') }"
-          ></b-form-input>
-          <has-error :form="user_form" field="password"></has-error>
-        </b-form-group>
-        <b-form-group v-if="action=='Edit'">
+        <div>
+          <b-form-group>
+            <b-form-input
+              id="input-5"
+              v-model="user_form.password"
+              :type="showpass?'password':'text'"
+              placeholder="Password"
+              class="ml-1 input-box"
+              :class="{ 'is-invalid': user_form.errors.has('password') }"
+            ></b-form-input>
+            <has-error :form="user_form" field="password"></has-error>
+          </b-form-group>
+          <input type="checkbox" @change="showpass=!showpass" /> Show/Hide Password
+        </div>  
+        <b-form-group v-if="action=='Edit'" class="mt-5 float-right">
           <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Active</span><span v-else>InActive</span>
         </b-form-group>
         <has-error :form="user_form" field="is_admin"></has-error>
@@ -123,6 +125,7 @@ export default {
       location:[],
       searchQuery: '',
       isDropdownOpen: false,
+      showpass:true,
     };
   },
   methods: {

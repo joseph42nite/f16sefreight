@@ -1,91 +1,12 @@
 <template>
   <div class="bg-white">
-    <!-- <div class="home-banner">
-      <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-transparent w-100">
-          <div class="container-fluid">
-            <div class="p-2-3 text-white">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="orange logo" style="width: 100%;">
-            </div>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse menu" id="navbarSupportedContent">
-              <ul class="navbar-nav mx-auto mb-2 mb-lg-0" style="font-size: medium;">
-                <li class="nav-item mx-3">
-                  <router-link to="/about-us" class="text-white">About Us</router-link>
-                </li>
-                <li class="nav-item mx-3">
-                  <router-link to="/contact-us" class="text-white">Contact Us</router-link>
-                </li>
-              </ul>
-              <ul style="font-size: medium;" class="navbar-nav">
-                <li class="nav-item">
-                  <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
-                </li>
-                <li class="nav-item">
-                  <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </nav>
-        <div class="banner"></div>
-      </div>
-      <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
-        <div class="home-block" style="width:100%; max-width: 45rem;">
-          <h1 class="text-white h1_text" style="font-weight:500;font-size: 56px;">Reshaping The Future Of Freight Forwarding</h1>
-          <h4 class="mt-5">For Online Rates Click On The Below </h4>
-          <div class="mt-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
-        </div>
-      </div>
-    </div> -->
-  <!-- <div class="home-banner">
-    <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
-      <b-navbar toggleable="lg" type="dark" variant="info">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <b-navbar-brand href="#">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
-            </b-navbar-brand>
-          </div>
-
-          <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
-
-          <b-collapse id="nav-collapse" is-nav>
-            <b-navbar-nav class="mx-auto">
-              <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
-              <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
-            </b-navbar-nav>
-
-            <b-navbar-nav class="ml-auto">
-              <b-nav-item>
-                <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
-              </b-nav-item>
-              <b-nav-item>
-                <button @click="firstPopUp('login_signup','login_signin')" class="btn btn-danger">Sign up</button>
-              </b-nav-item>
-            </b-navbar-nav>
-          </b-collapse>
-        </div>
-      </b-navbar>
-      <div class="banner"></div>
-    </div>
-    <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
-      <div class="home-block" style="width:100%; max-width: 45rem; padding: 0 15px;">
-        <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1>
-        <h4 class="mt-3 mt-lg-5">For Online Rates Click On The Below </h4>
-        <div class="mt-4 mt-lg-10"><router-link to="/login"><button class="login-btn">Focus Aakash</button></router-link></div>
-      </div>
-    </div>
-  </div> -->
   <div class="home-banner" id="home">
     <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
       <b-navbar toggleable="lg" type="dark" variant="info">
         <div class="container-fluid">
           <div class="navbar-header">
             <b-navbar-brand href="https://f16sefs.in/">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 100%;">
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 150px;">
             </b-navbar-brand>
           </div>
 
@@ -129,7 +50,6 @@
           <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="login()">
             <div class="pb-5 pt-lg-0 pt-5 text-center">
               <h1>Login</h1>
-              <!-- <img src="/media/custome/login/main-logo.png" alt="main login image" class="img-fluid" width="100" height="100"> -->
             </div>
             <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or password</span></div>
             <div class="p-3 text-center" v-else-if="errors == 'Blocked'"><span class="text-danger h6">Your account is blocked. Contact admin</span></div>
@@ -139,8 +59,8 @@
               <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email" placeholder="Email address" id="login_email" />
             </div>
             <div class="form-group d-flex form-control form-control-solid h-auto py-4 px-2 rounded-lg">
-              <input :type="showPass?'password':'text'" name="password" ref="password" autocomplete="off" placeholder="Password" id="login_password" />
-              <span id="show_pass" @click="showPass=!showPass"><span v-if="showPass">Show</span><span v-else>Hide</span></span>
+              <input :type="showPass?'password':'text'" name="password" ref="password" autocomplete="off" placeholder="Password" class="login_password" id="login_password" />
+              <span class="show_pass" @click="showPass=!showPass"><span v-if="showPass">Show</span><span v-else>Hide</span></span>
             </div>
             <div class="d-flex" style="float: right;">
               <a class="text-muted font-weight-bolder float-right" id="kt_login_forgot" @click="showForm('login_forgot','login_signin','login_signup')" style="cursor: pointer;">Forgot
@@ -218,9 +138,9 @@
                 </div>
               </b-input-group>
             </div>
-            <div class="form-group">
-              <input class="form-control form-control-solid h-auto py-4 px-2 rounded-lg" type="password" name="password"
-                ref="password" id="r_password" autocomplete="off" placeholder="Password"/>
+            <div class="form-group d-flex form-control form-control-solid h-auto py-4 px-2 rounded-lg">
+              <input :type="showPass?'password':'text'" name="password" ref="password" autocomplete="off" placeholder="Password" class="login_password" id="r_password" />
+              <span class="show_pass" @click="showPass=!showPass"><span v-if="showPass">Show</span><span v-else>Hide</span></span>
             </div>
             <span id="password" class="error-cls"></span>
             <div class="">
@@ -482,6 +402,11 @@
       </div>
       </div>
     </template>
+    <div id="whatsapp-float">
+        <a :href="'//api.whatsapp.com/send?phone=918660320019&text=Type your query here%0A'" target="_blank" rel="noopener noreferrer">
+            <img src="media/custome/w4.png" alt="WhatsApp">
+        </a>
+    </div>  
   </div>
 </template>
 
@@ -523,8 +448,8 @@ export default {
       location:[],
       searchQuery: '',
       isDropdownOpen: false,
-      logoSrc: "/media/custome/logo.png",
-      blackLogoSrc: "/media/custome/black-logo.png",
+      logoSrc: "/media/custome/logo-1.png",
+      blackLogoSrc: "/media/custome/logo-2.png",
       isHovered: false,
       showPass:true,
     };
@@ -638,7 +563,7 @@ export default {
         })
     },
     toggleLogo(isHovered) {
-      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo.png";
+      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo-1.png";
     },
      scrollToMission(sectionId) {
       const section = document.querySelector(sectionId);
@@ -652,6 +577,23 @@ export default {
 };
 </script>
 <style scoped>
+#whatsapp-float {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000; /* Ensure it's above other content */
+    }
+
+    #whatsapp-float img {
+        width: 60px; /* Adjust size as needed */
+        height: auto; /* Maintain aspect ratio */
+        border-radius: 50%; /* Circular shape */
+        transition: transform 0.2s; /* Smooth animation */
+    }
+
+    #whatsapp-float img:hover {
+        transform: scale(1.1); /* Scale up on hover */
+    }
 .navbar {
   background-color: transparent !important;
 }
@@ -1082,17 +1024,17 @@ grid-area:logo
 .option:hover {
   background-color: #f0f0f0;
 }
-#login_password{
+.login_password{
   border: none;
   background: #F3F6F9;
   outline: none;
   width: 100%;
 }
-#show_pass{
+.show_pass{
   color: #0984e3;
   cursor: pointer;
 }
-#login_password::placeholder {
+.login_password::placeholder {
   color: #B5B5C3;
 }
 </style>

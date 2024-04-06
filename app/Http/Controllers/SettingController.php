@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Setting;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 class SettingController extends Controller
 {
     //

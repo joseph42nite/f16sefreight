@@ -18,6 +18,8 @@ class UserSeeder extends Seeder
             'email' => 'user@gmail.com',
             'password' => Hash::make('123456'),
             'is_active' => true,
+            'origin_airport_code'=>'BLR',
+            'plan_expiry_date'=>'2025-03-26',
         ]);
         DB::table('roles')->insert([
             'email' => 'user@gmail.com',

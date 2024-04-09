@@ -25,7 +25,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->call('App\Http\Controllers\CurrencyRateController@getCurrencyRate')->dailyAt('02:00');
+        $schedule->call('App\Http\Controllers\CurrencyRateController@getCurrencyRate')->dailyAt('02:05');
     }
 
     /**

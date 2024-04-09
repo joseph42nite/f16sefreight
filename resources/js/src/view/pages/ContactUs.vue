@@ -6,7 +6,7 @@
           <div class="container-fluid">
             <div class="navbar-header">
               <b-navbar-brand href="https://f16sefs.in/">
-                <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 150px;">
+                <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" id="main-logo">
               </b-navbar-brand>
             </div>
 
@@ -639,7 +639,9 @@ export default {
   .login-content {
     padding: 5%;
   }
-
+  #main-logo{
+    width: 125px !important;
+  }
   .image-div {
     height: 70%;
   }
@@ -974,4 +976,7 @@ ul li a {
 .login_password::placeholder {
   color: #B5B5C3;
 }
+#main-logo{
+    width: 150px;
+  }
 </style>

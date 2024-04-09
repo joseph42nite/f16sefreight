@@ -6,7 +6,7 @@
         <div class="container-fluid">
           <div class="navbar-header">
             <b-navbar-brand href="https://f16sefs.in/">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 150px;">
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" id="main-logo">
             </b-navbar-brand>
           </div>
 
@@ -34,7 +34,7 @@
     </div>
     <div class="p-2-3 text-white container p-0" style="margin-top: 15%;">
       <div class="home-block" style="width:100%;padding: 0 5px;">
-        <div class="col-12 col-lg-6 fa-4x p-0 fa4x">
+        <div class="col-12 col-lg-6 fa-4x p-0 fa4x main-head-text">
           Reshaping The Future Of Freight Forwarding
         </div>
         <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
@@ -938,6 +938,15 @@ ul li a{
   .responsive-bg-w-text > .header {
     margin-top: 15%;
   }
+  .main-head-text{
+    font-size: 40px !important;
+  }
+  .login-btn1{
+      padding: 2% 6% !important;
+  }
+  #main-logo{
+    width: 125px !important;
+  }
 }
 .top-background {
     position: fixed;
@@ -1036,5 +1045,8 @@ grid-area:logo
 }
 .login_password::placeholder {
   color: #B5B5C3;
+}
+#main-logo{
+  width: 150px;
 }
 </style>

@@ -90,10 +90,22 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       isDropdownOpen_from: false,
       searchQuery_to: '',
       isDropdownOpen_to: false,
-      selectedRows: []
+      selectedRows: [],
+      currency_rate: [],
+      is_allin_check: false,
+      allin_amount: 1.00,
+      selected_currency: 'INR'
     };
   },
   methods: {
+    get_allin_amount: function get_allin_amount() {
+      for (var i = 0; i < 4; i++) {
+        if (this.currency_rate[i]['currency'] == this.selected_currency) {
+          this.allin_amount = this.currency_rate[i]['rate'];
+          break;
+        }
+      }
+    },
     toggleDropdown_from: function toggleDropdown_from() {
       this.isDropdownOpen_from = !this.isDropdownOpen_from;
     },
@@ -276,6 +288,14 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         }
       })["catch"](function (err) {});
     },
+    getValueBeforeSlash: function getValueBeforeSlash(str) {
+      var indexOfSlash = str.indexOf('/');
+      if (indexOfSlash !== -1) {
+        return str.substring(0, indexOfSlash);
+      } else {
+        return 0;
+      }
+    },
     copyToClipboard: function copyToClipboard() {
       if (confirm("The rates provided are in accordance with the current tariff. For system rates, please contact the respective airlines directly. Should there be any changes in other charges, kindly click on “WhatsApp” button to resolve the issue at the earliest. Always do manual checking before quoting to clients.")) {
         var clip_arr = [];
@@ -286,6 +306,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
           for (var i in this.rate_data_copy) {
             var currentData = {};
             carrier_code = this.rate_data_copy[i].carrier_code;
+            var all_subcharge_amount = 0;
+            var all_ams_amount = 0;
             // currentData.Sl = index_count;
             // currentData.Airline = ``;
             // currentData.ProductType = this.rate_data_copy[i].product_name;
@@ -293,14 +315,30 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
             currentData.Price = "".concat(index_count, ". ").concat(carrier_code, "(").concat(this.rate_data_copy[i].carrier_prefix, "): ").concat(this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]], "++, Surcharges: ");
             if (carrier_code == 'EK') {
               if (this.all_ams_ek[this.searched_country_code]) {
-                if (this.all_ams_ek[this.searched_country_code].fsc) currentData.Price += "".concat(this.all_ams_ek[this.searched_country_code].fsc, " (FSC) +");
-                if (this.all_ams_ek[this.searched_country_code].misc) currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].misc, " (MISC) +");
-                if (this.all_ams_ek[this.searched_country_code].xray) currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].xray, " (XRAY) +");
-                if (this.all_ams_ek[this.searched_country_code].scc) currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].scc, " (SCC) +");
-                if (this.all_ams_ek[this.searched_country_code].ctg) currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].ctg, " (CTG) +");
-                if (this.all_ams_ek[this.searched_country_code].awb_fee) currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].awb_fee, " (AWB FEE) +");
-                if (this.all_ams_ek[this.searched_country_code].mawb) currentData.Price += ", AMS: ".concat(this.all_ams_ek[this.searched_country_code].mawb, " (MAWB) ");
-                if (this.all_ams_ek[this.searched_country_code].hawb) currentData.Price += "+ ".concat(this.all_ams_ek[this.searched_country_code].hawb, " (HAWB)");
+                if (this.all_ams_ek[this.searched_country_code].fsc) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.all_ams_ek[this.searched_country_code].fsc);else currentData.Price += "".concat(this.all_ams_ek[this.searched_country_code].fsc, " (FSC) +");
+                }
+                if (this.all_ams_ek[this.searched_country_code].misc) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_ek[this.searched_country_code].misc));else currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].misc, " (MISC) +");
+                }
+                if (this.all_ams_ek[this.searched_country_code].xray) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_ek[this.searched_country_code].xray));else currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].xray, " (XRAY) +");
+                }
+                if (this.all_ams_ek[this.searched_country_code].scc) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.all_ams_ek[this.searched_country_code].scc);else currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].scc, " (SCC) +");
+                }
+                if (this.all_ams_ek[this.searched_country_code].ctg) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_ek[this.searched_country_code].ctg));else currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].ctg, " (CTG) +");
+                }
+                if (this.all_ams_ek[this.searched_country_code].awb_fee) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_ek[this.searched_country_code].awb_fee));else currentData.Price += " ".concat(this.all_ams_ek[this.searched_country_code].awb_fee, " (AWB FEE) +");
+                }
+                if (this.all_ams_ek[this.searched_country_code].mawb) {
+                  if (this.is_allin_check) all_ams_amount += parseFloat(this.all_ams_ek[this.searched_country_code].mawb);else currentData.Price += ", AMS: ".concat(this.all_ams_ek[this.searched_country_code].mawb, " (MAWB) ");
+                }
+                if (this.all_ams_ek[this.searched_country_code].hawb) {
+                  if (this.is_allin_check) all_ams_amount += parseFloat(this.all_ams_ek[this.searched_country_code].hawb);else currentData.Price += "+ ".concat(this.all_ams_ek[this.searched_country_code].hawb, " (HAWB)");
+                }
               }
             } else if (carrier_code == 'TG' || carrier_code == 'CX') {
               var key1 = this.search_form.to + "_" + carrier_code;
@@ -310,31 +348,67 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
               if (this.all_ams_tg_cx.hasOwnProperty(key1)) main_key = key1;else if (this.all_ams_tg_cx.hasOwnProperty(key2)) main_key = key2;else if (this.all_ams_tg_cx.hasOwnProperty(key3)) main_key = key3;
               if (main_key) {
                 if (this.all_ams_tg_cx[main_key]) {
-                  if (this.all_ams_tg_cx[main_key].fsc) currentData.Price += "".concat(this.all_ams_tg_cx[main_key].fsc, " (FSC) +");
-                  if (this.all_ams_tg_cx[main_key].misc) currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].misc, " (MISC) +");
-                  if (this.all_ams_tg_cx[main_key].xray) currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].xray, " (XRAY) +");
-                  if (this.all_ams_tg_cx[main_key].scc) currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].scc, " (SCC) +");
-                  if (this.all_ams_tg_cx[main_key].ctg) currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].ctg, " (CTG) +");
-                  if (this.all_ams_tg_cx[main_key].awb_fee) currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].awb_fee, " (AWB FEE) +");
-                  if (this.all_ams_tg_cx[main_key].mawb) currentData.Price += ", AMS: ".concat(this.all_ams_tg_cx[main_key].mawb, " (MAWB) ");
-                  if (this.all_ams_tg_cx[main_key].hawb) currentData.Price += "+ ".concat(this.all_ams_tg_cx[main_key].hawb, " (HAWB)");
+                  if (this.all_ams_tg_cx[main_key].fsc) {
+                    if (this.is_allin_check) all_subcharge_amount += parseFloat(this.all_ams_tg_cx[main_key].fsc);else currentData.Price += "".concat(this.all_ams_tg_cx[main_key].fsc, " (FSC) +");
+                  }
+                  if (this.all_ams_tg_cx[main_key].misc) {
+                    if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_tg_cx[main_key].misc));else currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].misc, " (MISC) +");
+                  }
+                  if (this.all_ams_tg_cx[main_key].xray) {
+                    if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_tg_cx[main_key].xray));else currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].xray, " (XRAY) +");
+                  }
+                  if (this.all_ams_tg_cx[main_key].scc) {
+                    if (this.is_allin_check) all_subcharge_amount += parseFloat(this.all_ams_tg_cx[main_key].scc);else currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].scc, " (SCC) +");
+                  }
+                  if (this.all_ams_tg_cx[main_key].ctg) {
+                    if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_tg_cx[main_key].ctg));else currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].ctg, " (CTG) +");
+                  }
+                  if (this.all_ams_tg_cx[main_key].awb_fee) {
+                    if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams_tg_cx[main_key].awb_fee));else currentData.Price += " ".concat(this.all_ams_tg_cx[main_key].awb_fee, " (AWB FEE) +");
+                  }
+                  if (this.all_ams_tg_cx[main_key].mawb) {
+                    if (this.is_allin_check) all_ams_amount += parseFloat(this.all_ams_tg_cx[main_key].mawb);else currentData.Price += ", AMS: ".concat(this.all_ams_tg_cx[main_key].mawb, " (MAWB) ");
+                  }
+                  if (this.all_ams_tg_cx[main_key].hawb) {
+                    if (this.is_allin_check) all_ams_amount += parseFloat(this.all_ams_tg_cx[main_key].hawb);else currentData.Price += "+ ".concat(this.all_ams_tg_cx[main_key].hawb, " (HAWB)");
+                  }
                 }
               }
             } else {
               if (this.all_ams[carrier_code]) {
-                if (this.all_ams[carrier_code].fsc) currentData.Price += "".concat(this.all_ams[carrier_code].fsc, " (FSC) +");
-                if (this.all_ams[carrier_code].misc) currentData.Price += " ".concat(this.all_ams[carrier_code].misc, " (MISC) +");
-                if (this.all_ams[carrier_code].xray) currentData.Price += " ".concat(this.all_ams[carrier_code].xray, " (XRAY) +");
-                if (this.all_ams[carrier_code].scc) currentData.Price += " ".concat(this.all_ams[carrier_code].scc, " (SCC) +");
-                if (this.all_ams[carrier_code].ctg) currentData.Price += " ".concat(this.all_ams[carrier_code].ctg, " (CTG) +");
-                if (this.all_ams[carrier_code].awb_fee) currentData.Price += " ".concat(this.all_ams[carrier_code].awb_fee, " (AWB FEE) +");
-                if (this.all_ams[carrier_code].mawb) currentData.Price += ", AMS: ".concat(this.all_ams[carrier_code].mawb, " (MAWB) ");
-                if (this.all_ams[carrier_code].hawb) currentData.Price += "+ ".concat(this.all_ams[carrier_code].hawb, " (HAWB)");
+                if (this.all_ams[carrier_code].fsc) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.all_ams[carrier_code].fsc);else currentData.Price += "".concat(this.all_ams[carrier_code].fsc, " (FSC) +");
+                }
+                if (this.all_ams[carrier_code].misc) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams[carrier_code].misc));else currentData.Price += " ".concat(this.all_ams[carrier_code].misc, " (MISC) +");
+                }
+                if (this.all_ams[carrier_code].xray) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams[carrier_code].xray));else currentData.Price += " ".concat(this.all_ams[carrier_code].xray, " (XRAY) +");
+                }
+                if (this.all_ams[carrier_code].scc) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.all_ams[carrier_code].scc);else currentData.Price += " ".concat(this.all_ams[carrier_code].scc, " (SCC) +");
+                }
+                if (this.all_ams[carrier_code].ctg) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams[carrier_code].ctg));else currentData.Price += " ".concat(this.all_ams[carrier_code].ctg, " (CTG) +");
+                }
+                if (this.all_ams[carrier_code].awb_fee) {
+                  if (this.is_allin_check) all_subcharge_amount += parseFloat(this.getValueBeforeSlash(this.all_ams[carrier_code].awb_fee));else currentData.Price += " ".concat(this.all_ams[carrier_code].awb_fee, " (AWB FEE) +");
+                }
+                if (this.all_ams[carrier_code].mawb) {
+                  if (this.is_allin_check) all_ams_amount += parseFloat(this.all_ams[carrier_code].mawb);else currentData.Price += ", AMS: ".concat(this.all_ams[carrier_code].mawb, " (MAWB) ");
+                }
+                if (this.all_ams[carrier_code].hawb) {
+                  if (this.is_allin_check) all_ams_amount += parseFloat(this.all_ams[carrier_code].hawb);else currentData.Price += "+ ".concat(this.all_ams[carrier_code].hawb, " (HAWB)");
+                }
               }
             }
-            currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');
-            currentData.Price = currentData.Price.replace('+, AMS:', ', AMS:');
-            currentData.Price = currentData.Price.replace('  ', ' ');
+            if (this.is_allin_check) {
+              currentData.Price += "".concat(this.selected_currency, " ").concat((all_subcharge_amount / this.allin_amount).toFixed(2), "/kg ALLIN, AMS: ").concat(this.selected_currency, " ").concat((all_ams_amount / this.allin_amount).toFixed(2), " ALLIN");
+            } else {
+              currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');
+              currentData.Price = currentData.Price.replace('+, AMS:', ', AMS:');
+              currentData.Price = currentData.Price.replace('  ', ' ');
+            }
             clip_arr.push(currentData);
             index_count++;
           }
@@ -426,12 +500,18 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         _this5.location = data;
       });
     },
+    getCurrencyRate: function getCurrencyRate() {
+      var _this6 = this;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/get-currency-rate").then(function (_ref6) {
+        var data = _ref6.data;
+        _this6.currency_rate = data;
+      });
+    },
     extraComission: function extraComission() {
       for (var i = 0; i < this.rate_data.length; i++) {
         var obj_key = Object.keys(this.rate_data[i].my_rate_2)[0];
         if (parseInt(this.extra_comission) > 0) {
           if (this.profit_type == "total") {
-            console.log(this.rate_data[i].my_rate[obj_key]);
             var add_profit = parseFloat(this.extra_comission) / parseFloat(this.search_form.quantity);
             this.rate_data[i].my_rate_2[obj_key] = parseFloat(this.rate_data[i].my_rate[obj_key]) + parseFloat(add_profit);
           } else if (this.profit_type == "per_kg") {
@@ -478,6 +558,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     this.getLocation();
     this.get_notice();
     this.get_asm();
+    this.getCurrencyRate();
     if (this.user_source) {
       this.search_form.from = this.user_source;
       // this.searchQuery_from = this.current_user.origin_airport_code;
@@ -744,6 +825,9 @@ var render = function render() {
       value: _vm.extra_comission,
       expression: "extra_comission"
     }],
+    staticStyle: {
+      width: "40%"
+    },
     attrs: {
       type: "number"
     },
@@ -788,7 +872,7 @@ var render = function render() {
     attrs: {
       value: "total"
     }
-  }, [_vm._v("INR")]), _vm._v(" "), _c("option", {
+  }, [_vm._v("Total")]), _vm._v(" "), _c("option", {
     attrs: {
       value: "per_kg"
     }
@@ -803,7 +887,112 @@ var render = function render() {
         return _vm.extraComission();
       }
     }
-  }, [_vm._v("Add profit")]) : _vm._e()]), _vm._v(" "), !_vm.is_all_rate ? _c("span", {
+  }, [_vm._v("Add profit")]) : _vm._e()]), _vm._v(" "), !_vm.is_all_rate ? _c("div", {
+    staticStyle: {
+      display: "flex"
+    }
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.is_allin_check,
+      expression: "is_allin_check"
+    }],
+    staticStyle: {
+      width: "15px"
+    },
+    attrs: {
+      type: "checkbox"
+    },
+    domProps: {
+      checked: Array.isArray(_vm.is_allin_check) ? _vm._i(_vm.is_allin_check, null) > -1 : _vm.is_allin_check
+    },
+    on: {
+      change: function change($event) {
+        var $$a = _vm.is_allin_check,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && (_vm.is_allin_check = $$a.concat([$$v]));
+          } else {
+            $$i > -1 && (_vm.is_allin_check = $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.is_allin_check = $$c;
+        }
+      }
+    }
+  }), _vm._v("  "), _c("label", {
+    staticStyle: {
+      "margin-top": "3px",
+      "font-weight": "600"
+    }
+  }, [_vm._v("Overseces/ALLIn")]), _vm._v(" "), _vm.is_allin_check ? _c("div", {
+    staticStyle: {
+      "margin-left": "3%"
+    }
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.allin_amount,
+      expression: "allin_amount"
+    }],
+    staticStyle: {
+      width: "40%",
+      height: "100%"
+    },
+    attrs: {
+      type: "number"
+    },
+    domProps: {
+      value: _vm.allin_amount
+    },
+    on: {
+      input: function input($event) {
+        if ($event.target.composing) return;
+        _vm.allin_amount = $event.target.value;
+      }
+    }
+  }), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.selected_currency,
+      expression: "selected_currency"
+    }],
+    staticClass: "mx-3",
+    staticStyle: {
+      height: "100%"
+    },
+    attrs: {
+      name: "profit_type",
+      id: "profit_type"
+    },
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.selected_currency = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, function ($event) {
+        return _vm.get_allin_amount();
+      }]
+    }
+  }, _vm._l(_vm.currency_rate, function (item, index) {
+    return _c("option", {
+      key: index,
+      domProps: {
+        value: item.currency
+      }
+    }, [_vm._v(_vm._s(item.currency) + " (" + _vm._s(item.rate) + ")")]);
+  }), 0)]) : _vm._e()]) : _vm._e(), _vm._v(" "), !_vm.is_all_rate ? _c("span", {
     staticClass: "copy-cls copy-cls-css",
     staticStyle: {
       background: "#487eb0",

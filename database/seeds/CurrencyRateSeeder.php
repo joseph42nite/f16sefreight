@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-class CurrencyRate extends Seeder
+class CurrencyRateSeeder extends Seeder
 {
     /**
      * Run the database seeds.

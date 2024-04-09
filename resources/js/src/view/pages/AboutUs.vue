@@ -6,7 +6,7 @@
             <div class="container-fluid">
               <div class="navbar-header">
                 <b-navbar-brand href="https://f16sefs.in/">
-                  <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 150px;">
+                  <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" id="main-logo">
                 </b-navbar-brand>
               </div>
 
@@ -526,6 +526,9 @@ font-size: medium;
   .responsive-bg-w-text .block{
     padding-bottom: 15%;
   }
+  #main-logo{
+    width: 125px !important;
+  }
 }
 @media (max-width: 576px) {
   .container {
@@ -683,6 +686,9 @@ font-size: medium;
     font-size: 20px;
     font-weight: 600;
 }
+#main-logo{
+    width: 150px;
+  }
 .login-btn1:hover{
   background: #b18480;
 }

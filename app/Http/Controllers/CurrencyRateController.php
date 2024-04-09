@@ -25,7 +25,7 @@ class CurrencyRateController extends Controller
                     if($key!='INR')
                      $update_value=$data[$key]*$data['INR'];
                     else
-                     $update_value=$data[$key];
+                     $update_value=1;
                     $update_value=round($update_value, 2);
                     CurrencyRate::where('currency',$key)->update(['rate'=>$update_value]);
                 }
@@ -35,5 +35,9 @@ class CurrencyRateController extends Controller
         } catch (\Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
+    }
+
+    public function getCurrency(){
+        return CurrencyRate::all(['currency','rate']);
     }
 }

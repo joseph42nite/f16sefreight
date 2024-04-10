@@ -61,7 +61,7 @@
                                     <span @click="extraComission()" class="copy-cls-css" v-if="!is_all_rate" style="background: #c0392b; padding: 5px 5px;">Add profit</span>
                                 </div>
                                 <div style="display:flex;" v-if="!is_all_rate">
-                                    <input type="checkbox" style="width: 15px;" v-model="is_allin_check"/>&nbsp;&nbsp;<label style="margin-top: 3px; font-weight: 600;">Overseces/ALLIn</label>
+                                    <input type="checkbox" style="width: 15px;" v-model="is_allin_check"/>&nbsp;&nbsp;<label style="margin-top: 3px; font-weight: 600;">Overseas/ALLIn</label>
                                     <div v-if="is_allin_check" style="margin-left: 3%;">
                                         <input type="number" style="width: 40%; height: 100%;" v-model="allin_amount"/>
                                         <select name="profit_type" id="profit_type" style="height: 100%;" class="mx-3" v-model="selected_currency" @change="get_allin_amount()">
@@ -451,11 +451,17 @@ export default {
                         carrier_code=this.rate_data_copy[i].carrier_code;
                         let all_subcharge_amount=0;
                         let all_ams_amount=0;
+                        let final_added_profit=0;
                         // currentData.Sl = index_count;
                         // currentData.Airline = ``;
                         // currentData.ProductType = this.rate_data_copy[i].product_name;
                         // currentData.Quantity = `${Object.keys(this.rate_data_copy[i].my_rate)[0]}`;
-                        currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges: `;
+                        if(this.is_allin_check){
+                            currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}):`;
+                            final_added_profit=parseFloat(this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]);
+                        }
+                        else
+                          currentData.Price = `${index_count}. ${carrier_code}(${this.rate_data_copy[i].carrier_prefix}): ${this.rate_data_copy[i].my_rate_2[Object.keys(this.rate_data_copy[i].my_rate_2)[0]]}++, Surcharges: `;
                         if(carrier_code=='EK'){
                             if(this.all_ams_ek[this.searched_country_code]){
                                 if(this.all_ams_ek[this.searched_country_code].fsc){
@@ -625,7 +631,7 @@ export default {
                             }
                         }
                         if(this.is_allin_check){
-                            currentData.Price+=`${this.selected_currency} ${(all_subcharge_amount/this.allin_amount).toFixed(2)}/kg ALLIN, AMS: ${this.selected_currency} ${(all_ams_amount/this.allin_amount).toFixed(2)} ALLIN`;
+                            currentData.Price+=`${this.selected_currency} ${((all_subcharge_amount+final_added_profit)/this.allin_amount).toFixed(2)}/kg ALLIN, AMS: ${this.selected_currency} ${(all_ams_amount/this.allin_amount).toFixed(2)} ALLIN`;
                         }
                         else{
                             currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');

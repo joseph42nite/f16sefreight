@@ -5,7 +5,7 @@
         <div class="container-fluid">
           <div class="navbar-header">
             <b-navbar-brand href="https://f16sefs.in/">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" style="width: 150px;">
+              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" id="main-logo">
             </b-navbar-brand>
           </div>
 
@@ -130,10 +130,16 @@ color: black;
 .menu-text{
 color: White;
 }
+#main-logo{
+  width: 150px;
+}
 @media (max-width: 768px) {
   .container {
     margin-top: 5%;
     margin-bottom: 5%;
+  }
+  #main-logo{
+    width: 125px;
   }
   .navbar-header {
   margin-left: 10px;

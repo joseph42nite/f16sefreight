@@ -1,12 +1,14 @@
 <template>
   <div class="bg-white">
   <div class="home-banner" id="home">
-    <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
+    <!-- @mouseover="isHovered = true" @mouseleave="isHovered = false" -->
+    <div class="wrap">
       <b-navbar toggleable="lg" type="dark" variant="info">
         <div class="container-fluid">
           <div class="navbar-header">
             <b-navbar-brand href="https://f16sefs.in/">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" id="main-logo">
+              <!-- isHovered ? blackLogoSrc :  -->
+              <img :src="logoSrc" alt="f16s logo" id="main-logo">
             </b-navbar-brand>
           </div>
 
@@ -19,7 +21,7 @@
               <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
             </b-navbar-nav>
 
-            <b-navbar-nav class="ml-auto">
+            <b-navbar-nav class="ml-auto login-desk" >
               <b-nav-item>
                 <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
               </b-nav-item>
@@ -27,6 +29,11 @@
                 <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
               </b-nav-item>
             </b-navbar-nav>
+
+            <div class="login-mobile">
+              <button @click="firstPopUp('login_signin','login_signup')" class="plain-button">Login</button>
+              <button @click="firstPopUp('login_signup','login_signin')" class="plain-button">Sign up</button>
+            </div>
           </b-collapse>
         </div>
       </b-navbar>
@@ -339,9 +346,9 @@
         <div class="container">
         <div class="row back-b text-white p-8">
           <div class="col-3 col-md-3 mt-5">
-            <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" style="width: 45%;"></a>
+            <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" id="logo-footer"></a>
             <div class="mt-6">
-              <img src="/media/custome/home/linkedin.png" alt="Linkedin">
+              <a href="https://www.linkedin.com/in/joseph-george-b99616147?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
             </div>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">
@@ -385,20 +392,11 @@
         <div  class="mt-5">
           <hr style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
           <div class="row text-white">
-            <div class="col-4">
+            <div class="col-12 text-center">
               <a href="https://f16sefs.in/" style="color: white;"><h6>© 2024 by F16s EFS Pvt Ltd </h6></a>
-            </div>
-            <div class="col-4 text-center">
-              <h6>Cookie Policy</h6>
-            </div>
-            <div class="col-4 text-right">
-              <h6>Privacy Policy </h6>
             </div>
           </div>
         </div>
-        <!-- <div class="row back-b text-white justify-content-center p-3">
-        <strong class="text-white"><i class="fas fa-copyright"></i> Copyright reserved Orangetheory Fitness</strong>
-        </div> -->
       </div>
       </div>
     </template>
@@ -607,13 +605,13 @@ export default {
 .nav-link-custom{
   font-size: medium;
 }
-.wrap:hover{
-  background-color: #923B33;
-}
-.wrap:hover .btn.btn-danger {
+/* .wrap:hover{
+  background-color: rgb(50, 4, 0);
+} */
+/* .wrap:hover .btn.btn-danger {
   background-color: white;
   color: #923B33;
-}
+} */
 .plain-button {
   border: none;
   background: none;
@@ -945,7 +943,19 @@ ul li a{
       padding: 2% 6% !important;
   }
   #main-logo{
-    width: 125px !important;
+    width: 115px !important;
+  }
+  #logo-footer{
+    width: 125% !important;
+  }
+  .wrap:hover{
+    background-color: rgb(50, 4, 0) !important;
+  }
+  .login-mobile{
+    display:block !important;
+  }
+  .login-desk{
+    display:none;
   }
 }
 .top-background {
@@ -1047,6 +1057,12 @@ grid-area:logo
   color: #B5B5C3;
 }
 #main-logo{
-  width: 150px;
+  width: 135px;
+}
+#logo-footer{
+  width: 45%;
+}
+.login-mobile{
+  display:none;
 }
 </style>

@@ -1,11 +1,13 @@
 <template>
   <div v-if="isAuthenticated">
-    <div class="wrap" @mouseover="isHovered = true" @mouseleave="isHovered = false">
+  <!-- @mouseover="isHovered = true" @mouseleave="isHovered = false" -->
+    <div class="wrap">
       <b-navbar toggleable="lg" type="dark" variant="info">
         <div class="container-fluid">
           <div class="navbar-header">
             <b-navbar-brand href="https://f16sefs.in/">
-              <img :src="isHovered ? blackLogoSrc : logoSrc" alt="f16s logo" id="main-logo">
+              <!-- isHovered ? blackLogoSrc :  -->
+              <img :src="logoSrc" alt="f16s logo" id="main-logo">
             </b-navbar-brand>
           </div>
 
@@ -40,7 +42,7 @@
                 </button>
               </b-nav-item>
               <b-nav-item class="mt-2 nav-link-custom text-white" style="font-size: 18px;">
-                {{currentUser.name}}
+                Hi, {{currentUser.name}}
               </b-nav-item>
             </b-navbar-nav>
           </b-collapse>
@@ -91,7 +93,7 @@ export default {
 </script>
 <style scoped>
 .navbar {
-  background-color: #923B33 !important;
+  background-color: rgb(50, 4, 0) !important;
 }
 .navbar-header {
   margin-left: 55px;
@@ -106,7 +108,7 @@ export default {
 .nav-link-custom{
   font-size: medium;
 }
-.wrap:hover {
+/* .wrap:hover {
   background-color: #923B33;
 }
 .wrap:hover.menu-text{
@@ -118,11 +120,11 @@ export default {
 }
 .wrap:hover .btn.logout .menu-text{
   color: #923B33 !important;
-}
-.logout:hover {
+} */
+/* .logout:hover {
   background-color: white !important;
   color: #923B33 !important;
-}
+} */
 a.menu-link{
 text-decoration: none !important;
 color: black;
@@ -131,7 +133,7 @@ color: black;
 color: White;
 }
 #main-logo{
-  width: 150px;
+  width: 135px;
 }
 @media (max-width: 768px) {
   .container {

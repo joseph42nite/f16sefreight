@@ -45,29 +45,31 @@
                     <button class="btn btn1" @click="get_rate()" id="rate_id">Rates</button>
                 </div>
             </div>
+            <div class="mt-4">
+                <div style="display:flex;" v-if="!is_all_rate">
+                    <input type="checkbox" style="width: 15px;" v-model="is_allin_check"/>&nbsp;&nbsp;<label style="margin-top: 3px; font-weight: 600;">Overseas/ALLIN</label>
+                    <div style="margin-left: 3%;">
+                        <input type="number" style="width: 40%; height: 100%;" v-model="allin_amount" :readonly="!is_allin_check"/>
+                        <select name="profit_type" id="profit_type" style="height: 100%;" class="mx-3" v-model="selected_currency" @change="get_allin_amount()">
+                            <option v-for="(item, index) in currency_rate" :key="index" :value="item.currency">{{item.currency}} (<span>{{item.rate}}</span>)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <!-- display area code -->
             <div class="row" style="margin-top: 2%">
                 <div :class="is_all_rate ? 'col-12 col-md-12 rate_area' : 'col-12 col-md-9 rate_area'
                     ">
                     <div class="rate-area mr-1" style="padding: 0px 3% 3% 3%;">
                         <div class="sticky-div">
-                            <div style="display: flex; justify-content: space-between; white-space: nowrap;">
+                            <div style="justify-content: space-between; display: flex; white-space: nowrap;">
                                 <div class="d-flex">
-                                    <input type="number" v-model="extra_comission" style="width: 40%;" v-if="!is_all_rate" />
+                                    <input type="number" v-model="extra_comission" placeholder="Enter profit in INR" style="width: 40%;" v-if="!is_all_rate" />
                                     <select name="profit_type" id="profit_type" class="mx-3" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
                                         <option value="total">Total</option>
-                                        <option value="per_kg">-/kg</option>
+                                        <option value="per_kg">Per kg</option>
                                     </select>
                                     <span @click="extraComission()" class="copy-cls-css" v-if="!is_all_rate" style="background: #c0392b; padding: 5px 5px;">Add profit</span>
-                                </div>
-                                <div style="display:flex;" v-if="!is_all_rate">
-                                    <input type="checkbox" style="width: 15px;" v-model="is_allin_check"/>&nbsp;&nbsp;<label style="margin-top: 3px; font-weight: 600;">Overseas/ALLIn</label>
-                                    <div v-if="is_allin_check" style="margin-left: 3%;">
-                                        <input type="number" style="width: 40%; height: 100%;" v-model="allin_amount"/>
-                                        <select name="profit_type" id="profit_type" style="height: 100%;" class="mx-3" v-model="selected_currency" @change="get_allin_amount()">
-                                            <option v-for="(item, index) in currency_rate" :key="index" :value="item.currency">{{item.currency}} ({{item.rate}})</option>
-                                        </select>
-                                    </div>
                                 </div>
                                 <span @click="copyToClipboard()" class="copy-cls copy-cls-css" v-if="!is_all_rate" style="background: #487eb0; padding: 5px 15px;">Export</span>
                             </div>
@@ -170,7 +172,7 @@ export default {
                 from: null,
                 to: "",
                 selected_quantity: "custom",
-                quantity: "200",
+                quantity: "",
             }),
             rate_data: "",
             rate_data_copy: {},
@@ -951,7 +953,7 @@ export default {
         margin-top: 15px;
     }
     .sticky-div{
-        width: 130%;
+        width: 143%;
     }
 }
 </style>
@@ -975,5 +977,12 @@ export default {
 
     #whatsapp-float img:hover {
         transform: scale(1.1); /* Scale up on hover */
+    }
+    input[readonly] {
+        background: lightgrey;
+        border: 1px solid;
+    }
+    option span {
+        color: green !important;
     }
 </style>

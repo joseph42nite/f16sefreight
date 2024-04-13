@@ -15,12 +15,12 @@
 
           <b-collapse id="nav-collapse" is-nav>
             <b-navbar-nav class="ml-auto">
-              <b-nav-item to="/login" class="nav-link-custom text-white">Home</b-nav-item>
+              <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item>
               <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
               <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
             </b-navbar-nav>
 
-            <b-navbar-nav class="ml-auto">
+            <b-navbar-nav class="ml-auto m_desk">
               <b-nav-item>
                 <button class="btn logout" style="background-color: rgb(115 21 12);">
                   <router-link to="#" @click.native="logout" v-slot="{ href, navigate, isActive, isExactActive }">
@@ -45,6 +45,12 @@
                 Hi, {{currentUser.name}}
               </b-nav-item>
             </b-navbar-nav>
+            <div class="mt-10 m_mob">
+                <button class="btn logout" style="background-color: rgb(115 21 12);" @click="logout()">
+                  <a href="#" class="menu-link" style="text-decoration: none;"><span class="menu-text">Logout</span></a>
+                </button>
+              <span class="text-white" style="font-size: 18px; margin-left: 5%;">Hi, {{currentUser.name}}</span>
+            </div>
           </b-collapse>
         </div>
       </b-navbar>
@@ -83,7 +89,7 @@ export default {
       return this.$route["path"].indexOf(match) !== -1;
     },
     logout() {
-      this.$store.dispatch(LOGOUT).then(() => this.$router.push("/login"));
+      this.$store.dispatch(LOGOUT).then(() => window.location.href='/' );
     },
   },
   computed: {
@@ -135,7 +141,16 @@ color: White;
 #main-logo{
   width: 135px;
 }
+.m_mob{
+  display:none;
+}
 @media (max-width: 768px) {
+  .m_mob{
+  display:block;
+}
+.m_desk{
+  display:none;
+}
   .container {
     margin-top: 5%;
     margin-bottom: 5%;

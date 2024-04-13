@@ -16,7 +16,7 @@
 
               <b-collapse id="nav-collapse" is-nav>
                 <b-navbar-nav class="ml-auto">
-                  <b-nav-item to="/login" class="nav-link-custom">Home</b-nav-item>
+                  <b-nav-item to="/" class="nav-link-custom">Home</b-nav-item>
                   <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
                   <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
                 </b-navbar-nav>
@@ -256,13 +256,13 @@
             <div class="col-3 col-md- mt-5">
               <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" id="logo-footer"></a>
               <div class="mt-6">
-                <a href="https://www.linkedin.com/in/joseph-george-b99616147?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
+                <a href="https://www.linkedin.com/company/f16s-efs/" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
               </div>
             </div>
             <div class="col-3 col-md-3 mt-5 justify-content">
               <h2>QUICK LINKS</h2>
               <ul>
-                <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
+                <li @click="scrollToMission('#home')"><router-link to="/">Home</router-link></li>
                 <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
                 <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
               </ul>
@@ -271,8 +271,8 @@
               <h2>Explore</h2>
               <ul>
                 <li @click="scrollToMission('#our-mission')"><router-link to="/#our-mission">Our Mission</router-link></li>
-                <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
-                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
+                <li @click="scrollToMission('#focus-areas')"><router-link to="/">Our Focus Areas</router-link></li>
+                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/">Our Airline Affiliations</router-link></li>
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 item-align-right">

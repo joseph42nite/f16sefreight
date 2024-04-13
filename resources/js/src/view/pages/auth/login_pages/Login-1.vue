@@ -16,7 +16,7 @@
 
           <b-collapse id="nav-collapse" is-nav>
             <b-navbar-nav class="ml-auto">
-              <b-nav-item to="/login" class="nav-link-custom">Home</b-nav-item>
+              <b-nav-item to="/" class="nav-link-custom">Home</b-nav-item>
               <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
               <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
             </b-navbar-nav>
@@ -45,7 +45,7 @@
           Reshaping The Future Of Freight Forwarding
         </div>
         <!-- <h1 class="text-white h1_text" style="font-weight:500; font-size: 56px; margin-bottom: 10px;">Reshaping The Future Of Freight Forwarding</h1> -->
-        <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Online Rates Click On The Below </h4>
+        <h4 class="mt-3 mt-lg-5 px-8 px-lg-0">For Air Freight Rates click on below </h4>
         <div class="mt-4 mt-lg-10 px-8 px-lg-0"><button class="login-btn1" @click="firstPopUp('login_signin','login_signup')">Focus Aakash</button></div>
       </div>
     </div>
@@ -194,7 +194,7 @@
           <div class="col-lg-6">
             <div class="col-md-10 px-10 mt-0">
               <h1 class="fw-bolder fa-4x" style="font-weight: 600;">Overview</h1>
-                <p style="font-weight: 400; font-size: 22px;" class="mt-10">Welcome to F16s, where innovation meets efficiency in the world of freight forwarding. Our commitment to reshaping the future of logistics is at the core of everything we do. As a pioneering force in the industry, we seamlessly connect businesses to a world of possibilities through our cutting-edge solutions.</p>
+                <p style="font-weight: 400; font-size: 22px;" class="mt-10">Welcome to F16s, where innovation meets efficiency in the world of freight forwarding. We offer various services like online rates, FWB/FHL and we strive on building a community of airlines, freight forwarders and transporters.</p>
               </div>
           </div>
         </div>
@@ -214,9 +214,8 @@
           <div class=" col-lg-6">
             <div class="container col-10 px-10 mt-0">
               <h1 class="fw-bolder fa-4x" style="font-weight: 600;">Mission Statement</h1>
-                <p style="font-weight: 400; font-size: 22px;" class="mt-10"> We do right by freight forwarders in India.
-                    F16s E-Freight Solutions is committed to making a positive impact, exactly how they took F15 fighter jets and made it better for combat.</p>
-                <div class="mt-10"><router-link to="/login"><button class="login-btn">Learn More</button></router-link></div>
+                <p style="font-weight: 400; font-size: 22px;" class="mt-10">Making best even better is our motto and we do right by freight forwarders in India. F16s E-Freight Solutions Pvt. Ltd. is committed to making a positive impact, exactly how F15 fighter jets was made better for combat and were called F16s.</p>
+                <div class="mt-10"><router-link to="/"><button class="login-btn">Learn More</button></router-link></div>
             </div>
           </div>
           <div class="col-lg-6">
@@ -280,7 +279,7 @@
           <div class="col-md-5 mb-4 mb-md-0">
             <h1 class="pt-lg-20 font-weight-black text-black fa-4x fa4x">We Build, We Plan, We Deliver</h1>
             <p class="fa-2x mt-2">
-              We offer a comprehensive array of services, from data management to analytics and shipment procurement management. You can count on the utmost professionalism in all that we do.
+              We offer a comprehensive array of services, from data management to analytics and shipment procurement management.
             </p>
           </div>
           <div class="col-md-6" style="right:0">
@@ -315,7 +314,7 @@
             </div>
           </div>
           <div class="mt-10 item-center block">
-            <router-link to="/login">
+            <router-link to="/">
               <button class="login-btn1">Read More</button>
             </router-link>
           </div>
@@ -348,24 +347,24 @@
           <div class="col-3 col-md-3 mt-5">
             <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" id="logo-footer"></a>
             <div class="mt-6">
-              <a href="https://www.linkedin.com/in/joseph-george-b99616147?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
+              <a href="https://www.linkedin.com/company/f16s-efs/" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
             </div>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>QUICK LINKS</h2>
             <ul>
-              <li @click="scrollToMission('#home')"><router-link to="/login">Home</router-link></li>
+              <li @click="scrollToMission('#home')"><router-link to="/">Home</router-link></li>
               <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
-              <!-- <li @click="scrollToMission('#home')"><router-link to="/login">Rates</router-link></li> -->
+              <!-- <li @click="scrollToMission('#home')"><router-link to="/">Rates</router-link></li> -->
               <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">
             <h2>Explore</h2>
             <ul>
-                <li @click="scrollToMission('#our-mission')"><router-link to="/login">Our Mission</router-link></li>
-                <li @click="scrollToMission('#focus-areas')"><router-link to="/login">Our Focus Areas</router-link></li>
-                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/login">Our Airline Affiliations</router-link></li>
+                <li @click="scrollToMission('#our-mission')"><router-link to="/">Our Mission</router-link></li>
+                <li @click="scrollToMission('#focus-areas')"><router-link to="/">Our Focus Areas</router-link></li>
+                <li @click="scrollToMission('#airline-affiliations')"><router-link to="/">Our Airline Affiliations</router-link></li>
                 <!-- <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li> -->
               </ul>
           </div>

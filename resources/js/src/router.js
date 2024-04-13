@@ -92,7 +92,7 @@ export default new Router({
       children: [
         {
           name: "userlogin",
-          path: "/login",
+          path: "/",
           component: () => import("@/view/pages/auth/login_pages/Login-1"),
         },
       ]

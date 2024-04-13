@@ -46,7 +46,7 @@
                 </div>
             </div>
             <div class="mt-4">
-                <div style="display:flex;" v-if="!is_all_rate">
+                <div class="all_cs" v-if="!is_all_rate">
                     <input type="checkbox" style="width: 15px;" v-model="is_allin_check"/>&nbsp;&nbsp;<label style="margin-top: 3px; font-weight: 600;">Overseas/ALLIN</label>
                     <div style="margin-left: 3%;">
                         <input type="number" style="width: 40%; height: 100%;" v-model="allin_amount" :readonly="!is_allin_check"/>
@@ -633,6 +633,10 @@ export default {
                             }
                         }
                         if(this.is_allin_check){
+                            if(!all_subcharge_amount)
+                              all_subcharge_amount=0;
+                            if(!all_ams_amount)
+                              all_ams_amount=0;  
                             currentData.Price+=`${this.selected_currency} ${((all_subcharge_amount+final_added_profit)/this.allin_amount).toFixed(2)}/kg ALLIN, AMS: ${this.selected_currency} ${(all_ams_amount/this.allin_amount).toFixed(2)} ALLIN`;
                         }
                         else{
@@ -948,12 +952,20 @@ export default {
     padding: 4px 2%;
     border-radius: 5px;
 }
+.all_cs{
+    display:flex;
+}
 @media (max-width: 768px)  {
     .rate_area{
         margin-top: 15px;
     }
     .sticky-div{
         width: 143%;
+    }
+}
+@media (max-width: 340px)  {
+    .all_cs{
+        display:block !important;
     }
 }
 </style>

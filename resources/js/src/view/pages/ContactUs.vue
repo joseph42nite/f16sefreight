@@ -660,7 +660,7 @@ export default {
     padding: 5%;
   }
   #main-logo{
-    width: 115px !important;
+    width: 110px !important;
   }
   .image-div {
     height: 70%;
@@ -997,7 +997,7 @@ ul li a {
   color: #B5B5C3;
 }
 #main-logo{
-    width: 135px;
+    width: 130px;
   }
   #logo-footer{
     width: 45%;

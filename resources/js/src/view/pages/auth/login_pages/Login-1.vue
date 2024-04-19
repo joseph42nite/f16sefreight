@@ -1056,7 +1056,7 @@ grid-area:logo
   color: #B5B5C3;
 }
 #main-logo{
-  width: 135px;
+  width: 130px;
 }
 #logo-footer{
   width: 45%;

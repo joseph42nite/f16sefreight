@@ -535,7 +535,7 @@ font-size: medium;
     padding-bottom: 15%;
   }
   #main-logo{
-    width: 115px !important;
+    width: 110px !important;
   }
   #logo-footer{
     width: 125% !important;
@@ -707,7 +707,7 @@ font-size: medium;
     font-weight: 600;
 }
 #main-logo{
-    width: 135px;
+    width: 130px;
   }
 .login-btn1:hover{
   background: #b18480;

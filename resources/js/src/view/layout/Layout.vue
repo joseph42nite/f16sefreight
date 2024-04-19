@@ -139,7 +139,7 @@ color: black;
 color: White;
 }
 #main-logo{
-  width: 135px;
+  width: 130px;
 }
 .m_mob{
   display:none;
@@ -156,7 +156,7 @@ color: White;
     margin-bottom: 5%;
   }
   #main-logo{
-    width: 125px;
+    width: 110px;
   }
   .navbar-header {
   margin-left: 10px;

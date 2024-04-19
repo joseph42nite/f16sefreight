@@ -936,13 +936,13 @@ ul li a{
     margin-top: 15%;
   }
   .main-head-text{
-    font-size: 40px !important;
+    font-size: 38px !important;
   }
   .login-btn1{
       padding: 2% 6% !important;
   }
   #main-logo{
-    width: 115px !important;
+    width: 110px !important;
   }
   #logo-footer{
     width: 125% !important;

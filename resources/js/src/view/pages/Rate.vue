@@ -618,11 +618,12 @@ export default {
                                     else
                                 currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
                                 }
+                                currentData.Price+=`, AMS: `;
                                 if(this.all_ams[carrier_code].mawb){
                                     if(this.is_allin_check)
                                     all_ams_amount+=parseFloat(this.all_ams[carrier_code].mawb);
                                     else
-                                currentData.Price+=`, AMS: ${this.all_ams[carrier_code].mawb} (MAWB) `;
+                                currentData.Price+=`${this.all_ams[carrier_code].mawb} (MAWB) `;
                                 }
                                 if(this.all_ams[carrier_code].hawb){
                                     if(this.is_allin_check)
@@ -642,6 +643,7 @@ export default {
                         else{
                             currentData.Price = currentData.Price.replace(' +, AMS:', ', AMS:');
                             currentData.Price = currentData.Price.replace('+, AMS:', ', AMS:');
+                            currentData.Price = currentData.Price.replace('AMS: +', 'AMS:');
                             currentData.Price = currentData.Price.replace('  ', ' ');    
                         }    
                         clip_arr.push(currentData);

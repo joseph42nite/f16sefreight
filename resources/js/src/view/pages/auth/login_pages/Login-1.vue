@@ -345,7 +345,7 @@
         <div class="container">
         <div class="row back-b text-white p-8">
           <div class="col-3 col-md-3 mt-5">
-            <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" id="logo-footer"></a>
+            <a href="https://f16sefs.in/"><img src="/media/custome/logo-1.png" alt="f16s logo" id="logo-footer"></a>
             <div class="mt-6">
               <a href="https://www.linkedin.com/company/f16s-efs/" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
             </div>
@@ -534,24 +534,30 @@ export default {
       this.user_form.email=$('#r_email').val();
       this.user_form.company_name=$('#r_company_name').val();
       this.user_form.password=$('#r_password').val();
-      axios.post("/register",this.user_form)
-      .then(result => {
-        const email=this.user_form.email;
-        const password=this.user_form.password
-        if(result.data.status)
-        this.$store.dispatch(LOGIN, {email, password})
-      })
-      .catch(({ response }) => {
-        let errors_1=response.data.errors;
-        let dummpy_user_from=this.user_form;
-        for (const [key, value] of Object.entries(errors_1)) {
-            $(`#${key}`).html(value);
-            delete dummpy_user_from[key];
-        }
-        for (const [key, value] of Object.entries(dummpy_user_from)) {
-             $(`#${key}`).html("");
-        } 
-      });
+      if(this.user_form.origin_airport_code){
+        axios.post("/register",this.user_form)
+        .then(result => {
+          const email=this.user_form.email;
+          const password=this.user_form.password
+          if(result.data.status)
+          this.$store.dispatch(LOGIN, {email, password})
+        })
+        .catch(({ response }) => {
+          let errors_1=response.data.errors;
+          let dummpy_user_from=this.user_form;
+          for (const [key, value] of Object.entries(errors_1)) {
+              $(`#${key}`).html(value);
+              delete dummpy_user_from[key];
+          }
+          for (const [key, value] of Object.entries(dummpy_user_from)) {
+              $(`#${key}`).html("");
+          } 
+        });
+      }
+      else{
+        alert("Please select Search source from dropdown");
+        $('#from_id').css('border','1px solid red');
+      }
     },
     getLocation(){
       ApiService.get(`/get-location`)

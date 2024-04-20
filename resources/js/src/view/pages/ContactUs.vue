@@ -264,7 +264,7 @@ NO. 18, 1,2nd CROSS 1st STAGE, MEDHALLI VILLAGE, VIRGONAGAR&t=&z=13&ie=UTF8&iwlo
             <div class="col-3 col-md-3 mt-5">
               <!-- <h1 class="logo_text">F16s</h1> -->
               <!-- <h6 style="font-size: smaller;line-height:normal;">Making best even better</h6> -->
-              <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" id="logo-footer"></a>
+              <a href="https://f16sefs.in/"><img src="/media/custome/logo-1.png" alt="f16s logo" id="logo-footer"></a>
               <div class="mt-6">
                 <a href="https://www.linkedin.com/company/f16s-efs/" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
               </div>

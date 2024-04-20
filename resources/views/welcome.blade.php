@@ -10,13 +10,13 @@
     <link rel="stylesheet" href="{{ asset('/css/app.css') }}">
 </head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-NE6K394S6M"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JCFDX15593"></script>
 <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-    gtag('config', 'G-NE6K394S6M');
+  gtag('config', 'G-JCFDX15593');
 </script>
 <body>
     <div id="app">

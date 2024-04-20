@@ -254,7 +254,7 @@
           <div class="container">
           <div class="row back-b text-white p-8">
             <div class="col-3 col-md- mt-5">
-              <a href="https://f16sefs.in/"><img src="/media/custome/footer_logo.png" alt="f16s logo" id="logo-footer"></a>
+              <a href="https://f16sefs.in/"><img src="/media/custome/logo-1.png" alt="f16s logo" id="logo-footer"></a>
               <div class="mt-6">
                 <a href="https://www.linkedin.com/company/f16s-efs/" target="_blank"><img src="/media/custome/home/linkedin.png" alt="Linkedin"></a>
               </div>

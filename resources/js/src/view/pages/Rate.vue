@@ -502,11 +502,13 @@ export default {
                                     else
                                        currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE) +`; 
                                 }
+                                if(!this.is_allin_check)
+                                    currentData.Price+=`, AMS: `;
                                 if(this.all_ams_ek[this.searched_country_code].mawb){
                                     if(this.is_allin_check)
                                        all_ams_amount+=parseFloat(this.all_ams_ek[this.searched_country_code].mawb);
                                     else
-                                       currentData.Price+=`, AMS: ${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) `;
+                                       currentData.Price+=`${this.all_ams_ek[this.searched_country_code].mawb} (MAWB) `;
                                 }
                                 if(this.all_ams_ek[this.searched_country_code].hawb){
                                     if(this.is_allin_check)
@@ -565,11 +567,13 @@ export default {
                                         else
                                     currentData.Price+=` ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE) +`; 
                                     }
+                                    if(!this.is_allin_check)
+                                      currentData.Price+=`, AMS: `;
                                     if(this.all_ams_tg_cx[main_key].mawb){
                                         if(this.is_allin_check)
                                            all_ams_amount+=parseFloat(this.all_ams_tg_cx[main_key].mawb);
                                         else
-                                    currentData.Price+=`, AMS: ${this.all_ams_tg_cx[main_key].mawb} (MAWB) `;
+                                    currentData.Price+=`${this.all_ams_tg_cx[main_key].mawb} (MAWB) `;
                                     }
                                     if(this.all_ams_tg_cx[main_key].hawb){
                                         if(this.is_allin_check)
@@ -618,7 +622,8 @@ export default {
                                     else
                                 currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
                                 }
-                                currentData.Price+=`, AMS: `;
+                                if(!this.is_allin_check)
+                                  currentData.Price+=`, AMS: `;
                                 if(this.all_ams[carrier_code].mawb){
                                     if(this.is_allin_check)
                                     all_ams_amount+=parseFloat(this.all_ams[carrier_code].mawb);

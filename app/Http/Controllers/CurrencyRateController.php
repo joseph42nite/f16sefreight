@@ -14,9 +14,9 @@ class CurrencyRateController extends Controller
         try {
             $response = Http::get('https://api.currencyfreaks.com/v2.0/rates/latest', [
                 'apikey' => env('RATE_TOKEN'),
-                'symbols' => 'EUR,USD,AED,INR'
+                'symbols' => 'USD,INR'
             ]);
-        
+            // EUR,AED
             if ($response->status() == 200) {
                 $data=$response->body();
                 $data=json_decode($data,true);

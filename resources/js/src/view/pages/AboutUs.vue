@@ -265,6 +265,7 @@
                 <li @click="scrollToMission('#home')"><router-link to="/">Home</router-link></li>
                 <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
                 <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
+                <li><router-link to="/terms-conditions">Terms & Conditions</router-link></li>
               </ul>
             </div>
             <div class="col-3 col-md-3 mt-5 justify-content">

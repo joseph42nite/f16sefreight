@@ -108,6 +108,11 @@ export default new Router({
       component: () =>import("@/view/pages/AboutUs"),
     },
     {
+      name: "Terms&Condition",
+      path: "/terms-conditions",
+      component: () =>import("@/view/pages/Terms-Condition"),
+    },
+    {
       name: "Contact Us",
       path: "/contact-us",
       component: () =>import("@/view/pages/ContactUs"),

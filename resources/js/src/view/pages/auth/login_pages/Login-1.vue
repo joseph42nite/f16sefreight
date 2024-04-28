@@ -132,7 +132,7 @@
             </div>
             <div class="form-group">
               <input class="form-control form-control-solid h-auto py-4 px-2" type="text" name="company_name" ref="company_name"
-                id="r_company_name" placeholder="Enter Compnay name"/>
+                id="r_company_name" placeholder="Enter Company name"/>
                 <span id="company_name" class="error-cls"></span>
             </div>
             <div class="form-group">
@@ -357,6 +357,7 @@
               <li @click="scrollToMission('#about-us')"><router-link to="/about-us">About Us</router-link></li>
               <!-- <li @click="scrollToMission('#home')"><router-link to="/">Rates</router-link></li> -->
               <li @click="scrollToMission('#contact-us')"><router-link to="/contact-us">Contact Us</router-link></li>
+              <li><router-link to="/terms-conditions">Terms & Conditions</router-link></li>
             </ul>
           </div>
           <div class="col-3 col-md-3 mt-5 justify-content">

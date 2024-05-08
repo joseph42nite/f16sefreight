@@ -23,5 +23,6 @@ class Ams extends Model
         'awb_fee',
         'mawb',
         'hawb',
+        'dg_fee',
     ];
 }

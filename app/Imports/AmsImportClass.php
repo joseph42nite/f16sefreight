@@ -33,6 +33,7 @@ class AmsImportClass implements ToCollection
                 'awb_fee'=>$data['awb_fee'],
                 'mawb'=>$data['mawb'],
                 'hawb'=>$data['hawb'],
+                'dg_fee'=>$data['dg_fee'],
             ];
             if(!empty($data['Carrier_Code']))
             Ams::create($insert_data);

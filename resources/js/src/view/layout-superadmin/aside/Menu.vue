@@ -237,7 +237,7 @@ export default {
       return this.$route["path"].indexOf(match) !== -1;
     },
     logout() {
-      this.$store.dispatch(LOGOUT).then(() => this.$router.push("/login"));
+      this.$store.dispatch(LOGOUT).then(() => this.$router.push("/"));
     },
   },
 };

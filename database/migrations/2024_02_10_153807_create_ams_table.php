@@ -30,6 +30,7 @@ class CreateAmsTable extends Migration
             $table->string('awb_fee',10)->nullable();
             $table->string('mawb',10)->nullable();
             $table->string('hawb',10)->nullable();
+            $table->string('de_fee',50)->nullable();
             $table->timestamps();
         });
     }

@@ -31,6 +31,7 @@ class AmsImportClass implements ToCollection
                 'misc'=>$data['misc'],
                 'ctg'=>$data['ctg'],
                 'awb_fee'=>$data['awb_fee'],
+                'fe'=>$data['fe'],
                 'mawb'=>$data['mawb'],
                 'hawb'=>$data['hawb'],
                 'dg_fee'=>$data['dg_fee'],

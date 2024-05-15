@@ -28,6 +28,7 @@ class CreateAmsTable extends Migration
             $table->string('misc',10)->nullable();
             $table->string('ctg',10)->nullable();
             $table->string('awb_fee',10)->nullable();
+            $table->string('fe',50)->nullable();
             $table->string('mawb',10)->nullable();
             $table->string('hawb',10)->nullable();
             $table->string('de_fee',50)->nullable();

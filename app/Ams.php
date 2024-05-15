@@ -21,6 +21,7 @@ class Ams extends Model
         'misc',
         'ctg',
         'awb_fee',
+        'fe',
         'mawb',
         'hawb',
         'dg_fee',

@@ -126,6 +126,7 @@
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MISC :</span> {{ ams_arr.misc }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">CTG :</span> {{ ams_arr.ctg }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">AWB FEE :</span> {{ ams_arr.awb_fee }}</span>
+                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FE :</span> {{ ams_arr.fe }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MAWB :</span> {{ ams_arr.mawb }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">HAWB :</span> {{ ams_arr.hawb }}</span>
                             <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">DG FEE :</span> {{ ams_arr.dg_fee }}</span>
@@ -195,6 +196,7 @@ export default {
                 misc:'',
                 ctg:'',
                 awb_fee:'',
+                fe:'',
                 mawb:'',
                 hawb:'',
                 dg_fee:'',
@@ -505,6 +507,12 @@ export default {
                                     else
                                        currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].awb_fee} (AWB FEE) +`; 
                                 }
+                                if(this.all_ams_ek[this.searched_country_code].fe){
+                                    if(this.is_allin_check)
+                                    all_subcharge_amount+=parseFloat(this.all_ams_ek[this.searched_country_code].fe);
+                                    else
+                                    currentData.Price+=` ${this.all_ams_ek[this.searched_country_code].fe} (FE) +`; 
+                                }
                                 if(!this.is_allin_check)
                                     currentData.Price+=`, AMS: `;
                                 if(this.all_ams_ek[this.searched_country_code].mawb){
@@ -522,7 +530,7 @@ export default {
                                 if(this.all_ams_ek[this.searched_country_code].dg_fee){
                                     if(this.is_allin_check)
                                     dg_fee=this.all_ams_ek[this.searched_country_code].dg_fee;
-                                    else
+                                    else if(this.rate_data_copy[i].dgr)
                                       currentData.Price+=`, DG FEE : ${this.all_ams_ek[this.searched_country_code].dg_fee}`;
                                     
                                 }
@@ -577,6 +585,12 @@ export default {
                                         else
                                     currentData.Price+=` ${this.all_ams_tg_cx[main_key].awb_fee} (AWB FEE) +`; 
                                     }
+                                    if(this.all_ams_tg_cx[main_key].fe){
+                                        if(this.is_allin_check)
+                                        all_subcharge_amount+=parseFloat(this.all_ams_tg_cx[main_key].fe);
+                                        else
+                                        currentData.Price+=` ${this.all_ams_tg_cx[main_key].fe} (FE) +`; 
+                                    }
                                     if(!this.is_allin_check)
                                       currentData.Price+=`, AMS: `;
                                     if(this.all_ams_tg_cx[main_key].mawb){
@@ -594,7 +608,7 @@ export default {
                                     if(this.all_ams_tg_cx[main_key].dg_fee){
                                         if(this.is_allin_check)
                                         dg_fee=this.all_ams_tg_cx[main_key].dg_fee;
-                                        else
+                                        else if(this.rate_data_copy[i].dgr)
                                            currentData.Price+=`, DG FEE : ${this.all_ams_tg_cx[main_key].dg_fee}`;
                                         
                                     }
@@ -639,6 +653,12 @@ export default {
                                     else
                                 currentData.Price+=` ${this.all_ams[carrier_code].awb_fee} (AWB FEE) +`; 
                                 }
+                                if(this.all_ams[carrier_code].fe){
+                                    if(this.is_allin_check)
+                                       all_subcharge_amount+=parseFloat(this.all_ams[carrier_code].fe);
+                                    else
+                                       currentData.Price+=` ${this.all_ams[carrier_code].fe} (FE) +`; 
+                                }
                                 if(!this.is_allin_check)
                                   currentData.Price+=`, AMS: `;
                                 if(this.all_ams[carrier_code].mawb){
@@ -655,8 +675,8 @@ export default {
                                 }
                                 if(this.all_ams[carrier_code].dg_fee){
                                     if(this.is_allin_check)
-                                    dg_fee=this.all_ams[carrier_code].dg_fee;
-                                else
+                                      dg_fee=this.all_ams[carrier_code].dg_fee;
+                                    else if(this.rate_data_copy[i].dgr)
                                       currentData.Price+=`, DG FEE : ${this.all_ams[carrier_code].dg_fee}`;
                                       
                                 }
@@ -668,7 +688,7 @@ export default {
                             if(!all_ams_amount)
                               all_ams_amount=0;  
                               currentData.Price+=`${this.selected_currency} ${((all_subcharge_amount+final_added_profit)/this.allin_amount).toFixed(2)}/kg ALLIN, AMS: ${this.selected_currency} ${(all_ams_amount/this.allin_amount).toFixed(2)} ALLIN ( MAWB + 1 HAWB )`;
-                            if(dg_fee)
+                            if(dg_fee && this.rate_data_copy[i].dgr)
                                currentData.Price+=`, DG FEE : ${dg_fee}`;
                                
                         }
@@ -721,6 +741,7 @@ export default {
             this.ams_arr.misc="";
             this.ams_arr.ctg="";
             this.ams_arr.awb_fee="";
+            this.ams_arr.fe="";
             this.ams_arr.mawb="";
             this.ams_arr.hawb="";
             this.ams_arr.dg_fee="";
@@ -738,6 +759,8 @@ export default {
                     this.ams_arr.ctg=this.all_ams_ek[this.searched_country_code].ctg;
                     if(this.all_ams_ek[this.searched_country_code].awb_fee)
                     this.ams_arr.awb_fee=this.all_ams_ek[this.searched_country_code].awb_fee;
+                    if(this.all_ams_ek[this.searched_country_code].fe)
+                    this.ams_arr.fe=this.all_ams_ek[this.searched_country_code].fe;
                     if(this.all_ams_ek[this.searched_country_code].mawb)
                     this.ams_arr.mawb=this.all_ams_ek[this.searched_country_code].mawb;
                     if(this.all_ams_ek[this.searched_country_code].hawb)
@@ -770,6 +793,8 @@ export default {
                     this.ams_arr.ctg=this.all_ams_tg_cx[main_key].ctg;
                     if(this.all_ams_tg_cx[main_key].awb_fee)
                     this.ams_arr.awb_fee=this.all_ams_tg_cx[main_key].awb_fee;
+                    if(this.all_ams_tg_cx[main_key].fe)
+                    this.ams_arr.fe=this.all_ams_tg_cx[main_key].fe;
                     if(this.all_ams_tg_cx[main_key].mawb)
                     this.ams_arr.mawb=this.all_ams_tg_cx[main_key].mawb;
                     if(this.all_ams_tg_cx[main_key].hawb)
@@ -792,6 +817,8 @@ export default {
                     this.ams_arr.ctg=this.all_ams[carrier_code].ctg;
                     if(this.all_ams[carrier_code].awb_fee)
                     this.ams_arr.awb_fee=this.all_ams[carrier_code].awb_fee;
+                    if(this.all_ams[carrier_code].fe)
+                    this.ams_arr.fe=this.all_ams[carrier_code].fe;
                     if(this.all_ams[carrier_code].mawb)
                     this.ams_arr.mawb=this.all_ams[carrier_code].mawb;
                     if(this.all_ams[carrier_code].hawb)

@@ -62,8 +62,9 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     Route::delete('/user/{id?}', [UserController::class,'delete']);
     //rate related work by admin
     Route::post('/import-excel', [RateController::class,'rateImport']);
-    Route::get('/get-airline-list', [RateController::class,'getAirlineList']);
-    Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}', [RateController::class,'deleteRate']);
+    Route::get('/get-airline-list/{source?}', [RateController::class,'getAirlineList']);
+    Route::get('/get-source-list', [RateController::class,'getSourceList']);
+    Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}/{source}', [RateController::class,'deleteRate']);
 
     //loctaion related work
     Route::post('/import-loctaion', [LocationController::class,'importData']);

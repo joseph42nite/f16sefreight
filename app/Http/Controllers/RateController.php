@@ -29,7 +29,8 @@ class RateController extends Controller
         }
         $location_details=Location::where('iata_code',$request->to)->first(['country_code','zone','region']);
         $zone=$location_details->zone;
-        $rate_data=Rate::where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->orWhere('zone', $zone)->get();
+        // $rate_data=Rate::where('origin_airport_code','like','%'.$request->from.'%')->where('dest_airport_code','like','%'.$request->to.'%')->orWhere('zone', $zone)->get();
+        $rate_data = Rate::where('origin_airport_code', 'like', '%' . $request->from . '%')->where(function($query) use ($request, $zone) {$query->where('dest_airport_code', 'like', '%' . $request->to . '%')->orWhere('zone', $zone);})->get();
         $data['rates']=$rate_data;
         $data['country_code']=$location_details->country_code;
         $data['region']=$location_details->region;
@@ -37,13 +38,16 @@ class RateController extends Controller
         return json_encode($data);
     }
 
-    public function getAirlineList(){
-        $data = Rate::select('carrier_code')->distinct()->get();
+    public function getAirlineList($source){
+        $data = Rate::where('origin_airport_code',$source)->select('carrier_code')->distinct()->get();
         return json_encode($data);
     }
-
-    public function deleteRate($carrier_code,$carrier_prefix){
-        Rate::where('carrier_code', $carrier_code)->delete();
+    public function getSourceList(){
+        $data = Rate::select('origin_airport_code')->distinct()->get();
+        return json_encode($data);
+    }
+    public function deleteRate($carrier_code,$carrier_prefix,$source){
+        Rate::where('carrier_code', $carrier_code)->where('origin_airport_code',$source)->delete();
         echo "data deleted successful";
     }
 }

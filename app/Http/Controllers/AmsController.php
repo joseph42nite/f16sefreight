@@ -13,8 +13,8 @@ class AmsController extends Controller
         $file = $request->file('file');
         Excel::import(new AmsImportClass, $file);
     }
-    public function getAms(Request $request){
-        $data=Ams::all(['carrier_code','carrier_prefix','region','dest_airport_code','country_code','haul','fsc','scc','xray','misc','ctg','awb_fee','mawb','hawb','dg_fee']);
+    public function getAms($origin){
+        $data=Ams::where('origin',$origin)->get(['carrier_code','carrier_prefix','origin','region','dest_airport_code','country_code','haul','fsc','scc','xray','misc','ctg','awb_fee','mawb','hawb','dg_fee']);
         return json_encode($data);
     }
     public function getAmsList(){

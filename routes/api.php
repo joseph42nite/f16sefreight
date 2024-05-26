@@ -43,7 +43,7 @@ Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::get('get-location', [LocationController::class,'getLocation']);
     Route::get('get-currency-rate', [CurrencyRateController::class,'getCurrency']);
     Route::get('get-notice', [SettingController::class,'getNotice']);
-    Route::get('get-ams', [AmsController::class,'getAms']);
+    Route::get('get-ams/{origin}', [AmsController::class,'getAms']);
     Route::post('report', [ReportController::class,'insert']);
 });
 

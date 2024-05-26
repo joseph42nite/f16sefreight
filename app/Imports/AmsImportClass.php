@@ -20,6 +20,7 @@ class AmsImportClass implements ToCollection
             $insert_data=[
                 'carrier_code'=>$data['Carrier_Code'],
                 'carrier_prefix'=>$data['Carrier_Prefix'],
+                'origin'=>$data['origin'],
                 'region'=>$data['Region'],
                 'dest_airport_code'=>$data['Destination_Airport_Code'],
                 'dest_country'=>$data['Destination_Country'],

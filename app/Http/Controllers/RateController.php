@@ -41,7 +41,10 @@ class RateController extends Controller
         $data = Rate::select('carrier_code')->distinct()->get();
         return json_encode($data);
     }
-
+    public function getSourceList(){
+        $data = Rate::select('origin_airport_code')->distinct()->get();
+        return json_encode($data);   
+    }
     public function deleteRate($carrier_code,$carrier_prefix){
         Rate::where('carrier_code', $carrier_code)->delete();
         echo "data deleted successful";

@@ -325,6 +325,17 @@ export default {
         },
         get_rate() {
             $('#rate_id').html("Loading..");
+            //reset ams value
+            this.ams_arr.fsc='';
+            this.ams_arr.scc='';
+            this.ams_arr.xray='';
+            this.ams_arr.misc='';
+            this.ams_arr.ctg='';
+            this.ams_arr.awb_fee='';
+            this.ams_arr.mawb='';
+            this.ams_arr.hawb='';
+            this.ams_arr.dg_fee='';
+            // end reset ams value
             this.rate_data = "";
             this.selectedRows=[];
             let rate_data_loop = [];

@@ -15,6 +15,7 @@ export default {
     data() {
         return {
             fields: ['carrier_code', 'Action'],
+            source_list: [],
             items: [],
             filter: null,
             totalRows: 0,
@@ -40,13 +41,23 @@ export default {
                 })
                 .catch(err => { });
         },
+        getSourceList() {
+            console.log("hello i am here");
+            ApiService.get(`/superadmin/get-source-list`)
+                .then(({ data }) => {
+                    console.log(data);
+                })
+                .catch(err => { });
+        },
         onFiltered(filteredItems) {
             this.totalRows = filteredItems.length;
             this.currentPage = 1;
         },
     },
     mounted() {
+        console.log("hello");
         this.getData();
+        this.getSourceList();
     },
 };
 </script>

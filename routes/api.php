@@ -63,6 +63,7 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     //rate related work by admin
     Route::post('/import-excel', [RateController::class,'rateImport']);
     Route::get('/get-airline-list', [RateController::class,'getAirlineList']);
+    Route::get('/get-source-list', [RateController::class,'getSourceList']);
     Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}', [RateController::class,'deleteRate']);
 
     //loctaion related work

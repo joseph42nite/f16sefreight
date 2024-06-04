@@ -332,6 +332,7 @@ export default {
             let rate_data_loop = [];
             let items_loop = [];
             let rate_index = 3;
+            this.rate_data_copy={},
             this.search_form.post(`/user/get-rate`)
                 .then(({ data }) => {
                     $('#rate_id').html("Rates");

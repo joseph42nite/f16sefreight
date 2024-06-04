@@ -48,7 +48,7 @@ class RateController extends Controller
     }
     public function deleteRate($carrier_code,$carrier_prefix,$source){
         Rate::where('carrier_code', $carrier_code)->where('origin_airport_code',$source)->delete();
-        echo "data deleted successful";
+        return "delete successfull";   
     }
 }
 

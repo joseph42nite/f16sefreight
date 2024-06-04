@@ -301,8 +301,8 @@ export default {
                 }
             });
         },
-        get_asm() {
-            ApiService.get(`/user/get-ams`).then(({ data }) => {
+        get_asm(origin) {
+            ApiService.get(`/user/get-ams/${origin}`).then(({ data }) => {
                 for(let i=0;i<data.length;i++){
                     this.all_ams[data[i].carrier_code]={};
                     if(data[i].carrier_code=='EK'){
@@ -327,6 +327,17 @@ export default {
         },
         get_rate() {
             $('#rate_id').html("Loading..");
+            //reset ams value
+            this.ams_arr.fsc='';
+            this.ams_arr.scc='';
+            this.ams_arr.xray='';
+            this.ams_arr.misc='';
+            this.ams_arr.ctg='';
+            this.ams_arr.awb_fee='';
+            this.ams_arr.mawb='';
+            this.ams_arr.hawb='';
+            this.ams_arr.dg_fee='';
+            // end reset ams value
             this.rate_data = "";
             this.selectedRows=[];
             let rate_data_loop = [];
@@ -897,10 +908,10 @@ export default {
     mounted() {
         this.getLocation();
         this.get_notice();
-        this.get_asm();
         this.getCurrencyRate();
         if (this.user_source){
             this.search_form.from = this.user_source;
+            this.get_asm(this.user_source);
             // this.searchQuery_from = this.current_user.origin_airport_code;
         }
 

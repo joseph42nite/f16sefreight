@@ -43,7 +43,7 @@ Route::group(['middleware' => 'auth:user-api','prefix' => 'user'], function () {
     Route::get('get-location', [LocationController::class,'getLocation']);
     Route::get('get-currency-rate', [CurrencyRateController::class,'getCurrency']);
     Route::get('get-notice', [SettingController::class,'getNotice']);
-    Route::get('get-ams', [AmsController::class,'getAms']);
+    Route::get('get-ams/{origin}', [AmsController::class,'getAms']);
     Route::post('report', [ReportController::class,'insert']);
 });
 
@@ -65,6 +65,9 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     Route::get('/get-airline-list/{source?}', [RateController::class,'getAirlineList']);
     Route::get('/get-source-list', [RateController::class,'getSourceList']);
     Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}/{source}', [RateController::class,'deleteRate']);
+    Route::get('/get-airline-list', [RateController::class,'getAirlineList']);
+    Route::get('/get-source-list', [RateController::class,'getSourceList']);
+    Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}', [RateController::class,'deleteRate']);
 
     //loctaion related work
     Route::post('/import-loctaion', [LocationController::class,'importData']);

@@ -10,6 +10,7 @@ class Ams extends Model
     protected $fillable = [
         'carrier_code',
         'carrier_prefix',
+        'origin',
         'region',
         'dest_airport_code',
         'dest_country',

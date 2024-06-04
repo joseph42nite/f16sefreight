@@ -7,7 +7,8 @@
         <b-table :bordered="true" responsive :fields="fields" :items="items" style="white-space:nowrap" primary-key="id"
             :filter="filter" :current-page="currentPage" :per-page="perPage" @filtered="onFiltered">
             <template #cell(action)="data">
-                <b-button variant="danger" :id="'delete_'+data.item['carrier_code']" v-on:click="deleteRate(data.item['carrier_code'])">Delete</b-button>
+                <b-button variant="danger" :id="'delete_' + data.item['carrier_code']"
+                    v-on:click="deleteRate(data.item['carrier_code'])">Delete</b-button>
             </template>
         </b-table>
     </div>
@@ -19,9 +20,10 @@ export default {
     data() {
         return {
             fields: ['carrier_code', 'Action'],
+            source_list: [],
             items: [],
-            all_source:[],
-            selected_source:'BLR',
+            all_source: [],
+            selected_source: 'BLR',
             filter: null,
             totalRows: 0,
             currentPage: 1,
@@ -30,8 +32,8 @@ export default {
         };
     },
     methods: {
-        deleteRate(carrier_code,carrier_prefix=0){
-            const deleted_btn='#delete_'+carrier_code;
+        deleteRate(carrier_code, carrier_prefix = 0) {
+            const deleted_btn = '#delete_' + carrier_code;
             $(deleted_btn).html("wait...");
             ApiService.delete(`/superadmin/delete-rate/${carrier_code}/${carrier_prefix}/${this.selected_source}`)
                 .then(({ data }) => {
@@ -49,8 +51,8 @@ export default {
         getSource() {
             ApiService.get(`/superadmin/get-source-list`)
                 .then(({ data }) => {
-                    for(let i=0; i<data.length; i++){
-                        this.all_source.push({"value":data[i].origin_airport_code,"text":data[i].origin_airport_code})
+                    for (let i = 0; i < data.length; i++) {
+                        this.all_source.push({ "value": data[i].origin_airport_code, "text": data[i].origin_airport_code })
                     }
                 })
         },
@@ -60,8 +62,10 @@ export default {
         },
     },
     mounted() {
+        console.log("hello");
         this.getData();
         this.getSource();
+        this.getSourceList();
     },
 };
 </script>
@@ -70,4 +74,3 @@ export default {
     display: none;
 }
 </style>
-  

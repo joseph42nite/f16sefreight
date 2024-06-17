@@ -21,14 +21,14 @@ class AmsController extends Controller
         $data = Ams::where('origin', $origin)->get(['carrier_code', 'carrier_prefix', 'origin', 'region', 'dest_airport_code', 'country_code', 'haul', 'fsc', 'scc', 'xray', 'misc', 'ctg', 'awb_fee', 'mawb', 'hawb', 'dg_fee']);
         return json_encode($data);
     }
-    public function getAmsList()
+    public function getAmsList($source)
     {
-        $data = Ams::select('carrier_code')->distinct()->get();
+        $data = Ams::where('origin',$source)->select('carrier_code')->distinct()->get();
         return json_encode($data);
     }
-    public function delete($carrier_code, $carrier_prefix)
+    public function delete($source)
     {
-        Ams::where('carrier_code', $carrier_code)->delete();
+        Ams::where('origin',$source)->delete();
         echo "data deleted successful";
     }
 }

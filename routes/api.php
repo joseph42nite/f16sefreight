@@ -66,7 +66,6 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
     Route::get('/get-source-list', [RateController::class,'getSourceList']);
     Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}/{source}', [RateController::class,'deleteRate']);
     Route::get('/get-airline-list', [RateController::class,'getAirlineList']);
-    Route::get('/get-source-list', [RateController::class,'getSourceList']);
     Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}', [RateController::class,'deleteRate']);
 
     //loctaion related work
@@ -76,8 +75,8 @@ Route::group(['middleware' => 'auth:superAdmin-api','prefix' => 'superadmin'], f
 
     //ams related work
     Route::post('/import-ams', [AmsController::class,'importData']);
-    Route::get('/get-ams-list', [AmsController::class,'getAmsList']);
-    Route::delete('/delete-ams/{carrier_code}/{carrier_prefix}', [AmsController::class,'delete']);
+    Route::get('/get-ams-list/{source}', [AmsController::class,'getAmsList']);
+    Route::delete('/delete-ams/{source}', [AmsController::class,'delete']);
 
     Route::get('get-notice', [SettingController::class,'getNotice']);
     Route::post('add-notice', [SettingController::class,'insert']);

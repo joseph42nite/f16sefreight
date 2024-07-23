@@ -62,7 +62,6 @@ export default {
         },
     },
     mounted() {
-        console.log("hello");
         this.getData();
         this.getSource();
         this.getSourceList();

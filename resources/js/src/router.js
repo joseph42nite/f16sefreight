@@ -117,6 +117,26 @@ export default new Router({
       path: "/contact-us",
       component: () =>import("@/view/pages/ContactUs"),
     },
+    // {
+    //   name: "Web Doc",
+    //   path: "/web-doc",
+    //   component: () =>import("@/view/pages/WebDoc"),
+    // },
+    {
+      name: "Web Doc",
+      path: "/web-doc",
+      component: () =>import("@/view/pages/WebDoc"),
+    },
+    {
+      name: "House Way Bill",
+      path: "/house-way-bill",
+      component: () =>import("@/view/pages/HouseWayBill"),
+    },
+    {
+      name: "Message Log",
+      path: "/message-log",
+      component: () =>import("@/view/pages/MessageLog"),
+    },
     //-----------for admin login-------------------
     // {
     //   path: "/admin/",

@@ -19,6 +19,8 @@
                 <b-nav-item to="/" class="nav-link-custom">Home</b-nav-item>
                 <b-nav-item to="/about-us" class="nav-link-custom">About Us</b-nav-item>
                 <b-nav-item to="/contact-us" class="nav-link-custom">Contact Us</b-nav-item>
+                <!-- <b-nav-item to="/web-doc" class="nav-link-custom">Web Doc</b-nav-item> -->
+                <b-nav-item to="/web-doc" class="nav-link-custom"> Web Doc</b-nav-item>
               </b-navbar-nav>
 
               <b-navbar-nav class="ml-auto login-desk" >

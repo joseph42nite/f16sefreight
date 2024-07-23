@@ -25,7 +25,6 @@ import "@/core/plugins/inline-svg";
 import "@/core/plugins/metronic";
 import "@/core/plugins/formvalidation";
 import "@/core/plugins/treeselect";
-
 // API service init
 ApiService.init();
 

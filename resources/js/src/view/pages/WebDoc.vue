@@ -1471,7 +1471,7 @@
                                                             <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
                                                             <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px;" v-model="form.currency"></b-form-input>
                                                         </div>
-                                                        <label class="ml-3 mt-5 mb-5">Declared Values For:</label>payment_type: "",
+                                                        <label class="ml-3 mt-5 mb-5">Declared Values For:</label>
                 
                                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Carriage :" class="form-control-sm col-form-label mr-3">
                                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style=" width: 220px;" v-model="form.carriage"></b-form-input>

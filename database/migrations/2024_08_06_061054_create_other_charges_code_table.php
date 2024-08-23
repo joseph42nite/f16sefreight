@@ -15,12 +15,13 @@ class CreateOtherChargesCodeTable extends Migration
     {
         Schema::create('other_charges_code', function (Blueprint $table) {
             $table->id();
-            $table->string('other_charge_code');
-            $table->string('amount');
-            $table->string('due_agent');
-            $table->string('due_carrier');
-            $table->string('prepaid');
-            $table->string('collect');
+            $table->string('other_charge_code')->nullable();
+            $table->string('amount')->nullable();
+            $table->string('due_agent')->nullable();
+            $table->string('due_carrier')->nullable();
+            $table->string('prepaid')->nullable();
+            $table->string('collect')->nullable();
+            $table->integer('awb_id')->nullable();
             $table->timestamps();
         });
     }

@@ -15,13 +15,14 @@ class CreateAgentsInfoTable extends Migration
     {
         Schema::create('agents_info', function (Blueprint $table) {
             $table->id();
-            $table->string('agent_name');
-            $table->string('agent_address');
-            $table->string('agent_issue_sign');
-            $table->string('agent_issue_loc_code');
-            $table->string('agent_issue_date');
-            $table->string('agent_account');
-            $table->integer('iata_agent_code'); //7
+            $table->integer('awb_id')->nullable();
+            $table->string('agent_name')->nullable();
+            $table->string('agent_address')->nullable();
+            $table->string('agent_issue_sign')->nullable();
+            $table->string('agent_issue_loc_code')->nullable();
+            $table->string('agent_issue_date')->nullable();
+            $table->string('agent_account')->nullable();
+            $table->integer('iata_agent_code')->nullable(); //7
             $table->integer('iata_agent_cass')->nullable(); //4
             $table->timestamps();
         });

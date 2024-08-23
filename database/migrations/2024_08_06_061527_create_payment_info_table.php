@@ -15,16 +15,17 @@ class CreatePaymentInfoTable extends Migration
     {
         Schema::create('payment_info', function (Blueprint $table) {
             $table->id();
-            $table->string('payment_type');
-            $table->string('currency');
-            $table->string('carriage');
-            $table->string('insurance');
+            $table->string('payment_type')->nullable();
+            $table->string('currency')->nullable();
+            $table->string('carriage')->nullable();
+            $table->string('insurance')->nullable();
             $table->integer('other_charges_due_carrier')->nullable();
             $table->integer('other_charges_due_agent')->nullable();
             $table->integer('taxes')->nullable();
             $table->integer('weight_charge')->nullable();
-            $table->integer('total_charges');
-            $table->timestaps();
+            $table->integer('total_charges')->nullable();
+            $table->integer('awb_id')->nullable();
+            $table->timestamps();
         });
     }
 

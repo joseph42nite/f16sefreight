@@ -1,17 +1,21 @@
 <template>
-    <div class="bg-white" style="height: auto !important;">
+    <div class="bg-white" style="height: auto !important">
         <template>
             <header>
                 <nav id="nav">
-                    <ul style="z-index: 1098;">
+                    <ul style="z-index: 1098">
                         <li v-for="item in items">
                             <a :href="item.url" v-if="!item.children">
                                 {{ item.name }}
                             </a>
-                            <span v-else v-on:mouseover="mouseover" v-on:mouseleave="mouseleave">
+                            <span
+                                v-else
+                                v-on:mouseover="mouseover"
+                                v-on:mouseleave="mouseleave"
+                            >
                                 {{ item.name }}
 
-                                <ul class=" dropdown" :class="{ isOpen }">
+                                <ul class="dropdown" :class="{ isOpen }">
                                     <li v-for="child in item.children">
                                         <a :href="child.url">
                                             {{ child.name }}
@@ -25,11 +29,13 @@
             </header>
         </template>
         <template>
-            <div class="d-flex justify-content-center align-items-center mt-5 bg-white">
+            <div
+                class="d-flex justify-content-center align-items-center mt-5 bg-white"
+            >
                 <b-button id="show-btn" v-b-modal.modal-ss class="mx-2 custom-btn">Activity</b-button>
                 <b-button id="toggle-btn" class="mx-2 custom-btn" v-b-modal.modal-prevent-closing>Search</b-button>
                 <b-button id="show-btn" v-b-modal.modal-s class="mx-2 custom-btn">10 Latest</b-button>
-                <b-button id="toggle-btn" v-b-modal.modal-templates class="mx-2 custom-btn">Templates</b-button>
+                <b-button  id="toggle-btn" v-b-modal.modal-templates class="mx-2 custom-btn">Templates</b-button>
                 <b-button id="show-btn" v-b-modal.modal-draft class="mx-2 custom-btn">Draft</b-button>
                 <b-button id="toggle-btn" @click="toggleModal" class="mx-2 custom-btn">Related</b-button>
                 <b-button id="show-btn" @click="showModal" class="mx-2 custom-btn">Update Draft</b-button>
@@ -55,31 +61,25 @@
                     </div>
                 </b-modal>
 
-                <b-modal id="modal-prevent-closing" ref="modal" title="Submit Your Name" @ok="handleOk">
+                <b-modal id="modal-prevent-closing" ref="modal" title="Submit Your Name"@ok="handleOk">
                     <form ref="form">
                         <b-form-group label="Cereated By:" label-for="name-input" v-slot="{ ariaDescribedby }">
                             <!-- <b-form-input id="name-input"></b-form-input> -->
-                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
-                                name="radio-options-slots"></b-form-radio-group>
+                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby" name="radio-options-slots"></b-form-radio-group>
                         </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="4"
-                            label="Id:" label-for="input-horizontal" class="form-control-sm">
+                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="4" label="Id:" label-for="input-horizontal" class="form-control-sm">
                             <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
                         </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Destination:" label-for="input-horizontal" class="form-control-sm col-form-label">
+                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2" label="Destination:" label-for="input-horizontal" class="form-control-sm col-form-label">
                             <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
                         </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Issued:" label-for="input-horizontal" class="form-control-sm">
+                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2" label="Issued:" label-for="input-horizontal" class="form-control-sm">
                             <b-form-checkbox size="sm"></b-form-checkbox>
                         </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Draft:" label-for="input-horizontal" class="form-control-sm">
+                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2" label="Draft:" label-for="input-horizontal" class="form-control-sm">
                             <b-form-checkbox size="sm"></b-form-checkbox>
                         </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Not Issue:" label-for="input-horizontal" class="form-control-sm">
+                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2" label="Not Issue:" label-for="input-horizontal" class="form-control-sm">
                             <b-form-checkbox size="sm"></b-form-checkbox>
                         </b-form-group>
                     </form>
@@ -88,10 +88,9 @@
                 <b-modal id="modal-s" title="Latest Messages" ok-only>
                     <div class="d-block">
                         <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
-                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
-                                name="radio-options-slots"></b-form-radio-group>
+                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby" name="radio-options-slots"></b-form-radio-group>
                         </b-form-group>
-                        <hr class="hr">
+                        <hr class="hr" />
                         <b-row class="mt-5">
                             <b-col>
                                 <a href="" class="custom-link">Edit e-AWB Data</a>
@@ -104,7 +103,7 @@
                             <b-col>
                                 <a href="" class="custom-link">e-AWB Pdf file</a>
                                 <a href="" class="custom-link">Multipage e-AWB Pdf</a>
-                                <a href="" class="custom-link"> Multipage e-AWB Pdf with back pages</a>
+                                <a href="" class="custom-link">Multipage e-AWB Pdf with back pages</a>
                                 <a href="" class="custom-link">Without IATA template</a>
                                 <a href="" class="custom-link">1 Page generic e-AWB label</a>
                                 <a href="" class="custom-link">e-AWB label per item (50 pages)</a>
@@ -122,12 +121,10 @@
                                     <h6>Created by:</h6>
                                 </b-col>
                                 <b-col cols="auto">
-                                    <b-form-radio :aria-describedby="ariaDescribedby" name="some-radios"
-                                        value="A">Me</b-form-radio>
+                                    <b-form-radio :aria-describedby="ariaDescribedby" name="some-radios" value="A">Me</b-form-radio>
                                 </b-col>
                                 <b-col cols="auto">
-                                    <b-form-radio :aria-describedby="ariaDescribedby" name="some-radios"
-                                        value="B">Participant group</b-form-radio>
+                                    <b-form-radio :aria-describedby="ariaDescribedby" name="some-radios" value="B">Participant group</b-form-radio>
                                 </b-col>
                             </b-row>
                         </b-form-group>
@@ -135,8 +132,10 @@
                             <b-row align-v="center">
                                 <label>Template</label>
                                 <b-col cols="auto">
-                                    <b-form-select class="form-control-sm" style="width:220px">
-                                        <option>Please choose a Custom Origin</option>
+                                    <b-form-select class="form-control-sm" style="width: 220px">
+                                        <option>
+                                            Please choose a Custom Origin
+                                        </option>
                                         <option>A</option>
                                         <option>B</option>
                                         <option>C</option>
@@ -145,75 +144,70 @@
                             </b-row>
                         </b-form-group>
 
-                        <hr class="hr">
+                        <hr class="hr" />
                         <h4 class="h-color">Save</h4>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-lg="auto" label="Name:"
-                            label-for="input-horizontal" class="form-control-sm col-form-label">
+                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-lg="auto" label="Name:" label-for="input-horizontal" class="form-control-sm col-form-label">
                             <b-row>
                                 <b-col cols="auto">
-                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                        style="width: 200px;"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 200px"></b-form-input>
                                 </b-col>
                                 <b-col>
                                     <b-button>+Save</b-button>
                                 </b-col>
                             </b-row>
                         </b-form-group>
-                        <h3 class="h-color font-weight-bolder mt-lg-10">Modify your templates</h3>
-                        <h5 style="font-size: smaller">Showing all templates in participant group</h5>
+                        <h3 class="h-color font-weight-bolder mt-lg-10">
+                            Modify your templates
+                        </h3>
+                        <h5 style="font-size: smaller">
+                            Showing all templates in participant group
+                        </h5>
                         <h5 class="text-danger ml-5">No Templates found</h5>
-                        <hr class="hr mt-lg-12">
-                        <h5 style="font-size: smaller">The e-AWB can be saved as 'draft' and a list with draft e-AWB
-                            created during the day will be presented below.
-                            The last 10 e-AWB will be visible.</h5>
+                        <hr class="hr mt-lg-12" />
+                        <h5 style="font-size: smaller">
+                            The e-AWB can be saved as 'draft' and a list with
+                            draft e-AWB created during the day will be presented
+                            below. The last 10 e-AWB will be visible.
+                        </h5>
                     </div>
                 </b-modal>
             </div>
         </template>
-        <div class="container mt-lg-15 border-2 bg-light p-2" style="margin-bottom:20px; border-bottom:1px solid black;">
+        <div class="container mt-lg-15 border-2 bg-light p-2" style="margin-bottom: 20px; border-bottom: 1px solid black">
             <div class="container h_background_color text-white pt-2 pb-2">
-                <h4>Create Master Air Waybill(e-AWB)
+                <h4> Create Master Air Waybill(e-AWB)
                     <span class="float-right">New</span>
                 </h4>
             </div>
             <!-- <template> -->
-            <form>
+            <form @submit.prevent="onSubmit">
                 <div class="container">
                     <b-row class="mt-5">
                         <b-col cols="auto">
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                content-cols-lg="auto" label="AWB No:*" label-for="input-horizontal"
-                                class="form-control-sm col-form-label">
-                                <b-form-input id="input-horizontal" class="form-control-sm"
-                                    style="width: 50px;"></b-form-input>
+                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="AWB No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.awb_code"></b-form-input>
                             </b-form-group>
                         </b-col>
                         <b-col cols="auto">
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                content-cols-lg="auto" label-for="input-horizontal"
-                                class="form-control-sm col-form-label">
-                                <b-form-input id="input-horizontal" class="form-control-sm"
-                                    style="width: 90px;"></b-form-input>
+                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.awb_no"></b-form-input>
                             </b-form-group>
                         </b-col>
                         <b-col cols="auto mr-7">
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                content-cols-lg="auto" label="" label-for="input-horizontal"
-                                class="form-control-sm col-form-label">
-                                <b-form-checkbox size="sm">Consolidate MAWB</b-form-checkbox>
+                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                <b-form-checkbox size="sm" v-model="form.consolidated_MAWB">Consolidate MAWB</b-form-checkbox>
                             </b-form-group>
                         </b-col>
-                        <b-col cols="auto ml-7" style="padding-left:9.3%;">
+                        <b-col cols="auto ml-7" style="padding-left: 9.3%">
                             <b-form-group label-for="name-input">
-                                <b-form-radio name="radio-size" size="sm">AWB</b-form-radio>
+                                <b-form-radio name="radio-size" size="sm" v-model="form.awb" value="true">AWB</b-form-radio>
                             </b-form-group>
                         </b-col>
                     </b-row>
                     <b-row class="justify-content-center mt-5">
-                        <b-col cols="auto" style="padding-left: 33.6%;">
+                        <b-col cols="auto" style="padding-left: 33.6%">
                             <b-form-group label-for="">
-                                <b-form-radio name="radio-size" size="sm">e-AWB With No Accompanying Paper
-                                    Documents</b-form-radio>
+                                <b-form-radio name="radio-size" size="sm">e-AWB With No Accompanying Paper Documents</b-form-radio>
                             </b-form-group>
                         </b-col>
                         <b-col cols="auto" class="">
@@ -221,239 +215,183 @@
                                 <b-form-radio name="radio-size" size="sm">e-CSD AWB</b-form-radio>
                             </b-form-group>
                         </b-col>
-                        <b-col cols="auto" style="margin-left:22.5%;">
+                        <b-col cols="auto" style="margin-left: 22.5%">
                             <b-form-group label-for="name-input">
-                                <b-form-radio name="radio-size" size="sm">e-AWB With Accompanying Paper
-                                    Documents</b-form-radio>
+                                <b-form-radio name="radio-size" size="sm">e-AWB With Accompanying Paper Documents</b-form-radio>
                             </b-form-group>
                         </b-col>
                     </b-row>
-                    <hr class="hr">
+                    <hr class="hr" />
 
                     <b-row class="justify-content-center mt-5">
                         <b-col>
                             <b-col cols="auto">
-                                <h4 class="h-color font-weight-bolder ml-2">Shipper</h4>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label">
-                                    <div class="aselect mt-1">
-                                        <div class="selector box">
-                                            <div class="arrow box"></div>
-                                            <select class="custom-select form-control-sm">
-                                                <option value="Select a Shipper">Select a Shipper</option>
-                                                <option>A</option>
-                                                <option>B</option>
-                                                <option>C</option>
+                                <h4 class="h-color font-weight-bolder ml-2">
+                                    Shipper
+                                </h4>
+                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Name:*" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <select class="custom-select form-control-sm" style="width: 320px">
+                                                <option disabled> Select a Shipper</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
                                             </select>
                                         </div>
+                                        <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2" @click="showShipper = !showShipper"></b-icon>
                                     </div>
                                 </b-form-group>
-                                <div class="d-flex align-items-center mt-5">
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-30"></b-form-input>
+                                <b-col v-if="showShipper">
+                                    <div class="d-flex align-items-center mt-5">
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="">
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30" v-model="form.ship_name"></b-form-input>
+                                        </b-form-group>
+                                    </div>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Account:" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15" v-model="form.ship_account"></b-form-input>
                                     </b-form-group>
-                                </div>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal" label="Account:"
-                                    class="form-control-sm col-form-label mr-3">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Address:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                        style="width: 220px;"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"
-                                        style="width: 220px;"></b-form-input>
-                                </b-form-group>
-                                <div class="d-flex align-items-center mt-1">
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label" label="City:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-22"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15" style="width: 220px" v-model="form.ship_address"></b-form-input>
                                     </b-form-group>
-                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                        style="width: 50px;"></b-form-input>
-                                </div>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="State:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
-                                    <b-form-select class="form-control-sm ml-lg-15" style="width: 220px;">
-                                        <option disabled value="Please select one">Please select one</option>
-                                        <option>A</option>
-                                        <option>B</option>
-                                        <option>C</option>
-                                    </b-form-select>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Phone:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Fax:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Telex:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"></b-form-input>
-                                </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" style="width: 220px" v-model="form.ship_account"></b-form-input>
+                                    </b-form-group>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label" label="City:">
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22" v-model="form.ship_city"></b-form-input>
+                                        </b-form-group>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.ship_airport_code"></b-form-input>
+                                    </div>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11" v-model="form.ship_post_code"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20" v-model="form.ship_state"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
+                                        <b-form-select class="form-control-sm ml-lg-15" style="width: 220px" v-model="form.ship_country">
+                                            <option disabled> Please select one</option>
+                                            <option value="A">A</option>
+                                            <option value="B">B</option>
+                                            <option Value="c">C</option>
+                                        </b-form-select>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Phone:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17" v-model="form.ship_phone"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Fax:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22" v-model="form.ship_fax"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Telex:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19" v-model="form.ship_telex"></b-form-input>
+                                    </b-form-group>
 
-                                <b-form-checkbox size="sm" class="ml-lg-35"> Save new address to address
-                                    book</b-form-checkbox>
+                                    <b-form-checkbox size="sm" class="ml-lg-35"> Save new address to address book</b-form-checkbox>
+                                </b-col>
                             </b-col>
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                content-cols-lg="auto" label="" label-for="input-horizontal"
-                                class="form-control-sm col-form-label mt-2">
-                                <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default e-AWB shipper for later
-                                    logins</b-form-checkbox>
+                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="" label-for="input-horizontal" class="form-control-sm col-form-label mt-2">
+                                <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default e-AWB shipper for later logins</b-form-checkbox>
                             </b-form-group>
                         </b-col>
                         <b-col>
                             <b-col cols="auto">
-                                <h4 class="h-color font-weight-bolder ml-2">Consignee</h4>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label">
-                                    <div class="aselect mt-1 ml-2">
-                                        <div class="selector box">
-                                            <div class="arrow box"></div>
-                                            <select class="custom-select form-control-sm">
-                                                <option value="Select a Consignee">Select a Consignee</option>
-                                                <option>A</option>
-                                                <option>B</option>
-                                                <option>C</option>
+                                <h4 class="h-color font-weight-bolder ml-2">
+                                    Consignee
+                                </h4>
+                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Name:*" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <select class="custom-select form-control-sm" style="width: 320px">
+                                                <option disabled> Select a Shipper</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
                                             </select>
                                         </div>
+                                        <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2" @click="showConsignee = !showConsignee"></b-icon>
                                     </div>
                                 </b-form-group>
-                                <div class="d-flex align-items-center mt-5">
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-16"></b-form-input>
+                                <b-col v-if="showConsignee">
+                                    <div class="d-flex align-items-center mt-5">
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" v-model="form.cons_name"></b-form-input>
+                                        </b-form-group>
+                                    </div>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Account:" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.cons_account"></b-form-input>
                                     </b-form-group>
-                                </div>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal" label="Account:"
-                                    class="form-control-sm col-form-label mr-3">
-                                    <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Address:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                        style="width: 220px;"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16"
-                                        style="width: 220px;"></b-form-input>
-                                </b-form-group>
-                                <div class="d-flex align-items-center mt-1">
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label" label="City:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-8"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 220px" v-model="form.cons_address"></b-form-input>
                                     </b-form-group>
-                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                        style="width: 50px;"></b-form-input>
-                                </div>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm "></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="State:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-6"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
-                                    <b-form-select class="form-control-sm ml-lg-1" style="width: 220px;">
-                                        <option disabled value="Please select one">Please select one</option>
-                                        <option>A</option>
-                                        <option>B</option>
-                                        <option>C</option>
-                                    </b-form-select>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Phone:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-3"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Fax:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8"></b-form-input>
-                                </b-form-group>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mr-3" label="Telex:">
-                                    <b-form-input id="input-horizontal" class="form-control-sm ml-lg-5"></b-form-input>
-                                </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" style="width: 220px" v-model="form.cons_account"></b-form-input>
+                                    </b-form-group>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label" label="City:">
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8" v-model="form.cons_city"></b-form-input>
+                                        </b-form-group>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"></b-form-input>
+                                    </div>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.cons_post_code"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-6" v-model="form.cons_state"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
+                                        <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"  v-model="form.cons_country">
+                                            <option disabled value="Please select one"> Please select one</option>
+                                            <option value="A">A</option>
+                                            <option value="B">B</option>
+                                            <option value="C">C</option>
+                                        </b-form-select>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Phone:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-3" v-model="form.cons_phone"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Fax:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8" v-model="form.cons_fax"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Telex:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-5" v-model="form.cons_telex"></b-form-input>
+                                    </b-form-group>
 
-                                <b-form-checkbox size="sm" class="ml-lg-21"> Save new address to address
-                                    book
-                                </b-form-checkbox>
+                                    <b-form-checkbox size="sm" class="ml-lg-21"> Save new address to address book</b-form-checkbox>
+                                </b-col>
                             </b-col>
                         </b-col>
                     </b-row>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div>
                         <b-tabs content-class="mt-3" class="nav-tabs">
-                            <b-tab title="Routing Information" style="border: 2px solid black !important;">
+                            <b-tab title="Routing Information" style="border: 2px solid black !important">
                                 <b-row class="mt-5">
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                            label="Departure Airport*" label-for="input-departure-airport"
-                                            class="form-control-sm col-form-label">
-                                            <b-form-input id="input-departure-airport"
-                                                class="form-control-sm ml-0 pl-0"></b-form-input>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Departure Airport*" label-for="input-departure-airport" class="form-control-sm">
+                                            <!-- <b-form-input id="input-departure-airport"
+                                                class="form-control-sm ml-0 pl-0"></b-form-input> -->
+                                            <b-form-select class="form-control" style="width: 150px" v-model="form.departure_airport">
+                                                <option value=""> Select a Rate Class</option>
+                                                <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY), United States</option>
+                                                <option value="ABZ, Aberdeen (ABZ), United Kingdom">
+                                                    ABZ, Aberdeen (ABZ), United
+                                                    Kingdom
+                                                </option>
+                                            </b-form-select>
                                         </b-form-group>
                                     </b-col>
-                                    <div class="d-flex flex-column align-items-center" style="margin-left: 8.5%;">
+                                    <div class="d-flex flex-column align-items-center" style="margin-left: 8.5%">
                                         <div class="container">
                                             <table class="table-bordered mx-auto table-sm">
                                                 <thead>
                                                     <tr class="h_background_color">
                                                         <th class="form-control1">From</th>
                                                         <th class="form-control1">To</th>
-                                                        <th class="form-control1" style="width: 50px;padding-left: 3%;">
-                                                            By</th>
-                                                        <th class="form-control1" style="width: 50px;padding-left: 3%;">
-                                                            Flight
-                                                        </th>
-                                                        <th class="form-control1" style="width: 50px;padding-left: 3%;">
-                                                            Date
-                                                        </th>
-                                                        <th class="form-control1" style="width: 80px;"></th>
+                                                        <th class="form-control1" style="width: 50px;padding-left: 3%;">By</th>
+                                                        <th class="form-control1" style="width: 50px;padding-left: 3%;">Flight</th>
+                                                        <th class="form-control1" style="width: 50px;padding-left: 3%;">Date</th>
+                                                        <th class="form-control1" style="width: 80px"></th>
                                                     </tr>
                                                 </thead>
                                             </table>
@@ -462,11 +400,22 @@
                                 </b-row>
                                 <b-row class="mt-5">
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                            label="Departure Airport*" label-for="input-departure-airport"
-                                            class="form-control-sm col-form-label">
-                                            <b-form-input id="input-departure-airport"
-                                                class="form-control-sm"></b-form-input>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Departure Airport*" label-for="input-departure-airport" class="form-control-sm col-form-label">
+                                            <!-- <b-form-input id="input-departure-airport"
+                                                class="form-control-sm"></b-form-input> -->
+                                            <b-form-select class="form-control" style="width: 150px" v-model="form.destination_airport">
+                                                <option value=""> Select a Rate Class</option>
+                                                <option
+                                                    value="ABY, Albany (ABY), United States"
+                                                >
+                                                    ABY, Albany (ABY), United
+                                                    States
+                                                </option>
+                                                <option value="ABZ, Aberdeen (ABZ), United Kingdom">
+                                                    ABZ, Aberdeen (ABZ), United
+                                                    Kingdom
+                                                </option>
+                                            </b-form-select>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="1">Routing:*</b-col>
@@ -475,19 +424,31 @@
                                             <table class="mx-auto table-sm">
                                                 <tbody>
                                                     <tr>
-                                                        <td class="editable-cell"><input type="text"
-                                                                class="form-control"></td>
-                                                        <td class="editable-cell"><input type="text"
-                                                                class="form-control"></td>
-                                                        <td class="editable-cell"><input type="text"
-                                                                class="form-control" style="width: 40px;"></td>
-                                                        <td class="editable-cell"><input type="text"
-                                                                class="form-control" style="width: 50px;"></td>
-                                                        <td class="editable-cell"><input type="text"
-                                                                class="form-control" style="width: 60px;"></td>
+                                                        <td class="editable-cell">
+                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.from">
+                                                                <option disabled>Select a Rate Class</option>
+                                                                <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
+                                                                <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ, Aberdeen (ABZ), United Kingdom</option>
+                                                            </b-form-select>
+                                                        </td>
+                                                        <td  class="editable-cell">
+                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.to">
+                                                                <option value=""> Select a Rate Class</option>
+                                                                <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY), United States</option>
+                                                                <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen (ABZ), United Kingdom</option>
+                                                            </b-form-select>
+                                                        </td>
+                                                        <td class="editable-cell">
+                                                            <input type="text" class="form-control" style="width: 40px;" v-model="form.by"/>
+                                                        </td>
+                                                        <td class="editable-cell">
+                                                            <input type="text" class="form-control" style=" width: 50px;" v-model="form.flight"/>
+                                                        </td>
+                                                        <td class="editable-cell">
+                                                            <input type="text" class="form-control" style="width: 60px;" v-model="form.date" />
+                                                        </td>
                                                         <td class="editable-cell w-10" style="width: 60px">
-                                                            <date-picker valueType="format"
-                                                                style="width: 30px !important;"></date-picker>
+                                                            <date-picker valueType="format" style="width: 30px !important;"></date-picker>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -495,23 +456,29 @@
                                         </div>
                                     </div>
                                 </b-row>
-                                <b-row class="justify-content-end" style="margin-right: 23%;">
+                                <b-row class="justify-content-end" style="margin-right: 23%">
                                     <div class="d-flex flex-column justify-content-end">
-                                        <!-- <div class="container"> -->
                                         <table class="mx-auto table-sm">
                                             <tbody>
                                                 <tr>
-                                                    <td class="editable-cell"><input type="text" class="form-control">
+                                                    <td class="editable-cell">
+                                                        <b-form-select class="form-control" style="width: 150px">
+                                                            <option value=""> Select a Rate Class</option>
+                                                            <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
+                                                            <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen (ABZ), United Kingdom</option>
+                                                        </b-form-select>
                                                     </td>
-                                                    <td class="editable-cell"><input type="text" class="form-control"
-                                                            style="width: 40px;"></td>
-                                                    <td class="editable-cell"><input type="text" class="form-control"
-                                                            style="width: 50px;"></td>
-                                                    <td class="editable-cell"><input type="text" class="form-control"
-                                                            style="width: 60px;"></td>
-                                                    <td class="editable-cell w-10" style="width: 60px !important;">
-                                                        <date-picker valueType="format"
-                                                            style="width: 30px !important;"></date-picker>
+                                                    <td class="editable-cell">
+                                                        <input type="text" class="form-control" style="width: 40px"/>
+                                                    </td>
+                                                    <td class="editable-cell">
+                                                        <input type="text"  class="form-control" style="width: 50px" />
+                                                    </td>
+                                                    <td class="editable-cell">
+                                                        <input type="text" class="form-control" style="width: 60px" />
+                                                    </td>
+                                                    <td  class="editable-cell w-10" style="width: 60px !important;">
+                                                        <date-picker valueType="format"  style=" width: 30px !important;"></date-picker>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -519,23 +486,29 @@
                                         <!-- </div> -->
                                     </div>
                                 </b-row>
-                                <b-row class="justify-content-end" style="margin-right: 23%;">
+                                <b-row class="justify-content-end" style="margin-right: 23%">
                                     <div class="d-flex flex-column justify-content-end">
-                                        <!-- <div class="container"> -->
                                         <table class="mx-auto table-sm">
                                             <tbody>
                                                 <tr>
-                                                    <td class="editable-cell"><input type="text" class="form-control">
+                                                    <td class="editable-cell">
+                                                        <b-form-select class="form-control" style="width: 150px">
+                                                            <option value=""> Select a Rate Class</option>
+                                                            <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
+                                                            <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ, Aberdeen (ABZ), United Kingdom</option>
+                                                        </b-form-select>
                                                     </td>
-                                                    <td class="editable-cell"><input type="text" class="form-control"
-                                                            style="width: 40px;"></td>
-                                                    <td class="editable-cell"><input type="text" class="form-control"
-                                                            style="width: 50px;"></td>
-                                                    <td class="editable-cell"><input type="text" class="form-control"
-                                                            style="width: 60px;"></td>
+                                                    <td class="editable-cell">
+                                                        <input type="text" class="form-control" style="width: 40px" />
+                                                    </td>
+                                                    <td class="editable-cell">
+                                                        <input type="text" class="form-control" style="width: 50px" />
+                                                    </td>
+                                                    <td class="editable-cell">
+                                                        <input type="text" class="form-control" style="width: 60px" />
+                                                    </td>
                                                     <td class="editable-cell" style="width: 60px !important;">
-                                                        <date-picker valueType="format"
-                                                            style="width: 30px !important;"></date-picker>
+                                                        <date-picker valueType="format" style=" width: 30px !important;"></date-picker>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -544,29 +517,40 @@
                                     </div>
                                 </b-row>
                             </b-tab>
-                            <b-tab title="Search Flights" style="border: 2px solid black !important;">
+                            <b-tab title="Search Flights" style="border: 2px solid black !important">
                                 <div class="d-flex flex-column align-items-start py-5">
                                     <table class="table-bordered table-sm">
                                         <thead>
                                             <tr class="h_background_color">
-                                                <th class="form-control1">Carrier</th>
-                                                <th class="form-control1">Origin</th>
-                                                <th class="form-control1">Destination</th>
-                                                <th class="form-control1">Flight Date</th>
+                                                <th class="form-control1">
+                                                    Carrier
+                                                </th>
+                                                <th class="form-control1">
+                                                    Origin
+                                                </th>
+                                                <th class="form-control1">
+                                                    Destination
+                                                </th>
+                                                <th class="form-control1">
+                                                    Flight Date
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="editable-cell"><input type="text" class="form-control">
+                                                <td class="editable-cell">
+                                                    <input type="text" class="form-control" />
                                                 </td>
-                                                <td class="editable-cell"><input type="text" class="form-control">
+                                                <td class="editable-cell">
+                                                    <input type="text" class="form-control" />
                                                 </td>
-                                                <td class="editable-cell"><input type="text" class="form-control">
+                                                <td class="editable-cell">
+                                                    <input type="text" class="form-control" />
                                                 </td>
-                                                <td class="editable-cell"><input type="text" class="form-control">
+                                                <td class="editable-cell">
+                                                    <input type="text" class="form-control"/>
                                                 </td>
-                                                <date-picker valueType="format"
-                                                    style="width: 30px !important;"></date-picker>
+                                                <date-picker  valueType="format" style=" width: 30px !important;"></date-picker>
                                                 <!-- <Datepicker format="yyyy-MM-dd" class="small-datepicker mb-2">
                                                 </Datepicker> -->
                                             </tr>
@@ -576,23 +560,23 @@
                             </b-tab>
                         </b-tabs>
                     </div>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div class="py-5">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h4 class="h-color font-weight-bolder ml-2 mb-0">Consignment Rate Description</h4>
+                            <h4 class="h-color font-weight-bolder ml-2 mb-0">
+                                Consignment Rate Description
+                            </h4>
                             <div>
                                 <b-button class="btn-secondary mr-2">
                                     <b-icon icon="search" font-scale="1"></b-icon>Get Rates
                                 </b-button>
                                 <b-button class="btn-secondary">
-                                    <b-icon icon="calendar2-minus-fill" font-scale="1"></b-icon>Collect house waybill
-                                    sum's
+                                    <b-icon icon="calendar2-minus-fill" font-scale="1"></b-icon>Collect house waybill sum's
                                 </b-button>
                             </div>
                         </div>
-                        <b-button class="mt-5" v-b-modal.modal-consignment variant="warning">Add Consignment
-                            Information</b-button>
-                        <b-modal id="modal-consignment" title="Consignment Information" size="xl" ok-only>
+                        <b-button class="mt-5" v-b-modal.modal-consignment variant="warning">Add Consignment Information</b-button>
+                        <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information" size="xl" ok-only>
                             <div class="d-block">
                                 <b-row>
                                     <!-- First Column -->
@@ -600,12 +584,9 @@
                                         <h6>Pieces and Nature and Quantity of Goods</h6>
                                         <div class="bg-light pl-2">
                                             <label for="">Pieces</label>
-                                            <b-form-input id="input-departure-airport"
-                                                class="form-control-sm"></b-form-input>
+                                            <b-form-input id="input-departure-airport"  class="form-control-sm" v-model="form.pieces"></b-form-input>
                                             <label for="">Description</label>
-                                            <b-form-textarea
-                                                style="grid-column: span 2 !important;width:100% !important"
-                                                id="textarea" rows="3" max-rows="6"></b-form-textarea>
+                                            <b-form-textarea style="grid-column: span 2 !important;width: 100% !important;" id="textarea" rows="3" max-rows="6" v-model="form.description"></b-form-textarea>
                                             <table class="table table-sm">
                                                 <tbody>
                                                     <tr>
@@ -613,28 +594,27 @@
                                                         <th>ULD Rate class:</th>
                                                     </tr>
                                                     <tr>
-                                                        <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width:320px">
-                                                                <option value="">Select a Rate Class</option>
+                                                        <td  class="editable-cell">
+                                                            <b-form-select class="form-control" style="width: 320px;" v-model="form.rate_class">
+                                                                <option>Select a Rate Class</option>
                                                                 <option value="B">CB - Basic rate</option>
                                                                 <option value="C">CC - Specific commodity rate</option>
                                                                 <option value="E">CE - Unit load device additional rate</option>
-                                                                <option value="K">CK - Rate per kilogram</option>
+                                                                <option value="K"> CK - Rate per kilogram</option>
                                                                 <option value="M">CM - Minimum charge</option>
                                                                 <option value="N">CN - Normal rate</option>
                                                                 <option value="P">CP - International priority service rate</option>
                                                                 <option value="Q">CQ - Quantity rate</option>
                                                                 <option value="R">CR - Class rate reduction</option>
                                                                 <option value="S">CS - Class rate surcharge</option>
-                                                                <option value="U">CU - Unit load device basic charge or rate</option>
+                                                                <option value="U"> CU - Unit load device basic charge or rate</option>
                                                                 <option value="X">CX - Unit load device additional info</option>
                                                                 <option value="Y">CY - Unit load device discount</option>
                                                                 <option value="Z">CZ - Mutually Defined</option>
                                                             </b-form-select>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 170px;">
+                                                            <input type="text" class="form-control" style="width: 170px;" v-model="form.uld_rate_class"/>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -643,7 +623,7 @@
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width:320px">
+                                                            <b-form-select class="form-control" style="width: 320px;" v-model="form.service_code">
                                                                 <option value="">Select a Service Code</option>
                                                                 <option value="A">A - Airport to Airport</option>
                                                                 <option value="B">B - Service Cargo</option>
@@ -655,7 +635,7 @@
                                                                 <option value="H">H - Company Mail</option>
                                                                 <option value="I">I - Diplomatic Mail</option>
                                                                 <option value="J">J - Priority Service</option>
-                                                                <option value="P">P - Small Package Service</option>
+                                                                <option value="P">P - Small Package Service </option>
                                                                 <option value="R">R - Restricted</option>
                                                                 <option value="S">S - Substitue Truck</option>
                                                                 <option value="T">T - Charter</option>
@@ -663,35 +643,36 @@
                                                             </b-form-select>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 170px;">
+                                                            <input type="text" class="form-control" style="width: 170px;" v-model="form.commodity_item"/>
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <th>Country Of Origin of Goods</th>
+                                                        <th>
+                                                            Country Of Origin of Goods
+                                                        </th>
                                                         <th>Slac:</th>
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width:320px">
-                                                                <option value="">Select a Country</option>
-                                                                <option value="AF">Afghanistan</option>
-                                                                <option value="AX">Åland Islands</option>
+                                                            <b-form-select class="form-control" style=" width: 320px;" v-model="form.country_origin_goods">
+                                                                <option value="">  Select a Country</option>
+                                                                <option value="AF"> Afghanistan</option>
+                                                                <option value="AX"> Åland Islands </option>
                                                                 <option value="AL">Albania</option>
                                                                 <option value="DZ">Algeria</option>
-                                                                <option value="AS">American Samoa</option>
-                                                                <option value="AD">Andorra</option>
-                                                                <option value="AO">Angola</option>
-                                                                <option value="AI">Anguilla</option>
-                                                                <option value="AQ">Antarctica</option>
-                                                                <option value="AG">Antigua and Barbuda</option>
-                                                                <option value="AR">Argentina</option>
+                                                                <option value="AS">American Samoa </option>
+                                                                <option value="AD"> Andorra</option>
+                                                                <option value="AO">  Angola</option>
+                                                                <option value="AI"> Anguilla</option>
+                                                                <option value="AQ"> Antarctica</option>
+                                                                <option value="AG"> Antigua and Barbuda</option>
+                                                                <option value="AR"> Argentina</option>
                                                                 <option value="AM">Armenia</option>
                                                                 <option value="AW">Aruba</option>
-                                                                <option value="AU">Australia</option>
-                                                                <option value="AT">Austria</option>
-                                                                <option value="AZ">Azerbaijan</option>
-                                                                <option value="BS">Bahamas</option>
+                                                                <option value="AU"> Australia</option>
+                                                                <option value="AT"> Austria</option>
+                                                                <option value="AZ"> Azerbaijan</option>
+                                                                <option value="BS"> Bahamas</option>
                                                                 <option value="BH">Bahrain</option>
                                                                 <option value="BD">Bangladesh</option>
                                                                 <option value="BB">Barbados</option>
@@ -699,24 +680,24 @@
                                                                 <option value="BE">Belgium</option>
                                                                 <option value="BZ">Belize</option>
                                                                 <option value="BJ">Benin</option>
-                                                                <option value="BM">Bermuda</option>
-                                                                <option value="BT">Bhutan</option>
-                                                                <option value="BO">Bolivia, Plurinational State of</option>
-                                                                <option value="BA">Bosnia and Herzegovina</option>
-                                                                <option value="BW">Botswana</option>
+                                                                <option value="BM"> Bermuda</option>
+                                                                <option value="BT"> Bhutan</option>
+                                                                <option value="BO"> Bolivia, Plurinational State of</option>
+                                                                <option value="BA"> Bosnia and Herzegovina</option>
+                                                                <option value="BW"> Botswana</option>
                                                                 <option value="BV">Bouvet Island</option>
-                                                                <option value="BR">Brazil</option>
-                                                                <option value="IO">British Indian Ocean Territory</option>
+                                                                <option value="BR"> Brazil</option>
+                                                                <option value="IO"> British Indian Ocean Territory</option>
                                                                 <option value="BN">Brunei Darussalam</option>
-                                                                <option value="BG">Bulgaria</option>
+                                                                <option value="BG"> Bulgaria</option>
                                                                 <option value="BF">Burkina Faso</option>
                                                                 <option value="BI">Burundi</option>
                                                                 <option value="KH">Cambodia</option>
                                                                 <option value="CM">Cameroon</option>
                                                                 <option value="CA">Canada</option>
-                                                                <option value="CV">Cape Verde</option>
-                                                                <option value="KY">Cayman Islands</option>
-                                                                <option value="CF">Central African Republic</option>
+                                                                <option value="CV"> Cape Verde</option>
+                                                                <option value="KY"> Cayman Islands</option>
+                                                                <option value="CF"> Central African Republic</option>
                                                                 <option value="TD">Chad</option>
                                                                 <option value="CL">Chile</option>
                                                                 <option value="CN">China</option>
@@ -742,7 +723,8 @@
                                                                 <option value="SV">El Salvador</option>
                                                                 <option value="GQ">Equatorial Guinea</option>
                                                                 <option value="ER">Eritrea</option>
-                                                                <option value="EE">Estonia</option>
+                                                                <option value="EE">Estonia
+                                                                </option>
                                                                 <option value="ET">Ethiopia</option>
                                                                 <option value="FK">Falkland Islands (Malvinas)</option>
                                                                 <option value="FO">Faroe Islands</option>
@@ -792,7 +774,7 @@
                                                                 <option value="KI">Kiribati</option>
                                                                 <option value="KP">Korea, Democratic People's Republic of</option>
                                                                 <option value="KR">Korea, Republic of</option>
-                                                                <option value="KW">Kuwait</option>
+                                                                <option value="KW"> Kuwait</option>
                                                                 <option value="KG">Kyrgyzstan</option>
                                                                 <option value="LA">Lao People's Democratic Republic</option>
                                                                 <option value="LV">Latvia</option>
@@ -858,7 +840,7 @@
                                                                 <option value="RO">Romania</option>
                                                                 <option value="RU">Russian Federation</option>
                                                                 <option value="RW">Rwanda</option>
-                                                                <option value="BL">Saint Barthélemy</option>
+                                                                <option value="BL">Saint  Barthélemy</option>
                                                                 <option value="SH">Saint Helena, Ascension and Tristan da Cunha</option>
                                                                 <option value="KN">Saint Kitts and Nevis</option>
                                                                 <option value="LC">Saint Lucia</option>
@@ -868,7 +850,7 @@
                                                                 <option value="WS">Samoa</option>
                                                                 <option value="SM">San Marino</option>
                                                                 <option value="ST">Sao Tome and Principe</option>
-                                                                <option value="SA">Saudi Arabia</option>
+                                                                <option value="SA"> Saudi Arabia</option>
                                                                 <option value="SN">Senegal</option>
                                                                 <option value="RS">Serbia</option>
                                                                 <option value="SC">Seychelles</option>
@@ -882,12 +864,12 @@
                                                                 <option value="GS">South Georgia and the South Sandwich Islands</option>
                                                                 <option value="SS">South Sudan</option>
                                                                 <option value="ES">Spain</option>
-                                                                <option value="LK">Sri Lanka</option>
+                                                                <option value="LK" >Sri Lanka</option>
                                                                 <option value="SD">Sudan</option>
                                                                 <option value="SR">Suriname</option>
-                                                                <option value="SJ">Svalbard and Jan Mayen</option>
-                                                                <option value="SZ">Swaziland</option>
-                                                                <option value="SE">Sweden</option>
+                                                                <option value="SJ">Svalbard and Jan Mayen </option>
+                                                                <option value="SZ">Swaziland </option>
+                                                                <option value="SE">Sweden </option>
                                                                 <option value="CH">Switzerland</option>
                                                                 <option value="SY">Syrian Arab Republic</option>
                                                                 <option value="TW">Taiwan, Republic of China</option>
@@ -898,16 +880,16 @@
                                                                 <option value="TG">Togo</option>
                                                                 <option value="TK">Tokelau</option>
                                                                 <option value="TO">Tonga</option>
-                                                                <option value="TT">Trinidad and Tobago</option>
-                                                                <option value="TN">Tunisia</option>
-                                                                <option value="TR">Turkey</option>
-                                                                <option value="TM">Turkmenistan</option>
+                                                                <option value="TT">Trinidad and Tobago </option>
+                                                                <option value="TN">Tunisia </option>
+                                                                <option value="TR" >Turkey</option>
+                                                                <option value="TM">Turkmenistan </option>
                                                                 <option value="TC">Turks and Caicos Islands</option>
-                                                                <option value="TV">Tuvalu</option>
+                                                                <option value="TV" >Tuvalu</option>
                                                                 <option value="UG">Uganda</option>
                                                                 <option value="UA">Ukraine</option>
-                                                                <option value="AE">United Arab Emirates</option>
-                                                                <option value="GB">United Kingdom</option>
+                                                                <option value="AE">United Arab Emirates </option>
+                                                                <option value="GB">United  Kingdom</option>
                                                                 <option value="US">United States</option>
                                                                 <option value="UM">United States Minor Outlying Islands</option>
                                                                 <option value="UY">Uruguay</option>
@@ -924,30 +906,31 @@
                                                                 <option value="ZW">Zimbabwe</option>
                                                             </b-form-select>
                                                         </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 170px;">
+                                                        <td  class="editable-cell">
+                                                            <input type="text" class="form-control" style="width: 170px;" v-model="form.slac"/>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <th>Hs Codes:</th>
                                                     </tr>
                                                     <tr>
-                                                        <td class="editable-cell"
-                                                            style="display: flex; align-items: center;">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 170px; margin-right: 10px;">
-                                                            <button>Add</button>
+                                                        <td class="editable-cell" style="display: flex;align-items: center;">
+                                                            <input type="text" class="form-control" style="width: 170px;margin-right: 10px;" v-model="form.hs_code" />
+                                                            <button @click="addHsCode">Add</button>
                                                         </td>
                                                     </tr>
                                                     <tr class="h_background_color">
                                                         <th>HS Codes</th>
                                                     </tr>
-                                                    <tr>
-                                                        <td class="editable-cell"
-                                                            style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                            <span>testing</span>
-                                                            <b-icon icon="trash" font-scale="1"></b-icon>
+                                                    <tr v-for="(code, index) in hsCodes" :key="index">
+                                                        <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                        <span>{{ code }}</span>
+                                                        <b-icon 
+                                                            icon="trash" 
+                                                            font-scale="1" 
+                                                            @click="removeHsCode(index)"
+                                                            style="cursor: pointer;" 
+                                                        ></b-icon>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -964,25 +947,24 @@
                                                     <tr>
                                                         <th>Gross Weight</th>
                                                         <th></th>
-                                                        <th>Chargeable Weight</th>
+                                                        <th> Chargeable Weight</th>
                                                         <th>Rate</th>
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width:70px;">
+                                                            <input type="text" class="form-control" style="width: 70px;" v-model="form.gross_weight" />
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width:70px;">
-                                                                <option>Kg</option>
-                                                                <option>Lbs</option>
+                                                            <b-form-select class="form-control" style=" width: 70px;" v-model="form.weight_code">
+                                                                <option value="K">Kgs</option>
+                                                                <option value="L">Lbs</option>
                                                             </b-form-select>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width:70px;">
+                                                            <input type="text" class="form-control" style="width: 70px;" v-model="form.chargable_code"/>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width:100px;">
+                                                            <input type="text" class="form-control" style=" width: 100px;" v-model="form.rate"/>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -996,36 +978,30 @@
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 100%;">
+                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.pcs"/>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 100%;">
+                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.wgt"/>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 100%;">
+                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.length" />
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 100%;">
+                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.width"/>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width: 100%;">
+                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.height" />
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width: 100%;">
-                                                                <option>Kg</option>
-                                                                <option>Lbs</option>
+                                                            <b-form-select class="form-control" style="width: 100%;" v-model="form.unit">
+                                                                <option value="CMT">CMT</option>
+                                                                <option value="INH">INH</option>
+                                                                <option value="FOT">FOT</option>
                                                             </b-form-select>
                                                         </td>
-                                                        <td class="editable-cell">
-                                                            <button>Add</button>
-                                                        </td>
+                                                        <td class="editable-cell"><button>Add</button></td>
                                                     </tr>
-                                                    <tr class="h_background_color">
+                                                    <tr  class="h_background_color">
                                                         <th>Pcs</th>
                                                         <th>Wgt</th>
                                                         <th>Length</th>
@@ -1034,23 +1010,12 @@
                                                         <th>Unit</th>
                                                     </tr>
                                                     <tr>
-                                                        <td class="editable-cell">
-                                                            2
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            3
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            10
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            30
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            40
-                                                        </td>
-                                                        <td class="editable-cell"
-                                                            style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                        <td class="editable-cell">2</td>
+                                                        <td class="editable-cell">3</td>
+                                                        <td class="editable-cell">10</td>
+                                                        <td class="editable-cell">30</td>
+                                                        <td class="editable-cell">40</td>
+                                                        <td class="editable-cell" style="display: flex;align-items: center;justify-content: space-between;width: 100%;">
                                                             <span class="mr-3">CMT</span>
                                                             <b-icon icon="trash" font-scale="1"></b-icon>
                                                         </td>
@@ -1060,19 +1025,14 @@
                                             <h6>Volume</h6>
                                             <b-row class="justify-content-end">
                                                 <b-col cols="auto">
-                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                        content-cols-sm content-cols-lg="auto"
-                                                        label-for="input-horizontal"
-                                                        class="form-control-sm col-form-label">
-                                                        <b-form-input id="input-horizontal" class="form-control-sm"
-                                                            style="width:80px"></b-form-input>
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 80px" v-model="form.volume" ></b-form-input>
                                                     </b-form-group>
                                                 </b-col>
                                                 <b-col cols="auto">
-                                                    <b-form-select class="form-control"
-                                                        style="width:70px;margin-right: 10px;">
-                                                        <option value="CC">cm³</option>
-                                                        <option selected="selected" value="MC">m³</option>
+                                                    <b-form-select class="form-control" style="width:70px;margin-right: 10px;" v-model="form.dimention_unit">
+                                                        <option selected="selected" value="CC">cm³</option>
+                                                        <option value="MC">m³</option>
                                                         <option value="CF">ft³</option>
                                                         <option value="CI">in³</option>
                                                     </b-form-select>
@@ -1091,20 +1051,16 @@
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width:100px;">
+                                                            <input type="text" class="form-control" style="width: 100px;" v-model="form.uld_type" />
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width:100px;">
+                                                            <input type="text" class="form-control" style="width: 100px;" v-model="form.uld_serial" :class="{ 'is-invalid': form.errors.has('uld_serial') }"/>
+                                                            <has-error :form="form" field="uld_serial"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control"
-                                                                style="width:100px;">
+                                                            <input type="text" class="form-control" style="width: 100px;" v-model="form.owner"/>
                                                         </td>
-                                                        <td class="editable-cell">
-                                                            <button>Add</button>
-                                                        </td>
+                                                        <td class="editable-cell"><button @click="addUldInfo">Add</button></td>
                                                     </tr>
                                                     <tr class="h_background_color">
                                                         <th>ULD Type:</th>
@@ -1112,19 +1068,12 @@
                                                         <th>Owner:</th>
                                                         <th></th>
                                                     </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">
-                                                            2
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            3
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            10
-                                                        </td>
-                                                        <td class="editable-cell"
-                                                            style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                            <b-icon icon="trash" font-scale="1"></b-icon>
+                                                    <tr v-for="(row, index) in uld_info" :key="index">
+                                                        <td class="editable-cell">{{ row.uld_type }}</td>
+                                                        <td class="editable-cell">{{ row.uld_serial }}</td>
+                                                        <td class="editable-cell">{{ row.owner }}</td>
+                                                        <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                            <b-icon icon="trash" font-scale="1" @click="deleteUldInfo(index)"></b-icon>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -1133,19 +1082,20 @@
                                     </b-col>
                                 </b-row>
                                 <div class="d-flex justify-content-end">
-                                    <button class="btn btn-secondary">Add</button>
+                                    <button class="btn btn-secondary" @click="addOrUpdateEntry">
+                                        {{ editIndex !== null ? 'Update' : 'Add' }}
+                                    </button>
                                 </div>
                             </div>
                         </b-modal>
 
-                        <div class="d-flex flex-column align-items-center mb-5 mt-5">
+                        <div class="d-flex flex-column align-items-center mb-5 mt-5" >
                             <div class="">
                                 <table class="table-bordered mx-auto table-sm">
                                     <thead>
-                                        <tr class="h_background_color" style="font-size: 10px;">
+                                        <tr class="h_background_color" style="font-size: 10px">
                                             <th class="form-control1">Pcs.</th>
-                                            <th class="form-control1">Description</th>
-                                            <th class="form-control1">Srv. Code</th>
+                                            <th class="form-control1">Description</th>Srv. Code</th>
                                             <th class="form-control1">Com. Itm.</th>
                                             <th class="form-control1">Gross Wgt.</th>
                                             <th class="form-control1">Chrg. Wgt.</th>
@@ -1159,18 +1109,43 @@
                                             <th class="form-control1">Origin Country</th>
                                             <th class="form-control1">UID information</th>
                                             <th class="form-control1">Slac</th>
+                                            <th class="form-control1"></th>
                                         </tr>
                                     </thead>
+                                    <tbody>
+                                        <tr v-for="(entry, index) in entries" :key="index">
+                                            <!-- Table data -->
+                                            <td>{{ entry.pcs }}</td>
+                                            <td>{{ entry.description }}</td>
+                                            <td>{{ entry.service_code }}</td>
+                                            <td>{{ entry.commodity_item }}</td>
+                                            <td>{{ entry.gross_weight }}, {{ entry.weight_code}}</td>
+                                            <td>{{ entry.chargable_weight }}</td>
+                                            <td>{{ entry.rate }}</td>
+                                            <td>{{ entry.detailed_pcs_info }}</td>
+                                            <td>{{ entry.volume }}</td>
+                                            <td>{{ entry.rate_class }}</td>
+                                            <td>{{ entry.uld_rate_class }}</td>
+                                            <td>{{ entry.charge }}</td>
+                                            <td>{{ entry.hs_code }}</td>
+                                            <td>{{ entry.country_origin_goods }}</td>
+                                            <td>{{ entry.uld_info }}</td>
+                                            <td>{{ entry.slac }}</td>
+                                            <td class="d-flex align-items-center">
+                                                <b-icon icon="pencil" font-scale="1" style="cursor: pointer;" @click="editEntry(index)" class="mr-2"></b-icon>
+                                                <b-icon icon="trash" font-scale="1"  @click="deleteEntry(index)"></b-icon>
+                                            </td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                             <div class="d-flex justify-content-end ml-auto">
                                 <div class="d-flex align-items-center">
-                                    <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-">
+                                    <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-" >
                                         <div class="d-flex align-items-center">
                                             <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm mr-2"></b-form-input>
-                                            <b-form-select class="form-control-sm">
+                                            <b-form-input id="input-horizontal" class="form-control-sm mr-2" v-model="form.total_valume"></b-form-input>
+                                            <b-form-select class="form-control-sm" v-model="form.dimention_unit">
                                                 <option value="CC">cm³</option>
                                                 <option selected="selected" value="MC">m³</option>
                                                 <option value="CF">ft³</option>
@@ -1178,29 +1153,27 @@
                                             </b-form-select>
                                         </div>
                                         <div class="d-flex align-items-center">
-                                            <label for="input-horizontal" class="mr-2 mb-0">Total Amount:</label>
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm mr-2"></b-form-input>
+                                            <label for="input-horizontal" class="mr-2 mb-0" >Total Amount:</label>
+                                            <b-form-input id="input-horizontal" class="form-control-sm mr-2" v-model="form.total_ammount"></b-form-input>
                                         </div>
                                     </b-form-group>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div>
                         <h5>Customs Origin Code:</h5>
-                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label"
-                            style="width: 350px;">
-                            <b-form-select class="form-control-sm">
+                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px">
+                            <b-form-select class="form-control-sm" v-model="form.customs_origin_code">
                                 <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
-                                <option value="T2">T2 - EC Goods not in free circulation</option>
-                                <option value="TE">TE - Goods in trade with Spain subject to duties</option>
-                                <option value="TP">TP - Goods in trade with Portugal subject to special duties</option>
-                                <option value="TD">TD - Goods already under formal transit procedure</option>
-                                <option value="TF">TF - Goods in trade between EC and Canary Islands</option>
-                                <option value="C">C  - Goods in free circulation</option>
-                                <option value="X">X  - Goods in free circulation with destination outside the EC</option>
+                                <option value="T2"> T2 - EC Goods not in free circulation </option>
+                                <option value="TE"> TE - Goods in trade with Spain subject to duties </option>
+                                <option value="TP"> TP - Goods in trade with Portugal subject to special duties </option>
+                                <option value="TD"> TD - Goods already under formal transit procedure </option>
+                                <option value="TF"> TF - Goods in trade between EC and Canary Islands </option>
+                                <option value="C"> C - Goods in free circulation </option>
+                                <option value="X"> X - Goods in free circulation with destination outside the EC </option>
                             </b-form-select>
                         </b-form-group>
                         <div class="py-md-9">
@@ -1208,74 +1181,53 @@
                                 <b-tab title="OSI" active>
                                     <h5>Other Service Information:</h5>
                                     <div class="py-7">
-                                        <b-form-textarea class=""
-                                            style="grid-column: span 2 !important;width: 60% !important" id="textarea"
-                                            rows="3" max-rows="6"></b-form-textarea>
+                                        <b-form-textarea class="" style=" grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.osi" ></b-form-textarea>
                                     </div>
                                 </b-tab>
                                 <b-tab title="SSR">
                                     <h5>Special Service Request:</h5>
                                     <div class="py-7">
-                                        <b-form-textarea class=""
-                                            style="grid-column: span 2 !important;width: 60% !important" id="textarea"
-                                            rows="3" max-rows="6"></b-form-textarea>
+                                        <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.ssr"></b-form-textarea>
                                     </div>
                                 </b-tab>
                                 <b-tab title="Accounting Information">
                                     <h5>Accounting Information:</h5>
                                     <div class="py-7">
-                                        <b-form-textarea class=""
-                                            style="grid-column: span 2 !important;width: 60% !important" id="textarea"
-                                            rows="3" max-rows="6"></b-form-textarea>
+                                        <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.account_info"></b-form-textarea>
 
-                                        <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
+                                        <b-form-checkbox size="sm" v-model="form.letter_credit">Letter Of Credit</b-form-checkbox>
                                     </div>
                                 </b-tab>
                                 <b-tab title="Shipment Reference Infomation">
                                     <h4 class="h-color font-weight-bolder ml-2">Shipment Reference Information</h4>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        label="Shipment Reference Number:" class="form-control-sm col-form-label">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-14"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Shipment Reference Number:" class="form-control-sm col-form-label">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-14" v-model="form.shipment_ref_no"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        label="Supplementary Shipment Information:"
-                                        class="form-control-sm col-form-label">
-                                        <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Supplementary Shipment Information:" class="form-control-sm col-form-label" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.supplementary_ship_info"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label ml-lg-30">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label ml-lg-30">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto" v-model="form.supplementary_ship_info"></b-form-input>
                                     </b-form-group>
                                 </b-tab>
                                 <b-tab title="IATA and Cass">
-                                    <h5 class="ml-5 py-5">Override IATA And Cass:</h5>
+                                    <h5 class="ml-5 py-5">
+                                        Override IATA And Cass:
+                                    </h5>
                                     <b-row>
                                         <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal" label="IATA:"
-                                                class="form-control-sm col-form-label">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm"></b-form-input>
+                                            <b-form-group id="fieldset-horizontal" abel-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="IATA:" class="form-control-sm col-form-label">
+                                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.iata_code" ></b-form-input>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto mr-7">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label="Cass:" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm"></b-form-input>
-
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Cass:" label-for="input-horizontal" class="form-control-sm col-form-label" >
+                                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.iata_cass" ></b-form-input>
                                             </b-form-group>
                                         </b-col>
-                                        <b-col cols="auto ml-7" style="padding-left:9.3%;">
-                                            <b-form-group label-for="name-input">
-                                                <b-form-checkbox size="sm">Save information for later
-                                                    logins</b-form-checkbox>
+                                        <b-col cols="auto ml-7" style="padding-left: 9.3%" >
+                                            <b-form-group label-for="name-input" >
+                                                <b-form-checkbox size="sm" >Save information for later logins</b-form-checkbox>
                                             </b-form-group>
                                         </b-col>
                                     </b-row>
@@ -1285,146 +1237,87 @@
                                 </b-tab>
 
                                 <b-tab title="Also Notify">
-                                    <h4 class="h-color font-weight-bolder ml-2 mt-2">Also Notify</h4>
+                                    <h4 class="h-color font-weight-bolder ml-2 mt-2"> Also Notify </h4>
                                     <div class="d-flex align-items-center mt-5">
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Name:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-20"></b-form-input>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Name:" >
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"></b-form-input>
                                         </b-form-group>
                                         <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
                                     </div>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-31"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Address:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-15"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-31"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="City:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-23"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="City:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-23"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-11"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="State:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-20"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Country:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-15"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Country:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Phone:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-17"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Phone:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Fax:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-22"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Fax:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Telex:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-19"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Telex:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"></b-form-input>
                                     </b-form-group>
 
-                                    <b-form-checkbox size="sm" class="ml-lg-35"> Save new address to address
-                                        book</b-form-checkbox>
+                                    <b-form-checkbox size="sm" class="ml-lg-35"> Save new address to address book</b-form-checkbox>
                                 </b-tab>
                                 <b-tab title="Exta Print Information">
-                                    <h5>Extra information printed of Air Way Bill (Only printed - not saved or sent to
-                                        Airlines):</h5>
-                                    <b-form-textarea class=""
-                                        style="grid-column: span 2 !important;width: 60% !important" id="textarea"
-                                        rows="3" max-rows="6"></b-form-textarea>
+                                    <h5> Extra information printed of Air Way Bill (Only printed - not saved or sent to Airlines): </h5>
+                                    <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.extra_print"></b-form-textarea>
                                 </b-tab>
                                 <b-tab title="Carrier Address">
-                                    <h4 class="h-color font-weight-bolder ml-2 mt-2"> Override the Carrier Address on
-                                        the PDF
-                                        Document</h4>
-                                    <h6>(This can be used for non-IATA carriers)</h6>
+                                    <h4 class="h-color font-weight-bolder ml-2 mt-2">Override the Carrier Address on the PDF Document
+                                    </h4>
+                                    <h6> (This can be used for non-IATA carriers) </h6>
                                     <div class="d-flex align-items-center mt-5">
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Name:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-20"></b-form-input>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Name:">
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"></b-form-input>
                                         </b-form-group>
                                         <b-form-checkbox size="sm">Public Address</b-form-checkbox>
                                     </div>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-31"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" ></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Address:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-15"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-31"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="City:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-23"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="City:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-23"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-11"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"></b-form-input>
                                     </b-form-group>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label mr-3" label="State:">
-                                        <b-form-input id="input-horizontal"
-                                            class="form-control-sm ml-lg-20"></b-form-input>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20" ></b-form-input>
                                     </b-form-group>
                                 </b-tab>
                             </b-tabs>
                         </div>
                     </div>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div class="py-5">
                         <b-tabs content-class="mt-3" class="nav-tabs">
                             <b-tab title="Other Charges">
-                                <div class="container h_background_color text-white pt-2 pb-2">
+                                <div class="container h_background_color text-white pt-2 pb-2" >
                                     <div class="row">
                                         <div class="col text-left">
                                             <h4>Code</h4>
@@ -1434,261 +1327,132 @@
                                         </div>
                                     </div>
                                 </div>
+
                                 <b-row>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-select class="form-control-sm">
-                                                <option value="">Select an Other Charge Code</option>
-                                                <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                <option value="SC - Security Charge">SC - Security Charge</option>
-                                                <option value=""></option>
-                                                <option value="AC - Animal Container">AC - Animal Container</option>
-                                                <option value="AS - Assembly Service Fee">AS - Assembly Service Fee</option>
-                                                <option value="AT - Attendant">AT - Attendant</option>
-                                                <option value="AW - Air Waybill Fee">AW - Air Waybill Fee</option>
-                                                <option value="BA - Advances And/or Guarantees">BA - Advances And/or Guarantees</option>
-                                                <option value="BB - Appraisal Service">BB - Appraisal Service</option>
-                                                <option value="BC - AWB Copy">BC - AWB Copy</option>
-                                                <option value="BE - Collection Of Funds">BE - Collection Of Funds</option>
-                                                <option value="BF - Copies Of Documents">BF - Copies Of Documents</option>
-                                                <option value="BH - Messenger Service">BH - Messenger Service</option>
-                                                <option value="BI - Import/export Documents Processing">BI - Import/export Documents Processing</option>
-                                                <option value="BL - Blacklist Certificate">BL - Blacklist Certificate</option>
-                                                <option value="BM - Withdrawal Of Shipment After Clearance">BM - Withdrawal Of Shipment After Clearance</option>
-                                                <option value="BR - Bank Release">BR - Bank Release</option>
-                                                <option value="CA - Bonding">CA - Bonding</option>
-                                                <option value="CB - Completion/preparation Of Documents">CB - Completion/preparation Of Documents</option>
-                                                <option value="CC - Manual Data Entry For Customs Purposes">CC - Manual Data Entry For Customs Purposes</option>
-                                                <option value="CD - Clearance And Handling">CD - Clearance And Handling</option>
-                                                <option value="CE - Export/Import Warrant">CE - Export/Import Warrant</option>
-                                                <option value="CF - Inventory And/or Inspection">CF - Inventory And/or Inspection</option>
-                                                <option value="CG - Electronic Proc. Or Trans. Of Data For Customs">CG - Electronic Proc. Or Trans. Of Data For Customs</option>
-                                                <option value="CH - Clearance And Handling">CH - Clearance And Handling</option>
-                                                <option value="CI - Overtime And Other Customs Imposed Charges">CI - Overtime And Other Customs Imposed Charges</option>
-                                                <option value="CJ - Removal (carrier Warehouse To Warehouse)">CJ - Removal (carrier Warehouse To Warehouse)</option>
-                                                <option value="DB - Disbursement Fee">DB - Disbursement Fee</option>
-                                                <option value="DC - Certificate Of Origin">DC - Certificate Of Origin</option>
-                                                <option value="DD - Preparation Of Cargo Manifest">DD - Preparation Of Cargo Manifest</option>
-                                                <option value="DF - Distribution Service Fee">DF - Distribution Service Fee</option>
-                                                <option value="DG - AWB Cancellation">DG - AWB Cancellation</option>
-                                                <option value="DH - AWB Charges Correction Advice">DH - AWB Charges Correction Advice</option>
-                                                <option value="DI - AWB Re-waybilling">DI - AWB Re-waybilling</option>
-                                                <option value="DJ - Proof Of Delivery (documentation)">DJ - Proof Of Delivery (documentation)</option>
-                                                <option value="DK - Release Order">DK - Release Order</option>
-                                                <option value="DV - Veterinary And/or Phytosanitary Purposes">DV - Veterinary And/or Phytosanitary Purposes</option>
-                                                <option value="EA - Handling (Express)">EA - Handling (Express)</option>
-                                                <option value="FA - Airport Arrival">FA - Airport Arrival</option>
-                                                <option value="FB - Domestic Shipments">FB - Domestic Shipments</option>
-                                                <option value="FC - Charges Collect Fee">FC - Charges Collect Fee</option>
-                                                <option value="FD - Priority">FD - Priority</option>
-                                                <option value="FE - General (Handling)">FE - General (Handling)</option>
-                                                <option value="FF - Loading/unloading">FF - Loading/unloading</option>
-                                                <option value="FI - Weighing">FI - Weighing</option>
-                                                <option value="FS - Fuel Surcharge">FS - Fuel Surcharge</option>
-                                                <option value="GA - Diplomatic Consignment">GA - Diplomatic Consignment</option>
-                                                <option value="GT - Government Tax">GT - Government Tax</option>
-                                                <option value="HB - Mortuary">HB - Mortuary</option>
-                                                <option value="HR - Human Remains">HR - Human Remains</option>
-                                                <option value="IA - Very Important Cargo (VIC)">IA - Very Important Cargo (VIC)</option>
-                                                <option value="IN - Insurance Premium">IN - Insurance Premium</option>
-                                                <option value="IR - War Risk">IR - War Risk</option>
-                                                <option value="IS - War Risk">IS - War Risk</option>
-                                                <option value="JA - Clearance OCText=General">JA - Clearance OCText=General</option>
-                                                <option value="KA - Handling (Heavy/Bulky Cargo)">KA - Handling (Heavy/Bulky Cargo)</option>
-                                                <option value="KB - Loading/unloading Equipment (forklift Etc.)">KB - Loading/unloading Equipment (forklift Etc.)</option>
-                                                <option value="LA - Live Animals">LA - Live Animals</option>
-                                                <option value="LC - Cleaning">LC - Cleaning</option>
-                                                <option value="LE - Hotel">LE - Hotel</option>
-                                                <option value="LF - Quarantine">LF - Quarantine</option>
-                                                <option value="LG - Veterinary Inspection">LG - Veterinary Inspection</option>
-                                                <option value="LH - Storage (Live Animals)">LH - Storage (Live Animals)</option>
-                                                <option value="LI - Cleaning Of Stalls/pens">LI - Cleaning Of Stalls/pens</option>
-                                                <option value="LJ - Rental Of Stalls/pens">LJ - Rental Of Stalls/pens</option>
-                                                <option value="MA - Miscellaneous A">MA - Miscellaneous A</option>
-                                                <option value="MB - Miscellaneous B">MB - Miscellaneous B</option>
-                                                <option value="MC - Miscellaneous C">MC - Miscellaneous C</option>
-                                                <option value="MD - Miscellaneous D">MD - Miscellaneous D</option>
-                                                <option value="ME - Miscellaneous E">ME - Miscellaneous E</option>
-                                                <option value="MF - Miscellaneous F">MF - Miscellaneous F</option>
-                                                <option value="MG - Miscellaneous G">MG - Miscellaneous G</option>
-                                                <option value="MH - Miscellaneous H">MH - Miscellaneous H</option>
-                                                <option value="MI - Miscellaneous I">MI - Miscellaneous I</option>
-                                                <option value="MJ - Miscellaneous J">MJ - Miscellaneous J</option>
-                                                <option value="MK - Miscellaneous K">MK - Miscellaneous K</option>
-                                                <option value="ML - Miscellaneous L">ML - Miscellaneous L</option>
-                                                <option value="MM - Miscellaneous M">MM - Miscellaneous M</option>
-                                                <option value="MN - Miscellaneous N">MN - Miscellaneous N</option>
-                                                <option value="MO - Miscellaneous O">MO - Miscellaneous O</option>
-                                                <option value="MP - Miscellaneous P">MP - Miscellaneous P</option>
-                                                <option value="MQ - Miscellaneous Q">MQ - Miscellaneous Q</option>
-                                                <option value="MR - Airfreight Surcharge">MR - Airfreight Surcharge</option>
-                                                <option value="MS - Miscellaneous S">MS - Miscellaneous S</option>
-                                                <option value="MT - Miscellaneous T">MT - Miscellaneous T</option>
-                                                <option value="MU - Miscellaneous U">MU - Miscellaneous U</option>
-                                                <option value="MV - Miscellaneous V">MV - Miscellaneous V</option>
-                                                <option value="MW - Miscellaneous W">MW - Miscellaneous W</option>
-                                                <option value="MX - Miscellaneous X">MX - Miscellaneous X</option>
-                                                <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                <option value="MZ - Miscellaneous Z">MZ - Miscellaneous Z</option>
-                                                <option value="NS - Navigation Surcharge">NS - Navigation Surcharge</option>
-                                                <option value="PA - Handling (Perishables)">PA - Handling (Perishables)</option>
-                                                <option value="PB - Cool/Cold Room OCText=freezer (Perishables)">PB - Cool/Cold Room OCText=freezer (Perishables)</option>
-                                                <option value="PK - Packing/Repacking">PK - Packing/Repacking</option>
-                                                <option value="PU - Pick-Up">PU - Pick-Up</option>
-                                                <option value="RA - Dangerous Goods Fee">RA - Dangerous Goods Fee</option>
-                                                <option value="RB - Rejection">RB - Rejection</option>
-                                                <option value="RC - Referral Of Charge">RC - Referral Of Charge</option>
-                                                <option value="RD - Radio-active Room">RD - Radio-active Room</option>
-                                                <option value="RF - Remit Following Collection Fee">RF - Remit Following Collection Fee</option>
-                                                <option value="SA - Delivery">SA - Delivery</option>
-                                                <option value="SB - Delivery Notification">SB - Delivery Notification</option>
-                                                <option value="SC - Security Charge">SC - Security Charge</option>
-                                                <option value="SD - Surface Charge">SD - Surface Charge</option>
-                                                <option value="SE - Proof Of Delivery (pickup And Delivery)">SE - Proof Of Delivery (pickup And Delivery)</option>
-                                                <option value="SF - Delivery Order">SF - Delivery Order</option>
-                                                <option value="SI - Stop In Transit">SI - Stop In Transit</option>
-                                                <option value="SO - Storage">SO - Storage</option>
-                                                <option value="SP - Separate Early Release">SP - Separate Early Release</option>
-                                                <option value="SR - Storage">SR - Storage</option>
-                                                <option value="SS - Signature Service">SS - Signature Service</option>
-                                                <option value="ST - State Sales Tax">ST - State Sales Tax</option>
-                                                <option value="SU - Surface Charge">SU - Surface Charge</option>
-                                                <option value="TA - Postal Tax">TA - Postal Tax</option>
-                                                <option value="TB - Sales Tax">TB - Sales Tax</option>
-                                                <option value="TC - Stamp Tax">TC - Stamp Tax</option>
-                                                <option value="TD - State Tax">TD - State Tax</option>
-                                                <option value="TE - Statistical Tax">TE - Statistical Tax</option>
-                                                <option value="TH - Terminal Handling">TH - Terminal Handling</option>
-                                                <option value="TI - Value Added Tax (For Import Only)">TI - Value Added Tax (For Import Only)</option>
-                                                <option value="TR - Transit">TR - Transit</option>
-                                                <option value="TV - Value Added Tax (General Or For Export)">TV - Value Added Tax (General Or For Export)</option>
-                                                <option value="TX - General Taxes">TX - General Taxes</option>
-                                                <option value="UB - Disassembly">UB - Disassembly</option>
-                                                <option value="UC - Adjusting Of Improperly Loaded ULD">UC - Adjusting Of Improperly Loaded ULD</option>
-                                                <option value="UD - Demurrage">UD - Demurrage</option>
-                                                <option value="UE - Leasing">UE - Leasing</option>
-                                                <option value="UF - Recontouring">UF - Recontouring</option>
-                                                <option value="UG - Unloading (Unit Load Device)">UG - Unloading (Unit Load Device)</option>
-                                                <option value="UH - Handling (Unit Load Device)">UH - Handling (Unit Load Device)</option>
-                                                <option value="VA - Handling (Valuable Cargo)">VA - Handling (Valuable Cargo)</option>
-                                                <option value="VB - Security (armed Guard/escort) Handling">VB - Security (armed Guard/escort) Handling</option>
-                                                <option value="VC - Strongroom">VC - Strongroom</option>
-                                                <option value="VE - Vetrinarian Charge">VE - Vetrinarian Charge</option>
-                                                <option value="VS - VARIOUS SURCHARGE">VS - VARIOUS SURCHARGE</option>
-                                                <option value="WA - Handling (Vulnerable Cargo)">WA - Handling (Vulnerable Cargo)</option>
-                                                <option value="WR - War Risk">WR - War Risk</option>
-                                                <option value="XB - Security (Surcharge/premiums)">XB - Security (Surcharge/premiums)</option>
-                                                <option value="XC - Time">XC - Time</option>
-                                                <option value="XD - War Risk">XD - War Risk</option>
-                                                <option value="XE - Weight">XE - Weight</option>
-                                                <option value="XR - Security Handling">XR - Security Handling</option>
-                                                <option value="ZA - Re-warehousing">ZA - Re-warehousing</option>
-                                                <option value="ZB - General (Storage)">ZB - General (Storage)</option>
-                                                <option value="ZC - Cool/Cold Room Freezer (Storage)">ZC - Cool/Cold Room Freezer (Storage)</option>
-
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                            <b-form-select class="form-control-sm" v-model="newCharge.code">
+                                                <option value=""> Select an Other Charge Code </option>
+                                                <option value="MY - Fuel Surcharge">MY - Fuel Surcharge </option>
+                                                <option value="SC - Security Charge">SC - Security Charge </option>
+                                                <option value="AC - Animal Container">AC - Animal Container </option>
                                             </b-form-select>
                                         </b-form-group>
                                     </b-col>
-                                    <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm">or:</b-form-input>
+                                    <b-col cols="auto"> 
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2" >
+                                            <b-form-input class="form-control-sm" v-model="newCharge.other_code" placeholder="or:" ></b-form-input>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2" >
+                                            <b-form-input class="form-control-sm" v-model="newCharge.amount" ></b-form-input>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-radio name="radio-size" size="sm">Due Agent </b-form-radio>
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2" >
+                                            <b-form-radio name="due" size="sm" v-model="newCharge.due" value="Agent" >Due Agent</b-form-radio>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-radio name="radio-size" size="sm">Due Carrier</b-form-radio>
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                            <b-form-radio name="due" size="sm" v-model="newCharge.due" value="Carrier" >Due Carrier</b-form-radio>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-radio name="radio-size" size="sm">Prepaid</b-form-radio>
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                            <b-form-radio name="payment_type" size="sm" v-model="newCharge.payment_type" value="Prepaid">Prepaid</b-form-radio>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-form-radio name="radio-size" size="sm">Collect</b-form-radio>
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                            <b-form-radio name="payment_type" size="sm" v-model="newCharge.payment_type" value="Collect">Collect</b-form-radio>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
-                                            <b-button class="bg-secondary form-control-sm px-5">Add</b-button>
+                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2" >
+                                            <b-button class="bg-secondary form-control-sm px-5" @click="addCharge" >
+                                                {{ editIndex !== null ? 'Update' : 'Add' }}
+                                            </b-button>
                                         </b-form-group>
                                     </b-col>
                                 </b-row>
+
+                                <!-- Calculation Table always visible -->
                                 <div class="d-flex flex-column align-items-start py-5">
-                                    <!-- <div class="container"> -->
                                     <table class="table-bordered table-sm">
                                         <thead>
                                             <tr class="h_background_color">
-                                                <th class="form-control1">Calculate Charge</th>
+                                                <th class="form-control1"> Calculate Charge </th>
                                                 <th class="form-control1"></th>
                                                 <th class="form-control1"></th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="editable-cell">Chargeable Weight
-                                                </td>
-                                                <td class="editable-cell"><input type="text" class="form-control"
-                                                        style="width: 50px;" value="0">
+                                                <td class="editable-cell"> Chargeable Weight </td>
+                                                <td class="editable-cell">
+                                                    <input type="text" class="form-control" style="width: 100px" v-model="form.chargable_weight" />
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="editable-cell">Charge
+                                                <td class="editable-cell"> Charge </td>
+                                                <td class="editable-cell">
+                                                    <input type="text" class="form-control" style="width: 100px" v-model="form.charge" />
                                                 </td>
-                                                <td class="editable-cell"><input type="text" class="form-control"
-                                                        style="width: 50px;" value="">
-                                                </td>
-                                                <td class="editable-cell mb-2"><input type="button" class="form-control"
-                                                        style="width: 100px;font-size:12px;font-weight:bold"
-                                                        value="Calculate">
+                                                <td class="editable-cell mb-2">
+                                                    <b-button class="bg-secondary form-control-sm px-5" @click="calculateCharge" >Calculate</b-button>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
-                                    <!-- </div> -->
                                 </div>
-                                <div class="d-flex flex-column align-items-start py-5">
-                                    <!-- <div class="container"> -->
-                                    <table class="table-bordered table-sm" style="width:100%">
-                                        <thead>
-                                            <tr class="h_background_color">
-                                                <th class="form-control1">Code</th>
-                                                <th class="form-control1">Due</th>
-                                                <th class="form-control1">Amount</th>
-                                                <th class="form-control1">Type Of Payment</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                    <!-- </div> -->
-                                </div>
-                                <hr class="hr">
+
+                                <!-- Charges Table -->
+                                <table class="table-bordered table-sm">
+                                    <thead>
+                                        <tr class="h_background_color">
+                                            <th class="form-control1">Code</th>
+                                            <th class="form-control1">Amount</th>
+                                            <th class="form-control1">Due</th>
+                                            <th class="form-control1">Type Of Payment</th>
+                                            <th class="form-control1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(charge, index) in charges" :key="index">
+                                            <td class="editable-cell">
+                                                {{  charge.code || charge.other_code }}
+                                            </td>
+                                            <td class="editable-cell">
+                                                {{ charge.amount }}
+                                            </td>
+                                            <td class="editable-cell">
+                                                {{ charge.due }}
+                                            </td>
+                                            <td class="editable-cell">
+                                                {{ charge.payment_type }}
+                                            </td>
+                                            <td class="editable-cell">
+                                                <b-button size="sm" @click="editCharge(index)">
+                                                        <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                    </b-button>
+                                                <b-button size="sm" @click="removeCharge(index)">
+                                                    <b-icon icon="trash" ></b-icon>
+                                                </b-button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <hr class="hr" />
+
                             </b-tab>
                         </b-tabs>
                     </div>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div class="py-7">
                         <b-tabs>
-                            <b-tab title="Payment Information" active style="background-color: white !important;">
+                            <b-tab title="Payment Information" active style="background-color: white !important">
                                 <div>
                                     <b-row>
                                         <b-col cols="7">
@@ -1696,54 +1460,30 @@
                                                 <b-col>
                                                     <b-col cols="auto">
                                                         <div class="d-flex align-items-center mt-1">
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                                content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-horizontal"
-                                                                class="form-control-sm col-form-label mr-3 mb-3"
-                                                                label="Type Of Payment:*">
-                                                                <b-form-select class="form-control-sm ml-lg-15"
-                                                                    style="width: 220px;">
-                                                                    <option disabled value="Please select one">Please
-                                                                        select one
-                                                                    </option>
-                                                                    <option>A</option>
-                                                                    <option>B</option>
-                                                                    <option>C</option>
+                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Type Of Payment:*">
+                                                                <b-form-select class="form-control-sm ml-lg-15" style="width: 220px;" v-model="form.payment_type">
+                                                                    <option disabled value=""> Please select one </option>
+                                                                    <option> A </option>
+                                                                    <option> B </option>
+                                                                    <option> C </option>
                                                                 </b-form-select>
                                                             </b-form-group>
-                                                            <lable class="ml-3 mt-4 mb-5 mr-5">Currency:</lable>
-                                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                                style="width: 50px;"></b-form-input>
+                                                            <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
+                                                            <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px;" v-model="form.currency"></b-form-input>
                                                         </div>
-                                                        <lable class="ml-3 mt-5 mb-5">Declared Values For:</lable>
-                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                            content-cols-sm content-cols-lg="auto"
-                                                            label-for="input-horizontal" label="Carriage :"
-                                                            class="form-control-sm col-form-label mr-3">
-                                                            <b-form-input id="input-horizontal"
-                                                                class="form-control-sm ml-lg-31 mt-3"
-                                                                style="width: 220px;"></b-form-input>
+                                                        <label class="ml-3 mt-5 mb-5">Declared Values For:</label>payment_type: "",
+                
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Carriage :" class="form-control-sm col-form-label mr-3">
+                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style=" width: 220px;" v-model="form.carriage"></b-form-input>
                                                         </b-form-group>
-                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                            content-cols-sm content-cols-lg="auto"
-                                                            label-for="input-horizontal"
-                                                            class="form-control-sm col-form-label mr-3"
-                                                            label="Customs :">
-                                                            <b-form-input id="input-horizontal"
-                                                                class="form-control-sm ml-lg-31 mt-3"
-                                                                style="width: 220px;"></b-form-input>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Customs :">
+                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style="width: 220px;" v-model="form.other_charges_due_carrier"></b-form-input>
                                                         </b-form-group>
-                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                            content-cols-sm content-cols-lg="auto"
-                                                            label-for="input-horizontal" label="Insurance:"
-                                                            class="form-control-sm col-form-label mr-3">
-                                                            <b-form-input id="input-horizontal"
-                                                                class="form-control-sm ml-lg-30 mt-3"
-                                                                style="width: 220px;"></b-form-input>
+                                                        <b-form-group
+                                                            id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal"
+                                                            label="Insurance:" class="form-control-sm col-form-label mr-3">
+                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30 mt-3" style="width: 220px;" v-model="form.insurance"></b-form-input>
                                                         </b-form-group>
-
-
-
                                                     </b-col>
                                                 </b-col>
                                             </b-row>
@@ -1758,61 +1498,30 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-
                                                     <tr class="column_b">
-                                                        <td class="editable-cell1">
-                                                            Weight Charge (WT)
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
+                                                        <td class="editable-cell1"> Weight Charge (WT) </td>
+                                                        <td class="editable-cell1" > 0.00 INR </td>
+                                                        <td class="editable-cell1" > 0.00 INR </td>
                                                     </tr>
                                                     <tr class="column_b">
-                                                        <td class="editable-cell1">
-                                                            Taxes (TX)
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
+                                                        <td  class="editable-cell1"> Taxes (TX) </td>
+                                                        <td class="editable-cell1" > 0.00 INR </td>
+                                                        <td class="editable-cell1" > 0.00 INR </td>
                                                     </tr>
                                                     <tr class="column_b">
-                                                        <td class="editable-cell1">
-                                                            Other Charges Due Agent (OA)
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
+                                                        <td class="editable-cell1" > Other Charges Due Agent (OA) </td>
+                                                        <td class="editable-cell1" > 0.00 INR </td>
+                                                        <td class="editable-cell1" > 0.00 INR </td>
                                                     </tr>
                                                     <tr class="column_b">
-                                                        <td class="editable-cell1">
-                                                            Other Charges Due Carrier (OC)
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
+                                                        <td class="editable-cell1"> Other Charges Due Carrier (OC)</td>
+                                                        <td class="editable-cell1"> 0.00 INR </td>
+                                                        <td class="editable-cell1"> 0.00 INR </td>
                                                     </tr>
                                                     <tr class="">
-                                                        <td class="editable-cell1">
-                                                            Total Charges
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
-                                                        <td class="editable-cell1">
-                                                            0.00 INR
-                                                        </td>
+                                                        <td class="editable-cell1"> Total Charges </td>
+                                                        <td  class="editable-cell1"> 0.00 INR </td>
+                                                        <td class="editable-cell1"> 0.00 INR </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -1820,14 +1529,12 @@
                                     </b-row>
                                 </div>
                             </b-tab>
-                            <!-- <b-tab title="Other Changes" style="background-color: white !important;"></b-tab> -->
-                            <b-tab title="Special Handling Codes" style="background-color: white !important;">
+                            <b-tab title="Special Handling Codes" style="background-color: white !important">
                                 <div>
                                     <b-row>
                                         <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm">
+                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                <b-form-select class="form-control-sm" >
                                                     <option value="">Select Special Handling Codes</option>
                                                     <option value="ACT">ACT - Active Temperature Controlled System</option>
                                                     <option value="AOG">AOG - Aircraft on ground</option>
@@ -1837,7 +1544,7 @@
                                                     <option value="BUP">BUP - Built up pallet</option>
                                                     <option value="CAO">CAO - Cargo Aircraft Only</option>
                                                     <option value="CAT">CAT - Cargo Attendant Accompanying Shipment</option>
-                                                    <option value="COL">COL - Cool Goods/Refrigerated Goods</option>
+                                                    <option value="COL">COL – Cool Goods/Refrigerated Goods</option>
                                                     <option value="COM">COM - Company mail</option>
                                                     <option value="CRT">CRT - Control Room Temperature </option>
                                                     <option value="DGD">DGD - Dangerous Goods as per attached DGD or DGD-CAO</option>
@@ -1932,26 +1639,24 @@
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm">or:</b-form-input>
+                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                <b-form-input id="input-horizontal" class="form-control-sm">or:</b-form-input>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-button id="input-horizontal" class="form-control-sm"
-                                                    type="button">Add</b-button>
+                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                <b-button id="input-horizontal" class="form-control-sm" type="button">Add</b-button>
                                             </b-form-group>
                                         </b-col>
                                     </b-row>
                                 </div>
                                 <div class="d-flex flex-column align-items-start py-5">
-                                    <table class="table-bordered table-sm" style="width:31%">
+                                    <table class="table-bordered table-sm" style="width: 31%">
                                         <thead>
                                             <tr class="h_background_color">
-                                                <th class="form-control1">Code</th>
+                                                <th class="form-control1">
+                                                    Code
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1962,26 +1667,25 @@
                                     </table>
                                 </div>
                             </b-tab>
-                            <b-tab title="Other Customs Information" style="background-color: white !important;">
+                            <b-tab title="Other Customs Information" style="background-color: white !important" >
                                 <b-tabs class="mt-lg-5">
                                     <b-tab title="Other Customs Information" class="mt-lg-7">
                                         <div class="d-flex flex-column align-items-start py-5">
-                                            <!-- <div class="container"> -->
-                                            <table class="table-bordered table-sm" style="width:100%">
+                                            <table class="table-bordered table-sm" style="width: 100%">
                                                 <thead>
                                                     <tr class="h_background_color">
-                                                        <th class="form-control1">Country Code:</th>
-                                                        <th class="form-control1">Information Identifier:</th>
-                                                        <th class="form-control1">Customs Information Identifier</th>
-                                                        <th class="form-control1"></th>
+                                                        <th class="form-control1">
+                                                            Country Code:
+                                                        </th>
+                                                        <th class="form-control1" > Information Identifier: </th>
+                                                        <th class="form-control1" > Customs Information Identifier </th>
+                                                        <th class="form-control1" ></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <tr>
-                                                       
-                                                            <td class="editable-cell">
-                                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label"
-                                                                style="width: 350px;">
+                                                        <td class="editable-cell" >
+                                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px;">
                                                                 <b-form-select class="form-control-sm">
                                                                     <option value="">Select a country</option>
                                                                     <option value="AF">Afghanistan</option>
@@ -2240,8 +1944,7 @@
                                                             </b-form-group>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label"
-                                                                style="width: 350px;">
+                                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px;">
                                                                 <b-form-select class="form-control-sm">
                                                                     <option value="">Select a code</option>
                                                                     <option value="ABI">ABI - AWB Amount Detail Information</option>
@@ -2434,9 +2137,10 @@
                                                                 </b-form-select>
                                                             </b-form-group>
                                                         </td>
-                                                            <td class="editable-cell">
-                                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label"
-                                                                style="width: 350px;">
+                                                        <td
+                                                            class="editable-cell"
+                                                        >
+                                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px;">
                                                                 <b-form-select class="form-control-sm">
                                                                     <option value="">Select a code</option>
                                                                     <option value="A">A - Automated Broker Interface (ABI) Filer Code</option>
@@ -2472,16 +2176,13 @@
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="editable-cell px-5">Supplementary Information:
+                                                        <td class="editable-cell px-5">Supplementary Information: </td>
+                                                        <td class="editable-cell px-4">
+                                                            <input type="text" class="form-control" style="width: 330px;" value=""/>
                                                         </td>
-                                                        <td class="editable-cell px-4"><input type="text" class="form-control"
-                                                                style="width: 330px;" value="">
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                        </td>
-                                                        <td class="editable-cell mb-2"><input type="button" class="form-control pb-1"
-                                                                style="width: 100px;font-size:12px;font-weight:bold"
-                                                                value="Add">
+                                                        <td class="editable-cell"></td>
+                                                        <td class="editable-cell mb-2">
+                                                            <input type="button" class="form-control pb-1" style="width: 100px;font-size: 12px;font-weight: bold;" value="Add" />
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -2491,16 +2192,11 @@
                                     </b-tab>
 
                                     <b-tab title="Other Customs Information Segment" style="background-color: white !important;">
-                                        <div class="h_background_color mt-5 mb-5 pt-1 pb-1 px-4">
+                                        <div class="h_background_color mt-5 mb-5 pt-1 pb-1 px-4"> 
                                             <h5 class="">Other Customs Information Segment</h5>
                                         </div>
-                                        <div class="py-7 px-3 d-flex align-items-end">
-                                            <b-form-textarea
-                                            style="width: 70% !important;"
-                                            id="textarea"
-                                            rows="3"
-                                            max-rows="6"
-                                            ></b-form-textarea>
+                                        <div class="py-7 px-3 d-flex align-items-end" >
+                                            <b-form-textarea style="width: 70% !important" id="textarea" rows="3" max-rows="6"></b-form-textarea>
                                             <b-button class="ml-2">Upload</b-button>
                                         </div>
                                     </b-tab>
@@ -2509,34 +2205,25 @@
                             </b-tab>
                         </b-tabs>
                     </div>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div class="py-7">
                         <b-row class="justify-content-end">
                             <b-col cols="auto" class="text-right">
-                                <b-form-group
-                                    id="fieldset-horizontal"
-                                    label-cols-lg="auto"
-                                    label-for="input-horizontal"
-                                    label="Email PDF copy To:"
-                                    class="form-control-sm col-form-label">
-                                    <b-form-input
-                                        id="input-horizontal"
-                                        class="form-control-sm"
-                                        style="width: 320px;">
-                                    </b-form-input>
+                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email PDF copy To:" class="form-control-sm col-form-label" >
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 320px"> </b-form-input>
                                 </b-form-group>
-                                <b-form-checkbox size="sm" class="text-left ml-4">Including Cargo Label</b-form-checkbox> 
+                                <b-form-checkbox size="sm" class="text-left ml-4">Including Cargo Label</b-form-checkbox>
                                 <p>(separate addresses with a semicolon ';')</p>
                             </b-col>
                         </b-row>
                     </div>
-                    <hr class="hr">
+                    <hr class="hr" />
                     <div class="py-7">
                         <div class="d-flex justify-content-end">
                             <b-button class="mr-2">Generate PDF</b-button>
                             <b-button class="mr-2">Send</b-button>
                             <b-button class="mr-2">Send & Clear</b-button>
-                            <b-button>Save Draft</b-button>
+                            <b-button type="submit">Save Draft</b-button>
                         </div>
                     </div>
                 </div>
@@ -2546,76 +2233,214 @@
     </div>
 </template>
 <script>
-import Datepicker from 'vuejs-datepicker';
-import DatePicker from 'vue2-datepicker';
-import 'vue2-datepicker/index.css';
+import Datepicker from "vuejs-datepicker";
+import DatePicker from "vue2-datepicker";
+import ApiService from "@/core/services/api.service";
+import "vue2-datepicker/index.css";
 export default {
     data() {
         return {
+            form: new Form({
+                awb_code: "",
+                awb_no: "",
+                consolidated_MAWB: false,
+                awb: true,
+                ship_name: "",
+                ship_account: "",
+                ship_address: "",
+                ship_city: "",
+                ship_post_code: "",
+                ship_state: "",
+                ship_country: "",
+                ship_phone: "",
+                ship_fax: "",
+                ship_telex: "",
+                ship_new_address: "",
+                ship_airport_code: null,
+
+                cons_name: "",
+                cons_account: "",
+                cons_address: "",
+                cons_city: "",
+                cons_airport_code: null,
+                cons_post_code: "",
+                cons_state: "",
+                cons_country: "",
+                cons_phone: "",
+                cons_fax: "",
+                cons_telex: "",
+                cons_new_address: "",
+
+                departure_airport: "",
+                destination_airport: "",
+                from: "",
+                to: "",
+                by: "",
+                flight: "",
+                date: "",
+
+                pieces: "",
+                description: "",
+                rate_class: "",
+                uld_rate_class: "",
+                service_code: "",
+                commodity_item: "",
+                country_origin_goods: "",
+                slac: "",
+                hs_code: "",
+
+                gross_weight: "",
+                weight_code: "", //kgs/lbs
+                chargable_weight: "",
+                rate: "",
+                pcs: "",
+                wgt: "",
+                length: "",
+                width: "",
+                height: "",
+                unit: "",
+                volume: '',
+                dimention_unit: "", //cm3,m3,ft3
+
+                uld_type: "",
+                uld_serial: "",
+                owner: "",
+
+                total_valume: null,
+                total_ammount: null,
+
+                customs_origin_code: null,
+                osi: "",
+                ssr: "",
+                account_info: "",
+                letter_credit: false,
+                shipment_ref_no: null,
+                supplementary_ship_info: null,
+                iata_code: null,
+                iata_cass: null,
+                extra_print: null,
+
+                agent_name: "",
+                agent_address: "",
+                issue_sign: "",
+                issue_loc_code: "",
+                issue_date: "",
+                agent_account: null,
+                participate: true,
+                office: false,
+                participate_airport: "",
+                participate_identifier: "",
+                participate_code: null,
+                office_file_ref: null,
+
+                // other_charge_code: '',
+                // other_code: null,
+                // other_amount: null,
+                // due_agent: '',
+                // due_carrier: '',
+                charge: '',
+                // prepaid: '',
+                // collect: '',
+
+                carr_namr: "",
+                carr_prefix: "",
+                carr_address: "",
+                carr_city: "",
+                carr_post_code: "",
+                carr_state: "",
+                carr_country: "",
+
+                payment_type: "",
+                currency: "",
+                carriage: "",
+                insurance: "",
+                other_charges_due_carrier: "",
+                other_charges_due_agent: "",
+                taxes: "",
+                weight_charge: "",
+                total_charges: "",
+            }),
+            newCharge: {
+                code: "",
+                other_code: "",
+                amount: "",
+                due: "Agent",
+                payment_type: "Prepaid",
+            },
+            uld_info: [],
+            charges: [],
+            entries: [],
+            newHsCode: '',
+            hsCodes: [],
             isOpen: false,
+            showShipper: false,
+            showConsignee: false,
+            showCalculationTable: false,
+            editIndex: null,
             items: [
                 {
-                    url: '#webdoc',
-                    name: 'WebDoc'
+                    url: "#webdoc",
+                    name: "WebDoc",
                 },
                 {
-                    url: '#booking',
-                    name: 'Booking(FFR)'
+                    url: "#booking",
+                    name: "Booking(FFR)",
                 },
                 {
-                    url: '#webdoc',
-                    name: 'WebDoc',
+                    url: "#webdoc",
+                    name: "WebDoc",
                     children: [
                         {
-                            url: '#booking',
-                            name: 'Booking(FFR)'
+                            url: "#booking",
+                            name: "Booking(FFR)",
                         },
                         {
-                            url: '#air_waybill',
-                            name: 'Air Waybill(FWB)',
+                            url: "#air_waybill",
+                            name: "Air Waybill(FWB)",
                         },
                         {
-                            url: '/house-way-bill',
-                            name: 'House Waybill(FHL)',
+                            url: "/house-way-bill",
+                            name: "House Waybill(FHL)",
                         },
                         {
-                            url: '#consolidation',
-                            name: 'Consolidation(FHL)'
+                            url: "#consolidation",
+                            name: "Consolidation(FHL)",
                         },
                         {
-                            url: '#import_mail_data',
-                            name: 'Import Mail Data'
+                            url: "#import_mail_data",
+                            name: "Import Mail Data",
                         },
                         {
-                            url: '#create_label',
-                            name: 'Create Label'
+                            url: "#create_label",
+                            name: "Create Label",
                         },
                         {
-                            url: 'message-log',
-                            name: 'Message Log'
+                            url: "message-log",
+                            name: "Message Log",
                         },
                         {
-                            url: '#maintain_contracts',
-                            name: 'Maintain Contracts'
+                            url: "#maintain_contracts",
+                            name: "Maintain Contracts",
                         },
                         {
-                            url: '#web_doc_printer_setup',
-                            name: 'WebDoc Printer Setup'
+                            url: "#web_doc_printer_setup",
+                            name: "WebDoc Printer Setup",
                         },
                         {
-                            url: '#help',
-                            name: 'Help'
+                            url: "#help",
+                            name: "Help",
                         },
-                    ]
+                    ],
                 },
                 {
-                    url: '#contact',
-                    name: 'Contact'
-                }
+                    url: "#contact",
+                    name: "Contact",
+                },
             ],
+            itemss: [],
             options: [
-                { text: 'Me', value: '1' },
-                { text: 'Participant Group', value: '1' }
+                { text: "Me", value: "1" },
+                { text: "Participant Group", value: "1" },
             ],
             logoSrc: "/media/custome/logo-1.png",
         };
@@ -2629,21 +2454,163 @@ export default {
             this.isOpen = false;
         },
         showModal() {
-            this.$refs['my-modal'].show()
+            this.$refs["my-modal"].show();
         },
         hideModal() {
-            this.$refs['my-modal'].hide();
+            this.$refs["my-modal"].hide();
         },
         toggleModal() {
-            this.$refs['my-modal'].toggle('#toggle-btn');
+            this.$refs["my-modal"].toggle("#toggle-btn");
         },
         handleOk(bvModalEvent) {
             bvModalEvent.preventDefault();
         },
+        onSubmit() {
+            this.form.post(`/create-webdoc`)
+            //ApiService.post(`/create-webdoc`, this.form)
+            .then(({ data }) => {
+                console.log('data', data);
+            })
+            .catch(err => { });
+        },
+        calculateCharge() {
+            let chargeRate = parseFloat(this.form.charge);
+            let weight = parseFloat(this.form.chargable_weight);
+            if (!isNaN(weight) && this.form.charge > 0 && !isNaN(chargeRate) && chargeRate > 0) {
+                let calculatedAmount = weight * chargeRate;
+                this.newCharge.amount = calculatedAmount.toFixed(2);
+            } else {
+                alert('Please enter valid numeric values for chargeable weight and charge rate.');
+            }
+        },
+        addCharge() {
+            if (this.newCharge.code || this.newCharge.other_code && this.newCharge.amount) {
+                // this.charges.push({
+                //     ...this.newCharge,
+                //     // amount: this.form.charge,
+                //     // amount:""
+                // });
+                if (this.editIndex !== null) {
+                    this.charges[this.editIndex] = {
+                        ...this.newCharge,
+                        amount: this.newCharge.amount
+                    };
+                    this.editIndex = null;
+                } else {
+                    // Add new charge
+                    this.charges.push({
+                        ...this.newCharge,
+                        amount: this.newCharge.amount
+                    });
+                }
+
+                this.newCharge = {
+                    code: "",
+                    other_code: "",
+                    amount: "",
+                    due: "",
+                    payment_type: "",
+                };
+                this.form.chargable_weight = '',
+                this.form.charge = ''
+            } else {
+                alert("Please select a code or enter other code.");
+            }
+        },
+        editCharge(index) {
+            this.newCharge = { ...this.charges[index] };
+            this.editIndex = index;
+        },
+        removeCharge(index) {
+            this.charges.splice(index, 1);
+        },
+        editEntry(index) {
+            this.editIndex = index;
+            this.form = { ...this.entries[index] };
+            // this.displayModal();
+            this.$refs.modalConsignment.show();
+        },
+        deleteEntry(index) {
+            this.entries.splice(index, 1);
+        },
+        addOrUpdateEntry() {
+            if (this.editIndex !== null) {
+                this.$set(this.entries, this.editIndex, {...this.form});
+                this.editIndex = null;
+            } else {
+                this.entries.push({ ...this.form });
+            }
+            this.closeModal();
+        },
+        addHsCode() {
+            // if (this.hs_code.length > 0) {
+            //     this.hs_code = '';
+            //     alert('You have exceeded the maximum limit of HS codes.');
+            //     return;
+            // }
+         
+            // if (this.hs_code.trim()) {
+            //     this.hs_code.push(this.hs_code.trim());
+            //     this.hs_code = '';
+            // } else {
+            //     alert('HS Code cannot be empty');
+            // }
+            if (this.hsCodes.length >= 1) {
+                alert('You have exceeded the maximum limit of HS codes.');
+                return;
+            }
+
+            if (this.form.hs_code.trim() === '') {
+                alert('HS Code cannot be empty.');
+                return;
+            }
+            this.hsCodes.push(this.form.hs_code.trim());
+                
+        },
+        removeHsCode(index) {
+            this.form.hs_code = '';
+            if (confirm('Are you sure you want to delete this HS Code?')) {
+                this.hsCodes.splice(index, 1);
+            }
+        },
+        displayModal() {
+             this.$refs.modalConsignment.show();
+        },
+        closeModal() {
+            this.$refs.modalConsignment.hide();
+        },
+        addUldInfo() {
+            if (this.form.uld_type && this.form.uld_serial && this.form.owner){
+                this.uld_info.push({
+                    uld_type: this.form.uld_type,
+                    uld_serial: this.form.uld_serial,
+                    owner: this.form.owner
+                });
+            this.form.uld_type = "";
+            this.form.uld_serial = "";
+            this.form.owner = "";
+            }
+            else {
+                alert("This field are empty");
+            }
+           
+        },
+        deleteUldInfo(index) {
+            if (this.uld_info && this.uld_info.length > index) {
+                this.uld_info.splice(index, 1);
+            }
+        }
+        // resetForm() {
+        //     for (const key in this.form) {
+        //         if (Object.prototype.hasOwnProperty.call(this.form, key)) {
+        //             this.form[key] = '';
+        //         }
+        //     }
+        // },
     },
     components: {
         Datepicker,
-        DatePicker
+        DatePicker,
     },
 };
 </script>
@@ -2672,22 +2639,22 @@ header {
     /* margin: 0 auto; */
 }
 
-#nav>ul {
+#nav > ul {
     display: flex;
     margin: 0;
     padding: 0;
     list-style-type: none;
 }
 
-#nav>ul>li:hover {
+#nav > ul > li:hover {
     background-color: gray;
 }
 
-#nav>ul>li>span:after {
+#nav > ul > li > span:after {
     display: inline-block;
 }
 
-#nav>ul>li>a {
+#nav > ul > li > a {
     display: block;
     height: auto;
     padding: 3px;
@@ -2695,7 +2662,7 @@ header {
     text-decoration: none;
 }
 
-#nav>ul>li>span {
+#nav > ul > li > span {
     position: relative;
     display: block;
     height: auto;
@@ -2709,10 +2676,9 @@ li {
     border-right: 1px solid white;
 }
 
-#nav>ul>li>span:after {
+#nav > ul > li > span:after {
     /* content: '▼'; */
     display: inline-block;
-
 }
 
 .dropdown {
@@ -2750,7 +2716,6 @@ li {
 /* #show-btn:hover {
   background-color: #007bff;
 } */
-
 
 .custom-btn:hover {
     background-color: #007bff !important;
@@ -2795,7 +2760,8 @@ li {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"><path fill="black" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"><path fill="black" d="M7 10l5 5 5-5z"/></svg>')
+        no-repeat right 10px center;
     background-color: white;
     border: 1px solid #ccc;
     /* padding: 10px 40px 10px 10px; */

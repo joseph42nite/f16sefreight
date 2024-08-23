@@ -15,13 +15,16 @@ class CreateShippersTable extends Migration
     {
         Schema::create('shipper_deatils', function (Blueprint $table) {
             $table->id();
-            $table->string('ship_name');
-            $table->string('ship_account');
-            $table->string('ship_address');
-            $table->integer('ship_post_code');
-            $table->string('ship_state');
-            $table->string('ship_country');
-            $table->integer('ship_phone');
+            $table->integer('awb_id')->nullable();
+            $table->string('ship_name')->nullable();
+            $table->string('ship_account')->nullable();
+            $table->string('ship_address')->nullable();
+            $table->string('ship_city')->nullable();
+            $table->string('ship_airport_code')->nullable();
+            $table->integer('ship_post_code')->nullable();
+            $table->string('ship_state')->nullable();
+            $table->string('ship_country')->nullable();
+            $table->integer('ship_phone')->nullable();
             $table->integer('ship_fax')->nullable();
             $table->integer('ship_telex')->nullable();
             $table->timestamps();

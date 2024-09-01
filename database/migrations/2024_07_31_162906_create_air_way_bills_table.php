@@ -39,6 +39,11 @@ class CreateAirWayBillsTable extends Migration
             $table->integer('occ_id')->nullable(); //other charges code id
             $table->integer('payment_id')->nullable();
             $table->integer('consignee_rate_id')->nullable();
+            $table->string('special_handling_code')->nullable();
+            $table->string('oci_country_code')->nullable(); //Other Customs Information(OCI)
+            $table->string('oci_info_identifier')->nullable();
+            $table->string('oci_custom_info_identifier')->nullable();
+            $table->string('oci_supplementary_info')->nullable();
             $table->timestamps();
         });
     }

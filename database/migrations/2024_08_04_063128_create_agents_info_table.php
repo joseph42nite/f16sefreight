@@ -24,6 +24,9 @@ class CreateAgentsInfoTable extends Migration
             $table->string('agent_account')->nullable();
             $table->integer('iata_agent_code')->nullable(); //7
             $table->integer('iata_agent_cass')->nullable(); //4
+            $table->string('office_airport')->nullable();
+            $table->string('office_function_designator')->nullable(); //2
+            $table->string('office_company_designator')->nullable();//2
             $table->timestamps();
         });
     }

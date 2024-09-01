@@ -14,74 +14,109 @@ use Illuminate\Support\Facades\Log;
 class AirwayBill extends Controller
 {
     public function index() {}
-
+    // :class="{ 'is-invalid': form.errors.has('awb_code') }"
+    // <has-error :form="form" field="awb_code"></has-error>
     public function store(Request $request)
     {
         try {
             $request->validate([
-                'awb_code' => 'required|string|max:3',
-                'awb_no' => 'required|string|max:8',
+                'awb_code' => 'required|numeric|size:3',
+                'awb_no' => 'required|size:8',
                 'consolidated_MAWB' => 'nullable|boolean',
                 'awb' => 'nullable|boolean',
+                'accounting_information' => 'nullable|string|max:70',
+                'special_handling_code' => 'required|string|max:3',
+                'special_service_request' => 'nullable|string|max:195',
+                'other_service_information' => 'nullable|string|max:195',
+                'oci_country_code' => 'nullable|string|max:2',//Other Customs Information(OCI)
+                'oci_info_identifier' => 'nullable|string|max:3',
+                'oci_custom_info_identifier' => 'nullable|string|max:2',
+                'oci_supplementary_info' => 'nullable|string|max:70',
+                'shipment_ref_no' => 'nullable|string|max:35',
+                'supplementary_shipment_Info' => 'nullable|string|max:35',
 
-                'ship_name' => 'nullable|string|max:255',
-                'ship_account' => 'nullable|string|max:255',
-                'ship_address' => 'nullable|string|max:255',
-                'ship_city' => 'nullable|string|max:255',
-                'ship_airport_code' => 'nullable|string|max:10',
-                'ship_post_code' => 'nullable|string|max:10',
-                'ship_state' => 'nullable|string|max:255',
-                'ship_country' => 'nullable|string|max:255',
-                'ship_phone' => 'nullable|string|max:20',
-                'ship_fax' => 'nullable|string|max:20',
-                'ship_telex' => 'nullable|string|max:20',
+                'ship_name' => 'required|string|max:70',
+                'ship_account' => 'nullable|string|max:14',
+                'ship_address' => 'required|max:70|regex:/^[a-zA-Z0-9\s]+$/',
+                'ship_city' => 'required|string|max:70',
+                'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
+                'ship_post_code' => 'nullable|string|max:9',
+                'ship_state' => 'nullable|string|max:9',
+                'ship_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
+                'ship_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35', //digits_between:1,35  regex:/^[0-9]+$/
+                'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
+                'ship_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
 
-                'cons_name' => 'nullable|string|max:255',
-                'cons_account' => 'nullable|string|max:255',
-                'cons_address' => 'nullable|string|max:255',
-                'cons_city' => 'nullable|string|max:255',
-                'cons_post_code' => 'nullable|string|max:10',
-                'cons_state' => 'nullable|string|max:255',
-                'cons_country' => 'nullable|string|max:255',
-                'cons_phone' => 'nullable|string|max:20',
-                'cons_fax' => 'nullable|string|max:20',
-                'cons_telex' => 'nullable|string|max:20',
+                'cons_name' => 'required|string|max:70',
+                'cons_account' => 'nullable|string|max:14',
+                'cons_city_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',   //airport code 
+                'cons_address' => 'required|max:70|regex:/^[a-zA-Z0-9\s]+$/',
+                'cons_city' => 'required|string|max:70',
+                'cons_post_code' => 'nullable|regex:/^[0-9]+$/|max:35',
+                'cons_state' => 'nullable|string|max:9',
+                'cons_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
+                'cons_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
+                'cons_fax' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
+                'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
 
-                'departure_airport' => 'nullable|string',
-                'destination_airport' => 'nullable|string',
-                'from' => 'nullable|string',
-                'to' => 'nullable|string',
-                'by' => 'nullable|string|max:20',
-                'flight' => 'nullable|string|max:20',
-                'date' => 'nullable|string',
-                'customs_origin_code' => 'nullable',
+                'departure_airport' => 'required|string',
+                'destination_airport' => 'required|string',
+                'from' => 'required|string',
+                'to' => 'required|string',
+                'by' => 'required|string|max:20',
+                'flight' => 'required|string|max:20',
+                'date' => 'required|string',
+                'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:2',
 
                 'awb_id' => 'nullable|string',
-                'pieces' => 'nullable|string',
-                'description'=> 'nullable|string',
-                'rate_class'=> 'nullable|string',
-                'uld_rate_class'=> 'nullable|string',
-                'service_code'=> 'nullable|string',
-                'commodity_item'=> 'nullable|string',
-                'country_origin_goods'=> 'nullable|string',
+                'pieces' => 'nullable|digits_between:1,4',
+                'description'=> 'nullable|string|max:70',
+                'rate_class'=> 'nullable|string|max:1',
+                'uld_rate_class' => 'nullable|regex:/^\d[A-Za-z]{2}$/',
+                'service_code'=> 'nullable|string|max:1',
+                'commodity_item'=> 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:11',
+                'country_origin_goods'=> 'nullable|string|max:2',
                 'slac'=> 'nullable|string',
-                'hs_code'=> 'nullable|string',
-                'gross_weight'=> 'nullable|string',
-                'chargable_weight'=> 'nullable|string',
-                'weight_code'=> 'nullable|string', //kgs/lbs
+                'hs_code'=> 'nullable|regex:/^[a-zA-Z0-9\s]+$/|min:6|max:18',
+                'gross_weight'=> 'nullable|numeric|min:0.1|max:9999999',
+                'chargable_weight'=> 'nullable|numeric|min:0.1|max:9999999',
+                'weight_code'=> 'nullable|string|max:3', //kgs/lbs
                 // $table->float('rate');
-                'rate'=> 'nullable|string',
-                'height'=> 'nullable|string',
-                'width'=> 'nullable|string',
-                'length'=> 'nullable|string',
-                'unit'=> 'nullable|string',
+                'rate'=> 'nullable|numeric|min:0.0001|max:99999999',
+                'height'=> 'nullable|regex:/^[0-9]+$/|max:5',
+                'width'=> 'nullable|regex:/^[0-9]+$/|max:5',
+                'length'=> 'nullable|regex:/^[0-9]+$/|max:5',
+                'unit'=> 'nullable|string|max:3',
                 'volume'=> 'nullable|string',
-                'dimention_unit'=> 'nullable|string',
-                'uld_type'=> 'nullable|string',
-                'uld_serial'=> 'nullable',
-                'owner'=> 'nullable|string',
-                'total_volume'=> 'nullable|string',
-                'total_amount'=> 'nullable|string'
+                'dimention_unit'=> 'nullable|string|max:2',
+                'uld_type'=> 'nullable|string|size:3',
+                'uld_serial'=> 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:5',
+                'owner'=> 'nullable|regex:/^[a-zA-Z0-9\s]+$/|size:2',
+                'total_volume'=> 'nullable|regex:/^[0-9]+$/|max:9',
+                'total_amount'=> 'nullable|numeric|min:0.01|max:999999999',
+
+                'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
+                'currency' => 'nullable|string|max:3',
+                'no_value_declear_carriage' => 'nullable|boolean',  //carriage
+                'declear_value_carriage' => 'nullable|numeric|min:0.000|max:999999999999',
+                'no_value_declear_customs' =>'nullable|boolean',    //customs
+                'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
+                'no_value_declear_insurance' => 'nullable|boolean',    //Insurance
+                'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',  
+
+                'agent_name' => 'nullable|string|max:35',
+                'agent_address' => 'nullable|max:70|regex:/^[a-zA-Z0-9\s]+$/',
+                'agent_issue_sign' => 'required|max:20|string',
+                'agent_issue_loc_code' => 'required|string|max:3',
+                'agent_issue_date' => 'required',
+                'agent_account' => '',
+                'office_airport' => '',
+                'office_function_designator' => '', //2
+                'office_company_designator' => '', //2
+                'iata_agent_code' => 'nullable|numeric|size:7',  //7
+                'iata_agent_cass' => 'nullable|numeric|size:4', //4
+
+                'other_charge_code' => 'nullable|string', //max:2
             ]);
 
             // Handle shipper data

@@ -261,7 +261,8 @@
                                         <has-error :form="form" field="ship_address"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" style="width: 220px" v-model="form.ship_address"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" style="width: 220px" v-model="form.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
+                                        <has-error :form="form" field="ship_address_line_2"></has-error>
                                     </b-form-group>
                                     <div class="d-flex align-items-center mt-1">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label" label="City:">
@@ -341,8 +342,8 @@
                                         <b-form-input id="input-horizontal" class="form-control-sm" style="width: 220px" v-model="form.cons_address" ></b-form-input>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" style="width: 220px" v-model="form.cons_account" :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
-                                        <has-error :form="form" field="cons_account"></has-error>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" style="width: 220px" v-model="form.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
+                                        <has-error :form="form" field="cons_address_line_2"></has-error>
                                     </b-form-group>
                                     <div class="d-flex align-items-center mt-1">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label" label="City:">
@@ -390,8 +391,6 @@
                                 <b-row class="mt-5">
                                     <b-col cols="auto">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Departure Airport*" label-for="input-departure-airport" class="form-control-sm">
-                                            <!-- <b-form-input id="input-departure-airport"
-                                                class="form-control-sm ml-0 pl-0"></b-form-input> -->
                                             <b-form-select class="form-control" style="width: 150px" v-model="form.departure_airport" :class="{ 'is-invalid': form.errors.has('cons_state') }">
                                                 <option disabled value=""> Select a Rate Class</option>
                                                 <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY), United States</option>
@@ -440,7 +439,7 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.from" :class="{ 'is-invalid': form.errors.has('from') }">
+                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.departure_airport" :class="{ 'is-invalid': form.errors.has('from') }">
                                                                 <option disabled>Select a Rate Class</option>
                                                                 <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ, Aberdeen (ABZ), United Kingdom</option>
@@ -482,23 +481,23 @@
                                             <tbody>
                                                 <tr>
                                                     <td class="editable-cell">
-                                                        <b-form-select class="form-control" style="width: 150px">
-                                                            <option disabled value=""> Select a Rate Class</option>
+                                                        <b-form-select class="form-control" style="width: 150px"  v-model="form.to_2" :class="{ 'is-invalid': form.errors.has('to_2') }">
+                                                            <option disabled value=""> Select 2 a Rate Class</option>
                                                             <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                             <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                         </b-form-select>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 40px"/>
+                                                        <input type="text" class="form-control" style="width: 40px"  v-model="form.by_2" :class="{ 'is-invalid': form.errors.has('by_2') }"/>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text"  class="form-control" style="width: 50px" />
+                                                        <input type="text"  class="form-control" style="width: 50px"  v-model="form.flight_2" :class="{ 'is-invalid': form.errors.has('flight_2') }"/>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 60px" />
+                                                        <input type="text" class="form-control" style="width: 60px"  v-model="form.date_2" :class="{ 'is-invalid': form.errors.has('date_2') }"/>
                                                     </td>
                                                     <td  class="editable-cell w-10" style="width: 60px !important;">
-                                                        <date-picker valueType="format"  style=" width: 30px !important;"></date-picker>
+                                                        <date-picker valueType="format"  style=" width: 30px !important;"  @change="handleDateChange"></date-picker>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -512,23 +511,23 @@
                                             <tbody>
                                                 <tr>
                                                     <td class="editable-cell">
-                                                        <b-form-select class="form-control" style="width: 150px">
-                                                            <option disabled value=""> Select a Rate Class</option>
+                                                        <b-form-select class="form-control" style="width: 150px"  v-model="form.to_3" :class="{ 'is-invalid': form.errors.has('to_3') }">
+                                                            <option disabled value=""> Select 3 a Rate Class</option>
                                                             <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                             <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                         </b-form-select>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 40px" />
+                                                        <input type="text" class="form-control" style="width: 40px"  v-model="form.by_3" :class="{ 'is-invalid': form.errors.has('by_3') }" />
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 50px" />
+                                                        <input type="text" class="form-control" style="width: 50px"  v-model="form.flight_3" :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 60px" />
+                                                        <input type="text" class="form-control" style="width: 60px"  v-model="form.date_3" :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                     </td>
                                                     <td class="editable-cell" style="width: 60px !important;">
-                                                        <date-picker valueType="format" style=" width: 30px !important;"></date-picker>
+                                                        <date-picker valueType="format" style=" width: 30px !important;" @change="handleDateChange"></date-picker>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -543,16 +542,16 @@
                                         <thead>
                                             <tr class="h_background_color">
                                                 <th class="form-control1">
-                                                    Carrier
+                                                    Carrier *
                                                 </th>
                                                 <th class="form-control1">
-                                                    Origin
+                                                    Origin *
                                                 </th>
                                                 <th class="form-control1">
-                                                    Destination
+                                                    Destination *
                                                 </th>
                                                 <th class="form-control1">
-                                                    Flight Date
+                                                    Flight Date *
                                                 </th>
                                             </tr>
                                         </thead>
@@ -562,10 +561,10 @@
                                                     <input type="text" class="form-control" />
                                                 </td>
                                                 <td class="editable-cell">
-                                                    <input type="text" class="form-control" />
+                                                    <input type="text" class="form-control" :value="getOriginCode(form.departure_airport)" />
                                                 </td>
                                                 <td class="editable-cell">
-                                                    <input type="text" class="form-control" />
+                                                    <input type="text" class="form-control" :value="getDestinationCode(form.destination_airport)"/>
                                                 </td>
                                                 <td class="editable-cell">
                                                     <input type="text" class="form-control"/>
@@ -1699,10 +1698,10 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <!-- <tr>
+                                                    <tr>
                                                         <td class="editable-cell">Weight Charge (WT)</td>
-                                                        <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td>
                                                         <td class="editable-cell">0.00 INR</td>
+                                                        <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td>
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">Taxes (TX)</td>
@@ -1711,46 +1710,18 @@
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">Other Charges Due Agent (OA)</td>
-                                                        <td class="editable-cell">{{ totalDueAgent }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
+                                                        <td class="editable-cell">{{ totalDueAgentPrepaid }} INR</td>
+                                                        <td class="editable-cell">{{ totalDueAgentCollect }} INR</td>
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">Other Charges Due Carrier (OC)</td>
-                                                        <td class="editable-cell">{{ totalDueCarrier }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
+                                                        <td class="editable-cell">{{ totalDueCarrierPrepaid }} INR</td>
+                                                        <td class="editable-cell">{{ totalDueCarrierCollect }} INR</td>
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell">Total Charges</td>
-                                                        <td class="editable-cell">{{ totalCharges }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr> -->
-                                                    <tr>
-                                                        <!-- <td class="editable-cell">Weight Charge (WT)</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Prepaid' ? weightCharge.toFixed(2) : '0.00' }} INR</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Collect' ? weightCharge.toFixed(2) : '0.00' }} INR</td> -->
-                                                        <td class="editable-cell">Weight Charge (WT)</td>
-                                                        <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Taxes (TX)</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Prepaid' ? taxes.toFixed(2) : '0.00' }} INR</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Collect' ? taxes.toFixed(2) : '0.00' }} INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Other Charges Due Agent (OA)</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Prepaid' ? totalDueAgent : '0.00' }} INR</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Collect' ? totalDueAgent : '0.00' }} INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Other Charges Due Carrier (OC)</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Prepaid' ? totalDueCarrier : '0.00' }} INR</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Collect' ? totalDueCarrier : '0.00' }} INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Total Charges</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Prepaid' ? totalCharges : '0.00' }} INR</td>
-                                                        <td class="editable-cell">{{ form.payment_type === 'Collect' ? totalCharges : '0.00' }} INR</td>
+                                                        <td class="editable-cell">{{ totalChargesPrepaid }} INR</td>
+                                                        <td class="editable-cell">{{ totalChrage }} INR</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -2425,16 +2396,42 @@
                                                     <tr>
                                                         <td class="editable-cell px-5">Supplementary Information: </td>
                                                         <td class="editable-cell px-4">
-                                                            <input type="text" class="form-control" style="width: 330px;" value=""/>
+                                                            <input type="text" class="form-control" style="width: 330px;" v-model="form.oci_supplementary_info" :class="{ 'is-invalid': form.errors.has('oci_custom_info_identifier') }"/>
+                                                            <has-error :form="form" field="oci_supplementary_info"></has-error>
                                                         </td>
                                                         <td class="editable-cell"></td>
                                                         <td class="editable-cell mb-2">
-                                                            <input type="button" class="form-control pb-1" style="width: 100px;font-size: 12px;font-weight: bold;" value="Add" />
+                                                            <input type="button" class="form-control pb-1" style="width: 100px;font-size: 12px;font-weight: bold;" value="Add"  @click="addOtherCustomInfo"/>
                                                         </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                             <!-- </div> -->
+                                            <div class="mt-5 mb-5 pt-1 pb-1 px-4">
+                                    
+                                                <table class="table table-sm" style="width:100%;">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th class="h_background_color" style="width:100%;max-width: 100%">Other Customs Information</th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                        </tr>
+                                                        <tr v-for="(row, index) in oci_entries" :key="index">
+                                                            <td class="editable-cell">{{ row.oci_country_code }}</td>
+                                                            <td class="editable-cell">{{ row.oci_info_identifier }}</td>
+                                                            <td class="editable-cell">{{ row.oci_custom_info_identifier }}</td>
+                                                            <td class="editable-cell">{{ row.oci_supplementary_info }}</td>
+                                                            <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                                <b-icon icon="pencil" font-scale="1" style="cursor: pointer;" @click="editOciInfo(index)" class="mr-2"></b-icon>
+                                                                <b-icon icon="trash" font-scale="1" @click="deleteOciInfo(index)"></b-icon>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </b-tab>
 
@@ -2448,7 +2445,6 @@
                                         </div>
                                     </b-tab>
                                 </b-tabs>
-                                <div class="h_background_color mt-5 mb-5 pt-1 pb-1 px-4">Other Customs Information</div>
                             </b-tab>
                         </b-tabs>
                     </div>
@@ -2495,10 +2491,12 @@ export default {
                 oci_country_code: '',
                 oci_info_identifier: '',
                 oci_custom_info_identifier: '',
+                oci_supplementary_info: '',
 
                 ship_name: '',
                 ship_account: '',
                 ship_address: '',
+                ship_address_line_2: '',
                 ship_city: '',
                 ship_post_code: '',
                 ship_state: '',
@@ -2512,6 +2510,7 @@ export default {
                 cons_name: '',
                 cons_account: '',
                 cons_address: '',
+                cons_address_line_2: '',
                 cons_city: '',
                 cons_airport_code: null,
                 cons_post_code: '',
@@ -2525,10 +2524,20 @@ export default {
                 departure_airport: '',
                 destination_airport: '',
                 from: '',
+                from_2: '',
+                from_3: '',
                 to: '',
+                to_2: '',
+                to_3: '',
                 by: '',
+                by_2: '',
+                by_3: '',
                 flight: '',
+                flight_2: '',
+                flight_3: '',
                 date: this.getCurrentDate(),
+                date_2: this.getCurrentDate(),
+                date_3: this.getCurrentDate(),
 
                 pieces: '',
                 description: '',
@@ -2636,6 +2645,7 @@ export default {
             uld_info: [],
             charges: [],
             entries: [],
+            oci_entries: [],
             newHsCode: '',
             hsCodes: [],
             isOpen: false,
@@ -2867,27 +2877,34 @@ export default {
             //     alert('This code is already added.');
             // }
             const selectedCode = this.selectedCode;
-
-// Clear the table codes before adding the new one
-this.tableCodes = [];
-
-// Add the selected code to the table
-this.tableCodes.push(selectedCode);
+            this.tableCodes = [];
+            this.tableCodes.push(selectedCode);
         },
         addManualCode() {
-        const code = this.selectedCode || this.manualCode.trim();
-        if (code) {
-            if (!this.tableCodes.includes(code)) {
-            this.tableCodes.push(code);
+            const code = this.selectedCode || this.manualCode.trim();
+            if (code) {
+                if (!this.tableCodes.includes(code)) {
+                this.tableCodes.push(code);
+                } else {
+                alert('This code is already added.');
+                }
             } else {
-            alert('This code is already added.');
+                alert('Please select or enter a code.');
             }
-        } else {
-            alert('Please select or enter a code.');
-        }
-        // Reset input fields
-        this.selectedCode = '';
-        this.manualCode = '';
+            this.selectedCode = '';
+            this.manualCode = '';
+        },
+        getOriginCode(airportString) {
+            if (airportString) {
+                return airportString.split(',')[0];
+            }
+            return '';
+        },
+        getDestinationCode(airportString){
+            if (airportString) {
+                return airportString.split(',')[0];
+            }
+            return '';
         },
         calculateCharge() {
             let chargeRate = parseFloat(this.form.charge);
@@ -3022,13 +3039,64 @@ this.tableCodes.push(selectedCode);
             else {
                 alert("This field are empty");
             }
-           
         },
+        editOciInfo(index) {
+        // Populate the form fields with the data from the selected row
+        const entry = this.oci_entries[index];
+        this.form.oci_country_code = entry.oci_country_code;
+        this.form.oci_info_identifier = entry.oci_info_identifier;
+        this.form.oci_custom_info_identifier = entry.oci_custom_info_identifier;
+        this.form.oci_supplementary_info = entry.oci_supplementary_info;
+        this.editingIndex = index; // Set the index of the entry being edited
+    },
         deleteUldInfo(index) {
             if (this.uld_info && this.uld_info.length > index) {
                 this.uld_info.splice(index, 1);
             }
         },
+        // addOtherCustomInfo() {
+        //     if( this.oci_country_code && this.oci_info_identifier && this.oci_custom_info_identifier && this.oci_supplementary_info){
+        //         this.oci_entries.push({
+        //             oci_country_code: this.form.oci_country_code,
+        //             oci_info_identifier: this.form.oci_info_identifier,
+        //             oci_custom_info_identifier: this.form.oci_custom_info_identifier,
+        //             oci_supplementary_info: this.form.oci_supplementary_info
+        //         }); 
+        //         this.oci_country_code = "";
+        //         this.oci_info_identifier = ""; 
+        //         this.oci_custom_info_identifier = ""; 
+        //         this.oci_supplementary_info = "";
+        //     }
+        //     else {
+        //         alert("This field are empty");
+        //     }
+        // },
+        addOtherCustomInfo() {
+        const { oci_country_code, oci_info_identifier, oci_custom_info_identifier, oci_supplementary_info } = this.form;
+        
+        if (oci_country_code && oci_info_identifier && oci_custom_info_identifier && oci_supplementary_info) {
+            this.oci_entries.push({
+                oci_country_code,
+                oci_info_identifier,
+                oci_custom_info_identifier,
+                oci_supplementary_info
+            });
+            
+            // Clear the form fields
+            this.form.oci_country_code = '';
+            this.form.oci_info_identifier = '';
+            this.form.oci_custom_info_identifier = '';
+            this.form.oci_supplementary_info = '';
+        } else {
+            alert('All fields must be filled out.');
+        }
+    },
+    deleteOciInfo(index) {
+        // this.oci_entries.splice(index, 1);
+        if (this.oci_entries.length > index) {
+                this.oci_entries.splice(index, 1);
+            }
+    },
         addPcsInfo(){
             if (this.itemss.length >= 1) {
                 alert("You have exceeded your limit");
@@ -3047,13 +3115,6 @@ this.tableCodes.push(selectedCode);
                 this.itemss.splice(index, 1);
             }
         },
-        // resetForm() {
-        //     for (const key in this.form) {
-        //         if (Object.prototype.hasOwnProperty.call(this.form, key)) {
-        //             this.form[key] = '';
-        //         }
-        //     }
-        // },
     },
     watch: {
         'form.rate_class': function() {
@@ -3097,30 +3158,75 @@ this.tableCodes.push(selectedCode);
     computed: {
     weightCharge() {
         return parseFloat(this.form.total_amount || 0);
+        
     },
     taxes() {
         return 0.00;
     },
-    totalDueAgent() {
-        return this.charges
-            .filter(charge => charge.due === 'Agent')
-            .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
-            .toFixed(2);
+    totalDueAgentPrepaid() {
+      return this.charges
+        .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Prepaid')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
     },
-    totalDueCarrier() {
-        return this.charges
-            .filter(charge => charge.due === 'Carrier')
-            .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
-            .toFixed(2);
+    totalDueAgentCollect() {
+      return this.charges
+        .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Collect')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
     },
-    totalCharges() {
-        return (
-            this.weightCharge +
-            parseFloat(this.taxes) +
-            parseFloat(this.totalDueAgent) +
-            parseFloat(this.totalDueCarrier)
-        ).toFixed(2);
+    totalDueCarrierPrepaid() {
+      return this.charges
+        .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Prepaid')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
+    },
+    totalDueCarrierCollect() {
+      return this.charges
+        .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Collect')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
+    },
+    totalChargesPrepaid() {
+      return (
+        parseFloat(this.totalDueAgentPrepaid) +
+        parseFloat(this.totalDueCarrierPrepaid)
+      ).toFixed(2);
+    },
+    totalChargesCollect() {
+      return (
+        this.weightCharge +
+        parseFloat(this.totalDueAgentCollect) +
+        parseFloat(this.totalDueCarrierCollect)
+      ).toFixed(2);
+    },
+    totalChrage(){
+         return (
+        this.weightCharge +
+        parseFloat(this.totalDueAgentCollect) +
+        parseFloat(this.totalDueCarrierCollect)
+      ).toFixed(2);
     }
+    // totalDueAgent() {
+    //     return this.charges
+    //         .filter(charge => charge.due === 'Agent')
+    //         .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
+    //         .toFixed(2);
+    // },
+    // totalDueCarrier() {
+    //     return this.charges
+    //         .filter(charge => charge.due === 'Carrier')
+    //         .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
+    //         .toFixed(2);
+    // },
+    // totalCharges() {
+    //     return (
+    //         this.weightCharge +
+    //         parseFloat(this.taxes) +
+    //         parseFloat(this.totalDueAgent) +
+    //         parseFloat(this.totalDueCarrier)
+    //     ).toFixed(2);
+    // }
 },
 
     components: {

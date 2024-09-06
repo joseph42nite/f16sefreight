@@ -20,11 +20,21 @@ class CreateAirWayBillsTable extends Migration
             $table->string('consolidated_MAWB')->nullable();
             $table->string('departure_airport')->nullable();
             $table->string('destination_airport')->nullable();
-            $table->string('from')->nullable();
+            $table->string('from')->nullable();//first
             $table->string('to')->nullable();
             $table->string('by')->nullable();
             $table->integer('flight')->nullable();
             $table->date('date')->nullable();
+            $table->string('from_2')->nullable();//sencond
+            $table->string('to_2')->nullable();
+            $table->string('by_2')->nullable();
+            $table->integer('flight_2')->nullable();
+            $table->date('date_2')->nullable();
+            $table->string('from_3')->nullable(); //third
+            $table->string('to_3')->nullable();
+            $table->string('by_3')->nullable();
+            $table->integer('flight_3')->nullable();
+            $table->date('date_3')->nullable();
             $table->string('customs_origin_code')->nullable();
             $table->boolean('lette_credit')->default(false)->nullable();
             $table->string('other_service_information')->nullable();

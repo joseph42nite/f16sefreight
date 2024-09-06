@@ -2,6 +2,7 @@
 // auth()->guard('admin-api')->user()->id;
 
 use App\Http\Controllers\airwayBill\AirwayBill;
+use App\Http\Controllers\airwayBill\HousewayBill;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -97,6 +98,7 @@ Route::delete('/delete-contact/{id?}',[ContactController::class,'delete']);
 //airway bills route
 
 Route::post('/create-webdoc', [AirwayBill::class,'store']);
+Route::post('/create-housewaybill', [HousewayBill::class,'store']);
 
 
 

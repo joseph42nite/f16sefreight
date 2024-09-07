@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\airwayBill;
 
+use App\Agent;
 use App\AirwayBills;
 use App\Consignee;
 use App\ConsignmentRate;
 use App\Http\Controllers\Controller;
+use App\PaymentInfo;
 use App\Shipper;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -20,12 +22,12 @@ class AirwayBill extends Controller
     {
         try {
             $request->validate([
-                'awb_code' => 'required|numeric|size:3',
+                'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
                 'awb_no' => 'required|size:8',
                 'consolidated_MAWB' => 'nullable|boolean',
                 'awb' => 'nullable|boolean',
                 'accounting_information' => 'nullable|string|max:70',
-                'special_handling_code' => 'required|string|max:3',
+                'special_handling_code' => 'nullable|string|max:3',
                 'special_service_request' => 'nullable|string|max:195',
                 'other_service_information' => 'nullable|string|max:195',
                 'oci_country_code' => 'nullable|string|max:2',//Other Customs Information(OCI)
@@ -63,7 +65,7 @@ class AirwayBill extends Controller
 
                 'departure_airport' => 'required|string',
                 'destination_airport' => 'required|string',
-                'from' => 'required|string',
+                'from' => 'nullable|string',
                 'to' => 'required|string',
                 'by' => 'required|string|max:20',
                 'flight' => 'required|string|max:20',
@@ -123,19 +125,17 @@ class AirwayBill extends Controller
                 'agent_issue_sign' => 'required|max:20|string',
                 'agent_issue_loc_code' => 'required|string|max:3',
                 'agent_issue_date' => 'required',
-                'agent_account' => '',
-                'office_airport' => '',
+                'agent_account' => 'nullable',
+                'office_airport' => 'nullable',
                 'office_function_designator' => '', //2
                 'office_company_designator' => '', //2
-                'iata_agent_code' => 'nullable|numeric|size:7',  //7
-                'iata_agent_cass' => 'nullable|numeric|size:4', //4
-                'office_file_reference:' => '',	 
-                'iata_agent_code' => 'nullable|numeric|size:7',  //7
-                'iata_agent_cass' => 'nullable|numeric|size:4', //4
-                'participant_airport' => '',
-                'prticipant_identifer' => '',
-                'participant_code' => '',
-                'participant_file_reference:' => '',	//office_file_reference
+                'iata_agent_code' => 'nullable|regex:/^[0-9]+$/|size:7',  //7
+                'iata_agent_cass' => 'nullable|regex:/^[0-9]+$/|size:4', //4
+                'office_file_reference' => 'nullable',	 
+                'participant_airport' => 'nullable',
+                'prticipant_identifer' => 'required',
+                'participant_code' => 'required|string',
+                'participant_file_reference' => 'nullable',	//office_file_reference
 
                 'other_charge_code' => 'nullable|string', //max:2
             ]);
@@ -201,31 +201,68 @@ class AirwayBill extends Controller
                 'total_volume',
                 'total_amount'
             ]);
-            
-            $agent = Agent
+
+            $agent_info = $request->only([
+                'agent_name',
+                'agent_address',
+                'agent_issue_sign',
+                'agent_issue_loc_code',
+                'agent_issue_date',
+                'agent_account',
+                'office_airport',
+                'office_function_designator', //2
+                'office_company_designator', //2
+                'iata_agent_code',  //7
+                'iata_agent_cass', //4
+                'office_file_reference',
+                'participant_airport',
+                'prticipant_identifer',
+                'participant_code',
+                'participant_file_reference',
+                'agent_city',
+                'agent_pincode'
+            ]);
+
+            $payment_info = $request->only([
+                'total_charges',
+                'currency',
+                'no_value_declear_carriage',  //carriage
+                'declear_value_carriage',
+                'no_value_declear_customs',    //customs
+                'declear_value_customs',
+                'no_value_declear_insurance',    //Insurance
+                'declear_value_insurance',  
+            ]);
+            $payment = PaymentInfo::create($payment_info);
+            $agent = Agent::create($agent_info);
             $shipper = Shipper::create($shipperData);
             $consignee = Consignee::create($consigneeData);
             // $consignee_info = ConsignmentRate::create($consignee_info);
-            $additionalData = [
+            $awbData = array_merge($awbData, [
                 'shipper_id' => $shipper->id,
                 'consignee_id' => $consignee->id,
-            ];
-            
-            $awbData = array_merge($awbData, $additionalData);
+                'agent_id' => $agent->id,
+                'payment_id' => $payment->id,
+            ]);
             
             $awb = AirwayBills::create($awbData);
-            $additional_info = [
-                'awb_id' => $awb->id
-            ];
-            $consigneeData = array_merge($consignee_info, $additional_info);
-            $consignee_rate = ConsignmentRate::create($consigneeData);
+            
+            $consignee_info = $request->input('consignment_rates', []);
+
+            foreach ($consignee_info as $rateData) {
+                ConsignmentRate::updateOrCreate(
+                    ['id' => $rateData['id'] ?? null],
+                    array_merge($rateData, ['awb_id' => $awb->id])
+                );
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Data created successfully!',
                 'shipper' => $shipper,
                 'consignee' => $consignee,
                 'awb' => $awb,
-                'consignment_rate_info' => $consignee_rate,
+                'payment_info' => $payment
+                // 'consignment_rate_info' => $consignee_rate,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Capture validation errors

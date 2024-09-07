@@ -180,7 +180,7 @@
                 </h4>
             </div>
             <!-- <template> -->
-            <form @submit.prevent="onSubmit">
+            <b-form @submit.prevent="onSubmit">
                 <div class="container">
                     <b-row class="mt-5">
                         <b-col cols="auto">
@@ -1237,7 +1237,7 @@
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Supplementary Shipment Information:" class="form-control-sm col-form-label" >
                                         <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.supplementary_shipment_Info" :class="{ 'is-invalid': form.errors.has('supplementary_shipment_Info') }"></b-form-input>
-                                        <has-error :form="form" field="awb_code"></has-error>
+                                        <has-error :form="form" field="supplementary_shipment_Info"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label ml-lg-30">
                                         <b-form-input id="input-horizontal" class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto" v-model="form.supplementary_shipment_Info"></b-form-input>
@@ -1256,8 +1256,8 @@
                                         </b-col>
                                         <b-col cols="auto mr-7">
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Cass:" label-for="input-horizontal" class="form-control-sm col-form-label" >
-                                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.agent_iata_cass" :class="{ 'is-invalid': form.errors.has('iata_agent_code') }"></b-form-input>
-                                                <has-error :form="form" field="agent_iata_cass"></has-error>
+                                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.iata_agent_cass" :class="{ 'is-invalid': form.errors.has('iata_agent_cass') }"></b-form-input>
+                                                <has-error :form="form" field="iata_agent_cass"></has-error>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto ml-7" style="padding-left: 9.3%" >
@@ -1295,7 +1295,7 @@
                                                         <tr>
                                                             <td class="editable-cell"></td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 130px" v-model="form.agent_state" />
+                                                                <input type="text" class="form-control" style="width: 130px" v-model="form.agent_city" />
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control" style="width: 130px" v-model="form.agent_pincode" />
@@ -1304,25 +1304,25 @@
                                                         <tr>
                                                             <td class="editable-cell">Issuing Signature:* </td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.issue_sign" />
+                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.agent_issue_sign" />
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">Issuing Location Code:* </td>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.issue_loc_code">
+                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.agent_issue_loc_code">
                                                                     <option disabled value=""> Please select one </option>
-                                                                    <option value="BLR, Bangalore (BLR), India">BLR, Bangalore (BLR), India</option>
-                                                                    <option value="AAE, Annaba (AAE), Algeria">AAE, Annaba (AAE), Algeria</option>
-                                                                    <option value="AAH, Aachen (AAH), Germany">AAH, Aachen (AAH), Germany</option>
-                                                                    <option value="AAI, Arraias (AAI), Brazil">AAI, Arraias (AAI), Brazil</option>
-                                                                    <option value="AAL, Aalborg (AAL), Denmark">AAL, Aalborg (AAL), Denmark</option>
-                                                                    <option value="AAM, Mala Mala (AAM), South Africa">AAM, Mala Mala (AAM), South Africa</option>
-                                                                    <option value="AAN, Al Ain (AAN), United Arab Emirates">AAN, Al Ain (AAN), United Arab Emirates</option>
-                                                                    <option value="AAP, Samarinda (AAP), Indonesia">AAP, Samarinda (AAP), Indonesia</option>
-                                                                    <option value="AAR, Aarhus (AAR), Denmark">AAR, Aarhus (AAR), Denmark</option>
-                                                                    <option value="ABA, Abakan (ABA), Russian Federation">ABA, Abakan (ABA), Russian Federation</option>
-                                                                    <option value="ABC, Albacete (ABC), Spain">ABC, Albacete (ABC), Spain</option>
+                                                                    <option value="BLR">BLR, Bangalore (BLR), India</option>
+                                                                    <option value="AAE">AAE, Annaba (AAE), Algeria</option>
+                                                                    <option value="AAH">AAH, Aachen (AAH), Germany</option>
+                                                                    <option value="AAI">AAI, Arraias (AAI), Brazil</option>
+                                                                    <option value="AAL">AAL, Aalborg (AAL), Denmark</option>
+                                                                    <option value="AAM">AAM, Mala Mala (AAM), South Africa</option>
+                                                                    <option value="AAN">AAN, Al Ain (AAN), United Arab Emirates</option>
+                                                                    <option value="AAP">AAP, Samarinda (AAP), Indonesia</option>
+                                                                    <option value="AAR">AAR, Aarhus (AAR), Denmark</option>
+                                                                    <option value="ABA">ABA, Abakan (ABA), Russian Federation</option>
+                                                                    <option value="ABC">ABC, Albacete (ABC), Spain</option>
                                                                 </b-form-select>
                                                             </td>
                                                             <td class="editable-cell">
@@ -1332,7 +1332,7 @@
                                                         <tr>
                                                             <td class="editable-cell">Issuing Date:*</td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.issue_date" />
+                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.agent_issue_date" />
                                                             </td>
                                                             <date-picker valueType="format" style=" width: 30px !important;"></date-picker>
                                                         </tr>
@@ -1388,7 +1388,7 @@
                                                         <tr>
                                                             <td class="editable-cell">Participant Identifer:</td>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.participate_identifier">
+                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.prticipant_identifer">
                                                                     <option disabled value=""> Please select one </option>
                                                                     <option value="AIR"> Airline	AIR</option>
                                                                     <option value="APT">Airport Authority	APT</option>
@@ -1410,13 +1410,13 @@
                                                         <tr>
                                                             <td class="editable-cell">Participant Code:</td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.participate_code" />
+                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.participant_code" />
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">Office File Reference:</td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 200px" v-model="form.office_file_ref" />
+                                                                <input type="text" class="form-control" style="width: 200px" v-model="form.office_file_reference" />
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -1733,123 +1733,13 @@
                                     <div>
                                         <b-row>
                                             <b-col cols="auto">
-                                                <!-- <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                    <b-form-select class="form-control-sm" v-model="form.special_handling_code" :class="{ 'is-invalid': form.errors.has('special_handling_code') }">
-                                                        <option disabled value="">Select Special Handling Codes</option>
-                                                        <option value="ACT">ACT - Active Temperature Controlled System</option>
-                                                        <option value="AOG">AOG - Aircraft on ground</option>
-                                                        <option value="ATT">ATT - Cargo attached to AWB </option>
-                                                        <option value="AVI">AVI - Live animals </option>
-                                                        <option value="BIG">BIG - Outsized</option>
-                                                        <option value="BUP">BUP - Built up pallet</option>
-                                                        <option value="CAO">CAO - Cargo Aircraft Only</option>
-                                                        <option value="CAT">CAT - Cargo Attendant Accompanying Shipment</option>
-                                                        <option value="COL">COL – Cool Goods/Refrigerated Goods</option>
-                                                        <option value="COM">COM - Company mail</option>
-                                                        <option value="CRT">CRT - Control Room Temperature </option>
-                                                        <option value="DGD">DGD - Dangerous Goods as per attached DGD or DGD-CAO</option>
-                                                        <option value="DIP">DIP - Diplomatic mail</option>
-                                                        <option value="EAP">EAP - e-freight Consignment with Accompanying Documents</option>
-                                                        <option value="EAW">EAW - e-freight Consignment with No Accompanying Documents</option>
-                                                        <option value="EAT">EAT - Foodstuffs </option>
-                                                        <option value="ECC">ECC - Electronically Concluded Cargo Contract</option>
-                                                        <option value="ELI">ELI - Lithium Ion batteries excepted class 9</option>
-                                                        <option value="ELM">ELM - Lithium Metal batteries excepted class 9</option>
-                                                        <option value="EMD">EMD - Electronic Monitoring Devices on/in Cargo/Container</option>
-                                                        <option value="ERT">ERT - Extended Room Temperature +2°C to +25°C</option>
-                                                        <option value="FIL">FIL - Undeveloped/unexposed film</option>
-                                                        <option value="FRI">FRI - Frozen Goods Subject to Veterinary/Phytosanitary Inspections</option>
-                                                        <option value="FRO">FRO - Frozen Goods (not for dry ice but -20 C products)</option>
-                                                        <option value="GCO">GCO - General Cargo</option>
-                                                        <option value="GOG">GOG - Hanging Garments</option>
-                                                        <option value="HEA">HEA - Heavy Cargo, over 150kg pc</option>
-                                                        <option value="HEG">HEG - Hatching Eggs</option>
-                                                        <option value="HUM">HUM - Human remains</option>
-                                                        <option value="ICE">ICE - Dry ice</option>
-                                                        <option value="LHO">LHO - Living Human Organs/Blood</option>
-                                                        <option value="LIC">LIC - License Required</option>
-                                                        <option value="MAG">MAG - Magnetised Material </option>
-                                                        <option value="MAL">MAL - Mail </option>
-                                                        <option value="MUW">MUW - Munitions / Guns</option>
-                                                        <option value="NDA">NDA - No dims Available</option>
-                                                        <option value="NWP">NWP - Newspapers / Magazines</option>
-                                                        <option value="OBX">OBX - Obnoxious Cargo </option>
-                                                        <option value="OCI">OCI - Other Customs, Security and Regulatory Control Information </option>
-                                                        <option value="OHG">OHG - Overhang Items </option>
-                                                        <option value="OSI">OSI - Other Service Information </option>
-                                                        <option value="PAC">PAC - Passenger and Cargo</option>
-                                                        <option value="PEA">PEA - Hunting trophies</option>
-                                                        <option value="PEF">PEF - Flowers</option>
-                                                        <option value="PEM">PEM - Meat</option>
-                                                        <option value="PEP">PEP - Fruits and Vegetables</option>
-                                                        <option value="PER">PER - Perishable cargo</option>
-                                                        <option value="PES">PES - Fish / Seafood</option>
-                                                        <option value="PIL">PIL - Pharmaceuticals</option>
-                                                        <option value="QRT">QRT - Quick Ramp Transfer </option>
-                                                        <option value="RAC">RAC - Reserverd Air Cargo</option>
-                                                        <option value="RBI">RBI - Fully regulated lithium ion batteries (Class 9, UN 3480) as per Section IA and IB of PI 965</option>
-                                                        <option value="RBM">RBM - Cargo-XML Manual and ToolkitFully regulated lithium metal batteries (Class 9, UN 3090) as per Section IA and IB of PI 968</option>
-                                                        <option value="RCL">RCL - Cryogenic Liquid</option>
-                                                        <option value="RCM">RCM - Corrosive</option>
-                                                        <option value="RCX">RCX - Explosives 1.3C</option>
-                                                        <option value="RDS">RDS - Biological Substance</option>
-                                                        <option value="REQ">REQ - Dangerous Goods in Excepted Quantities</option>
-                                                        <option value="REX">REX - To be reserved for normally forbidden Explosives, Divisions 1.1, 1.2, 1.3, 1.4F, 1.5 and 1.6</option>
-                                                        <option value="RFG">RFG - Flammable Gas</option>
-                                                        <option value="RFL">RFL - Flammable Liquid</option>
-                                                        <option value="RFS">RFS - Flammable Solid</option>
-                                                        <option value="RFW">RFW - Dangerous When Wet</option>
-                                                        <option value="RGX">RGX - Explosives 1.3G</option>
-                                                        <option value="RIS">RIS - Infectious Substance</option>
-                                                        <option value="RLI">RLI - Litium Ion batteries</option>
-                                                        <option value="RLM">RLM - Litium Metal batteries</option>
-                                                        <option value="RMD">RMD - Miscellaneous Dangerous Goods</option>
-                                                        <option value="RNG">RNG - Non-Flammable Gas</option>
-                                                        <option value="ROP">ROP - Organic Peroxide</option>
-                                                        <option value="ROX">ROX - Oxidiser</option>
-                                                        <option value="RPB">RPB - Poison</option>
-                                                        <option value="RPG">RPG - Toxic (Poison) Gas</option>
-                                                        <option value="RRE">RRE - Excepted Quantities of Radioactive Material</option>
-                                                        <option value="RRW">RRW - Radioactive - White</option>
-                                                        <option value="RRY">RRY - Radioactive - Yellow</option>
-                                                        <option value="RSB">RSB - Polystyrene Beads</option>
-                                                        <option value="RSC">RSC - Spontaneously Combustible</option>
-                                                        <option value="RXB">RXB - Explosives 1.4B</option>
-                                                        <option value="RXC">RXC - Explosives 1.4C</option>
-                                                        <option value="RXD">RXD - Explosives 1.4D</option>
-                                                        <option value="RXE">RXE - Explosives 1.4E</option>
-                                                        <option value="RXG">RXG - Explosives 1.4G</option>
-                                                        <option value="RXS">RXS - Explosives</option>
-                                                        <option value="SAL">SAL - Surface Mail </option>
-                                                        <option value="SCO">SCO - Cargo Secure for All-Cargo Aircraft Only </option>
-                                                        <option value="SFX">SFX - Expedair Service </option>
-                                                        <option value="SHL">SHL - Save Human Life </option>
-                                                        <option value="SHR">SHR - Secure for Passenger, All-Cargo and All-Mail Aircraft in Accordance with High Risk Requirements </option>
-                                                        <option value="SPF">SPF - Laboratory Animals</option>
-                                                        <option value="SPX">SPX - Cargo Secure for Passenger and All-Cargo Aircraft </option>
-                                                        <option value="SUR">SUR - Surface Transportation</option>
-                                                        <option value="SWP">SWP - Sporting weapons</option>
-                                                        <option value="VAL">VAL - Valuable cargo</option>
-                                                        <option value="VOL">VOL - Volume</option>
-                                                        <option value="VUN">VUN - Vulnerable Cargo</option>
-                                                        <option value="WET">WET - Shipments of Wet Material not Packed in Watertight Containers</option>
-                                                        <option value="XPH">XPH - Equation Heavy for KLM</option>
-                                                        <option value="XPS">XPS - 236 XPS</option>
+                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                    <b-form-select class="form-control-sm" v-model="selectedCode" :class="{ 'is-invalid': form.errors.has('special_handling_code') }">
+                                                    <option disabled value="">Select Special Handling Codes</option>
+                                                    <option v-for="code in codes" :key="code.value" :value="code.value">{{ code.text }}</option>
                                                     </b-form-select>
-                                                    
                                                     <has-error :form="form" field="special_handling_code"></has-error>
-                                                </b-form-group> -->
-                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-form-select
-                                                class="form-control-sm"
-                                                v-model="selectedCode"
-                                                :class="{ 'is-invalid': form.errors.has('special_handling_code') }"
-                                                >
-                                                <option disabled value="">Select Special Handling Codes</option>
-                                                <option v-for="code in codes" :key="code.value" :value="code.value">{{ code.text }}</option>
-                                                </b-form-select>
-                                                <has-error :form="form" field="special_handling_code"></has-error>
-                                            </b-form-group>
+                                                </b-form-group>
                                             </b-col>
                                             or:
                                             <b-col cols="auto">
@@ -2470,7 +2360,7 @@
                         </div>
                     </div>
                 </div>
-            </form>
+            </b-form>
             <!-- </template> -->
         </div>
     </div>
@@ -2583,21 +2473,21 @@ export default {
 
                 agent_name: '',
                 agent_address: '',
-                agent_state: '',
+                agent_city: '',
                 agent_pincode: '',
-                issue_sign: '',
-                issue_loc_code: '',
-                issue_date: this.getCurrentDate(),
+                agent_issue_sign: '',
+                agent_issue_loc_code: '',
+                agent_issue_date: this.getCurrentDate(),
                 agent_account: null,
                 participate: '0',
                 participate_airport: '',
-                participate_identifier: '',
-                participate_code: null,
-                office_file_ref: null,
+                prticipant_identifer: '',
+                participant_code: null,
+                office_file_reference: '',
                 office_airport:'',
                 office_function_designator:'',
                 office_company_designator: '',
-
+                participant_file_reference: '',
                 // other_charge_code: '',
                 // other_code: null,
                 // other_amount: null,
@@ -2862,12 +2752,12 @@ export default {
             this.form.issue_date = this.formatDate(date);
         },
         onSubmit() {
-            this.form.post(`/create-webdoc`)
-            //ApiService.post(`/create-webdoc`, this.form)
-            .then(({ data }) => {
+            this.form.post(`/create-webdoc`).then(({ data }) => {
                 console.log('data', data);
             })
-            .catch(err => { });
+            .catch(err => { 
+                console.log('data', err);
+            });
         },
         handleRadioChange() {
             // const radioCode = 'EAP';
@@ -2973,12 +2863,6 @@ export default {
                 total_valume: this.calculateTotalVolume(),
                 total_amount: this.calculateTotalAmount(),
             };
-            // if (this.editIndex !== null) {
-            //     this.$set(this.entries, this.editIndex, {...this.form});
-            //     this.editIndex = null;
-            // } else {
-            //     this.entries.push({ ...this.form });
-            // }
             if (this.editIndex !== null) {
                 this.$set(this.entries, this.editIndex, entryData);
                 this.editIndex = null;
@@ -3201,7 +3085,7 @@ export default {
       ).toFixed(2);
     },
     totalChrage(){
-         return (
+        return (
         this.weightCharge +
         parseFloat(this.totalDueAgentCollect) +
         parseFloat(this.totalDueCarrierCollect)

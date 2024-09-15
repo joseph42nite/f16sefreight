@@ -19,6 +19,7 @@ class CreateShippersTable extends Migration
             $table->string('ship_name')->nullable();
             $table->string('ship_account')->nullable();
             $table->string('ship_address')->nullable();
+            $table->string('ship_address_line_2')->nullable();
             $table->string('ship_city')->nullable();
             $table->string('ship_airport_code')->nullable();
             $table->integer('ship_post_code')->nullable();

@@ -31,6 +31,7 @@ class CreatePaymentInfoTable extends Migration
             $table->integer('declear_value_customs')->nullable();
             $table->boolean('no_value_declear_insurance')->nullable(); //Insurance
             $table->integer('declear_value_insurance')->nullable();
+            $table->string('type_of_payment')->nullable();
             $table->timestamps();
         });
     }

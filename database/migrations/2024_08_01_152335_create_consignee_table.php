@@ -19,6 +19,7 @@ class CreateConsigneeTable extends Migration
             $table->string('cons_name')->nullable();
             $table->string('cons_account')->nullable();
             $table->string('cons_address')->nullable();
+            $table->string('cons_address_line_2')->nullable();
             $table->string('cons_city')->nullable();
             $table->string('cons_airport_code')->nullable();
             $table->integer('cons_post_code')->nullable();

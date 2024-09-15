@@ -137,6 +137,11 @@ export default new Router({
       path: "/message-log",
       component: () =>import("@/view/pages/MessageLog"),
     },
+    {
+      name: "Test",
+      path: "/test-view",
+      component: () =>import("@/view/pages/Test"),
+    },
     //-----------for admin login-------------------
     // {
     //   path: "/admin/",

@@ -17,14 +17,25 @@ class CreateAirWayBillsTable extends Migration
             $table->id();
             $table->integer('awb_code')->nullable();
             $table->integer('awb_no')->nullable();
+            $table->boolean('awb')->nullable();
             $table->string('consolidated_MAWB')->nullable();
             $table->string('departure_airport')->nullable();
             $table->string('destination_airport')->nullable();
-            $table->string('from')->nullable();
+            $table->string('from')->nullable();//first
             $table->string('to')->nullable();
             $table->string('by')->nullable();
             $table->integer('flight')->nullable();
-            $table->date('date')->nullable();
+            $table->string('date')->nullable();
+            $table->string('from_2')->nullable();//sencond
+            $table->string('to_2')->nullable();
+            $table->string('by_2')->nullable();
+            $table->integer('flight_2')->nullable();
+            $table->string('date_2')->nullable();
+            $table->string('from_3')->nullable(); //third
+            $table->string('to_3')->nullable();
+            $table->string('by_3')->nullable();
+            $table->integer('flight_3')->nullable();
+            $table->string('date_3')->nullable();
             $table->string('customs_origin_code')->nullable();
             $table->boolean('lette_credit')->default(false)->nullable();
             $table->string('other_service_information')->nullable();
@@ -39,6 +50,11 @@ class CreateAirWayBillsTable extends Migration
             $table->integer('occ_id')->nullable(); //other charges code id
             $table->integer('payment_id')->nullable();
             $table->integer('consignee_rate_id')->nullable();
+            $table->string('special_handling_code')->nullable();
+            $table->string('oci_country_code')->nullable(); //Other Customs Information(OCI)
+            $table->string('oci_info_identifier')->nullable();
+            $table->string('oci_custom_info_identifier')->nullable();
+            $table->string('oci_supplementary_info')->nullable();
             $table->timestamps();
         });
     }

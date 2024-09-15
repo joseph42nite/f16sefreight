@@ -25,6 +25,12 @@ class CreatePaymentInfoTable extends Migration
             $table->integer('weight_charge')->nullable();
             $table->integer('total_charges')->nullable();
             $table->integer('awb_id')->nullable();
+            $table->boolean('no_value_declear_carriage')->nullable(); //carriage
+            $table->integer('declear_value_carriage')->nullable();
+            $table->boolean('no_value_declear_customs')->nullable(); //customs
+            $table->integer('declear_value_customs')->nullable();
+            $table->boolean('no_value_declear_insurance')->nullable(); //Insurance
+            $table->integer('declear_value_insurance')->nullable();
             $table->timestamps();
         });
     }

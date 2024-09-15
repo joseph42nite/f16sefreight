@@ -18,12 +18,23 @@ class CreateAgentsInfoTable extends Migration
             $table->integer('awb_id')->nullable();
             $table->string('agent_name')->nullable();
             $table->string('agent_address')->nullable();
+            $table->string('agent_pincode')->nullable();
+            $table->string('agent_city')->nullable();
             $table->string('agent_issue_sign')->nullable();
             $table->string('agent_issue_loc_code')->nullable();
             $table->string('agent_issue_date')->nullable();
             $table->string('agent_account')->nullable();
             $table->integer('iata_agent_code')->nullable(); //7
             $table->integer('iata_agent_cass')->nullable(); //4
+            $table->string('office_airport')->nullable();
+            $table->string('office_function_designator')->nullable(); //2
+            $table->string('office_company_designator')->nullable();//2
+            $table->string('office_file_reference')->nullable();
+            $table->string('participant_airport')->nullable();
+            $table->string('prticipant_identifer')->nullable();
+            $table->string('participant_code')->nullable(); 
+            $table->string('participant_file_reference')->nullable();	//office_file_reference
+            // $table->string('other_charge_code')->nullable();  //max:2
             $table->timestamps();
         });
     }

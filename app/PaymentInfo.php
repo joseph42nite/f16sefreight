@@ -17,6 +17,7 @@ class PaymentInfo extends Model
     'taxes',
     'weight_charge',
     'total_charges',
-    'awb_id'
+    'awb_id',
+    'type_of_payment'
    ];
 }

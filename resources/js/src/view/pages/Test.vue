@@ -180,39 +180,50 @@
                 </h4>
             </div>
             <!-- <template> -->
-            <form @submit.prevent="onSubmit">
+            <b-form @submit.prevent="onSubmit">
                 <div class="container">
                     <b-row class="mt-5">
                         <b-col cols="auto">
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="HAWB No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                <b-form-input id="input-horizontal" class="form-control-sm"  v-model="form.awb_code"></b-form-input>
-                            </b-form-group>
-                        </b-col>
-                        <b-col cols="auto">
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Master No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.awb_code"></b-form-input>
+                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="AWB No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }"></b-form-input>
+                              <has-error :form="form" field="awb_code"></has-error>
                             </b-form-group>
                         </b-col>
                         -
                         <b-col cols="auto">
                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.awb_no"></b-form-input>
+                                <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
+                                <has-error :form="form" field="awb_no"></has-error>
                             </b-form-group>
                         </b-col>
-                    </b-row>
-                    <b-row class="mt-5">
-                        <b-col cols="auto">
-                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Agent Account: " label-for="input-horizontal" class="form-control-sm col-form-label">
-                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.awb_no"></b-form-input>
+                        <b-col cols="auto mr-7">
+                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="" label-for="input-horizontal" class="form-control-sm col-form-label">
+                                <b-form-checkbox size="sm" v-model="form.consolidated_MAWB">Consolidate MAWB</b-form-checkbox>
                             </b-form-group>
                         </b-col>
-                        <b-col class="ml-auto" cols="auto">
+                        <b-col cols="auto ml-7" style="padding-left: 9.3%">
                             <b-form-group label-for="name-input">
-                                <b-form-radio name="radio-size" size="sm">e-CSD Status</b-form-radio>
+                                <b-form-radio name="radio-size" size="sm" v-model="form.awb" value="true">AWB</b-form-radio>
                             </b-form-group>
                         </b-col>
                     </b-row>
-
+                    <b-row class="justify-content-center mt-5">
+                        <b-col cols="auto" style="padding-left: 33.6%">
+                            <b-form-group label-for="">
+                                <b-form-radio name="radio-size" size="sm" value="EAW" v-model="selectedCode" @change="handleRadioChange">e-AWB With No Accompanying Paper Documents</b-form-radio>
+                            </b-form-group>
+                        </b-col>
+                        <b-col cols="auto" class="">
+                            <b-form-group label-for="name-input">
+                                <b-form-radio name="radio-size" size="sm">e-CSD AWB</b-form-radio>
+                            </b-form-group>
+                        </b-col>
+                        <b-col cols="auto" style="margin-left: 22.5%">
+                            <b-form-group label-for="name-input">
+                                <b-form-radio name="radio-size" size="sm" @change="handleRadioChange" v-model="selectedCode" value="EAP">e-AWB With Accompanying Paper Documents</b-form-radio>
+                            </b-form-group>
+                        </b-col>
+                    </b-row>
                     <hr class="hr" />
 
                     <b-row class="justify-content-center mt-5">
@@ -225,10 +236,10 @@
                                     <div class="d-flex align-items-center">
                                         <div class="flex-grow-1">
                                             <select class="custom-select form-control-sm" style="width: 320px">
-                                                <option disabled> Select a Shipper</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option value="C">C</option>
+                                                <option disabled value=""> Select a Shipper</option>
+                                                <option value="ABS">A</option>
+                                                <option value="BDE">B</option>
+                                                <option value="RTY">C</option>
                                             </select>
                                         </div>
                                         <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2" @click="showShipper = !showShipper"></b-icon>
@@ -237,43 +248,54 @@
                                 <b-col v-if="showShipper">
                                     <div class="d-flex align-items-center mt-5">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30" v-model="form.ship_name"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30" v-model="form.ship_name" :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
+                                            <has-error :form="form" field="ship_name"></has-error>
                                         </b-form-group>
                                     </div>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Account:" class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15" v-model="form.ship_account"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15" v-model="form.ship_account" :class="{ 'is-invalid': form.errors.has('ship_account') }"></b-form-input>
+                                        <has-error :form="form" field="ship_account"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15" style="width: 220px" v-model="form.ship_address"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15" style="width: 220px" v-model="form.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
+                                        <has-error :form="form" field="ship_address"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" style="width: 220px" v-model="form.ship_account"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" style="width: 220px" v-model="form.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
+                                        <has-error :form="form" field="ship_address_line_2"></has-error>
                                     </b-form-group>
                                     <div class="d-flex align-items-center mt-1">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label" label="City:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22" v-model="form.ship_city"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22" v-model="form.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                            <has-error :form="form" field="ship_city"></has-error>
                                         </b-form-group>
-                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.ship_airport_code"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                        <has-error :form="form" field="ship_airport_code"></has-error>
                                     </div>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11" v-model="form.ship_post_code"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11" v-model="form.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
+                                        <has-error :form="form" field="ship_post_code"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20" v-model="form.ship_state"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20" v-model="form.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
+                                        <has-error :form="form" field="ship_state"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
-                                        <b-form-select class="form-control-sm ml-lg-15" style="width: 220px" v-model="form.ship_country">
+                                        <b-form-select class="form-control-sm ml-lg-15" style="width: 220px" v-model="form.ship_country" :class="{ 'is-invalid': form.errors.has('ship_country') }">
                                             <option disabled value=""> Please select one</option>
                                             <option value="A">A</option>
                                             <option value="B">B</option>
                                             <option Value="c">C</option>
                                         </b-form-select>
+                                        <has-error :form="form" field="ship_country"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Phone:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17" v-model="form.ship_phone"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17" v-model="form.ship_phone" :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
+                                        <has-error :form="form" field="ship_phone"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Fax:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22" v-model="form.ship_fax"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22" v-model="form.ship_fax" :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
+                                        <has-error :form="form" field="ship_fax"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Telex:">
                                         <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19" v-model="form.ship_telex"></b-form-input>
@@ -294,12 +316,13 @@
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Name:*" label-for="input-horizontal" class="form-control-sm col-form-label">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-grow-1">
-                                            <select class="custom-select form-control-sm" style="width: 320px">
-                                                <option disabled> Select a Shipper</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option value="C">C</option>
+                                            <select class="custom-select form-control-sm" style="width: 320px" :class="{ 'is-invalid': form.errors.has('cons_name') }" v-model="form.cons_name">
+                                                <option disabled value=""> Select a Consignee</option>
+                                                <option value="ABC">A</option>
+                                                <option value="BDE">B</option>
+                                                <option value="CAB">C</option>
                                             </select>
+                                            <has-error :form="form" field="cons_name"></has-error>
                                         </div>
                                         <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2" @click="showConsignee = !showConsignee"></b-icon>
                                     </div>
@@ -307,37 +330,44 @@
                                 <b-col v-if="showConsignee">
                                     <div class="d-flex align-items-center mt-5">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" v-model="form.cons_name"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" v-model="form.cons_name" :class="{ 'is-invalid': form.errors.has('cons_name') }"></b-form-input>
+                                            <has-error :form="form" field="cons_name"></has-error>
                                         </b-form-group>
                                     </div>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Account:" class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.cons_account"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.cons_account" :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
+                                        <has-error :form="form" field="cons_account"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 220px" v-model="form.cons_address"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 220px" v-model="form.cons_address" ></b-form-input>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" style="width: 220px" v-model="form.cons_account"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16" style="width: 220px" v-model="form.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
+                                        <has-error :form="form" field="cons_address_line_2"></has-error>
                                     </b-form-group>
                                     <div class="d-flex align-items-center mt-1">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label" label="City:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8" v-model="form.cons_city"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8" v-model="form.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                            <has-error :form="form" field="cons_city"></has-error>
                                         </b-form-group>
                                         <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"></b-form-input>
                                     </div>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.cons_post_code"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
+                                        <has-error :form="form" field="cons_post_code"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-6" v-model="form.cons_state"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-6" v-model="form.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
+                                        <has-error :form="form" field="cons_state"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
-                                        <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"  v-model="form.cons_country">
+                                        <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"  v-model="form.cons_country" :class="{ 'is-invalid': form.errors.has('cons_country') }">
                                             <option disabled value="Please select one"> Please select one</option>
                                             <option value="A">A</option>
                                             <option value="B">B</option>
                                             <option value="C">C</option>
                                         </b-form-select>
+                                        <has-error :form="form" field="cons_country"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Phone:">
                                         <b-form-input id="input-horizontal" class="form-control-sm ml-lg-3" v-model="form.cons_phone"></b-form-input>
@@ -361,9 +391,7 @@
                                 <b-row class="mt-5">
                                     <b-col cols="auto">
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Departure Airport*" label-for="input-departure-airport" class="form-control-sm">
-                                            <!-- <b-form-input id="input-departure-airport"
-                                                class="form-control-sm ml-0 pl-0"></b-form-input> -->
-                                            <b-form-select class="form-control" style="width: 150px" v-model="form.departure_airport">
+                                            <b-form-select class="form-control" style="width: 150px" v-model="form.departure_airport" :class="{ 'is-invalid': form.errors.has('cons_state') }">
                                                 <option disabled value=""> Select a Rate Class</option>
                                                 <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY), United States</option>
                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">
@@ -371,6 +399,7 @@
                                                     Kingdom
                                                 </option>
                                             </b-form-select>
+                                            <has-error :form="form" field="departure_airport"></has-error>
                                         </b-form-group>
                                     </b-col>
                                     <div class="d-flex flex-column align-items-center" style="margin-left: 8.5%">
@@ -395,11 +424,12 @@
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Destination Airport: *" label-for="input-departure-airport" class="form-control-sm col-form-label">
                                             <!-- <b-form-input id="input-departure-airport"
                                                 class="form-control-sm"></b-form-input> -->
-                                            <b-form-select class="form-control" style="width: 150px" v-model="form.destination_airport">
+                                            <b-form-select class="form-control" style="width: 150px" v-model="form.destination_airport" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
                                                 <option disabled value=""> Select a Rate Class</option>
                                                 <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen (ABZ), United Kingdom</option>
                                             </b-form-select>
+                                            <has-error :form="form" field="destination_airport"></has-error>
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="1">Routing:*</b-col>
@@ -409,30 +439,35 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.from">
+                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.departure_airport" :class="{ 'is-invalid': form.errors.has('from') }">
                                                                 <option disabled>Select a Rate Class</option>
                                                                 <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                             </b-form-select>
+                                                            <has-error :form="form" field="from"></has-error>
                                                         </td>
                                                         <td  class="editable-cell">
-                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.to">
+                                                            <b-form-select class="form-control" style="width: 150px;" v-model="form.to" :class="{ 'is-invalid': form.errors.has('to') }">
                                                                 <option disabledvalue=""> Select a Rate Class</option>
                                                                 <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY), United States</option>
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                             </b-form-select>
+                                                            <has-error :form="form" field="to"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 40px;" v-model="form.by"/>
+                                                            <input type="text" class="form-control" style="width: 40px;" v-model="form.by" :class="{ 'is-invalid': form.errors.has('by') }"/>
+                                                            <has-error :form="form" field="by"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control" style=" width: 50px;" v-model="form.flight"/>
+                                                            <input type="text" class="form-control" style=" width: 50px;" v-model="form.flight" :class="{ 'is-invalid': form.errors.has('flight') }"/>
+                                                            <has-error :form="form" field="flight"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 60px;" v-model="form.date" />
+                                                            <input type="text" class="form-control" style="width: 60px;" v-model="form.date" :class="{ 'is-invalid': form.errors.has('date') }"/>
+                                                            <has-error :form="form" field="date"></has-error>
                                                         </td>
                                                         <td class="editable-cell w-10" style="width: 60px">
-                                                            <date-picker valueType="format" style="width: 30px !important;"></date-picker>
+                                                            <date-picker valueType="format" style="width: 30px !important;"  @change="handleDateChange"></date-picker>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -440,36 +475,29 @@
                                         </div>
                                     </div>
                                 </b-row>
-                                <b-row class="">
-                                    <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Master Origin: *" label-for="input-departure-airport" class="form-control-sm col-form-label">
-                                            <b-form-input id="input-departure-airport"
-                                                class="form-control-sm"></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    
-                                    <div class="d-flex flex-column align-items-center" style="margin-left:22.5% !important;">
-                                        <table class="mx-auto table-sm" >
+                                <b-row class="justify-content-end" style="margin-right: 23%">
+                                    <div class="d-flex flex-column justify-content-end">
+                                        <table class="mx-auto table-sm">
                                             <tbody>
                                                 <tr>
                                                     <td class="editable-cell">
-                                                        <b-form-select class="form-control ml-lg-8" style="width: 150px">
-                                                            <option disabled value=""> Select a Rate Class</option>
+                                                        <b-form-select class="form-control" style="width: 150px"  v-model="form.to_2" :class="{ 'is-invalid': form.errors.has('to_2') }">
+                                                            <option disabled value=""> Select 2 a Rate Class</option>
                                                             <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                             <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                         </b-form-select>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 40px"/>
+                                                        <input type="text" class="form-control" style="width: 40px"  v-model="form.by_2" :class="{ 'is-invalid': form.errors.has('by_2') }"/>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text"  class="form-control" style="width: 50px" />
+                                                        <input type="text"  class="form-control" style="width: 50px"  v-model="form.flight_2" :class="{ 'is-invalid': form.errors.has('flight_2') }"/>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 60px" />
+                                                        <input type="text" class="form-control" style="width: 60px"  v-model="form.date_2" :class="{ 'is-invalid': form.errors.has('date_2') }"/>
                                                     </td>
                                                     <td  class="editable-cell w-10" style="width: 60px !important;">
-                                                        <date-picker valueType="format"  style=" width: 30px !important;"></date-picker>
+                                                        <date-picker valueType="format"  style=" width: 30px !important;"  @change="handleDateChange"></date-picker>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -477,36 +505,29 @@
                                         <!-- </div> -->
                                     </div>
                                 </b-row>
-                                <b-row>
-                                    <b-col cols="auto">
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label="Master Destination: *" label-for="input-departure-airport" class="form-control-sm col-form-label">
-                                            <b-form-input id="input-departure-airport"
-                                                class="form-control-sm"></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col cols="1"></b-col>
-                                    <div class="d-flex flex-column justify-content-center" style="margin-left:14% !important;">
+                                <b-row class="justify-content-end" style="margin-right: 23%">
+                                    <div class="d-flex flex-column justify-content-end">
                                         <table class="mx-auto table-sm">
                                             <tbody>
                                                 <tr>
                                                     <td class="editable-cell">
-                                                        <b-form-select class="form-control" style="width: 150px">
-                                                            <option disabled value=""> Select a Rate Class</option>
+                                                        <b-form-select class="form-control" style="width: 150px"  v-model="form.to_3" :class="{ 'is-invalid': form.errors.has('to_3') }">
+                                                            <option disabled value=""> Select 3 a Rate Class</option>
                                                             <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY), United States</option>
                                                             <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                         </b-form-select>
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 40px" />
+                                                        <input type="text" class="form-control" style="width: 40px"  v-model="form.by_3" :class="{ 'is-invalid': form.errors.has('by_3') }" />
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 50px" />
+                                                        <input type="text" class="form-control" style="width: 50px"  v-model="form.flight_3" :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                     </td>
                                                     <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 60px" />
+                                                        <input type="text" class="form-control" style="width: 60px"  v-model="form.date_3" :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                     </td>
                                                     <td class="editable-cell" style="width: 60px !important;">
-                                                        <date-picker valueType="format" style=" width: 30px !important;"></date-picker>
+                                                        <date-picker valueType="format" style=" width: 30px !important;" @change="handleDateChange"></date-picker>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -521,16 +542,16 @@
                                         <thead>
                                             <tr class="h_background_color">
                                                 <th class="form-control1">
-                                                    Carrier
+                                                    Carrier *
                                                 </th>
                                                 <th class="form-control1">
-                                                    Origin
+                                                    Origin *
                                                 </th>
                                                 <th class="form-control1">
-                                                    Destination
+                                                    Destination *
                                                 </th>
                                                 <th class="form-control1">
-                                                    Flight Date
+                                                    Flight Date *
                                                 </th>
                                             </tr>
                                         </thead>
@@ -540,10 +561,10 @@
                                                     <input type="text" class="form-control" />
                                                 </td>
                                                 <td class="editable-cell">
-                                                    <input type="text" class="form-control" />
+                                                    <input type="text" class="form-control" :value="getOriginCode(form.departure_airport)" />
                                                 </td>
                                                 <td class="editable-cell">
-                                                    <input type="text" class="form-control" />
+                                                    <input type="text" class="form-control" :value="getDestinationCode(form.destination_airport)"/>
                                                 </td>
                                                 <td class="editable-cell">
                                                     <input type="text" class="form-control"/>
@@ -921,7 +942,8 @@
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell" style="display: flex;align-items: center;">
-                                                            <input type="text" class="form-control" style="width: 170px;margin-right: 10px;" v-model="form.hs_code" />
+                                                            <b-form-input type="text" class="form-control" style="width: 170px;margin-right: 10px;" v-model="form.hs_code" :class="{ 'is-invalid': form.errors.has('hs_code') }"></b-form-input>
+                                                            <has-error :form="form" field="hs_code"></has-error>
                                                             <button @click="addHsCode">Add</button>
                                                         </td>
                                                     </tr>
@@ -987,7 +1009,7 @@
                                                             <input type="text" class="form-control" style="width: 100%;" v-model="form.pcs"/>
                                                         </td>
                                                         <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.wgt"/>
+                                                            <input type="text" class="form-control" style="width: 100%;" v-model="form.gross_weight"/>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 100%;" v-model="form.length" />
@@ -1017,7 +1039,7 @@
                                                     </tr>
                                                     <tr v-for="(row, index) in itemss" :key="index">
                                                         <td class="editable-cell">{{ row.pcs }}</td>
-                                                        <td class="editable-cell">{{ row.wgt }}</td>
+                                                        <td class="editable-cell">{{ row.gross_weight }}</td>
                                                         <td class="editable-cell">{{ row.length }}</td>
                                                         <td class="editable-cell">{{ row.width }}</td>
                                                         <td class="editable-cell">{{ row.height }}</td>
@@ -1096,7 +1118,7 @@
                         </b-modal>
 
                         <div class="d-flex flex-column align-items-center mb-5 mt-5" >
-                            <div>
+                            <div class="">
                                 <table class="table-bordered mx-auto table-sm">
                                     <thead>
                                         <tr class="h_background_color" style="font-size: 10px">
@@ -1129,7 +1151,7 @@
                                             <td>{{ entry.chargable_weight }}</td>
                                             <td>{{ entry.rate }}</td>
                                             <!-- <td>{{ entry.detailed_pcs_info }}</td> -->
-                                            <td>{{ entry.pcs }}-{{ entry.wgt }}-{{ entry.weight_code }}-{{ entry.length }}x{{ entry.width }}x{{ entry.height }}-{{ entry.unit }}</td>
+                                            <td>{{ entry.pcs }}-{{ entry.gross_weight }}-{{ entry.weight_code }}-{{ entry.length }}x{{ entry.width }}x{{ entry.height }}-{{ entry.unit }}</td>
                                             <td>{{ entry.volume }}</td>
                                             <td>{{ entry.rate_class }}</td>
                                             <td>{{ entry.uld_rate_class }}</td>
@@ -1146,7 +1168,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="d-flex justify-content-end ml-auto mb-20">
+                            <div class="d-flex justify-content-end ml-auto">
                                 <div class="d-flex align-items-center">
                                     <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-" >
                                         <div class="d-flex align-items-center">
@@ -1163,14 +1185,6 @@
                                             <label for="input-horizontal" class="mr-2 mb-0" >Total Amount:</label>
                                             <b-form-input id="input-horizontal" class="form-control-sm mr-2" v-model="form.total_amount"></b-form-input>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <label for="input-horizontal" class="mr-2 mb-3" >Master Pcs:*</label>
-                                            <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.total_amount"></b-form-input>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <label for="input-horizontal" class="mr-2 mb-0" >Master Weight:*</label>
-                                            <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.total_amount"></b-form-input>
-                                        </div>
                                     </b-form-group>
                                 </div>
                             </div>
@@ -1178,56 +1192,82 @@
                     </div>
                     <hr class="hr" />
                     <div>
+                        <h5>Customs Origin Code:</h5>
+                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px">
+                            <b-form-select class="form-control-sm" v-model="form.customs_origin_code">
+                                <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
+                                <option value="T2"> T2 - EC Goods not in free circulation </option>
+                                <option value="TE"> TE - Goods in trade with Spain subject to duties </option>
+                                <option value="TP"> TP - Goods in trade with Portugal subject to special duties </option>
+                                <option value="TD"> TD - Goods already under formal transit procedure </option>
+                                <option value="TF"> TF - Goods in trade between EC and Canary Islands </option>
+                                <option value="C"> C - Goods in free circulation </option>
+                                <option value="X"> X - Goods in free circulation with destination outside the EC </option>
+                            </b-form-select>
+                        </b-form-group>
                         <div class="py-md-9">
                             <b-tabs content-class="mt-3">
                                 <b-tab title="OSI" active>
                                     <h5>Other Service Information:</h5>
                                     <div class="py-7">
-                                        <b-form-textarea class="" style=" grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.osi" ></b-form-textarea>
+                                        <b-form-textarea class="" style=" grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.other_service_information"  :class="{ 'is-invalid': form.errors.has('other_service_information') }"></b-form-textarea>
+                                        <has-error :form="form" field="other_service_information"></has-error>
                                     </div>
                                 </b-tab>
                                 <b-tab title="SSR">
                                     <h5>Special Service Request:</h5>
                                     <div class="py-7">
-                                        <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.ssr"></b-form-textarea>
+                                        <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.special_service_request" :class="{ 'is-invalid': form.errors.has('special_service_request') }"></b-form-textarea>
+                                        <has-error :form="form" field="special_service_request"></has-error>
                                     </div>
                                 </b-tab>
                                 <b-tab title="Accounting Information">
                                     <h5>Accounting Information:</h5>
                                     <div class="py-7">
-                                        <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.account_info"></b-form-textarea>
-
+                                        <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.accounting_information" :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
+                                        <has-error :form="form" field="accounting_information"></has-error>
                                         <b-form-checkbox size="sm" v-model="form.letter_credit">Letter Of Credit</b-form-checkbox>
                                     </div>
                                 </b-tab>
                                 <b-tab title="Shipment Reference Infomation">
                                     <h4 class="h-color font-weight-bolder ml-2">Shipment Reference Information</h4>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Shipment Reference Number:" class="form-control-sm col-form-label">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-14" v-model="form.shipment_ref_no"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-14" v-model="form.shipment_ref_no" :class="{ 'is-invalid': form.errors.has('shipment_ref_no') }"></b-form-input>
+                                        <has-error :form="form" field="shipment_ref_no"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Supplementary Shipment Information:" class="form-control-sm col-form-label" >
-                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.supplementary_ship_info"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.supplementary_shipment_Info" :class="{ 'is-invalid': form.errors.has('supplementary_shipment_Info') }"></b-form-input>
+                                        <has-error :form="form" field="supplementary_shipment_Info"></has-error>
                                     </b-form-group>
                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label ml-lg-30">
-                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto" v-model="form.supplementary_ship_info"></b-form-input>
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto" v-model="form.supplementary_shipment_Info"></b-form-input>
                                     </b-form-group>
                                 </b-tab>
-                                <b-tab title="Custom Origin">
-                                    <h5>Customs Origin Code:</h5>
-                                    <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px">
-                                        <b-form-select class="form-control-sm" v-model="form.customs_origin_code">
-                                            <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
-                                            <option value="T2"> T2 - EC Goods not in free circulation </option>
-                                            <option value="TE"> TE - Goods in trade with Spain subject to duties </option>
-                                            <option value="TP"> TP - Goods in trade with Portugal subject to special duties </option>
-                                            <option value="TD"> TD - Goods already under formal transit procedure </option>
-                                            <option value="TF"> TF - Goods in trade between EC and Canary Islands </option>
-                                            <option value="C"> C - Goods in free circulation </option>
-                                            <option value="X"> X - Goods in free circulation with destination outside the EC </option>
-                                        </b-form-select>
-                                    </b-form-group>
+                                <b-tab title="IATA and Cass">
+                                    <h5 class="ml-5 py-5">
+                                        Override IATA And Cass:
+                                    </h5>
+                                    <b-row>
+                                        <b-col cols="auto">
+                                            <b-form-group id="fieldset-horizontal" abel-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="IATA:" class="form-control-sm col-form-label">
+                                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.iata_agent_code" :class="{ 'is-invalid': form.errors.has('iata_agent_code') }"></b-form-input>
+                                                <has-error :form="form" field="iata_agent_code"></has-error>
+                                            </b-form-group>
+                                        </b-col>
+                                        <b-col cols="auto mr-7">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Cass:" label-for="input-horizontal" class="form-control-sm col-form-label" >
+                                                <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.iata_agent_cass" :class="{ 'is-invalid': form.errors.has('iata_agent_cass') }"></b-form-input>
+                                                <has-error :form="form" field="iata_agent_cass"></has-error>
+                                            </b-form-group>
+                                        </b-col>
+                                        <b-col cols="auto ml-7" style="padding-left: 9.3%" >
+                                            <b-form-group label-for="name-input" >
+                                                <b-form-checkbox size="sm" >Save information for later logins</b-form-checkbox>
+                                            </b-form-group>
+                                        </b-col>
+                                    </b-row>
                                 </b-tab>
-                                <b-tab title="HAWB Agent Head Office">
+                                <b-tab title="Agent Information">
                                     <div class="container py-5">
                                         <div class="row">
                                             <div class="col-md-6">
@@ -1255,7 +1295,7 @@
                                                         <tr>
                                                             <td class="editable-cell"></td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 130px" v-model="form.agent_state" />
+                                                                <input type="text" class="form-control" style="width: 130px" v-model="form.agent_city" />
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control" style="width: 130px" v-model="form.agent_pincode" />
@@ -1264,25 +1304,25 @@
                                                         <tr>
                                                             <td class="editable-cell">Issuing Signature:* </td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.issue_sign" />
+                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.agent_issue_sign" />
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">Issuing Location Code:* </td>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.issue_loc_code">
+                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.agent_issue_loc_code">
                                                                     <option disabled value=""> Please select one </option>
-                                                                    <option value="BLR, Bangalore (BLR), India">BLR, Bangalore (BLR), India</option>
-                                                                    <option value="AAE, Annaba (AAE), Algeria">AAE, Annaba (AAE), Algeria</option>
-                                                                    <option value="AAH, Aachen (AAH), Germany">AAH, Aachen (AAH), Germany</option>
-                                                                    <option value="AAI, Arraias (AAI), Brazil">AAI, Arraias (AAI), Brazil</option>
-                                                                    <option value="AAL, Aalborg (AAL), Denmark">AAL, Aalborg (AAL), Denmark</option>
-                                                                    <option value="AAM, Mala Mala (AAM), South Africa">AAM, Mala Mala (AAM), South Africa</option>
-                                                                    <option value="AAN, Al Ain (AAN), United Arab Emirates">AAN, Al Ain (AAN), United Arab Emirates</option>
-                                                                    <option value="AAP, Samarinda (AAP), Indonesia">AAP, Samarinda (AAP), Indonesia</option>
-                                                                    <option value="AAR, Aarhus (AAR), Denmark">AAR, Aarhus (AAR), Denmark</option>
-                                                                    <option value="ABA, Abakan (ABA), Russian Federation">ABA, Abakan (ABA), Russian Federation</option>
-                                                                    <option value="ABC, Albacete (ABC), Spain">ABC, Albacete (ABC), Spain</option>
+                                                                    <option value="BLR">BLR, Bangalore (BLR), India</option>
+                                                                    <option value="AAE">AAE, Annaba (AAE), Algeria</option>
+                                                                    <option value="AAH">AAH, Aachen (AAH), Germany</option>
+                                                                    <option value="AAI">AAI, Arraias (AAI), Brazil</option>
+                                                                    <option value="AAL">AAL, Aalborg (AAL), Denmark</option>
+                                                                    <option value="AAM">AAM, Mala Mala (AAM), South Africa</option>
+                                                                    <option value="AAN">AAN, Al Ain (AAN), United Arab Emirates</option>
+                                                                    <option value="AAP">AAP, Samarinda (AAP), Indonesia</option>
+                                                                    <option value="AAR">AAR, Aarhus (AAR), Denmark</option>
+                                                                    <option value="ABA">ABA, Abakan (ABA), Russian Federation</option>
+                                                                    <option value="ABC">ABC, Albacete (ABC), Spain</option>
                                                                 </b-form-select>
                                                             </td>
                                                             <td class="editable-cell">
@@ -1292,9 +1332,9 @@
                                                         <tr>
                                                             <td class="editable-cell">Issuing Date:*</td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.issue_date" />
+                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.agent_issue_date" />
                                                             </td>
-                                                            <date-picker  valueType="format" style=" width: 30px !important;"></date-picker>
+                                                            <date-picker valueType="format" style=" width: 30px !important;"></date-picker>
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">Agent Account:</td>
@@ -1348,7 +1388,7 @@
                                                         <tr>
                                                             <td class="editable-cell">Participant Identifer:</td>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.participate_identifier">
+                                                                <b-form-select class="form-control" style="width: 150px" v-model="form.prticipant_identifer">
                                                                     <option disabled value=""> Please select one </option>
                                                                     <option value="AIR"> Airline	AIR</option>
                                                                     <option value="APT">Airport Authority	APT</option>
@@ -1370,13 +1410,13 @@
                                                         <tr>
                                                             <td class="editable-cell">Participant Code:</td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.participate_code" />
+                                                                <input type="text" class="form-control" style="width: 150px" v-model="form.participant_code" />
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">Office File Reference:</td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 200px" v-model="form.office_file_ref" />
+                                                                <input type="text" class="form-control" style="width: 200px" v-model="form.office_file_reference" />
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -1431,100 +1471,42 @@
                                     <h5> Extra information printed of Air Way Bill (Only printed - not saved or sent to Airlines): </h5>
                                     <b-form-textarea class="" style="grid-column: span 2 !important;width: 60% !important;" id="textarea" rows="3" max-rows="6" v-model="form.extra_print"></b-form-textarea>
                                 </b-tab>
+                                <b-tab title="Carrier Address">
+                                    <h4 class="h-color font-weight-bolder ml-2 mt-2">Override the Carrier Address on the PDF Document
+                                    </h4>
+                                    <h6> (This can be used for non-IATA carriers) </h6>
+                                    <div class="d-flex align-items-center mt-5">
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Name:">
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"></b-form-input>
+                                        </b-form-group>
+                                        <b-form-checkbox size="sm">Public Address</b-form-checkbox>
+                                    </div>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31" ></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Address:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="City:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-23"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Post Code:">
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"></b-form-input>
+                                    </b-form-group>
+                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="State:" >
+                                        <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20" ></b-form-input>
+                                    </b-form-group>
+                                </b-tab>
                             </b-tabs>
                         </div>
                     </div>
                     <hr class="hr" />
-                    <div class="py-7">
-                        <b-tabs>
-                            <b-tab title="Payment Information" active style="background-color: white !important">
-                                <div>
-                                    <b-row>
-                                        <b-col cols="7">
-                                            <b-row class="justify-content-center mt-5">
-                                                <b-col>
-                                                    <b-col cols="auto">
-                                                        <div class="d-flex align-items-center mt-1">
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Type Of Payment:*">
-                                                                <b-form-select class="form-control-sm ml-lg-15" style="width: 220px;" v-model="form.type_of_payment">
-                                                                    <option disabled value=""> Please select one </option>
-                                                                    <option value="CA">Partial Collect Credit — Partial Prepaid Cash	CA</option>
-                                                                    <option value="CB">Partial Collect Credit — Partial Prepaid Credit	CB</option>
-                                                                    <option value="CC">All Charges Collect	CC</option>
-                                                                    <option value="CG">All Charges Collect by GBL CG</option>
-                                                                    <option value="CP">Destination Collect Cash	CP</option>
-                                                                    <option value="CX">Destination Collect Credit CX</option>
-                                                                    <option value="CX">No Charge NC</option>
-                                                                    <option value="PC">Partial Prepaid Cash — Partial Collect Cash	PC</option>
-                                                                    <option value="PD">Partial Prepaid Credit — Partial Collect Cash	PD</option>
-                                                                    <option value="PG">All Charges Prepaid by GBL	PG</option>
-                                                                    <option value="PP">All Charges Prepaid Cash	PP</option>
-                                                                    <option value="PX">All Charges Prepaid Credit	PX</option>
-                                                                </b-form-select>
-                                                            </b-form-group>
-                                                            <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
-                                                            <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px;" v-model="form.currency"></b-form-input>
-                                                        </div>
-                                                        <label class="ml-3 mt-5 mb-5">Declared Values For:</label>
-                
-                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Carriage :" class="form-control-sm col-form-label mr-3">
-                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style=" width: 220px;" v-model="form.carriage"></b-form-input>
-                                                        </b-form-group>
-                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Customs :">
-                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style="width: 220px;" v-model="form.customs"></b-form-input>
-                                                        </b-form-group>
-                                                        <b-form-group
-                                                            id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal"
-                                                            label="Insurance:" class="form-control-sm col-form-label mr-3">
-                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30 mt-3" style="width: 220px;" v-model="form.insurance"></b-form-input>
-                                                        </b-form-group>
-                                                    </b-col>
-                                                </b-col>
-                                            </b-row>
-                                        </b-col>
-                                        <b-col cols="5">
-                                            <table class="table-bordered ml-auto table-sm m-5">
-                                                <thead>
-                                                    <tr class="h_background_color">
-                                                        <th>Charges Summary</th>
-                                                        <th>Prepaid</th>
-                                                        <th>Collect</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td class="editable-cell">Weight Charge (WT)</td>
-                                                        <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Taxes (TX)</td>
-                                                        <td class="editable-cell">{{ taxes.toFixed(2) }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Other Charges Due Agent (OA)</td>
-                                                        <td class="editable-cell">{{ totalDueAgent }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Other Charges Due Carrier (OC)</td>
-                                                        <td class="editable-cell">{{ totalDueCarrier }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="editable-cell">Total Charges</td>
-                                                        <td class="editable-cell">{{ totalCharges }} INR</td>
-                                                        <td class="editable-cell">0.00 INR</td>
-                                                    </tr>
-                                                    
-                                                </tbody>
-                                            </table>
-                                        </b-col>
-                                    </b-row>
-                                </div>
-                            </b-tab>
-                            <b-tab title="Other Charges" style="background-color: white !important">
+                    <div class="py-5">
+                        <b-tabs content-class="mt-3" class="nav-tabs">
+                            <b-tab title="Other Charges">
                                 <div class="container h_background_color text-white pt-2 pb-2" >
                                     <div class="row">
                                         <div class="col text-left">
@@ -1652,129 +1634,126 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <hr class="hr" /> 
+                                <hr class="hr" />
+
                             </b-tab>
-                            <b-tab title="Special Handling Codes" style="background-color: white !important">
+                        </b-tabs>
+                    </div>
+                    <hr class="hr" />
+                    <div class="py-7">
+                        <b-tabs>
+                            <b-tab title="Payment Information" active style="background-color: white !important">
                                 <div>
                                     <b-row>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" >
-                                                    <option disabled value="">Select Special Handling Codes</option>
-                                                    <option value="ACT">ACT - Active Temperature Controlled System</option>
-                                                    <option value="AOG">AOG - Aircraft on ground</option>
-                                                    <option value="ATT">ATT - Cargo attached to AWB </option>
-                                                    <option value="AVI">AVI - Live animals </option>
-                                                    <option value="BIG">BIG - Outsized</option>
-                                                    <option value="BUP">BUP - Built up pallet</option>
-                                                    <option value="CAO">CAO - Cargo Aircraft Only</option>
-                                                    <option value="CAT">CAT - Cargo Attendant Accompanying Shipment</option>
-                                                    <option value="COL">COL – Cool Goods/Refrigerated Goods</option>
-                                                    <option value="COM">COM - Company mail</option>
-                                                    <option value="CRT">CRT - Control Room Temperature </option>
-                                                    <option value="DGD">DGD - Dangerous Goods as per attached DGD or DGD-CAO</option>
-                                                    <option value="DIP">DIP - Diplomatic mail</option>
-                                                    <option value="EAP">EAP - e-freight Consignment with Accompanying Documents</option>
-                                                    <option value="EAW">EAW - e-freight Consignment with No Accompanying Documents</option>
-                                                    <option value="EAT">EAT - Foodstuffs </option>
-                                                    <option value="ECC">ECC - Electronically Concluded Cargo Contract</option>
-                                                    <option value="ELI">ELI - Lithium Ion batteries excepted class 9</option>
-                                                    <option value="ELM">ELM - Lithium Metal batteries excepted class 9</option>
-                                                    <option value="EMD">EMD - Electronic Monitoring Devices on/in Cargo/Container</option>
-                                                    <option value="ERT">ERT - Extended Room Temperature +2°C to +25°C</option>
-                                                    <option value="FIL">FIL - Undeveloped/unexposed film</option>
-                                                    <option value="FRI">FRI - Frozen Goods Subject to Veterinary/Phytosanitary Inspections</option>
-                                                    <option value="FRO">FRO - Frozen Goods (not for dry ice but -20 C products)</option>
-                                                    <option value="GCO">GCO - General Cargo</option>
-                                                    <option value="GOG">GOG - Hanging Garments</option>
-                                                    <option value="HEA">HEA - Heavy Cargo, over 150kg pc</option>
-                                                    <option value="HEG">HEG - Hatching Eggs</option>
-                                                    <option value="HUM">HUM - Human remains</option>
-                                                    <option value="ICE">ICE - Dry ice</option>
-                                                    <option value="LHO">LHO - Living Human Organs/Blood</option>
-                                                    <option value="LIC">LIC - License Required</option>
-                                                    <option value="MAG">MAG - Magnetised Material </option>
-                                                    <option value="MAL">MAL - Mail </option>
-                                                    <option value="MUW">MUW - Munitions / Guns</option>
-                                                    <option value="NDA">NDA - No dims Available</option>
-                                                    <option value="NWP">NWP - Newspapers / Magazines</option>
-                                                    <option value="OBX">OBX - Obnoxious Cargo </option>
-                                                    <option value="OCI">OCI - Other Customs, Security and Regulatory Control Information </option>
-                                                    <option value="OHG">OHG - Overhang Items </option>
-                                                    <option value="OSI">OSI - Other Service Information </option>
-                                                    <option value="PAC">PAC - Passenger and Cargo</option>
-                                                    <option value="PEA">PEA - Hunting trophies</option>
-                                                    <option value="PEF">PEF - Flowers</option>
-                                                    <option value="PEM">PEM - Meat</option>
-                                                    <option value="PEP">PEP - Fruits and Vegetables</option>
-                                                    <option value="PER">PER - Perishable cargo</option>
-                                                    <option value="PES">PES - Fish / Seafood</option>
-                                                    <option value="PIL">PIL - Pharmaceuticals</option>
-                                                    <option value="QRT">QRT - Quick Ramp Transfer </option>
-                                                    <option value="RAC">RAC - Reserverd Air Cargo</option>
-                                                    <option value="RBI">RBI - Fully regulated lithium ion batteries (Class 9, UN 3480) as per Section IA and IB of PI 965</option>
-                                                    <option value="RBM">RBM - Cargo-XML Manual and ToolkitFully regulated lithium metal batteries (Class 9, UN 3090) as per Section IA and IB of PI 968</option>
-                                                    <option value="RCL">RCL - Cryogenic Liquid</option>
-                                                    <option value="RCM">RCM - Corrosive</option>
-                                                    <option value="RCX">RCX - Explosives 1.3C</option>
-                                                    <option value="RDS">RDS - Biological Substance</option>
-                                                    <option value="REQ">REQ - Dangerous Goods in Excepted Quantities</option>
-                                                    <option value="REX">REX - To be reserved for normally forbidden Explosives, Divisions 1.1, 1.2, 1.3, 1.4F, 1.5 and 1.6</option>
-                                                    <option value="RFG">RFG - Flammable Gas</option>
-                                                    <option value="RFL">RFL - Flammable Liquid</option>
-                                                    <option value="RFS">RFS - Flammable Solid</option>
-                                                    <option value="RFW">RFW - Dangerous When Wet</option>
-                                                    <option value="RGX">RGX - Explosives 1.3G</option>
-                                                    <option value="RIS">RIS - Infectious Substance</option>
-                                                    <option value="RLI">RLI - Litium Ion batteries</option>
-                                                    <option value="RLM">RLM - Litium Metal batteries</option>
-                                                    <option value="RMD">RMD - Miscellaneous Dangerous Goods</option>
-                                                    <option value="RNG">RNG - Non-Flammable Gas</option>
-                                                    <option value="ROP">ROP - Organic Peroxide</option>
-                                                    <option value="ROX">ROX - Oxidiser</option>
-                                                    <option value="RPB">RPB - Poison</option>
-                                                    <option value="RPG">RPG - Toxic (Poison) Gas</option>
-                                                    <option value="RRE">RRE - Excepted Quantities of Radioactive Material</option>
-                                                    <option value="RRW">RRW - Radioactive - White</option>
-                                                    <option value="RRY">RRY - Radioactive - Yellow</option>
-                                                    <option value="RSB">RSB - Polystyrene Beads</option>
-                                                    <option value="RSC">RSC - Spontaneously Combustible</option>
-                                                    <option value="RXB">RXB - Explosives 1.4B</option>
-                                                    <option value="RXC">RXC - Explosives 1.4C</option>
-                                                    <option value="RXD">RXD - Explosives 1.4D</option>
-                                                    <option value="RXE">RXE - Explosives 1.4E</option>
-                                                    <option value="RXG">RXG - Explosives 1.4G</option>
-                                                    <option value="RXS">RXS - Explosives</option>
-                                                    <option value="SAL">SAL - Surface Mail </option>
-                                                    <option value="SCO">SCO - Cargo Secure for All-Cargo Aircraft Only </option>
-                                                    <option value="SFX">SFX - Expedair Service </option>
-                                                    <option value="SHL">SHL - Save Human Life </option>
-                                                    <option value="SHR">SHR - Secure for Passenger, All-Cargo and All-Mail Aircraft in Accordance with High Risk Requirements </option>
-                                                    <option value="SPF">SPF - Laboratory Animals</option>
-                                                    <option value="SPX">SPX - Cargo Secure for Passenger and All-Cargo Aircraft </option>
-                                                    <option value="SUR">SUR - Surface Transportation</option>
-                                                    <option value="SWP">SWP - Sporting weapons</option>
-                                                    <option value="VAL">VAL - Valuable cargo</option>
-                                                    <option value="VOL">VOL - Volume</option>
-                                                    <option value="VUN">VUN - Vulnerable Cargo</option>
-                                                    <option value="WET">WET - Shipments of Wet Material not Packed in Watertight Containers</option>
-                                                    <option value="XPH">XPH - Equation Heavy for KLM</option>
-                                                    <option value="XPS">XPS - 236 XPS</option>
-                                                </b-form-select>
-                                            </b-form-group>
+                                        <b-col cols="7">
+                                            <b-row class="justify-content-center mt-5">
+                                                <b-col>
+                                                    <b-col cols="auto">
+                                                        <div class="d-flex align-items-center mt-1">
+                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3 mb-3" label="Type Of Payment:*">
+                                                                <b-form-select class="form-control-sm ml-lg-15" style="width: 220px;" v-model="form.type_of_payment">
+                                                                    <option disabled value=""> Please select one </option>
+                                                                    <option value="CA">Partial Collect Credit — Partial Prepaid Cash	CA</option>
+                                                                    <option value="CB">Partial Collect Credit — Partial Prepaid Credit	CB</option>
+                                                                    <option value="CC">All Charges Collect	CC</option>
+                                                                    <option value="CG">All Charges Collect by GBL CG</option>
+                                                                    <option value="CP">Destination Collect Cash	CP</option>
+                                                                    <option value="CX">Destination Collect Credit CX</option>
+                                                                    <option value="CX">No Charge NC</option>
+                                                                    <option value="PC">Partial Prepaid Cash — Partial Collect Cash	PC</option>
+                                                                    <option value="PD">Partial Prepaid Credit — Partial Collect Cash	PD</option>
+                                                                    <option value="PG">All Charges Prepaid by GBL	PG</option>
+                                                                    <option value="PP">All Charges Prepaid Cash	PP</option>
+                                                                    <option value="PX">All Charges Prepaid Credit	PX</option>
+                                                                </b-form-select>
+                                                            </b-form-group>
+                                                            <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
+                                                            <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px;" v-model="form.currency" :class="{ 'is-invalid': form.errors.has('currency') }"></b-form-input>
+                                                            <has-error :form="form" field="currency"></has-error>
+                                                        </div>
+                                                        <label class="ml-3 mt-5 mb-5">Declared Values For:</label>
+                
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" label="Carriage :" class="form-control-sm col-form-label mr-3">
+                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style=" width: 220px;" v-model="form.carriage"></b-form-input>
+                                                        </b-form-group>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label mr-3" label="Customs :">
+                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31 mt-3" style="width: 220px;" v-model="form.customs"></b-form-input>
+                                                        </b-form-group>
+                                                        <b-form-group
+                                                            id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal"
+                                                            label="Insurance:" class="form-control-sm col-form-label mr-3">
+                                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30 mt-3" style="width: 220px;" v-model="form.insurance"></b-form-input>
+                                                        </b-form-group>
+                                                    </b-col>
+                                                </b-col>
+                                            </b-row>
                                         </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-form-input id="input-horizontal" class="form-control-sm">or:</b-form-input>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-button id="input-horizontal" class="form-control-sm" type="button">Add</b-button>
-                                            </b-form-group>
+                                        <b-col cols="5">
+                                            <table class="table-bordered ml-auto table-sm m-5">
+                                                <thead>
+                                                    <tr class="h_background_color">
+                                                        <th>Charges Summary</th>
+                                                        <th>Prepaid</th>
+                                                        <th>Collect</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td class="editable-cell">Weight Charge (WT)</td>
+                                                        <td class="editable-cell">0.00 INR</td>
+                                                        <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="editable-cell">Taxes (TX)</td>
+                                                        <td class="editable-cell">{{ taxes.toFixed(2) }} INR</td>
+                                                        <td class="editable-cell">0.00 INR</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="editable-cell">Other Charges Due Agent (OA)</td>
+                                                        <td class="editable-cell">{{ totalDueAgentPrepaid }} INR</td>
+                                                        <td class="editable-cell">{{ totalDueAgentCollect }} INR</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="editable-cell">Other Charges Due Carrier (OC)</td>
+                                                        <td class="editable-cell">{{ totalDueCarrierPrepaid }} INR</td>
+                                                        <td class="editable-cell">{{ totalDueCarrierCollect }} INR</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="editable-cell">Total Charges</td>
+                                                        <td class="editable-cell">{{ totalChargesPrepaid }} INR</td>
+                                                        <td class="editable-cell">{{ totalChrage }} INR</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </b-col>
                                     </b-row>
                                 </div>
+                            </b-tab>
+                            <b-tab title="Special Handling Codes" style="background-color: white !important">
+                                    <div>
+                                        <b-row>
+                                            <b-col cols="auto">
+                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                    <b-form-select class="form-control-sm" v-model="selectedCode" :class="{ 'is-invalid': form.errors.has('special_handling_code') }">
+                                                    <option disabled value="">Select Special Handling Codes</option>
+                                                    <option v-for="code in codes" :key="code.value" :value="code.value">{{ code.text }}</option>
+                                                    </b-form-select>
+                                                    <has-error :form="form" field="special_handling_code"></has-error>
+                                                </b-form-group>
+                                            </b-col>
+                                            or:
+                                            <b-col cols="auto">
+                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                    <b-form-input id="input-horizontal" class="form-control-sm">or:</b-form-input>
+                                                </b-form-group>
+                                            </b-col>
+                                            <b-col cols="auto">
+                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                    <b-button id="input-horizontal" class="form-control-sm" type="button" @click="addManualCode">Add</b-button>
+                                                </b-form-group>
+                                            </b-col>
+                                        </b-row>
+                                    </div>
                                 <div class="d-flex flex-column align-items-start py-5">
                                     <table class="table-bordered table-sm" style="width: 31%">
                                         <thead>
@@ -1785,9 +1764,12 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
+                                            <!-- <tr>
                                                 <td class="editable-cell"></td>
-                                            </tr>
+                                            </tr> -->
+                                            <tr v-for="(code, index) in tableCodes" :key="index">
+                                            <td class="editable-cell">{{ code }}</td>
+                                        </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1811,7 +1793,7 @@
                                                     <tr>
                                                         <td class="editable-cell" >
                                                             <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px;">
-                                                                <b-form-select class="form-control-sm">
+                                                                <b-form-select class="form-control-sm" v-model="form.oci_country_code" :class="{ 'is-invalid': form.errors.has('oci_country_code') }">
                                                                     <option disabled value="">Select a country</option>
                                                                     <option value="AF">Afghanistan</option>
                                                                     <option value="AX">Åland Islands</option>
@@ -2066,11 +2048,12 @@
                                                                     <option value="ZM">Zambia</option>
                                                                     <option value="ZW">Zimbabwe</option>
                                                                 </b-form-select>
+                                                                <has-error :form="form" field="oci_country_code"></has-error>
                                                             </b-form-group>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px;">
-                                                                <b-form-select class="form-control-sm">
+                                                                <b-form-select class="form-control-sm" v-model="form.oci_info_identifier" :class="{ 'is-invalid': form.errors.has('oci_info_identifier') }">
                                                                     <option disabled value="">Select a code</option>
                                                                     <option value="ABI">ABI - AWB Amount Detail Information</option>
                                                                     <option value="ABS">ABS - AWB Supplementary Information</option>
@@ -2260,13 +2243,12 @@
                                                                     <option value="WBI">WBI - Waybill Information</option>
                                                                     <option value="WBL">WBL - Waybill Details</option>
                                                                 </b-form-select>
+                                                                <has-error :form="form" field="oci_info_identifier"></has-error>
                                                             </b-form-group>
                                                         </td>
-                                                        <td
-                                                            class="editable-cell"
-                                                        >
+                                                        <td class="editable-cell">
                                                             <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label" style="width: 350px;">
-                                                                <b-form-select class="form-control-sm">
+                                                                <b-form-select class="form-control-sm" v-model="form.oci_custom_info_identifier" :class="{ 'is-invalid': form.errors.has('oci_custom_info_identifier') }">
                                                                     <option disabled value="">Select a code</option>
                                                                     <option value="A">A - Automated Broker Interface (ABI) Filer Code</option>
                                                                     <option value="AC">AC - Account Consignor (consignor for all cargo aircraft)</option>
@@ -2297,22 +2279,49 @@
                                                                     <option value="U">U - Unique Consignment Reference Number</option>
                                                                     <option value="V">V - Invoice Number</option>
                                                                 </b-form-select>
+                                                                <has-error :form="form" field="oci_custom_info_identifier"></has-error>
                                                             </b-form-group>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td class="editable-cell px-5">Supplementary Information: </td>
                                                         <td class="editable-cell px-4">
-                                                            <input type="text" class="form-control" style="width: 330px;" value=""/>
+                                                            <input type="text" class="form-control" style="width: 330px;" v-model="form.oci_supplementary_info" :class="{ 'is-invalid': form.errors.has('oci_custom_info_identifier') }"/>
+                                                            <has-error :form="form" field="oci_supplementary_info"></has-error>
                                                         </td>
                                                         <td class="editable-cell"></td>
                                                         <td class="editable-cell mb-2">
-                                                            <input type="button" class="form-control pb-1" style="width: 100px;font-size: 12px;font-weight: bold;" value="Add" />
+                                                            <input type="button" class="form-control pb-1" style="width: 100px;font-size: 12px;font-weight: bold;" value="Add"  @click="addOtherCustomInfo"/>
                                                         </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                             <!-- </div> -->
+                                            <div class="mt-5 mb-5 pt-1 pb-1 px-4">
+                                    
+                                                <table class="table table-sm" style="width:100%;">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th class="h_background_color" style="width:100%;max-width: 100%">Other Customs Information</th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                        </tr>
+                                                        <tr v-for="(row, index) in oci_entries" :key="index">
+                                                            <td class="editable-cell">{{ row.oci_country_code }}</td>
+                                                            <td class="editable-cell">{{ row.oci_info_identifier }}</td>
+                                                            <td class="editable-cell">{{ row.oci_custom_info_identifier }}</td>
+                                                            <td class="editable-cell">{{ row.oci_supplementary_info }}</td>
+                                                            <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                                <b-icon icon="pencil" font-scale="1" style="cursor: pointer;" @click="editOciInfo(index)" class="mr-2"></b-icon>
+                                                                <b-icon icon="trash" font-scale="1" @click="deleteOciInfo(index)"></b-icon>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </b-tab>
 
@@ -2326,7 +2335,6 @@
                                         </div>
                                     </b-tab>
                                 </b-tabs>
-                                <div class="h_background_color mt-5 mb-5 pt-1 pb-1 px-4">Other Customs Information</div>
                             </b-tab>
                         </b-tabs>
                     </div>
@@ -2352,7 +2360,7 @@
                         </div>
                     </div>
                 </div>
-            </form>
+            </b-form>
             <!-- </template> -->
         </div>
     </div>
@@ -2370,9 +2378,15 @@ export default {
                 awb_no: '',
                 consolidated_MAWB: false,
                 awb: true,
+                oci_country_code: '',
+                oci_info_identifier: '',
+                oci_custom_info_identifier: '',
+                oci_supplementary_info: '',
+
                 ship_name: '',
                 ship_account: '',
                 ship_address: '',
+                ship_address_line_2: '',
                 ship_city: '',
                 ship_post_code: '',
                 ship_state: '',
@@ -2386,6 +2400,7 @@ export default {
                 cons_name: '',
                 cons_account: '',
                 cons_address: '',
+                cons_address_line_2: '',
                 cons_city: '',
                 cons_airport_code: null,
                 cons_post_code: '',
@@ -2399,10 +2414,20 @@ export default {
                 departure_airport: '',
                 destination_airport: '',
                 from: '',
+                from_2: '',
+                from_3: '',
                 to: '',
+                to_2: '',
+                to_3: '',
                 by: '',
+                by_2: '',
+                by_3: '',
                 flight: '',
-                date: '',
+                flight_2: '',
+                flight_3: '',
+                date: this.getCurrentDate(),
+                date_2: this.getCurrentDate(),
+                date_3: this.getCurrentDate(),
 
                 pieces: '',
                 description: '',
@@ -2436,33 +2461,33 @@ export default {
                 total_amount: 0,
 
                 customs_origin_code: null,
-                osi: '',
-                ssr: '',
-                account_info: '',
+                other_service_information: '',
+                special_service_request: '',
+                accounting_information: '',
                 letter_credit: false,
                 shipment_ref_no: null,
-                supplementary_ship_info: null,
-                iata_code: null,
-                iata_cass: null,
+                supplementary_shipment_Info: '',
+                iata_agent_code: null,
+                iata_agent_cass: null,
                 extra_print: null,
 
                 agent_name: '',
                 agent_address: '',
-                agent_state: '',
+                agent_city: '',
                 agent_pincode: '',
-                issue_sign: '',
-                issue_loc_code: '',
-                issue_date: '',
+                agent_issue_sign: '',
+                agent_issue_loc_code: '',
+                agent_issue_date: this.getCurrentDate(),
                 agent_account: null,
                 participate: '0',
                 participate_airport: '',
-                participate_identifier: '',
-                participate_code: null,
-                office_file_ref: null,
+                prticipant_identifer: '',
+                participant_code: null,
+                office_file_reference: '',
                 office_airport:'',
                 office_function_designator:'',
                 office_company_designator: '',
-
+                participant_file_reference: '',
                 // other_charge_code: '',
                 // other_code: null,
                 // other_amount: null,
@@ -2487,7 +2512,7 @@ export default {
                 carr_country: '',
 
                 type_of_payment: '',
-                currency: '',
+                currency: 'INR',
                 carriage: 'NVD',
                 insurance: 'XXX',
                 customs: 'NCV',
@@ -2504,9 +2529,13 @@ export default {
             //     due: "Carrier",
             //     payment_type: "Prepaid",
             // },
+            selectedCode: '',
+            manualCode: '',
+            tableCodes: [],
             uld_info: [],
             charges: [],
             entries: [],
+            oci_entries: [],
             newHsCode: '',
             hsCodes: [],
             isOpen: false,
@@ -2574,6 +2603,107 @@ export default {
                     name: "Contact",
                 },
             ],
+            codes: [
+                { value: 'ACT', text: 'ACT - Active Temperature Controlled System' },
+                { value: 'AOG', text: 'AOG - Aircraft on ground' },
+                { value: 'ATT', text: 'ATT - Cargo attached to AWB' },
+                { value: 'AVI', text: 'AVI - Live animals'},
+                { value: 'BIG', text: 'BIG - Outsized' },
+                { value: 'BUP', text: 'BUP - Built up pallet' },
+                { value: 'CAO', text: 'CAO - Cargo Aircraft Only' },
+                { value: 'CAT', text: 'CAT - Cargo Attendant Accompanying Shipment' },
+                { value: 'COL', text: 'COL – Cool Goods/Refrigerated Goods' },
+                { value: 'COM', text: 'COM - Company mail' },
+                { value: 'CRT', text: 'CRT - Control Room Temperature ' },
+                { value: 'DGD', text: 'DGD - Dangerous Goods as per attached DGD or DGD-CAO' },
+                { value: 'DIP', text: 'DIP - Diplomatic mail' },
+                { value: 'EAP', text: 'EAP - e-freight Consignment with Accompanying Documents' },
+                { value: 'EAW', text: 'EAW - e-freight Consignment with No Accompanying Documents' },
+                { value: 'EAT', text: 'EAT - Foodstuffs' },
+                { value: 'ECC', text: 'ECC - Electronically Concluded Cargo Contract' },
+                { value: 'ELI', text: 'ELI - Lithium Ion batteries excepted class 9' },
+                { value: 'ELM', text: 'ELM - Lithium Metal batteries excepted class 9' },
+                { value: 'EMD', text: 'EMD - Electronic Monitoring Devices on/in Cargo/Container'},
+                { value: 'ERT', text: 'ERT - Extended Room Temperature +2°C to +25°C'},
+                { value: 'FIL', text: 'FIL - Undeveloped/unexposed film'},
+                { value: 'FRI', text: 'FRI - Frozen Goods Subject to Veterinary/Phytosanitary Inspections'},
+                { value: 'FRO', text: 'FRO - Frozen Goods (not for dry ice but -20 C products)'},
+                { value: 'GCO', text: 'GCO - General Cargo'},
+                { value: 'GOG', text: 'GOG - Hanging Garments'},
+                { value: 'HEA', text: 'HEA - Heavy Cargo, over 150kg pc'},
+                { value: 'HEG', text: 'HEG - Hatching Eggs'},
+                { value: 'HUM', text: 'HUM - Human remains'},
+                { value: 'ICE', text: 'ICE - Dry ice'},
+                { value: 'LHO', text: 'LHO - Living Human Organs/Blood'},
+                { value: 'LIC', text: 'LIC - License Required'},
+                { value: 'MAG', text: 'MAG - Magnetised Material'},
+                { value: 'MAL', text: 'MAL - Mail '},
+                { value: 'MUW', text: 'MUW - Munitions / Guns'},
+                { value: 'NDA', text: 'NDA - No dims Available'},
+                { value: 'NWP', text: 'NWP - Newspapers / Magazines'},
+                { value: 'OBX', text: 'OBX - Obnoxious Cargo'},
+                { value: 'OCI', text: 'OCI - Other Customs, Security and Regulatory Control Information'},
+                { value: 'OHG', text: 'OHG - Overhang Items '},
+                { value: 'OSI', text: 'OSI - Other Service Information'},
+                { value: 'PAC', text: 'PAC - Passenger and Cargo'},
+                { value: 'PEA', text: 'PEA - Hunting trophies'},
+                { value: 'PEF', text: 'PEF - Flowers'},
+                { value: 'PEM', text: 'PEM - Meat'},
+                { value: 'PEP', text: 'PEP - Fruits and Vegetables'},
+                { value: 'PER', text: 'PER - Perishable cargo'},
+                { value: 'PES', text: 'PES - Fish / Seafood'},
+                { value: 'PIL', text: 'PIL - Pharmaceuticals'},
+                { value: 'QRT', text: 'QRT - Quick Ramp Transfer '},
+                { value: 'RAC', text: 'RAC - Reserverd Air Cargo'},
+                { value: 'RBI', text: 'RBI - Fully regulated lithium ion batteries (Class 9, UN 3480) as per Section IA and IB of PI 965'},
+                { value: 'RBM', text: 'RBM - Cargo-XML Manual and ToolkitFully regulated lithium metal batteries (Class 9, UN 3090) as per Section IA and IB of PI 968'},
+                { value: 'RCL', text: 'RCL - Cryogenic Liquid'},
+                { value: 'RCM', text: 'RCM - Corrosive'},
+                { value: 'RCX', text: 'RCX - Explosives 1.3C'},
+                { value: 'RDS', text: 'RDS - Biological Substance'},
+                { value: 'REQ', text: 'REQ - Dangerous Goods in Excepted Quantities'},
+                { value: 'REX', text: 'REX - To be reserved for normally forbidden Explosives, Divisions 1.1, 1.2, 1.3, 1.4F, 1.5 and 1.6'},
+                { value: 'RFG', text: '>RFG - Flammable Gas'},
+                { value: 'RFL', text: 'RFL - Flammable Liquid'},
+                { value: 'RFS', text: 'RFS - Flammable Solid'},
+                { value: 'RFW', text: 'RFW - Dangerous When Wet'},
+                { value: 'RGX', text: 'RGX - Explosives 1.3G'},
+                { value: 'RIS', text: 'RIS - Infectious Substance'},
+                { value: 'RLI', text: 'RLI - Litium Ion batteries'},
+                { value: 'RLM', text: 'RLM - Litium Metal batteries'},
+                { value: 'RMD', text: 'RMD - Miscellaneous Dangerous Goods'},
+                { value: 'RNG', text: 'RNG - Non-Flammable Gas'},
+                { value: 'ROP', text: 'ROP - Organic Peroxide'},
+                { value: 'ROX', text: 'ROX - Oxidiser'},
+                { value: 'RPB', text: 'RPB - Poison'},
+                { value: 'RPG', text: 'RPG - Toxic (Poison) Gas'},
+                { value: 'RRE', text: 'RRE - Excepted Quantities of Radioactive Material'},
+                { value: 'RRW', text: 'RRW - Radioactive - White'},
+                { value: 'RRY', text: 'RRY - Radioactive - Yellow'},
+                { value: 'RSB', text: 'RSB - Polystyrene Beads'},
+                { value: 'RSC', text: 'RSC - Spontaneously Combustible'},
+                { value: 'RXB', text: 'RXB - Explosives 1.4B'},
+                { value: 'RXC', text: 'RXC - Explosives 1.4C'},
+                { value: 'RXD', text: 'RXD - Explosives 1.4D'},
+                { value: 'RXE', text: 'RXE - Explosives 1.4E'},
+                { value: 'RXG', text: 'RXG - Explosives 1.4G'},
+                { value: 'RXS', text: 'RXS - Explosives'},
+                { value: 'SAL', text: 'SAL - Surface Mail '},
+                { value: 'SCO', text: 'SCO - Cargo Secure for All-Cargo Aircraft Only '},
+                { value: 'SFX', text: 'SFX - Expedair Service '},
+                { value: 'SHL', text: 'SHL - Save Human Life '},
+                { value: 'SHR', text: 'SHR - Secure for Passenger, All-Cargo and All-Mail Aircraft in Accordance with High Risk Requirements '},
+                { value: 'SPF', text: 'SPF - Laboratory Animals'},
+                { value: 'SPX', text: 'SPX - Cargo Secure for Passenger and All-Cargo Aircraft '},
+                { value: 'SUR', text: 'SUR - Surface Transportation'},
+                { value: 'SWP', text: 'SWP - Sporting weapons'},
+                { value: 'VAL', text: 'VAL - Valuable cargo'},
+                { value: 'VOL', text: 'VOL - Volume'},
+                { value: 'VUN', text: 'VUN - Vulnerable Cargo'},
+                { value: 'WET', text: 'WET - Shipments of Wet Material not Packed in Watertight Containers'},
+                { value: 'XPH', text: 'XPH - Equation Heavy for KLM'},
+                { value: 'XPS', text: 'XPS - 236 XPS'},
+            ],
             itemss: [],
             options: [
                 { text: "Me", value: "1" },
@@ -2602,12 +2732,69 @@ export default {
         handleOk(bvModalEvent) {
             bvModalEvent.preventDefault();
         },
+        getCurrentDate() {
+            const today = new Date();
+            const day = today.getDate().toString().padStart(2, '0'); 
+            const month = today.toLocaleString('en-GB', { month: 'short' });
+            return `${day}${month}`; 
+        },
+        formatDate(date) {
+            if (!date) return '';
+            const day = new Date(date).getDate().toString().padStart(2, '0');
+            const month = new Date(date).toLocaleString('en-GB', { month: 'short' });
+
+            return `${day}${month}`;
+        },
+        handleDateChange(date) {
+            this.form.date = this.formatDate(date);
+        },
+        issueDateChange(date) {
+            this.form.issue_date = this.formatDate(date);
+        },
         onSubmit() {
-            this.form.post(`/create-housewaybill`)
-            .then(({ data }) => {
+            this.form.post(`/create-webdoc`).then(({ data }) => {
                 console.log('data', data);
             })
-            .catch(err => { });
+            .catch(err => { 
+                console.log('data', err);
+            });
+        },
+        handleRadioChange() {
+            // const radioCode = 'EAP';
+            // if (!this.tableCodes.includes(radioCode)) {
+            //     this.tableCodes.push(radioCode);
+            // } else {
+            //     alert('This code is already added.');
+            // }
+            const selectedCode = this.selectedCode;
+            this.tableCodes = [];
+            this.tableCodes.push(selectedCode);
+        },
+        addManualCode() {
+            const code = this.selectedCode || this.manualCode.trim();
+            if (code) {
+                if (!this.tableCodes.includes(code)) {
+                this.tableCodes.push(code);
+                } else {
+                alert('This code is already added.');
+                }
+            } else {
+                alert('Please select or enter a code.');
+            }
+            this.selectedCode = '';
+            this.manualCode = '';
+        },
+        getOriginCode(airportString) {
+            if (airportString) {
+                return airportString.split(',')[0];
+            }
+            return '';
+        },
+        getDestinationCode(airportString){
+            if (airportString) {
+                return airportString.split(',')[0];
+            }
+            return '';
         },
         calculateCharge() {
             let chargeRate = parseFloat(this.form.charge);
@@ -2676,12 +2863,6 @@ export default {
                 total_valume: this.calculateTotalVolume(),
                 total_amount: this.calculateTotalAmount(),
             };
-            // if (this.editIndex !== null) {
-            //     this.$set(this.entries, this.editIndex, {...this.form});
-            //     this.editIndex = null;
-            // } else {
-            //     this.entries.push({ ...this.form });
-            // }
             if (this.editIndex !== null) {
                 this.$set(this.entries, this.editIndex, entryData);
                 this.editIndex = null;
@@ -2742,13 +2923,64 @@ export default {
             else {
                 alert("This field are empty");
             }
-           
         },
+        editOciInfo(index) {
+        // Populate the form fields with the data from the selected row
+        const entry = this.oci_entries[index];
+        this.form.oci_country_code = entry.oci_country_code;
+        this.form.oci_info_identifier = entry.oci_info_identifier;
+        this.form.oci_custom_info_identifier = entry.oci_custom_info_identifier;
+        this.form.oci_supplementary_info = entry.oci_supplementary_info;
+        this.editingIndex = index; // Set the index of the entry being edited
+    },
         deleteUldInfo(index) {
             if (this.uld_info && this.uld_info.length > index) {
                 this.uld_info.splice(index, 1);
             }
         },
+        // addOtherCustomInfo() {
+        //     if( this.oci_country_code && this.oci_info_identifier && this.oci_custom_info_identifier && this.oci_supplementary_info){
+        //         this.oci_entries.push({
+        //             oci_country_code: this.form.oci_country_code,
+        //             oci_info_identifier: this.form.oci_info_identifier,
+        //             oci_custom_info_identifier: this.form.oci_custom_info_identifier,
+        //             oci_supplementary_info: this.form.oci_supplementary_info
+        //         }); 
+        //         this.oci_country_code = "";
+        //         this.oci_info_identifier = ""; 
+        //         this.oci_custom_info_identifier = ""; 
+        //         this.oci_supplementary_info = "";
+        //     }
+        //     else {
+        //         alert("This field are empty");
+        //     }
+        // },
+        addOtherCustomInfo() {
+        const { oci_country_code, oci_info_identifier, oci_custom_info_identifier, oci_supplementary_info } = this.form;
+        
+        if (oci_country_code && oci_info_identifier && oci_custom_info_identifier && oci_supplementary_info) {
+            this.oci_entries.push({
+                oci_country_code,
+                oci_info_identifier,
+                oci_custom_info_identifier,
+                oci_supplementary_info
+            });
+            
+            // Clear the form fields
+            this.form.oci_country_code = '';
+            this.form.oci_info_identifier = '';
+            this.form.oci_custom_info_identifier = '';
+            this.form.oci_supplementary_info = '';
+        } else {
+            alert('All fields must be filled out.');
+        }
+    },
+    deleteOciInfo(index) {
+        // this.oci_entries.splice(index, 1);
+        if (this.oci_entries.length > index) {
+                this.oci_entries.splice(index, 1);
+            }
+    },
         addPcsInfo(){
             if (this.itemss.length >= 1) {
                 alert("You have exceeded your limit");
@@ -2756,7 +2988,7 @@ export default {
             }
             this.itemss.push({ ...this.form });
             this.pcs = '';
-            this.wgt = '';
+            this.gross_weight = '';
             this.length = '';
             this.weight = '';
             this.height = '';
@@ -2767,13 +2999,6 @@ export default {
                 this.itemss.splice(index, 1);
             }
         },
-        // resetForm() {
-        //     for (const key in this.form) {
-        //         if (Object.prototype.hasOwnProperty.call(this.form, key)) {
-        //             this.form[key] = '';
-        //         }
-        //     }
-        // },
     },
     watch: {
         'form.rate_class': function() {
@@ -2786,35 +3011,108 @@ export default {
             this.form.total_amount = this.calculateTotalAmount();
         }
     },
+    // computed: {
+    //     weightCharge() {
+    //         return parseFloat(this.form.total_amount || 0);
+    //     },
+    //     taxes() {
+    //         return 0.00;
+    //     },
+    //     totalDueAgent() {
+    //         return this.charges
+    //             .filter(charge => charge.due === 'Agent')
+    //             .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
+    //             .toFixed(2);
+    //     },
+    //     totalDueCarrier() {
+    //         return this.charges
+    //             .filter(charge => charge.due === 'Carrier')
+    //             .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
+    //             .toFixed(2);
+    //     },
+    //     totalCharges() {
+    //         return (
+    //             this.weightCharge +
+    //             parseFloat(this.taxes) +
+    //             parseFloat(this.totalDueAgent) +
+    //             parseFloat(this.totalDueCarrier)
+    //         ).toFixed(2);
+    //     }
+    // },
     computed: {
-        // This should be your weight charge, for example from the form
-        weightCharge() {
-            return parseFloat(this.form.total_amount || 0);
-        },
-        taxes() {
-            return 0.00;
-        },
-        totalDueAgent() {
-            return this.charges
-                .filter(charge => charge.due === 'Agent')
-                .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
-                .toFixed(2);
-        },
-        totalDueCarrier() {
-            return this.charges
-                .filter(charge => charge.due === 'Carrier')
-                .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
-                .toFixed(2);
-        },
-        totalCharges() {
-            return (
-                this.weightCharge +
-                parseFloat(this.taxes) +
-                parseFloat(this.totalDueAgent) +
-                parseFloat(this.totalDueCarrier)
-            ).toFixed(2);
-        }
+    weightCharge() {
+        return parseFloat(this.form.total_amount || 0);
+        
     },
+    taxes() {
+        return 0.00;
+    },
+    totalDueAgentPrepaid() {
+      return this.charges
+        .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Prepaid')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
+    },
+    totalDueAgentCollect() {
+      return this.charges
+        .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Collect')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
+    },
+    totalDueCarrierPrepaid() {
+      return this.charges
+        .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Prepaid')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
+    },
+    totalDueCarrierCollect() {
+      return this.charges
+        .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Collect')
+        .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
+        .toFixed(2);
+    },
+    totalChargesPrepaid() {
+      return (
+        parseFloat(this.totalDueAgentPrepaid) +
+        parseFloat(this.totalDueCarrierPrepaid)
+      ).toFixed(2);
+    },
+    totalChargesCollect() {
+      return (
+        this.weightCharge +
+        parseFloat(this.totalDueAgentCollect) +
+        parseFloat(this.totalDueCarrierCollect)
+      ).toFixed(2);
+    },
+    totalChrage(){
+        return (
+        this.weightCharge +
+        parseFloat(this.totalDueAgentCollect) +
+        parseFloat(this.totalDueCarrierCollect)
+      ).toFixed(2);
+    }
+    // totalDueAgent() {
+    //     return this.charges
+    //         .filter(charge => charge.due === 'Agent')
+    //         .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
+    //         .toFixed(2);
+    // },
+    // totalDueCarrier() {
+    //     return this.charges
+    //         .filter(charge => charge.due === 'Carrier')
+    //         .reduce((total, charge) => total + parseFloat(charge.amount || 0), 0)
+    //         .toFixed(2);
+    // },
+    // totalCharges() {
+    //     return (
+    //         this.weightCharge +
+    //         parseFloat(this.taxes) +
+    //         parseFloat(this.totalDueAgent) +
+    //         parseFloat(this.totalDueCarrier)
+    //     ).toFixed(2);
+    // }
+},
+
     components: {
         Datepicker,
         DatePicker,

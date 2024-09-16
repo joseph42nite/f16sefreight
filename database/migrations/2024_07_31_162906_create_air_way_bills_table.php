@@ -25,14 +25,12 @@ class CreateAirWayBillsTable extends Migration
             $table->string('to')->nullable();
             $table->string('by')->nullable();
             $table->integer('flight')->nullable();
-            $table->string('date')->nullable();
-            $table->string('from_2')->nullable();//sencond
-            $table->string('to_2')->nullable();
+            $table->string('date')->nullable(); 
+            $table->string('to_2')->nullable(); //second
             $table->string('by_2')->nullable();
             $table->integer('flight_2')->nullable();
             $table->string('date_2')->nullable();
-            $table->string('from_3')->nullable(); //third
-            $table->string('to_3')->nullable();
+            $table->string('to_3')->nullable();//third
             $table->string('by_3')->nullable();
             $table->integer('flight_3')->nullable();
             $table->string('date_3')->nullable();

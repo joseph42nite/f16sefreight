@@ -4,11 +4,10 @@ namespace App\Http\Controllers\airwayBill;
 
 use App\Agent;
 use App\AirwayBills;
-use App\Consignee;
-use App\ConsignmentRate;
 use App\Http\Controllers\Controller;
 use App\PaymentInfo;
-use App\Shipper;
+use App\WayBillAddress;
+use App\SavedAddress;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

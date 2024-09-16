@@ -15,7 +15,7 @@ class CreateAgentsInfoTable extends Migration
     {
         Schema::create('agents_info', function (Blueprint $table) {
             $table->id();
-            $table->integer('awb_id')->nullable();
+            $table->integer('user_id')->nullable();
             $table->string('agent_name')->nullable();
             $table->string('agent_address')->nullable();
             $table->string('agent_pincode')->nullable();
@@ -33,8 +33,7 @@ class CreateAgentsInfoTable extends Migration
             $table->string('participant_airport')->nullable();
             $table->string('prticipant_identifer')->nullable();
             $table->string('participant_code')->nullable(); 
-            $table->string('participant_file_reference')->nullable();	//office_file_reference
-            // $table->string('other_charge_code')->nullable();  //max:2
+            $table->string('participant_file_reference')->nullable();
             $table->timestamps();
         });
     }

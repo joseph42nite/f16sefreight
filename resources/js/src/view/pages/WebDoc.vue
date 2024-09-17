@@ -916,9 +916,8 @@
                                                                 style="display: flex;align-items: center;">
                                                                 <b-form-input type="text" class="form-control"
                                                                     style="width: 170px;margin-right: 10px;"
-                                                                    v-model="consignment_list.hs_code" 
-                                                                    ></b-form-input>
-                                                                    <!-- :class="{ 'is-invalid': consignment_list.errors.has('hs_code') }" -->
+                                                                    v-model="consignment_list.hs_code"></b-form-input>
+                                                                <!-- :class="{ 'is-invalid': consignment_list.errors.has('hs_code') }" -->
                                                                 <!-- <has-error :form="form" field="hs_code"></has-error> -->
                                                                 <button @click="addHsCode">Add</button>
                                                             </td>
@@ -1134,7 +1133,6 @@
 
                             <div class="d-flex flex-column align-items-center mb-5 mt-5">
                                 <div class="">
-                                    {{form.entries}}
                                     <table class="table-bordered mx-auto table-sm">
                                         <thead>
                                             <tr class="h_background_color" style="font-size: 10px">
@@ -1320,9 +1318,7 @@
                                                     content-cols-sm content-cols-lg="auto" label-for="input-horizontal"
                                                     label="IATA:" class="form-control-sm col-form-label">
                                                     <b-form-input id="input-horizontal" class="form-control-sm"
-                                                        v-model="form.iata_agent_code"
-                                                        :class="{ 'is-invalid': form.errors.has('iata_agent_code') }"></b-form-input>
-                                                    <has-error :form="form" field="iata_agent_code"></has-error>
+                                                        v-model="iata_cass.iata_agent_code"></b-form-input>
                                                 </b-form-group>
                                             </b-col>
                                             <b-col cols="auto mr-7">
@@ -1330,15 +1326,12 @@
                                                     content-cols-sm content-cols-lg="auto" label="Cass:"
                                                     label-for="input-horizontal" class="form-control-sm col-form-label">
                                                     <b-form-input id="input-horizontal" class="form-control-sm"
-                                                        v-model="form.iata_agent_cass"
-                                                        :class="{ 'is-invalid': form.errors.has('iata_agent_cass') }"></b-form-input>
-                                                    <has-error :form="form" field="iata_agent_cass"></has-error>
+                                                        v-model="iata_cass.iata_agent_cass"></b-form-input>
                                                 </b-form-group>
                                             </b-col>
                                             <b-col cols="auto ml-7" style="padding-left: 9.3%">
                                                 <b-form-group label-for="name-input">
-                                                    <b-form-checkbox size="sm">Save information for later
-                                                        logins</b-form-checkbox>
+                                                    <b-form-checkbox size="sm">Save information for later logins</b-form-checkbox>
                                                 </b-form-group>
                                             </b-col>
                                         </b-row>
@@ -1362,7 +1355,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.agent_name" />
+                                                                        v-model="agent_information.agent_name" />
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -1370,7 +1363,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.agent_address" />
+                                                                        v-model="agent_information.agent_address" />
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -1378,12 +1371,12 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 130px"
-                                                                        v-model="form.agent_city" />
+                                                                        v-model="agent_information.agent_city" />
                                                                 </td>
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 130px"
-                                                                        v-model="form.agent_pincode" />
+                                                                        v-model="agent_information.agent_pincode" />
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -1391,7 +1384,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.agent_issue_sign" />
+                                                                        v-model="agent_information.agent_issue_sign" />
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -1399,7 +1392,7 @@
                                                                 <td class="editable-cell">
                                                                     <b-form-select class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.agent_issue_loc_code">
+                                                                        v-model="agent_information.agent_issue_loc_code">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
                                                                         <option value="BLR">BLR, Bangalore (BLR), India
@@ -1436,7 +1429,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.agent_issue_date" />
+                                                                        v-model="agent_information.agent_issue_date" />
                                                                 </td>
                                                                 <date-picker valueType="format"
                                                                     style=" width: 30px !important;"></date-picker>
@@ -1446,7 +1439,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.agent_account" />
+                                                                        v-model="agent_information.agent_account" />
                                                                 </td>
                                                                 <td class="editable-cell">
                                                                     <b-form-checkbox size="sm">Save information for
@@ -1469,12 +1462,12 @@
                                                             <tr>
                                                                 <td class="editable-cell">
                                                                     <b-form-radio name="participate" size="sm"
-                                                                        v-model="form.participate"
+                                                                        v-model="agent_information.participate"
                                                                         value="0">Participant</b-form-radio>
                                                                 </td>
                                                                 <td class="editable-cell">
                                                                     <b-form-radio name="office" size="sm"
-                                                                        v-model="form.participate"
+                                                                        v-model="agent_information.participate"
                                                                         value="1">Office</b-form-radio>
                                                                 </td>
                                                             </tr>
@@ -1483,36 +1476,31 @@
                                                                 <td class="editable-cell">
                                                                     <b-form-select class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.participate_airport">
+                                                                        v-model="agent_information.participate_airport">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
-                                                                        <option value="BLR, Bangalore (BLR), India">BLR,
-                                                                            Bangalore (BLR), India</option>
-                                                                        <option value="AAE, Annaba (AAE), Algeria">AAE,
-                                                                            Annaba (AAE), Algeria</option>
-                                                                        <option value="AAH, Aachen (AAH), Germany">AAH,
-                                                                            Aachen (AAH), Germany</option>
-                                                                        <option value="AAI, Arraias (AAI), Brazil">AAI,
-                                                                            Arraias (AAI), Brazil</option>
-                                                                        <option value="AAL, Aalborg (AAL), Denmark">AAL,
-                                                                            Aalborg (AAL), Denmark</option>
-                                                                        <option
-                                                                            value="AAM, Mala Mala (AAM), South Africa">
-                                                                            AAM, Mala Mala (AAM), South Africa</option>
-                                                                        <option
-                                                                            value="AAN, Al Ain (AAN), United Arab Emirates">
-                                                                            AAN, Al Ain (AAN), United Arab Emirates
+                                                                        <option value="BLR">BLR, Bangalore (BLR), India
                                                                         </option>
-                                                                        <option value="AAP, Samarinda (AAP), Indonesia">
-                                                                            AAP, Samarinda (AAP), Indonesia</option>
-                                                                        <option value="AAR, Aarhus (AAR), Denmark">AAR,
-                                                                            Aarhus (AAR), Denmark</option>
-                                                                        <option
-                                                                            value="ABA, Abakan (ABA), Russian Federation">
-                                                                            ABA, Abakan (ABA), Russian Federation
+                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria
                                                                         </option>
-                                                                        <option value="ABC, Albacete (ABC), Spain">ABC,
-                                                                            Albacete (ABC), Spain</option>
+                                                                        <option value="AAH">AAH, Aachen (AAH), Germany
+                                                                        </option>
+                                                                        <option value="AAI">AAI, Arraias (AAI), Brazil
+                                                                        </option>
+                                                                        <option value="AAL">AAL, Aalborg (AAL), Denmark
+                                                                        </option>
+                                                                        <option value="AAM">AAM, Mala Mala (AAM), South
+                                                                            Africa</option>
+                                                                        <option value="AAN">AAN, Al Ain (AAN), United
+                                                                            Arab Emirates</option>
+                                                                        <option value="AAP">AAP, Samarinda (AAP),
+                                                                            Indonesia</option>
+                                                                        <option value="AAR">AAR, Aarhus (AAR), Denmark
+                                                                        </option>
+                                                                        <option value="ABA">ABA, Abakan (ABA), Russian
+                                                                            Federation</option>
+                                                                        <option value="ABC">ABC, Albacete (ABC), Spain
+                                                                        </option>
                                                                     </b-form-select>
                                                                 </td>
                                                             </tr>
@@ -1521,7 +1509,7 @@
                                                                 <td class="editable-cell">
                                                                     <b-form-select class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.prticipant_identifer">
+                                                                        v-model="agent_information.prticipant_identifer">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
                                                                         <option value="AIR"> Airline AIR</option>
@@ -1550,7 +1538,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 150px"
-                                                                        v-model="form.participant_code" />
+                                                                        v-model="agent_information.participant_code" />
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -1558,7 +1546,7 @@
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 200px"
-                                                                        v-model="form.office_file_reference" />
+                                                                        v-model="agent_information.office_file_reference" />
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -1579,68 +1567,101 @@
                                             </b-form-group>
                                             <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
                                         </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-31"></b-form-input>
-                                        </b-form-group>
+                                        <div class="d-flex align-items-center mt-5">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="input-horizontal"
+                                                class="form-control-sm col-form-label mr-3" label="">
+                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
+                                                    v-model="form.also_notify_address.name"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
+                                                <has-error :form="form" field="ship_name"></has-error>
+                                            </b-form-group>
+                                        </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Address:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-15"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
+                                                style="width: 220px" v-model="form.also_notify_address.address"
+                                                :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
+                                            <has-error :form="form" field="ship_address"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-31"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"
+                                                style="width: 220px" v-model="form.also_notify_address.address_line_2"
+                                                :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
+                                            <has-error :form="form" field="ship_address_line_2"></has-error>
                                         </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="City:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-23"></b-form-input>
-                                        </b-form-group>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="input-horizontal"
+                                                class="form-control-sm col-form-label" label="City:">
+                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
+                                                    v-model="form.also_notify_address.city"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                                <has-error :form="form" field="ship_city"></has-error>
+                                            </b-form-group>
+                                            <b-form-input id="input-horizontal" class="form-control-sm"
+                                                style="width: 50px" v-model="form.also_notify_address.airport_code"
+                                                :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                            <has-error :form="form" field="ship_airport_code"></has-error>
+                                        </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-11"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"
+                                                v-model="form.also_notify_address.post_code"
+                                                :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
+                                            <has-error :form="form" field="ship_post_code"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="State:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-20"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"
+                                                v-model="form.also_notify_address.state"
+                                                :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
+                                            <has-error :form="form" field="ship_state"></has-error>
                                         </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s
                                             content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Country:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-15"></b-form-input>
+                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
+                                            <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
+                                                v-model="form.also_notify_address.country"
+                                                :class="{ 'is-invalid': form.errors.has('ship_country') }">
+                                                <option disabled value=""> Please select one</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option Value="c">C</option>
+                                            </b-form-select>
+                                            <has-error :form="form" field="ship_country"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Phone:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-17"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"
+                                                v-model="form.also_notify_address.phone"
+                                                :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
+                                            <has-error :form="form" field="ship_phone"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Fax:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-22"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
+                                                v-model="form.also_notify_address.fax"
+                                                :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
+                                            <has-error :form="form" field="ship_fax"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Telex:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-19"></b-form-input>
+                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"
+                                                v-model="form.also_notify_address.telex"></b-form-input>
                                         </b-form-group>
 
-                                        <b-form-checkbox size="sm" class="ml-lg-35"> Save new address to address
+                                        <b-form-checkbox size="sm" class="ml-lg-35"
+                                            v-model="is_also_notify_address_save"
+                                            @change="SaveAddress('also_notify_address')"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-tab>
                                     <b-tab title="Exta Print Information">
@@ -2941,6 +2962,20 @@ export default {
                     telex: '',
                     new_address: '',
                 },
+                also_notify_address: {
+                    name: '',
+                    address: '',
+                    address_line_2: '',
+                    city: '',
+                    airport_code: null,
+                    post_code: '',
+                    state: '',
+                    country: '',
+                    phone: '',
+                    fax: '',
+                    telex: '',
+                    new_address: '',
+                },
                 departure_airport: '',
                 destination_airport: '',
                 from: '',
@@ -2970,23 +3005,8 @@ export default {
                 letter_credit: false,
                 shipment_ref_no: null,
                 supplementary_shipment_Info: '',
-                iata_agent_code: null,
-                iata_agent_cass: null,
                 extra_print: null,
 
-                agent_name: '',
-                agent_address: '',
-                agent_city: '',
-                agent_pincode: '',
-                agent_issue_sign: '',
-                agent_issue_loc_code: '',
-                agent_issue_date: this.getCurrentDate(),
-                agent_account: null,
-                participate: '0',
-                participate_airport: '',
-                prticipant_identifer: '',
-                participant_code: null,
-                office_file_reference: '',
                 office_airport: '',
                 office_function_designator: '',
                 office_company_designator: '',
@@ -3058,7 +3078,25 @@ export default {
                 hsCodes: [],
                 uld_info: [],
             },
-
+            iata_cass:{
+                iata_agent_code: 1432027,
+                iata_agent_cass: 9013,
+            },
+            agent_information:{
+                agent_name: 'KSR Freight Forwarders BLR',
+                agent_address: 'No12 Nenapu 8th Main Road',
+                agent_city: 'Bangalore',
+                agent_pincode: '562157',
+                agent_issue_sign: 'jgeorgeksrblr',
+                agent_issue_loc_code: 'BLR',
+                agent_issue_date: '7Sep',
+                agent_account: null,
+                participate: '0',
+                participate_airport: 'BLR',
+                prticipant_identifer: 'AIR',
+                participant_code: null,
+                office_file_reference: '',
+            },
             selectedCode: '',
             manualCode: '',
             tableCodes: [],
@@ -3071,6 +3109,7 @@ export default {
             showCalculationTable: false,
             is_consignee_address_save: false,
             is_shipper_address_save: false,
+            is_also_notify_address_save: false,
             editIndex: null,
             edit_entry_index: null,
             items: [
@@ -3406,9 +3445,9 @@ export default {
         addOrUpdateEntry() {
             if (this.edit_entry_index !== null) {
                 this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
-                this.edit_entry_index=null;
+                this.edit_entry_index = null;
             } else {
-                this.form.entries.push({ ...this.consignment_list });  
+                this.form.entries.push({ ...this.consignment_list });
             }
             this.closeModal();
 
@@ -3416,7 +3455,7 @@ export default {
             for (let key in this.consignment_list) {
                 if (typeof this.consignment_list[key] === 'object') {
                     this.consignment_list[key] = []; // Reset objects if needed
-                }else{
+                } else {
                     this.consignment_list[key] = '';
                 }
             }
@@ -3537,7 +3576,7 @@ export default {
         },
     },
     watch: {
-        'form.rate_class': function () {
+        /*'form.rate_class': function () {
             this.form.total_amount = this.calculateTotalAmount();
         },
         'form.rate': function () {
@@ -3545,7 +3584,7 @@ export default {
         },
         'form.chargable_weight': function () {
             this.form.total_amount = this.calculateTotalAmount();
-        }
+        }*/
     },
     computed: {
         weightCharge() {

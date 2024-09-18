@@ -155,6 +155,67 @@ class AirwayBill extends Controller
         }
         return "consignee address saved successfull";
     }
+    private function saveAlsoNotify($awb_no, $also_notify_address, $is_alsonotify_address_save){
+        $validator = Validator::make($also_notify_address, [
+            'name' => 'required|string|max:70',
+            'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
+            'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
+            'city' => 'required|string|max:70',
+            'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
+            'post_code' => 'nullable|string|max:9',
+            'state' => 'nullable|string|max:9',
+            'country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
+            'phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
+            'fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
+            'telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
+        ]);
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $WayBillAddress = WayBillAddress::where('awb_id', $awb_no)->first();
+        if (!isset($WayBillAddress))
+            $WayBillAddress = new WayBillAddress();
+        $WayBillAddress->awb_id = $awb_no;
+        $WayBillAddress->also_name = $also_notify_address['name'];
+        $WayBillAddress->cons_address = $also_notify_address['address'];
+        $WayBillAddress->also_address_line_2 = $also_notify_address['address_line_2'];
+        $WayBillAddress->also_city = $also_notify_address['city'];
+        $WayBillAddress->also_airport_code = $also_notify_address['airport_code'];
+        $WayBillAddress->also_post_code = $also_notify_address['post_code'];
+        $WayBillAddress->also_state = $also_notify_address['state'];
+        $WayBillAddress->also_country = $also_notify_address['country'];
+        $WayBillAddress->also_phone = $also_notify_address['phone'];
+        $WayBillAddress->also_fax = $also_notify_address['fax'];
+        $WayBillAddress->also_telex = $also_notify_address['telex'];
+        $WayBillAddress->save();
+
+        if ($is_alsonotify_address_save) {
+            $SavedAddress = SavedAddress::where([['awb_id', $awb_no], ['address_type', 'also_notify_address']])->first();
+            if (!isset($SavedAddress))
+                $SavedAddress = new SavedAddress();
+            $SavedAddress->awb_id = $awb_no;
+            $SavedAddress->user_id = '123456';
+            $SavedAddress->address_type = 'also_notify_address';
+            $SavedAddress->name = $also_notify_address['name'];
+            $SavedAddress->address = $also_notify_address['address'];
+            $SavedAddress->address_line_2 = $also_notify_address['address_line_2'];
+            $SavedAddress->city = $also_notify_address['city'];
+            $SavedAddress->airport_code = $also_notify_address['airport_code'];
+            $SavedAddress->post_code = $also_notify_address['post_code'];
+            $SavedAddress->state = $also_notify_address['state'];
+            $SavedAddress->country = $also_notify_address['country'];
+            $SavedAddress->phone = $also_notify_address['phone'];
+            $SavedAddress->fax = $also_notify_address['fax'];
+            $SavedAddress->telex = $also_notify_address['telex'];
+            $SavedAddress->save();
+        }
+        return "Also notify address saved successfull";
+    }
     public function store(Request $request)
     {
         $main_return_data = [];
@@ -163,6 +224,9 @@ class AirwayBill extends Controller
         }
         if (!empty($request->consignee_address['account']) && !empty($request->consignee_address['telex'])) {
             $main_return_data['consignee_address_data'] = $this->saveConsigneeAddress($request->awb_no, $request->consignee_address, $request->is_consignee_address_save);
+        }
+        if (!empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+            $main_return_data['also_notify_address_data'] = $this->saveAlsoNotify($request->awb_no, $request->also_notify_address, $request->is_alsonotify_address_save);
         }
         return json_encode($main_return_data);
     }

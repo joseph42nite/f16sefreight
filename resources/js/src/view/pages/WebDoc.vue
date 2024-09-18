@@ -371,7 +371,7 @@
                                                 v-model="form.shipper_address.telex"></b-form-input>
                                         </b-form-group>
 
-                                        <b-form-checkbox size="sm" class="ml-lg-35" v-model="is_shipper_address_save"
+                                        <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_shipper_address_save"
                                             @change="SaveAddress('shipper_address')"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-col>
@@ -501,7 +501,7 @@
                                                 v-model="form.consignee_address.telex"></b-form-input>
                                         </b-form-group>
 
-                                        <b-form-checkbox size="sm" class="ml-lg-21" v-model="is_consignee_address_save"
+                                        <b-form-checkbox size="sm" class="ml-lg-21" v-model="form.is_consignee_address_save"
                                             @change="SaveAddress('consignee_address')"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-col>
@@ -1660,7 +1660,7 @@
                                         </b-form-group>
 
                                         <b-form-checkbox size="sm" class="ml-lg-35"
-                                            v-model="is_also_notify_address_save"
+                                            v-model="form.is_also_notify_address_save"
                                             @change="SaveAddress('also_notify_address')"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-tab>
@@ -3025,7 +3025,11 @@ export default {
                     taxes: '',
                     weight_charge: '',
                     total_charges: '',
-                }
+                },
+
+                is_consignee_address_save: false,
+                is_shipper_address_save: false,
+                is_also_notify_address_save: false,
             }),
             oci_info:{
                 oci_country_code: '',
@@ -3109,9 +3113,6 @@ export default {
             showShipper: false,
             showConsignee: false,
             showCalculationTable: false,
-            is_consignee_address_save: false,
-            is_shipper_address_save: false,
-            is_also_notify_address_save: false,
             editIndex: null,
             edit_entry_index: null,
             items: [
@@ -3325,14 +3326,13 @@ export default {
             this.form.issue_date = this.formatDate(date);
         },
         onSubmit(evt) {
-            console.log(this.form);
             evt.preventDefault();
-            this.form.append('oci_entries', JSON.stringify(this.form.oci_entries));
+            /*this.form.append('oci_entries', JSON.stringify(this.form.oci_entries));
             this.form.append('other_charges', JSON.stringify(this.form.charges));
-            this.form.append('special_handling_code', JSON.stringify(this.form.tableCodes));
+            this.form.append('special_handling_code', JSON.stringify(this.form.tableCodes));*/
             console.log(this.form);
             this.form.post(`/create-webdoc`).then(response => {
-                console.log('Save successful:', response.data);
+                console.log(response.data);
             })
         },
         getAgent(){

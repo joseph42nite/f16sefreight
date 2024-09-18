@@ -15,6 +15,7 @@ class CreateSavedAddressesTable extends Migration
     {
         Schema::create('saved_addresses', function (Blueprint $table) {
             $table->id();
+            $table->integer('awb_id')->nullable();
             $table->integer('user_id')->nullable();
             $table->string('address_type',100)->nullable();
             $table->string('name',100)->nullable();

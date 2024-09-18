@@ -194,7 +194,7 @@
                                     content-cols-lg="auto" label="AWB No:*" label-for="input-horizontal"
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"
-                                        v-model="form.awb_code"
+                                        v-model="form.first_box.awb_code"
                                         :class="{ 'is-invalid': form.errors.has('awb_code') }"></b-form-input>
                                     <has-error :form="form" field="awb_code"></has-error>
                                 </b-form-group>
@@ -205,7 +205,7 @@
                                     content-cols-lg="auto" label-for="input-horizontal"
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px"
-                                        v-model="form.awb_no"
+                                        v-model="form.first_box.awb_no"
                                         :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
                                     <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
@@ -214,13 +214,13 @@
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                     content-cols-lg="auto" label="" label-for="input-horizontal"
                                     class="form-control-sm col-form-label">
-                                    <b-form-checkbox size="sm" v-model="form.consolidated_MAWB">Consolidate
+                                    <b-form-checkbox size="sm" v-model="form.first_box.consolidated_MAWB">Consolidate
                                         MAWB</b-form-checkbox>
                                 </b-form-group>
                             </b-col>
                             <b-col cols="auto ml-7" style="padding-left: 9.3%">
                                 <b-form-group label-for="name-input">
-                                    <b-form-radio name="radio-size" size="sm" v-model="form.awb"
+                                    <b-form-radio name="radio-size" size="sm" v-model="form.first_box.awb"
                                         value="true">AWB</b-form-radio>
                                 </b-form-group>
                             </b-col>
@@ -518,8 +518,8 @@
                                                 label="Departure Airport*" label-for="input-departure-airport"
                                                 class="form-control-sm">
                                                 <b-form-select class="form-control" style="width: 150px"
-                                                    v-model="form.departure_airport"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_state') }">
+                                                    v-model="form.routing_information.departure_airport"
+                                                    :class="{ 'is-invalid': form.errors.has('departure_airport') }">
                                                     <option disabled value=""> Select a Rate Class</option>
                                                     <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY),
                                                         United States</option>
@@ -559,7 +559,7 @@
                                                 <!-- <b-form-input id="input-departure-airport"
                                                     class="form-control-sm"></b-form-input> -->
                                                 <b-form-select class="form-control" style="width: 150px"
-                                                    v-model="form.destination_airport"
+                                                    v-model="form.routing_information.destination_airport"
                                                     :class="{ 'is-invalid': form.errors.has('destination_airport') }">
                                                     <option disabled value=""> Select a Rate Class</option>
                                                     <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY),
@@ -579,7 +579,7 @@
                                                             <td class="editable-cell">
                                                                 <b-form-select class="form-control"
                                                                     style="width: 150px;"
-                                                                    v-model="form.departure_airport"
+                                                                    v-model="form.routing_information.departure_airport"
                                                                     :class="{ 'is-invalid': form.errors.has('from') }">
                                                                     <option disabled>Select a Rate Class</option>
                                                                     <option value="ABY, Albany (ABY), United States">
@@ -591,7 +591,7 @@
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <b-form-select class="form-control"
-                                                                    style="width: 150px;" v-model="form.to"
+                                                                    style="width: 150px;" v-model="form.routing_information.to"
                                                                     :class="{ 'is-invalid': form.errors.has('to') }">
                                                                     <option disabledvalue=""> Select a Rate Class
                                                                     </option>
@@ -604,19 +604,19 @@
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
-                                                                    style="width: 40px;" v-model="form.by"
+                                                                    style="width: 40px;" v-model="form.routing_information.by"
                                                                     :class="{ 'is-invalid': form.errors.has('by') }" />
                                                                 <has-error :form="form" field="by"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
-                                                                    style=" width: 50px;" v-model="form.flight"
+                                                                    style=" width: 50px;" v-model="form.routing_information.flight"
                                                                     :class="{ 'is-invalid': form.errors.has('flight') }" />
                                                                 <has-error :form="form" field="flight"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
-                                                                    style="width: 60px;" v-model="form.date"
+                                                                    style="width: 60px;" v-model="form.routing_information.date"
                                                                     :class="{ 'is-invalid': form.errors.has('date') }" />
                                                                 <has-error :form="form" field="date"></has-error>
                                                             </td>
@@ -638,7 +638,7 @@
                                                     <tr>
                                                         <td class="editable-cell">
                                                             <b-form-select class="form-control" style="width: 150px"
-                                                                v-model="form.to_2"
+                                                                v-model="form.routing_information.to_2"
                                                                 :class="{ 'is-invalid': form.errors.has('to_2') }">
                                                                 <option disabled value=""> Select 2 a Rate Class
                                                                 </option>
@@ -650,17 +650,17 @@
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 40px"
-                                                                v-model="form.by_2"
+                                                                v-model="form.routing_information.by_2"
                                                                 :class="{ 'is-invalid': form.errors.has('by_2') }" />
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 50px"
-                                                                v-model="form.flight_2"
+                                                                v-model="form.routing_information.flight_2"
                                                                 :class="{ 'is-invalid': form.errors.has('flight_2') }" />
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 60px"
-                                                                v-model="form.date_2"
+                                                                v-model="form.routing_information.date_2"
                                                                 :class="{ 'is-invalid': form.errors.has('date_2') }" />
                                                         </td>
                                                         <td class="editable-cell w-10" style="width: 60px !important;">
@@ -681,7 +681,7 @@
                                                     <tr>
                                                         <td class="editable-cell">
                                                             <b-form-select class="form-control" style="width: 150px"
-                                                                v-model="form.to_3"
+                                                                v-model="form.routing_information.to_3"
                                                                 :class="{ 'is-invalid': form.errors.has('to_3') }">
                                                                 <option disabled value=""> Select 3 a Rate Class
                                                                 </option>
@@ -693,17 +693,17 @@
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 40px"
-                                                                v-model="form.by_3"
+                                                                v-model="form.routing_information.by_3"
                                                                 :class="{ 'is-invalid': form.errors.has('by_3') }" />
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 50px"
-                                                                v-model="form.flight_3"
+                                                                v-model="form.routing_information.flight_3"
                                                                 :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 60px"
-                                                                v-model="form.date_3"
+                                                                v-model="form.routing_information.date_3"
                                                                 :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                         </td>
                                                         <td class="editable-cell" style="width: 60px !important;">
@@ -744,11 +744,11 @@
                                                     </td>
                                                     <td class="editable-cell">
                                                         <input type="text" class="form-control"
-                                                            :value="getOriginCode(form.departure_airport)" />
+                                                            :value="getOriginCode(form.routing_information.departure_airport)" />
                                                     </td>
                                                     <td class="editable-cell">
                                                         <input type="text" class="form-control"
-                                                            :value="getDestinationCode(form.destination_airport)" />
+                                                            :value="getDestinationCode(form.routing_information.destination_airport)" />
                                                     </td>
                                                     <td class="editable-cell">
                                                         <input type="text" class="form-control" />
@@ -2923,11 +2923,12 @@ export default {
     data() {
         return {
             form: new Form({
-                awb_code: '',
-                awb_no: '',
-                consolidated_MAWB: false,
-                awb: true,
-               
+                first_box:{
+                    awb_code: '',
+                    awb_no: '',
+                    consolidated_MAWB: false,
+                    awb: true,
+                },
                 shipper_address: {
                     name: '',
                     account: '',
@@ -2972,23 +2973,23 @@ export default {
                     telex: '',
                     new_address: '',
                 },
-                departure_airport: '',
-                destination_airport: '',
-                from: '',
-                from_2: '',
-                from_3: '',
-                to: '',
-                to_2: '',
-                to_3: '',
-                by: '',
-                by_2: '',
-                by_3: '',
-                flight: '',
-                flight_2: '',
-                flight_3: '',
-                date: this.getCurrentDate(),
-                date_2: this.getCurrentDate(),
-                date_3: this.getCurrentDate(),
+                routing_information:{
+                    departure_airport: '',
+                    destination_airport: '',
+                    from: '',
+                    to: '',
+                    to_2: '',
+                    to_3: '',
+                    by: '',
+                    by_2: '',
+                    by_3: '',
+                    flight: '',
+                    flight_2: '',
+                    flight_3: '',
+                    date: this.getCurrentDate(),
+                    date_2: this.getCurrentDate(),
+                    date_3: this.getCurrentDate(),
+                },
 
                 entries: [],
                 oci_entries: [],

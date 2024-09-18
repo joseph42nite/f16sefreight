@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateConsignmentRateInfo extends Migration
+class CreateConsignmentDataTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateConsignmentRateInfo extends Migration
      */
     public function up()
     {
-        Schema::create('consignment_rate_info', function (Blueprint $table) {
+        Schema::create('way_bill_consignment_data', function (Blueprint $table) {
             $table->id();
             $table->integer('awb_id')->nullable();
             $table->integer('pieces')->nullable();
@@ -24,23 +24,13 @@ class CreateConsignmentRateInfo extends Migration
             $table->string('commodity_item')->nullable();
             $table->string('country_origin_goods')->nullable();
             $table->integer('slac')->nullable();
-            $table->integer('hs_code')->nullable();
+            $table->string('hs_code')->nullable();
             $table->string('gross_weight')->nullable();
-            $table->integer('chargable_weight')->nullable();
             $table->string('weight_code')->nullable(); //kgs/lbs
-            // $table->float('rate');
+            $table->integer('chargable_weight')->nullable();
             $table->integer('rate')->nullable();
-            $table->float('height')->nullable();
-            $table->decimal('width')->nullable();
-            $table->decimal('length')->nullable();
-            $table->string('unit')->nullable();
-            $table->string('volume')->nullable();
-            $table->string('dimention_unit')->nullable();
-            $table->string('uld_type')->nullable();
-            $table->integer('uld_serial')->nullable();
-            $table->string('owner')->nullable();
-            $table->string('total_volume')->nullable();
-            $table->string('total_amount')->nullable();
+            $table->text('pieces_info')->nullable();
+            $table->string('uld_info',1000)->nullable();
             $table->timestamps();
         });
     }
@@ -52,6 +42,6 @@ class CreateConsignmentRateInfo extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('consignment_rate_info');
+        Schema::dropIfExists('way_bill_consignment_data');
     }
 }

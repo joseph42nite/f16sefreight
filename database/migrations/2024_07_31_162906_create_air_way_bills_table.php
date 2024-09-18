@@ -16,9 +16,8 @@ class CreateAirWayBillsTable extends Migration
         Schema::create('air_way_bills', function (Blueprint $table) {
             $table->id();
             $table->integer('awb_code')->nullable();
-            $table->integer('awb_no')->nullable();
             $table->boolean('awb')->nullable();
-            $table->string('consolidated_MAWB')->nullable();
+            $table->string('consolidated_mawb')->nullable();
             $table->string('departure_airport')->nullable();
             $table->string('destination_airport')->nullable();
             $table->string('from')->nullable();//first
@@ -40,20 +39,17 @@ class CreateAirWayBillsTable extends Migration
             $table->string('special_service_request')->nullable();
             $table->string('accounting_information')->nullable();
             $table->string('shipment_ref_no')->nullable();
-            $table->string('supplementary_shipment_Info')->nullable();
+            $table->string('supplementary_shipment_info')->nullable();
             $table->string('extra_print')->nullable();
             $table->integer('shipper_id')->nullable();
             $table->integer('consignee_id')->nullable();
             $table->integer('agent_id')->nullable();
             $table->integer('payment_id')->nullable();
-            $table->json('special_handling_code')->nullable();
-            // $table->json('oci_entries')->nullable();
-            // $table->string('oci_country_code')->nullable(); //Other Customs Information(OCI)
-            // $table->string('oci_info_identifier')->nullable();
-            // $table->string('oci_custom_info_identifier')->nullable();
-            // $table->string('oci_supplementary_info')->nullable();
-            // $table->json('consignee_info')->nullable();
-            // $table->json('other_charges')->nullable();
+            $table->text('special_handling_info')->nullable();
+            $table->text('oci_info')->nullable(); //other custome information
+            $table->string('total_volume',20)->nullable();
+            $table->string('dimention_unit')->nullable();
+            $table->string('total_amount',20)->nullable();
             $table->timestamps();
         });
     }

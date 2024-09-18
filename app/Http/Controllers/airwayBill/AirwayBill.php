@@ -24,10 +24,10 @@ class AirwayBill extends Controller
         $validator = Validator::make($shipper_address, [
             'name' => 'required|string|max:70',
             'account' => 'nullable|string|max:14',
-            'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
-            'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
+            // 'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
+            // 'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'city' => 'required|string|max:70',
-            'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
+            // 'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'post_code' => 'nullable|string|max:9',
             'state' => 'nullable|string|max:9',
             'country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
@@ -93,10 +93,10 @@ class AirwayBill extends Controller
         $validator = Validator::make($consignee_address, [
             'name' => 'required|string|max:70',
             'account' => 'nullable|string|max:14',
-            'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
-            'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
+            // 'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
+            // 'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'city' => 'required|string|max:70',
-            'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
+            // 'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'post_code' => 'nullable|string|max:9',
             'state' => 'nullable|string|max:9',
             'country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
@@ -155,13 +155,14 @@ class AirwayBill extends Controller
         }
         return "consignee address saved successfull";
     }
-    private function saveAlsoNotify($awb_no, $also_notify_address, $is_alsonotify_address_save){
+    private function saveAlsoNotify($awb_no, $also_notify_address, $is_also_notify_address_save)
+    {
         $validator = Validator::make($also_notify_address, [
             'name' => 'required|string|max:70',
-            'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
-            'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
+            // 'address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
+            // 'address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'city' => 'required|string|max:70',
-            'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
+            // 'airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'post_code' => 'nullable|string|max:9',
             'state' => 'nullable|string|max:9',
             'country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
@@ -194,7 +195,7 @@ class AirwayBill extends Controller
         $WayBillAddress->also_telex = $also_notify_address['telex'];
         $WayBillAddress->save();
 
-        if ($is_alsonotify_address_save) {
+        if ($is_also_notify_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $awb_no], ['address_type', 'also_notify_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
@@ -216,17 +217,103 @@ class AirwayBill extends Controller
         }
         return "Also notify address saved successfull";
     }
+    private function firstBox($first_box)
+    {
+        $validator = Validator::make($first_box, [
+            'awb_code' => 'required',
+            //|regex:/^[0-9]+$/|size:3
+            'awb_no' => 'required',
+            //|size:8
+            'consolidated_MAWB' => 'nullable|boolean',
+            'awb' => 'nullable|boolean',
+        ]);
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $AirwayBills = AirwayBills::find($first_box['awb_no']);
+        if (!isset($AirwayBills))
+            $AirwayBills = new AirwayBills();
+        $AirwayBills->id = $first_box['awb_no'];
+        $AirwayBills->awb_code = $first_box['awb_code'];
+        $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
+        $AirwayBills->awb = $first_box['awb'];
+        $AirwayBills->save();
+        return "first box saved successfull";
+    }
+    private function routingInformation($awb_no, $routing_information)
+    {
+        $validator = Validator::make($routing_information, [
+            'departure_airport' => 'required|string',
+            'destination_airport' => 'required|string',
+            'from' => 'nullable|string',
+            'to' => 'required|string',
+            'by' => 'required|string|max:20',
+            'flight' => 'required|string|max:20',
+            'date' => 'required|string',
+            'to_2' => 'nullable|string',
+            'by_2' => 'nullable|string|max:20',
+            'flight_2' => 'nullable|string|max:20',
+            'date_2' => 'nullable|string',
+            'to_3' => 'nullable|string',
+            'by_3' => 'nullable|string|max:20',
+            'flight_3' => 'nullable|string|max:20',
+            'date_3' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $AirwayBills = AirwayBills::find($awb_no);
+        if (!isset($AirwayBills))
+            $AirwayBills = new AirwayBills();
+
+            $AirwayBills->departure_airport = $routing_information['departure_airport'];
+            $AirwayBills->destination_airport = $routing_information['destination_airport'];
+            $AirwayBills->from = $routing_information['from'];
+            $AirwayBills->to = $routing_information['to'];
+            $AirwayBills->by = $routing_information['by'];
+            $AirwayBills->flight = $routing_information['flight'];
+            $AirwayBills->date = $routing_information['date'];
+            $AirwayBills->to_2 = $routing_information['to_2'];
+            $AirwayBills->by_2 = $routing_information['by_2'];
+            $AirwayBills->flight_2 = $routing_information['flight_2'];
+            $AirwayBills->date_2 = $routing_information['date_2'];
+            $AirwayBills->to_3 = $routing_information['to_3'];
+            $AirwayBills->by_3 = $routing_information['by_3'];
+            $AirwayBills->flight_3 = $routing_information['flight_3'];
+            $AirwayBills->date_3 = $routing_information['date_3'];
+            $AirwayBills->save();
+            return "Routing Information saved successfull";    
+    }
     public function store(Request $request)
     {
         $main_return_data = [];
-        if (!empty($request->shipper_address['account']) && !empty($request->shipper_address['telex'])) {
-            $main_return_data['shipper_address_data'] = $this->saveShipperAddress($request->awb_no, $request->shipper_address, $request->is_shipper_address_save);
+        if (!empty($request->shipper_address['name']) && !empty($request->shipper_address['country']) && !empty($request->shipper_address['city'])) {
+            $main_return_data['shipper_address'] = $this->saveShipperAddress($request->first_box['awb_no'], $request->shipper_address, $request->is_shipper_address_save);
         }
-        if (!empty($request->consignee_address['account']) && !empty($request->consignee_address['telex'])) {
-            $main_return_data['consignee_address_data'] = $this->saveConsigneeAddress($request->awb_no, $request->consignee_address, $request->is_consignee_address_save);
+        if (!empty($request->consignee_address['name']) && !empty($request->consignee_address['country']) && !empty($request->consignee_address['city'])) {
+            $main_return_data['consignee_address'] = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->consignee_address, $request->is_consignee_address_save);
         }
-        if (!empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
-            $main_return_data['also_notify_address_data'] = $this->saveAlsoNotify($request->awb_no, $request->also_notify_address, $request->is_alsonotify_address_save);
+        if (!empty($request->also_notify_address['name']) && !empty($request->also_notify_address['country']) && !empty($request->also_notify_address['city'])) {
+            $main_return_data['also_notify_address'] = $this->saveAlsoNotify($request->first_box['awb_no'], $request->also_notify_address, $request->is_also_notify_address_save);
+        }
+        if (!empty($request->first_box['awb_code']) && !empty($request->first_box['awb_no'])) {
+            $main_return_data['first_box'] = $this->firstBox($request->first_box);
+        }
+        // && !empty($request->routing_information['from'])
+        if (!empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+            $main_return_data['routing_information'] = $this->routingInformation($request->first_box['awb_no'], $request->routing_information);
         }
         return json_encode($main_return_data);
     }

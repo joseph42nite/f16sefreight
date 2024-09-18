@@ -30,6 +30,7 @@ class CreateAgentsInfoTable extends Migration
             $table->string('office_function_designator')->nullable(); //2
             $table->string('office_company_designator')->nullable();//2
             $table->string('office_file_reference')->nullable();
+            $table->tinyInteger('participant')->default(0)->nullable();
             $table->string('participant_airport')->nullable();
             $table->string('prticipant_identifer')->nullable();
             $table->string('participant_code')->nullable(); 

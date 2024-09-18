@@ -1744,7 +1744,7 @@
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="form.code">
+                                                <b-form-select class="form-control-sm" v-model="other_charges.code">
                                                     <option disabled value=""> Select an Other Charge Code </option>
                                                     <option value="MY - Fuel Surcharge">MY - Fuel Surcharge </option>
                                                     <option value="SC - Security Charge">SC - Security Charge </option>
@@ -1756,7 +1756,7 @@
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-input class="form-control-sm" v-model="form.other_code"
+                                                <b-form-input class="form-control-sm" v-model="other_charges.other_code"
                                                     placeholder="or:"></b-form-input>
                                             </b-form-group>
                                         </b-col>
@@ -1764,34 +1764,34 @@
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
                                                 <b-form-input class="form-control-sm"
-                                                    v-model="form.amount"></b-form-input>
+                                                    v-model="other_charges.amount"></b-form-input>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="due" size="sm" v-model="form.due" value="Agent">Due
+                                                <b-form-radio name="due" size="sm" v-model="other_charges.due" value="Agent">Due
                                                     Agent</b-form-radio>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="due" size="sm" v-model="form.due"
+                                                <b-form-radio name="due" size="sm" v-model="other_charges.due"
                                                     value="Carrier">Due Carrier</b-form-radio>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="payment_type" size="sm" v-model="form.payment_type"
+                                                <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
                                                     value="Prepaid">Prepaid</b-form-radio>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="payment_type" size="sm" v-model="form.payment_type"
+                                                <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
                                                     value="Collect">Collect</b-form-radio>
                                             </b-form-group>
                                         </b-col>
@@ -1820,14 +1820,14 @@
                                                     <td class="editable-cell"> Chargeable Weight </td>
                                                     <td class="editable-cell">
                                                         <input type="text" class="form-control" style="width: 100px"
-                                                            v-model="form.chargable_weight1" />
+                                                            v-model="other_charges.chargable_weight1" />
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td class="editable-cell"> Charge </td>
                                                     <td class="editable-cell">
                                                         <input type="text" class="form-control" style="width: 100px"
-                                                            v-model="form.charge" />
+                                                            v-model="other_charges.charge" />
                                                     </td>
                                                     <td class="editable-cell mb-2">
                                                         <b-button class="bg-secondary form-control-sm px-5"
@@ -1850,7 +1850,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-for="(charge, index) in charges" :key="index">
+                                            <tr v-for="(charge, index) in form.charges" :key="index">
                                                 <td class="editable-cell">
                                                     {{ charge.code || charge.other_code }}
                                                 </td>
@@ -1897,7 +1897,7 @@
                                                                     label="Type Of Payment:*">
                                                                     <b-form-select class="form-control-sm ml-lg-15"
                                                                         style="width: 220px;"
-                                                                        v-model="form.type_of_payment">
+                                                                        v-model="form.payment_info.type_of_payment">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
                                                                         <option value="CA">Partial Collect Credit —
@@ -1928,7 +1928,7 @@
                                                                 <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm" style="width: 50px;"
-                                                                    v-model="form.currency"
+                                                                    v-model="form.payment_info.currency"
                                                                     :class="{ 'is-invalid': form.errors.has('currency') }"></b-form-input>
                                                                 <has-error :form="form" field="currency"></has-error>
                                                             </div>
@@ -1941,7 +1941,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-31 mt-3"
                                                                     style=" width: 220px;"
-                                                                    v-model="form.carriage"></b-form-input>
+                                                                    v-model="form.payment_info.carriage"></b-form-input>
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                 content-cols-sm content-cols-lg="auto"
@@ -1951,7 +1951,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-31 mt-3"
                                                                     style="width: 220px;"
-                                                                    v-model="form.customs"></b-form-input>
+                                                                    v-model="form.payment_info.customs"></b-form-input>
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                 content-cols-sm content-cols-lg="auto"
@@ -1960,7 +1960,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-30 mt-3"
                                                                     style="width: 220px;"
-                                                                    v-model="form.insurance"></b-form-input>
+                                                                    v-model="form.payment_info.insurance"></b-form-input>
                                                             </b-form-group>
                                                         </b-col>
                                                     </b-col>
@@ -2049,17 +2049,15 @@
                                         <table class="table-bordered table-sm" style="width: 31%">
                                             <thead>
                                                 <tr class="h_background_color">
-                                                    <th class="form-control1">
-                                                        Code
-                                                    </th>
+                                                        <td class="editable-cell">Code</td>
+                                                        <td class="editable-cell"></td>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <!-- <tr>
-                                                    <td class="editable-cell"></td>
-                                                </tr> -->
-                                                <tr v-for="(code, index) in tableCodes" :key="index">
+                                                <tr v-for="(code, index) in form.tableCodes" :key="index">
                                                     <td class="editable-cell">{{ code }}</td>
+                                                    <td class="editable-cell"><b-icon icon="trash" font-scale="1"
+                                                        @click="deleteSplCode(index)"></b-icon></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -2088,7 +2086,7 @@
                                                                     class="form-control-sm col-form-label"
                                                                     style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="form.oci_country_code"
+                                                                        v-model="oci_info.oci_country_code"
                                                                         :class="{ 'is-invalid': form.errors.has('oci_country_code') }">
                                                                         <option disabled value="">Select a country
                                                                         </option>
@@ -2382,7 +2380,7 @@
                                                                     class="form-control-sm col-form-label"
                                                                     style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="form.oci_info_identifier"
+                                                                        v-model="oci_info.oci_info_identifier"
                                                                         :class="{ 'is-invalid': form.errors.has('oci_info_identifier') }">
                                                                         <option disabled value="">Select a code</option>
                                                                         <option value="ABI">ABI - AWB Amount Detail
@@ -2754,7 +2752,7 @@
                                                                     class="form-control-sm col-form-label"
                                                                     style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="form.oci_custom_info_identifier"
+                                                                        v-model="oci_info.oci_custom_info_identifier"
                                                                         :class="{ 'is-invalid': form.errors.has('oci_custom_info_identifier') }">
                                                                         <option disabled value="">Select a code</option>
                                                                         <option value="A">A - Automated Broker Interface
@@ -2815,16 +2813,19 @@
                                                             <td class="editable-cell px-4">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 330px;"
-                                                                    v-model="form.oci_supplementary_info"
+                                                                    v-model="oci_info.oci_supplementary_info"
                                                                     :class="{ 'is-invalid': form.errors.has('oci_supplementary_info') }" />
                                                                 <has-error :form="form"
                                                                     field="oci_supplementary_info"></has-error>
                                                             </td>
                                                             <td class="editable-cell"></td>
                                                             <td class="editable-cell mb-2">
-                                                                <input type="button" class="form-control pb-1"
-                                                                    style="width: 100px;font-size: 12px;font-weight: bold;"
-                                                                    value="Add" @click="addOtherCustomInfo" />
+                                                                <b-form-group id="fieldset-horizontal"
+                                                                    class="form-control-sm col-form-label mt-2">
+                                                                    <b-button class="bg-secondary form-control-sm px-5" @click="addOtherCustomInfo">
+                                                                        {{ editIndex !== null ? 'Update' : 'Add' }}
+                                                                    </b-button>
+                                                                </b-form-group>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -2844,7 +2845,7 @@
                                                                 <th></th>
                                                                 <th></th>
                                                             </tr>
-                                                            <tr v-for="(row, index) in oci_entries" :key="index">
+                                                            <tr v-for="(row, index) in form.oci_entries" :key="index">
                                                                 <td class="editable-cell">{{ row.oci_country_code }}
                                                                 </td>
                                                                 <td class="editable-cell">{{ row.oci_info_identifier }}
@@ -2855,12 +2856,10 @@
                                                                     }}</td>
                                                                 <td class="editable-cell"
                                                                     style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                                    <b-icon icon="pencil" font-scale="1"
-                                                                        style="cursor: pointer;"
-                                                                        @click="editOciInfo(index)"
-                                                                        class="mr-2"></b-icon>
+                                                                    <b-icon icon="pencil" font-scale="1" class="mr-2" style="cursor: pointer;" @click="editOciInfo(index)"></b-icon>
                                                                     <b-icon icon="trash" font-scale="1"
-                                                                        @click="deleteOciInfo(index)"></b-icon>
+                                                                        @click="deleteOciInfo(index)">
+                                                                    </b-icon>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -2903,7 +2902,7 @@
                         <hr class="hr" />
                         <div class="py-7">
                             <div class="d-flex justify-content-end">
-                                <b-button class="mr-2">Generate PDF</b-button>
+                                <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
                                 <b-button class="mr-2">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
                                 <b-button type="submit">Save Draft</b-button>
@@ -2928,10 +2927,7 @@ export default {
                 awb_no: '',
                 consolidated_MAWB: false,
                 awb: true,
-                oci_country_code: '',
-                oci_info_identifier: '',
-                oci_custom_info_identifier: '',
-                oci_supplementary_info: '',
+               
                 shipper_address: {
                     name: '',
                     account: '',
@@ -2995,6 +2991,9 @@ export default {
                 date_3: this.getCurrentDate(),
 
                 entries: [],
+                oci_entries: [],
+                tableCodes: [],
+                charges: [],
                 total_valume: null,
                 total_amount: 0,
 
@@ -3007,25 +3006,6 @@ export default {
                 supplementary_shipment_Info: '',
                 extra_print: null,
 
-                office_airport: '',
-                office_function_designator: '',
-                office_company_designator: '',
-                participant_file_reference: '',
-                // other_charge_code: '',
-                // other_code: null,
-                // other_amount: null,
-                // due_agent: '',
-                // due_carrier: '',
-                code: '',
-                other_code: '',
-                amount: '',
-                due: "Carrier",
-                payment_type: "Prepaid",
-                charge: '',
-                // prepaid: '',
-                // collect: '',
-                chargable_weight1: '',
-
                 carr_namr: '',
                 carr_prefix: '',
                 carr_address: '',
@@ -3034,17 +3014,25 @@ export default {
                 carr_state: '',
                 carr_country: '',
 
-                type_of_payment: '',
-                currency: 'INR',
-                carriage: 'NVD',
-                insurance: 'XXX',
-                customs: 'NCV',
-                other_charges_due_carrier: '',
-                other_charges_due_agent: '',
-                taxes: '',
-                weight_charge: '',
-                total_charges: '',
+                payment_info:{
+                    type_of_payment: '',
+                    currency: 'INR',
+                    carriage: 'NVD',
+                    insurance: 'XXX',
+                    customs: 'NCV',
+                    other_charges_due_carrier: '',
+                    other_charges_due_agent: '',
+                    taxes: '',
+                    weight_charge: '',
+                    total_charges: '',
+                }
             }),
+            oci_info:{
+                oci_country_code: '',
+                oci_info_identifier: '',
+                oci_custom_info_identifier: '',
+                oci_supplementary_info: '',
+            },
             consignment_list: {
                 pieces: '',
                 description: '',
@@ -3079,29 +3067,43 @@ export default {
                 uld_info: [],
             },
             iata_cass:{
-                iata_agent_code: 1432027,
-                iata_agent_cass: 9013,
+                iata_agent_code: null,
+                iata_agent_cass: null,
             },
             agent_information:{
-                agent_name: 'KSR Freight Forwarders BLR',
-                agent_address: 'No12 Nenapu 8th Main Road',
-                agent_city: 'Bangalore',
-                agent_pincode: '562157',
-                agent_issue_sign: 'jgeorgeksrblr',
-                agent_issue_loc_code: 'BLR',
-                agent_issue_date: '7Sep',
+                agent_name: '',
+                agent_address: '',
+                agent_city: '',
+                agent_pincode: '',
+                agent_issue_sign: '',
+                agent_issue_loc_code: '',
+                agent_issue_date: '',
                 agent_account: null,
-                participate: '0',
-                participate_airport: 'BLR',
-                prticipant_identifer: 'AIR',
+
+                //Participate Sender Reference
+                participate: null,
+                participate_airport: '',
+                prticipant_identifer: '',
                 participant_code: null,
                 office_file_reference: '',
+               
+                //Office Sender Reference
+                office_airport: null,
+                office_function_designator: null,
+                office_company_designator: null,
+            },
+            other_charges:{
+                code: '',
+                other_code: '',
+                amount: '',
+                due: "Carrier",
+                payment_type: "Prepaid",
+                charge: '',
+                chargable_weight1: '',
             },
             selectedCode: '',
             manualCode: '',
-            tableCodes: [],
-            charges: [],
-            oci_entries: [],
+
             newHsCode: '',
             isOpen: false,
             showShipper: false,
@@ -3325,24 +3327,41 @@ export default {
         onSubmit(evt) {
             console.log(this.form);
             evt.preventDefault();
-            this.form.append('oci_entries', JSON.stringify(this.oci_entries));
-            this.form.append('other_charges', JSON.stringify(this.charges));
-            this.form.append('special_handling_code', JSON.stringify(this.tableCodes));
+            this.form.append('oci_entries', JSON.stringify(this.form.oci_entries));
+            this.form.append('other_charges', JSON.stringify(this.form.charges));
+            this.form.append('special_handling_code', JSON.stringify(this.form.tableCodes));
             console.log(this.form);
             this.form.post(`/create-webdoc`).then(response => {
                 console.log('Save successful:', response.data);
             })
         },
+        getAgent(){
+            ApiService.get(`/agent-info/`)
+                .then(({ data }) => {
+                if (Array.isArray(data) && data.length > 0) {
+                    this.agent_information = data[0];
+                    this.iata_cass = {
+                        iata_agent_code: this.agent_information.iata_agent_code || null,
+                        iata_agent_cass: this.agent_information.iata_agent_cass || null
+                    };
+                } else {
+                    this.agent_information = data;
+                }
+                })
+                .catch(error => {
+                    console.error("Error fetching agent information:", error);
+                });
+        },
         handleRadioChange() {
             const selectedCode = this.selectedCode;
-            this.tableCodes = [];
-            this.tableCodes.push(selectedCode);
+            this.form.tableCodes = [];
+            this.form.tableCodes.push(selectedCode);
         },
         addManualCode() {
             const code = this.selectedCode || this.manualCode.trim();
             if (code) {
-                if (!this.tableCodes.includes(code)) {
-                    this.tableCodes.push(code);
+                if (!this.form.tableCodes.includes(code)) {
+                    this.form.tableCodes.push(code);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3351,6 +3370,9 @@ export default {
             }
             this.selectedCode = '';
             this.manualCode = '';
+        },
+        deleteSplCode(index) {
+            this.form.tableCodes.splice(index, 1);
         },
         getOriginCode(airportString) {
             if (airportString) {
@@ -3365,74 +3387,43 @@ export default {
             return '';
         },
         calculateCharge() {
-            let chargeRate = parseFloat(this.form.charge);
-            let weight = parseFloat(this.form.chargable_weight1);
-            if (!isNaN(weight) && this.form.charge > 0 && !isNaN(chargeRate) && chargeRate > 0) {
+            let chargeRate = parseFloat(this.other_charges.charge);
+            let weight = parseFloat(this.other_charges.chargable_weight1);
+            if (!isNaN(weight) && this.other_charges.charge > 0 && !isNaN(chargeRate) && chargeRate > 0) {
                 let calculatedAmount = weight * chargeRate;
-                this.form.amount = calculatedAmount.toFixed(2);
+                this.other_charges.amount = calculatedAmount.toFixed(2);
             } else {
                 alert('Please enter valid numeric values for chargeable weight and charge rate.');
             }
         },
         addCharge() {
-            // if (this.form.code || this.form.other_code && this.form.amount) {
-            //     if (this.editIndex !== null) {
-            //         this.charges[this.editIndex] = {
-            //             ...this.form,
-            //             amount: this.form.amount
-            //         };
-            //         this.editIndex = null;
-            //     } else {
-            //         this.charges.push({
-            //             ...this.form,
-            //             amount: this.form.amount
-            //         });
-            //     }
-            // } 
-            // else {
-            //     alert("Please select a code or enter other code.");
-            // }
-            if (!this.form.code && !this.form.other_code) {
+            if (!this.other_charges.code && !this.other_charges.other_code) {
                 alert("Please select a code or enter other code.");
                 return;
             }
-
-            if (!this.form.amount) {
+            if (!this.other_charges.amount) {
                 alert("Please enter the amount.");
                 return;
             }
-
-            // If we are editing an existing charge
             if (this.editIndex !== null) {
-                this.charges[this.editIndex] = {
-                    code: this.form.code,
-                    other_code: this.form.other_code,
-                    amount: this.form.amount,
-                    due: this.form.due,
-                    payment_type: this.form.payment_type,
-                    chargable_weight1: this.form.chargable_weight1,
-                    charge: this.form.charge
-                };
+                this.form.charges[this.editIndex] = { ...this.other_charges };
                 this.editIndex = null;
             } else {
-                // Add new charge
-                this.charges.push({
-                    code: this.form.code,
-                    other_code: this.form.other_code,
-                    amount: this.form.amount,
-                    due: this.form.due,
-                    payment_type: this.form.payment_type,
-                    chargable_weight1: this.form.chargable_weight1,
-                    charge: this.form.charge
-                });
+                this.form.charges.push({...this.other_charges});
+            }
+            for (let key in this.other_charges) {
+                if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
+                    this.other_charges[key] = '';
+                }
             }
         },
         editCharge(index) {
-            this.form = { ...this.charges[index] };
             this.editIndex = index;
+            this.other_charges = { ...this.form.charges[index] };
+            // this.editIndex = null;
         },
         removeCharge(index) {
-            this.charges.splice(index, 1);
+            this.form.charges.splice(index, 1);
         },
         editEntry(index) {
             this.edit_entry_index = index;
@@ -3450,7 +3441,6 @@ export default {
                 this.form.entries.push({ ...this.consignment_list });
             }
             this.closeModal();
-
             //clear consignment_list data
             for (let key in this.consignment_list) {
                 if (typeof this.consignment_list[key] === 'object') {
@@ -3464,7 +3454,6 @@ export default {
             let volumePerPiece = (this.form.length * this.form.width * this.form.height) / 1e6;
             return this.form.total_valume = volumePerPiece * (parseFloat(this.form.pcs) || 0);
         },
-
         calculateTotalAmount() {
             let chargable_weight = parseFloat(this.form.chargable_weight) || 0;
             let rate = parseFloat(this.form.rate) || 0;
@@ -3514,37 +3503,30 @@ export default {
             }
         },
         editOciInfo(index) {
-            const entry = this.oci_entries[index];
-            this.form.oci_country_code = entry.oci_country_code;
-            this.form.oci_info_identifier = entry.oci_info_identifier;
-            this.form.oci_custom_info_identifier = entry.oci_custom_info_identifier;
-            this.form.oci_supplementary_info = entry.oci_supplementary_info;
-            this.editingIndex = index;
+            this.editIndex = index;
+            this.oci_info = { ...this.form.oci_entries[index] };
         },
         addOtherCustomInfo() {
-            if (!this.form.oci_country_code || !this.form.oci_info_identifier || !this.form.oci_supplementary_info || !this.form.oci_custom_info_identifier) {
+            if (!this.oci_info.oci_country_code || !this.oci_info.oci_info_identifier || !this.oci_info.oci_supplementary_info || !this.oci_info.oci_custom_info_identifier) {
                 alert('Please fill in all fields');
                 return;
             }
-
-            // Add entry to oci_entries array
-            this.oci_entries.push({
-                oci_custom_info_identifier: this.form.oci_custom_info_identifier,
-                oci_country_code: this.form.oci_country_code,
-                oci_info_identifier: this.form.oci_info_identifier,
-                oci_supplementary_info: this.form.oci_supplementary_info,
-            });
-
-            // Clear form after adding entry
-            this.form.oci_custom_info_identifier = '';
-            this.form.oci_country_code = '';
-            this.form.oci_info_identifier = '';
-            this.form.oci_supplementary_info = '';
+            if (this.editIndex !== null) {
+                this.form.oci_entries[this.editIndex] = { ...this.oci_info };
+                this.editIndex = null;
+            } else {
+                this.form.oci_entries.push({ ...this.oci_info });
+            }
+            for (let key in this.oci_info) {
+                if (this.oci_info.hasOwnProperty(key)) {
+                    this.oci_info[key] = '';
+                }
+            }
         },
         deleteOciInfo(index) {
             // this.oci_entries.splice(index, 1);
-            if (this.oci_entries.length > index) {
-                this.oci_entries.splice(index, 1);
+            if (this.form.oci_entries.length > index) {
+                this.form.oci_entries.splice(index, 1);
             }
         },
         addPcsInfo() {
@@ -3586,34 +3568,36 @@ export default {
             this.form.total_amount = this.calculateTotalAmount();
         }*/
     },
+    created() {
+        this.getAgent();
+    },
     computed: {
         weightCharge() {
             return parseFloat(this.form.total_amount || 0);
-
         },
         taxes() {
             return 0.00;
         },
         totalDueAgentPrepaid() {
-            return this.charges
+            return this.form.charges
                 .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Prepaid')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
         totalDueAgentCollect() {
-            return this.charges
+            return this.form.charges
                 .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Collect')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
         totalDueCarrierPrepaid() {
-            return this.charges
+            return this.form.charges
                 .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Prepaid')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
         totalDueCarrierCollect() {
-            return this.charges
+            return this.form.charges
                 .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Collect')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);

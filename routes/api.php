@@ -98,6 +98,7 @@ Route::delete('/delete-contact/{id?}',[ContactController::class,'delete']);
 //airway bills route
 
 Route::post('/create-webdoc', [AirwayBill::class,'store']);
+Route::get('/agent-info',[AirwayBill::class,'get_agent']);
 Route::post('/create-housewaybill', [HousewayBill::class,'store']);
 
 

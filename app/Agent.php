@@ -24,6 +24,7 @@ class Agent extends Model
         'iata_agent_code',  //7
         'iata_agent_cass', //4
         'office_file_reference',
+        'participant',
         'participant_airport',
         'prticipant_identifer',
         'participant_code',

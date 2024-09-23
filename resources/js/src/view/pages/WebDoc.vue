@@ -371,8 +371,7 @@
                                                 v-model="form.shipper_address.telex"></b-form-input>
                                         </b-form-group>
 
-                                        <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_shipper_address_save"
-                                            @change="SaveAddress('shipper_address')"> Save new address to address
+                                        <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_shipper_address_save"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-col>
                                 </b-col>
@@ -501,8 +500,7 @@
                                                 v-model="form.consignee_address.telex"></b-form-input>
                                         </b-form-group>
 
-                                        <b-form-checkbox size="sm" class="ml-lg-21" v-model="form.is_consignee_address_save"
-                                            @change="SaveAddress('consignee_address')"> Save new address to address
+                                        <b-form-checkbox size="sm" class="ml-lg-21" v-model="form.is_consignee_address_save"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-col>
                                 </b-col>
@@ -1660,8 +1658,7 @@
                                         </b-form-group>
 
                                         <b-form-checkbox size="sm" class="ml-lg-35"
-                                            v-model="form.is_also_notify_address_save"
-                                            @change="SaveAddress('also_notify_address')"> Save new address to address
+                                            v-model="form.is_also_notify_address_save"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-tab>
                                     <b-tab title="Exta Print Information">
@@ -2903,7 +2900,7 @@
                         <div class="py-7">
                             <div class="d-flex justify-content-end">
                                 <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
-                                <b-button class="mr-2">Send</b-button>
+                                <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
                                 <b-button type="submit">Save Draft</b-button>
                             </div>
@@ -3292,8 +3289,11 @@ export default {
         mouseleave: function () {
             this.isOpen = false;
         },
-        SaveAddress(address_type) {
-
+        converXml(awb_no){
+            ApiService.get(`/waybill/${awb_no}`)
+                .then(({ data }) => {
+                    console.log(data);
+                });
         },
         showModal() {
             this.$refs["my-modal"].show();

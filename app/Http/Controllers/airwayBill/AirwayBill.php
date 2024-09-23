@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\PaymentInfo;
 use App\WayBillAddress;
 use App\SavedAddress;
+use App\ConsignmentData;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -278,33 +279,63 @@ class AirwayBill extends Controller
         if (!isset($AirwayBills))
             $AirwayBills = new AirwayBills();
 
-            $AirwayBills->departure_airport = $routing_information['departure_airport'];
-            $AirwayBills->destination_airport = $routing_information['destination_airport'];
-            $AirwayBills->from = $routing_information['from'];
-            $AirwayBills->to = $routing_information['to'];
-            $AirwayBills->by = $routing_information['by'];
-            $AirwayBills->flight = $routing_information['flight'];
-            $AirwayBills->date = $routing_information['date'];
-            $AirwayBills->to_2 = $routing_information['to_2'];
-            $AirwayBills->by_2 = $routing_information['by_2'];
-            $AirwayBills->flight_2 = $routing_information['flight_2'];
-            $AirwayBills->date_2 = $routing_information['date_2'];
-            $AirwayBills->to_3 = $routing_information['to_3'];
-            $AirwayBills->by_3 = $routing_information['by_3'];
-            $AirwayBills->flight_3 = $routing_information['flight_3'];
-            $AirwayBills->date_3 = $routing_information['date_3'];
-            $AirwayBills->save();
-            return "Routing Information saved successfull";    
+        $AirwayBills->departure_airport = $routing_information['departure_airport'];
+        $AirwayBills->destination_airport = $routing_information['destination_airport'];
+        $AirwayBills->from = $routing_information['from'];
+        $AirwayBills->to = $routing_information['to'];
+        $AirwayBills->by = $routing_information['by'];
+        $AirwayBills->flight = $routing_information['flight'];
+        $AirwayBills->date = $routing_information['date'];
+        $AirwayBills->to_2 = $routing_information['to_2'];
+        $AirwayBills->by_2 = $routing_information['by_2'];
+        $AirwayBills->flight_2 = $routing_information['flight_2'];
+        $AirwayBills->date_2 = $routing_information['date_2'];
+        $AirwayBills->to_3 = $routing_information['to_3'];
+        $AirwayBills->by_3 = $routing_information['by_3'];
+        $AirwayBills->flight_3 = $routing_information['flight_3'];
+        $AirwayBills->date_3 = $routing_information['date_3'];
+        $AirwayBills->save();
+        return "Routing Information saved successfull";
+    }
+    private function consignmentInformation($awb_no, $entries)
+    {
+        for ($i = 0; $i < sizeof($entries); $i++) {
+            $pieces = $entries[$i]['pieces'];
+            $ConsignmentData = ConsignmentData::where([['awb_id', $awb_no], ['pieces', $pieces]])->first();
+            if (!isset($ConsignmentData))
+                $ConsignmentData = new ConsignmentData();
+            $ConsignmentData->awb_id = $awb_no;
+            $ConsignmentData->pieces = $pieces;
+            $ConsignmentData->description = $entries[$i]['description'];
+            $ConsignmentData->rate_class = $entries[$i]['rate_class'];
+            $ConsignmentData->uld_rate_class = $entries[$i]['uld_rate_class'];
+            $ConsignmentData->service_code = $entries[$i]['service_code'];
+            $ConsignmentData->commodity_item = $entries[$i]['commodity_item'];
+            $ConsignmentData->country_origin_goods = $entries[$i]['country_origin_goods'];
+            $ConsignmentData->slac = $entries[$i]['slac'];
+            $ConsignmentData->hs_code = json_encode($entries[$i]['hsCodes']);
+            $ConsignmentData->gross_weight = $entries[$i]['gross_weight'];
+            $ConsignmentData->weight_code = $entries[$i]['weight_code'];
+            $ConsignmentData->chargable_weight = $entries[$i]['chargable_weight'];
+            $ConsignmentData->rate = $entries[$i]['rate'];
+            $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
+            $ConsignmentData->uld_info = json_encode($entries[$i]['uld_info']);
+            $ConsignmentData->save();
+            return "Consignment Data saved successfull";
+        }
     }
     public function store(Request $request)
     {
         $main_return_data = [];
+        //for storing shipper address
         if (!empty($request->shipper_address['name']) && !empty($request->shipper_address['country']) && !empty($request->shipper_address['city'])) {
             $main_return_data['shipper_address'] = $this->saveShipperAddress($request->first_box['awb_no'], $request->shipper_address, $request->is_shipper_address_save);
         }
+        //for storing consignee address
         if (!empty($request->consignee_address['name']) && !empty($request->consignee_address['country']) && !empty($request->consignee_address['city'])) {
             $main_return_data['consignee_address'] = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->consignee_address, $request->is_consignee_address_save);
         }
+        //for storing also notify address
         if (!empty($request->also_notify_address['name']) && !empty($request->also_notify_address['country']) && !empty($request->also_notify_address['city'])) {
             $main_return_data['also_notify_address'] = $this->saveAlsoNotify($request->first_box['awb_no'], $request->also_notify_address, $request->is_also_notify_address_save);
         }
@@ -315,6 +346,11 @@ class AirwayBill extends Controller
         if (!empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
             $main_return_data['routing_information'] = $this->routingInformation($request->first_box['awb_no'], $request->routing_information);
         }
+        //for storing Consignment Information
+        if (!empty($request->entries)) {
+            $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->entries);
+        }
+
         return json_encode($main_return_data);
     }
 }

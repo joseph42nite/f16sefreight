@@ -16,6 +16,7 @@ use App\Http\Controllers\AmsController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\ConversionController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -100,6 +101,8 @@ Route::delete('/delete-contact/{id?}',[ContactController::class,'delete']);
 Route::post('/create-webdoc', [AirwayBill::class,'store']);
 Route::get('/agent-info',[AirwayBill::class,'get_agent']);
 Route::post('/create-housewaybill', [HousewayBill::class,'store']);
+
+Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion']);
 
 
 

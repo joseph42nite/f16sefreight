@@ -304,4 +304,15 @@ class DummyController extends Controller
             ], 500);
         }
     }
+    private function otherCharges($awb_no, $charges){
+        $validator = Validator::make($charges, [
+        'payment_type' => 'nullable|string',
+        'other_code' => 'nullable|string',
+        'other_charge_code' => 'nullable|string',
+        'amount' => 'nullable|numeric|min:0.01|max:999999999',
+        'due' => 'nullable|string',   
+        ]);
+        
+        
+    }
 }

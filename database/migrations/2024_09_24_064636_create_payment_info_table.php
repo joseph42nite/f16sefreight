@@ -18,20 +18,24 @@ class CreatePaymentInfoTable extends Migration
             $table->integer('awb_id')->nullable();
             $table->string('payment_type')->nullable();
             $table->string('currency')->nullable();
-            $table->string('carriage')->nullable();
-            $table->string('insurance')->nullable();
-            $table->integer('other_charges_due_carrier')->nullable();
-            $table->integer('other_charges_due_agent')->nullable();
+            // $table->integer('other_charges_due_carrier')->nullable();
+            // $table->integer('other_charges_due_agent')->nullable();
             $table->integer('taxes')->nullable();
             $table->integer('weight_charge')->nullable();
             $table->integer('total_charges')->nullable();
-            $table->boolean('no_value_declear_carriage')->nullable(); //carriage
+            $table->string('no_value_declear_carriage')->nullable(); //carriage   NVD
             $table->integer('declear_value_carriage')->nullable();
-            $table->boolean('no_value_declear_customs')->nullable(); //customs
+            $table->string('no_value_declear_customs')->nullable(); //customs   NCV
             $table->integer('declear_value_customs')->nullable();
-            $table->boolean('no_value_declear_insurance')->nullable(); //Insurance
+            $table->string('no_value_declear_insurance')->nullable(); //Insurance   XXX
             $table->integer('declear_value_insurance')->nullable();
+            $table->integer('total_charges_prepaid')->nullable();
+            $table->integer('total_charges_collect')->nullable();
             $table->string('type_of_payment')->nullable();
+            $table->integer('other_charges_due_agent_prepaid')->nullable();
+            $table->integer('other_charges_due_agent_collect')->nullable();
+            $table->integer('other_charges_due_carrier_prepaid')->nullable();
+            $table->integer('other_charges_due_carrier_collect')->nullable();
             $table->timestamps();
         });
     }

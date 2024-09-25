@@ -18,10 +18,13 @@ class CreateOtherChargesCodeTable extends Migration
             $table->integer('awb_id')->nullable();
             $table->string('other_charge_code')->nullable();
             $table->string('amount')->nullable();
-            $table->string('due_agent')->nullable();
-            $table->string('due_carrier')->nullable();
-            $table->string('prepaid')->nullable();
-            $table->string('collect')->nullable();
+            $table->string('payment_type', 20)->nullable();
+            $table->string('due', 20)->nullable();
+            $table->string('other_code', 2)->nullable();
+            // $table->string('due_agent')->nullable();
+            // $table->string('due_carrier')->nullable();
+            // $table->string('prepaid')->nullable();
+            // $table->string('collect')->nullable();
             $table->timestamps();
         });
     }

@@ -844,7 +844,7 @@
                                                                     <span class="mr-2">Charge:</span>
                                                                     <input type="text" class="form-control"
                                                                         style="width: 170px;"
-                                                                        v-model="consignment_list.total_amount" />
+                                                                        v-model="form.totals.total_amount" />
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -1174,8 +1174,7 @@
                                                 <td>{{ entry.volume }}</td>
                                                 <td>{{ entry.rate_class }}</td>
                                                 <td>{{ entry.uld_rate_class }}</td>
-                                                <td>{{ entry.total_amount }}</td>
-                                                <!-- <td>{{ entry.hs_code }}</td> -->
+                                                <td>{{ form.totals.total_amount }}</td>
                                                 <td>
                                                     <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
                                                         class="mb-1">
@@ -1206,7 +1205,7 @@
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2"
-                                                    v-model="form.total_valume"></b-form-input>
+                                                    v-model="form.totals.total_volume"></b-form-input>
                                                 <b-form-select class="form-control-sm" v-model="form.dimention_unit">
                                                     <option value="CC">cm³</option>
                                                     <option value="MC">m³</option>
@@ -1217,7 +1216,7 @@
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Amount:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2"
-                                                    v-model="form.total_amount"></b-form-input>
+                                                    v-model="form.totals.total_amount"></b-form-input>
                                             </div>
                                         </b-form-group>
                                     </div>
@@ -1229,7 +1228,7 @@
                             <h5>Customs Origin Code:</h5>
                             <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label"
                                 style="width: 350px">
-                                <b-form-select class="form-control-sm" v-model="form.customs_origin_code">
+                                <b-form-select class="form-control-sm" v-model="form.custom_origin.customs_origin_code">
                                     <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
                                     <option value="T2"> T2 - EC Goods not in free circulation </option>
                                     <option value="TE"> TE - Goods in trade with Spain subject to duties </option>
@@ -1250,7 +1249,7 @@
                                             <b-form-textarea class=""
                                                 style=" grid-column: span 2 !important;width: 60% !important;"
                                                 id="textarea" rows="3" max-rows="6"
-                                                v-model="form.other_service_information"
+                                                v-model="form.custom_origin.other_service_information"
                                                 :class="{ 'is-invalid': form.errors.has('other_service_information') }"></b-form-textarea>
                                             <has-error :form="form" field="other_service_information"></has-error>
                                         </div>
@@ -1261,7 +1260,7 @@
                                             <b-form-textarea class=""
                                                 style="grid-column: span 2 !important;width: 60% !important;"
                                                 id="textarea" rows="3" max-rows="6"
-                                                v-model="form.special_service_request"
+                                                v-model="form.custom_origin.special_service_request"
                                                 :class="{ 'is-invalid': form.errors.has('special_service_request') }"></b-form-textarea>
                                             <has-error :form="form" field="special_service_request"></has-error>
                                         </div>
@@ -1272,10 +1271,10 @@
                                             <b-form-textarea class=""
                                                 style="grid-column: span 2 !important;width: 60% !important;"
                                                 id="textarea" rows="3" max-rows="6"
-                                                v-model="form.accounting_information"
+                                                v-model="form.custom_origin.accounting_information"
                                                 :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
                                             <has-error :form="form" field="accounting_information"></has-error>
-                                            <b-form-checkbox size="sm" v-model="form.letter_credit">Letter Of
+                                            <b-form-checkbox size="sm" v-model="form.custom_origin.letter_credit">Letter Of
                                                 Credit</b-form-checkbox>
                                         </div>
                                     </b-tab>
@@ -1285,7 +1284,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             label="Shipment Reference Number:" class="form-control-sm col-form-label">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-14"
-                                                v-model="form.shipment_ref_no"
+                                                v-model="form.custom_origin.shipment_ref_no"
                                                 :class="{ 'is-invalid': form.errors.has('shipment_ref_no') }"></b-form-input>
                                             <has-error :form="form" field="shipment_ref_no"></has-error>
                                         </b-form-group>
@@ -1294,7 +1293,7 @@
                                             label="Supplementary Shipment Information:"
                                             class="form-control-sm col-form-label">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.supplementary_shipment_Info"
+                                                v-model="form.custom_origin.supplementary_shipment_Info"
                                                 :class="{ 'is-invalid': form.errors.has('supplementary_shipment_Info') }"></b-form-input>
                                             <has-error :form="form" field="supplementary_shipment_Info"></has-error>
                                         </b-form-group>
@@ -1303,7 +1302,7 @@
                                             class="form-control-sm col-form-label ml-lg-30">
                                             <b-form-input id="input-horizontal"
                                                 class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto"
-                                                v-model="form.supplementary_shipment_Info"></b-form-input>
+                                                v-model="form.custom_origin.supplementary_shipment_Info"></b-form-input>
                                         </b-form-group>
                                     </b-tab>
                                     <b-tab title="IATA and Cass">
@@ -1666,7 +1665,7 @@
                                             to Airlines): </h5>
                                         <b-form-textarea class=""
                                             style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
-                                            rows="3" max-rows="6" v-model="form.extra_print"></b-form-textarea>
+                                            rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
                                     </b-tab>
                                     <b-tab title="Carrier Address">
                                         <h4 class="h-color font-weight-bolder ml-2 mt-2">Override the Carrier Address on
@@ -1741,7 +1740,7 @@
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="other_charges.code">
+                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
                                                     <option disabled value=""> Select an Other Charge Code </option>
                                                     <option value="MY - Fuel Surcharge">MY - Fuel Surcharge </option>
                                                     <option value="SC - Security Charge">SC - Security Charge </option>
@@ -1849,7 +1848,7 @@
                                         <tbody>
                                             <tr v-for="(charge, index) in form.charges" :key="index">
                                                 <td class="editable-cell">
-                                                    {{ charge.code || charge.other_code }}
+                                                    {{ charge.other_charge_code || charge.other_code }}
                                                 </td>
                                                 <td class="editable-cell">
                                                     {{ charge.amount }}
@@ -1938,7 +1937,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-31 mt-3"
                                                                     style=" width: 220px;"
-                                                                    v-model="form.payment_info.carriage"></b-form-input>
+                                                                    v-model="form.payment_info.no_value_declear_carriage"></b-form-input>
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                 content-cols-sm content-cols-lg="auto"
@@ -1948,7 +1947,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-31 mt-3"
                                                                     style="width: 220px;"
-                                                                    v-model="form.payment_info.customs"></b-form-input>
+                                                                    v-model="form.payment_info.no_value_declear_customs"></b-form-input>
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                 content-cols-sm content-cols-lg="auto"
@@ -1957,7 +1956,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-30 mt-3"
                                                                     style="width: 220px;"
-                                                                    v-model="form.payment_info.insurance"></b-form-input>
+                                                                    v-model="form.payment_info.no_value_declear_insurance"></b-form-input>
                                                             </b-form-group>
                                                         </b-col>
                                                     </b-col>
@@ -2992,17 +2991,21 @@ export default {
                 oci_entries: [],
                 tableCodes: [],
                 charges: [],
-                total_valume: null,
-                total_amount: 0,
+                totals:{
+                    total_volume: null,
+                    total_amount: 0,
+                },
 
-                customs_origin_code: null,
-                other_service_information: '',
-                special_service_request: '',
-                accounting_information: '',
-                letter_credit: false,
-                shipment_ref_no: null,
-                supplementary_shipment_Info: '',
-                extra_print: null,
+                custom_origin:{
+                    customs_origin_code: null,
+                    other_service_information: '',
+                    special_service_request: '',
+                    accounting_information: '',
+                    letter_credit: false,
+                    shipment_ref_no: null,
+                    supplementary_shipment_Info: '',
+                    extra_print: null,
+                },
 
                 carr_namr: '',
                 carr_prefix: '',
@@ -3015,14 +3018,20 @@ export default {
                 payment_info:{
                     type_of_payment: '',
                     currency: 'INR',
-                    carriage: 'NVD',
-                    insurance: 'XXX',
-                    customs: 'NCV',
-                    other_charges_due_carrier: '',
-                    other_charges_due_agent: '',
+                    no_value_declear_carriage: 'NVD',
+                    no_value_declear_insurance: 'XXX',
+                    no_value_declear_customs: 'NCV',
+                    // other_charges_due_carrier: '',
+                    // other_charges_due_agent: '',
                     taxes: '',
                     weight_charge: '',
+                    total_charges_prepaid: '',
+                    total_charges_collect: '',
                     total_charges: '',
+                    other_charges_due_agent_prepaid: '',
+                    other_charges_due_agent_collect: '',
+                    other_charges_due_carrier_prepaid: '',
+                    other_charges_due_carrier_collect: ''
                 },
 
                 is_consignee_address_save: false,
@@ -3095,7 +3104,7 @@ export default {
                 office_company_designator: null,
             },
             other_charges:{
-                code: '',
+                other_charge_code: '',
                 other_code: '',
                 amount: '',
                 due: "Carrier",
@@ -3328,9 +3337,6 @@ export default {
         },
         onSubmit(evt) {
             evt.preventDefault();
-            /*this.form.append('oci_entries', JSON.stringify(this.form.oci_entries));
-            this.form.append('other_charges', JSON.stringify(this.form.charges));
-            this.form.append('special_handling_code', JSON.stringify(this.form.tableCodes));*/
             console.log(this.form);
             this.form.post(`/create-webdoc`).then(response => {
                 console.log(response.data);
@@ -3363,6 +3369,7 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
+                    console.log("Table code ", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3397,20 +3404,42 @@ export default {
                 alert('Please enter valid numeric values for chargeable weight and charge rate.');
             }
         },
+        // addCharge() {
+        //     if (!this.other_charges.other_charge_code && !this.other_charges.other_code) {
+        //         alert("Please select a code or enter other code.");
+        //         return;
+        //     }
+        //     if (!this.other_charges.amount) {
+        //         alert("Please enter the amount.");
+        //         return;
+        //     }
+        //     if (this.editIndex !== null) {
+        //         this.form.charges[this.editIndex] = { ...this.other_charges };
+        //         this.editIndex = null;
+        //     } else {
+        //         this.form.charges.push({...this.other_charges});
+        //     }
+        //     for (let key in this.other_charges) {
+        //         if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
+        //             this.other_charges[key] = '';
+        //         }
+        //     }
+        // },
         addCharge() {
-            if (!this.other_charges.code && !this.other_charges.other_code) {
-                alert("Please select a code or enter other code.");
-                return;
-            }
-            if (!this.other_charges.amount) {
-                alert("Please enter the amount.");
-                return;
-            }
+            const chargeData = {
+                other_charge_code: this.other_charges.other_charge_code,
+                other_code: this.other_charges.other_code,
+                amount: parseFloat(this.other_charges.amount) || 0,
+                due: this.other_charges.due,
+                payment_type: this.other_charges.payment_type,
+            };
+
             if (this.editIndex !== null) {
-                this.form.charges[this.editIndex] = { ...this.other_charges };
+                this.$set(this.form.charges, this.editIndex, chargeData);
                 this.editIndex = null;
             } else {
-                this.form.charges.push({...this.other_charges});
+                this.form.charges.push(chargeData);
+                console.log('Added new charge:', chargeData);
             }
             for (let key in this.other_charges) {
                 if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
@@ -3450,15 +3479,31 @@ export default {
                     this.consignment_list[key] = '';
                 }
             }
+            this.calculateTotalVolume();
+            this.calculateTotalAmount();
         },
         calculateTotalVolume() {
-            let volumePerPiece = (this.form.length * this.form.width * this.form.height) / 1e6;
-            return this.form.total_valume = volumePerPiece * (parseFloat(this.form.pcs) || 0);
+            let totalVolume = this.form.entries.reduce((total, entry) => {
+                return total + entry.itemss.reduce((entryTotal, item) => {
+                    let volumePerPiece = (item.length * item.width * item.height) / 1e6;
+                    return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
+                }, 0);
+            }, 0);
+            
+            return this.form.totals.total_volume = totalVolume;
         },
+
         calculateTotalAmount() {
-            let chargable_weight = parseFloat(this.form.chargable_weight) || 0;
-            let rate = parseFloat(this.form.rate) || 0;
-            return this.form.total_amount = chargable_weight * rate;
+            let chargeableWeight = parseFloat(this.form.entries.reduce((total, entry) => {
+                return total + (parseFloat(entry.chargable_weight) || 0);
+            }, 0)) || 0;
+
+            let rate = parseFloat(this.form.entries.reduce((total, entry) => {
+                return total + (parseFloat(entry.rate) || 0);
+            }, 0)) || 0;
+
+            this.form.totals.total_amount = chargeableWeight * rate; // Calculate total amount
+            console.log("Total Amount:", this.form.totals.total_amount);
         },
         addHsCode() {
             if (this.consignment_list.hs_code) {
@@ -3543,7 +3588,6 @@ export default {
                 height: this.consignment_list.height,
                 unit: this.consignment_list.unit
             });
-
             // Reset consignment_list fields if needed
             this.consignment_list.pcs = '';
             this.consignment_list.gross_weight = '';
@@ -3559,22 +3603,67 @@ export default {
         },
     },
     watch: {
-        /*'form.rate_class': function () {
-            this.form.total_amount = this.calculateTotalAmount();
+       'form.rate_class': function () {
+            this.form.totals.total_amount = this.calculateTotalAmount();
         },
         'form.rate': function () {
-            this.form.total_amount = this.calculateTotalAmount();
+            this.form.totals.total_amount = this.calculateTotalAmount();
         },
         'form.chargable_weight': function () {
-            this.form.total_amount = this.calculateTotalAmount();
-        }*/
+            this.form.totals.total_amount = this.calculateTotalAmount();
+        },
+        'form.entries.itemss': function () {
+            this.calculateTotalVolume();
+        },
+        'form.charges': {
+            handler(newVal) {
+                console.log('Charges changed:', newVal);
+                this.totalChargesPrepaid;
+                this.totalChargesCollect;
+                this.weightCharge;
+                this.taxes;
+                this.totalCharges;
+                this.totalDueAgentPrepaid;
+                this.totalDueAgentCollect;
+                this.totalDueCarrierPrepaid;
+                this.totalDueCarrierCollect;
+            },
+            deep: true,
+        },
+        totalChargesPrepaid(newVal) {
+            this.form.payment_info.total_charges_prepaid = newVal;
+        },
+        totalChargesCollect(newVal) {
+            this.form.payment_info.total_charges_collect = newVal;
+        },
+        weightCharge(newVal) {
+            this.form.payment_info.weight_charge = newVal;
+        },
+        taxes(newVal) {
+            this.form.payment_info.taxes = newVal;
+        },
+        totalCharges(newVal) {
+            this.form.payment_info.total_charges = newVal;
+        },
+        totalDueAgentPrepaid(newVal) {
+            this.form.payment_info.other_charges_due_agent_prepaid = newVal;
+        },
+        totalDueAgentCollect(newVal) {
+            this.form.payment_info.other_charges_due_agent_collect = newVal;
+        },
+        totalDueCarrierPrepaid(newVal) {
+            this.form.payment_info.other_charges_due_carrier_prepaid = newVal;
+        },
+        totalDueCarrierCollect(newVal) {
+            this.form.payment_info.other_charges_due_carrier_collect = newVal;
+        }
     },
     created() {
         this.getAgent();
     },
     computed: {
         weightCharge() {
-            return parseFloat(this.form.total_amount || 0);
+            return parseFloat(this.form.totals.total_amount || 0);
         },
         taxes() {
             return 0.00;

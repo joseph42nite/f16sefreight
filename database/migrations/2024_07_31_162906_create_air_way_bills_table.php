@@ -34,7 +34,7 @@ class CreateAirWayBillsTable extends Migration
             $table->integer('flight_3')->nullable();
             $table->string('date_3')->nullable();
             $table->string('customs_origin_code')->nullable();
-            $table->boolean('lette_credit')->default(false)->nullable();
+            $table->boolean('letter_credit')->default(false)->nullable();
             $table->string('other_service_information')->nullable();
             $table->string('special_service_request')->nullable();
             $table->string('accounting_information')->nullable();
@@ -46,7 +46,7 @@ class CreateAirWayBillsTable extends Migration
             $table->integer('agent_id')->nullable();
             $table->integer('payment_id')->nullable();
             $table->text('special_handling_info')->nullable();
-            $table->text('oci_info')->nullable(); //other custome information
+            // $table->text('oci_info')->nullable(); //other custome information
             $table->string('total_volume',20)->nullable();
             $table->string('dimention_unit')->nullable();
             $table->string('total_amount',20)->nullable();

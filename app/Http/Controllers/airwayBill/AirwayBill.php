@@ -9,6 +9,8 @@ use App\PaymentInfo;
 use App\WayBillAddress;
 use App\SavedAddress;
 use App\ConsignmentData;
+use App\OtherCharge;
+use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -324,6 +326,188 @@ class AirwayBill extends Controller
             return "Consignment Data saved successfull";
         }
     }
+    private function customOriginAndOsiInfo($awb_no, $custom_origin){
+        $validator = Validator::make($custom_origin, [
+            'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:2',
+            'accounting_information' => 'nullable|string|max:70',
+            'special_service_request' => 'nullable|string|max:195',
+            'other_service_information' => 'nullable|string|max:195',
+            'shipment_ref_no' => 'nullable|string|max:35',
+            'supplementary_shipment_Info' => 'nullable|string|max:35',
+            'letter_credit' => 'nullable|boolean',
+            'extra_print' => 'nullable|string|max:195'
+        ]);
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $AirwayBills = AirwayBills::find($awb_no);
+        if (!isset($AirwayBills))
+            $AirwayBills = new AirwayBills();
+
+        $AirwayBills->customs_origin_code = $custom_origin['customs_origin_code'];
+        $AirwayBills->accounting_information = $custom_origin['accounting_information'];
+        $AirwayBills->special_service_request = $custom_origin['special_service_request'];
+        $AirwayBills->other_service_information = $custom_origin['other_service_information'];
+        $AirwayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
+        $AirwayBills->supplementary_shipment_Info = $custom_origin['supplementary_shipment_Info'];
+        $AirwayBills->letter_credit = $custom_origin['letter_credit'];
+        $AirwayBills->extra_print = $custom_origin['extra_print'];
+        $AirwayBills->save();
+        return "Custom Origin Code and other tab information save successfully";
+    }
+    private function otherCharges($awb_no, $charges)
+    {
+        for ($i = 0; $i < sizeof($charges); $i++) {
+            $other_charge_code = $charges[$i]['other_charge_code'];
+            $otherChargesData = OtherCharge::where([['awb_id', $awb_no], ['other_charge_code', $other_charge_code]])->first();
+
+            if (!isset($otherChargesData)) {
+                $otherChargesData = new OtherCharge(); 
+            }
+            $otherChargesData->awb_id = $awb_no;
+            $otherChargesData->other_charge_code = $other_charge_code;
+            $otherChargesData->other_code = $charges[$i]['other_code'];
+            $otherChargesData->payment_type = $charges[$i]['payment_type'];
+            $otherChargesData->due = $charges[$i]['due'];
+            $otherChargesData->amount = $charges[$i]['amount'];
+            $otherChargesData->save();
+        }
+        return "Other Charges Data saved successfully";
+    }
+    private function paymentInformation($awb_no, $payment_info){
+        $validator = Validator::make($payment_info, [
+            'type_of_payment' => 'required',
+            'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
+            'currency' => 'nullable|string|size:3',
+            'no_value_declear_carriage' => 'nullable',  //boolean
+            //carriage
+            'declear_value_carriage' => 'nullable|numeric|min:0.000|max:999999999999',
+            'no_value_declear_customs' => 'nullable',
+            //customs
+            'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
+            'no_value_declear_insurance' => 'nullable',
+            //Insurance
+            'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
+            'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
+            'taxes' => 'nullable|integer',
+            'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
+            'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999'
+        ]);
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $AirwayBills = PaymentInfo::where('awb_id', $awb_no)->first();
+        if (!isset($AirwayBills))
+            $AirwayBills = new PaymentInfo();
+
+        $AirwayBills->awb_id = $awb_no;
+        $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
+        $AirwayBills->total_charges = $payment_info['total_charges'];
+        $AirwayBills->currency = $payment_info['currency'];
+        $AirwayBills->no_value_declear_carriage = $payment_info['no_value_declear_carriage'];
+        $AirwayBills->no_value_declear_customs = $payment_info['no_value_declear_customs'];
+        $AirwayBills->no_value_declear_insurance = $payment_info['no_value_declear_insurance'];
+        $AirwayBills->weight_charge = $payment_info['weight_charge'];
+        $AirwayBills->taxes = $payment_info['taxes'];
+        $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
+        $AirwayBills->total_charges_collect = $payment_info['total_charges_collect'];
+        $AirwayBills->other_charges_due_agent_prepaid = $payment_info['other_charges_due_agent_prepaid'];
+        $AirwayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'];
+        $AirwayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'];
+        $AirwayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'];
+        $AirwayBills->save();
+        return "Payment Information save successfully";
+    }
+    private function otherCustomInformation($awb_no, $oci_entries)
+    {
+        foreach ($oci_entries as $oci_entry) {
+            $validator = Validator::make($oci_entry, [
+                'oci_country_code' => 'nullable|string|max:2',
+                'oci_info_identifier' => 'required|string|max:3',
+                'oci_custom_info_identifier' => 'nullable|string|max:2',
+                'oci_supplementary_info' => 'nullable|string|max:70',
+            ]);
+
+            if ($validator->fails()) {
+                Log::error('Validation failed:', ['errors' => $validator->errors()]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            $oci_info_identifier = $oci_entry['oci_info_identifier'];
+            $OtherCustomInfo = OtherCustomInformation::where([
+                ['awb_id', $awb_no], 
+                ['oci_info_identifier', $oci_info_identifier]
+            ])->first();
+            if (!isset($OtherCustomInfo)) {
+                $OtherCustomInfo = new OtherCustomInformation();
+            }
+            $OtherCustomInfo->awb_id = $awb_no;
+            $OtherCustomInfo->oci_info_identifier = $oci_info_identifier;
+            $OtherCustomInfo->oci_country_code = $oci_entry['oci_country_code'];
+            $OtherCustomInfo->oci_custom_info_identifier = $oci_entry['oci_custom_info_identifier'];
+            $OtherCustomInfo->oci_supplementary_info = $oci_entry['oci_supplementary_info'];
+            if (!$OtherCustomInfo->save()) {
+                Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $awb_no, 'oci_entry' => $oci_entry]);
+            }
+        } 
+        return "Other Custom Information saved successfully";
+    }
+    private function totalAmountValume($awb_no, $totals){
+        $validator = Validator::make($totals, [
+            'total_volume' =>  'required|numeric|min:0|max:999999999',                       //'required|regex:/^[0-9]+$/|max:9',
+            'total_amount' => 'required|numeric|min:0.01|max:999999999', 
+        ]);
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $AirwayBills = AirwayBills::find($awb_no);
+        if (!isset($AirwayBills))
+            $AirwayBills = new AirwayBills();
+
+        $AirwayBills->total_volume = $totals['total_volume'];     
+        $AirwayBills->total_amount = $totals['total_amount']; 
+        $AirwayBills->save();
+        return "Toatl Amount and Total Volume saved successfull";
+    }
+    private function saveSpecialHandlingCode($awb_no, $tableCodes)
+    {
+        if (empty($tableCodes)) {
+            return "Code is missing in tableCodes entry.";
+        }
+        $codesArray = [];
+        foreach ($tableCodes as $code) {
+            if (!empty($code)) {
+                $codesArray[] = $code; 
+            }
+        }
+        $codesJson = json_encode($codesArray);
+        $handlingCode = AirwayBills::find($awb_no)->first();
+        if (!$handlingCode) {
+            $handlingCode = new AirwayBills();
+        }
+        $handlingCode->special_handling_info = $codesJson;
+        $handlingCode->save();
+        return "Special Handling Codes saved successfully.";
+    }
+
     public function store(Request $request)
     {
         $main_return_data = [];
@@ -350,7 +534,29 @@ class AirwayBill extends Controller
         if (!empty($request->entries)) {
             $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->entries);
         }
-
+        //for custom origin code and OSI, SSR, Accounting and shipment reference information
+        if (!empty($request->custom_origin)) {
+            $main_return_data['custom_origin'] = $this->customOriginAndOsiInfo($request->first_box['awb_no'], $request->custom_origin);
+        }
+        // for other charges 
+        if (!empty($request->charges)) {
+            $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'], $request->charges);
+        }
+        //For payment information
+        if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+            $main_return_data['payment_info'] = $this->paymentInformation($request->first_box['awb_no'], $request->payment_info);
+        }
+        //for Other custom Information
+        if(!empty($request->oci_entries)){
+            $main_return_data['oci_entries'] = $this->otherCustomInformation($request->first_box['awb_no'], $request->oci_entries);
+        }
+        //for Total Consignee Amount and Total Volume
+        if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+            $main_return_data['totals'] = $this->totalAmountValume($request->first_box['awb_no'], $request->totals);
+        }
+        if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
+            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->tableCodes);
+        }
         return json_encode($main_return_data);
     }
 }

@@ -13,13 +13,10 @@ class ConversionController extends Controller
     public function WayBillConversion($awb_id = 6543154)
     {
         // Fetch data from the database (this is just sample data for now)
-        $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
+        $waybill_data = AirwayBills::where([['id', $awb_id]])->limit(1)->get()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->get()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->get()->toArray();
-        // echo "<pre>";
-        // print_r($waybill_data);
-        // echo "</pre>";
-        // die();
+
         // Start conversion to XML
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
@@ -33,12 +30,14 @@ class ConversionController extends Controller
         // Message Header Document
         $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
         $waybill->appendChild($messageHeaderDocument);
-        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
+
+        $messageHeaderDocument->appendChild($xml->createElement('ID', '057-21804532'));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Master Air Waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '741'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $waybill_data['updated_at']));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', '2014-01-27T14:53:23'));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
+        $messageHeaderDocument->appendChild($xml->createElement('ConversationID', 'BLRG17967009'));
 
         // SenderParty
         $senderParty1 = $xml->createElement('SenderParty');
@@ -52,31 +51,26 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($senderParty2);
 
         // RecipientParty
-        $recipientParty1 = $xml->createElement('RecipientParty');
-        $recipientParty1->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
-        $recipientParty1->firstChild->setAttribute('schemeID', 'P');
-        $messageHeaderDocument->appendChild($recipientParty1);
-
-        $recipientParty2 = $xml->createElement('RecipientParty');
-        $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
-        $recipientParty2->firstChild->setAttribute('schemeID', 'C');
-        $messageHeaderDocument->appendChild($recipientParty2);
+        $recipientParty = $xml->createElement('RecipientParty');
+        $recipientParty->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
+        $recipientParty->firstChild->setAttribute('schemeID', 'C');
+        $messageHeaderDocument->appendChild($recipientParty);
 
         // Business Header Document
         $businessHeaderDocument = $xml->createElement('ns2:BusinessHeaderDocument');
         $waybill->appendChild($businessHeaderDocument);
 
-        $businessHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
+        $businessHeaderDocument->appendChild($xml->createElement('ID', '057-21804532'));
+        $businessHeaderDocument->appendChild($xml->createElement('SenderAssignedID', '473328534010890'));
 
         // Included Header Note
         $includedHeaderNote = $xml->createElement('IncludedHeaderNote');
         $includedHeaderNote->appendChild($xml->createElement('ContentCode', 'C'));
-        $includedHeaderNote->appendChild($xml->createElement('Content', 'Consolidation'));
+        $includedHeaderNote->appendChild($xml->createElement('Content', 'Consolidation Shipment'));
         $businessHeaderDocument->appendChild($includedHeaderNote);
 
         // Signatory Consignor Authentication
         $signatoryConsignorAuth = $xml->createElement('SignatoryConsignorAuthentication');
-        $signatoryConsignorAuth->appendChild($xml->createElement('ActualDateTime',$waybill_data['updated_at']));
         $signatoryConsignorAuth->appendChild($xml->createElement('Signatory', 'Shubha Covilakum'));
         $businessHeaderDocument->appendChild($signatoryConsignorAuth);
 

@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CurrencyRateController;
-Route::get('test-route', [CurrencyRateController::class, 'getCurrencyRate']);
+use App\Http\Controllers\ConversionController;
+Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
 
 Route::get('{any}', function () {
     return view('welcome');

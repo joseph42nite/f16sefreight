@@ -10,7 +10,7 @@ use DOMDocument;
 
 class ConversionController extends Controller
 {
-    public function WayBillConversion($awb_id = 6543154)
+    public function WayBillConversion($awb_id = 1070525)
     {
         // Fetch data from the database (this is just sample data for now)
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();

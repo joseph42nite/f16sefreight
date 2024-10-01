@@ -291,7 +291,7 @@
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address:">
+                                            class="form-control-sm col-form-label mr-3" label="Address *:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
                                                 style="width: 220px" v-model="form.shipper_address.ship_address"
                                                 :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
@@ -308,7 +308,7 @@
                                         <div class="d-flex align-items-center mt-1">
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label" label="City:">
+                                                class="form-control-sm col-form-label" label="City *:">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
                                                     v-model="form.shipper_address.ship_city"
                                                     :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
@@ -337,7 +337,7 @@
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s
                                             content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
+                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country *:">
                                             <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
                                                 v-model="form.shipper_address.ship_country"
                                                 :class="{ 'is-invalid': form.errors.has('ship_country') }">
@@ -427,7 +427,7 @@
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address:">
+                                            class="form-control-sm col-form-label mr-3" label="Address *:">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
                                                 style="width: 220px"
                                                 v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }"></b-form-input>
@@ -444,7 +444,7 @@
                                         <div class="d-flex align-items-center mt-1">
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label" label="City:">
+                                                class="form-control-sm col-form-label" label="City *:">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8"
                                                     v-model="form.consignee_address.cons_city"
                                                     :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
@@ -471,7 +471,7 @@
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
+                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country *:">
                                             <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"
                                                 v-model="form.consignee_address.cons_country"
                                                 :class="{ 'is-invalid': form.errors.has('cons_country') }">
@@ -915,9 +915,9 @@
                                                                 style="display: flex;align-items: center;">
                                                                 <b-form-input type="text" class="form-control"
                                                                     style="width: 170px;margin-right: 10px;"
-                                                                    v-model="consignment_list.hs_code"></b-form-input>
+                                                                    v-model="consignment_list.hs_code" :class="{ 'is-invalid': form.errors.has('hs_code') }"></b-form-input>
                                                                 <!-- :class="{ 'is-invalid': consignment_list.errors.has('hs_code') }" -->
-                                                                <!-- <has-error :form="form" field="hs_code"></has-error> -->
+                                                                <has-error :form="form" field="hs_code"></has-error>
                                                                 <button @click="addHsCode">Add</button>
                                                             </td>
                                                         </tr>
@@ -994,7 +994,7 @@
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 100%;"
-                                                                    v-model="consignment_list.gross_weight" />
+                                                                    v-model="consignment_list.wgt" />
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
@@ -1007,11 +1007,11 @@
                                                                     v-model="consignment_list.width" />
                                                             </td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control"
+                                                                <input class="form-control"
                                                                     style="width: 100%;"
-                                                                    v-model="consignment_list.height" />
+                                                                    v-model="consignment_list.height" type="number" />
                                                             </td>
-                                                            <td class="editable-cell">
+                                                            <td class="editable-cell" style="width: 100%;">
                                                                 <b-form-select class="form-control" style="width: 100%;"
                                                                     v-model="consignment_list.unit">
                                                                     <option value="CMT">CMT</option>
@@ -1033,7 +1033,7 @@
                                                         <tr v-for="(row, index) in consignment_list.itemss"
                                                             :key="index">
                                                             <td class="editable-cell">{{ row.pcs }}</td>
-                                                            <td class="editable-cell">{{ row.gross_weight }}</td>
+                                                            <td class="editable-cell">{{ row.wgt }}</td>
                                                             <td class="editable-cell">{{ row.length }}</td>
                                                             <td class="editable-cell">{{ row.width }}</td>
                                                             <td class="editable-cell">{{ row.height }}</td>
@@ -1167,7 +1167,7 @@
                                                 <td>
                                                     <div v-for="(pcs, pcsIndex) in entry.itemss" :key="pcsIndex"
                                                         class="mb-1">
-                                                        {{ pcs.pcs }}-{{ pcs.gross_weight }}-{{ pcs.weight_code }}-{{
+                                                        {{ pcs.pcs }}-{{ pcs.wgt }}-{{ pcs.weight_code }}-{{
                                                             pcs.length }}x{{ pcs.width }}x{{ pcs.height }}-{{ pcs.unit }}
                                                     </div>
                                                 </td>
@@ -1207,7 +1207,7 @@
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2"
                                                     v-model="form.totals.total_volume"></b-form-input>
-                                                <b-form-select class="form-control-sm" v-model="form.dimention_unit">
+                                                <b-form-select class="form-control-sm" v-model="form.entries.dimention_unit">
                                                     <option value="CC">cm³</option>
                                                     <option value="MC">m³</option>
                                                     <option value="CF">ft³</option>
@@ -3405,27 +3405,6 @@ export default {
                 alert('Please enter valid numeric values for chargeable weight and charge rate.');
             }
         },
-        // addCharge() {
-        //     if (!this.other_charges.other_charge_code && !this.other_charges.other_code) {
-        //         alert("Please select a code or enter other code.");
-        //         return;
-        //     }
-        //     if (!this.other_charges.amount) {
-        //         alert("Please enter the amount.");
-        //         return;
-        //     }
-        //     if (this.editIndex !== null) {
-        //         this.form.charges[this.editIndex] = { ...this.other_charges };
-        //         this.editIndex = null;
-        //     } else {
-        //         this.form.charges.push({...this.other_charges});
-        //     }
-        //     for (let key in this.other_charges) {
-        //         if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
-        //             this.other_charges[key] = '';
-        //         }
-        //     }
-        // },
         addCharge() {
             const chargeData = {
                 other_charge_code: this.other_charges.other_charge_code,
@@ -3583,7 +3562,7 @@ export default {
             }
             this.consignment_list.itemss.push({
                 pcs: this.consignment_list.pcs,
-                gross_weight: this.consignment_list.gross_weight,
+                wgt: this.consignment_list.wgt,
                 length: this.consignment_list.length,
                 width: this.consignment_list.width,
                 height: this.consignment_list.height,
@@ -3591,7 +3570,7 @@ export default {
             });
             // Reset consignment_list fields if needed
             this.consignment_list.pcs = '';
-            this.consignment_list.gross_weight = '';
+            this.consignment_list.wgt = '';
             this.consignment_list.length = '';
             this.consignment_list.width = '';
             this.consignment_list.height = '';

@@ -276,7 +276,7 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3" label="">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
-                                                    v-model="form.shipper_address.name"
+                                                    v-model="form.shipper_address.ship_name"
                                                     :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
                                                 <has-error :form="form" field="ship_name"></has-error>
                                             </b-form-group>
@@ -285,7 +285,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal" label="Account:"
                                             class="form-control-sm col-form-label mr-3">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                                v-model="form.shipper_address.account"
+                                                v-model="form.shipper_address.ship_account"
                                                 :class="{ 'is-invalid': form.errors.has('ship_account') }"></b-form-input>
                                             <has-error :form="form" field="ship_account"></has-error>
                                         </b-form-group>
@@ -293,7 +293,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Address:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                                style="width: 220px" v-model="form.shipper_address.address"
+                                                style="width: 220px" v-model="form.shipper_address.ship_address"
                                                 :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
                                             <has-error :form="form" field="ship_address"></has-error>
                                         </b-form-group>
@@ -301,7 +301,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"
-                                                style="width: 220px" v-model="form.shipper_address.address_line_2"
+                                                style="width: 220px" v-model="form.shipper_address.ship_address_line_2"
                                                 :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
                                             <has-error :form="form" field="ship_address_line_2"></has-error>
                                         </b-form-group>
@@ -310,12 +310,12 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label" label="City:">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                    v-model="form.shipper_address.city"
+                                                    v-model="form.shipper_address.ship_city"
                                                     :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
                                                 <has-error :form="form" field="ship_city"></has-error>
                                             </b-form-group>
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                style="width: 50px" v-model="form.shipper_address.airport_code"
+                                                style="width: 50px" v-model="form.shipper_address.ship_airport_code"
                                                 :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
                                             <has-error :form="form" field="ship_airport_code"></has-error>
                                         </div>
@@ -323,7 +323,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Post Code:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"
-                                                v-model="form.shipper_address.post_code"
+                                                v-model="form.shipper_address.ship_post_code"
                                                 :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
                                             <has-error :form="form" field="ship_post_code"></has-error>
                                         </b-form-group>
@@ -331,7 +331,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="State:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"
-                                                v-model="form.shipper_address.state"
+                                                v-model="form.shipper_address.ship_state"
                                                 :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
                                             <has-error :form="form" field="ship_state"></has-error>
                                         </b-form-group>
@@ -339,7 +339,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
                                             <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
-                                                v-model="form.shipper_address.country"
+                                                v-model="form.shipper_address.ship_country"
                                                 :class="{ 'is-invalid': form.errors.has('ship_country') }">
                                                 <option disabled value=""> Please select one</option>
                                                 <option value="A">A</option>
@@ -352,7 +352,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Phone:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"
-                                                v-model="form.shipper_address.phone"
+                                                v-model="form.shipper_address.ship_phone"
                                                 :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
                                             <has-error :form="form" field="ship_phone"></has-error>
                                         </b-form-group>
@@ -360,7 +360,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Fax:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                v-model="form.shipper_address.fax"
+                                                v-model="form.shipper_address.ship_fax"
                                                 :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
                                             <has-error :form="form" field="ship_fax"></has-error>
                                         </b-form-group>
@@ -368,7 +368,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Telex:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"
-                                                v-model="form.shipper_address.telex"></b-form-input>
+                                                v-model="form.shipper_address.ship_telex"></b-form-input>
                                         </b-form-group>
 
                                         <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_shipper_address_save"> Save new address to address
@@ -412,7 +412,7 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16"
-                                                    v-model="form.consignee_address.name"
+                                                    v-model="form.consignee_address.cons_name"
                                                     :class="{ 'is-invalid': form.errors.has('cons_name') }"></b-form-input>
                                                 <has-error :form="form" field="cons_name"></has-error>
                                             </b-form-group>
@@ -421,7 +421,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal" label="Account:"
                                             class="form-control-sm col-form-label mr-3">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.consignee_address.account"
+                                                v-model="form.consignee_address.cons_account"
                                                 :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
                                             <has-error :form="form" field="cons_account"></has-error>
                                         </b-form-group>
@@ -430,13 +430,14 @@
                                             class="form-control-sm col-form-label mr-3" label="Address:">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
                                                 style="width: 220px"
-                                                v-model="form.consignee_address.address"></b-form-input>
+                                                v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }"></b-form-input>
+                                                <has-error :form="form" field="cons_address"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16"
-                                                style="width: 220px" v-model="form.consignee_address.address_line_2"
+                                                style="width: 220px" v-model="form.consignee_address.cons_address_line_2"
                                                 :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
                                             <has-error :form="form" field="cons_address_line_2"></has-error>
                                         </b-form-group>
@@ -445,7 +446,7 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label" label="City:">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8"
-                                                    v-model="form.consignee_address.city"
+                                                    v-model="form.consignee_address.cons_city"
                                                     :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
                                                 <has-error :form="form" field="cons_city"></has-error>
                                             </b-form-group>
@@ -456,7 +457,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Post Code:">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.consignee_address.post_code"
+                                                v-model="form.consignee_address.cons_post_code"
                                                 :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
                                             <has-error :form="form" field="cons_post_code"></has-error>
                                         </b-form-group>
@@ -464,7 +465,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="State:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-6"
-                                                v-model="form.consignee_address.state"
+                                                v-model="form.consignee_address.cons_state"
                                                 :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
                                             <has-error :form="form" field="cons_state"></has-error>
                                         </b-form-group>
@@ -472,7 +473,7 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
                                             <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"
-                                                v-model="form.consignee_address.country"
+                                                v-model="form.consignee_address.cons_country"
                                                 :class="{ 'is-invalid': form.errors.has('cons_country') }">
                                                 <option disabled value="Please select one"> Please select one</option>
                                                 <option value="A">A</option>
@@ -485,19 +486,19 @@
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Phone:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-3"
-                                                v-model="form.consignee_address.phone"></b-form-input>
+                                                v-model="form.consignee_address.cons_phone"></b-form-input>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Fax:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8"
-                                                v-model="form.consignee_address.fax"></b-form-input>
+                                                v-model="form.consignee_address.cons_fax"></b-form-input>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Telex:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-5"
-                                                v-model="form.consignee_address.telex"></b-form-input>
+                                                v-model="form.consignee_address.cons_telex"></b-form-input>
                                         </b-form-group>
 
                                         <b-form-checkbox size="sm" class="ml-lg-21" v-model="form.is_consignee_address_save"> Save new address to address
@@ -1569,91 +1570,91 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3" label="">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
-                                                    v-model="form.also_notify_address.name"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
-                                                <has-error :form="form" field="ship_name"></has-error>
+                                                    v-model="form.also_notify_address.also_name"
+                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"></b-form-input>
+                                                <has-error :form="form" field="also_name"></has-error>
                                             </b-form-group>
                                         </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Address:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                                style="width: 220px" v-model="form.also_notify_address.address"
-                                                :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
-                                            <has-error :form="form" field="ship_address"></has-error>
+                                                style="width: 220px" v-model="form.also_notify_address.also_address"
+                                                :class="{ 'is-invalid': form.errors.has('also_address') }"></b-form-input>
+                                            <has-error :form="form" field="also_address"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"
-                                                style="width: 220px" v-model="form.also_notify_address.address_line_2"
-                                                :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
-                                            <has-error :form="form" field="ship_address_line_2"></has-error>
+                                                style="width: 220px" v-model="form.also_notify_address.also_address_line_2"
+                                                :class="{ 'is-invalid': form.errors.has('also_address_line_2') }"></b-form-input>
+                                            <has-error :form="form" field="also_address_line_2"></has-error>
                                         </b-form-group>
                                         <div class="d-flex align-items-center mt-1">
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label" label="City:">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                    v-model="form.also_notify_address.city"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
-                                                <has-error :form="form" field="ship_city"></has-error>
+                                                    v-model="form.also_notify_address.also_city"
+                                                    :class="{ 'is-invalid': form.errors.has('also_city') }"></b-form-input>
+                                                <has-error :form="form" field="also_city"></has-error>
                                             </b-form-group>
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                style="width: 50px" v-model="form.also_notify_address.airport_code"
-                                                :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                            <has-error :form="form" field="ship_airport_code"></has-error>
+                                                style="width: 50px" v-model="form.also_notify_address.also_airport_code"
+                                                :class="{ 'is-invalid': form.errors.has('also_airport_code') }"></b-form-input>
+                                            <has-error :form="form" field="also_airport_code"></has-error>
                                         </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Post Code:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"
-                                                v-model="form.also_notify_address.post_code"
-                                                :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
-                                            <has-error :form="form" field="ship_post_code"></has-error>
+                                                v-model="form.also_notify_address.also_post_code"
+                                                :class="{ 'is-invalid': form.errors.has('also_post_code') }"></b-form-input>
+                                            <has-error :form="form" field="also_post_code"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="State:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"
-                                                v-model="form.also_notify_address.state"
-                                                :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
-                                            <has-error :form="form" field="ship_state"></has-error>
+                                                v-model="form.also_notify_address.also_state"
+                                                :class="{ 'is-invalid': form.errors.has('also_state') }"></b-form-input>
+                                            <has-error :form="form" field="also_state"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
                                             <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
-                                                v-model="form.also_notify_address.country"
-                                                :class="{ 'is-invalid': form.errors.has('ship_country') }">
+                                                v-model="form.also_notify_address.also_country"
+                                                :class="{ 'is-invalid': form.errors.has('also_country') }">
                                                 <option disabled value=""> Please select one</option>
                                                 <option value="A">A</option>
                                                 <option value="B">B</option>
                                                 <option Value="c">C</option>
                                             </b-form-select>
-                                            <has-error :form="form" field="ship_country"></has-error>
+                                            <has-error :form="form" field="also_country"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Phone:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"
-                                                v-model="form.also_notify_address.phone"
-                                                :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
-                                            <has-error :form="form" field="ship_phone"></has-error>
+                                                v-model="form.also_notify_address.also_phone"
+                                                :class="{ 'is-invalid': form.errors.has('also_phone') }"></b-form-input>
+                                            <has-error :form="form" field="also_phone"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Fax:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                v-model="form.also_notify_address.fax"
-                                                :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
-                                            <has-error :form="form" field="ship_fax"></has-error>
+                                                v-model="form.also_notify_address.also_fax"
+                                                :class="{ 'is-invalid': form.errors.has('also_fax') }"></b-form-input>
+                                            <has-error :form="form" field="also_fax"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mr-3" label="Telex:">
                                             <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"
-                                                v-model="form.also_notify_address.telex"></b-form-input>
+                                                v-model="form.also_notify_address.also_telex"></b-form-input>
                                         </b-form-group>
 
                                         <b-form-checkbox size="sm" class="ml-lg-35"
@@ -2919,6 +2920,7 @@ export default {
     data() {
         return {
             form: new Form({
+                account1: '',
                 first_box:{
                     awb_code: '',
                     awb_no: '',
@@ -2926,48 +2928,48 @@ export default {
                     awb: true,
                 },
                 shipper_address: {
-                    name: '',
-                    account: '',
-                    address: '',
-                    address_line_2: '',
-                    city: '',
-                    post_code: '',
-                    state: '',
-                    country: '',
-                    phone: '',
-                    fax: '',
-                    telex: '',
-                    new_address: '',
-                    airport_code: null,
+                    ship_name: '',
+                    ship_account: '',
+                    ship_address: '',
+                    ship_address_line_2: '',
+                    ship_city: '',
+                    ship_post_code: '',
+                    ship_state: '',
+                    ship_country: '',
+                    ship_phone: '',
+                    ship_fax: '',
+                    ship_telex: '',
+                    ship_new_address: '',
+                    ship_airport_code: null,
                 },
                 consignee_address: {
-                    name: '',
-                    account: '',
-                    address: '',
-                    address_line_2: '',
-                    city: '',
-                    airport_code: null,
-                    post_code: '',
-                    state: '',
-                    country: '',
-                    phone: '',
-                    fax: '',
-                    telex: '',
-                    new_address: '',
+                    cons_name: '',
+                    cons_account: '',
+                    cons_address: '',
+                    cons_address_line_2: '',
+                    cons_city: '',
+                    cons_airport_code: null,
+                    cons_post_code: '',
+                    cons_state: '',
+                    cons_country: '',
+                    cons_phone: '',
+                    cons_fax: '',
+                    cons_telex: '',
+                    cons_new_address: '',
                 },
                 also_notify_address: {
-                    name: '',
-                    address: '',
-                    address_line_2: '',
-                    city: '',
-                    airport_code: null,
-                    post_code: '',
-                    state: '',
-                    country: '',
-                    phone: '',
-                    fax: '',
-                    telex: '',
-                    new_address: '',
+                    also_name: '',
+                    also_address: '',
+                    also_address_line_2: '',
+                    also_city: '',
+                    also_airport_code: null,
+                    also_post_code: '',
+                    also_state: '',
+                    also_country: '',
+                    also_phone: '',
+                    also_fax: '',
+                    also_telex: '',
+                    also_new_address: '',
                 },
                 routing_information:{
                     departure_airport: '',
@@ -3337,9 +3339,8 @@ export default {
         },
         onSubmit(evt) {
             evt.preventDefault();
-            console.log(this.form);
             this.form.post(`/create-webdoc`).then(response => {
-                console.log(response.data);
+                console.log(response);
             })
         },
         getAgent(){

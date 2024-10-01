@@ -209,10 +209,8 @@ class AirwayBill extends Controller
     private function firstBox($first_box)
     {
         $validator = Validator::make($first_box, [
-            'awb_code' => 'required',
-            //|regex:/^[0-9]+$/|size:3
-            'awb_no' => 'required',
-            //|size:8
+            'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+            'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
             'consolidated_MAWB' => 'nullable|boolean',
             'awb' => 'nullable|boolean',
         ]);
@@ -237,16 +235,16 @@ class AirwayBill extends Controller
             'destination_airport' => 'required|string',
             'from' => 'nullable|string',
             'to' => 'required|string',
-            'by' => 'required|string|max:20',
-            'flight' => 'required|string|max:20',
+            'by' => 'required|string|size:2',
+            'flight' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:5',
             'date' => 'required|string',
             'to_2' => 'nullable|string',
-            'by_2' => 'nullable|string|max:20',
-            'flight_2' => 'nullable|string|max:20',
+            'by_2' => 'nullable|string|size:2',
+            'flight_2' => 'nullable|string|max:5',
             'date_2' => 'nullable|string',
             'to_3' => 'nullable|string',
-            'by_3' => 'nullable|string|max:20',
-            'flight_3' => 'nullable|string|max:20',
+            'by_3' => 'nullable|string|size:2',
+            'flight_3' => 'nullable|string|max:5',
             'date_3' => 'nullable|string',
         ]);
 
@@ -337,6 +335,18 @@ class AirwayBill extends Controller
     private function otherCharges($awb_no, $charges)
     {
         for ($i = 0; $i < sizeof($charges); $i++) {
+            $validator = Validator::make($charges[$i], [
+                'payment_type' => 'nullable|string',
+                'other_code' => 'nullable|string',
+                'other_charge_code' => 'nullable|string',
+                'amount' => 'nullable|numeric|min:0.01|max:999999999',
+                'due' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
             $other_charge_code = $charges[$i]['other_charge_code'];
             $otherChargesData = OtherCharge::where([['awb_id', $awb_no], ['other_charge_code', $other_charge_code]])->first();
 
@@ -359,7 +369,8 @@ class AirwayBill extends Controller
             'type_of_payment' => 'required',
             'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
-            'no_value_declear_carriage' => 'nullable',  //boolean
+            'no_value_declear_carriage' => 'nullable',
+            //boolean
             //carriage
             'declear_value_carriage' => 'nullable|numeric|min:0.000|max:999999999999',
             'no_value_declear_customs' => 'nullable',
@@ -435,7 +446,8 @@ class AirwayBill extends Controller
     private function totalAmountValume($awb_no, $totals)
     {
         $validator = Validator::make($totals, [
-            'total_volume' =>  'required|numeric|min:0|max:999999999',                       //'required|regex:/^[0-9]+$/|max:9',
+            'total_volume' => 'required|numeric|min:0|max:999999999',
+            //'required|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'required|numeric|min:0.01|max:999999999',
         ]);
         if ($validator->fails()) {
@@ -559,5 +571,46 @@ class AirwayBill extends Controller
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->tableCodes);
         }
         return json_encode($main_return_data);
+    }
+    public function getConsignmentError(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'pieces' => 'required|digits_between:1,4',
+            'description' => 'nullable|string|max:70',
+            'rate_class' => 'nullable|string|max:1',
+            'uld_rate_class' => 'nullable|regex:/^\d[A-Za-z]{2}$/',
+            'service_code' => 'nullable|string|max:1',
+            'commodity_item' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:11',
+            'country_origin_goods' => 'nullable|string|max:2',
+            'slac' => 'nullable|string',
+
+            'hsCodes' => 'nullable|array',
+            'hsCodes.*.hs_code' => 'required|regex:/^[a-zA-Z0-9\s]+$/|min:6|max:18',
+            'gross_weight' => 'nullable|numeric|min:0.1|max:9999999',
+            'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
+            'weight_code' => 'nullable|string|max:3',
+            'volume' => 'nullable|string',
+            'dimention_unit' => 'nullable|string|max:2',
+            'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
+            'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
+
+            'itemss' => 'nullable|array',
+            'itemss.*.rate' => 'nullable|numeric|min:0.0001|max:99999999',
+            'itemss.*.height' => 'nullable|regex:/^[0-9]+$/|max:5',
+            'itemss.*.width' => 'nullable|regex:/^[0-9]+$/|max:5',
+            'itemss.*.length' => 'nullable|regex:/^[0-9]+$/|max:5',
+            'itemss.*.unit' => 'nullable|string|max:3',
+            'itemss.*.wgt' => 'nullable|numeric|min:0.1|max:9999999',
+
+            'uld_info' => 'nullable|array',
+            'uld_info.*.uld_type' => 'nullable|string|size:3',
+            'uld_info.*.uld_serial' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:5',
+            'uld_info.*.owner' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|size:2',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        return response()->json(['msg' => 'No error'], 200);
     }
 }

@@ -27,8 +27,8 @@ class AirwayBill extends Controller
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
             'ship_account' => 'required|string|max:14',
-            'ship_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
-            'ship_address_line_2' => 'required|max:30|regex:/^[a-zA-Z0-9\s]+$/',
+            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:40',
+            'ship_address_line_2' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'ship_post_code' => 'nullable|string|max:9',
@@ -584,8 +584,6 @@ class AirwayBill extends Controller
             'country_origin_goods' => 'nullable|string|max:2',
             'slac' => 'nullable|string',
 
-            'hsCodes' => 'nullable|array',
-            'hsCodes.*.hs_code' => 'required|regex:/^[a-zA-Z0-9\s]+$/|min:6|max:18',
             'gross_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'weight_code' => 'nullable|string|max:3',
@@ -593,19 +591,6 @@ class AirwayBill extends Controller
             'dimention_unit' => 'nullable|string|max:2',
             'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
-
-            'itemss' => 'nullable|array',
-            'itemss.*.rate' => 'nullable|numeric|min:0.0001|max:99999999',
-            'itemss.*.height' => 'nullable|regex:/^[0-9]+$/|max:5',
-            'itemss.*.width' => 'nullable|regex:/^[0-9]+$/|max:5',
-            'itemss.*.length' => 'nullable|regex:/^[0-9]+$/|max:5',
-            'itemss.*.unit' => 'nullable|string|max:3',
-            'itemss.*.wgt' => 'nullable|numeric|min:0.1|max:9999999',
-
-            'uld_info' => 'nullable|array',
-            'uld_info.*.uld_type' => 'nullable|string|size:3',
-            'uld_info.*.uld_serial' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:5',
-            'uld_info.*.owner' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|size:2',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);

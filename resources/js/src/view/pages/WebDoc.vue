@@ -809,7 +809,7 @@
                                                             <td class="editable-cell">
                                                                 <b-form-select class="form-control"
                                                                     style="width: 320px;"
-                                                                    v-model="consignment_list.rate_class">
+                                                                    v-model="consignment_list.rate_class" @change="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate_class') }">
                                                                     <option disabled value="">Select a Rate Class
                                                                     </option>
                                                                     <option value="B">CB - Basic rate</option>
@@ -833,11 +833,13 @@
                                                                     </option>
                                                                     <option value="Z">CZ - Mutually Defined</option>
                                                                 </b-form-select>
+                                                                <has-error :form="consignment_list" field="rate_class"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 170px;"
-                                                                    v-model="consignment_list.uld_rate_class" />
+                                                                    v-model="consignment_list.uld_rate_class" :class="{ 'is-invalid': consignment_list.errors.has('uld_rate_class') }"/>
+                                                                    <has-error :form="consignment_list" field="uld_rate_class"></has-error>
                                                             </td>
                                                         </tr>
                                                         <tr v-if="consignment_list.rate_class">
@@ -847,7 +849,7 @@
                                                                     <span class="mr-2">Charge:</span>
                                                                     <input type="text" class="form-control"
                                                                         style="width: 170px;"
-                                                                        v-model="form.totals.total_amount" />
+                                                                        :value="calculatedCharge" />
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -859,7 +861,7 @@
                                                             <td class="editable-cell">
                                                                 <b-form-select class="form-control"
                                                                     style="width: 320px;"
-                                                                    v-model="consignment_list.service_code">
+                                                                    v-model="consignment_list.service_code" :class="{ 'is-invalid': consignment_list.errors.has('service_code') }">
                                                                     <option disabled value="">Select a Service Code
                                                                     </option>
                                                                     <option value="A">A - Airport to Airport</option>
@@ -879,11 +881,13 @@
                                                                     <option value="T">T - Charter</option>
                                                                     <option value="X">X - Express Service</option>
                                                                 </b-form-select>
+                                                                <has-error :form="consignment_list" field="service_code"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 170px;"
-                                                                    v-model="consignment_list.commodity_item" />
+                                                                    v-model="consignment_list.commodity_item" :class="{ 'is-invalid': consignment_list.errors.has('commodity_item') }"/>
+                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -896,17 +900,19 @@
                                                             <td class="editable-cell">
                                                                 <b-form-select class="form-control"
                                                                     style=" width: 320px;"
-                                                                    v-model="consignment_list.country_origin_goods">
+                                                                    v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
                                                                     <option disabled value=""> Select a Country</option>
                                                                     <option value="AF"> Afghanistan</option>
                                                                     <option value="AX"> Åland Islands </option>
                                                                     <option value="AL">Albania</option>
                                                                 </b-form-select>
+                                                                <has-error :form="consignment_list" field="country_origin_goods"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 170px;"
-                                                                    v-model="consignment_list.slac" />
+                                                                    v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
+                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -917,12 +923,15 @@
                                                                 style="display: flex;align-items: center;">
                                                                 <b-form-input type="text" class="form-control"
                                                                     style="width: 170px;margin-right: 10px;"
-                                                                    v-model="consignment_list.hs_code"></b-form-input>
-                                                                    <!-- :class="{ 'is-invalid': form.errors.has('hs_code') }" -->
-                                                                <!-- :class="{ 'is-invalid': consignment_list.errors.has('hs_code') }" -->
-                                                                <!-- <has-error :form="form" field="hs_code"></has-error> -->
+                                                                    v-model="consignment_list.hs_code" :class="{ 'is-invalid': hs_code_error.length > 0 }"></b-form-input>
                                                                 <button @click="addHsCode">Add</button>
                                                             </td>
+                                                            <div v-if="hs_code_error.length" class="text-danger">
+                                                                <ul  style="list-style-type: none; padding-left: 0;font-size: 10px;">
+                                                                    <li>Warning:</li>
+                                                                    <li v-for="(error, index) in hs_code_error" :key="index">{{ error }}</li>
+                                                                </ul>
+                                                            </div>
                                                         </tr>
                                                         <tr class="h_background_color">
                                                             <th>HS Codes</th>
@@ -958,25 +967,25 @@
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 70px;"
-                                                                    v-model="consignment_list.gross_weight" />
+                                                                    v-model="consignment_list.gross_weight" :class="{ 'is-invalid': consignment_list.errors.has('gross_weight') }" />
+                                                                    <has-error :form="consignment_list" field="uld_serial"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <b-form-select class="form-control"
                                                                     style=" width: 70px;"
-                                                                    v-model="consignment_list.weight_code">
+                                                                    v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
                                                                     <option value="K">Kgs</option>
                                                                     <option value="L">Lbs</option>
                                                                 </b-form-select>
+                                                                <has-error :form="consignment_list" field="weight_code"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 70px;"
-                                                                    v-model="consignment_list.chargable_weight" />
+                                                                <input type="text" class="form-control" style="width: 70px;" v-model="consignment_list.chargable_weight" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
+                                                                <has-error :form="consignment_list" field="chargable_weight"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style=" width: 100px;"
-                                                                    v-model="consignment_list.rate" />
+                                                                <input type="text" class="form-control" style=" width: 100px;" v-model="consignment_list.rate" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
+                                                                <has-error :form="consignment_list" field="rate"></has-error>
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -1012,7 +1021,7 @@
                                                             <td class="editable-cell">
                                                                 <input class="form-control"
                                                                     style="width: 100%;"
-                                                                    v-model="consignment_list.height" type="number" />
+                                                                    v-model="consignment_list.height" type="text" />
                                                             </td>
                                                             <td class="editable-cell" style="width: 100%;">
                                                                 <b-form-select class="form-control" style="width: 100%;"
@@ -1025,6 +1034,16 @@
                                                             <td class="editable-cell"><button
                                                                     @click="addPcsInfo">Add</button></td>
                                                         </tr>
+                                                        <tr v-if="validationErrors.length > 0">
+                                                            <td colspan="7">
+                                                                <div class="text-danger">
+                                                                    <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
+                                                                        <li>Warning:</li>
+                                                                        <li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li>
+                                                                    </ul>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
                                                         <tr class="h_background_color">
                                                             <th>Pcs</th>
                                                             <th>Wgt</th>
@@ -1036,7 +1055,7 @@
                                                         <tr v-for="(row, index) in consignment_list.itemss"
                                                             :key="index">
                                                             <td class="editable-cell">{{ row.pcs }}</td>
-                                                            <td class="editable-cell">{{ row.wgt }}</td>
+                                                            <td class="editable-cell">{{ row.wgt }} {{ consignment_list.weight_code }}</td>
                                                             <td class="editable-cell">{{ row.length }}</td>
                                                             <td class="editable-cell">{{ row.width }}</td>
                                                             <td class="editable-cell">{{ row.height }}</td>
@@ -1102,6 +1121,14 @@
                                                             </td>
                                                             <td class="editable-cell"><button
                                                                     @click="addUldInfo">Add</button></td>
+                                                        </tr>
+                                                        <tr v-if="uld_error.length" style="color: red;">
+                                                            <td colspan="4">
+                                                                <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
+                                                                    <li>Warning:</li>
+                                                                    <li v-for="(error, index) in uld_error" :key="index">{{ error }}</li>
+                                                                </ul>
+                                                            </td>
                                                         </tr>
                                                         <tr class="h_background_color">
                                                             <th>ULD Type:</th>
@@ -1220,7 +1247,7 @@
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Amount:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2"
-                                                    v-model="form.totals.total_amount"></b-form-input>
+                                                    :value="calculatedCharge"></b-form-input>
                                             </div>
                                         </b-form-group>
                                     </div>
@@ -1745,11 +1772,152 @@
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
                                                 <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
-                                                    <option disabled value=""> Select an Other Charge Code </option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge </option>
-                                                    <option value="SC - Security Charge">SC - Security Charge </option>
-                                                    <option value="AC - Animal Container">AC - Animal Container
-                                                    </option>
+                                                    <option value="">Select an Other Charge Code</option>
+                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
+                                                    <option value="SC - Security Charge">SC - Security Charge</option>
+                                                    <option value="AC - Animal Container">AC - Animal Container</option>
+                                                    <option value="AS - Assembly Service Fee">AS - Assembly Service Fee</option>
+                                                    <option value="AT - Attendant">AT - Attendant</option>
+                                                    <option value="AW - Air Waybill Fee">AW - Air Waybill Fee</option>
+                                                    <option value="BA - Advances And/or Guarantees">BA - Advances And/or Guarantees</option>
+                                                    <option value="BB - Appraisal Service">BB - Appraisal Service</option>
+                                                    <option value="BC - AWB Copy">BC - AWB Copy</option>
+                                                    <option value="BE - Collection Of Funds">BE - Collection Of Funds</option>
+                                                    <option value="BF - Copies Of Documents">BF - Copies Of Documents</option>
+                                                    <option value="BH - Messenger Service">BH - Messenger Service</option>
+                                                    <option value="BI - Import/export Documents Processing">BI - Import/export Documents Processing</option>
+                                                    <option value="BL - Blacklist Certificate">BL - Blacklist Certificate</option>
+                                                    <option value="BM - Withdrawal Of Shipment After Clearance">BM - Withdrawal Of Shipment After Clearance</option>
+                                                    <option value="BR - Bank Release">BR - Bank Release</option>
+                                                    <option value="CA - Bonding">CA - Bonding</option>
+                                                    <option value="CB - Completion/preparation Of Documents">CB - Completion/preparation Of Documents</option>
+                                                    <option value="CC - Manual Data Entry For Customs Purposes">CC - Manual Data Entry For Customs Purposes</option>
+                                                    <option value="CD - Clearance And Handling">CD - Clearance And Handling</option>
+                                                    <option value="CE - Export/Import Warrant">CE - Export/Import Warrant</option>
+                                                    <option value="CF - Inventory And/or Inspection">CF - Inventory And/or Inspection</option>
+                                                    <option value="CG - Electronic Proc. Or Trans. Of Data For Customs">CG - Electronic Proc. Or Trans. Of Data For Customs</option>
+                                                    <option value="CH - Clearance And Handling">CH - Clearance And Handling</option>
+                                                    <option value="CI - Overtime And Other Customs Imposed Charges">CI - Overtime And Other Customs Imposed Charges</option>
+                                                    <option value="CJ - Removal (carrier Warehouse To Warehouse)">CJ - Removal (carrier Warehouse To Warehouse)</option>
+                                                    <option value="DB - Disbursement Fee">DB - Disbursement Fee</option>
+                                                    <option value="DC - Certificate Of Origin">DC - Certificate Of Origin</option>
+                                                    <option value="DD - Preparation Of Cargo Manifest">DD - Preparation Of Cargo Manifest</option>
+                                                    <option value="DF - Distribution Service Fee">DF - Distribution Service Fee</option>
+                                                    <option value="DG - AWB Cancellation">DG - AWB Cancellation</option>
+                                                    <option value="DH - AWB Charges Correction Advice">DH - AWB Charges Correction Advice</option>
+                                                    <option value="DI - AWB Re-waybilling">DI - AWB Re-waybilling</option>
+                                                    <option value="DJ - Proof Of Delivery (documentation)">DJ - Proof Of Delivery (documentation)</option>
+                                                    <option value="DK - Release Order">DK - Release Order</option>
+                                                    <option value="DV - Veterinary And/or Phytosanitary Purposes">DV - Veterinary And/or Phytosanitary Purposes</option>
+                                                    <option value="EA - Handling (Express)">EA - Handling (Express)</option>
+                                                    <option value="FA - Airport Arrival">FA - Airport Arrival</option>
+                                                    <option value="FB - Domestic Shipments">FB - Domestic Shipments</option>
+                                                    <option value="FC - Charges Collect Fee">FC - Charges Collect Fee</option>
+                                                    <option value="FD - Priority">FD - Priority</option>
+                                                    <option value="FE - General (Handling)">FE - General (Handling)</option>
+                                                    <option value="FF - Loading/unloading">FF - Loading/unloading</option>
+                                                    <option value="FI - Weighing">FI - Weighing</option>
+                                                    <option value="FS - Fuel Surcharge">FS - Fuel Surcharge</option>
+                                                    <option value="GA - Diplomatic Consignment">GA - Diplomatic Consignment</option>
+                                                    <option value="GT - Government Tax">GT - Government Tax</option>
+                                                    <option value="HB - Mortuary">HB - Mortuary</option>
+                                                    <option value="HR - Human Remains">HR - Human Remains</option>
+                                                    <option value="IA - Very Important Cargo (VIC)">IA - Very Important Cargo (VIC)</option>
+                                                    <option value="IN - Insurance Premium">IN - Insurance Premium</option>
+                                                    <option value="IR - War Risk">IR - War Risk</option>
+                                                    <option value="IS - War Risk">IS - War Risk</option>
+                                                    <option value="JA - Clearance OCText=General">JA - Clearance OCText=General</option>
+                                                    <option value="KA - Handling (Heavy/Bulky Cargo)">KA - Handling (Heavy/Bulky Cargo)</option>
+                                                    <option value="KB - Loading/unloading Equipment (forklift Etc.)">KB - Loading/unloading Equipment (forklift Etc.)</option>
+                                                    <option value="LA - Live Animals">LA - Live Animals</option>
+                                                    <option value="LC - Cleaning">LC - Cleaning</option>
+                                                    <option value="LE - Hotel">LE - Hotel</option>
+                                                    <option value="LF - Quarantine">LF - Quarantine</option>
+                                                    <option value="LG - Veterinary Inspection">LG - Veterinary Inspection</option>
+                                                    <option value="LH - Storage (Live Animals)">LH - Storage (Live Animals)</option>
+                                                    <option value="LI - Cleaning Of Stalls/pens">LI - Cleaning Of Stalls/pens</option>
+                                                    <option value="LJ - Rental Of Stalls/pens">LJ - Rental Of Stalls/pens</option>
+                                                    <option value="MA - Miscellaneous A">MA - Miscellaneous A</option>
+                                                    <option value="MB - Miscellaneous B">MB - Miscellaneous B</option>
+                                                    <option value="MC - Miscellaneous C">MC - Miscellaneous C</option>
+                                                    <option value="MD - Miscellaneous D">MD - Miscellaneous D</option>
+                                                    <option value="ME - Miscellaneous E">ME - Miscellaneous E</option>
+                                                    <option value="MF - Miscellaneous F">MF - Miscellaneous F</option>
+                                                    <option value="MG - Miscellaneous G">MG - Miscellaneous G</option>
+                                                    <option value="MH - Miscellaneous H">MH - Miscellaneous H</option>
+                                                    <option value="MI - Miscellaneous I">MI - Miscellaneous I</option>
+                                                    <option value="MJ - Miscellaneous J">MJ - Miscellaneous J</option>
+                                                    <option value="MK - Miscellaneous K">MK - Miscellaneous K</option>
+                                                    <option value="ML - Miscellaneous L">ML - Miscellaneous L</option>
+                                                    <option value="MM - Miscellaneous M">MM - Miscellaneous M</option>
+                                                    <option value="MN - Miscellaneous N">MN - Miscellaneous N</option>
+                                                    <option value="MO - Miscellaneous O">MO - Miscellaneous O</option>
+                                                    <option value="MP - Miscellaneous P">MP - Miscellaneous P</option>
+                                                    <option value="MQ - Miscellaneous Q">MQ - Miscellaneous Q</option>
+                                                    <option value="MR - Airfreight Surcharge">MR - Airfreight Surcharge</option>
+                                                    <option value="MS - Miscellaneous S">MS - Miscellaneous S</option>
+                                                    <option value="MT - Miscellaneous T">MT - Miscellaneous T</option>
+                                                    <option value="MU - Miscellaneous U">MU - Miscellaneous U</option>
+                                                    <option value="MV - Miscellaneous V">MV - Miscellaneous V</option>
+                                                    <option value="MW - Miscellaneous W">MW - Miscellaneous W</option>
+                                                    <option value="MX - Miscellaneous X">MX - Miscellaneous X</option>
+                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
+                                                    <option value="MZ - Miscellaneous Z">MZ - Miscellaneous Z</option>
+                                                    <option value="NS - Navigation Surcharge">NS - Navigation Surcharge</option>
+                                                    <option value="PA - Handling (Perishables)">PA - Handling (Perishables)</option>
+                                                    <option value="PB - Cool/Cold Room OCText=freezer (Perishables)">PB - Cool/Cold Room OCText=freezer (Perishables)</option>
+                                                    <option value="PK - Packing/Repacking">PK - Packing/Repacking</option>
+                                                    <option value="PU - Pick-Up">PU - Pick-Up</option>
+                                                    <option value="RA - Dangerous Goods Fee">RA - Dangerous Goods Fee</option>
+                                                    <option value="RB - Rejection">RB - Rejection</option>
+                                                    <option value="RC - Referral Of Charge">RC - Referral Of Charge</option>
+                                                    <option value="RD - Radio-active Room">RD - Radio-active Room</option>
+                                                    <option value="RF - Remit Following Collection Fee">RF - Remit Following Collection Fee</option>
+                                                    <option value="SA - Delivery">SA - Delivery</option>
+                                                    <option value="SB - Delivery Notification">SB - Delivery Notification</option>
+                                                    <option value="SC - Security Charge">SC - Security Charge</option>
+                                                    <option value="SD - Surface Charge">SD - Surface Charge</option>
+                                                    <option value="SE - Proof Of Delivery (pickup And Delivery)">SE - Proof Of Delivery (pickup And Delivery)</option>
+                                                    <option value="SF - Delivery Order">SF - Delivery Order</option>
+                                                    <option value="SI - Stop In Transit">SI - Stop In Transit</option>
+                                                    <option value="SO - Storage">SO - Storage</option>
+                                                    <option value="SP - Separate Early Release">SP - Separate Early Release</option>
+                                                    <option value="SR - Storage">SR - Storage</option>
+                                                    <option value="SS - Signature Service">SS - Signature Service</option>
+                                                    <option value="ST - State Sales Tax">ST - State Sales Tax</option>
+                                                    <option value="SU - Surface Charge">SU - Surface Charge</option>
+                                                    <option value="TA - Postal Tax">TA - Postal Tax</option>
+                                                    <option value="TB - Sales Tax">TB - Sales Tax</option>
+                                                    <option value="TC - Stamp Tax">TC - Stamp Tax</option>
+                                                    <option value="TD - State Tax">TD - State Tax</option>
+                                                    <option value="TE - Statistical Tax">TE - Statistical Tax</option>
+                                                    <option value="TH - Terminal Handling">TH - Terminal Handling</option>
+                                                    <option value="TI - Value Added Tax (For Import Only)">TI - Value Added Tax (For Import Only)</option>
+                                                    <option value="TR - Transit">TR - Transit</option>
+                                                    <option value="TV - Value Added Tax (General Or For Export)">TV - Value Added Tax (General Or For Export)</option>
+                                                    <option value="TX - General Taxes">TX - General Taxes</option>
+                                                    <option value="UB - Disassembly">UB - Disassembly</option>
+                                                    <option value="UC - Adjusting Of Improperly Loaded ULD">UC - Adjusting Of Improperly Loaded ULD</option>
+                                                    <option value="UD - Demurrage">UD - Demurrage</option>
+                                                    <option value="UE - Leasing">UE - Leasing</option>
+                                                    <option value="UF - Recontouring">UF - Recontouring</option>
+                                                    <option value="UG - Unloading (Unit Load Device)">UG - Unloading (Unit Load Device)</option>
+                                                    <option value="UH - Handling (Unit Load Device)">UH - Handling (Unit Load Device)</option>
+                                                    <option value="VA - Handling (Valuable Cargo)">VA - Handling (Valuable Cargo)</option>
+                                                    <option value="VB - Security (armed Guard/escort) Handling">VB - Security (armed Guard/escort) Handling</option>
+                                                    <option value="VC - Strongroom">VC - Strongroom</option>
+                                                    <option value="VE - Vetrinarian Charge">VE - Vetrinarian Charge</option>
+                                                    <option value="VS - VARIOUS SURCHARGE">VS - VARIOUS SURCHARGE</option>
+                                                    <option value="WA - Handling (Vulnerable Cargo)">WA - Handling (Vulnerable Cargo)</option>
+                                                    <option value="WR - War Risk">WR - War Risk</option>
+                                                    <option value="XB - Security (Surcharge/premiums)">XB - Security (Surcharge/premiums)</option>
+                                                    <option value="XC - Time">XC - Time</option>
+                                                    <option value="XD - War Risk">XD - War Risk</option>
+                                                    <option value="XE - Weight">XE - Weight</option>
+                                                    <option value="XR - Security Handling">XR - Security Handling</option>
+                                                    <option value="ZA - Re-warehousing">ZA - Re-warehousing</option>
+                                                    <option value="ZB - General (Storage)">ZB - General (Storage)</option>
+                                                    <option value="ZC - Cool/Cold Room Freezer (Storage)">ZC - Cool/Cold Room Freezer (Storage)</option>
                                                 </b-form-select>
                                             </b-form-group>
                                         </b-col>
@@ -1843,8 +2011,8 @@
                                         <thead>
                                             <tr class="h_background_color">
                                                 <th class="form-control1">Code</th>
-                                                <th class="form-control1">Amount</th>
                                                 <th class="form-control1">Due</th>
+                                                <th class="form-control1">Amount</th>
                                                 <th class="form-control1">Type Of Payment</th>
                                                 <th class="form-control1">Actions</th>
                                             </tr>
@@ -1855,10 +2023,10 @@
                                                     {{ charge.other_charge_code || charge.other_code }}
                                                 </td>
                                                 <td class="editable-cell">
-                                                    {{ charge.amount }}
+                                                    {{ charge.due }}
                                                 </td>
                                                 <td class="editable-cell">
-                                                    {{ charge.due }}
+                                                    {{ charge.amount }}.00
                                                 </td>
                                                 <td class="editable-cell">
                                                     {{ charge.payment_type }}
@@ -1978,9 +2146,12 @@
                                                     <tbody>
                                                         <tr>
                                                             <td class="editable-cell">Weight Charge (WT)</td>
-                                                            <td class="editable-cell">0.00 INR</td>
-                                                            <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR
-                                                            </td>
+                                                            <!-- <td class="editable-cell">0.00 INR</td>
+                                                            <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td> -->
+                                                            <!-- <td class="editable-cell">{{ isPrepaid ? weightCharge.toFixed(2) : '0.00' }} INR</td>
+                                                            <td class="editable-cell">{{ isPrepaid ? '0.00' : weightCharge.toFixed(2) }} INR</td> -->
+                                                            <td class="editable-cell">{{ totalCharges.prepaid }} INR</td>
+                                                            <td class="editable-cell">{{ totalCharges.collect }} INR</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">Taxes (TX)</td>
@@ -3069,7 +3240,7 @@ export default {
                 length: '',
                 width: '',
                 height: '',
-                unit: '',
+                unit: 'CMT',
                 volume: '',
                 dimention_unit: '', //cm3,m3,ft3
 
@@ -3118,7 +3289,9 @@ export default {
             },
             selectedCode: '',
             manualCode: '',
-
+            validationErrors: [],
+            hs_code_error: [],
+            uld_error: [],
             newHsCode: '',
             isOpen: false,
             showShipper: false,
@@ -3408,6 +3581,16 @@ export default {
             }
         },
         addCharge() {
+            if (!this.other_charges.other_charge_code) {
+                alert("Other charge code is mandatory.");
+                return;
+            }
+            const amount = parseFloat(this.other_charges.amount);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Amount is mandatory and must be a valid number greater than 0.");
+                return;
+            }
+
             const chargeData = {
                 other_charge_code: this.other_charges.other_charge_code,
                 other_code: this.other_charges.other_code,
@@ -3441,33 +3624,37 @@ export default {
             this.edit_entry_index = index;
             this.consignment_list = { ...this.form.entries[index] };
             this.$refs.modalConsignment.show();
+            this.calculateTotalAmount();
         },
         deleteEntry(index) {
             this.form.entries.splice(index, 1);
+            this.calculateTotalVolume();
+            this.calculateTotalAmount();
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
             this.consignment_list.post(`/get-consignment-error`).then(response => {
                 if (this.edit_entry_index !== null) {
                     this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
+                    // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
                     this.edit_entry_index = null;
                 } else {
                     this.form.entries.push({ ...this.consignment_list });
                 }
+                this.calculateTotalVolume();
+                this.calculateTotalAmount();
                 this.closeModal();
                 //clear consignment_list data
                 for (let key in this.consignment_list) {
                     if(key !='busy' && key !='successful' && key !='errors' && key !='originalData'){
                         if (typeof this.consignment_list[key] === 'object') {
-                            this.consignment_list[key] = []; // Reset objects if needed
+                            this.consignment_list[key] = [];
                         } else {
                             this.consignment_list[key] = '';
                         }
                     }
                 }
-                this.calculateTotalVolume();
-                this.calculateTotalAmount();
-            })
+            });
         },
         calculateTotalVolume() {
             let totalVolume = this.form.entries.reduce((total, entry) => {
@@ -3476,31 +3663,54 @@ export default {
                     return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
                 }, 0);
             }, 0);
-            
             return this.form.totals.total_volume = totalVolume;
         },
 
+        // calculateTotalAmount() {
+        //     let chargeableWeight = parseFloat(this.form.entries.reduce((total, entry) => {
+        //         return total + (parseFloat(entry.chargable_weight) || 0);
+        //     }, 0)) || 0;
+
+        //     let rate = parseFloat(this.form.entries.reduce((total, entry) => {
+        //         return total + (parseFloat(entry.rate) || 0);
+        //     }, 0)) || 0;
+
+        //     this.form.totals.total_amount = chargeableWeight * rate; // Calculate total amount
+        //     console.log("Total Amount:", this.form.totals.total_amount);
+        // },
         calculateTotalAmount() {
-            let chargeableWeight = parseFloat(this.form.entries.reduce((total, entry) => {
-                return total + (parseFloat(entry.chargable_weight) || 0);
-            }, 0)) || 0;
-
-            let rate = parseFloat(this.form.entries.reduce((total, entry) => {
-                return total + (parseFloat(entry.rate) || 0);
-            }, 0)) || 0;
-
-            this.form.totals.total_amount = chargeableWeight * rate; // Calculate total amount
-            console.log("Total Amount:", this.form.totals.total_amount);
+            const chargeableWeight = this.form.entries.reduce((total, entry) => {
+                let weight = parseFloat(entry.chargable_weight) || 0;
+                return total + weight;
+            }, 0);
+            const { rate_class } = this.consignment_list;
+            let rates = 0;
+            this.form.totals.total_amount = 0;
+            if (rate_class === "B" || rate_class === "M") {
+                this.form.totals.total_amount = this.consignment_list.rate || 0;
+            } else if (rate_class === "P" || rate_class === "X") {
+                this.form.totals.total_amount = 0;
+            } else {
+                rates = parseFloat(this.form.entries.reduce((total, entry) => {
+                    return total + (parseFloat(entry.rate) || 0);
+                }, 0)) || 0;
+                this.form.totals.total_amount = chargeableWeight * rates;
+            }
         },
         addHsCode() {
-            if (this.consignment_list.hs_code) {
+            this.hs_code_error = [];
+            const hsCodeRegex = /^[a-zA-Z0-9]+$/;
+            if (!this.consignment_list.hs_code) {
+                this.hs_code_error.push("This field is empty.");
+            } else if (!hsCodeRegex.test(this.consignment_list.hs_code)) {
+                this.hs_code_error.push("HS Code can only contain letters,numbers");
+            } else if (this.consignment_list.hs_code.length < 6 || this.consignment_list.hs_code.length > 18) {
+                this.hs_code_error.push("HS Code must be between 6 to 18 characters/digits.");
+            } else {
                 this.consignment_list.hsCodes.push({
                     hs_code: this.consignment_list.hs_code
                 });
                 this.consignment_list.hs_code = "";
-            }
-            else {
-                alert("This field are empty");
             }
         },
         removeHsCode(index) {
@@ -3516,19 +3726,27 @@ export default {
             this.$refs.modalConsignment.hide();
         },
         addUldInfo() {
-            if (this.consignment_list.uld_type && this.consignment_list.uld_serial && this.consignment_list.owner) {
-                this.consignment_list.uld_info.push({
-                    uld_type: this.consignment_list.uld_type,
-                    uld_serial: this.consignment_list.uld_serial,
-                    owner: this.consignment_list.owner
-                });
-                this.consignment_list.uld_type = "";
-                this.consignment_list.uld_serial = "";
-                this.consignment_list.owner = "";
+            this.uld_error = [];
+            const { uld_type, uld_serial, owner } = this.consignment_list;
+            const regex = {
+                uldType: /^[a-zA-Z][A-Za-z0-9]{2}$/, // ULD Type
+                uldSerial: /^[A-Za-z0-9]\d{3,4}$/,   // ULD Serial
+                owner: /^[a-zA-Z0-9]{2}$/          // Owner
+            };
+            if (!uld_type) this.uld_error.push("ULD Type is required.");
+            else if (!regex.uldType.test(uld_type)) this.uld_error.push("ULD Type must be 3 characters: 1 alphabetic and 2 alphanumeric.");
+
+            if (!uld_serial) this.uld_error.push("ULD Serial is required.");
+            else if (!regex.uldSerial.test(uld_serial)) this.uld_error.push("ULD Serial must be in the format 'mnnn(n)' where 'm' is an alpha character and 'n' is a digit.");
+
+            if (!owner) this.uld_error.push("Owner is required.");
+            else if (!regex.owner.test(owner)) this.uld_error.push("Owner must be exactly 2 characters long and can only contain letters and digits.");
+            if (this.uld_error.length>0) {
+                return;
             }
-            else {
-                alert("This field are empty");
-            }
+            // Push validated data to uld_info
+            this.consignment_list.uld_info.push({ uld_type, uld_serial, owner });
+            this.consignment_list.uld_type = this.consignment_list.uld_serial = this.consignment_list.owner = "";
         },
         deleteUldInfo(index) {
             if (this.consignment_list.uld_info && this.consignment_list.uld_info.length > index) {
@@ -3563,48 +3781,79 @@ export default {
             }
         },
         addPcsInfo() {
-            if (this.consignment_list.itemss.length >= 1) {
-                alert("You have exceeded your limit");
+            this.validationErrors = [];
+            const rules = {
+                pcs: { type: 'numeric', message: "PCS must be a valid number." },
+                wgt: { type: 'numeric', min: 0.1, max: 9999999, message: "Weight must be between 0.1 and 9999999." },
+                length: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Length must be a numeric value with a maximum of 5 digits." },
+                width: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Width must be a numeric value with a maximum of 5 digits." },
+                height: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Height must be a numeric value with a maximum of 5 digits." },
+            };
+            let { pcs, wgt, length, width, height,unit } = this.consignment_list;
+            if (!pcs) {
+                this.validationErrors.push("When using dimensions or weight - pieces cannot be empty.");
+            }
+            // If any one dimension is added, all other dimensions are required
+            if (length || width || height) {
+                if (!length) {
+                    this.validationErrors.push("Please add length to the dimension");
+                }
+                if (!width) {
+                    this.validationErrors.push("Please add width to the dimension");
+                }
+                if (!height) {
+                    this.validationErrors.push("Please add height to the dimension");
+                }
+            }
+            if (!length && !width && !height && !wgt) {
+                this.validationErrors.push("Only pieces filled in, please add also weight (WGT) and/or dimensions.");
+            }
+            // Validate individual fields based on their rules
+            Object.keys(rules).forEach(field => {
+                const rule = rules[field];
+                const value = this.consignment_list[field];
+                if (value) {
+                    if (rule.type === 'numeric' && (isNaN(value) || value < rule.min || value > rule.max)) {
+                        this.validationErrors.push(rule.message);
+                    } else if (rule.type === 'regex' && (!rule.regex.test(value) || value.length > rule.maxLength)) {
+                        this.validationErrors.push(rule.message);
+                    }
+                }
+            });
+            if (this.validationErrors.length > 0) {
                 return;
             }
             this.consignment_list.itemss.push({
-                pcs: this.consignment_list.pcs,
-                wgt: this.consignment_list.wgt,
-                length: this.consignment_list.length,
-                width: this.consignment_list.width,
-                height: this.consignment_list.height,
-                unit: this.consignment_list.unit
+                pcs: pcs,
+                wgt: wgt,
+                length: length,
+                width: width,
+                height: height,
+                unit: unit
             });
-            // Reset consignment_list fields if needed
+            // this.calculateTotalAmount();
             this.consignment_list.pcs = '';
             this.consignment_list.wgt = '';
             this.consignment_list.length = '';
             this.consignment_list.width = '';
             this.consignment_list.height = '';
-            this.consignment_list.unit = '';
+            this.consignment_list.unit = 'CMT';
         },
         deletePcs(index) {
             if (this.consignment_list.itemss.length > index) {
                 this.consignment_list.itemss.splice(index, 1);
             }
         },
+        calculateTotalCharges() {
+            this.form.totals.total_amount = this.calculateTotalAmount();
+        },
     },
     watch: {
-       'form.rate_class': function () {
-            this.form.totals.total_amount = this.calculateTotalAmount();
-        },
-        'form.rate': function () {
-            this.form.totals.total_amount = this.calculateTotalAmount();
-        },
-        'form.chargable_weight': function () {
-            this.form.totals.total_amount = this.calculateTotalAmount();
-        },
-        'form.entries.itemss': function () {
-            this.calculateTotalVolume();
-        },
+        // 'consignment_list': function () {
+        //     this.form.totals.total_amount = this.calculateTotalAmount();
+        // },
         'form.charges': {
             handler(newVal) {
-                console.log('Charges changed:', newVal);
                 this.totalChargesPrepaid;
                 this.totalChargesCollect;
                 this.weightCharge;
@@ -3617,6 +3866,9 @@ export default {
             },
             deep: true,
         },
+        // 'form.payment_info.type_of_payment'(newVal) {
+        //     this.calculateTotalCharges();
+        // },
         totalChargesPrepaid(newVal) {
             this.form.payment_info.total_charges_prepaid = newVal;
         },
@@ -3649,6 +3901,10 @@ export default {
         this.getAgent();
     },
     computed: {
+        isPrepaid() {
+            const prepaidTypes = ['PC', 'PD', 'PG', 'OO', 'PX'];
+            return prepaidTypes.includes(this.form.payment_info.type_of_payment);
+        },
         weightCharge() {
             return parseFloat(this.form.totals.total_amount || 0);
         },
@@ -3679,15 +3935,29 @@ export default {
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
+        // totalChargesPrepaid() {
+        //     return (
+        //         parseFloat(this.totalDueAgentPrepaid) +
+        //         parseFloat(this.totalDueCarrierPrepaid)
+        //     ).toFixed(2);
+        // },
+        // totalChargesCollect() {
+        //     return (
+        //         this.weightCharge +
+        //         parseFloat(this.totalDueAgentCollect) +
+        //         parseFloat(this.totalDueCarrierCollect)
+        //     ).toFixed(2);
+        // },
         totalChargesPrepaid() {
             return (
+                (this.isPrepaid ? this.weightCharge : 0) +
                 parseFloat(this.totalDueAgentPrepaid) +
                 parseFloat(this.totalDueCarrierPrepaid)
             ).toFixed(2);
         },
         totalChargesCollect() {
             return (
-                this.weightCharge +
+                (this.isPrepaid ? 0 : this.weightCharge) +
                 parseFloat(this.totalDueAgentCollect) +
                 parseFloat(this.totalDueCarrierCollect)
             ).toFixed(2);
@@ -3698,6 +3968,17 @@ export default {
                 parseFloat(this.totalDueAgentCollect) +
                 parseFloat(this.totalDueCarrierCollect)
             ).toFixed(2);
+        },
+        totalCharges() {
+            console.log('Weight Charge:', this.weightCharge);
+            console.log('Is Prepaid:', this.isPrepaid);
+            return {
+                prepaid: this.isPrepaid ? this.weightCharge.toFixed(2) : '0.00',
+                collect: this.isPrepaid ? '0.00' : this.weightCharge.toFixed(2),
+            };
+        },
+        calculatedCharge() {
+            return this.form.totals.total_amount;
         }
     },
 

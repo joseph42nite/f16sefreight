@@ -16,11 +16,8 @@ class ConversionController extends Controller
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->get()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->get()->toArray();
-        // echo "<pre>";
-        // print_r($waybill_data);
-        // echo "</pre>";
-        // die();
-        // Start conversion to XML
+        $utc_current_date=gmdate("Y-m-d H:i:s");
+        $time=time();
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
@@ -33,10 +30,10 @@ class ConversionController extends Controller
         // Message Header Document
         $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
         $waybill->appendChild($messageHeaderDocument);
-        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
-        $messageHeaderDocument->appendChild($xml->createElement('Name', 'Master Air Waybill'));
-        $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '741'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $waybill_data['updated_at']));
+        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id'].'_'.$time));
+        $messageHeaderDocument->appendChild($xml->createElement('Name', 'Air Waybill'));
+        $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '740'));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -283,5 +280,8 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
+    }
+    public function check(){
+        echo gmdate("Y-m-d H:i:s"); 
     }
 }

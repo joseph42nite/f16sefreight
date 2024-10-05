@@ -342,9 +342,9 @@
                                                 v-model="form.shipper_address.ship_country"
                                                 :class="{ 'is-invalid': form.errors.has('ship_country') }">
                                                 <option disabled value=""> Please select one</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option Value="c">C</option>
+                                                <option value="IN">India</option>
+                                                <option value="USA">United State</option>
+                                                <option Value="UK">United Kingdom</option>
                                             </b-form-select>
                                             <has-error :form="form" field="ship_country"></has-error>
                                         </b-form-group>
@@ -476,9 +476,9 @@
                                                 v-model="form.consignee_address.cons_country"
                                                 :class="{ 'is-invalid': form.errors.has('cons_country') }">
                                                 <option disabled value="Please select one"> Please select one</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option value="C">C</option>
+                                                <option value="IN">India</option>
+                                                <option value="USA">United State</option>
+                                                <option Value="UK">United Kingdom</option>
                                             </b-form-select>
                                             <has-error :form="form" field="cons_country"></has-error>
                                         </b-form-group>
@@ -974,8 +974,8 @@
                                                                 <b-form-select class="form-control"
                                                                     style=" width: 70px;"
                                                                     v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
-                                                                    <option value="K">Kgs</option>
-                                                                    <option value="L">Lbs</option>
+                                                                    <option value="KGM">Kgs</option>
+                                                                    <option value="LBR">Lbs</option>
                                                                 </b-form-select>
                                                                 <has-error :form="consignment_list" field="weight_code"></has-error>
                                                             </td>
@@ -1658,9 +1658,9 @@
                                                 v-model="form.also_notify_address.also_country"
                                                 :class="{ 'is-invalid': form.errors.has('also_country') }">
                                                 <option disabled value=""> Please select one</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option Value="c">C</option>
+                                                <option value="IN">India</option>
+                                                <option value="USA">United State</option>
+                                                <option Value="UK">United Kingdom</option>
                                             </b-form-select>
                                             <has-error :form="form" field="also_country"></has-error>
                                         </b-form-group>
@@ -3231,7 +3231,7 @@ export default {
                 hs_code: '',
 
                 gross_weight: '',
-                weight_code: 'K', //kgs/lbs
+                weight_code: 'KGM', //kgs/lbs
                 chargable_weight: '',
                 other_charge: '',
                 rate: '',

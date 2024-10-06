@@ -5,17 +5,27 @@ namespace App\Http\Controllers;
 use App\AirwayBills;
 use App\WayBillAddress;
 use App\ConsignmentData;
+use App\Agent;
+use App\PaymentInfo;
+use App\OtherCharge;
 use Illuminate\Http\Request;
 use DOMDocument;
 
 class ConversionController extends Controller
 {
-    public function WayBillConversion($awb_id = 6543154)
+    public function WayBillConversion($awb_id = 1070525)
     {
         // Fetch data from the database (this is just sample data for now)
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
-        $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->get()->toArray();
-        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->get()->toArray();
+        $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
+        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
+        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
+        $other_charges = OtherCharge::where('awb_id', $awb_id)->limit(1)->get()->toArray();
+        // echo "<pre>";
+        // print_r($waybill_address);
+        // echo "</pre>";
+        // die();
         $utc_current_date = gmdate("Y-m-d H:i:s");
         $time = time();
         // Start conversion to XML
@@ -73,16 +83,16 @@ class ConversionController extends Controller
 
         // Signatory Consignor Authentication
         $signatoryConsignorAuth = $xml->createElement('SignatoryConsignorAuthentication');
-        $signatoryConsignorAuth->appendChild($xml->createElement('Signatory', 'Shubha Covilakum'));
+        $signatoryConsignorAuth->appendChild($xml->createElement('Signatory', $agent_details['agent_issue_sign']));
         $businessHeaderDocument->appendChild($signatoryConsignorAuth);
 
         // Signatory Carrier Authentication
         $signatoryCarrierAuth = $xml->createElement('SignatoryCarrierAuthentication');
-        $signatoryCarrierAuth->appendChild($xml->createElement('ActualDateTime', '2014-01-27T00:00:00'));
-        $signatoryCarrierAuth->appendChild($xml->createElement('Signatory', 'KUEHNE + NAGEL PV'));
+        $signatoryCarrierAuth->appendChild($xml->createElement('ActualDateTime', $utc_current_date));
+        $signatoryCarrierAuth->appendChild($xml->createElement('Signatory', $agent_details['agent_name']));
 
         $issueAuthLocation = $xml->createElement('IssueAuthenticationLocation');
-        $issueAuthLocation->appendChild($xml->createElement('Name', 'BANGALORE'));
+        $issueAuthLocation->appendChild($xml->createElement('Name', $agent_details['agent_issue_loc_code']));
         $signatoryCarrierAuth->appendChild($issueAuthLocation);
         $businessHeaderDocument->appendChild($signatoryCarrierAuth);
 
@@ -93,9 +103,9 @@ class ConversionController extends Controller
         $masterConsignment->appendChild($xml->createElement('NilCarriageValueIndicator', 'true'));
         $masterConsignment->appendChild($xml->createElement('NilCustomsValueIndicator', 'true'));
         $masterConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'true'));
-        $masterConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', 'P'));
-        $masterConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', 'P'));
-        $masterConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', '1000'))->setAttribute('unitCode', 'KGM');
+        $masterConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['payment_type']));
+        $masterConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
+        $masterConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         $masterConsignment->appendChild($xml->createElement('GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
         $masterConsignment->appendChild($xml->createElement('TotalPieceQuantity', '7'));
 
@@ -123,14 +133,14 @@ class ConversionController extends Controller
         $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_telex']));
         $DefinedTradeContact->appendChild($TelexCommunication);
         $consignorParty->appendChild($DefinedTradeContact);
-        
+
         $masterConsignment->appendChild($consignorParty);
 
         // Consignee Party
         $consignee_street_name = $waybill_address['cons_address'] . (!empty($waybill_address['cons_address_line_2']) ? ',' . $waybill_address['cons_address_line_2'] : '');
         $consigneeParty = $xml->createElement('ConsigneeParty');
         $consigneeParty->appendChild($xml->createElement('Name', $waybill_address['cons_name']));
-        $consignorParty->appendChild($xml->createElement('AccountID', $waybill_address['cons_account']));
+        $consigneeParty->appendChild($xml->createElement('AccountID', $waybill_address['cons_account']));
         $postalStructuredAddress2 = $xml->createElement('PostalStructuredAddress');
         $postalStructuredAddress2->appendChild($xml->createElement('PostcodeCode', $waybill_address['cons_post_code']));
         $postalStructuredAddress2->appendChild($xml->createElement('StreetName', $consignee_street_name));
@@ -150,15 +160,14 @@ class ConversionController extends Controller
         $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_telex']));
         $DefinedTradeContact->appendChild($TelexCommunication);
         $consigneeParty->appendChild($DefinedTradeContact);
-
         $masterConsignment->appendChild($consigneeParty);
 
         // Freight Forwarder Party
         $freightForwarderParty = $xml->createElement('FreightForwarderParty');
-        $freightForwarderParty->appendChild($xml->createElement('Name', 'KUEHNE + NAGEL PVT. LTD. MUNEESH LEGACY II FLOOR'));
-        $freightForwarderParty->appendChild($xml->createElement('CargoAgentID', '1433544'));
+        $freightForwarderParty->appendChild($xml->createElement('Name', $agent_details['agent_name']));
+        $freightForwarderParty->appendChild($xml->createElement('CargoAgentID', $agent_details['iata_agent_code']));
         $freightForwarderAddress = $xml->createElement('FreightForwarderAddress');
-        $freightForwarderAddress->appendChild($xml->createElement('PostcodeCode', '560 071'));
+        $freightForwarderAddress->appendChild($xml->createElement('PostcodeCode', $agent_details['agent_pincode']));
         $freightForwarderAddress->appendChild($xml->createElement('StreetName', '156/1 DOMLUR VILLAGE'));
         $freightForwarderAddress->appendChild($xml->createElement('CityName', 'BANGALORE'));
         $freightForwarderAddress->appendChild($xml->createElement('CountryID', 'IN'));

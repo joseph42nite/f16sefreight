@@ -2068,29 +2068,8 @@
                                                                         v-model="form.payment_info.type_of_payment">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
-                                                                        <option value="CA">Partial Collect Credit —
-                                                                            Partial Prepaid Cash CA</option>
-                                                                        <option value="CB">Partial Collect Credit —
-                                                                            Partial Prepaid Credit CB</option>
-                                                                        <option value="CC">All Charges Collect CC
-                                                                        </option>
-                                                                        <option value="CG">All Charges Collect by GBL CG
-                                                                        </option>
-                                                                        <option value="CP">Destination Collect Cash CP
-                                                                        </option>
-                                                                        <option value="CX">Destination Collect Credit CX
-                                                                        </option>
-                                                                        <option value="CX">No Charge NC</option>
-                                                                        <option value="PC">Partial Prepaid Cash —
-                                                                            Partial Collect Cash PC</option>
-                                                                        <option value="PD">Partial Prepaid Credit —
-                                                                            Partial Collect Cash PD</option>
-                                                                        <option value="PG">All Charges Prepaid by GBL PG
-                                                                        </option>
-                                                                        <option value="PP">All Charges Prepaid Cash PP
-                                                                        </option>
-                                                                        <option value="PX">All Charges Prepaid Credit PX
-                                                                        </option>
+                                                                        <option value="C">All Charges Collect CC</option>
+                                                                        <option value="P">All Charges Prepaid Cash PP</option>
                                                                     </b-form-select>
                                                                 </b-form-group>
                                                                 <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>

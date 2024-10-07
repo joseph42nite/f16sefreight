@@ -1494,12 +1494,12 @@
                                                                         value="0">Participant</b-form-radio>
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-radio name="office" size="sm"
+                                                                    <b-form-radio name="participate" size="sm"
                                                                         v-model="agent_information.participate"
                                                                         value="1">Office</b-form-radio>
                                                                 </td>
                                                             </tr>
-                                                            <tr>
+                                                            <tr v-if="agent_information.participate === '0'">
                                                                 <td class="editable-cell">Participant Airport:</td>
                                                                 <td class="editable-cell">
                                                                     <b-form-select class="form-control"
@@ -1532,7 +1532,7 @@
                                                                     </b-form-select>
                                                                 </td>
                                                             </tr>
-                                                            <tr>
+                                                            <tr v-if="agent_information.participate === '0'">
                                                                 <td class="editable-cell">Participant Identifer:</td>
                                                                 <td class="editable-cell">
                                                                     <b-form-select class="form-control"
@@ -1561,7 +1561,7 @@
                                                                     </b-form-select>
                                                                 </td>
                                                             </tr>
-                                                            <tr>
+                                                            <tr v-if="agent_information.participate === '0'">
                                                                 <td class="editable-cell">Participant Code:</td>
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
@@ -1569,12 +1569,42 @@
                                                                         v-model="agent_information.participant_code" />
                                                                 </td>
                                                             </tr>
-                                                            <tr>
+                                                            <tr v-if="agent_information.participate === '0'">
                                                                 <td class="editable-cell">Office File Reference:</td>
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
                                                                         style="width: 200px"
                                                                         v-model="agent_information.office_file_reference" />
+                                                                </td>
+                                                            </tr>
+
+                                                            <tr v-if="agent_information.participate === '1'">
+                                                                <td class="editable-cell">Office Airport:</td>
+                                                                <td class="editable-cell">
+                                                                    <b-form-select class="form-control" style="width: 150px" v-model="agent_information.office_airport">
+                                                                        <option disabled value=""> Please select one</option>
+                                                                        <option value="BLR">BLR, Bangalore (BLR), India</option>
+                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria</option>
+                                                                        <option value="AAH">AAH, Aachen (AAH), Germany</option>
+                                                                    </b-form-select>
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-if="agent_information.participate === '1'">
+                                                                <td class="editable-cell">Office Function Designator:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width: 150px" v-model="agent_information.office_function_designator" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-if="agent_information.participate === '1'">
+                                                                <td class="editable-cell">Office Company Designator:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width: 150px" v-model="agent_information.office_company_designator" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-if="agent_information.participate === '1'">
+                                                                <td class="editable-cell">Office File Reference:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width: 200px" v-model="agent_information.office_file_reference" />
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -3267,7 +3297,7 @@ export default {
                 agent_account: null,
 
                 //Participate Sender Reference
-                participate: null,
+                participate: '0',
                 participate_airport: '',
                 prticipant_identifer: '',
                 participant_code: null,
@@ -3895,10 +3925,13 @@ export default {
         },
         totalDueCarrierCollect(newVal) {
             this.form.payment_info.other_charges_due_carrier_collect = newVal;
+        },
+        'agent_information.participate': function(newValue) {
+            console.log('Participate value changed to:', newValue);
         }
     },
     created() {
-        this.getAgent();
+        // this.getAgent();
     },
     computed: {
         isPrepaid() {
@@ -3970,8 +4003,6 @@ export default {
             ).toFixed(2);
         },
         totalCharges() {
-            console.log('Weight Charge:', this.weightCharge);
-            console.log('Is Prepaid:', this.isPrepaid);
             return {
                 prepaid: this.isPrepaid ? this.weightCharge.toFixed(2) : '0.00',
                 collect: this.isPrepaid ? '0.00' : this.weightCharge.toFixed(2),

@@ -414,11 +414,14 @@ class AirwayBill extends Controller
     {
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make($oci_entry, [
-                'oci_country_code' => 'nullable|string|max:2',
+                'oci_country_code' => 'required|string|max:2',
                 'oci_info_identifier' => 'required|string|max:3',
-                'oci_custom_info_identifier' => 'nullable|string|max:2',
-                'oci_supplementary_info' => 'nullable|string|max:70',
-            ]);
+                'oci_custom_info_identifier' => 'required|string|max:2',
+                'oci_supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
+            ],[
+                'oci_supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
+            ]
+        );
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);

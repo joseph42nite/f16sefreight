@@ -106,7 +106,8 @@ class ConversionController extends Controller
         $masterConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['payment_type']));
         $masterConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $masterConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
-        $masterConsignment->appendChild($xml->createElement('GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
+        if (!empty($waybill_data['total_volume']))
+            $masterConsignment->appendChild($xml->createElement('GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
         $masterConsignment->appendChild($xml->createElement('TotalPieceQuantity', '7'));
 
         // Consignor Party
@@ -119,21 +120,28 @@ class ConversionController extends Controller
         $postalStructuredAddress1->appendChild($xml->createElement('StreetName', $consignor_street_name));
         $postalStructuredAddress1->appendChild($xml->createElement('CityName', $waybill_address['ship_city']));
         $postalStructuredAddress1->appendChild($xml->createElement('CountryID', $waybill_address['ship_country']));
-        $postalStructuredAddress1->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['ship_state']));
+        // $postalStructuredAddress1->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['ship_state']));
         $consignorParty->appendChild($postalStructuredAddress1);
 
-        $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
-        $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
-        $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_phone']));
-        $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-        $FaxCommunication = $xml->createElement('FaxCommunication');
-        $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_fax']));
-        $DefinedTradeContact->appendChild($FaxCommunication);
-        $TelexCommunication = $xml->createElement('TelexCommunication');
-        $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_telex']));
-        $DefinedTradeContact->appendChild($TelexCommunication);
-        $consignorParty->appendChild($DefinedTradeContact);
-
+        if (!empty($waybill_address['ship_phone']) || !empty($waybill_address['ship_fax']) || !empty($waybill_address['ship_telex'])) {
+            $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+            if (!empty($waybill_address['ship_phone'])) {
+                $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+                $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_phone']));
+                $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+            }
+            if (!empty($waybill_address['ship_fax'])) {
+                $FaxCommunication = $xml->createElement('FaxCommunication');
+                $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_fax']));
+                $DefinedTradeContact->appendChild($FaxCommunication);
+            }
+            if ($waybill_address['ship_telex']) {
+                $TelexCommunication = $xml->createElement('TelexCommunication');
+                $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['ship_telex']));
+                $DefinedTradeContact->appendChild($TelexCommunication);
+            }
+            $consignorParty->appendChild($DefinedTradeContact);
+        }
         $masterConsignment->appendChild($consignorParty);
 
         // Consignee Party
@@ -146,20 +154,28 @@ class ConversionController extends Controller
         $postalStructuredAddress2->appendChild($xml->createElement('StreetName', $consignee_street_name));
         $postalStructuredAddress2->appendChild($xml->createElement('CityName', 'Paris'));
         $postalStructuredAddress2->appendChild($xml->createElement('CountryID', $waybill_address['cons_country']));
-        $postalStructuredAddress2->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['cons_state']));
+        // $postalStructuredAddress2->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['cons_state']));
         $consigneeParty->appendChild($postalStructuredAddress2);
 
-        $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
-        $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
-        $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_phone']));
-        $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-        $FaxCommunication = $xml->createElement('FaxCommunication');
-        $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_fax']));
-        $DefinedTradeContact->appendChild($FaxCommunication);
-        $TelexCommunication = $xml->createElement('TelexCommunication');
-        $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_telex']));
-        $DefinedTradeContact->appendChild($TelexCommunication);
-        $consigneeParty->appendChild($DefinedTradeContact);
+        if (!empty($waybill_address['cons_phone']) || !empty($waybill_address['cons_fax']) || !empty($waybill_address['cons_telex'])) {
+            $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+            if (!empty($waybill_address['cons_phone'])) {
+                $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+                $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_phone']));
+                $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+            }
+            if (!empty($waybill_address['cons_fax'])) {
+                $FaxCommunication = $xml->createElement('FaxCommunication');
+                $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_fax']));
+                $DefinedTradeContact->appendChild($FaxCommunication);
+            }
+            if ($waybill_address['cons_telex']) {
+                $TelexCommunication = $xml->createElement('TelexCommunication');
+                $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['cons_telex']));
+                $DefinedTradeContact->appendChild($TelexCommunication);
+            }
+            $consigneeParty->appendChild($DefinedTradeContact);
+        }
         $masterConsignment->appendChild($consigneeParty);
 
         // Freight Forwarder Party
@@ -168,57 +184,176 @@ class ConversionController extends Controller
         $freightForwarderParty->appendChild($xml->createElement('CargoAgentID', $agent_details['iata_agent_code']));
         $freightForwarderAddress = $xml->createElement('FreightForwarderAddress');
         $freightForwarderAddress->appendChild($xml->createElement('PostcodeCode', $agent_details['agent_pincode']));
-        $freightForwarderAddress->appendChild($xml->createElement('StreetName', '156/1 DOMLUR VILLAGE'));
-        $freightForwarderAddress->appendChild($xml->createElement('CityName', 'BANGALORE'));
-        $freightForwarderAddress->appendChild($xml->createElement('CountryID', 'IN'));
+        $freightForwarderAddress->appendChild($xml->createElement('StreetName', $agent_details['agent_address']));
+        $freightForwarderAddress->appendChild($xml->createElement('CityName', $agent_details['agent_city']));
+        $freightForwarderAddress->appendChild($xml->createElement('CountryID', $agent_details['agent_country'])); //
         $freightForwarderParty->appendChild($freightForwarderAddress);
-        $specifiedCargoAgentLocation = $xml->createElement('SpecifiedCargoAgentLocation');
-        $specifiedCargoAgentLocation->appendChild($xml->createElement('ID', '0022'));
-        $freightForwarderParty->appendChild($specifiedCargoAgentLocation);
+
+        $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+        $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+        $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $agent_details['agent_contact_person_phone']));
+        $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+        $URIEmailCommunication = $xml->createElement('URIEmailCommunication');
+        $URIEmailCommunication->appendChild($xml->createElement('URIID', $agent_details['agent_contact_person_email']));
+        $DefinedTradeContact->appendChild($URIEmailCommunication);
+        $freightForwarderParty->appendChild($DefinedTradeContact);
         $masterConsignment->appendChild($freightForwarderParty);
+
+        //also notify
+        if (!empty($waybill_address['also_name'])) {
+            $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
+            $AssociatedParty = $xml->createElement('AssociatedParty');
+            $AssociatedParty->appendChild($xml->createElement('Name', $waybill_address['also_name']));
+
+            $roleCode = $xml->createElement('RoleCode', 'NI');
+            $roleCode->setAttribute('listID', '3035');
+            $roleCode->setAttribute('listAgencyID', '6');
+            $roleCode->setAttribute('listVersionID', 'D09A');
+            $AssociatedParty->appendChild($roleCode);
+
+            $postalStructuredAddress3 = $xml->createElement('PostalStructuredAddress');
+            $postalStructuredAddress3->appendChild($xml->createElement('PostcodeCode', $waybill_address['also_post_code']));
+            $postalStructuredAddress3->appendChild($xml->createElement('StreetName', $consignee_street_name));
+            $postalStructuredAddress3->appendChild($xml->createElement('CityName', 'Paris'));
+            $postalStructuredAddress3->appendChild($xml->createElement('CountryID', $waybill_address['also_country']));
+            // $postalStructuredAddress3->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['also_state']));
+            $AssociatedParty->appendChild($postalStructuredAddress3);
+
+            if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
+                $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+                if (!empty($waybill_address['also_phone'])) {
+                    $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+                    $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_phone']));
+                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+                }
+                if (!empty($waybill_address['also_fax'])) {
+                    $FaxCommunication = $xml->createElement('FaxCommunication');
+                    $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_fax']));
+                    $DefinedTradeContact->appendChild($FaxCommunication);
+                }
+                if ($waybill_address['also_telex']) {
+                    $TelexCommunication = $xml->createElement('TelexCommunication');
+                    $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_telex']));
+                    $DefinedTradeContact->appendChild($TelexCommunication);
+                }
+                $AssociatedParty->appendChild($DefinedTradeContact);
+            }
+            $masterConsignment->appendChild($AssociatedParty);
+        }
 
         // Origin Location
         $originLocation = $xml->createElement('OriginLocation');
-        $originLocation->appendChild($xml->createElement('ID', 'BLR'));
-        $originLocation->appendChild($xml->createElement('Name', 'BANGALORE'));
+        $originLocation->appendChild($xml->createElement('ID', $waybill_data['departure_airport']));
         $masterConsignment->appendChild($originLocation);
 
         // Final Destination Location
         $finalDestinationLocation = $xml->createElement('FinalDestinationLocation');
-        $finalDestinationLocation->appendChild($xml->createElement('ID', 'CDG'));
-        $finalDestinationLocation->appendChild($xml->createElement('Name', 'AEROPORT CHARLES DE GAULLE'));
+        $finalDestinationLocation->appendChild($xml->createElement('ID', $waybill_data['destination_airport']));
         $masterConsignment->appendChild($finalDestinationLocation);
 
-        // Create the SpecifiedLogisticsTransportMovement element
-        $specifiedLogisticsTransportMovement = $xml->createElement('SpecifiedLogisticsTransportMovement');
+        // ===========First route info=============
+        if (!empty($waybill_data['by']) && !empty($waybill_data['flight'])) {
+            // Create the SpecifiedLogisticsTransportMovement element
+            $specifiedLogisticsTransportMovement = $xml->createElement('SpecifiedLogisticsTransportMovement');
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('StageCode', 'Main-Carriage'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ModeCode', 4));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('Mode', 'AIR TRANSPORT'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ID', $waybill_data['by'] . $waybill_data['flight']));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('SequenceNumeric', '1'));
 
-        // Stage Code
-        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('StageCode', 'MAIN-CARRIAGE'));
-        // ID
-        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ID', 'AF991'));
-        // Sequence Numeric
-        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('SequenceNumeric', '1'));
+            // Used Logistics Transport Means
+            $usedLogisticsTransportMeans = $xml->createElement('UsedLogisticsTransportMeans');
+            $usedLogisticsTransportMeans->appendChild($xml->createElement('Name', $waybill_data['by']));
+            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
 
-        // Used Logistics Transport Means
-        $usedLogisticsTransportMeans = $xml->createElement('UsedLogisticsTransportMeans');
-        $usedLogisticsTransportMeans->appendChild($xml->createElement('Name', 'AF'));
-        $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
+            // Arrival Event
+            $arrivalEvent = $xml->createElement('ArrivalEvent');
+            $occurrenceArrivalLocation = $xml->createElement('OccurrenceArrivalLocation');
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ID', $waybill_data['to']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($occurrenceArrivalLocation);
+            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
 
-        // Arrival Event
-        $arrivalEvent = $xml->createElement('ArrivalEvent');
-        $occurrenceArrivalLocation = $xml->createElement('OccurrenceArrivalLocation');
-        $occurrenceArrivalLocation->appendChild($xml->createElement('ID', 'CDG'));
-        $occurrenceArrivalLocation->appendChild($xml->createElement('TypeCode', 'AIRPORT'));
-        $arrivalEvent->appendChild($occurrenceArrivalLocation);
-        $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+            // Departure Event
+            $departureEvent = $xml->createElement('DepartureEvent');
+            $departureEvent->appendChild($xml->createElement('ScheduledOccurrenceDateTime', $waybill_data['date']));
+            $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $waybill_data['from']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
-        // Departure Event
-        $departureEvent = $xml->createElement('DepartureEvent');
-        $departureEvent->appendChild($xml->createElement('ScheduledOccurrenceDateTime', '2014-01-28T00:00:00'));
-        $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // =========== End First route info=============
+        }
+        if (!empty($waybill_data['by_2']) && !empty($waybill_data['flight_2'])) {
+            // ===========Second route info=============
+            $specifiedLogisticsTransportMovement = $xml->createElement('SpecifiedLogisticsTransportMovement');
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('StageCode', 'Main-Carriage'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ModeCode', 4));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('Mode', 'AIR TRANSPORT'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ID', $waybill_data['by_2'] . $waybill_data['flight_2']));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('SequenceNumeric', '2'));
 
-        $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // Used Logistics Transport Means
+            $usedLogisticsTransportMeans = $xml->createElement('UsedLogisticsTransportMeans');
+            $usedLogisticsTransportMeans->appendChild($xml->createElement('Name', $waybill_data['by_2']));
+            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
 
+            // Arrival Event
+            $arrivalEvent = $xml->createElement('ArrivalEvent');
+            $occurrenceArrivalLocation = $xml->createElement('OccurrenceArrivalLocation');
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ID', $waybill_data['to_2']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($occurrenceArrivalLocation);
+            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+
+            // Departure Event
+            $departureEvent = $xml->createElement('DepartureEvent');
+            $departureEvent->appendChild($xml->createElement('ScheduledOccurrenceDateTime', $waybill_data['date_2']));
+            $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $waybill_data['to']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+
+            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // ===========End Second route info=============
+        }
+        if (!empty($waybill_data['by_3']) && !empty($waybill_data['flight_3'])) {
+            // ===========Third route info=============
+            $specifiedLogisticsTransportMovement = $xml->createElement('SpecifiedLogisticsTransportMovement');
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('StageCode', 'Main-Carriage'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ModeCode', 4));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('Mode', 'AIR TRANSPORT'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ID', $waybill_data['by_3'] . $waybill_data['flight_3']));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('SequenceNumeric', '3'));
+
+            // Used Logistics Transport Means
+            $usedLogisticsTransportMeans = $xml->createElement('UsedLogisticsTransportMeans');
+            $usedLogisticsTransportMeans->appendChild($xml->createElement('Name', $waybill_data['by_3']));
+            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
+
+            // Arrival Event
+            $arrivalEvent = $xml->createElement('ArrivalEvent');
+            $occurrenceArrivalLocation = $xml->createElement('OccurrenceArrivalLocation');
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ID', $waybill_data['to_3']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($occurrenceArrivalLocation);
+            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+
+            // Departure Event
+            $departureEvent = $xml->createElement('DepartureEvent');
+            $departureEvent->appendChild($xml->createElement('ScheduledOccurrenceDateTime', $waybill_data['date_3']));
+            $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $waybill_data['to_2']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+
+            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // ===========End Third route info=============
+        }
         // Handling SPH Instructions
         $handlingSPHInstructions = $xml->createElement('HandlingSPHInstructions');
         $handlingSPHInstructions->appendChild($xml->createElement('DescriptionCode', 'EAW'));

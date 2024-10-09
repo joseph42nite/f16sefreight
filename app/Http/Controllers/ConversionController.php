@@ -8,6 +8,7 @@ use App\ConsignmentData;
 use App\Agent;
 use App\PaymentInfo;
 use App\OtherCharge;
+use App\OtherCustomInformation;
 use Illuminate\Http\Request;
 use DOMDocument;
 
@@ -22,8 +23,9 @@ class ConversionController extends Controller
         $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $awb_id)->limit(1)->get()->toArray();
+        $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         // echo "<pre>";
-        // print_r($waybill_address);
+        // print_r(json_decode($waybill_data['special_handling_info'],true));
         // echo "</pre>";
         // die();
         $utc_current_date = gmdate("Y-m-d H:i:s");
@@ -199,48 +201,6 @@ class ConversionController extends Controller
         $freightForwarderParty->appendChild($DefinedTradeContact);
         $masterConsignment->appendChild($freightForwarderParty);
 
-        //also notify
-        if (!empty($waybill_address['also_name'])) {
-            $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
-            $AssociatedParty = $xml->createElement('AssociatedParty');
-            $AssociatedParty->appendChild($xml->createElement('Name', $waybill_address['also_name']));
-
-            $roleCode = $xml->createElement('RoleCode', 'NI');
-            $roleCode->setAttribute('listID', '3035');
-            $roleCode->setAttribute('listAgencyID', '6');
-            $roleCode->setAttribute('listVersionID', 'D09A');
-            $AssociatedParty->appendChild($roleCode);
-
-            $postalStructuredAddress3 = $xml->createElement('PostalStructuredAddress');
-            $postalStructuredAddress3->appendChild($xml->createElement('PostcodeCode', $waybill_address['also_post_code']));
-            $postalStructuredAddress3->appendChild($xml->createElement('StreetName', $consignee_street_name));
-            $postalStructuredAddress3->appendChild($xml->createElement('CityName', 'Paris'));
-            $postalStructuredAddress3->appendChild($xml->createElement('CountryID', $waybill_address['also_country']));
-            // $postalStructuredAddress3->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['also_state']));
-            $AssociatedParty->appendChild($postalStructuredAddress3);
-
-            if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
-                $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
-                if (!empty($waybill_address['also_phone'])) {
-                    $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
-                    $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_phone']));
-                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-                }
-                if (!empty($waybill_address['also_fax'])) {
-                    $FaxCommunication = $xml->createElement('FaxCommunication');
-                    $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_fax']));
-                    $DefinedTradeContact->appendChild($FaxCommunication);
-                }
-                if ($waybill_address['also_telex']) {
-                    $TelexCommunication = $xml->createElement('TelexCommunication');
-                    $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_telex']));
-                    $DefinedTradeContact->appendChild($TelexCommunication);
-                }
-                $AssociatedParty->appendChild($DefinedTradeContact);
-            }
-            $masterConsignment->appendChild($AssociatedParty);
-        }
-
         // Origin Location
         $originLocation = $xml->createElement('OriginLocation');
         $originLocation->appendChild($xml->createElement('ID', $waybill_data['departure_airport']));
@@ -354,26 +314,99 @@ class ConversionController extends Controller
             $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
             // ===========End Third route info=============
         }
+
+        $special_handling_info = json_decode($waybill_data['special_handling_info'], true);
         // Handling SPH Instructions
-        $handlingSPHInstructions = $xml->createElement('HandlingSPHInstructions');
-        $handlingSPHInstructions->appendChild($xml->createElement('DescriptionCode', 'EAW'));
-        $masterConsignment->appendChild($handlingSPHInstructions);
+        for ($i = 0; $i < sizeof($special_handling_info); $i++) {
+            $handlingSPHInstructions = $xml->createElement('HandlingSPHInstructions');
+            $handlingSPHInstructions->appendChild($xml->createElement('DescriptionCode', $special_handling_info[$i]));
+            $masterConsignment->appendChild($handlingSPHInstructions);
+        }
 
-        // Handling SSR Instructions
-        $handlingSSRInstructions = $xml->createElement('HandlingSSRInstructions');
-        $handlingSSRInstructions->appendChild($xml->createElement('Description', 'PLS INFORM CONSINGEE UPON ARRIVAL. DOCS ATTD TO THE HAWB'));
-        $masterConsignment->appendChild($handlingSSRInstructions);
+        if (!empty($waybill_data['special_service_request'])) {
+            // Handling SSR Instructions
+            $handlingSSRInstructions = $xml->createElement('HandlingSSRInstructions');
+            $handlingSSRInstructions->appendChild($xml->createElement('Description', $waybill_data['special_service_request']));
+            $masterConsignment->appendChild($handlingSSRInstructions);
+        }
+        //also notify
+        if (!empty($waybill_address['also_name'])) {
+            $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
+            $AssociatedParty = $xml->createElement('AssociatedParty');
+            $AssociatedParty->appendChild($xml->createElement('Name', $waybill_address['also_name']));
 
-        // Included Accounting Note
-        $includedAccountingNote = $xml->createElement('IncludedAccountingNote');
-        $includedAccountingNote->appendChild($xml->createElement('ContentCode', 'GEN'));
-        $includedAccountingNote->appendChild($xml->createElement('Content', 'PAYMENT BY CERTIFIED CHEQUE'));
-        $masterConsignment->appendChild($includedAccountingNote);
+            $roleCode = $xml->createElement('RoleCode', 'NI');
+            $roleCode->setAttribute('listID', '3035');
+            $roleCode->setAttribute('listAgencyID', '6');
+            $roleCode->setAttribute('listVersionID', 'D09A');
+            $AssociatedParty->appendChild($roleCode);
+
+            $postalStructuredAddress3 = $xml->createElement('PostalStructuredAddress');
+            $postalStructuredAddress3->appendChild($xml->createElement('PostcodeCode', $waybill_address['also_post_code']));
+            $postalStructuredAddress3->appendChild($xml->createElement('StreetName', $consignee_street_name));
+            $postalStructuredAddress3->appendChild($xml->createElement('CityName', 'Paris'));
+            $postalStructuredAddress3->appendChild($xml->createElement('CountryID', $waybill_address['also_country']));
+            // $postalStructuredAddress3->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['also_state']));
+            $AssociatedParty->appendChild($postalStructuredAddress3);
+
+            if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
+                $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+                if (!empty($waybill_address['also_phone'])) {
+                    $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+                    $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_phone']));
+                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+                }
+                if (!empty($waybill_address['also_fax'])) {
+                    $FaxCommunication = $xml->createElement('FaxCommunication');
+                    $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_fax']));
+                    $DefinedTradeContact->appendChild($FaxCommunication);
+                }
+                if ($waybill_address['also_telex']) {
+                    $TelexCommunication = $xml->createElement('TelexCommunication');
+                    $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_telex']));
+                    $DefinedTradeContact->appendChild($TelexCommunication);
+                }
+                $AssociatedParty->appendChild($DefinedTradeContact);
+            }
+            $masterConsignment->appendChild($AssociatedParty);
+        }
+        if (!empty($waybill_data['other_service_information'])) {
+            // Handling SSR Instructions
+            $HandlingOSIInstructions = $xml->createElement('HandlingOSIInstructions');
+            $HandlingOSIInstructions->appendChild($xml->createElement('Description', $waybill_data['other_service_information']));
+            $masterConsignment->appendChild($HandlingOSIInstructions);
+        }
+        if (!empty($waybill_data['letter_credit']) && !empty($waybill_data['accounting_information'])) {
+            // Included Accounting Note
+            $includedAccountingNote = $xml->createElement('IncludedAccountingNote');
+            $includedAccountingNote->appendChild($xml->createElement('ContentCode', $waybill_data['letter_credit']));
+            $includedAccountingNote->appendChild($xml->createElement('Content', $waybill_data['accounting_information']));
+            $masterConsignment->appendChild($includedAccountingNote);
+        }
+        for ($i = 0; $i < sizeof($custom_info); $i++) {
+            $IncludedCustomsNote = $xml->createElement('IncludedCustomsNote');
+            $IncludedCustomsNote->appendChild($xml->createElement('ContentCode', $custom_info[$i]['custom_info_identifier']));
+            $IncludedCustomsNote->appendChild($xml->createElement('Content', $custom_info[$i]['supplementary_info']));
+            $IncludedCustomsNote->appendChild($xml->createElement('SubjectCode', $custom_info[$i]['info_identifier']));
+            $IncludedCustomsNote->appendChild($xml->createElement('CountryID', $custom_info[$i]['country_code']));
+            $masterConsignment->appendChild($IncludedCustomsNote);
+        }
+        if ($waybill_data['customs_origin_code']) {
+            $AssociatedConsignmentCustomsProcedure = $xml->createElement('AssociatedConsignmentCustomsProcedure');
+            $AssociatedConsignmentCustomsProcedure->appendChild($xml->createElement('GoodsStatusCode', $waybill_data['customs_origin_code']));
+            $masterConsignment->appendChild($AssociatedConsignmentCustomsProcedure);
+        }
 
         // Applicable Origin Currency Exchange
         $applicableOriginCurrencyExchange = $xml->createElement('ApplicableOriginCurrencyExchange');
         $applicableOriginCurrencyExchange->appendChild($xml->createElement('SourceCurrencyCode', 'INR'));
         $masterConsignment->appendChild($applicableOriginCurrencyExchange);
+
+        if ($payment_details['payment_type']) {
+            $ApplicableLogisticsServiceCharge = $xml->createElement('ApplicableLogisticsServiceCharge');
+            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('TransportPaymentMethodCode', $payment_details['payment_type']));
+            $masterConsignment->appendChild($ApplicableLogisticsServiceCharge);
+        }
 
         // Applicable Logistics Allowance Charge (Multiple Entries)
         $allowanceCharges = [

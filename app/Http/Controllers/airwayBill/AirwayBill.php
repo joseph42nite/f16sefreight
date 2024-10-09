@@ -591,14 +591,13 @@ class AirwayBill extends Controller
             'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'weight_code' => 'nullable|string|max:3',
             'volume' => 'nullable|string',
-            'dimention_unit' => 'nullable|string|max:2',
+            'dimention_unit' => 'nullable|string|max:3',
             'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
         return response()->json(['msg' => 'No error'], 200);
     }
 }

@@ -342,9 +342,9 @@
                                                 v-model="form.shipper_address.ship_country"
                                                 :class="{ 'is-invalid': form.errors.has('ship_country') }">
                                                 <option disabled value=""> Please select one</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option Value="c">C</option>
+                                                <option value="IN">India</option>
+                                                <option value="USA">United State</option>
+                                                <option Value="UK">United Kingdom</option>
                                             </b-form-select>
                                             <has-error :form="form" field="ship_country"></has-error>
                                         </b-form-group>
@@ -476,9 +476,9 @@
                                                 v-model="form.consignee_address.cons_country"
                                                 :class="{ 'is-invalid': form.errors.has('cons_country') }">
                                                 <option disabled value="Please select one"> Please select one</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option value="C">C</option>
+                                                <option value="IN">India</option>
+                                                <option value="USA">United State</option>
+                                                <option Value="UK">United Kingdom</option>
                                             </b-form-select>
                                             <has-error :form="form" field="cons_country"></has-error>
                                         </b-form-group>
@@ -810,7 +810,7 @@
                                                                 <b-form-select class="form-control"
                                                                     style="width: 320px;"
                                                                     v-model="consignment_list.rate_class" @change="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate_class') }">
-                                                                    <option disabled value="">Select a Rate Class
+                                                                    <option value="">Select a Rate Class
                                                                     </option>
                                                                     <option value="B">CB - Basic rate</option>
                                                                     <option value="C">CC - Specific commodity rate
@@ -862,7 +862,7 @@
                                                                 <b-form-select class="form-control"
                                                                     style="width: 320px;"
                                                                     v-model="consignment_list.service_code" :class="{ 'is-invalid': consignment_list.errors.has('service_code') }">
-                                                                    <option disabled value="">Select a Service Code
+                                                                    <option value="">Select a Service Code
                                                                     </option>
                                                                     <option value="A">A - Airport to Airport</option>
                                                                     <option value="B">B - Service Cargo</option>
@@ -901,7 +901,7 @@
                                                                 <b-form-select class="form-control"
                                                                     style=" width: 320px;"
                                                                     v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
-                                                                    <option disabled value=""> Select a Country</option>
+                                                                    <option value=""> Select a Country</option>
                                                                     <option value="AF"> Afghanistan</option>
                                                                     <option value="AX"> Åland Islands </option>
                                                                     <option value="AL">Albania</option>
@@ -974,8 +974,8 @@
                                                                 <b-form-select class="form-control"
                                                                     style=" width: 70px;"
                                                                     v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
-                                                                    <option value="K">Kgs</option>
-                                                                    <option value="L">Lbs</option>
+                                                                    <option value="KGM">Kgs</option>
+                                                                    <option value="LBR">Lbs</option>
                                                                 </b-form-select>
                                                                 <has-error :form="consignment_list" field="weight_code"></has-error>
                                                             </td>
@@ -1083,11 +1083,11 @@
                                                     <b-col cols="auto">
                                                         <b-form-select class="form-control"
                                                             style="width:70px;margin-right: 10px;"
-                                                            v-model="consignment_list.dimention_unit">
-                                                            <option value="CC">cm³</option>
-                                                            <option value="MC">m³</option>
-                                                            <option value="CF">ft³</option>
-                                                            <option value="CI">in³</option>
+                                                            v-model="this.form.entries.dimention_unit">
+                                                            <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
+                                                            <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
+                                                            <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
+                                                            <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
                                                         </b-form-select>
                                                     </b-col>
                                                 </b-row>
@@ -1238,10 +1238,10 @@
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2"
                                                     v-model="form.totals.total_volume"></b-form-input>
                                                 <b-form-select class="form-control-sm" v-model="form.entries.dimention_unit">
-                                                    <option value="CC">cm³</option>
-                                                    <option value="MC">m³</option>
-                                                    <option value="CF">ft³</option>
-                                                    <option value="CI">in³</option>
+                                                    <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
+                                                    <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
+                                                    <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
+                                                    <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
                                                 </b-form-select>
                                             </div>
                                             <div class="d-flex align-items-center">
@@ -1688,9 +1688,9 @@
                                                 v-model="form.also_notify_address.also_country"
                                                 :class="{ 'is-invalid': form.errors.has('also_country') }">
                                                 <option disabled value=""> Please select one</option>
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option Value="c">C</option>
+                                                <option value="IN">India</option>
+                                                <option value="USA">United State</option>
+                                                <option Value="UK">United Kingdom</option>
                                             </b-form-select>
                                             <has-error :form="form" field="also_country"></has-error>
                                         </b-form-group>
@@ -2098,29 +2098,8 @@
                                                                         v-model="form.payment_info.type_of_payment">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
-                                                                        <option value="CA">Partial Collect Credit —
-                                                                            Partial Prepaid Cash CA</option>
-                                                                        <option value="CB">Partial Collect Credit —
-                                                                            Partial Prepaid Credit CB</option>
-                                                                        <option value="CC">All Charges Collect CC
-                                                                        </option>
-                                                                        <option value="CG">All Charges Collect by GBL CG
-                                                                        </option>
-                                                                        <option value="CP">Destination Collect Cash CP
-                                                                        </option>
-                                                                        <option value="CX">Destination Collect Credit CX
-                                                                        </option>
-                                                                        <option value="CX">No Charge NC</option>
-                                                                        <option value="PC">Partial Prepaid Cash —
-                                                                            Partial Collect Cash PC</option>
-                                                                        <option value="PD">Partial Prepaid Credit —
-                                                                            Partial Collect Cash PD</option>
-                                                                        <option value="PG">All Charges Prepaid by GBL PG
-                                                                        </option>
-                                                                        <option value="PP">All Charges Prepaid Cash PP
-                                                                        </option>
-                                                                        <option value="PX">All Charges Prepaid Credit PX
-                                                                        </option>
+                                                                        <option value="C">All Charges Collect CC</option>
+                                                                        <option value="P">All Charges Prepaid Cash PP</option>
                                                                     </b-form-select>
                                                                 </b-form-group>
                                                                 <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
@@ -3261,7 +3240,7 @@ export default {
                 hs_code: '',
 
                 gross_weight: '',
-                weight_code: 'K', //kgs/lbs
+                weight_code: 'KGM', //kgs/lbs
                 chargable_weight: '',
                 other_charge: '',
                 rate: '',
@@ -3272,7 +3251,7 @@ export default {
                 height: '',
                 unit: 'CMT',
                 volume: '',
-                dimention_unit: '', //cm3,m3,ft3
+                dimention_unit: 'MTQ', //cm3,m3,ft3
 
                 uld_type: '',
                 uld_serial: '',
@@ -3663,7 +3642,8 @@ export default {
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
-            this.consignment_list.post(`/get-consignment-error`).then(response => {
+            this.consignment_list.post(`/get-consignment-error`)
+            .then(response => {
                 if (this.edit_entry_index !== null) {
                     this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
                     // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
@@ -3684,30 +3664,76 @@ export default {
                         }
                     }
                 }
+            })
+            .catch(error => {
+                console.error("There was an error with the consignment request:", error);
             });
         },
+        // calculateTotalVolume() {
+        //     let totalVolume = this.form.entries.reduce((total, entry) => {
+        //         return total + entry.itemss.reduce((entryTotal, item) => {
+        //             let volumePerPiece = (item.length * item.width * item.height) / 1e6;
+        //             return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
+        //         }, 0);
+        //     }, 0);
+        //     return this.form.totals.total_volume = totalVolume;
+        // },
+       
         calculateTotalVolume() {
             let totalVolume = this.form.entries.reduce((total, entry) => {
                 return total + entry.itemss.reduce((entryTotal, item) => {
-                    let volumePerPiece = (item.length * item.width * item.height) / 1e6;
-                    return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
+                    // Parse dimensions and pcs
+                    let length = parseFloat(item.length) || 0; // Length
+                    let width = parseFloat(item.width) || 0;   // Width
+                    let height = parseFloat(item.height) || 0; // Height
+                    let pcs = parseFloat(item.pcs) || 0;        // Pieces
+                    let dimensionUnit = item.unit;             // Get the dimension unit (CMT, INH, FOT)
+                    let volumeInCMT = (length * width * height * pcs) / 1_000_000;
+                    let volumeInCM3, volumeInFt3, volumeInIn3, volumeInM3;
+                    if (dimensionUnit === 'CMT') {
+                        volumeInCM3 = volumeInCM3;
+                        volumeInCM3 = volumeInCMT * 1_000_000; // m³ to cm³
+                        volumeInFt3 = volumeInCMT * 35.3147; // m³ to ft³
+                        volumeInIn3 = volumeInCMT * 61_023.7441; // m³ to in³
+                    } else if (dimensionUnit === 'INH') {
+                        let volumeInInch = length * width * height * pcs; // in³
+                        volumeInIn3 = volumeInInch; // Already in in³
+                        volumeInCM3 = volumeInInch * 16.387; // in³ to cm³
+                        volumeInFt3 = volumeInInch * 0.0005787037; // in³ to ft³
+                        volumeInM3 = volumeInInch * 0.000016387064; // in³ to m³
+                    } else if (dimensionUnit === 'FOT') {
+                        let volumeInFoot = length * width * height * pcs; // in ft³
+                        volumeInFt3 = volumeInFoot;
+                        volumeInCM3 = volumeInFoot * 28_316.8466; // ft³ to cm³
+                        volumeInM3 = volumeInFoot * 0.0283168466; // ft³ to m³
+                        volumeInIn3 = volumeInFoot * 1_728; // ft³ to in³
+                    }
+                    let selectedUnit = this.form.entries.dimention_unit; 
+                    let finalVolume = 0;
+
+                    switch (selectedUnit) {
+                        case 'CMQ': // cm³
+                            finalVolume = volumeInCM3;
+                            break;
+                        case 'MTQ': // m³
+                            finalVolume = volumeInM3 || (volumeInCMT); // Use volumeInCMT directly if in m³
+                            break;
+                        case 'FTQ': // ft³
+                            finalVolume = volumeInFt3;
+                            break;
+                        case 'INQ': // in³
+                            finalVolume = volumeInIn3;
+                            break;
+                        default:
+                            finalVolume = volumeInCM3; // Default case
+                    }
+                    return entryTotal + finalVolume;
                 }, 0);
             }, 0);
-            return this.form.totals.total_volume = totalVolume;
+
+            // Set total volume in the form
+            this.form.totals.total_volume = totalVolume.toFixed(2);
         },
-
-        // calculateTotalAmount() {
-        //     let chargeableWeight = parseFloat(this.form.entries.reduce((total, entry) => {
-        //         return total + (parseFloat(entry.chargable_weight) || 0);
-        //     }, 0)) || 0;
-
-        //     let rate = parseFloat(this.form.entries.reduce((total, entry) => {
-        //         return total + (parseFloat(entry.rate) || 0);
-        //     }, 0)) || 0;
-
-        //     this.form.totals.total_amount = chargeableWeight * rate; // Calculate total amount
-        //     console.log("Total Amount:", this.form.totals.total_amount);
-        // },
         calculateTotalAmount() {
             const chargeableWeight = this.form.entries.reduce((total, entry) => {
                 let weight = parseFloat(entry.chargable_weight) || 0;
@@ -3878,10 +3904,16 @@ export default {
             this.form.totals.total_amount = this.calculateTotalAmount();
         },
     },
+    mounted(){
+        this.calculateTotalVolume();
+    },
     watch: {
         // 'consignment_list': function () {
         //     this.form.totals.total_amount = this.calculateTotalAmount();
         // },
+        'form.entries.dimention_unit': function() {
+            this.calculateTotalVolume();
+        },
         'form.charges': {
             handler(newVal) {
                 this.totalChargesPrepaid;

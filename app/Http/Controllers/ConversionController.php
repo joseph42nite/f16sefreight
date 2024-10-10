@@ -22,10 +22,10 @@ class ConversionController extends Controller
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
-        $other_charges = OtherCharge::where('awb_id', $awb_id)->limit(1)->get()->toArray();
+        $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         // echo "<pre>";
-        // print_r(json_decode($waybill_data['special_handling_info'],true));
+        // print_r($hs_code);
         // echo "</pre>";
         // die();
         $utc_current_date = gmdate("Y-m-d H:i:s");
@@ -409,21 +409,13 @@ class ConversionController extends Controller
         }
 
         // Applicable Logistics Allowance Charge (Multiple Entries)
-        $allowanceCharges = [
-            ['ID' => 'MC', 'ActualAmount' => '4585.00'],
-            ['ID' => 'CG', 'ActualAmount' => '190.00'],
-            ['ID' => 'MA', 'ActualAmount' => '1834.00'],
-            ['ID' => 'MY', 'ActualAmount' => '102704.00'],
-            ['ID' => 'SC', 'ActualAmount' => '14672.00'],
-        ];
-
-        foreach ($allowanceCharges as $charge) {
+        for ($i = 0; $i < sizeof($other_charges); $i++) {
             $applicableLogisticsAllowanceCharge = $xml->createElement('ApplicableLogisticsAllowanceCharge');
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ID', $charge['ID']));
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('PrepaidIndicator', 'P'));
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('PartyTypeCode', 'C'));
-            $applicableAmount = $xml->createElement('ActualAmount', $charge['ActualAmount']);
-            $applicableAmount->setAttribute('currencyID', 'INR');
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ID', $other_charges[$i]['other_charge_code']));
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('PrepaidIndicator', $other_charges[$i]['payment_type']));
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('PartyTypeCode', $other_charges[$i]['due']));
+            $applicableAmount = $xml->createElement('ActualAmount', $other_charges[$i]['amount']);
+            $applicableAmount->setAttribute('currencyID', $payment_details['currency']);
             $applicableLogisticsAllowanceCharge->appendChild($applicableAmount);
             $masterConsignment->appendChild($applicableLogisticsAllowanceCharge);
         }
@@ -432,37 +424,50 @@ class ConversionController extends Controller
         $applicableRating = $xml->createElement('ApplicableRating');
         $applicableRating->appendChild($xml->createElement('TypeCode', 'F'));
 
-        $totalChargeAmount = $xml->createElement('TotalChargeAmount', '280602.00');
-        $totalChargeAmount->setAttribute('currencyID', 'INR');
+        $totalChargeAmount = $xml->createElement('TotalChargeAmount', $waybill_data['total_amount']);
+        $totalChargeAmount->setAttribute('currencyID', $payment_details['currency']);
         $applicableRating->appendChild($totalChargeAmount);
+        $applicableRating->appendChild($xml->createElement('ConsignmentItemQuantity', $consignment_data['pieces']));
+        $all_pieces = json_decode($consignment_data['pieces_info'], true);
+        for ($i = 0; $i < sizeof($all_pieces); $i++) {
+            // Included Master Consignment Item
+            $includedMasterConsignmentItem = $xml->createElement('IncludedMasterConsignmentItem');
+            $includedMasterConsignmentItem->appendChild($xml->createElement('SequenceNumeric', $i + 1));
+            $hs_code = json_decode($consignment_data['hs_code'], true);
+            $TypeCode = $xml->createElement('TypeCode', $hs_code[0]);
+            $TypeCode->setAttribute('listAgencyID', 1);
+            $includedMasterConsignmentItem->appendChild($TypeCode);
+            $includedMasterConsignmentItem->appendChild($xml->createElement('GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+            $includedMasterConsignmentItem->appendChild($xml->createElement('GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
+            if (!empty($consignment_data['slac']))
+                $includedMasterConsignmentItem->appendChild($xml->createElement('PackageQuantity', $consignment_data['slac']));
+            $includedMasterConsignmentItem->appendChild($xml->createElement('PieceQuantity', $all_pieces[$i]['pcs']));
+            $includedMasterConsignmentItem->appendChild($xml->createElement('Information', 'NDA'));
+            // Nature Identification Transport Cargo
+            if (!empty($consignment_data['description'])) {
+                $natureIdentificationTransportCargo = $xml->createElement('NatureIdentificationTransportCargo');
+                $natureIdentificationTransportCargo->appendChild($xml->createElement('Identification', $consignment_data['description']));
+                $includedMasterConsignmentItem->appendChild($natureIdentificationTransportCargo);
+            }
+            if (!empty($consignment_data['country_origin_goods'])) {
+                $OriginCountry = $xml->createElement('OriginCountry');
+                $OriginCountry->appendChild($xml->createElement('ID', $consignment_data['country_origin_goods']));
+                $includedMasterConsignmentItem->appendChild($OriginCountry);
+            }
 
-        // Included Master Consignment Item
-        $includedMasterConsignmentItem = $xml->createElement('IncludedMasterConsignmentItem');
-        $includedMasterConsignmentItem->appendChild($xml->createElement('SequenceNumeric', '1'));
-        $includedMasterConsignmentItem->appendChild($xml->createElement('TypeCode', ''));
-        $includedMasterConsignmentItem->appendChild($xml->createElement('GrossWeightMeasure', '1834.0'))->setAttribute('unitCode', 'KGM');
-        $includedMasterConsignmentItem->appendChild($xml->createElement('GrossVolumeMeasure', '4.299'))->setAttribute('unitCode', 'MTQ');
-        $includedMasterConsignmentItem->appendChild($xml->createElement('PackageQuantity', '7'));
-        $includedMasterConsignmentItem->appendChild($xml->createElement('PieceQuantity', '7'));
-        $includedMasterConsignmentItem->appendChild($xml->createElement('Information', 'NDA'));
+            // Applicable Freight Rate Service Charge
+            $applicableFreightRateServiceCharge = $xml->createElement('ApplicableFreightRateServiceCharge');
+            $applicableFreightRateServiceCharge->appendChild($xml->createElement('CategoryCode', 'Q'));
+            $applicableFreightRateServiceCharge->appendChild($xml->createElement('ChargeableWeightMeasure', '1834.0'))->setAttribute('unitCode', 'KGM');
+            $applicableFreightRateServiceCharge->appendChild($xml->createElement('AppliedRate', '153.00'));
+            $applicableAppliedAmount = $xml->createElement('AppliedAmount', '280602.00');
+            $applicableAppliedAmount->setAttribute('currencyID', 'INR');
+            $applicableFreightRateServiceCharge->appendChild($applicableAppliedAmount);
+            $includedMasterConsignmentItem->appendChild($applicableFreightRateServiceCharge);
 
-        // Nature Identification Transport Cargo
-        $natureIdentificationTransportCargo = $xml->createElement('NatureIdentificationTransportCargo');
-        $natureIdentificationTransportCargo->appendChild($xml->createElement('Identification', 'CONSOLIDATION AS PER ATTACHED MANIFEST'));
-        $includedMasterConsignmentItem->appendChild($natureIdentificationTransportCargo);
-
-        // Applicable Freight Rate Service Charge
-        $applicableFreightRateServiceCharge = $xml->createElement('ApplicableFreightRateServiceCharge');
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('CategoryCode', 'Q'));
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ChargeableWeightMeasure', '1834.0'))->setAttribute('unitCode', 'KGM');
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('AppliedRate', '153.00'));
-        $applicableAppliedAmount = $xml->createElement('AppliedAmount', '280602.00');
-        $applicableAppliedAmount->setAttribute('currencyID', 'INR');
-        $applicableFreightRateServiceCharge->appendChild($applicableAppliedAmount);
-        $includedMasterConsignmentItem->appendChild($applicableFreightRateServiceCharge);
-
-        // Append IncludedMasterConsignmentItem to ApplicableRating
-        $applicableRating->appendChild($includedMasterConsignmentItem);
+            // Append IncludedMasterConsignmentItem to ApplicableRating
+            $applicableRating->appendChild($includedMasterConsignmentItem);
+        }
         $masterConsignment->appendChild($applicableRating);
 
         // Applicable Total Rating

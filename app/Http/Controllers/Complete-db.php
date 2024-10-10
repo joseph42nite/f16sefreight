@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ns2:Waybill xmlns="iata:datamodel:3"
-    xmlns:ns2="iata:waybill:1">
+<ns2:Waybill xmlns="iata:datamodel:3" xmlns:ns2="iata:waybill:1">
     <ns2:MessageHeaderDocument>
         <ID>057-51987552_280824093140298</ID>
         <Name>MASTER AIR WAYBILL</Name>
@@ -151,7 +150,7 @@
             </DepartureEvent>
         </SpecifiedLogisticsTransportMovement>
 
-        
+
         <HandlingSPHInstructions>
             <DescriptionCode>ECC</DescriptionCode>
         </HandlingSPHInstructions>
@@ -231,7 +230,7 @@
         <ApplicableLogisticsServiceCharge>
             <TransportPaymentMethodCode>PX</TransportPaymentMethodCode>
         </ApplicableLogisticsServiceCharge>
-        
+
         <ApplicableRating>
             <TypeCode>F</TypeCode>
             <TotalChargeAmount currencyID="INR">91872</TotalChargeAmount>
@@ -271,6 +270,11 @@
                 </ApplicableFreightRateServiceCharge>
             </IncludedMasterConsignmentItem>
         </ApplicableRating>
+
+
+
+
+        
         <ApplicableTotalRating>
             <TypeCode>F</TypeCode>
             <ApplicablePrepaidCollectMonetarySummation>

@@ -25,7 +25,7 @@ class ConversionController extends Controller
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         // echo "<pre>";
-        // print_r($hs_code);
+        // print_r($uld_info);
         // echo "</pre>";
         // die();
         $utc_current_date = gmdate("Y-m-d H:i:s");
@@ -454,7 +454,19 @@ class ConversionController extends Controller
                 $OriginCountry->appendChild($xml->createElement('ID', $consignment_data['country_origin_goods']));
                 $includedMasterConsignmentItem->appendChild($OriginCountry);
             }
-
+            //for the uld
+            $uld_info = json_decode($consignment_data['uld_info'], true);
+            for ($j = 0; $j < sizeof($uld_info); $j++) {
+                $AssociatedUnitLoadTransportEquipment = $xml->createElement('AssociatedUnitLoadTransportEquipment');
+                $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ID', $uld_info[$j]['uld_serial']));
+                $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('CharacteristicCode', $uld_info[$j]['uld_type']));
+                $OperatingParty = $xml->createElement("OperatingParty");
+                $PrimaryID = $xml->createElement("PrimaryID", $uld_info[$j]['owner']);
+                $PrimaryID->setAttribute('schemeAgencyID', $j + 1);
+                $OperatingParty->appendChild($PrimaryID);
+                $AssociatedUnitLoadTransportEquipment->appendChild($OperatingParty);
+                $includedMasterConsignmentItem->appendChild($AssociatedUnitLoadTransportEquipment);
+            }
             // Applicable Freight Rate Service Charge
             $applicableFreightRateServiceCharge = $xml->createElement('ApplicableFreightRateServiceCharge');
             $applicableFreightRateServiceCharge->appendChild($xml->createElement('CategoryCode', 'Q'));

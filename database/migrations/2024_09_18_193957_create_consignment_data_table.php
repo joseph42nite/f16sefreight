@@ -30,7 +30,7 @@ class CreateConsignmentDataTable extends Migration
             $table->integer('chargable_weight')->nullable();
             $table->integer('rate')->nullable();
             $table->text('pieces_info')->nullable();
-            $table->string('uld_info',1000)->nullable();
+            $table->string('uld_info', 1000)->nullable();
             $table->timestamps();
         });
     }

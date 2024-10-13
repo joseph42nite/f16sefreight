@@ -240,10 +240,12 @@
                 <TypeCode listAgencyID="1">62064000</TypeCode>
                 <GrossWeightMeasure unitCode="KGM">174</GrossWeightMeasure>
                 <GrossVolumeMeasure unitCode="MTQ">0.92</GrossVolumeMeasure>
+                
                 <PieceQuantity>25</PieceQuantity>
                 <NatureIdentificationTransportCargo>
                     <Identification>CONSOLIDATION</Identification>
                 </NatureIdentificationTransportCargo>
+
                 <TransportLogisticsPackage>
                     <ItemQuantity>22</ItemQuantity>
                     <GrossWeightMeasure unitCode="KGM">22</GrossWeightMeasure>
@@ -253,6 +255,7 @@
                         <HeightMeasure unitCode="CMT">46</HeightMeasure>
                     </LinearSpatialDimension>
                 </TransportLogisticsPackage>
+
                 <TransportLogisticsPackage>
                     <ItemQuantity>3</ItemQuantity>
                     <GrossWeightMeasure unitCode="KGM">3</GrossWeightMeasure>
@@ -262,6 +265,7 @@
                         <HeightMeasure unitCode="CMT">46</HeightMeasure>
                     </LinearSpatialDimension>
                 </TransportLogisticsPackage>
+
                 <ApplicableFreightRateServiceCharge>
                     <CategoryCode>Q</CategoryCode>
                     <ChargeableWeightMeasure unitCode="KGM">174</ChargeableWeightMeasure>

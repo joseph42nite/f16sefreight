@@ -102,15 +102,30 @@ class ConversionController extends Controller
         $masterConsignment = $xml->createElement('ns2:MasterConsignment');
         $waybill->appendChild($masterConsignment);
 
-        $masterConsignment->appendChild($xml->createElement('NilCarriageValueIndicator', 'true'));
-        $masterConsignment->appendChild($xml->createElement('NilCustomsValueIndicator', 'true'));
-        $masterConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'true'));
+        if ($payment_details['declear_value_carriage'] == 'NVD')
+            $masterConsignment->appendChild($xml->createElement('NilCarriageValueIndicator', 'true'));
+        else {
+            $masterConsignment->appendChild($xml->createElement('NilCarriageValueIndicator', 'false'));
+            $masterConsignment->appendChild($xml->createElement('DeclaredValueForCarriageAmount', $payment_details['declear_value_carriage']))->setAttribute('currencyID', $payment_details['currency']);
+        }
+        if ($payment_details['declear_value_customs'] == 'NCV')
+            $masterConsignment->appendChild($xml->createElement('NilCustomsValueIndicator', 'true'));
+        else {
+            $masterConsignment->appendChild($xml->createElement('NilCustomsValueIndicator', 'false'));
+            $masterConsignment->appendChild($xml->createElement('DeclaredValueForCustomsAmount', $payment_details['declear_value_customs']))->setAttribute('currencyID', $payment_details['currency']);
+        }
+        if ($payment_details['declear_value_insurance'] == 'XXX')
+            $masterConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'true'));
+        else {
+            $masterConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'false'));
+            $masterConsignment->appendChild($xml->createElement('InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
+        }
         $masterConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment']));
         $masterConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $masterConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
             $masterConsignment->appendChild($xml->createElement('GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
-        $masterConsignment->appendChild($xml->createElement('TotalPieceQuantity', '7'));
+        $masterConsignment->appendChild($xml->createElement('TotalPieceQuantity', $consignment_data['pieces']));
 
         // Consignor Party
         $consignor_street_name = $waybill_address['ship_address'] . (!empty($waybill_address['ship_address_line_2']) ? ',' . $waybill_address['ship_address_line_2'] : '');
@@ -405,6 +420,8 @@ class ConversionController extends Controller
         if ($payment_details['type_of_payment']) {
             $ApplicableLogisticsServiceCharge = $xml->createElement('ApplicableLogisticsServiceCharge');
             $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('TransportPaymentMethodCode', $payment_details['type_of_payment']));
+            if ($consignment_data['service_code'])
+                $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ServiceTypeCode', $consignment_data['service_code']));
             $masterConsignment->appendChild($ApplicableLogisticsServiceCharge);
         }
 

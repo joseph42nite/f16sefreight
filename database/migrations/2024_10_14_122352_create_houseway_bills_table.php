@@ -14,7 +14,7 @@ class CreateHousewayBillsTable extends Migration
     public function up()
     {
         Schema::create('house_way_bills', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->integer('awb_no')->nullable();
             $table->integer('awb_code')->nullable();
             $table->string('departure_airport')->nullable();

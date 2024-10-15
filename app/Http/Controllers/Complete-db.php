@@ -240,7 +240,7 @@
                 <TypeCode listAgencyID="1">62064000</TypeCode>
                 <GrossWeightMeasure unitCode="KGM">174</GrossWeightMeasure>
                 <GrossVolumeMeasure unitCode="MTQ">0.92</GrossVolumeMeasure>
-                
+
                 <PieceQuantity>25</PieceQuantity>
                 <NatureIdentificationTransportCargo>
                     <Identification>CONSOLIDATION</Identification>
@@ -278,7 +278,7 @@
 
 
 
-        
+
         <ApplicableTotalRating>
             <TypeCode>F</TypeCode>
             <ApplicablePrepaidCollectMonetarySummation>

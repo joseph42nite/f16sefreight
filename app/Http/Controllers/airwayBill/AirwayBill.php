@@ -310,7 +310,7 @@ class AirwayBill extends Controller
             'other_service_information' => 'nullable|string|max:195',
             'shipment_ref_no' => 'nullable|string|max:35',
             'supplementary_shipment_Info' => 'nullable|string|max:35',
-            'letter_credit' => 'nullable|boolean',
+            'letter_credit' => 'nullable|string|size:3',
             'extra_print' => 'nullable|string|max:195'
         ]);
         if ($validator->fails()) {
@@ -372,7 +372,12 @@ class AirwayBill extends Controller
             'no_value_declear_carriage' => 'nullable',
             //boolean
             //carriage
-            'declear_value_carriage' => 'nullable|numeric|min:0.000|max:999999999999',
+            'declear_value_carriage' => 'required',
+            'regex:/^NVD$|^\d+(\.\d{1,3})?$/',  // Either 'NVD' or a number with up to 3 decimal places
+            'nullable',
+            'numeric',
+            'min:0.000',
+            'max:999999999999',                   //'nullable|numeric|min:0.000|max:999999999999',
             'no_value_declear_customs' => 'nullable',
             //customs
             'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
@@ -396,9 +401,12 @@ class AirwayBill extends Controller
         $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
         $AirwayBills->total_charges = $payment_info['total_charges'];
         $AirwayBills->currency = $payment_info['currency'];
-        $AirwayBills->no_value_declear_carriage = $payment_info['no_value_declear_carriage'];
-        $AirwayBills->no_value_declear_customs = $payment_info['no_value_declear_customs'];
-        $AirwayBills->no_value_declear_insurance = $payment_info['no_value_declear_insurance'];
+        $AirwayBills->declear_value_carriage =  $payment_info['declear_value_carriage'];
+        $AirwayBills->declear_value_customs =  $payment_info['declear_value_customs'];
+        $AirwayBills->declear_value_insurance =  $payment_info['declear_value_insurance'];
+        // $AirwayBills->no_value_declear_carriage = $payment_info['no_value_declear_carriage'];
+        // $AirwayBills->no_value_declear_customs = $payment_info['no_value_declear_customs'];
+        // $AirwayBills->no_value_declear_insurance = $payment_info['no_value_declear_insurance'];
         $AirwayBills->weight_charge = $payment_info['weight_charge'];
         $AirwayBills->taxes = $payment_info['taxes'];
         $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
@@ -414,12 +422,12 @@ class AirwayBill extends Controller
     {
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make($oci_entry, [
-                'oci_country_code' => 'required|string|max:2',
-                'oci_info_identifier' => 'required|string|max:3',
-                'oci_custom_info_identifier' => 'required|string|max:2',
-                'oci_supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
+                'country_code' => 'required|string|max:2',
+                'info_identifier' => 'required|string|max:3',
+                'custom_info_identifier' => 'required|string|max:2',
+                'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
             ],[
-                'oci_supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
+                'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
             ]
         );
 
@@ -427,19 +435,19 @@ class AirwayBill extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $oci_info_identifier = $oci_entry['oci_info_identifier'];
+            $oci_info_identifier = $oci_entry['info_identifier'];
             $OtherCustomInfo = OtherCustomInformation::where([
                 ['awb_id', $awb_no],
-                ['oci_info_identifier', $oci_info_identifier]
+                ['info_identifier', $oci_info_identifier]
             ])->first();
             if (!isset($OtherCustomInfo)) {
                 $OtherCustomInfo = new OtherCustomInformation();
             }
             $OtherCustomInfo->awb_id = $awb_no;
-            $OtherCustomInfo->oci_info_identifier = $oci_info_identifier;
-            $OtherCustomInfo->oci_country_code = $oci_entry['oci_country_code'];
-            $OtherCustomInfo->oci_custom_info_identifier = $oci_entry['oci_custom_info_identifier'];
-            $OtherCustomInfo->oci_supplementary_info = $oci_entry['oci_supplementary_info'];
+            $OtherCustomInfo->info_identifier = $oci_info_identifier;
+            $OtherCustomInfo->country_code = $oci_entry['country_code'];
+            $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
+            $OtherCustomInfo->supplementary_info = $oci_entry['supplementary_info'];
             if (!$OtherCustomInfo->save()) {
                 Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $awb_no, 'oci_entry' => $oci_entry]);
             }

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAirWayBillsTable extends Migration
+class CreateHousewayBillsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateAirWayBillsTable extends Migration
      */
     public function up()
     {
-        Schema::create('air_way_bills', function (Blueprint $table) {
+        Schema::create('houseway_bills', function (Blueprint $table) {
             $table->id();
+            $table->integer('awb_no')->nullable();
             $table->integer('awb_code')->nullable();
-            $table->boolean('awb')->nullable();
             $table->string('consolidated_mawb')->nullable();
             $table->string('departure_airport')->nullable();
             $table->string('destination_airport')->nullable();
@@ -33,7 +33,8 @@ class CreateAirWayBillsTable extends Migration
             $table->string('by_3')->nullable();
             $table->integer('flight_3')->nullable();
             $table->dateTime('date_3')->nullable();
-            $table->string('customs_origin_code')->nullable();
+            $table->string('master_origin')->nullable();
+            $table->string('master_destination')->nullable();
             $table->string('letter_credit')->nullable();
             $table->string('other_service_information')->nullable();
             $table->string('special_service_request')->nullable();
@@ -50,6 +51,8 @@ class CreateAirWayBillsTable extends Migration
             $table->string('total_volume',20)->nullable();
             $table->string('dimention_unit')->nullable();
             $table->string('total_amount',20)->nullable();
+            $table->string('master_pcs')->nullable();
+            $table->string('master_weight')->nullable();
             $table->timestamps();
         });
     }
@@ -61,6 +64,6 @@ class CreateAirWayBillsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('air_way_bills');
+        Schema::dropIfExists('houseway_bills');
     }
 }

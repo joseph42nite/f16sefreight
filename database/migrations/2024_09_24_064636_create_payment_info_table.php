@@ -15,7 +15,7 @@ class CreatePaymentInfoTable extends Migration
     {
         Schema::create('payment_info', function (Blueprint $table) {
             $table->id();
-            $table->integer('awb_id')->nullable();
+            $table->string('awb_id', 50)->nullable();
             // $table->string('payment_type')->nullable();
             $table->string('currency')->nullable();
             // $table->integer('other_charges_due_carrier')->nullable();

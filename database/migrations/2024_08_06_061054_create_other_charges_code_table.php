@@ -15,7 +15,7 @@ class CreateOtherChargesCodeTable extends Migration
     {
         Schema::create('other_charges_code', function (Blueprint $table) {
             $table->id();
-            $table->integer('awb_id')->nullable();
+            $table->string('awb_id', 50)->nullable();
             $table->string('other_charge_code')->nullable();
             $table->string('amount')->nullable();
             $table->string('payment_type', 20)->nullable();

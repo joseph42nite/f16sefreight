@@ -13,8 +13,9 @@ class CreateHousewayBillsTable extends Migration
      */
     public function up()
     {
-        Schema::create('houseway_bills', function (Blueprint $table) {
+        Schema::create('house_way_bills', function (Blueprint $table) {
             $table->id();
+            $table->string('hawb_no', 50)->nullable();
             $table->integer('awb_no')->nullable();
             $table->integer('awb_code')->nullable();
             $table->string('consolidated_mawb')->nullable();
@@ -64,6 +65,6 @@ class CreateHousewayBillsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('houseway_bills');
+        Schema::dropIfExists('house_way_bills');
     }
 }

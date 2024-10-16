@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\HousewayBill;
+namespace App\Http\Controllers\airwayBill;
 
 use App\Agent;
-use App\AirwayBills;
 use App\Http\Controllers\Controller;
 use App\PaymentInfo;
 use App\WayBillAddress;
 use App\SavedAddress;
 use App\ConsignmentData;
+use App\HousewayBills;
 use App\OtherCharge;
 use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
@@ -22,7 +22,7 @@ class HousewayBill extends Controller
         $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         return json_encode($data);
     }
-    private function saveShipperAddress($awb_no, $shipper_address, $is_shipper_address_save)
+    private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
@@ -42,12 +42,12 @@ class HousewayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         //for update
-        $WayBillAddress = WayBillAddress::where('awb_id', $awb_no)->first();
+        $WayBillAddress = WayBillAddress::where('awb_id', $hawb_no)->first();
 
         //for insert
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
-        $WayBillAddress->awb_id = $awb_no;
+        $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
         $WayBillAddress->ship_account = $shipper_address['ship_account'];
         $WayBillAddress->ship_address = $shipper_address['ship_address'];
@@ -64,10 +64,10 @@ class HousewayBill extends Controller
 
         //insert address if saved button checked
         if ($is_shipper_address_save) {
-            $SavedAddress = SavedAddress::where([['awb_id', $awb_no], ['address_type', 'shipper_address']])->first();
+            $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
-            $SavedAddress->awb_id = $awb_no;
+            $SavedAddress->awb_id = $hawb_no;
             $SavedAddress->user_id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
@@ -86,7 +86,7 @@ class HousewayBill extends Controller
         }
         return 'shipper address saved successfull';
     }
-    private function saveConsigneeAddress($awb_no, $consignee_address, $is_consignee_address_save)
+    private function saveConsigneeAddress($hawb_no, $consignee_address, $is_consignee_address_save)
     {
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
@@ -106,10 +106,10 @@ class HousewayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $WayBillAddress = WayBillAddress::where('awb_id', $awb_no)->first();
+        $WayBillAddress = WayBillAddress::where('awb_id', $hawb_no)->first();
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
-        $WayBillAddress->awb_id = $awb_no;
+        $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
         $WayBillAddress->cons_account = $consignee_address['cons_account'];
         $WayBillAddress->cons_address = $consignee_address['cons_address'];
@@ -126,10 +126,10 @@ class HousewayBill extends Controller
 
         //insert address if saved button checked
         if ($is_consignee_address_save) {
-            $SavedAddress = SavedAddress::where([['awb_id', $awb_no], ['address_type', 'consignee_address']])->first();
+            $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'consignee_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
-            $SavedAddress->awb_id = $awb_no;
+            $SavedAddress->awb_id = $hawb_no;
             $SavedAddress->user_id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
@@ -148,7 +148,7 @@ class HousewayBill extends Controller
         }
         return "consignee address saved successfull";
     }
-    private function saveAlsoNotify($awb_no, $also_notify_address, $is_also_notify_address_save)
+    private function saveAlsoNotify($hawb_no, $also_notify_address, $is_also_notify_address_save)
     {
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
@@ -167,10 +167,10 @@ class HousewayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $WayBillAddress = WayBillAddress::where('awb_id', $awb_no)->first();
+        $WayBillAddress = WayBillAddress::where('awb_id', $hawb_no)->first();
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
-        $WayBillAddress->awb_id = $awb_no;
+        $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->also_name = $also_notify_address['also_name'];
         $WayBillAddress->cons_address = $also_notify_address['also_address'];
         $WayBillAddress->also_address_line_2 = $also_notify_address['also_address_line_2'];
@@ -209,26 +209,24 @@ class HousewayBill extends Controller
     private function firstBox($first_box)
     {
         $validator = Validator::make($first_box, [
+            'hawb_no' =>'required|regex:/^[a-zA-Z0-9]+$/|max:35',
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
-            'consolidated_MAWB' => 'nullable|boolean',
-            'awb' => 'nullable|boolean',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $AirwayBills = AirwayBills::find($first_box['awb_no']);
+        $HousewayBills = HousewayBills::firstOrNew(['id' => $first_box['hawb_no']]);
         if (!isset($AirwayBills))
-            $AirwayBills = new AirwayBills();
-        $AirwayBills->id = $first_box['awb_no'];
-        $AirwayBills->awb_code = $first_box['awb_code'];
-        $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
-        $AirwayBills->awb = $first_box['awb'];
-        $AirwayBills->save();
+            $HousewayBills = new HousewayBills();
+        $HousewayBills->id = $first_box['hawb_no'];
+        $HousewayBills->awb_no = $first_box['awb_no'];
+        $HousewayBills->awb_code = $first_box['awb_code'];
+        $HousewayBills->save();
         return "first box saved successfull";
     }
-    private function routingInformation($awb_no, $routing_information)
+    private function routingInformation($hawb_no, $routing_information)
     {
         $validator = Validator::make($routing_information, [
             'departure_airport' => 'required|string',
@@ -236,7 +234,7 @@ class HousewayBill extends Controller
             'from' => 'nullable|string',
             'to' => 'required|string',
             'by' => 'required|string|size:2',
-            'flight' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:5',
+            'flight' => 'required|regex:/^[a-zA-Z0-9]+$/|max:5',
             'date' => 'required|string',
             'to_2' => 'nullable|string',
             'by_2' => 'nullable|string|size:2',
@@ -246,42 +244,46 @@ class HousewayBill extends Controller
             'by_3' => 'nullable|string|size:2',
             'flight_3' => 'nullable|string|max:5',
             'date_3' => 'nullable|string',
+            'master_origin' => 'required|regex:/^[a-zA-Z0-9]+$/|max:3',
+            'master_destination' => 'required|regex:/^[a-zA-Z0-9]+$/|max:3'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $AirwayBills = AirwayBills::find($awb_no);
-        if (!isset($AirwayBills))
-            $AirwayBills = new AirwayBills();
+        $HousewayBills = HousewayBills::find($hawb_no);
+        if (!isset($HousewayBills))
+            $HousewayBills = new HousewayBills();
 
-        $AirwayBills->departure_airport = $routing_information['departure_airport'];
-        $AirwayBills->destination_airport = $routing_information['destination_airport'];
-        $AirwayBills->from = $routing_information['from'];
-        $AirwayBills->to = $routing_information['to'];
-        $AirwayBills->by = $routing_information['by'];
-        $AirwayBills->flight = $routing_information['flight'];
-        $AirwayBills->date = $routing_information['date'];
-        $AirwayBills->to_2 = $routing_information['to_2'];
-        $AirwayBills->by_2 = $routing_information['by_2'];
-        $AirwayBills->flight_2 = $routing_information['flight_2'];
-        $AirwayBills->date_2 = $routing_information['date_2'];
-        $AirwayBills->to_3 = $routing_information['to_3'];
-        $AirwayBills->by_3 = $routing_information['by_3'];
-        $AirwayBills->flight_3 = $routing_information['flight_3'];
-        $AirwayBills->date_3 = $routing_information['date_3'];
-        $AirwayBills->save();
+       $HousewayBills->departure_airport = $routing_information['departure_airport'];
+       $HousewayBills->destination_airport = $routing_information['destination_airport'];
+       $HousewayBills->from = $routing_information['from'];
+       $HousewayBills->to = $routing_information['to'];
+       $HousewayBills->by = $routing_information['by'];
+       $HousewayBills->flight = $routing_information['flight'];
+       $HousewayBills->date = $routing_information['date'];
+       $HousewayBills->to_2 = $routing_information['to_2'];
+       $HousewayBills->by_2 = $routing_information['by_2'];
+       $HousewayBills->flight_2 = $routing_information['flight_2'];
+       $HousewayBills->date_2 = $routing_information['date_2'];
+       $HousewayBills->to_3 = $routing_information['to_3'];
+       $HousewayBills->by_3 = $routing_information['by_3'];
+       $HousewayBills->flight_3 = $routing_information['flight_3'];
+       $HousewayBills->date_3 = $routing_information['date_3'];
+       $HousewayBills->master_origin = $routing_information['master_origin'];
+       $HousewayBills->master_destination = $routing_information['master_destination'];
+       $HousewayBills->save();
         return "Routing Information saved successfull";
     }
-    private function consignmentInformation($awb_no, $entries)
+    private function consignmentInformation($hawb_no, $entries)
     {
         for ($i = 0; $i < sizeof($entries); $i++) {
             $pieces = $entries[$i]['pieces'];
-            $ConsignmentData = ConsignmentData::where([['awb_id', $awb_no], ['pieces', $pieces]])->first();
+            $ConsignmentData = ConsignmentData::where([['awb_id', $hawb_no], ['pieces', $pieces]])->first();
             if (!isset($ConsignmentData))
                 $ConsignmentData = new ConsignmentData();
-            $ConsignmentData->awb_id = $awb_no;
+            $ConsignmentData->awb_id = $hawb_no;
             $ConsignmentData->pieces = $pieces;
             $ConsignmentData->description = $entries[$i]['description'];
             $ConsignmentData->rate_class = $entries[$i]['rate_class'];
@@ -301,7 +303,7 @@ class HousewayBill extends Controller
             return "Consignment Data saved successfull";
         }
     }
-    private function customOriginAndOsiInfo($awb_no, $custom_origin)
+    private function customOriginAndOsiInfo($hawb_no, $custom_origin)
     {
         $validator = Validator::make($custom_origin, [
             'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:2',
@@ -317,22 +319,22 @@ class HousewayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $AirwayBills = AirwayBills::find($awb_no);
-        if (!isset($AirwayBills))
-            $AirwayBills = new AirwayBills();
+        $HousewayBills = HousewayBills::find($hawb_no);
+        if (!isset($HousewayBills))
+            $HousewayBills = new HousewayBills();
 
-        $AirwayBills->customs_origin_code = $custom_origin['customs_origin_code'];
-        $AirwayBills->accounting_information = $custom_origin['accounting_information'];
-        $AirwayBills->special_service_request = $custom_origin['special_service_request'];
-        $AirwayBills->other_service_information = $custom_origin['other_service_information'];
-        $AirwayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
-        $AirwayBills->supplementary_shipment_Info = $custom_origin['supplementary_shipment_Info'];
-        $AirwayBills->letter_credit = $custom_origin['letter_credit'];
-        $AirwayBills->extra_print = $custom_origin['extra_print'];
-        $AirwayBills->save();
+        $HousewayBills->customs_origin_code = $custom_origin['customs_origin_code'];
+        $HousewayBills->accounting_information = $custom_origin['accounting_information'];
+        $HousewayBills->special_service_request = $custom_origin['special_service_request'];
+        $HousewayBills->other_service_information = $custom_origin['other_service_information'];
+        $HousewayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
+        $HousewayBills->supplementary_shipment_Info = $custom_origin['supplementary_shipment_Info'];
+        $HousewayBills->letter_credit = $custom_origin['letter_credit'];
+        $HousewayBills->extra_print = $custom_origin['extra_print'];
+        $HousewayBills->save();
         return "Custom Origin Code and other tab information save successfully";
     }
-    private function otherCharges($awb_no, $charges)
+    private function otherCharges($hawb_no, $charges)
     {
         for ($i = 0; $i < sizeof($charges); $i++) {
             $validator = Validator::make($charges[$i], [
@@ -348,12 +350,12 @@ class HousewayBill extends Controller
             }
 
             $other_charge_code = $charges[$i]['other_charge_code'];
-            $otherChargesData = OtherCharge::where([['awb_id', $awb_no], ['other_charge_code', $other_charge_code]])->first();
+            $otherChargesData = OtherCharge::where([['awb_id', $hawb_no], ['other_charge_code', $other_charge_code]])->first();
 
             if (!isset($otherChargesData)) {
                 $otherChargesData = new OtherCharge();
             }
-            $otherChargesData->awb_id = $awb_no;
+            $otherChargesData->awb_id = $hawb_no;
             $otherChargesData->other_charge_code = $other_charge_code;
             $otherChargesData->other_code = $charges[$i]['other_code'];
             $otherChargesData->payment_type = $charges[$i]['payment_type'];
@@ -363,7 +365,7 @@ class HousewayBill extends Controller
         }
         return "Other Charges Data saved successfully";
     }
-    private function paymentInformation($awb_no, $payment_info)
+    private function paymentInformation($hawb_no, $payment_info)
     {
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
@@ -393,29 +395,29 @@ class HousewayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $AirwayBills = PaymentInfo::where('awb_id', $awb_no)->first();
-        if (!isset($AirwayBills))
-            $AirwayBills = new PaymentInfo();
+        $HousewayBills = PaymentInfo::where('awb_id', $hawb_no)->first();
+        if (!isset($HousewayBills))
+            $HousewayBills = new PaymentInfo();
 
-        $AirwayBills->awb_id = $awb_no;
-        $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
-        $AirwayBills->total_charges = $payment_info['total_charges'];
-        $AirwayBills->currency = $payment_info['currency'];
-        $AirwayBills->declear_value_carriage =  $payment_info['declear_value_carriage'];
-        $AirwayBills->declear_value_customs =  $payment_info['declear_value_customs'];
-        $AirwayBills->declear_value_insurance =  $payment_info['declear_value_insurance'];
-        $AirwayBills->weight_charge = $payment_info['weight_charge'];
-        $AirwayBills->taxes = $payment_info['taxes'];
-        $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
-        $AirwayBills->total_charges_collect = $payment_info['total_charges_collect'];
-        $AirwayBills->other_charges_due_agent_prepaid = $payment_info['other_charges_due_agent_prepaid'];
-        $AirwayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'];
-        $AirwayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'];
-        $AirwayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'];
-        $AirwayBills->save();
+        $HousewayBills->awb_id = $hawb_no;
+        $HousewayBills->type_of_payment = $payment_info['type_of_payment'];
+        $HousewayBills->total_charges = $payment_info['total_charges'];
+        $HousewayBills->currency = $payment_info['currency'];
+        $HousewayBills->declear_value_carriage =  $payment_info['declear_value_carriage'];
+        $HousewayBills->declear_value_customs =  $payment_info['declear_value_customs'];
+        $HousewayBills->declear_value_insurance =  $payment_info['declear_value_insurance'];
+        $HousewayBills->weight_charge = $payment_info['weight_charge'];
+        $HousewayBills->taxes = $payment_info['taxes'];
+        $HousewayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
+        $HousewayBills->total_charges_collect = $payment_info['total_charges_collect'];
+        $HousewayBills->other_charges_due_agent_prepaid = $payment_info['other_charges_due_agent_prepaid'];
+        $HousewayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'];
+        $HousewayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'];
+        $HousewayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'];
+        $HousewayBills->save();
         return "Payment Information save successfully";
     }
-    private function otherCustomInformation($awb_no, $oci_entries)
+    private function otherCustomInformation($hawb_no, $oci_entries)
     {
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make($oci_entry, [
@@ -434,44 +436,48 @@ class HousewayBill extends Controller
 
             $oci_info_identifier = $oci_entry['info_identifier'];
             $OtherCustomInfo = OtherCustomInformation::where([
-                ['awb_id', $awb_no],
+                ['awb_id', $hawb_no],
                 ['info_identifier', $oci_info_identifier]
             ])->first();
             if (!isset($OtherCustomInfo)) {
                 $OtherCustomInfo = new OtherCustomInformation();
             }
-            $OtherCustomInfo->awb_id = $awb_no;
+            $OtherCustomInfo->awb_id = $hawb_no;
             $OtherCustomInfo->info_identifier = $oci_info_identifier;
             $OtherCustomInfo->country_code = $oci_entry['country_code'];
             $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
             $OtherCustomInfo->supplementary_info = $oci_entry['supplementary_info'];
             if (!$OtherCustomInfo->save()) {
-                Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $awb_no, 'oci_entry' => $oci_entry]);
+                Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $hawb_no, 'oci_entry' => $oci_entry]);
             }
         }
         return "Other Custom Information saved successfully";
     }
-    private function totalAmountValume($awb_no, $totals)
+    private function totalAmountValume($hawb_no, $totals)
     {
         $validator = Validator::make($totals, [
             'total_volume' => 'required|numeric|min:0|max:999999999',
             //'required|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'required|numeric|min:0.01|max:999999999',
+            'master_pcs' => 'required|regex:/^[0-9]+$/|max:4',
+            'master_weight' => 'required|numeric|min:0.1|max:9999999|regex:/^\d{1,7}(\.\d{1,3})?$/',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $AirwayBills = AirwayBills::find($awb_no);
-        if (!isset($AirwayBills))
-            $AirwayBills = new AirwayBills();
+        $HousewayBills = HousewayBills::find($hawb_no);
+        if (!isset($HousewayBills))
+            $HousewayBills = new HousewayBills();
 
-        $AirwayBills->total_volume = $totals['total_volume'];
-        $AirwayBills->total_amount = $totals['total_amount'];
-        $AirwayBills->save();
+        $HousewayBills->total_volume = $totals['total_volume'];
+        $HousewayBills->total_amount = $totals['total_amount'];
+        $HousewayBills->master_pcs = $totals['master_pcs'];
+        $HousewayBills->master_weight = $totals['master_weight'];
+        $HousewayBills->save();
         return "Toatl Amount and Total Volume saved successfull";
     }
-    private function saveSpecialHandlingCode($awb_no, $tableCodes)
+    private function saveSpecialHandlingCode($hawb_no, $tableCodes)
     {
         if (empty($tableCodes)) {
             return "Code is missing in tableCodes entry.";
@@ -483,9 +489,9 @@ class HousewayBill extends Controller
             }
         }
         $codesJson = json_encode($codesArray);
-        $handlingCode = AirwayBills::find($awb_no)->first();
+        $handlingCode = HousewayBills::find($hawb_no)->first();
         if (!$handlingCode) {
-            $handlingCode = new AirwayBills();
+            $handlingCode = new HousewayBills();
         }
         $handlingCode->special_handling_info = $codesJson;
         $handlingCode->save();
@@ -498,7 +504,7 @@ class HousewayBill extends Controller
         $error_data = '';
         //for storing shipper address
         if (!empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
-            $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->shipper_address, $request->is_shipper_address_save);
+            $error_data = $this->saveShipperAddress($request->first_box['hawb_no'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -506,7 +512,7 @@ class HousewayBill extends Controller
         }
         // for storing consignee address
         if (!empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
-            $error_data = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->consignee_address, $request->is_consignee_address_save);
+            $error_data = $this->saveConsigneeAddress($request->first_box['hawb_no'], $request->consignee_address, $request->is_consignee_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -514,13 +520,13 @@ class HousewayBill extends Controller
         }
         //for storing also notify address
         if (!empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
-            $error_data = $this->saveAlsoNotify($request->first_box['awb_no'], $request->also_notify_address, $request->is_also_notify_address_save);
+            $error_data = $this->saveAlsoNotify($request->first_box['hawb_no'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($request->first_box['awb_code']) && !empty($request->first_box['awb_no'])) {
+        if (!empty($request->first_box['hawb_no']) && !empty($request->first_box['awb_code']) && !empty($request->first_box['awb_no'])) {
             $error_data = $this->firstBox($request->first_box);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -529,7 +535,7 @@ class HousewayBill extends Controller
         }
         // && !empty($request->routing_information['from'])
         if (!empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
-            $error_data = $this->routingInformation($request->first_box['awb_no'], $request->routing_information);
+            $error_data = $this->routingInformation($request->first_box['hawb_no'], $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -537,11 +543,11 @@ class HousewayBill extends Controller
         }
         //for storing Consignment Information
         if (!empty($request->entries)) {
-            $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->entries);
+            $main_return_data['entries'] = $this->consignmentInformation($request->first_box['hawb_no'], $request->entries);
         }
         //for custom origin code and OSI, SSR, Accounting and shipment reference information
         if (!empty($request->custom_origin)) {
-            $error_data = $this->customOriginAndOsiInfo($request->first_box['awb_no'], $request->custom_origin);
+            $error_data = $this->customOriginAndOsiInfo($request->first_box['hawb_no'], $request->custom_origin);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -549,11 +555,11 @@ class HousewayBill extends Controller
         }
         // for other charges 
         if (!empty($request->charges)) {
-            $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'], $request->charges);
+            $main_return_data['charges'] = $this->otherCharges($request->first_box['hawb_no'], $request->charges);
         }
         //For payment information
         if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
-            $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->payment_info);
+            $error_data = $this->paymentInformation($request->first_box['hawb_no'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -561,7 +567,7 @@ class HousewayBill extends Controller
         }
         //for Other custom Information
         if (!empty($request->oci_entries)) {
-            $error_data = $this->otherCustomInformation($request->first_box['awb_no'], $request->oci_entries);
+            $error_data = $this->otherCustomInformation($request->first_box['hawb_no'], $request->oci_entries);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -569,14 +575,14 @@ class HousewayBill extends Controller
         }
         //for Total Consignee Amount and Total Volume
         if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
-            $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->totals);
+            $error_data = $this->totalAmountValume($request->first_box['hawb_no'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['totals'] = $error_data;
         }
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
-            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->tableCodes);
+            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['hawb_no'], $request->tableCodes);
         }
         return json_encode($main_return_data);
     }
@@ -588,7 +594,7 @@ class HousewayBill extends Controller
             'rate_class' => 'nullable|string|max:1',
             'uld_rate_class' => 'nullable|regex:/^\d[A-Za-z]{2}$/',
             'service_code' => 'nullable|string|max:1',
-            'commodity_item' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:11',
+            'commodity_item' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:11',
             'country_origin_goods' => 'nullable|string|max:2',
             'slac' => 'nullable|string',
 

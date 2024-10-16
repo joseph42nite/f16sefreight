@@ -17,6 +17,8 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\ConversionController;
+use App\Http\Controllers\HousewayBill\HousewayBill as HousewayBillHousewayBill;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -101,7 +103,8 @@ Route::delete('/delete-contact/{id?}',[ContactController::class,'delete']);
 Route::post('/create-webdoc', [AirwayBill::class,'store']);
 Route::post('/get-consignment-error', [AirwayBill::class,'getConsignmentError']);
 Route::get('/agent-info',[AirwayBill::class,'get_agent']);
-Route::post('/create-housewaybill', [HousewayBill::class,'store']);
+Route::post('/create-houseway-bill', [HousewayBill::class,'store']);
+Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
 
 Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion']);
 

@@ -191,8 +191,8 @@
                         <b-row class="mt-5">
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="HAWB No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.HAWB_no" :class="{ 'is-invalid': form.errors.has('HAWB_no') }"></b-form-input>
-                                    <has-error :form="form" field="HAWB_no"></has-error>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.first_box.hawb_no" :class="{ 'is-invalid': form.errors.has('hawb_no') }"></b-form-input>
+                                    <has-error :form="form" field="hawb_no"></has-error>
                                 </b-form-group>
                             </b-col>
                             <b-col cols="auto">
@@ -204,7 +204,8 @@
                             -
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.awb_no"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
+                                    <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
                             </b-col>
                         </b-row>
@@ -3157,8 +3158,8 @@ export default {
                 first_box:{
                     awb_code: '',
                     awb_no: '',
-                    consolidated_MAWB: false,
-                    awb: true,
+                    master_pcs: null,
+                    master_weight: null,
                 },
                 shipper_address: {
                     ship_name: '',
@@ -3574,7 +3575,7 @@ export default {
         },
         onSubmit(evt) {
             evt.preventDefault();
-            this.form.post(`/create-webdoc`).then(response => {
+            this.form.post(`/create-houseway-bill`).then(response => {
                 console.log(response);
             })
         },
@@ -3696,7 +3697,7 @@ export default {
             if (!(this.consignment_list instanceof Form)) {
                 this.consignment_list = new Form(this.consignment_list);
             }
-            this.consignment_list.post(`/get-consignment-error`)
+            this.consignment_list.post(`/get-house-consignment-error`)
             .then(response => {
                 if (this.edit_entry_index !== null) {
                     this.form.entries[this.edit_entry_index] = { ...this.consignment_list };

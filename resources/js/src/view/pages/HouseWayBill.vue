@@ -3488,9 +3488,6 @@ export default {
                 hsCodes: [],
                 uld_info: [],
             }),
-            iata_cass:{
-               
-            },
             agent_information:{
                 agent_name: '',
                 agent_address: '',
@@ -3756,10 +3753,6 @@ export default {
                 .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) {
                     this.agent_information = data[0];
-                    this.iata_cass = {
-                        iata_agent_code: this.agent_information.iata_agent_code || null,
-                        iata_agent_cass: this.agent_information.iata_agent_cass || null
-                    };
                 } else {
                     this.agent_information = data;
                 }

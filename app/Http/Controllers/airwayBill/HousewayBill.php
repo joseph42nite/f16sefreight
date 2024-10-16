@@ -185,10 +185,10 @@ class HousewayBill extends Controller
         $WayBillAddress->save();
 
         if ($is_also_notify_address_save) {
-            $SavedAddress = SavedAddress::where([['awb_id', $awb_no], ['address_type', 'also_notify_address']])->first();
+            $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'also_notify_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
-            $SavedAddress->awb_id = $awb_no;
+            $SavedAddress->awb_id = $hawb_no;
             $SavedAddress->user_id = '123456';
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];

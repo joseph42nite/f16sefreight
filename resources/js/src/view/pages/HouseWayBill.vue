@@ -222,64 +222,6 @@
                                 </b-form-group>
                             </b-col>
                         </b-row>
-                        <!-- <b-row class="mt-5">
-                            <b-col cols="auto">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label="AWB No:*" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"
-                                        v-model="form.first_box.awb_code"
-                                        :class="{ 'is-invalid': form.errors.has('awb_code') }"></b-form-input>
-                                    <has-error :form="form" field="awb_code"></has-error>
-                                </b-form-group>
-                            </b-col>
-                            -
-                            <b-col cols="auto">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px"
-                                        v-model="form.first_box.awb_no"
-                                        :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
-                                    <has-error :form="form" field="awb_no"></has-error>
-                                </b-form-group>
-                            </b-col>
-                            <b-col cols="auto mr-7">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label="" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label">
-                                    <b-form-checkbox size="sm" v-model="form.first_box.consolidated_MAWB">Consolidate
-                                        MAWB</b-form-checkbox>
-                                </b-form-group>
-                            </b-col>
-                            <b-col cols="auto ml-7" style="padding-left: 9.3%">
-                                <b-form-group label-for="name-input">
-                                    <b-form-radio name="radio-size" size="sm" v-model="form.first_box.awb"
-                                        value="true">AWB</b-form-radio>
-                                </b-form-group>
-                            </b-col>
-                        </b-row>
-                        <b-row class="justify-content-center mt-5">
-                            <b-col cols="auto" style="padding-left: 33.6%">
-                                <b-form-group label-for="">
-                                    <b-form-radio name="radio-size" size="sm" value="EAW" v-model="selectedCode"
-                                        @change="handleRadioChange">e-AWB With No Accompanying Paper
-                                        Documents</b-form-radio>
-                                </b-form-group>
-                            </b-col>
-                            <b-col cols="auto" class="">
-                                <b-form-group label-for="name-input">
-                                    <b-form-radio name="radio-size" size="sm">e-CSD AWB</b-form-radio>
-                                </b-form-group>
-                            </b-col>
-                            <b-col cols="auto" style="margin-left: 22.5%">
-                                <b-form-group label-for="name-input">
-                                    <b-form-radio name="radio-size" size="sm" @change="handleRadioChange"
-                                        v-model="selectedCode" value="EAP">e-AWB With Accompanying Paper
-                                        Documents</b-form-radio>
-                                </b-form-group>
-                            </b-col>
-                        </b-row> -->
                         <hr class="hr" />
 
                         <b-row class="justify-content-center mt-5">
@@ -412,8 +354,7 @@
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                     content-cols-lg="auto" label="" label-for="input-horizontal"
                                     class="form-control-sm col-form-label mt-2">
-                                    <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default e-AWB shipper for
-                                        later logins</b-form-checkbox>
+                                    <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default house shipper for later logins</b-form-checkbox>
                                 </b-form-group>
                             </b-col>
                             <b-col>
@@ -664,8 +605,18 @@
                                             </div>
                                         </div>
                                     </b-row>
-                                    <b-row class="justify-content-end" style="margin-right: 23%">
-                                        <div class="d-flex flex-column justify-content-end">
+                                    <b-row class="">
+                                        <b-col cols="auto" class="justify-content-lg-start">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                label="Master Origin: *" label-for="input-departure-airport"
+                                                class="form-control-sm col-form-label">
+                                                <b-form-input id="input-departure-airport"
+                                                    class="form-control-sm" v-model="form.routing_information.master_origin"
+                                                    :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
+                                                <has-error :form="form" field="master_origin"></has-error>
+                                            </b-form-group>
+                                        </b-col>
+                                        <div class="d-flex flex-column justify-content-end" style="margin-left: 24%">
                                             <table class="mx-auto table-sm">
                                                 <tbody>
                                                     <tr>
@@ -707,8 +658,18 @@
                                             <!-- </div> -->
                                         </div>
                                     </b-row>
-                                    <b-row class="justify-content-end" style="margin-right: 23%">
-                                        <div class="d-flex flex-column justify-content-end">
+                                    <b-row class="">
+                                        <b-col cols="auto" class="justify-content-lg-start">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                label="Master Destination: *" label-for="input-departure-airport"
+                                                class="form-control-sm col-form-label">
+                                                <b-form-input id="input-departure-airport"
+                                                    class="form-control-sm" v-model="form.routing_information.master_destination"
+                                                    :class="{ 'is-invalid': form.errors.has('master_destination') }"></b-form-input>
+                                                <has-error :form="form" field="master_destination"></has-error>
+                                            </b-form-group>
+                                        </b-col>
+                                        <div class="d-flex flex-column justify-content-end" style="margin-left: 22%">
                                             <table class="mx-auto table-sm">
                                                 <tbody>
                                                     <tr>
@@ -1283,16 +1244,17 @@
                                             </div>
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-3" >Master Pcs:*</label>
-                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.master_pcs"></b-form-input>
+                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_pcs"></b-form-input>
                                             </div>
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-0" >Master Weight:*</label>
-                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.master_weight"></b-form-input>
+                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_weight"></b-form-input>
                                             </div>
                                         </b-form-group>
                                     </div>
                                 </div>
                             </div>
+                            <b-form-checkbox size="sm" class="mt-2 text-bold justify-content-lg-start">As Agreed</b-form-checkbox>
                         </div>
                         <hr class="hr" />
                         <div>
@@ -1388,37 +1350,380 @@
                                             </b-form-select>
                                         </b-form-group>
                                     </b-tab>
-                                    <b-tab title="IATA and Cass">
-                                        <h5 class="ml-5 py-5">
-                                            Override IATA And Cass:
-                                        </h5>
-                                        <b-row>
-                                            <b-col cols="auto">
-                                                <b-form-group id="fieldset-horizontal" abel-cols-lg="auto"
-                                                    content-cols-sm content-cols-lg="auto" label-for="input-horizontal"
-                                                    label="IATA:" class="form-control-sm col-form-label">
-                                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                                        v-model="iata_cass.iata_agent_code"></b-form-input>
-                                                </b-form-group>
-                                            </b-col>
-                                            <b-col cols="auto mr-7">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                    content-cols-sm content-cols-lg="auto" label="Cass:"
-                                                    label-for="input-horizontal" class="form-control-sm col-form-label">
-                                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                                        v-model="iata_cass.iata_agent_cass"></b-form-input>
-                                                </b-form-group>
-                                            </b-col>
-                                            <b-col cols="auto ml-7" style="padding-left: 9.3%">
-                                                <b-form-group label-for="name-input">
-                                                    <b-form-checkbox size="sm">Save information for later logins</b-form-checkbox>
-                                                </b-form-group>
-                                            </b-col>
-                                        </b-row>
-                                    </b-tab>
                                     <b-tab title="Agent Information">
                                         <div class="container py-5">
                                             <div class="row">
+                                                <div class="col-md-6">
+                                                    <table class="table-bordered table-sm">
+                                                        <thead>
+                                                            <tr class="h_background_color">
+                                                                <th class="form-control1" style="width: 180px;">HAWB Agents Head Office</th>
+                                                                <th class="form-control1"></th>
+                                                                <th class="form-control1"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="editable-cell">Name:*</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 150px"
+                                                                        v-model="agent_information.ho_name" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">Address:*</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 150px"
+                                                                        v-model="agent_information.ho_address" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">City:*</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 130px"
+                                                                        v-model="agent_information.ho_city" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">Post Code:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 130px"
+                                                                        v-model="agent_information.ho_pincode" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">State:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 150px"
+                                                                        v-model="agent_information.ho_state" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">Country:* </td>
+                                                                <td class="editable-cell">
+                                                                    <b-form-select class="form-control"
+                                                                        style="width: 150px"
+                                                                        v-model="agent_information.ho_country"  :class="{ 'is-invalid': form.errors.has('ho_country') }">
+                                                                        <option value="">Select a country</option>
+                                                                        <option value="AF">Afghanistan</option>
+                                                                        <option value="AX">Åland Islands</option>
+                                                                        <option value="AL">Albania</option>
+                                                                        <option value="DZ">Algeria</option>
+                                                                        <option value="AS">American Samoa</option>
+                                                                        <option value="AD">Andorra</option>
+                                                                        <option value="AO">Angola</option>
+                                                                        <option value="AI">Anguilla</option>
+                                                                        <option value="AQ">Antarctica</option>
+                                                                        <option value="AG">Antigua and Barbuda</option>
+                                                                        <option value="AR">Argentina</option>
+                                                                        <option value="AM">Armenia</option>
+                                                                        <option value="AW">Aruba</option>
+                                                                        <option value="AU">Australia</option>
+                                                                        <option value="AT">Austria</option>
+                                                                        <option value="AZ">Azerbaijan</option>
+                                                                        <option value="BS">Bahamas</option>
+                                                                        <option value="BH">Bahrain</option>
+                                                                        <option value="BD">Bangladesh</option>
+                                                                        <option value="BB">Barbados</option>
+                                                                        <option value="BY">Belarus</option>
+                                                                        <option value="BE">Belgium</option>
+                                                                        <option value="BZ">Belize</option>
+                                                                        <option value="BJ">Benin</option>
+                                                                        <option value="BM">Bermuda</option>
+                                                                        <option value="BT">Bhutan</option>
+                                                                        <option value="BO">Bolivia</option>
+                                                                        <option value="BQ">Bonaire</option>
+                                                                        <option value="BA">Bosnia and Herzegovina
+                                                                        </option>
+                                                                        <option value="BW">Botswana</option>
+                                                                        <option value="BV">Bouvet Island</option>
+                                                                        <option value="BR">Brazil</option>
+                                                                        <option value="IO">British Indian Ocean
+                                                                            Territory</option>
+                                                                        <option value="BN">Brunei Darussalam</option>
+                                                                        <option value="BG">Bulgaria</option>
+                                                                        <option value="BF">Burkina Faso</option>
+                                                                        <option value="BI">Burundi</option>
+                                                                        <option value="KH">Cambodia</option>
+                                                                        <option value="CM">Cameroon</option>
+                                                                        <option value="CA">Canada</option>
+                                                                        <option value="CV">Cape Verde</option>
+                                                                        <option value="KY">Cayman Islands</option>
+                                                                        <option value="CF">Central African Republic
+                                                                        </option>
+                                                                        <option value="TD">Chad</option>
+                                                                        <option value="CL">Chile</option>
+                                                                        <option value="CN">China</option>
+                                                                        <option value="CX">Christmas Island</option>
+                                                                        <option value="CC">Cocos (Keeling) Islands
+                                                                        </option>
+                                                                        <option value="CO">Colombia</option>
+                                                                        <option value="KM">Comoros</option>
+                                                                        <option value="CG">Congo</option>
+                                                                        <option value="CD">Congo, the Democratic
+                                                                            Republic of the</option>
+                                                                        <option value="CK">Cook Islands</option>
+                                                                        <option value="CR">Costa Rica</option>
+                                                                        <option value="CI">Côte d'Ivoire</option>
+                                                                        <option value="HR">Croatia</option>
+                                                                        <option value="CU">Cuba</option>
+                                                                        <option value="CW">Curacao</option>
+                                                                        <option value="CY">Cyprus</option>
+                                                                        <option value="CZ">Czech Republic</option>
+                                                                        <option value="DK">Denmark</option>
+                                                                        <option value="DJ">Djibouti</option>
+                                                                        <option value="DM">Dominica</option>
+                                                                        <option value="DO">Dominican Republic</option>
+                                                                        <option value="EC">Ecuador</option>
+                                                                        <option value="EG">Egypt</option>
+                                                                        <option value="SV">El Salvador</option>
+                                                                        <option value="GQ">Equatorial Guinea</option>
+                                                                        <option value="ER">Eritrea</option>
+                                                                        <option value="EE">Estonia</option>
+                                                                        <option value="ET">Ethiopia</option>
+                                                                        <option value="FK">Falkland Islands (Malvinas)
+                                                                        </option>
+                                                                        <option value="FO">Faroe Islands</option>
+                                                                        <option value="FJ">Fiji</option>
+                                                                        <option value="FI">Finland</option>
+                                                                        <option value="FR">France</option>
+                                                                        <option value="GF">French Guiana</option>
+                                                                        <option value="PF">French Polynesia</option>
+                                                                        <option value="TF">French Southern Territories
+                                                                        </option>
+                                                                        <option value="GA">Gabon</option>
+                                                                        <option value="GM">Gambia</option>
+                                                                        <option value="GE">Georgia</option>
+                                                                        <option value="DE">Germany</option>
+                                                                        <option value="GH">Ghana</option>
+                                                                        <option value="GI">Gibraltar</option>
+                                                                        <option value="GR">Greece</option>
+                                                                        <option value="GL">Greenland</option>
+                                                                        <option value="GD">Grenada</option>
+                                                                        <option value="GP">Guadeloupe</option>
+                                                                        <option value="GU">Guam</option>
+                                                                        <option value="GT">Guatemala</option>
+                                                                        <option value="GG">Guernsey</option>
+                                                                        <option value="GN">Guinea</option>
+                                                                        <option value="GW">Guinea-Bissau</option>
+                                                                        <option value="GY">Guyana</option>
+                                                                        <option value="HT">Haiti</option>
+                                                                        <option value="HM">Heard Island and McDonald
+                                                                            Islands</option>
+                                                                        <option value="VA">Holy See (Vatican City State)
+                                                                        </option>
+                                                                        <option value="HN">Honduras</option>
+                                                                        <option value="HK">Hong Kong</option>
+                                                                        <option value="HU">Hungary</option>
+                                                                        <option value="IS">Iceland</option>
+                                                                        <option value="IN">India</option>
+                                                                        <option value="ID">Indonesia</option>
+                                                                        <option value="IR">Iran, Islamic Republic of
+                                                                        </option>
+                                                                        <option value="IQ">Iraq</option>
+                                                                        <option value="IE">Ireland</option>
+                                                                        <option value="IM">Isle of Man</option>
+                                                                        <option value="IL">Israel</option>
+                                                                        <option value="IT">Italy</option>
+                                                                        <option value="JM">Jamaica</option>
+                                                                        <option value="JP">Japan</option>
+                                                                        <option value="JE">Jersey</option>
+                                                                        <option value="JO">Jordan</option>
+                                                                        <option value="KZ">Kazakhstan</option>
+                                                                        <option value="KE">Kenya</option>
+                                                                        <option value="KI">Kiribati</option>
+                                                                        <option value="KP">Korea, Democratic People's
+                                                                            Republic of</option>
+                                                                        <option value="KR">Korea, Republic of</option>
+                                                                        <option value="XK">Kosovo, Republic of</option>
+                                                                        <option value="KW">Kuwait</option>
+                                                                        <option value="KG">Kyrgyzstan</option>
+                                                                        <option value="LA">Lao People's Democratic
+                                                                            Republic</option>
+                                                                        <option value="LV">Latvia</option>
+                                                                        <option value="LB">Lebanon</option>
+                                                                        <option value="LS">Lesotho</option>
+                                                                        <option value="LR">Liberia</option>
+                                                                        <option value="LY">Libya</option>
+                                                                        <option value="LI">Liechtenstein</option>
+                                                                        <option value="LT">Lithuania</option>
+                                                                        <option value="LU">Luxembourg</option>
+                                                                        <option value="MO">Macao</option>
+                                                                        <option value="MK">Macedonia, the former
+                                                                            Yugoslav Republic of</option>
+                                                                        <option value="MG">Madagascar</option>
+                                                                        <option value="MW">Malawi</option>
+                                                                        <option value="MY">Malaysia</option>
+                                                                        <option value="MV">Maldives</option>
+                                                                        <option value="ML">Mali</option>
+                                                                        <option value="MT">Malta</option>
+                                                                        <option value="MH">Marshall Islands</option>
+                                                                        <option value="MQ">Martinique</option>
+                                                                        <option value="MR">Mauritania</option>
+                                                                        <option value="MU">Mauritius</option>
+                                                                        <option value="YT">Mayotte</option>
+                                                                        <option value="MX">Mexico</option>
+                                                                        <option value="FM">Micronesia, Federated States
+                                                                            of</option>
+                                                                        <option value="MD">Moldova, Republic of</option>
+                                                                        <option value="MC">Monaco</option>
+                                                                        <option value="MN">Mongolia</option>
+                                                                        <option value="ME">Montenegro</option>
+                                                                        <option value="MS">Montserrat</option>
+                                                                        <option value="MA">Morocco</option>
+                                                                        <option value="MZ">Mozambique</option>
+                                                                        <option value="MM">Myanmar</option>
+                                                                        <option value="NA">Namibia</option>
+                                                                        <option value="NR">Nauru</option>
+                                                                        <option value="NP">Nepal</option>
+                                                                        <option value="NL">Netherlands</option>
+                                                                        <option value="NC">New Caledonia</option>
+                                                                        <option value="NZ">New Zealand</option>
+                                                                        <option value="NI">Nicaragua</option>
+                                                                        <option value="NE">Niger</option>
+                                                                        <option value="NG">Nigeria</option>
+                                                                        <option value="NU">Niue</option>
+                                                                        <option value="NF">Norfolk Island</option>
+                                                                        <option value="XI">Northern Ireland</option>
+                                                                        <option value="MP">Northern Mariana Islands
+                                                                        </option>
+                                                                        <option value="NO">Norway</option>
+                                                                        <option value="OM">Oman</option>
+                                                                        <option value="PK">Pakistan</option>
+                                                                        <option value="PW">Palau</option>
+                                                                        <option value="PS">Palestinian Territory,
+                                                                            Occupied</option>
+                                                                        <option value="PA">Panama</option>
+                                                                        <option value="PG">Papua New Guinea</option>
+                                                                        <option value="PY">Paraguay</option>
+                                                                        <option value="PE">Peru</option>
+                                                                        <option value="PH">Philippines</option>
+                                                                        <option value="PN">Pitcairn</option>
+                                                                        <option value="PL">Poland</option>
+                                                                        <option value="PT">Portugal</option>
+                                                                        <option value="PR">Puerto Rico</option>
+                                                                        <option value="QA">Qatar</option>
+                                                                        <option value="RE">Reunion Réunion</option>
+                                                                        <option value="RO">Romania</option>
+                                                                        <option value="RU">Russian Federation</option>
+                                                                        <option value="RW">Rwanda</option>
+                                                                        <option value="BL">Saint Barthélemy</option>
+                                                                        <option value="SH">Saint Helena</option>
+                                                                        <option value="KN">Saint Kitts and Nevis
+                                                                        </option>
+                                                                        <option value="LC">Saint Lucia</option>
+                                                                        <option value="MF">Saint Martin (French part)
+                                                                        </option>
+                                                                        <option value="PM">Saint Pierre and Miquelon
+                                                                        </option>
+                                                                        <option value="VC">Saint Vincent and the
+                                                                            Grenadines</option>
+                                                                        <option value="WS">Samoa</option>
+                                                                        <option value="SM">San Marino</option>
+                                                                        <option value="ST">Sao Tome and Principe
+                                                                        </option>
+                                                                        <option value="SA">Saudi Arabia</option>
+                                                                        <option value="SN">Senegal</option>
+                                                                        <option value="RS">Serbia</option>
+                                                                        <option value="SC">Seychelles</option>
+                                                                        <option value="SL">Sierra Leone</option>
+                                                                        <option value="SG">Singapore</option>
+                                                                        <option value="SX">Sint Maarten</option>
+                                                                        <option value="SK">Slovakia</option>
+                                                                        <option value="SI">Slovenia</option>
+                                                                        <option value="SB">Solomon Islands</option>
+                                                                        <option value="SO">Somalia</option>
+                                                                        <option value="ZA">South Africa</option>
+                                                                        <option value="GS">South Georgia and the South
+                                                                            Sandwich Islands</option>
+                                                                        <option value="SS">South Sudan</option>
+                                                                        <option value="ES">Spain</option>
+                                                                        <option value="LK">Sri Lanka</option>
+                                                                        <option value="SD">Sudan</option>
+                                                                        <option value="SR">Suriname</option>
+                                                                        <option value="SJ">Svalbard and Jan Mayen
+                                                                        </option>
+                                                                        <option value="SW">Swahili</option>
+                                                                        <option value="SZ">Swaziland</option>
+                                                                        <option value="SE">Sweden</option>
+                                                                        <option value="CH">Switzerland</option>
+                                                                        <option value="SY">Syrian Arab Republic</option>
+                                                                        <option value="TW">Taiwan, Republic of China
+                                                                        </option>
+                                                                        <option value="TJ">Tajikistan</option>
+                                                                        <option value="TZ">Tanzania, United Republic of
+                                                                        </option>
+                                                                        <option value="TH">Thailand</option>
+                                                                        <option value="TL">Timor-Leste</option>
+                                                                        <option value="TG">Togo</option>
+                                                                        <option value="TK">Tokelau</option>
+                                                                        <option value="TO">Tonga</option>
+                                                                        <option value="TT">Trinidad and Tobago</option>
+                                                                        <option value="TN">Tunisia</option>
+                                                                        <option value="TR">Turkey</option>
+                                                                        <option value="TM">Turkmenistan</option>
+                                                                        <option value="TC">Turks and Caicos Islands
+                                                                        </option>
+                                                                        <option value="TV">Tuvalu</option>
+                                                                        <option value="UG">Uganda</option>
+                                                                        <option value="UA">Ukraine</option>
+                                                                        <option value="AE">United Arab Emirates</option>
+                                                                        <option value="GB">United Kingdom</option>
+                                                                        <option value="US">United States</option>
+                                                                        <option value="UM">United States Minor Outlying
+                                                                            Islands</option>
+                                                                        <option value="UY">Uruguay</option>
+                                                                        <option value="UZ">Uzbekistan</option>
+                                                                        <option value="VU">Vanuatu</option>
+                                                                        <option value="VE">Venezuela</option>
+                                                                        <option value="VN">Viet Nam</option>
+                                                                        <option value="VG">Virgin Islands, British
+                                                                        </option>
+                                                                        <option value="VI">Virgin Islands, U.S.</option>
+                                                                        <option value="WF">Wallis and Futuna</option>
+                                                                        <option value="EH">Western Sahara</option>
+                                                                        <option value="YE">Yemen</option>
+                                                                        <option value="ZM">Zambia</option>
+                                                                        <option value="ZW">Zimbabwe</option>
+                                                                    </b-form-select>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell"></td>
+                                                                <td class="editable-cell">
+                                                                    <b-form-checkbox size="sm">Save Agents Head Office For Later Logins</b-form-checkbox>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">IATA:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 150px"
+                                                                        v-model="agent_information.iata_agent_code" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell">Cass:</td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control"
+                                                                        style="width: 150px"
+                                                                        v-model="agent_information.iata_agent_cass" />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell"></td>
+                                                                <td class="editable-cell">
+                                                                    <b-form-checkbox size="sm">Save IATA and Cass Information For Later Logins</b-form-checkbox>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                                 <div class="col-md-6">
                                                     <table class="table-bordered table-sm">
                                                         <thead>
@@ -1514,7 +1819,7 @@
                                                                 <date-picker valueType="format"
                                                                     style=" width: 30px !important;"></date-picker>
                                                             </tr>
-                                                            <tr>
+                                                            <!-- <tr>
                                                                 <td class="editable-cell">Agent Account:</td>
                                                                 <td class="editable-cell">
                                                                     <input type="text" class="form-control"
@@ -1525,140 +1830,7 @@
                                                                     <b-form-checkbox size="sm">Save information for
                                                                         later logins</b-form-checkbox>
                                                                 </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <table class="table-bordered table-sm">
-                                                        <thead>
-                                                            <tr class="h_background_color">
-                                                                <th class="form-control1">Senders Reference:</th>
-                                                                <th class="form-control1"></th>
-                                                                <th class="form-control1"></th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td class="editable-cell">
-                                                                    <b-form-radio name="participate" size="sm"
-                                                                        v-model="agent_information.participate"
-                                                                        value="0">Participant</b-form-radio>
-                                                                </td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-radio name="participate" size="sm"
-                                                                        v-model="agent_information.participate"
-                                                                        value="1">Office</b-form-radio>
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '0'">
-                                                                <td class="editable-cell">Participant Airport:</td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.participate_airport">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="BLR">BLR, Bangalore (BLR), India
-                                                                        </option>
-                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria
-                                                                        </option>
-                                                                        <option value="AAH">AAH, Aachen (AAH), Germany
-                                                                        </option>
-                                                                        <option value="AAI">AAI, Arraias (AAI), Brazil
-                                                                        </option>
-                                                                        <option value="AAL">AAL, Aalborg (AAL), Denmark
-                                                                        </option>
-                                                                        <option value="AAM">AAM, Mala Mala (AAM), South
-                                                                            Africa</option>
-                                                                        <option value="AAN">AAN, Al Ain (AAN), United
-                                                                            Arab Emirates</option>
-                                                                        <option value="AAP">AAP, Samarinda (AAP),
-                                                                            Indonesia</option>
-                                                                        <option value="AAR">AAR, Aarhus (AAR), Denmark
-                                                                        </option>
-                                                                        <option value="ABA">ABA, Abakan (ABA), Russian
-                                                                            Federation</option>
-                                                                        <option value="ABC">ABC, Albacete (ABC), Spain
-                                                                        </option>
-                                                                    </b-form-select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '0'">
-                                                                <td class="editable-cell">Participant Identifer:</td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.prticipant_identifer">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="AIR"> Airline AIR</option>
-                                                                        <option value="APT">Airport Authority APT
-                                                                        </option>
-                                                                        <option value="AGT">Agent AGT</option>
-                                                                        <option value="BRK">Broker BRK</option>
-                                                                        <option value="CAG">Commissionable Agent CAG
-                                                                        </option>
-                                                                        <option value="CNE">Consignee CNE</option>
-                                                                        <option value="CTM">Customs CTM</option>
-                                                                        <option value="DCL">Declarant DCL</option>
-                                                                        <option value="DEC">Deconsolidator DEC</option>
-                                                                        <option value="FFW">Freight Forwarder FFW
-                                                                        </option>
-                                                                        <option value="GHA">Ground Handling Agent GHA
-                                                                        </option>
-                                                                        <option value="PTT">Post Office PTT</option>
-                                                                        <option value="SHP">Shipper SHP</option>
-                                                                        <option value="TRK">Trucker TRK</option>
-                                                                    </b-form-select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '0'">
-                                                                <td class="editable-cell">Participant Code:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.participant_code" />
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '0'">
-                                                                <td class="editable-cell">Office File Reference:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 200px"
-                                                                        v-model="agent_information.office_file_reference" />
-                                                                </td>
-                                                            </tr>
-
-                                                            <tr v-if="agent_information.participate === '1'">
-                                                                <td class="editable-cell">Office Airport:</td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-select class="form-control" style="width: 150px" v-model="agent_information.office_airport">
-                                                                        <option disabled value=""> Please select one</option>
-                                                                        <option value="BLR">BLR, Bangalore (BLR), India</option>
-                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria</option>
-                                                                        <option value="AAH">AAH, Aachen (AAH), Germany</option>
-                                                                    </b-form-select>
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '1'">
-                                                                <td class="editable-cell">Office Function Designator:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width: 150px" v-model="agent_information.office_function_designator" />
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '1'">
-                                                                <td class="editable-cell">Office Company Designator:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width: 150px" v-model="agent_information.office_company_designator" />
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-if="agent_information.participate === '1'">
-                                                                <td class="editable-cell">Office File Reference:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width: 200px" v-model="agent_information.office_file_reference" />
-                                                                </td>
-                                                            </tr>
+                                                            </tr> -->
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -3156,10 +3328,9 @@ export default {
         return {
             form: new Form({
                 first_box:{
+                    hawb_no: '',
                     awb_code: '',
                     awb_no: '',
-                    master_pcs: null,
-                    master_weight: null,
                 },
                 shipper_address: {
                     ship_name: '',
@@ -3218,6 +3389,8 @@ export default {
                     flight: '',
                     flight_2: '',
                     flight_3: '',
+                    master_origin:'',
+                    master_destination: '',
                     date: this.getCurrentDate(),
                     date_2: this.getCurrentDate(),
                     date_3: this.getCurrentDate(),
@@ -3230,6 +3403,8 @@ export default {
                 totals:{
                     total_volume: null,
                     total_amount: 0,
+                    master_pcs: null,
+                    master_weight: null,
                 },
 
                 custom_origin:{
@@ -3314,8 +3489,7 @@ export default {
                 uld_info: [],
             }),
             iata_cass:{
-                iata_agent_code: null,
-                iata_agent_cass: null,
+               
             },
             agent_information:{
                 agent_name: '',
@@ -3327,17 +3501,15 @@ export default {
                 agent_issue_date: '',
                 agent_account: null,
 
-                //Participate Sender Reference
-                participate: '0',
-                participate_airport: '',
-                prticipant_identifer: '',
-                participant_code: null,
-                office_file_reference: '',
-               
-                //Office Sender Reference
-                office_airport: null,
-                office_function_designator: null,
-                office_company_designator: null,
+                ho_name: '',
+                ho_address: '',
+                ho_city: '',
+                ho_pincode: '',
+                ho_state: '',
+                ho_country: '',
+
+                iata_agent_code: null,
+                iata_agent_cass: null,
             },
             other_charges:{
                 other_charge_code: '',

@@ -14,6 +14,7 @@ use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class HousewayBill extends Controller
 {
@@ -216,9 +217,8 @@ class HousewayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
-        $HousewayBills = HousewayBills::firstOrNew(['id' => $first_box['hawb_no']]);
-        if (!isset($AirwayBills))
+        $HousewayBills = HousewayBills::find($first_box['hawb_no']);
+        if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
         $HousewayBills->id = $first_box['hawb_no'];
         $HousewayBills->awb_no = $first_box['awb_no'];
@@ -367,30 +367,33 @@ class HousewayBill extends Controller
     }
     private function paymentInformation($hawb_no, $payment_info)
     {
+        // dd($payment_info['declear_value_carriage']);die;
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
-            'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
+            // 'total_charges' => 'required|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
-            'no_value_declear_carriage' => 'nullable',
             //boolean
             //carriage
-            'declear_value_carriage' => 'required',
-            'regex:/^NVD$|^\d+(\.\d{1,3})?$/',  // Either 'NVD' or a number with up to 3 decimal places
-            'nullable',
-            'numeric',
-            'min:0.000',
-            'max:999999999999',                   //'nullable|numeric|min:0.000|max:999999999999',
-            'no_value_declear_customs' => 'nullable',
+            // 'declear_value_carriage' => 'required',
+            // 'regex:/^NVD$|^\d+(\.\d{1,3})?$/',  // Either 'NVD' or a number with up to 3 decimal places
+            // 'nullable',
+            // 'numeric',
+            // 'min:0.000',
+            // 'max:999999999999',                   //'nullable|numeric|min:0.000|max:999999999999',
+
             //customs
-            'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
-            'no_value_declear_insurance' => 'nullable',
+            // 'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
             //Insurance
-            'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
+            // 'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
             'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
             'taxes' => 'nullable|integer',
             'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
-            'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999'
+            'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999',
+            // Custom validations with correct regex
+            'declear_value_carriage' => 'required|regex:/^(NVD|[0-9]+)$/|max:999999999999'   //'required|regex:#^(?:\d|NVD)$#'
         ]);
+       
+        
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -398,7 +401,6 @@ class HousewayBill extends Controller
         $HousewayBills = PaymentInfo::where('awb_id', $hawb_no)->first();
         if (!isset($HousewayBills))
             $HousewayBills = new PaymentInfo();
-
         $HousewayBills->awb_id = $hawb_no;
         $HousewayBills->type_of_payment = $payment_info['type_of_payment'];
         $HousewayBills->total_charges = $payment_info['total_charges'];
@@ -414,6 +416,7 @@ class HousewayBill extends Controller
         $HousewayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'];
         $HousewayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'];
         $HousewayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'];
+        
         $HousewayBills->save();
         return "Payment Information save successfully";
     }

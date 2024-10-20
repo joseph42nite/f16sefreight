@@ -27,7 +27,7 @@
     <ns2:MasterConsignment>
         <IncludedTareGrossWeightMeasure unitCode="KGM">174</IncludedTareGrossWeightMeasure>
         <TotalPieceQuantity>25</TotalPieceQuantity>
-        
+
         <TransportContractDocument>
             <ID>057-51987552</ID>
         </TransportContractDocument>

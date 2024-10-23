@@ -17,6 +17,7 @@ class CreateHousewayBillsTable extends Migration
             $table->string('id', 50)->primary();
             $table->integer('awb_no')->nullable();
             $table->integer('awb_code')->nullable();
+            $table->string('reference_id',50)->nullable();
             $table->string('departure_airport')->nullable();
             $table->string('destination_airport')->nullable();
             $table->string('from')->nullable();//first

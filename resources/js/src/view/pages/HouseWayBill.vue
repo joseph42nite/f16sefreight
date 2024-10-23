@@ -764,15 +764,6 @@
                                 <h4 class="h-color font-weight-bolder ml-2 mb-0">
                                     Consignment Rate Description
                                 </h4>
-                                <div>
-                                    <b-button class="btn-secondary mr-2">
-                                        <b-icon icon="search" font-scale="1"></b-icon>Get Rates
-                                    </b-button>
-                                    <b-button class="btn-secondary">
-                                        <b-icon icon="calendar2-minus-fill" font-scale="1"></b-icon>Collect house
-                                        waybill sum's
-                                    </b-button>
-                                </div>
                             </div>
                             <b-button class="mt-5" v-b-modal.modal-consignment variant="warning">Add Consignment
                                 Information</b-button>
@@ -1946,72 +1937,14 @@
                                             book</b-form-checkbox>
                                     </b-tab>
                                     <b-tab title="Exta Print Information">
-                                        <h5> Extra information printed of Air Way Bill (Only printed - not saved or sent
-                                            to Airlines): </h5>
+                                        <h5> Extra information printed on House Way Bill (Only printed - not saved or sent to Airlines):</h5>
                                         <b-form-textarea class=""
                                             style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
                                             rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
                                     </b-tab>
-                                    <b-tab title="Carrier Address">
-                                        <h4 class="h-color font-weight-bolder ml-2 mt-2">Override the Carrier Address on
-                                            the PDF Document
-                                        </h4>
-                                        <h6> (This can be used for non-IATA carriers) </h6>
-                                        <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3" label="Name:">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm ml-lg-20"></b-form-input>
-                                            </b-form-group>
-                                            <b-form-checkbox size="sm">Public Address</b-form-checkbox>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-31"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-15"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-31"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="City:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-23"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-11"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="State:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-20"></b-form-input>
-                                        </b-form-group>
-                                    </b-tab>
                                 </b-tabs>
                             </div>
                         </div>
-                        <hr class="hr" />
-                        <!-- <div class="py-5">
-                            <b-tabs content-class="mt-3" class="nav-tabs">
-                                
-                            </b-tabs>
-                        </div> -->
                         <hr class="hr" />
                         <div class="py-7">
                             <b-tabs>

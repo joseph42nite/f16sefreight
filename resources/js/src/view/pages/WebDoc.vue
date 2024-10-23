@@ -2106,10 +2106,19 @@
                                                                     <b-form-select class="form-control-sm ml-lg-15"
                                                                         style="width: 220px;"
                                                                         v-model="form.payment_info.type_of_payment">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="C">All Charges Collect CC</option>
-                                                                        <option value="P">All Charges Prepaid Cash PP</option>
+                                                                        <option value=""> Please select one</option>
+                                                                        <option value="CC">CA - Partial collect credit - partial prepaid cash</option>
+                                                                        <option value="CC">CB - Partial collect credit - partial prepaid credit</option>
+                                                                        <option value="CC">CC - All charges collect</option> <!-- CC -->
+                                                                        <option value="CC">CG - All Charges collect by GBL</option>
+                                                                        <option value="CC">CP - Destination collect cash</option>
+                                                                        <option value="CC">CX - Destination collect credit</option>
+                                                                        <option value="CP">NC - Service rate. No charge</option>
+                                                                        <option value="PP">PC - Partial prepaid cash - partial collect cash</option>
+                                                                        <option value="PP">PD - Partial prepaid credit - partial collect cash</option>
+                                                                        <option value="PP">PG - All charges prepaid by GBL</option>
+                                                                        <option value="PP">PP - All charges prepaid cash</option><!-- PP -->
+                                                                        <option value="PP">PX - All charges prepaid credit</option>
                                                                     </b-form-select>
                                                                 </b-form-group>
                                                                 <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
@@ -3978,7 +3987,7 @@ export default {
     },
     computed: {
         isPrepaid() {
-            const prepaidTypes = ['PC', 'PD', 'PG', 'OO', 'PX'];
+            const prepaidTypes = ['PP'];
             return prepaidTypes.includes(this.form.payment_info.type_of_payment);
         },
         weightCharge() {

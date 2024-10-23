@@ -372,25 +372,40 @@ class HousewayBill extends Controller
             'type_of_payment' => 'required',
             // 'total_charges' => 'required|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
-            //boolean
-            //carriage
-            // 'declear_value_carriage' => 'required',
-            // 'regex:/^NVD$|^\d+(\.\d{1,3})?$/',  // Either 'NVD' or a number with up to 3 decimal places
-            // 'nullable',
-            // 'numeric',
-            // 'min:0.000',
-            // 'max:999999999999',                   //'nullable|numeric|min:0.000|max:999999999999',
-
-            //customs
-            // 'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
-            //Insurance
-            // 'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
+            'declear_value_carriage' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'NVD') {
+                        $fail($attribute.' must be a number or "NVD".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
+            'declear_value_customs' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'NCV') {
+                        $fail($attribute.' must be a number or "NCV".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
+            'declear_value_insurance' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'XXX') {
+                        $fail($attribute.' must be a number or "XXX".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
             'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
             'taxes' => 'nullable|integer',
             'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
             'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999',
-            // Custom validations with correct regex
-            'declear_value_carriage' => 'required|regex:/^(NVD|[0-9]+)$/|max:999999999999'   //'required|regex:#^(?:\d|NVD)$#'
         ]);
        
         

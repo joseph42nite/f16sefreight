@@ -372,23 +372,48 @@ class AirwayBill extends Controller
     {
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
-            'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
+            // 'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
             'no_value_declear_carriage' => 'nullable',
             //boolean
             //carriage
-            'declear_value_carriage' => 'required',
-            'regex:/^NVD$|^\d+(\.\d{1,3})?$/',  // Either 'NVD' or a number with up to 3 decimal places
-            'nullable',
-            'numeric',
-            'min:0.000',
-            'max:999999999999',                   //'nullable|numeric|min:0.000|max:999999999999',
+            // 'declear_value_carriage' => 'required|min:0.000|max:999999999999',// Either 'NVD' or a number or decimal
+            'declear_value_carriage' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'NVD') {
+                        $fail($attribute.' must be a number or "NVD".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
+            'declear_value_customs' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'NCV') {
+                        $fail($attribute.' must be a number or "NCV".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
+            'declear_value_insurance' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'XXX') {
+                        $fail($attribute.' must be a number or "XXX".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
             'no_value_declear_customs' => 'nullable',
             //customs
-            'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
+            // 'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
             'no_value_declear_insurance' => 'nullable',
             //Insurance
-            'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
+            // 'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
             'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
             'taxes' => 'nullable|integer',
             'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
@@ -404,14 +429,11 @@ class AirwayBill extends Controller
 
         $AirwayBills->awb_id = $awb_id;
         $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
-        $AirwayBills->total_charges = $payment_info['total_charges'];
+        // $AirwayBills->total_charges = $payment_info['total_charges'];
         $AirwayBills->currency = $payment_info['currency'];
         $AirwayBills->declear_value_carriage =  $payment_info['declear_value_carriage'];
         $AirwayBills->declear_value_customs =  $payment_info['declear_value_customs'];
         $AirwayBills->declear_value_insurance =  $payment_info['declear_value_insurance'];
-        // $AirwayBills->no_value_declear_carriage = $payment_info['no_value_declear_carriage'];
-        // $AirwayBills->no_value_declear_customs = $payment_info['no_value_declear_customs'];
-        // $AirwayBills->no_value_declear_insurance = $payment_info['no_value_declear_insurance'];
         $AirwayBills->weight_charge = $payment_info['weight_charge'];
         $AirwayBills->taxes = $payment_info['taxes'];
         $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
@@ -423,6 +445,7 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Payment Information save successfully";
     }
+   
     private function otherCustomInformation($awb_no, $awb_code, $oci_entries)
     {
         $awb_id = $awb_code . $awb_no;

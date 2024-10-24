@@ -1228,4 +1228,8 @@ class ConversionController extends Controller
             ->header('Content-Type', 'application/xml');
     }
 
+    function StatusMessage()
+    {
+
+    }
 }

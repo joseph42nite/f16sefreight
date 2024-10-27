@@ -3188,7 +3188,6 @@ export default {
                     date_2: this.getCurrentDate(),
                     date_3: this.getCurrentDate(),
                 },
-
                 entries: [],
                 oci_entries: [],
                 tableCodes: [],
@@ -4285,4 +4284,33 @@ th {
 .column_b {
     border: 1px solid #b1b1b1;
 }
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  /* border: solid 1px silver; */
+  border-radius: 5px;
+}
+
+.dropdown-options {
+  /* position: absolute; */
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+/* .option {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background-color: #f0f0f0;
+} */
 </style>

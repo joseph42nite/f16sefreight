@@ -1136,12 +1136,17 @@ class ConversionController extends Controller
     {
         $awb_id = '571070525';
         $hawb_no = '57HOUSE10';
-        $request_code = 34;
+        $check_particular_value = 1;
+        $request_code = 703;
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
         $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
         $message_format = config("xml_message_format.$request_code");
         $utc_current_date = gmdate("Y-m-d H:i:s");
+        if ($request_code == 703)
+            $main_data = $house_data;
+        else
+            $main_data = $waybill_data;
 
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
@@ -1154,7 +1159,7 @@ class ConversionController extends Controller
         // Message Header Document
         $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
         $generic_request->appendChild($messageHeaderDocument);
-        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['reference_id']));
+        $messageHeaderDocument->appendChild($xml->createElement('ID', $main_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Query'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '21'));
         $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
@@ -1186,9 +1191,33 @@ class ConversionController extends Controller
         // Master Consignment
         $masterConsignment = $xml->createElement('ns2:MasterConsignment');
 
-        $TransportContractDocument=$xml->createElement('TransportContractDocument');
-        $TransportContractDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
+        $TransportContractDocument = $xml->createElement('TransportContractDocument');
+        $TransportContractDocument->appendChild($xml->createElement('ID', $main_data['awb_code'] . '-' . $main_data['awb_no']));
         $masterConsignment->appendChild($TransportContractDocument);
+
+        $OriginLocation = $xml->createElement('OriginLocation');
+        $OriginLocation->appendChild($xml->createElement('ID', $main_data['departure_airport']));
+        $masterConsignment->appendChild($OriginLocation);
+        $FinalDestinationLocation = $xml->createElement('FinalDestinationLocation');
+        $FinalDestinationLocation->appendChild($xml->createElement('ID', $main_data['destination_airport']));
+        $masterConsignment->appendChild($FinalDestinationLocation);
+
+        if (($request_code == 703 && !empty($check_particular_value)) || ($request_code == 34 && !empty($check_particular_value))) {
+            //for getting the house waybill data
+            $IncludedHouseConsignment = $xml->createElement('IncludedHouseConsignment');
+            $TransportContractDocumentHouse = $xml->createElement('TransportContractDocument');
+            $TransportContractDocumentHouse->appendChild($xml->createElement('ID', $house_data['id']));
+            $IncludedHouseConsignment->appendChild($TransportContractDocumentHouse);
+
+            $OriginLocation = $xml->createElement('OriginLocation');
+            $OriginLocation->appendChild($xml->createElement('ID', $house_data['departure_airport']));
+            $IncludedHouseConsignment->appendChild($OriginLocation);
+            $FinalDestinationLocation = $xml->createElement('FinalDestinationLocation');
+            $FinalDestinationLocation->appendChild($xml->createElement('ID', $house_data['destination_airport']));
+            $IncludedHouseConsignment->appendChild($FinalDestinationLocation);
+
+            $masterConsignment->appendChild($IncludedHouseConsignment);
+        }
 
         $generic_request->appendChild($masterConsignment);
         // Append to the root element
@@ -1199,4 +1228,8 @@ class ConversionController extends Controller
             ->header('Content-Type', 'application/xml');
     }
 
+    function StatusMessage()
+    {
+
+    }
 }

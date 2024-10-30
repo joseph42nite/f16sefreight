@@ -513,7 +513,7 @@
                                 <b-tab title="Routing Information" style="border: 2px solid black !important">
                                     <b-row class="mt-5">
                                         <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                            <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                 label="Departure Airport*" label-for="input-departure-airport"
                                                 class="form-control-sm">
                                                 <b-form-select class="form-control" style="width: 150px"
@@ -527,6 +527,23 @@
                                                         Kingdom
                                                     </option>
                                                 </b-form-select>
+                                                <has-error :form="form" field="departure_airport"></has-error>
+                                            </b-form-group> -->
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                label="Departure Airport: *" label-for="input-departure-airport"
+                                                class="form-control-sm col-form-label">
+                                                    <div class="custom-dropdown" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
+                                                        <input type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
+                                                            autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
+                                                        <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
+                                                            <div v-for="(item, index) in filteredLocations_departure" 
+                                                                :key="index" 
+                                                                @click.stop="selectOption_departure(item)" 
+                                                                class="option">
+                                                                {{ item.iata_code }} ({{ item.destination }})
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 <has-error :form="form" field="departure_airport"></has-error>
                                             </b-form-group>
                                         </b-col>
@@ -553,19 +570,20 @@
                                     <b-row class="mt-5">
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Destination Airport: *" label-for="input-departure-airport"
+                                                label="Destination Airport: *" label-for="input-destination-airport"
                                                 class="form-control-sm col-form-label">
-                                                <!-- <b-form-input id="input-departure-airport"
-                                                    class="form-control-sm"></b-form-input> -->
-                                                <b-form-select class="form-control" style="width: 150px"
-                                                    v-model="form.routing_information.destination_airport"
-                                                    :class="{ 'is-invalid': form.errors.has('destination_airport') }">
-                                                    <option disabled value=""> Select a Rate Class</option>
-                                                    <option value="ABY, Albany (ABY), United States">ABY, Albany (ABY),
-                                                        United States</option>
-                                                    <option value="ABZ, Aberdeen (ABZ), United Kingdom"> ABZ, Aberdeen
-                                                        (ABZ), United Kingdom</option>
-                                                </b-form-select>
+                                                    <div class="custom-dropdown" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
+                                                        <input type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
+                                                            autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
+                                                        <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
+                                                            <div v-for="(item, index) in filteredLocations_destination" 
+                                                                :key="index" 
+                                                                @click.stop="selectOption_destination(item)" 
+                                                                class="option">
+                                                                {{ item.iata_code }} ({{ item.destination }})
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 <has-error :form="form" field="destination_airport"></has-error>
                                             </b-form-group>
                                         </b-col>
@@ -576,30 +594,40 @@
                                                     <tbody>
                                                         <tr>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style="width: 150px;"
-                                                                    v-model="form.routing_information.departure_airport"
-                                                                    :class="{ 'is-invalid': form.errors.has('from') }">
-                                                                    <option disabled>Select a Rate Class</option>
-                                                                    <option value="ABY, Albany (ABY), United States">
-                                                                        ABY, Albany (ABY), United States</option>
-                                                                    <option value="ABZ, Aberdeen (ABZ), United Kingdom">
-                                                                        ABZ, Aberdeen (ABZ), United Kingdom</option>
-                                                                </b-form-select>
-                                                                <has-error :form="form" field="from"></has-error>
+                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-form-airport"
+                                                                    class="form-control-sm col-form-label">
+                                                                        <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                                                                            <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" class="form-control" 
+                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
+                                                                            <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in filteredLocations_from" 
+                                                                                    :key="index" 
+                                                                                    @click.stop="selectOption_from(item)" 
+                                                                                    class="option">
+                                                                                    {{ item.iata_code }} ({{ item.destination }})
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    <has-error :form="form" field="from"></has-error>
+                                                                </b-form-group>
                                                             </td>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style="width: 150px;" v-model="form.routing_information.to"
-                                                                    :class="{ 'is-invalid': form.errors.has('to') }">
-                                                                    <option disabledvalue=""> Select a Rate Class
-                                                                    </option>
-                                                                    <option value="ABY, Albany (ABY), United States">
-                                                                        ABY, Albany (ABY), United States</option>
-                                                                    <option value="ABZ, Aberdeen (ABZ), United Kingdom">
-                                                                        ABZ, Aberdeen (ABZ), United Kingdom</option>
-                                                                </b-form-select>
-                                                                <has-error :form="form" field="to"></has-error>
+                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to"
+                                                                    class="form-control-sm col-form-label">
+                                                                        <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                                                                            <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" class="form-control" 
+                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
+                                                                            <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in filteredLocations_to" 
+                                                                                    :key="index" 
+                                                                                    @click.stop="selectOption_to(item)" 
+                                                                                    class="option">
+                                                                                    {{ item.iata_code }} ({{ item.destination }})
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    <has-error :form="form" field="to"></has-error>
+                                                                </b-form-group>
                                                             </td>
                                                             <td class="editable-cell">
                                                                 <input type="text" class="form-control"
@@ -636,7 +664,7 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width: 150px"
+                                                            <!-- <b-form-select class="form-control" style="width: 150px"
                                                                 v-model="form.routing_information.to_2"
                                                                 :class="{ 'is-invalid': form.errors.has('to_2') }">
                                                                 <option disabled value=""> Select 2 a Rate Class
@@ -645,7 +673,23 @@
                                                                     Albany (ABY), United States</option>
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">
                                                                     ABZ, Aberdeen (ABZ), United Kingdom</option>
-                                                            </b-form-select>
+                                                            </b-form-select> -->
+                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to2"
+                                                                    class="form-control-sm col-form-label">
+                                                                        <div class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
+                                                                            <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" class="form-control" 
+                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_2') }">
+                                                                            <div v-if="isDropdownOpen_to2 && filteredLocations_to2.length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in filteredLocations_to2" 
+                                                                                    :key="index" 
+                                                                                    @click.stop="selectOption_to2(item)" 
+                                                                                    class="option">
+                                                                                    {{ item.iata_code }} ({{ item.destination }})
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    <has-error :form="form" field="to_2"></has-error>
+                                                            </b-form-group>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 40px"
@@ -679,7 +723,7 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <b-form-select class="form-control" style="width: 150px"
+                                                            <!-- <b-form-select class="form-control" style="width: 150px"
                                                                 v-model="form.routing_information.to_3"
                                                                 :class="{ 'is-invalid': form.errors.has('to_3') }">
                                                                 <option disabled value=""> Select 3 a Rate Class
@@ -688,7 +732,23 @@
                                                                     Albany (ABY), United States</option>
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ,
                                                                     Aberdeen (ABZ), United Kingdom</option>
-                                                            </b-form-select>
+                                                            </b-form-select> -->
+                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to3"
+                                                                    class="form-control-sm col-form-label">
+                                                                        <div class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown_to3">
+                                                                            <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" class="form-control" 
+                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_3') }">
+                                                                            <div v-if="isDropdownOpen_to3 && filteredLocations_to3.length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in filteredLocations_to3" 
+                                                                                    :key="index" 
+                                                                                    @click.stop="selectOption_to3(item)" 
+                                                                                    class="option">
+                                                                                    {{ item.iata_code }} ({{ item.destination }})
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    <has-error :form="form" field="to_3"></has-error>
+                                                            </b-form-group>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 40px"
@@ -3313,11 +3373,19 @@ export default {
                 charge: '',
                 chargable_weight1: '',
             },
+            searchQuery_to: '',
+            isDropdownOpen_to: false,
+            isDropdownOpen_departure: false,
+            isDropdownOpen_destination: false,
+            isDropdownOpen_to2: false,
+            isDropdownOpen_to3: false,
+            isDropdownOpen_from: false,
             selectedCode: '',
             manualCode: '',
             validationErrors: [],
             hs_code_error: [],
             uld_error: [],
+            location: [],
             newHsCode: '',
             isOpen: false,
             showShipper: false,
@@ -3537,6 +3605,13 @@ export default {
         },
         issueDateChange(date) {
             this.form.issue_date = this.formatDate(date);
+        },
+        // location
+        getLocation() {
+            ApiService.get(`/user/get-location`).then(({ data }) => {
+                this.location=data;
+                console.log('location',data);
+            });
         },
         onSubmit(evt) {
             evt.preventDefault();
@@ -3922,9 +3997,129 @@ export default {
         calculateTotalCharges() {
             this.form.totals.total_amount = this.calculateTotalAmount();
         },
+        toggleDropdown_departure() {
+            this.isDropdownOpen_departure = !this.isDropdownOpen_departure;
+        },
+       
+        selectOption_departure(item) {
+            this.form.routing_information.departure_airport = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.form.routing_information.departure_airport = final_set;
+            this.isDropdownOpen_departure = false;
+        },
+        toggleDropdown_destination() {
+            this.isDropdownOpen_destination = !this.isDropdownOpen_destination;
+        },
+        selectOption_destination(item) {
+            this.form.routing_information.destination_airport = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.form.routing_information.destination_airport = final_set;
+            this.isDropdownOpen_destination = false;
+        },
+        toggleDropdown_to() {
+            this.isDropdownOpen_to = !this.isDropdownOpen_to;
+        },
+        selectOption_to(item) {
+            this.form.routing_information.to = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.form.routing_information.to = final_set;
+            this.isDropdownOpen_to = false;
+        },
+        toggleDropdown_to2() {
+            this.isDropdownOpen_to2 = !this.isDropdownOpen_to2;
+        },
+        selectOption_to2(item) {
+            this.form.routing_information.to_2 = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.form.routing_information.to_2 = final_set;
+            this.isDropdownOpen_to2 = false;
+        },
+        toggleDropdown_to3() {
+            this.isDropdownOpen_to3 = !this.isDropdownOpen_to3;
+        },
+        selectOption_to3(item) {
+            this.form.routing_information.to_3 = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.form.routing_information.to_3 = final_set;
+            this.isDropdownOpen_to3 = false;
+        },
+        toggleDropdown_from() {
+            this.isDropdownOpen_from = !this.isDropdownOpen_from;
+        },
+        selectOption_from(item) {
+            this.form.routing_information.from = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.form.routing_information.from = final_set;
+            this.isDropdownOpen_from = false;
+        },
+        closeDropdown_to(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_to;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_to = false;
+            }
+        },
+        closeDropdown_to2(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_to2;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_to2 = false;
+            }
+        },
+        closeDropdown_to3(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_to3;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_to3 = false;
+            }
+        },
+        closeDropdown_departure(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_departure;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_departure = false;
+            }
+        },
+        closeDropdown_destination(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_destination = false;
+            }
+        },
+        closeDropdown_from(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_from;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_from = false;
+            }
+        },
+        // selectOption_to(item) {
+        //     const { iata_code, destination } = item;
+        //     const finalSet = `${iata_code}, ${destination}`;
+        //     if (this.activeField) {
+        //         this.form.routing_information[this.activeField] = finalSet;
+        //     }
+        //     this.searchQuery_to = finalSet;
+        //     this.isDropdownOpen_to = false;
+        // },
     },
     mounted(){
         this.calculateTotalVolume();
+        window.addEventListener('click', this.closeDropdown_to);
+        window.addEventListener('click', this.closeDropdown_to2);
+        window.addEventListener('click', this.closeDropdown_to3);
+        window.addEventListener('click', this.closeDropdown_from);
+        window.addEventListener('click', this.closeDropdown_destination);
+        window.addEventListener('click', this.closeDropdown_departure);
+        this.getLocation(); 
+        this.location = [];
     },
     watch: {
         // 'consignment_list': function () {
@@ -4061,9 +4256,71 @@ export default {
         },
         calculatedCharge() {
             return this.form.totals.total_amount;
-        }
-    },
+        },
+        filteredLocations_to() {
+            const query = this.form.routing_information.to.toLowerCase().trim();
+            if (!query) return this.location;
 
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_to2() {
+            const query = this.form.routing_information.to_2.toLowerCase().trim();
+            if (!query) return this.location;
+
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_to3() {
+            const query = this.form.routing_information.to_3.toLowerCase().trim();
+            if (!query) return this.location;
+
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_from() {
+            const query = this.form.routing_information.from.toLowerCase().trim();
+            if (!query) return this.location;
+
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_destination() {
+            const query = this.form.routing_information.destination_airport.toLowerCase().trim();
+            if (!query) return this.location;
+
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_departure() {
+            const query = this.form.routing_information.departure_airport.toLowerCase().trim();
+            if (!query) return this.location;
+
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+       
+    },
+    beforeDestroy() {
+        // window.removeEventListener('click', this.closeDropdown_to);
+        // window.removeEventListener('click', this.closeDropdown_to2);
+        // window.removeEventListener('click', this.closeDropdown_to3);
+        // window.removeEventListener('click', this.closeDropdown_from);
+        // window.removeEventListener('click', this.closeDropdown_destination);
+        // window.removeEventListener('click', this.closeDropdown_departure);
+    },
     components: {
         Datepicker,
         DatePicker,
@@ -4305,12 +4562,12 @@ th {
   z-index: 1;
 }
 
-/* .option {
+.option {
   padding: 5px 10px;
   cursor: pointer;
 }
 
 .option:hover {
   background-color: #f0f0f0;
-} */
+}
 </style>

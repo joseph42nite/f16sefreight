@@ -38,6 +38,14 @@ class CreateAgentsInfoTable extends Migration
             $table->string('prticipant_identifer')->nullable();
             $table->string('participant_code')->nullable();
             $table->string('participant_file_reference')->nullable();
+
+           
+            $table->string('ho_name',100)->nullable();
+            $table->string('ho_address', 200)->nullable();
+            $table->string('ho_city')->nullable();
+            $table->string('ho_pincode', 20)->nullable();
+            $table->string('ho_state', 100)->nullable();
+            $table->string('ho_country')->nullable();
             $table->timestamps();
         });
     }

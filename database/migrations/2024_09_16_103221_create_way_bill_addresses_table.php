@@ -15,7 +15,7 @@ class CreateWayBillAddressesTable extends Migration
     {
         Schema::create('way_bill_addresses', function (Blueprint $table) {
             $table->id();
-            $table->integer('awb_id')->nullable();
+            $table->string('awb_id', 50)->nullable();
             $table->string('ship_name')->nullable();
             $table->string('ship_account')->nullable();
             $table->string('ship_address')->nullable();

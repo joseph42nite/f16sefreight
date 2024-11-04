@@ -8,6 +8,36 @@ class AirwayBills extends Model
 {
     //
     protected $table = 'air_way_bills';
+
+    public function agentsInfo()
+    {
+        return $this->belongsTo(Agent::class, 'agent_id', 'id');
+    }
+    
+    public function paymentInfo()
+    {
+        return $this->hasOne(PaymentInfo::class, 'awb_id', 'id');
+    }
+
+    public function wayBillAddress()
+    {
+        return $this->hasOne(WayBillAddress::class, 'awb_id', 'id');
+    }
+
+    public function consignmentData()
+    {
+        return $this->hasOne(ConsignmentData::class, 'awb_id', 'id');
+    }
+
+    public function customInfo()
+    {
+        return $this->hasOne(OtherCustomInformation::class, 'awb_id', 'id');
+    }
+
+    public function otherCharge()
+    {
+        return $this->hasMany(OtherCharge::class, 'awb_id', 'id');
+    }
     
     // protected $fillable = [
     //     'awb_code',

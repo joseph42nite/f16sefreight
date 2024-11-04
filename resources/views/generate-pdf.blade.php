@@ -18,12 +18,12 @@
             top: 0px;
         }
         .routing-and-destination::before {
-            left: -4px;
+            left: -3px;
             border-left: none;
             transform: skew(33deg);
         }
         .routing-and-destination::after {
-            right: -4px;
+            right: -3px;
             border-right: none;
             transform: skew(-33deg);
         }
@@ -38,72 +38,61 @@
         .optional-Shipping-information::after {
             content: "";
             position: absolute;
-            height: 10px;
+            height: 11px;
             border: 1px solid #000;
             top: 0px;
         }
         .optional-Shipping-information::before {
-            left: -5px;
+            left: -6px;
             border-left: none;
             transform: skew(40deg);
         }
         .optional-Shipping-information::after {
-            right: -5px;
+            right: -6px;
             border-right: none;
             transform: skew(-40deg);
         }
     </style>
 </head>
 <body style="word-spacing:normal;margin: 0 auto;">
-    <table role="presentation" cellpadding="0" cellspacing="0" align="center" width="600px">
+    <table align="center" cellpadding="0" cellspacing="0" align="center" width="600px">
         <tr>
             <td align="center" valign="top">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <table cellpadding="0" cellspacing="0" width="100%">
                     <!-- UDR Section -->
                     <tr>
-                        <td align="center" valign="top" width="600px">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <td align="center" valign="top" width="600px" style="padding-bottom:5px;">
+                            <table cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td align="center" valign="top">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                    <!-- first section code -->
+                                    <td align="left" valign="top" width="300px">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <!-- first section code -->
-                                                <td align="center" valign="top" width="300px">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                        <tr>
-                                                            <td align="left" valign="top" width="280px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                    <tr>
-                                                                        <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
-                                                                            057 UDR 51929861
-                                                                        </td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
+                                                <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
+                                                    @php
+                                                    $destination_airport =  explode(',', $airWayBill->departure_airport);
+                                                    $destination_airport = $destination_airport[0];
+                                                    @endphp
+                                                    {{$airWayBill->awb_code .' '. $destination_airport .' '. $airWayBill->awb_no}}
                                                 </td>
-                                                <!-- first section code -->
-                                                <!-- second section code -->
-                                                <td align="center" valign="top" width="300px">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                        <tr>
-                                                            <td align="center" valign="top">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                    <tr>
-                                                                        <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                            057 - 51929861
-                                                                        </td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                                <!-- second section code -->
                                             </tr>
                                         </table>
                                     </td>
+                                    <!-- first section code -->
+                                    <!-- second section code -->
+                                    <td align="center" valign="top" width="300px">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td align="center" valign="top" width="60px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                    &nbsp;
+                                                    </td>
+                                                <td align="center" valign="top" width="140px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                    {{$airWayBill->awb_code . ' - '. $airWayBill->awb_no}}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <!-- second section code -->
                                 </tr>
                             </table>
                         </td>
@@ -112,30 +101,31 @@
                     <!-- Main Border Section Code -->
                     <tr>
                         <td align="center" valign="top">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="600px">
+                            <table cellpadding="0" cellspacing="0" width="600px">
                                 <!-- Shipper's Name and Address Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="300px" style="border-right: 1px solid #000000;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" width="280px" style="padding-left: 5px;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
                                                                         <td align="left" valign="top" width="140px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Shipper's Name and Address
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top: 10px;">
-                                                                                        Time Express Logistics<br>#30, 1st B Main, Chandra<br>Reddy Layo<br>Koramangala 4th Block<br>Bangalore ka 560047<br>India
+                                                                                    <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
+                                                                                        {{ $airWayBill->wayBillAddress->ship_name }} <br/>
+                                                                                        {{ $airWayBill->wayBillAddress->ship_address }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -143,13 +133,18 @@
                                                                         <!-- first column code -->
                                                                         <!-- second column code-->
                                                                         <td align="center" valign="top" width="140px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Shipper's Account Number
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->wayBillAddress->ship_account }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -163,25 +158,25 @@
                                                             </td>
                                                         </tr>
                                                     </table>
-                                                </td>
+                                                 </td>
                                                 <!-- first column section -->
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="300px">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" width="280px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
                                                                         <td align="left" valign="top" width="60px" style="padding-left: 5px;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Not Negotiable
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
                                                                                         Issued by
                                                                                     </td>
                                                                                 </tr>
@@ -190,14 +185,14 @@
                                                                         <!-- first column code -->
                                                                         <!-- second column code-->
                                                                         <td align="left" valign="top" width="220px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;">
+                                                                                    <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;">
                                                                                         Air Waybill
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 12px;line-height: 16px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France
                                                                                     </td>
                                                                                 </tr>
@@ -219,71 +214,64 @@
                                 <!-- Consignee Section Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="300px" style="border-right: 1px solid #000000;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top" width="280px" style="padding-left: 5px;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- first column code-->
+                                                            <td align="left" valign="top" width="150px">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <!-- first column code-->
-                                                                        <td align="left" valign="top" width="140px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                        Consignee's Name and Address
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top: 10px;padding-bottom:20px;">
-                                                                                        M/S INTERGRATED EXPRESS 177 15 149 TH STREET JAMAICA NEW YORK NY 11434 United States
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            Consignee's Name and Address
                                                                         </td>
-                                                                        <!-- first column code -->
-                                                                        <!-- second column code-->
-                                                                        <td align="center" valign="top" width="140px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
-                                                                                    <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                            <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    Consignee's Account Number
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
+                                                                            {{ $airWayBill->wayBillAddress->cons_name }}<br/>
+                                                                            {{ $airWayBill->wayBillAddress->cons_address }}
                                                                         </td>
-                                                                        <!-- second column code -->
                                                                     </tr>
                                                                 </table>
                                                             </td>
+                                                            <!-- first column code -->
+                                                            <!-- second column code-->
+                                                            <td align="center" valign="top" width="150px">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                    <tr>
+                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                <tr>
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                        Consignee's Account Number
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                       {{ $airWayBill->wayBillAddress->cons_account }}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <!-- second column code -->
                                                         </tr>
                                                     </table>
                                                 </td>
                                                 <!-- first column section -->
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="300px">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top" width="280px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <td align="center" valign="top" >
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        
-                                                                        <td align="center" valign="top" >
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px;">
-                                                                                        It is agreed that the goods described herein are accepted in apparent good order and condition (except as noted) for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. ALL GOODS MAY BE CARRIED BY ANY OTHER MEANS INCLUDING ROAD OR ANY OTHER CARRIER UNLESS SPECIFIC CONTRARY INSTRUCTIONS ARE GIVEN HEREON BY THE SHIPPER, AND SHIPPER AGREES THAT THE SHIPMENT MAY BE CARRIED VIA INTERMEDIATE STOPPING PLACES WHICH THE CARRIER DEEMS APPROPRIATE. THE SHIPPER'S ATTENTION IS DRAWN TO THE NOTICE CONCERNING CARRIER'S LIMITATION OF LIABILITY. Shipper may increase such limitation of liability by declaring a higher value for carriage and paying a supplemental charge if required.
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 10px;">
+                                                                            It is agreed that the goods described herein are accepted in apparent good order and condition (except as noted) for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. ALL GOODS MAY BE CARRIED BY ANY OTHER MEANS INCLUDING ROAD OR ANY OTHER CARRIER UNLESS SPECIFIC CONTRARY INSTRUCTIONS ARE GIVEN HEREON BY THE SHIPPER, AND SHIPPER AGREES THAT THE SHIPMENT MAY BE CARRIED VIA INTERMEDIATE STOPPING PLACES WHICH THE CARRIER DEEMS APPROPRIATE. THE SHIPPER'S ATTENTION IS DRAWN TO THE NOTICE CONCERNING CARRIER'S LIMITATION OF LIABILITY. Shipper may increase such limitation of liability by declaring a higher value for carriage and paying a supplemental charge if required.
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -300,119 +288,120 @@
                                 <!-- Issuing Carrier's Agent Name and City Section Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="300px" style="border-right: 1px solid #000000;text-align:center;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top" width="280px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Top column code-->
+                                                            <td align="left" valign="top" style="border-bottom: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <!-- first column code-->
-                                                                        <td align="left" valign="top" style="border-bottom: 1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px">
-                                                                                        Issuing Carrier's Agent Name and City
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-bottom: 20px;">
-                                                                                        Bas Freight BLR<br> 30 4th MAIN CHANDRA REDDY LO BAN<br> 560047 Bangalore
-
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px">
+                                                                            Issuing Carrier's Agent Name and City
                                                                         </td>
-                                                                        <!-- first column code -->
                                                                     </tr>
                                                                     <tr>
-                                                                        <!-- first column code-->
-                                                                        <td align="left" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
-                                                                                    <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                        <tr>
-                                                                                        <!-- first column code-->
-                                                                                        <td align="left" valign="top" width="140px" style="border-right: 1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
-                                                                                        <tr>
-                                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 20px;">Agent's IATA Code
-                                                                                        </td>
-                                                                                        </tr>
-
-                                                                                        <tr>
-                                                                                        <td align="left" valign="top" width="140px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                        <tr>
-                                                                                        <!-- first column code -->
-                                                                                        <td align="center" valign="top" width="70px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                        <tr>
-                                                                                        <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
-                                                                                            1437485   
-                                                                                        </td>
-                                                                                        </tr>
-                                                                                        </table>
-                                                                                        </td>
-                                                                                        <!-- first column code -->
-                                                                                        <!-- second column code -->
-                                                                                        <td align="center" valign="top" width="70px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                        <tr>
-                                                                                        <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                            000   
-                                                                                        </td>
-                                                                                        </tr>
-                                                                                        </table>
-                                                                                        </td>
-                                                                                        <!-- second column code -->
-                                                                                        </tr>
-                                                                                        </table>        
-                                                                                        </td>
-                                                                                        </tr>
-                                                                                        
-                                                                                        </table>
-                                                                                        </td>
-                                                                                        <!-- first column code -->
-                                                                                        <!-- second column code-->
-                                                                                        <td align="center" valign="top" width="width:140px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                        <tr>
-                                                                                        <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">Agent's Account no.
-                                                                                        </td>
-                                                                                        </tr>
-                                                                                        </table>
-                                                                                        </td>
-                                                                                        <!-- second column code -->
-                                                                                        </tr>
-                                                                                        </table>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>
+                                                                        <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 10px 20px;">
+                                                                            {{ $airWayBill->agentsInfo->agent_name }}
+                                                                            <br>
+                                                                            {{ $airWayBill->agentsInfo->agent_address }}
                                                                         </td>
-                                                                        <!-- first column code -->
                                                                     </tr>
                                                                 </table>
                                                             </td>
+                                                            <!-- Top column code -->
+                                                        </tr>
+                                                        <tr>
+                                                            <!-- first column code-->
+                                                            <td align="left" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                    <tr>
+                                                                        <!-- first column code-->
+                                                                        <td align="left" valign="top" width="150px" style="border-right: 1px solid #000000;">
+                                                                            <table cellpadding="0" cellspacing="0">
+                                                                                <tr>
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 20px;">
+                                                                                        Agent's IATA Code
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="left" valign="top" width="150px">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <tr>
+                                                                                                <!-- first column code -->
+                                                                                                <td align="center" valign="top" width="75px">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                                {{ $airWayBill->agentsInfo->iata_agent_code }}  
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                                <!-- first column code -->
+                                                                                                <!-- second column code -->
+                                                                                                <td align="center" valign="top" width="75px">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            {{ $airWayBill->agentsInfo->iata_agent_cass }}   
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                                <!-- second column code -->
+                                                                                            </tr>
+                                                                                        </table>        
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                        <!-- first column code -->
+                                                                        <!-- second column code-->
+                                                                        <td align="center" valign="top" width="width:150px">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                <tr>
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                                        Agent's Account no.
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <!-- first column code -->
+                                                                                    <td align="center" valign="bottom">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <tr>
+                                                                                                <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:19px;">
+                                                                                                    {{ $airWayBill->agentsInfo->agent_account }}  
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                    <!-- first column code -->
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                        <!-- second column code -->
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <!-- first column code -->
                                                         </tr>
                                                     </table>
                                                 </td>
                                                 <!-- first column section -->
-
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="300px">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" width="280px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px;">
                                                                                         Accounting Information
                                                                                     </td>
                                                                                 </tr>
@@ -433,31 +422,23 @@
                                 <!-- Airport of Departure (Addr. of First Carrier and Requested Routing) Section Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="300px" style="border-right:1px solid #000;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                    <tr>
-                                                                        <td align="left" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
-                                                                                        Airport of Departure (Addr. of First Carrier and Requested Routing)
-                                                                                    </td>
-                                                                                </tr>
-                                                                                <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
-                                                                                        UDR - Udaipur
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>
-                                                                        </td>
-                                                                    </tr>
-                                                                </table>
+                                                            <td align="left" valign="top" width="292px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                Airport of Departure (Addr. of First Carrier and Requested Routing)
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td align="left" valign="top" width="292px" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
+                                                                @php
+                                                                $departureAirport = explode(',', $airWayBill->departure_airport);
+                                                                $departureAirport = $departureAirport[0] . ' - ' . $departureAirport[2]  
+                                                                @endphp
+                                                                {{ $departureAirport }}
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -465,24 +446,24 @@
                                                 <!-- first column section -->
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="300px">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" width="300px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr> 
-                                                                        <td align="left" valign="top" width="80px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="left" valign="top" width="85px">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                         Reference Number
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="center" valign="top" width="110px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="center" valign="top" width="141px">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" width="140px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Optional Shipping Information
                                                                                     </td>
                                                                                 </tr>
@@ -494,30 +475,30 @@
                                                         </tr>
                                                         <tr>
                                                             <td align="left" valign="top" width="300px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr> 
-                                                                        <td align="left" valign="top" width="138px" height="23px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="left" valign="top" width="136px" height="23px">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         &nbsp;
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="left" valign="top" width="80px" style="border-left:1px solid #000;border-right:1px solid #000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="left" valign="top" width="82px" style="border-left:1px solid #000;border-right:1px solid #000;">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         &nbsp;
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                         <td align="center" valign="top" width="82px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                        &nbsp;
                                                                                     </td>
                                                                                 </tr>
@@ -538,41 +519,45 @@
                                 <!--Routing and Destination Section Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 
                                                 <tr>
                                                     <!-- first section -->
                                                     <td align="center" valign="top"  width="300px" style="border-right:1px solid #000000;">
-                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                             <tr>
                                                                 <!-- first column code -->
                                                                 <td align="center" valign="top" width="35px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
-                                                                                AMS
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
+                                                                                @php
+                                                                                    $to1 = explode(',', $airWayBill->to);
+                                                                                    $to1 = $to1[0];
+                                                                                @endphp
+                                                                                {{ $to1 }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
                                                                 </td>
                                                                 <!-- first column code -->
                                                                 <!-- second column code -->
-                                                                <td align="left" valign="top" width="65px">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <td align="left" valign="top" width="66px">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 7px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            <td align="left" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                 By First Carrier
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
-                                                                                Air France
+                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
+                                                                                {{ $airWayBill->by }}
                                                                             </td>
                                                                     </tr>
                                                                     </table>
@@ -580,9 +565,9 @@
                                                                 <!-- second column code -->
                                                                 <!-- third column code -->
                                                                 <td align="center" valign="top" width="80px" style="border-right: 1px solid #000000;padding-right:6px;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" class="routing-and-destination" style="font-size: 7px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px;">
+                                                                            <td align="center" valign="top" class="routing-and-destination" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px;">
                                                                                 Routing and Destination
                                                                             </td>
                                                                         </tr>
@@ -591,15 +576,19 @@
                                                                 <!-- third column code -->
                                                                 <!-- fourth column code -->
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                JFK
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                @php
+                                                                                    $to2 = explode(',', $airWayBill->to_2);
+                                                                                    $to2 = $to2[0];
+                                                                                @endphp
+                                                                                {{ $to2 }}
                                                                             </td>
                                                                             </tr>
                                                                     </table>
@@ -607,15 +596,15 @@
                                                                 <!-- fourth column code -->
                                                                 <!-- fifth column code -->
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 by
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                AF
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                {{ $airWayBill->by_2 }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -623,10 +612,19 @@
                                                                 <!-- fifth column code -->
                                                                 <!-- sixth column code -->
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 to
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                @php
+                                                                                    $to3 = explode(',', $airWayBill->to_3);
+                                                                                    $to3 = $to3[0];
+                                                                                @endphp
+                                                                                {{ $to3 }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -634,10 +632,15 @@
                                                                 <!-- sixth column code -->
                                                                 <!-- seven column code -->
                                                                 <td align="center" valign="top" width="30px">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 by
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                {{ $airWayBill->by_3 }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -649,19 +652,19 @@
                                                     <!-- first section -->
                                                     <!-- second section -->
                                                     <td align="center" valign="top" width="300px">
-                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                             <tr>
                                                                 <!-- first column code -->
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Currency
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                INR 
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
+                                                                                {{ $airWayBill->paymentInfo->currency }} 
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -669,15 +672,15 @@
                                                                 <!-- first column code -->
                                                                 <!-- second column code -->
                                                                 <td align="center" valign="top" width="25px" bgcolor="bee3fe" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 CHGS
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                PP 
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                {{ $airWayBill->paymentInfo->type_of_payment }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -685,35 +688,48 @@
                                                                 <!-- second column code -->
                                                                 <!-- third column code -->
                                                                 <td align="center" valign="top" width="40px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
                                                                                 WT/VAL
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="top">
-                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                <table cellpadding="0" cellspacing="0">
                                                                                     <tr>
                                                                                         <td align="center" valign="top" width="20px" style="border-right: 1px solid #000000;">
-                                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         PPD
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                        X 
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                        @php
+                                                                                                            if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'PP') {
+                                                                                                                echo "X";
+                                                                                                            }
+                                                                                                        @endphp
                                                                                                     </td>
                                                                                                 </tr>
                                                                                             </table>
                                                                                         </td>
                                                                                         <td align="center" valign="top" width="20px">
-                                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         COLL
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                        @php
+                                                                                                        if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'CC') {
+                                                                                                            echo "X";
+                                                                                                        }
+                                                                                                    @endphp
                                                                                                     </td>
                                                                                                 </tr>
                                                                                             </table>
@@ -727,38 +743,50 @@
                                                                 <!-- third column code -->
                                                                 <!-- fourth column code -->
                                                                 <td align="center" valign="top" width="40px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
                                                                                 Other
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="top">
-                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                <table cellpadding="0" cellspacing="0">
                                                                                     <tr>
                                                                                         <td align="center" valign="top" width="20px" style="border-right: 1px solid #000000;">
-                                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         PPD
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                        X 
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                        @php
+                                                                                                            if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'PP') {
+                                                                                                                echo "X";
+                                                                                                            }
+                                                                                                        @endphp
                                                                                                     </td>
                                                                                                 </tr>
                                                                                             </table>
                                                                                         </td>
                                                                                         <td align="center" valign="top" width="20px">
-                                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         COLL
                                                                                                     </td>
                                                                                                 </tr>
-                                                                                                
+                                                                                                <tr>
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                        @php
+                                                                                                            if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'CC') {
+                                                                                                                echo "X";
+                                                                                                            }
+                                                                                                        @endphp
+                                                                                                    </td>
+                                                                                                </tr>
                                                                                             </table>
                                                                                         </td>
                                                                                     </tr>
@@ -770,15 +798,15 @@
                                                                 <!-- fourth column code -->
                                                                 <!-- fifth column code -->
                                                                 <td align="center" valign="top" width="84px" style="border-right: 1px solid #000000;">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Declared Value for Carriage
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                NVD 
+                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                {{ $airWayBill->paymentInfo->declear_value_carriage }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -786,15 +814,15 @@
                                                                 <!-- fifth column code -->
                                                                 <!-- sixth column code -->
                                                                 <td align="center" valign="top" width="84px">
-                                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Declared Value for Customs
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                NCV 
+                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                                {{ $airWayBill->paymentInfo->declear_value_customs }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -813,26 +841,26 @@
                                 <!-- Airport of Destination Section Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="300px" style="border-right: 1px solid #000000;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" width="280px">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        <td align="center" valign="top" width="width:120px" style="text-align:center; border:2px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="center" valign="top" width="width:120px" style="border:2px solid #000000;">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
                                                                                         Airport of Destination
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;padding-top:10px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                        JFK - John F. Kennedy Intl.
+                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                                                        {{ $airWayBill->destination_airport }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -840,12 +868,12 @@
                                                                         <!-- first column code -->
                                                                         <!-- second column code-->
                                                                         <td align="center" valign="top" width="160px">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" style="padding-left:20px;padding-right:40px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px ;padding-right: 2px;">
+                                                                                                <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px ;padding-right: 2px;">
                                                                                                     Requested Flight/Date 
                                                                                                 </td>
                                                                                             </tr>
@@ -853,27 +881,29 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="140px" style="width:140px;text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="bottom" width="140px">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <!-- first column code -->
-                                                                                                <td align="center" valign="top" width="70px" style="width:70px;text-align:center;border-right:1px solid #000000;">
-                                                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                                <tr>
-                                                                                                <td align="center" valign="top" width="70px" height="30px" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">AFS3126 /15
-                                                                                                </td>
-                                                                                                </tr>
-                                                                                                </table>           
+                                                                                                <td align="center" valign="bottom" width="70px" style="border-right:1px solid #000000;">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date }}
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>           
                                                                                                 </td>
                                                                                                 <!-- first column code -->
                                                                                                 <!-- second column code -->
-                                                                                                <td align="center" valign="top" width="70px">
-                                                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                                                                                <tr>
-                                                                                                <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">AFS3126 /15
-                                                                                                </td>
-                                                                                                </tr>
-                                                                                                </table>           
+                                                                                                <td align="center" valign="bottom" width="70px">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date }}
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>           
                                                                                                 </td>
                                                                                                 <!-- second column code -->
                                                                                             </tr>
@@ -891,33 +921,33 @@
                                                 </td>
                                                 <!-- first column section -->
                                                 <!-- second column section -->
-                                                <td align="center" valign="top" width="300px" style="width:300px;text-align:center;;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                <td align="center" valign="top" width="300px">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top" width="280px" style="width:280px;text-align:left;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <td align="left" valign="top" width="280px">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        <td align="left" valign="top" width="100px" style="text-align:left;padding-left: 5px;border-right:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="left" valign="top" width="100px" style="padding-left: 5px;border-right:1px solid #000000;">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="height:32px;width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="height:36px;width:100px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Amount of Insurance
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                        XXX
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                        {{ $airWayBill->paymentInfo->declear_value_insurance }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                         <!-- first column code -->
                                                                         <!-- second column code-->
-                                                                        <td align="left" valign="middle" width="180px" style="vertical-align:middle;width:180px;text-align:left;padding-left: 5px;padding-right: 5px;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="left" valign="top" width="180px" style="padding-left: 5px;padding-right: 5px;">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="middle" style="vertical-align:middle;font-size: 6px;line-height: 9px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 7px;line-height: 9px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         INSURANCE: If Carrier offers insurance, and such insurance is requested in accordance with the conditions thereof, indicate amount to be insured in figures in box marked 'Amount of Insurance'
                                                                                     </td>
                                                                                 </tr>
@@ -940,28 +970,26 @@
                                 <!-- Handling Information -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="430px" style="width:430px;text-align:center;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
                                                                         <td align="left" valign="top" width="140px" style="width:140px;text-align:left;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:1px;">
                                                                                         Handling Information
                                                                                     </td>
                                                                                 </tr>
-                                                                                
                                                                             </table>
                                                                         </td>
                                                                         <!-- first column code -->
-                                                                        
                                                                     </tr>
                                                                 </table>
                                                             </td>
@@ -972,26 +1000,28 @@
 
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="190px;" style="width:190px;text-align:center;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
                                                                         
                                                                         <td align="left" valign="top" width="95px" style="width:95px;text-align:left;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" >
+                                                                            <table cellpadding="0" cellspacing="0" >
                                                                                 <tr>
                                                                                     <td align="left" valign="top" >
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     Special Handling Codes:
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
-                                                                                                    EAP UCB SPX
+                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                    @php
+                                                                                                        echo str_replace('"', '', $specialHandlingInfo);
+                                                                                                    @endphp
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1002,12 +1032,12 @@
                                                                         <!-- first column code-->
                                                                         <!-- second column code-->
                                                                         <td align="left" valign="bottom" width="95px" style="width:95px;text-align:left;padding-top: 40px;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="left" valign="bottom"  style="border-top: 1px solid #000000;border-left: 1px solid #000000;">
-                                                                                    <table role="presentation" cellpadding="0" cellspacing="0" >
+                                                                                    <table cellpadding="0" cellspacing="0" >
                                                                                         <tr>
-                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                 SCI
                                                                                             </td>
                                                                                         </tr>
@@ -1032,23 +1062,23 @@
                                 <!-- Pieces -->
                                 <tr>
                                     <td align="center">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td align="center">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <!-- One -->
                                                             <td align="center" valign="top" width="100px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top" style="border-right:1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:40px;text-align:center;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     No. of Pieces RCP 
                                                                                                 </td>
                                                                                             </tr>
@@ -1057,9 +1087,9 @@
                                                                                     <!-- One -->
                                                                                     <!-- Two -->
                                                                                     <td align="center" valign="top" style="border-right:1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:40px;text-align:center;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Gross Weight 
                                                                                                 </td>
                                                                                             </tr>
@@ -1068,9 +1098,9 @@
                                                                                     <!-- Two -->
                                                                                     <!-- Three -->
                                                                                     <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:20px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     kg lb 
                                                                                                 </td>
                                                                                             </tr>
@@ -1083,25 +1113,25 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="right" valign="top" style="text-align:right;border-right:1px solid #000000;border-bottom:1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="right" valign="top" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" style="width:40px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    50 
+                                                                                                <td align="right" valign="top" width="39px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->consignmentData->pieces }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- One -->
                                                                                     <!-- Two -->
-                                                                                    <td align="right" valign="top" style="text-align:right;border-right:1px solid #000000;border-bottom:1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="right" valign="top" style="tborder-right:1px solid #000000;border-bottom:1px solid #000000;">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" style="width:40px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    2000 
+                                                                                                <td align="right" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->consignmentData->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1109,9 +1139,9 @@
                                                                                     <!-- Two -->
                                                                                     <!-- Three -->
                                                                                     <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:20px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom: 130px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom: 130px;">
                                                                                                     K 
                                                                                                 </td>
                                                                                             </tr>
@@ -1124,14 +1154,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="bottom">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width:40px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    50 
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->consignmentData->pieces }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1139,10 +1169,10 @@
                                                                                     <!-- One -->
                                                                                     <!-- Two -->
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width:40px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    2000 
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->consignmentData->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1150,9 +1180,9 @@
                                                                                     <!-- Two -->
                                                                                     <!-- Three -->
                                                                                     <td align="right" valign="bottom">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width:20px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="bottom" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp; 
                                                                                                 </td>
                                                                                             </tr>
@@ -1166,17 +1196,18 @@
                                                                 </table>
                                                             </td>
                                                             <!-- One -->
-                                                            <td align="center" valign="top" width="8px" style="width:8px;" bgcolor="bee3fe" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Two -->
+                                                            <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="8px" style="width:8px;text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top" width="8px">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
-                                                                                                    A 
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
+                                                                                                   {{ $airWayBill->consignmentData->service_code }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1185,21 +1216,21 @@
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    
                                                                 </table>
                                                             </td>
-
-                                                            <td align="center" valign="top" width="100px" style="width:100px;border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Two -->
+                                                            <!-- Three -->
+                                                            <td align="center" valign="top" width="100px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top" >
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:100px;text-align:center;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Rate Class
                                                                                                 </td>
                                                                                             </tr>
@@ -1212,24 +1243,24 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:20px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
-                                                                                                    Q 
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
+                                                                                                    {{ $airWayBill->consignmentData->rate_class }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- One -->
                                                                                     <!-- Two -->
-                                                                                    <td align="center" valign="top"  style="width:80px;text-align:center;border-left:1px solid #000000;border-top: 1px solid #000000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top"  width="80px" style="border-left:1px solid #000000;border-top: 1px solid #000000;">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:80px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;border-bottom: 1px solid #000000;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;border-bottom: 1px solid #000000;">
                                                                                                     Commodity Item No. 
                                                                                                 </td>
                                                                                             </tr>
@@ -1240,40 +1271,39 @@
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    
                                                                 </table>
                                                             </td>
-
-                                                            <td align="center" valign="top" width="8px" style="text-align:center;" bgcolor="bee3fe" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Three -->
+                                                            <!-- Four -->
+                                                            <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td style="width:8px">
+                                                                                    <td align="center" valign="top" width="8px">
                                                                                         &nbsp;
                                                                                     </td>
-                                                                                    
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    
                                                                 </table>
                                                             </td>
-                                                            <!-- Two -->
-                                                            <td align="center" valign="top" width="70px" style="width:70px;text-align:center;border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Four -->
+                                                            <!-- Five -->
+                                                            <td align="center" valign="top" width="70px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="center" valign="top" style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    Chargeable Weight
+                                                                                                <td align="center" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    Chargable Weight
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1284,97 +1314,92 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="right" valign="top">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="right" valign="top" style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="right" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" style="width:60px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    2000 
+                                                                                                <td align="right" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->consignmentData->chargable_weight }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- One -->
-                                                                                    
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                    </tr>
-                                                                    
+                                                                    </tr> 
                                                                 </table>
                                                             </td>
-                                                            <!-- Two -->
-                                                            <td align="center" valign="top" width="width:8px" style="text-align:center;" bgcolor="bee3fe" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Five -->
+                                                            <!-- Six -->
+                                                            <td align="center" valign="top" width="width:8px" bgcolor="bee3fe" >
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="width:8px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    
                                                                 </table>
                                                             </td>
-                                                            <!-- Three -->
-                                                            <td align="center" valign="top" width="50px" style="width:50px;text-align:center;border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Six -->
+                                                            <!-- Seven -->
+                                                            <td align="center" valign="top" width="50px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <!-- One -->
-                                                                                    <td align="center" valign="top"  style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:24px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="24px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Rate 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
-                                                                                    <td align="center" valign="top"  style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:2px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="2px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     / 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
-                                                                                    <td align="center" valign="top" style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:24px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="24px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Charge 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
-                                                                                    <!-- Two -->
                                                                                 </tr>
-                                                                                    <!-- One -->
-
                                                                             </table>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top" style="">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="right" valign="top"  style="text-align:right;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="right" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" style="width:75px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    295.00 
+                                                                                                <td align="right" valign="top" width="75px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->consignmentData->rate }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1388,14 +1413,15 @@
                                                                     
                                                                 </table>
                                                             </td>
-                                                            <!-- Three -->
-                                                            <td align="center" valign="top" width="width:8px" style="text-align:center;" bgcolor="bee3fe" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Seven -->
+                                                            <!-- Eight -->
+                                                            <td align="center" valign="top" width="width:8px" bgcolor="bee3fe" >
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="width:8px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
@@ -1405,18 +1431,19 @@
                                                                     
                                                                 </table>
                                                             </td>
-                                                            <!-- four -->
-                                                            <td align="center" valign="top" width="80px;" style="width:80px;text-align:center;border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Eight -->
+                                                            <!-- Nine -->
+                                                            <td align="center" valign="top" width="80px;" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="center" valign="top"  style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="width:80px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Total
                                                                                                 </td>
                                                                                             </tr>
@@ -1429,14 +1456,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="right" valign="top" style="text-align:right;border-bottom: 1px solid #000;padding-bottom: 130px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="right" valign="top" style="border-bottom: 1px solid #000;padding-bottom: 130px;">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" style="width:75px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    590000.00 
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->total_amount }}  
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1449,14 +1476,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="right" valign="top" style="text-align:right;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="right" valign="top">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" style="width:75px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    590000.00 
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $airWayBill->total_amount }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1469,33 +1496,36 @@
                                                                     </tr>
                                                                 </table>
                                                             </td>
-                                                            <!-- four -->
-                                                            <td align="center" valign="top" width="8px" style="width:8px;text-align:center;" bgcolor="bee3fe" >
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Nine -->
+                                                            <!-- Ten -->
+                                                            <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    &nbsp;
+                                                                                    <td lign="center" valign="top" width="8px">
+                                                                                        &nbsp;
+                                                                                    </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    
                                                                 </table>
                                                             </td>
-                                                            <!-- five -->
-                                                            <td align="center" valign="top" width="160px" style="width:160px;text-align:center;border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                            <!-- Ten -->
+                                                            <!-- Eleven -->
+                                                            <td align="center" valign="top" width="162px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="center" valign="top" width="160px" style="width:160px;text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="center" valign="top" width="160px">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Nature and Quantity of Goods (incl. Dimensions or Volume)
                                                                                                 </td>
                                                                                             </tr>
@@ -1508,37 +1538,47 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top" style="">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="left" valign="top" width="160px" style="text-align:center;padding-bottom:0px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                    <td align="left" valign="top" width="160px">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="width:160px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
-                                                                                                    COURIER BAGS
-                                                                                                    50/60x50x40 cms
-                                                                                                    HS Code: 71171990
-                                                                                                    HS Code: 62089990
-                                                                                                    HS Code: 62034200 
+                                                                                                <td align="left" valign="top" width="160px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                    {{ $airWayBill->consignmentData->description }}<br>
+
+                                                                                                        @php
+                                                                                                            $decodedInfo = json_decode($airWayBill->consignmentData->pieces_info, true);
+                                                                                                            foreach ($decodedInfo as $key => $value) 
+                                                                                                            {
+                                                                                                                echo $piecesInfo = $decodedInfo[$key]['pcs'].'/'.$decodedInfo[$key]['length'].'x'.$decodedInfo[$key]['width'].'x'.$decodedInfo[$key]['height'].' '.$decodedInfo[$key]['unit'].'<br/>' ;
+
+                                                                                                            }
+                                                                                                            // Getting Hs code
+                                                                                                            $hsCode = str_replace('"', '', $hsCode);
+                                                                                                            $hsCode = explode(' ', $hsCode);
+                                                                                                            foreach ($hsCode as $value) {
+                                                                                                                echo "Hs Code: ".$value."<br>";
+                                                                                                            }
+                                                                                                        @endphp
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- One -->
-                                                                                    
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="bottom" style="">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="left" valign="bottom" style="text-align:center;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" style="padding-left:5px;width:160px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="left" valign="bottom" width="160px" style="padding-left:5px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     Total Volume: 6MC 
                                                                                                 </td>
                                                                                             </tr>
@@ -1552,7 +1592,7 @@
                                                                     </tr>
                                                                 </table>
                                                             </td>
-                                                            <!-- five -->    
+                                                            <!-- Eleven -->    
                                                         </tr>
                                                     </table>
                                                 </td>
@@ -1564,27 +1604,27 @@
                                 <!-- MJ-Miscellaneous  -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;border-bottom:none;border-right:none">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td align="center" valign="top">
-                                                    <table  role="presentation" cellpadding="0" cellspacing="0">
+                                                    <table  cellpadding="0" cellspacing="0">
                                                         <tr>
                                                             <!-- first section -->
-                                                            <td align="center" valign="top" width="280px" style="width;280px;text-align:center;border-right:1px solid #000000;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                            <td align="center" valign="top" width="280px" style="border-right:1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <!-- Prepaid Weight Charge Collect -->
                                                                     <tr>
-                                                                        <td align="center" valign="top" width="280px" style="width;280px;text-align:center;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="center" valign="top" width="280px">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top" width="80px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="40px" style="padding:0px 0px 0px 10px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                                 Prepaid   
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1597,12 +1637,12 @@
 
                                                                                     <!-- Two -->
                                                                                     <td align="center" valign="top" width="120px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="100px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
                                                                                                                 Weight Charge   
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1615,12 +1655,12 @@
 
                                                                                     <!-- three -->
                                                                                     <td align="center" valign="top" width="80px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top"width="40px" style="padding-left:20px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                             Collect   
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1636,16 +1676,26 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width: 122px;border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 5px;">
-                                                                                                    590000.00
+                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    @php
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        if ($prepaidTaxType == "PP") {
+                                                                                                            echo $airWayBill->paymentInfo->total_charges_prepaid;
+                                                                                                        }
+                                                                                                    @endphp
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" style="width: 148px;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    &nbsp;
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    @php
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        if ($prepaidTaxType == "CC") {
+                                                                                                            echo $airWayBill->paymentInfo->total_charges_collect;
+                                                                                                        }
+                                                                                                    @endphp
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1657,20 +1707,20 @@
                                                                     <!-- Prepaid Weight Charge Collect -->
                                                                     <!-- Valuation Charge -->
                                                                     <tr>
-                                                                        <td align="center" valign="top"  width="280px" style="width:280px;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="center" valign="top"  width="280px">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
                                                                                                 <!-- one -->
                                                                                                 <td align="center" valign="top" width="80px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" style="width:80px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1682,12 +1732,12 @@
                                                                                                 <!-- one -->
                                                                                                 <!-- Two -->
                                                                                                 <td align="center" valign="top" width="120px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                            <td align="center" valign="top" style="padding-left:10px; padding-right:20px;">
+                                                                                                                <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" class="optional-Shipping-information" style="width:90px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                                        <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             Valuation Charge   
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1699,12 +1749,12 @@
                                                                                                 <!-- Two -->
                                                                                                 <!-- Three -->
                                                                                                 <td align="center" valign="top" width="80px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" style="width:80px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;  
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1722,16 +1772,16 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="right" valign="top"  width="280px">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width: 122px;border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 5px;">
+                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     &nbsp;
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" style="width: 148px;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -1744,20 +1794,20 @@
                                                                     <!-- Valuation Charge -->
                                                                     <!-- TAX -->
                                                                     <tr>
-                                                                        <td align="center" valign="top"  width="280px" style="width:280px;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="center" valign="top"  width="280px">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                             <tr>
                                                                                                 <!-- one -->
                                                                                                 <td align="center" valign="top" width="100px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" style="width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1769,12 +1819,12 @@
                                                                                                 <!-- one -->
                                                                                                 <!-- Two -->
                                                                                                 <td align="center" valign="top" width="80px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                            <td align="center" valign="top" style="padding-left:5px; padding-right:20px;">
+                                                                                                                <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
+                                                                                                                        <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             Tax   
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1786,12 +1836,12 @@
                                                                                                 <!-- Two -->
                                                                                                 <!-- Three -->
                                                                                                 <td align="center" valign="top" width="100px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" style="width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;  
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1810,16 +1860,26 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width: 122px;border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 5px;">
-                                                                                                    &nbsp;
+                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    @php
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        if ($prepaidTaxType == "PP") {
+                                                                                                            echo $airWayBill->paymentInfo->taxes;
+                                                                                                        }
+                                                                                                    @endphp
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" style="width: 148px;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    &nbsp;
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    @php
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        if ($prepaidTaxType == "CC") {
+                                                                                                            echo $airWayBill->paymentInfo->taxes;
+                                                                                                        }
+                                                                                                    @endphp
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1832,19 +1892,19 @@
                                                                     <!-- Total Other Charges Due Agent -->
                                                                     <tr>
                                                                         <td align="center" valign="top"  width="280px" style="width:280px;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <!-- one -->
                                                                                                 <td align="center" valign="top" width="40px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" style="width:40px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1856,12 +1916,12 @@
                                                                                                 <!-- one -->
                                                                                                 <!-- Two -->
                                                                                                 <td align="center" valign="top" width="200px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" class="optional-Shipping-information" style="width:180px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                                        <td align="center" valign="top" width="180px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
                                                                                                                             Total Other Charges Due Agent   
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1873,12 +1933,12 @@
                                                                                                 <!-- Two -->
                                                                                                 <!-- Three -->
                                                                                                 <td align="center" valign="top" width="40px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top">
-                                                                                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                                <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" style="width:40px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;  
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1897,16 +1957,16 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width: 122px;border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 5px;">
-                                                                                                    &nbsp;
+                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_prepaid }}
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" style="width: 148px;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    &nbsp;
+                                                                                                <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_collect }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1918,17 +1978,17 @@
                                                                     <!-- Total Other Charges Due Agent -->
                                                                     <!-- Total Other Charges Due Carrier -->
                                                                     <tr>
-                                                                        <td align="center" valign="top" width="280px" style="width;280px;text-align:center;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="center" valign="top" width="280px">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top" width="40px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="40px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                                 &nbsp;  
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1940,12 +2000,12 @@
                                                                                     <!-- One -->
                                                                                     <!-- Two -->
                                                                                     <td align="center" valign="top" width="200px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" class="optional-Shipping-information" style="width:180px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                            <td align="center" valign="top" width="180px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
                                                                                                                 Total Other Charges Due Carrier
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1958,13 +2018,13 @@
 
                                                                                     <!-- three -->
                                                                                     <td align="center" valign="top" width="40px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="40px">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
-                                                                                                           &nbsp;
+                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -1979,16 +2039,16 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width: 122px;border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 5px;">
-                                                                                                    630.00
+                                                                                                <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_prepaid }}
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" style="width: 148px;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    &nbsp;
+                                                                                                <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_collect }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -2001,15 +2061,15 @@
                                                                     <!-- Blank Row -->
                                                                     <tr>
                                                                         <td align="right" valign="top" bgcolor="bee3fe">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="width: 122px;border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 5px;">
+                                                                                                <td align="right" valign="bottom" height="30px" width="132px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     &nbsp;
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" style="width: 148px;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" height="30px" width="148px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -2023,25 +2083,25 @@
                                                                     <!-- Total prepaid Total collect -->
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="92px" style="width: 92px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="92px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="width:90px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Total Prepaid
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                                Total Prepaid
+                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                Total Collect
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2054,26 +2114,26 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="center" valign="top" style="border-bottom: 1px solid #000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="right" valign="top" style="border-bottom: 1px solid #000;">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="right" valign="bottom" width="132px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                590630.00
+                                                                                                            <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                                {{ $airWayBill->paymentInfo->total_charges_prepaid }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="right" valign="bottom" width="148px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                               &nbsp;
+                                                                                                            <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                                {{ $airWayBill->paymentInfo->total_charges_collect }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2089,24 +2149,24 @@
                                                                     <!-- Currency Conversion Rates -->
                                                                     <tr>
                                                                         <td align="center" valign="top" bgcolor="bee3fe">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="112px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="width:112px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Currency Conversion Rates
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="128px" style="width: 128px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="128px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="128px" class="optional-Shipping-information" style="width:128px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="128px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 CC Charges in Dest. Currency
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2121,24 +2181,24 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top" bgcolor="bee3fe" style="border-bottom:1px solid #000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="right" valign="top" width="132px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="right" valign="top" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="148px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-right:2px;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2155,24 +2215,24 @@
                                                                     <!-- Charges at Destination -->
                                                                     <tr>
                                                                         <td align="center" valign="top" bgcolor="bee3fe">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 For Carrier's use only at Destinations
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" class="optional-Shipping-information" style="width:108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="108px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Charges at Destination
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2187,24 +2247,24 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top" bgcolor="bee3fe" style="border-bottom:1px solid #000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2223,23 +2283,25 @@
                                                             <!-- first section -->
                                                             <!-- second section -->
                                                             <td align="left" valign="top" width="370px" style="width:370px;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <!-- First Column -->
                                                                     <tr>
                                                                         <td align="left" valign="top" width="370px" style="border-bottom:1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                         Other Charges
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
-                                                                                        MJ-Miscellaneous J C 630.00
+                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
+                                                                                        @foreach ($airWayBill->otherCharge as $charge)
+                                                                                            {{ $charge->other_charge_code }} {{ $charge->due }} {{ $charge->amount }}<br> 
+                                                                                        @endforeach
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;height:53px;">
+                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                        &nbsp;
                                                                                     </td>
                                                                                 </tr>
@@ -2249,21 +2311,22 @@
                                                                     <!-- First column -->
                                                                     <!-- Second column -->
                                                                     <tr>
-                                                                        <td align="left" valign="top"  style="border-right:1px solid #000;height:55px;width:370px;text-align:center;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                        <td align="left" valign="top"  style="border-right:1px solid #000;">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="height:55px;width:370px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >Shipper certifies that the particulars on the face hereof are correct and that insofar as any part of the consignment contains dangerous goods, such part is properly described by name and is in proper condition for carriage by air according to the applicable Dangerous Goods Regulations
+                                                                                    <td align="left" valign="top" height="68px" width="370px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                        Shipper certifies that the particulars on the face hereof are correct and that insofar as any part of the consignment contains dangerous goods, such part is properly described by name and is in proper condition for carriage by air according to the applicable Dangerous Goods Regulations
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="center" valign="bottom" style="padding:0px 35px 5px;border-bottom:1px solid #000;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="370px" style="width:370px;text-align:center;">
+                                                                                        <table cellpadding="0" cellspacing="0" width="370px" style="width:370px;text-align:center;">
                                                                                             <tr>
                                                                                                 <td align="center" valign="bottom">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0" style="width:300px;">
+                                                                                                    <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;text-align:center;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
-                                                                                                                BAS FREIGHT BLR
+                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
+                                                                                                                {{ $airWayBill->agentsInfo->agent_name }}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -2271,9 +2334,9 @@
                                                                                             </tr>
                                                                                             <tr>
                                                                                                 <td align="center" valign="middle">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0" style="width:300px;">
+                                                                                                    <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px;text-align:center;" >
+                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px;text-align:center;" >
                                                                                                                 Signature of Shipper or his Agent
                                                                                                             </td>
                                                                                                         </tr>
@@ -2287,38 +2350,43 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="center" valign="middle"  width="370px" style="width:370px;border-right:1px solid #000;border-bottom: 1px solid #000000;">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%">
+                                                                        <td align="center" valign="bottom"  width="370px" height="68px" style="border-right:1px solid #000;border-bottom: 1px solid #000000;">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="middle">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="300px" style="padding:0px 35px;">
+                                                                                    <td align="center" valign="bottom">
+                                                                                        <table cellpadding="0" cellspacing="0" width="300px" style="padding:0px 35px;">
                                                                                         <tr>
-                                                                                            <td align="center" valign="middle" style="border-bottom:1px dotted #000000;">
-                                                                                                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;">
+                                                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" width="70px" style="width:70px;">
-                                                                                                            <table role="presentation" cellpadding="0" cellspacing="0"> 
+                                                                                                        <td align="center" valign="bottom" width="70px">
+                                                                                                            <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
-                                                                                                                        14-OCT-24
+                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                        @php
+                                                                                                                            echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
+                                                                                                                        @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                             </table>
                                                                                                         </td>
-                                                                                                        <td align="center" valign="top" width="70px" style="width:70px;">
-                                                                                                            <table role="presentation" cellpadding="0" cellspacing="0"> 
+                                                                                                        <td align="center" valign="top" width="70px">
+                                                                                                            <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
-                                                                                                                        BLR
+                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                        @php
+                                                                                                                            $locationCode = explode(',', $airWayBill->agentsInfo->agent_issue_loc_code);
+                                                                                                                            echo $locationCode = $locationCode[0];
+                                                                                                                        @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                             </table>
                                                                                                         </td>
-                                                                                                        <td align="center" valign="top" width="160px" style="width:160px;">
-                                                                                                            <table role="presentation" cellpadding="0" cellspacing="0"> 
+                                                                                                        <td align="center" valign="top" width="160px">
+                                                                                                            <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" style="width:160px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
-                                                                                                                        BAS FREIGHT LLP
+                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                        {{ $airWayBill->agentsInfo->agent_issue_sign }}
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                             </table>
@@ -2331,31 +2399,31 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="middle" style="padding-bottom:7px;">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0" width="300px"  style="padding:0px 35px;">
+                                                                                    <td align="center" valign="middle" style="padding-bottom:6px;">
+                                                                                        <table cellpadding="0" cellspacing="0" width="300px"  style="padding:0px 35px;">
                                                                                         <tr>
                                                                                             <td align="center" valign="top" width="70px" style="width:70px">
-                                                                                                <table role="presentation" cellpadding="0" cellspacing="0"> 
+                                                                                                <table cellpadding="0" cellspacing="0"> 
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                                             Executed on (Date)
                                                                                                         </td>
                                                                                                     </tr>
                                                                                                 </table>
                                                                                             </td>
                                                                                             <td align="center" valign="top" width="70px" style="width:70px">
-                                                                                                <table role="presentation" cellpadding="0" cellspacing="0"> 
+                                                                                                <table cellpadding="0" cellspacing="0"> 
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                                             at (Place)
                                                                                                         </td>
                                                                                                     </tr>
                                                                                                 </table>
                                                                                             </td>
                                                                                             <td align="center" valign="top" width="160px" style="width:160px">
-                                                                                                <table role="presentation" cellpadding="0" cellspacing="0"> 
+                                                                                                <table cellpadding="0" cellspacing="0"> 
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" style="width:160px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                                        <td align="center" valign="top" style="width:160px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                                             Signature of Issuing Carrier or his Agent
                                                                                                         </td>
                                                                                                     </tr>
@@ -2370,25 +2438,25 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="370px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="width:112px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Total Collect Charges
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="width:108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
-                                                                                                                057 51929861
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
+                                                                                                                {{$airWayBill->awb_code . ' '. $airWayBill->awb_no}}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2402,24 +2470,24 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="370px">
-                                                                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                        <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="width: 112px;border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="width: 112px;border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" style="height:23px;width:112px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" style="height:23px;width:112px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="width:108px;font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="108px" style="width:108px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2453,38 +2521,38 @@
         </tr>
     </table>
     <!-- Second Page code --> 
-    {{-- <table role="presentation" cellpadding="0" cellspacing="0" width="600" align="center">
+    <table cellpadding="0" cellspacing="0" width="600px" align="center">
         <tr>
-            <td align="center" valign="top">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%"> 
+            <td align="center" valign="top" width="600px">
+                <table cellpadding="0" cellspacing="0" width="100%"> 
                     <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
+                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
                             <img src="" />
                         </td>
                     </tr>
                     <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
+                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
                             NOTICE CONCERNING CARRIER’S LIMITATION OF LIABILITY 
                         </td>
                     </tr>
                     <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
+                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
                             If the carriage involves an ultimate destination or stop in a country other than the country of departure, the Montreal Convention or the Warsaw Convention may be applicable to the liability of the Carrier in respect of loss of, damage or delay to cargo. Carrier's limitation of liability in accordance with those Conventions shall be as set forth in subparagraph 4 unless a higher value is declared.
                         </td>
                     </tr>
                     <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
+                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
                             CONDITIONS OF CONTRACT
                         </td>
                     </tr>
                     <tr>
                         <td align="center" valign="middle">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="600" align="center">
+                            <table cellpadding="0" cellspacing="0" width="600px" align="center">
                                 <tr>
                                     <td align="center" valign="top">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%"> 
+                                        <table cellpadding="0" cellspacing="0" width="100%"> 
                                             <tr>
-                                                <td width="280" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                     <b>1.</b> In this contract and the Notices appearing hereon:<br aria-hidden="true" />
                                                     CARRIER includes the air carrier issuing this air waybill and all carriers that carry or undertake to carry the cargo or perform any other services related to such carriage. SPECIAL DRAWING RIGHT (SDR) is a Special Drawing Right as defined by the International Monetary Fund. WARSAW CONVENTION means whichever of the following instruments is applicable to the contract of carriage: the Convention for the Unification of Certain Rules Relating to International Carriage by Air, signed at Warsaw, 12 October 1929; that Convention as amended at The Hague on 28 September 1955; that Convention as amended at The Hague 1955 and by Montreal Protocol No. 1, 2, or 4 (1975) as the case may be. MONTREAL CONVENTION means the Convention for the Unification of Certain Rules for International Carriage by Air, done at Montreal on 28 May 1999. 
                                                     <br aria-hidden="true" />
@@ -2550,7 +2618,8 @@
                                                     <br aria-hidden="true" />
                                                     <b>6.2</b> In carriage to which neither the Warsaw Convention nor the Montreal                               
                                                 </td>
-                                                <td width="280" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >Convention applies Carrier shall, in accordance with the procedures set
+                                                <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    Convention applies Carrier shall, in accordance with the procedures set
                                                     forth in its general conditions of carriage and applicable tariffs, permit
                                                     shipper to increase the limitation of liability by declaring a higher value
                                                     for carriage and paying a supplemental charge if so required. 
@@ -2640,6 +2709,6 @@
                 </table>
             </td>
         </tr>
-    </table> --}}
+    </table>
 </body>
 </html>

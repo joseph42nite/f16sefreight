@@ -8,4 +8,8 @@ class OtherCustomInformation extends Model
 {
     //
     protected $table = 'way_bill_custom_info';
+    public function airWayBill()
+    {
+        return $this->belongsTo(AirWayBill::class, 'awb_id', 'id');
+    }
 }

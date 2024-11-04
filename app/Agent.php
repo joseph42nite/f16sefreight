@@ -8,6 +8,11 @@ class Agent extends Model
 {
     //
     protected $table = 'agents_info';
+
+    public function airWayBill()
+    {
+        return $this->hasOne(AirWayBill::class, 'agent_id', 'id');
+    }
     
     protected $fillable = [
         'agent_name',

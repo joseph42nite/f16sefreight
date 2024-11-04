@@ -80,6 +80,8 @@ class UserController extends Controller
            return response()->json(['status'=>false]);
         }
     }
+
+    
     public function personal_update(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],

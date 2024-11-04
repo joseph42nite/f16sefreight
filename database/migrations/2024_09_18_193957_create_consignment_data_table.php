@@ -15,7 +15,7 @@ class CreateConsignmentDataTable extends Migration
     {
         Schema::create('way_bill_consignment_data', function (Blueprint $table) {
             $table->id();
-            $table->integer('awb_id')->nullable();
+            $table->string('awb_id', 50)->nullable();
             $table->integer('pieces')->nullable();
             $table->string('description')->nullable();
             $table->string('rate_class')->nullable();

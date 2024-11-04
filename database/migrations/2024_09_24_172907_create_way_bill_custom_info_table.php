@@ -15,7 +15,7 @@ class CreateWayBillCustomInfoTable extends Migration
     {
         Schema::create('way_bill_custom_info', function (Blueprint $table) {
             $table->id();
-            $table->integer('awb_id')->nullable();
+            $table->string('awb_id', 50)->nullable();
             $table->string('country_code',10)->nullable();
             $table->string('info_identifier', 10)->nullable();
             $table->string('custom_info_identifier',10)->nullable();

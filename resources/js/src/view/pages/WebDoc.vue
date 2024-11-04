@@ -940,7 +940,7 @@
                                                             :key="index">
                                                             <td class="editable-cell"
                                                                 style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                                <span>{{ code.hs_code }}</span>
+                                                                <span> {{ code }} </span>
                                                                 <b-icon icon="trash" font-scale="1"
                                                                     @click="removeHsCode(index)"
                                                                     style="cursor: pointer;"></b-icon>
@@ -1172,7 +1172,7 @@
                                                 <th class="form-control1">Gross Wgt.</th>
                                                 <th class="form-control1">Chrg. Wgt.</th>
                                                 <th class="form-control1">Rate</th>
-                                                <th class="form-control1">Detailed Pcs. Info</th>
+                                                <th class="form-control1" style="width:100px;">Detailed Pcs. Info</th>
                                                 <th class="form-control1">Vol</th>
                                                 <th class="form-control1">Rate Class</th>
                                                 <th class="form-control1">UID Rate Class</th>
@@ -1263,8 +1263,7 @@
                                     <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
                                     <option value="T2"> T2 - EC Goods not in free circulation </option>
                                     <option value="TE"> TE - Goods in trade with Spain subject to duties </option>
-                                    <option value="TP"> TP - Goods in trade with Portugal subject to special duties
-                                    </option>
+                                    <option value="TP"> TP - Goods in trade with Portugal subject to special duties</option>
                                     <option value="TD"> TD - Goods already under formal transit procedure </option>
                                     <option value="TF"> TF - Goods in trade between EC and Canary Islands </option>
                                     <option value="C"> C - Goods in free circulation </option>
@@ -1305,8 +1304,19 @@
                                                 v-model="form.custom_origin.accounting_information"
                                                 :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
                                             <has-error :form="form" field="accounting_information"></has-error>
-                                            <b-form-checkbox size="sm" v-model="form.custom_origin.letter_credit">Letter Of
-                                                Credit</b-form-checkbox>
+                                            <!-- <b-form-checkbox size="sm" v-model="form.custom_origin.letter_credit">Letter Of
+                                                Credit</b-form-checkbox> -->
+                                                <label for="input-horizontal" class="mr-2 mt-2 mb-0" style="width: 150px">Letter Of Credit</label>
+                                                <b-form-select class="form-control-sm" v-model="form.custom_origin.letter_credit" style="width: 250px">
+                                                    <option value="CRN">Credit Card Number</option>
+                                                    <option value="CRD">Credit Card Expiry Date</option>
+                                                    <option value="CRI">Credit Card Issuance Name</option>
+                                                    <option value="GEN">General Information</option>
+                                                    <option value="GBL">Government Bill of Lading</option>
+                                                    <option value="STL">Mode of Settlement</option>
+                                                    <option value="RET">Return to Origin</option>
+                                                    <option value="SRN">Shipper’s Reference Number</option>
+                                                </b-form-select>
                                         </div>
                                     </b-tab>
                                     <b-tab title="Shipment Reference Infomation">
@@ -1968,7 +1978,7 @@
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="due" size="sm" v-model="other_charges.due" value="Agent">Due
+                                                <b-form-radio name="due" size="sm" v-model="other_charges.due" value="A">Due
                                                     Agent</b-form-radio>
                                             </b-form-group>
                                         </b-col>
@@ -1976,21 +1986,21 @@
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
                                                 <b-form-radio name="due" size="sm" v-model="other_charges.due"
-                                                    value="Carrier">Due Carrier</b-form-radio>
+                                                    value="C">Due Carrier</b-form-radio>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
                                                 <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
-                                                    value="Prepaid">Prepaid</b-form-radio>
+                                                    value="P">Prepaid</b-form-radio>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
                                                 <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
-                                                    value="Collect">Collect</b-form-radio>
+                                                    value="C">Collect</b-form-radio>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
@@ -2118,7 +2128,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-31 mt-3"
                                                                     style=" width: 220px;"
-                                                                    v-model="form.payment_info.no_value_declear_carriage"></b-form-input>
+                                                                    v-model="form.payment_info.declear_value_carriage"></b-form-input>
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                 content-cols-sm content-cols-lg="auto"
@@ -2128,7 +2138,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-31 mt-3"
                                                                     style="width: 220px;"
-                                                                    v-model="form.payment_info.no_value_declear_customs"></b-form-input>
+                                                                    v-model="form.payment_info.declear_value_customs"></b-form-input>
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                 content-cols-sm content-cols-lg="auto"
@@ -2137,7 +2147,7 @@
                                                                 <b-form-input id="input-horizontal"
                                                                     class="form-control-sm ml-lg-30 mt-3"
                                                                     style="width: 220px;"
-                                                                    v-model="form.payment_info.no_value_declear_insurance"></b-form-input>
+                                                                    v-model="form.payment_info.declear_value_insurance"></b-form-input>
                                                             </b-form-group>
                                                         </b-col>
                                                     </b-col>
@@ -2266,10 +2276,9 @@
                                                                     class="form-control-sm col-form-label"
                                                                     style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.oci_country_code"
-                                                                        :class="{ 'is-invalid': form.errors.has('oci_country_code') }">
-                                                                        <option disabled value="">Select a country
-                                                                        </option>
+                                                                        v-model="oci_info.country_code"
+                                                                        :class="{ 'is-invalid': form.errors.has('country_code') }">
+                                                                        <option value="">Select a country</option>
                                                                         <option value="AF">Afghanistan</option>
                                                                         <option value="AX">Åland Islands</option>
                                                                         <option value="AL">Albania</option>
@@ -2552,7 +2561,7 @@
                                                                         <option value="ZW">Zimbabwe</option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
-                                                                        field="oci_country_code"></has-error>
+                                                                        field="country_code"></has-error>
                                                                 </b-form-group>
                                                             </td>
                                                             <td class="editable-cell">
@@ -2560,8 +2569,8 @@
                                                                     class="form-control-sm col-form-label"
                                                                     style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.oci_info_identifier"
-                                                                        :class="{ 'is-invalid': form.errors.has('oci_info_identifier') }">
+                                                                        v-model="oci_info.info_identifier"
+                                                                        :class="{ 'is-invalid': form.errors.has('info_identifier') }">
                                                                         <option disabled value="">Select a code</option>
                                                                         <option value="ABI">ABI - AWB Amount Detail
                                                                             Information</option>
@@ -2924,7 +2933,7 @@
                                                                         </option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
-                                                                        field="oci_info_identifier"></has-error>
+                                                                        field="info_identifier"></has-error>
                                                                 </b-form-group>
                                                             </td>
                                                             <td class="editable-cell">
@@ -2932,8 +2941,8 @@
                                                                     class="form-control-sm col-form-label"
                                                                     style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.oci_custom_info_identifier"
-                                                                        :class="{ 'is-invalid': form.errors.has('oci_custom_info_identifier') }">
+                                                                        v-model="oci_info.custom_info_identifier"
+                                                                        :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
                                                                         <option disabled value="">Select a code</option>
                                                                         <option value="A">A - Automated Broker Interface
                                                                             (ABI) Filer Code</option>
@@ -2983,7 +2992,7 @@
                                                                         <option value="V">V - Invoice Number</option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
-                                                                        field="oci_custom_info_identifier"></has-error>
+                                                                        field="custom_info_identifier"></has-error>
                                                                 </b-form-group>
                                                             </td>
                                                         </tr>
@@ -2993,10 +3002,10 @@
                                                             <td class="editable-cell px-4">
                                                                 <input type="text" class="form-control"
                                                                     style="width: 330px;"
-                                                                    v-model="oci_info.oci_supplementary_info"
-                                                                    :class="{ 'is-invalid': form.errors.has('oci_supplementary_info') }" />
+                                                                    v-model="oci_info.supplementary_info"
+                                                                    :class="{ 'is-invalid': form.errors.has('supplementary_info') }" />
                                                                 <has-error :form="form"
-                                                                    field="oci_supplementary_info"></has-error>
+                                                                    field="supplementary_info"></has-error>
                                                             </td>
                                                             <td class="editable-cell"></td>
                                                             <td class="editable-cell mb-2">
@@ -3026,13 +3035,13 @@
                                                                 <th></th>
                                                             </tr>
                                                             <tr v-for="(row, index) in form.oci_entries" :key="index">
-                                                                <td class="editable-cell">{{ row.oci_country_code }}
+                                                                <td class="editable-cell">{{ row.country_code }}
                                                                 </td>
-                                                                <td class="editable-cell">{{ row.oci_info_identifier }}
+                                                                <td class="editable-cell">{{ row.info_identifier }}
                                                                 </td>
                                                                 <td class="editable-cell">{{
-                                                                    row.oci_custom_info_identifier }}</td>
-                                                                <td class="editable-cell">{{ row.oci_supplementary_info
+                                                                    row.custom_info_identifier }}</td>
+                                                                <td class="editable-cell">{{ row.supplementary_info
                                                                     }}</td>
                                                                 <td class="editable-cell"
                                                                     style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
@@ -3185,7 +3194,7 @@ export default {
                     other_service_information: '',
                     special_service_request: '',
                     accounting_information: '',
-                    letter_credit: false,
+                    letter_credit: '',
                     shipment_ref_no: null,
                     supplementary_shipment_Info: '',
                     extra_print: null,
@@ -3202,20 +3211,20 @@ export default {
                 payment_info:{
                     type_of_payment: '',
                     currency: 'INR',
-                    no_value_declear_carriage: 'NVD',
-                    no_value_declear_insurance: 'XXX',
-                    no_value_declear_customs: 'NCV',
+                    declear_value_carriage: 'NVD',
+                    declear_value_insurance: 'XXX',
+                    declear_value_customs: 'NCV',
                     // other_charges_due_carrier: '',
                     // other_charges_due_agent: '',
-                    taxes: '',
-                    weight_charge: '',
-                    total_charges_prepaid: '',
-                    total_charges_collect: '',
-                    total_charges: '',
-                    other_charges_due_agent_prepaid: '',
-                    other_charges_due_agent_collect: '',
-                    other_charges_due_carrier_prepaid: '',
-                    other_charges_due_carrier_collect: ''
+                    taxes: null,
+                    weight_charge: null,
+                    total_charges_prepaid: null,
+                    total_charges_collect: null,
+                    total_charges: null,
+                    other_charges_due_agent_prepaid: null,
+                    other_charges_due_agent_collect: null,
+                    other_charges_due_carrier_prepaid: null,
+                    other_charges_due_carrier_collect: null
                 },
 
                 is_consignee_address_save: false,
@@ -3223,10 +3232,10 @@ export default {
                 is_also_notify_address_save: false,
             }),
             oci_info:{
-                oci_country_code: '',
-                oci_info_identifier: '',
-                oci_custom_info_identifier: '',
-                oci_supplementary_info: '',
+                country_code: '',
+                info_identifier: '',
+                custom_info_identifier: '',
+                supplementary_info: '',
             },
             consignment_list: new Form({
                 pieces: '',
@@ -3291,8 +3300,8 @@ export default {
                 other_charge_code: '',
                 other_code: '',
                 amount: '',
-                due: "Carrier",
-                payment_type: "Prepaid",
+                due: "C",
+                payment_type: "P",
                 charge: '',
                 chargable_weight1: '',
             },
@@ -3642,6 +3651,9 @@ export default {
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
+            if (!(this.consignment_list instanceof Form)) {
+                this.consignment_list = new Form(this.consignment_list);
+            }
             this.consignment_list.post(`/get-consignment-error`)
             .then(response => {
                 if (this.edit_entry_index !== null) {
@@ -3763,9 +3775,7 @@ export default {
             } else if (this.consignment_list.hs_code.length < 6 || this.consignment_list.hs_code.length > 18) {
                 this.hs_code_error.push("HS Code must be between 6 to 18 characters/digits.");
             } else {
-                this.consignment_list.hsCodes.push({
-                    hs_code: this.consignment_list.hs_code
-                });
+                this.consignment_list.hsCodes.push(this.consignment_list.hs_code);
                 this.consignment_list.hs_code = "";
             }
         },
@@ -3814,10 +3824,11 @@ export default {
             this.oci_info = { ...this.form.oci_entries[index] };
         },
         addOtherCustomInfo() {
-            if (!this.oci_info.oci_country_code || !this.oci_info.oci_info_identifier || !this.oci_info.oci_supplementary_info || !this.oci_info.oci_custom_info_identifier) {
+            if (!this.oci_info.country_code || !this.oci_info.info_identifier || !this.oci_info.supplementary_info || !this.oci_info.custom_info_identifier) {
                 alert('Please fill in all fields');
                 return;
             }
+            if(!this.oci_info.info_identifier){}
             if (this.editIndex !== null) {
                 this.form.oci_entries[this.editIndex] = { ...this.oci_info };
                 this.editIndex = null;
@@ -3978,25 +3989,25 @@ export default {
         },
         totalDueAgentPrepaid() {
             return this.form.charges
-                .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Prepaid')
+                .filter(charge => charge.due === 'A' && charge.payment_type === 'P')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
         totalDueAgentCollect() {
             return this.form.charges
-                .filter(charge => charge.due === 'Agent' && charge.payment_type === 'Collect')
+                .filter(charge => charge.due === 'A' && charge.payment_type === 'C')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
         totalDueCarrierPrepaid() {
             return this.form.charges
-                .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Prepaid')
+                .filter(charge => charge.due === 'C' && charge.payment_type === 'P')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
         totalDueCarrierCollect() {
             return this.form.charges
-                .filter(charge => charge.due === 'Carrier' && charge.payment_type === 'Collect')
+                .filter(charge => charge.due === 'C' && charge.payment_type === 'C')
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },

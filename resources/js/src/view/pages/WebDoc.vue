@@ -259,11 +259,10 @@
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1">
-                                                <select class="custom-select form-control-sm" style="width: 320px">
-                                                    <option disabled value=""> Select a Shipper</option>
-                                                    <option value="ABS">A</option>
-                                                    <option value="BDE">B</option>
-                                                    <option value="RTY">C</option>
+                                                <select class="custom-select form-control-sm" style="width: 320px" v-model="selectedShipper" @change="fillShipperDetails">
+                                                    <option v-for="shipper in shippers" :key="shipper.id" :value="shipper.id">
+                                                        {{ shipper.name }}
+                                                    </option>
                                                 </select>
                                             </div>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
@@ -392,13 +391,18 @@
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1">
-                                                <select class="custom-select form-control-sm" style="width: 320px"
+                                                <!-- <select class="custom-select form-control-sm" style="width: 320px"
                                                     :class="{ 'is-invalid': form.errors.has('cons_name') }"
                                                     v-model="form.cons_name">
                                                     <option disabled value=""> Select a Consignee</option>
                                                     <option value="ABC">A</option>
                                                     <option value="BDE">B</option>
                                                     <option value="CAB">C</option>
+                                                </select> -->
+                                                <select class="custom-select form-control-sm" style="width: 320px" v-model="selectedConsignee" @change="fillConsigneeDetails">
+                                                    <option v-for="consignee in consignees" :key="consignee.id" :value="consignee.id">
+                                                        {{ consignee.name }}
+                                                    </option>
                                                 </select>
                                                 <has-error :form="form" field="cons_name"></has-error>
                                             </div>
@@ -1429,7 +1433,7 @@
                                             </b-col>
                                             <b-col cols="auto ml-7" style="padding-left: 9.3%">
                                                 <b-form-group label-for="name-input">
-                                                    <b-form-checkbox size="sm">Save information for later logins</b-form-checkbox>
+                                                    <b-form-checkbox size="sm" v-model="form.is_iata_login_later">Save information for later logins</b-form-checkbox>
                                                 </b-form-group>
                                             </b-col>
                                         </b-row>
@@ -3298,6 +3302,7 @@ export default {
                 is_consignee_address_save: false,
                 is_shipper_address_save: false,
                 is_also_notify_address_save: false,
+                is_iata_login_later: false,
             }),
             oci_info:{
                 country_code: '',
@@ -3373,6 +3378,10 @@ export default {
                 charge: '',
                 chargable_weight1: '',
             },
+            selectedShipper: null,
+            selectedConsignee: null,
+            shippers: [],
+            consignees: [],
             searchQuery_to: '',
             isDropdownOpen_to: false,
             isDropdownOpen_departure: false,
@@ -3608,10 +3617,59 @@ export default {
         },
         // location
         getLocation() {
-            ApiService.get(`/user/get-location`).then(({ data }) => {
+            ApiService.get(`/get-location`).then(({ data }) => {
                 this.location=data;
-                console.log('location',data);
             });
+        },
+        fetchShippers() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.shippers = response.data;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fetchConsignee() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.consignees = response.data;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fillShipperDetails() {
+            if (this.selectedShipper) {
+                ApiService.get(`/get-shipper-address?id=${this.selectedShipper}`)
+                .then( response => {
+                    this.form.shipper_address = response.data; 
+                    // console.log('Shipper', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching shipper address:', error);
+                });
+            } else {
+                this.form.shipper_address = {
+                ship_name: '',
+                ship_account: '',
+                ship_address: '',
+                ship_city: '',
+                };
+            }
+        },
+        fillConsigneeDetails() {
+            if (this.selectedConsignee) {
+                ApiService.get(`/get-consignee-address?id=${this.selectedConsignee}`)
+                .then( response => {
+                    this.form.consignee_address = response.data; 
+                    console.log('Consignee', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching shipper address:', error);
+                });
+            } else {
+                this.form.consignee_address = {
+                cons_name: '',
+                cons_account: '',
+                cons_address: '',
+                cons_city: '',
+                };
+            }
         },
         onSubmit(evt) {
             evt.preventDefault();
@@ -4119,6 +4177,10 @@ export default {
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);
         this.getLocation(); 
+        this.fetchShippers();
+        this.fillShipperDetails();
+        this.fillConsigneeDetails();
+        this.fetchConsignee();
         this.location = [];
     },
     watch: {

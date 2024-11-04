@@ -32,8 +32,6 @@
                 <b-button id="toggle-btn" v-b-modal.modal-templates class="mx-2 custom-btn">Templates</b-button>
                 <b-button id="show-btn" v-b-modal.modal-draft class="mx-2 custom-btn">Draft</b-button>
                 <b-button id="toggle-btn" @click="toggleModal" class="mx-2 custom-btn">Related</b-button>
-                <b-button id="show-btn" @click="showModal" class="mx-2 custom-btn">Update Draft</b-button>
-
                 <b-modal id="modal-ss" title="Activity" ok-only>
                     <div class="d-block">
                         <h3>Updated:04:49</h3>
@@ -94,6 +92,16 @@
                         <hr class="hr" />
                         <b-row class="mt-5">
                             <b-col>
+                                <div v-for="item in data_items" :key="item.id">
+                                    <a href="#" class="custom-link" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                            <span class="mr-2 mt-3c">
+                                                <!-- <a href="#" class="custom-link" @click="navigate">Edit e-AWB Data</a> -->
+                                                <p @click="navigate">Edit e-AWB Data </p>
+                                            </span>
+                                       </router-link>
+                                    </a>
+                                </div>
                                 <a href="" class="custom-link">Edit e-AWB Data</a>
                                 <a href="" class="custom-link">Copy e-AWB Data</a>
                                 <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
@@ -181,12 +189,12 @@
         <div class="container mt-lg-15 border-2 bg-light p-2"
             style="margin-bottom: 20px; border-bottom: 1px solid black">
             <div class="container h_background_color text-white pt-2 pb-2">
-                <h4> Create Master Air Waybill(e-AWB)
+                <h4>Create Electronic House Waybill (FHL)
                     <span class="float-right">New</span>
                 </h4>
             </div>
             <template>
-                <b-form @submit="onSubmit">
+                <b-form @submit.prevent="onSubmit">
                     <div class="container">
                         <b-row class="mt-5">
                             <b-col cols="auto">
@@ -3242,7 +3250,8 @@
                                 <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
-                                <b-button type="submit">Save Draft</b-button>
+                                <!-- <b-button type="submit">Save Draft</b-button> -->
+                                <b-button type="submit">{{submitButtonText}}</b-button>
                             </div>
                         </div>
                     </div>
@@ -3259,6 +3268,7 @@ import "vue2-datepicker/index.css";
 export default {
     data() {
         return {
+            mode: 'add',
             form: new Form({
                 first_box:{
                     hawb_no: '',
@@ -3462,6 +3472,8 @@ export default {
             showCalculationTable: false,
             editIndex: null,
             edit_entry_index: null,
+            existingData: null,
+            data_items:[],
             items: [
                 {
                     url: "#webdoc",
@@ -3480,7 +3492,7 @@ export default {
                             name: "Booking(FFR)",
                         },
                         {
-                            url: "#air_waybill",
+                            url: "/web-doc",
                             name: "Air Waybill(FWB)",
                         },
                         {
@@ -3644,12 +3656,12 @@ export default {
                     console.log(data);
                 });
         },
-        showModal() {
-            this.$refs["my-modal"].show();
-        },
-        hideModal() {
-            this.$refs["my-modal"].hide();
-        },
+        // showModal() {
+        //     this.$refs["my-modal"].show();
+        // },
+        // hideModal() {
+        //     this.$refs["my-modal"].hide();
+        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3675,11 +3687,60 @@ export default {
         issueDateChange(date) {
             this.form.issue_date = this.formatDate(date);
         },
-        onSubmit(evt) {
-            evt.preventDefault();
-            this.form.post(`/create-houseway-bill`).then(response => {
-                console.log(response);
-            })
+        // onSubmit(evt) {
+        //     evt.preventDefault();
+        //     this.form.post(`/create-houseway-bill`).then(response => {
+        //         console.log(response);
+        //     })
+        // },
+        onSubmit() {
+            if (this.mode === 'add') {
+                this.form.post('/add-houseway-bill')
+                .then(response => {
+                    console.log('Add Successful:', response);
+                })
+                .catch(error => {
+                    console.error('Add Failed:', error);
+                });
+            } else if (this.mode === 'update') {
+                this.form.put(`/update-houseway-bill/${this.existingData.id}`)
+                .then(response => {
+                    console.log('Update Successful:', response);
+                    // this.$router.push({ path: '/house-way-bill' });
+                })
+                .catch(error => {
+                    console.error('Update Failed:', error);
+                });
+            }
+        },
+        allHousewayBill() {
+            ApiService.get('/all-houseway-bill')
+                .then(response => {
+                    this.data_items = response.data;
+                })
+                .catch(error => {
+                    console.error("Failed to fetch items:", error);
+                });
+        },
+        getHouseWayBill(id) { 
+            ApiService.get(`/houseway-bill/${id}`)
+                .then(response => {
+                    this.existingData = response.data;
+                    this.openForm('update', this.existingData.id);
+                })
+                .catch(error => {
+                    console.error("Failed to fetch data for updating:", error);
+                });
+        },
+        openForm(mode, id = null) {
+            this.mode = mode;
+            if (mode === 'update' && id) {
+                console.log("Data prepared for update, ID:", id);
+                this.form.first_box = this.existingData;
+                this.form.first_box.hawb_no = this.existingData.id;
+            } else {
+                console.log("Add mode activated");
+            }
         },
         getAgent(){
             ApiService.get(`/agent-info/`)
@@ -4058,6 +4119,7 @@ export default {
     },
     mounted(){
         this.calculateTotalVolume();
+        this.allHousewayBill();
     },
     watch: {
         // 'consignment_list': function () {
@@ -4194,7 +4256,10 @@ export default {
         },
         calculatedCharge() {
             return this.form.totals.total_amount;
-        }
+        },
+        submitButtonText() {
+            return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
+        },
     },
 
     components: {

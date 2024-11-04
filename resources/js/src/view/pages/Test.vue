@@ -6677,6 +6677,24 @@ export default {
                 console.log(response);
             })
         },
+        addDraft() {
+            this.form.post('/add-houseway-bill')
+                .then(response => {
+                    console.log('Add Successful:', response);
+                })
+                .catch(error => {
+                    console.error('Add Failed:', error);
+                });
+        },
+        updateDraft() {
+            this.form.put(`/update-houseway-bill/${this.existingData.id}`)
+            .then(response => {
+                console.log('Update Successful:', response);
+            })
+            .catch(error => {
+                console.error('Update Failed:', error);
+            });
+        },
         getAgent(){
             ApiService.get(`/agent-info/`)
                 .then(({ data }) => {

@@ -25,14 +25,14 @@ class AirwayBill extends Controller
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [
-            'ship_name' => 'required|string|max:70',
-            'ship_account' => 'required|string|max:14',
-            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:40',
-            'ship_address_line_2' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:30',
+            'ship_name' => 'string|max:70',
+            'ship_account' => 'required|regex:/^[a-zA-Z0-9]+$/|max:14',
+            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
+            'ship_address_line_2' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
-            'ship_post_code' => 'nullable|string|max:9',
-            'ship_state' => 'nullable|string|max:9',
+            'ship_post_code' => 'nullable|regex:/^[0-9]+$/|max:35',
+            'ship_state' => 'nullable|string|max:35',
             'ship_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
             'ship_phone' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
             'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
@@ -61,6 +61,7 @@ class AirwayBill extends Controller
         $WayBillAddress->ship_phone = $shipper_address['ship_phone'];
         $WayBillAddress->ship_fax = $shipper_address['ship_fax'];
         $WayBillAddress->ship_telex = $shipper_address['ship_telex'];
+        // dd($WayBillAddress);die();
         $WayBillAddress->save();
 
         //insert address if saved button checked
@@ -83,6 +84,7 @@ class AirwayBill extends Controller
             $SavedAddress->phone = $shipper_address['ship_phone'];
             $SavedAddress->fax = $shipper_address['ship_fax'];
             $SavedAddress->telex = $shipper_address['ship_telex'];
+            // dd($SavedAddress);die();
             $SavedAddress->save();
         }
         return 'shipper address saved successfull';
@@ -91,17 +93,17 @@ class AirwayBill extends Controller
     {
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
-            'cons_account' => 'required|string|max:14',
-            'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
-            'cons_address_line_2' => 'required|max:30|regex:/^[a-zA-Z0-9\s]+$/',
+            'cons_account' => 'required|regex:/^[a-zA-Z0-9]+$/|max:14',
+            'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
+            'cons_address_line_2' => 'required|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
-            'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'cons_post_code' => 'nullable|string|max:9',
-            'cons_state' => 'nullable|string|max:9',
-            'cons_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
-            'cons_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
-            'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
-            'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
+            'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
+            'cons_post_code' => 'nullable|string|max:35',
+            'cons_state' => 'nullable|string|max:35',
+            'cons_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
+            'cons_phone' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -157,8 +159,8 @@ class AirwayBill extends Controller
             'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
-            'also_post_code' => 'nullable|string|max:9',
-            'also_state' => 'nullable|string|max:9',
+            'also_post_code' => 'nullable|string|max:35',
+            'also_state' => 'nullable|string|max:35',
             'also_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
             'also_phone' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
             'also_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
@@ -374,9 +376,6 @@ class AirwayBill extends Controller
             'type_of_payment' => 'required',
             // 'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
-            'no_value_declear_carriage' => 'nullable',
-            //boolean
-            //carriage
             // 'declear_value_carriage' => 'required|min:0.000|max:999999999999',// Either 'NVD' or a number or decimal
             'declear_value_carriage' => [
                 'required', 
@@ -408,11 +407,8 @@ class AirwayBill extends Controller
                     }
                 }
             ],
-            'no_value_declear_customs' => 'nullable',
             //customs
             // 'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
-            'no_value_declear_insurance' => 'nullable',
-            //Insurance
             // 'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
             'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
             'taxes' => 'nullable|integer',
@@ -637,5 +633,62 @@ class AirwayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         return response()->json(['msg' => 'No error'], 200);
+    }
+
+    public function getShippers()
+    {
+        $shippers = SavedAddress::all();
+        return response()->json($shippers);
+    }
+    public function getShipperAddress(Request $request)
+    {
+        $addressId = $request->query('id');
+        $address_type = $request->query('address_type', 'shipper_address');
+        // if (!$user_id) {
+        //     return response()->json(['error' => 'User ID is required'], 400);
+        // }
+        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+
+        if ($address) {
+            return response()->json([
+                'ship_name' => $address->name,
+                'ship_account' => $address->account,
+                'ship_address' => $address->address,
+                'ship_address_line_2' => $address->address_line_2,
+                'ship_city' => $address->city,
+                'ship_airport_code' => $address->airport_code,
+                'ship_post_code' => $address->post_code,
+                'ship_state' => $address->state,
+                'ship_country' => $address->country,
+                'ship_phone' => $address->phone,
+                'ship_fax' => $address->fax,
+                'ship_telex' => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
+    public function getConsigneeAddress(Request $request)
+    {
+        $addressId = $request->query('id');
+        $address_type = $request->query('address_type', 'consignee_address');
+        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+
+        if ($address) {
+            return response()->json([
+                'cons_name' => $address->name,
+                'cons_account' => $address->account,
+                'cons_address' => $address->address,
+                'cons_address_line_2' => $address->address_line_2,
+                'cons_city' => $address->city,
+                'cons_airport_code' => $address->airport_code,
+                'cons_post_code' => $address->post_code,
+                'cons_state' => $address->state,
+                'cons_country' => $address->country,
+                'cons_phone' => $address->phone,
+                'cons_fax' => $address->fax,
+                'cons_telex' => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
     }
 }

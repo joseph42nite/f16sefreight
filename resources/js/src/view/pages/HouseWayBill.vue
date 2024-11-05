@@ -32,8 +32,6 @@
                 <b-button id="toggle-btn" v-b-modal.modal-templates class="mx-2 custom-btn">Templates</b-button>
                 <b-button id="show-btn" v-b-modal.modal-draft class="mx-2 custom-btn">Draft</b-button>
                 <b-button id="toggle-btn" @click="toggleModal" class="mx-2 custom-btn">Related</b-button>
-                <b-button id="show-btn" @click="showModal" class="mx-2 custom-btn">Update Draft</b-button>
-
                 <b-modal id="modal-ss" title="Activity" ok-only>
                     <div class="d-block">
                         <h3>Updated:04:49</h3>
@@ -94,6 +92,16 @@
                         <hr class="hr" />
                         <b-row class="mt-5">
                             <b-col>
+                                <div v-for="item in data_items" :key="item.id">
+                                    <a href="#" class="custom-link" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                            <span class="mr-2 mt-3c">
+                                                <!-- <a href="#" class="custom-link" @click="navigate">Edit e-AWB Data</a> -->
+                                                <p @click="navigate">Edit e-AWB Data </p>
+                                            </span>
+                                       </router-link>
+                                    </a>
+                                </div>
                                 <a href="" class="custom-link">Edit e-AWB Data</a>
                                 <a href="" class="custom-link">Copy e-AWB Data</a>
                                 <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
@@ -181,12 +189,12 @@
         <div class="container mt-lg-15 border-2 bg-light p-2"
             style="margin-bottom: 20px; border-bottom: 1px solid black">
             <div class="container h_background_color text-white pt-2 pb-2">
-                <h4> Create Master Air Waybill(e-AWB)
+                <h4>Create Electronic House Waybill (FHL)
                     <span class="float-right">New</span>
                 </h4>
             </div>
             <template>
-                <b-form @submit="onSubmit">
+                <b-form @submit.prevent="onSubmit">
                     <div class="container">
                         <b-row class="mt-5">
                             <b-col cols="auto">
@@ -764,15 +772,6 @@
                                 <h4 class="h-color font-weight-bolder ml-2 mb-0">
                                     Consignment Rate Description
                                 </h4>
-                                <div>
-                                    <b-button class="btn-secondary mr-2">
-                                        <b-icon icon="search" font-scale="1"></b-icon>Get Rates
-                                    </b-button>
-                                    <b-button class="btn-secondary">
-                                        <b-icon icon="calendar2-minus-fill" font-scale="1"></b-icon>Collect house
-                                        waybill sum's
-                                    </b-button>
-                                </div>
                             </div>
                             <b-button class="mt-5" v-b-modal.modal-consignment variant="warning">Add Consignment
                                 Information</b-button>
@@ -1946,72 +1945,14 @@
                                             book</b-form-checkbox>
                                     </b-tab>
                                     <b-tab title="Exta Print Information">
-                                        <h5> Extra information printed of Air Way Bill (Only printed - not saved or sent
-                                            to Airlines): </h5>
+                                        <h5> Extra information printed on House Way Bill (Only printed - not saved or sent to Airlines):</h5>
                                         <b-form-textarea class=""
                                             style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
                                             rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
                                     </b-tab>
-                                    <b-tab title="Carrier Address">
-                                        <h4 class="h-color font-weight-bolder ml-2 mt-2">Override the Carrier Address on
-                                            the PDF Document
-                                        </h4>
-                                        <h6> (This can be used for non-IATA carriers) </h6>
-                                        <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3" label="Name:">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm ml-lg-20"></b-form-input>
-                                            </b-form-group>
-                                            <b-form-checkbox size="sm">Public Address</b-form-checkbox>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-31"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-15"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-31"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="City:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-23"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-11"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="State:">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-20"></b-form-input>
-                                        </b-form-group>
-                                    </b-tab>
                                 </b-tabs>
                             </div>
                         </div>
-                        <hr class="hr" />
-                        <!-- <div class="py-5">
-                            <b-tabs content-class="mt-3" class="nav-tabs">
-                                
-                            </b-tabs>
-                        </div> -->
                         <hr class="hr" />
                         <div class="py-7">
                             <b-tabs>
@@ -3309,7 +3250,8 @@
                                 <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
-                                <b-button type="submit">Save Draft</b-button>
+                                <!-- <b-button type="submit">Save Draft</b-button> -->
+                                <b-button type="submit">{{submitButtonText}}</b-button>
                             </div>
                         </div>
                     </div>
@@ -3326,6 +3268,7 @@ import "vue2-datepicker/index.css";
 export default {
     data() {
         return {
+            mode: 'add',
             form: new Form({
                 first_box:{
                     hawb_no: '',
@@ -3529,6 +3472,8 @@ export default {
             showCalculationTable: false,
             editIndex: null,
             edit_entry_index: null,
+            existingData: null,
+            data_items:[],
             items: [
                 {
                     url: "#webdoc",
@@ -3547,7 +3492,7 @@ export default {
                             name: "Booking(FFR)",
                         },
                         {
-                            url: "#air_waybill",
+                            url: "/web-doc",
                             name: "Air Waybill(FWB)",
                         },
                         {
@@ -3711,12 +3656,12 @@ export default {
                     console.log(data);
                 });
         },
-        showModal() {
-            this.$refs["my-modal"].show();
-        },
-        hideModal() {
-            this.$refs["my-modal"].hide();
-        },
+        // showModal() {
+        //     this.$refs["my-modal"].show();
+        // },
+        // hideModal() {
+        //     this.$refs["my-modal"].hide();
+        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3742,11 +3687,60 @@ export default {
         issueDateChange(date) {
             this.form.issue_date = this.formatDate(date);
         },
-        onSubmit(evt) {
-            evt.preventDefault();
-            this.form.post(`/create-houseway-bill`).then(response => {
-                console.log(response);
-            })
+        // onSubmit(evt) {
+        //     evt.preventDefault();
+        //     this.form.post(`/create-houseway-bill`).then(response => {
+        //         console.log(response);
+        //     })
+        // },
+        onSubmit() {
+            if (this.mode === 'add') {
+                this.form.post('/add-houseway-bill')
+                .then(response => {
+                    console.log('Add Successful:', response);
+                })
+                .catch(error => {
+                    console.error('Add Failed:', error);
+                });
+            } else if (this.mode === 'update') {
+                this.form.put(`/update-houseway-bill/${this.existingData.id}`)
+                .then(response => {
+                    console.log('Update Successful:', response);
+                    // this.$router.push({ path: '/house-way-bill' });
+                })
+                .catch(error => {
+                    console.error('Update Failed:', error);
+                });
+            }
+        },
+        allHousewayBill() {
+            ApiService.get('/all-houseway-bill')
+                .then(response => {
+                    this.data_items = response.data;
+                })
+                .catch(error => {
+                    console.error("Failed to fetch items:", error);
+                });
+        },
+        getHouseWayBill(id) { 
+            ApiService.get(`/houseway-bill/${id}`)
+                .then(response => {
+                    this.existingData = response.data;
+                    this.openForm('update', this.existingData.id);
+                })
+                .catch(error => {
+                    console.error("Failed to fetch data for updating:", error);
+                });
+        },
+        openForm(mode, id = null) {
+            this.mode = mode;
+            if (mode === 'update' && id) {
+                console.log("Data prepared for update, ID:", id);
+                this.form.first_box = this.existingData;
+                this.form.first_box.hawb_no = this.existingData.id;
+            } else {
+                console.log("Add mode activated");
+            }
         },
         getAgent(){
             ApiService.get(`/agent-info/`)
@@ -4125,6 +4119,7 @@ export default {
     },
     mounted(){
         this.calculateTotalVolume();
+        this.allHousewayBill();
     },
     watch: {
         // 'consignment_list': function () {
@@ -4261,7 +4256,10 @@ export default {
         },
         calculatedCharge() {
             return this.form.totals.total_amount;
-        }
+        },
+        submitButtonText() {
+            return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
+        },
     },
 
     components: {

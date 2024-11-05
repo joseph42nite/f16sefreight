@@ -10,12 +10,13 @@ use App\Agent;
 use App\PaymentInfo;
 use App\OtherCharge;
 use App\OtherCustomInformation;
+use App\Ams;
 use Illuminate\Http\Request;
 use DOMDocument;
 
 class ConversionController extends Controller
 {
-    public function WayBillConversion($awb_id = 571070525)
+    public function WayBillConversion($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
@@ -47,7 +48,7 @@ class ConversionController extends Controller
         // Message Header Document
         $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
         $waybill->appendChild($messageHeaderDocument);
-        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id'] . '_' . $time));
+        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Air Waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '740'));
         $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
@@ -174,7 +175,7 @@ class ConversionController extends Controller
         $postalStructuredAddress2 = $xml->createElement('PostalStructuredAddress');
         $postalStructuredAddress2->appendChild($xml->createElement('PostcodeCode', $waybill_address['cons_post_code']));
         $postalStructuredAddress2->appendChild($xml->createElement('StreetName', $consignee_street_name));
-        $postalStructuredAddress2->appendChild($xml->createElement('CityName', 'Paris'));
+        $postalStructuredAddress2->appendChild($xml->createElement('CityName', $waybill_address['cons_city']));
         $postalStructuredAddress2->appendChild($xml->createElement('CountryID', $waybill_address['cons_country']));
         // $postalStructuredAddress2->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['cons_state']));
         $consigneeParty->appendChild($postalStructuredAddress2);
@@ -364,7 +365,7 @@ class ConversionController extends Controller
             $postalStructuredAddress3 = $xml->createElement('PostalStructuredAddress');
             $postalStructuredAddress3->appendChild($xml->createElement('PostcodeCode', $waybill_address['also_post_code']));
             $postalStructuredAddress3->appendChild($xml->createElement('StreetName', $consignee_street_name));
-            $postalStructuredAddress3->appendChild($xml->createElement('CityName', 'Paris'));
+            $postalStructuredAddress3->appendChild($xml->createElement('CityName', $waybill_address['also_city']));
             $postalStructuredAddress3->appendChild($xml->createElement('CountryID', $waybill_address['also_country']));
             // $postalStructuredAddress3->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['also_state']));
             $AssociatedParty->appendChild($postalStructuredAddress3);
@@ -727,7 +728,7 @@ class ConversionController extends Controller
         $postalStructuredAddress2 = $xml->createElement('PostalStructuredAddress');
         $postalStructuredAddress2->appendChild($xml->createElement('PostcodeCode', $house_address['cons_post_code']));
         $postalStructuredAddress2->appendChild($xml->createElement('StreetName', $consignee_street_name));
-        $postalStructuredAddress2->appendChild($xml->createElement('CityName', 'Paris'));
+        $postalStructuredAddress2->appendChild($xml->createElement('CityName', $house_address['cons_city']));
         $postalStructuredAddress2->appendChild($xml->createElement('CountryID', $house_address['cons_country']));
         // $postalStructuredAddress2->appendChild($xml->createElement('CountrySubDivisionName', $house_address['cons_state']));
         $consigneeParty->appendChild($postalStructuredAddress2);
@@ -768,7 +769,7 @@ class ConversionController extends Controller
             $postalStructuredAddress3 = $xml->createElement('PostalStructuredAddress');
             $postalStructuredAddress3->appendChild($xml->createElement('PostcodeCode', $house_address['also_post_code']));
             $postalStructuredAddress3->appendChild($xml->createElement('StreetName', $consignee_street_name));
-            $postalStructuredAddress3->appendChild($xml->createElement('CityName', 'Paris'));
+            $postalStructuredAddress3->appendChild($xml->createElement('CityName', $house_address['also_city']));
             $postalStructuredAddress3->appendChild($xml->createElement('CountryID', $house_address['also_country']));
             $AssociatedParty->appendChild($postalStructuredAddress3);
 
@@ -1230,6 +1231,481 @@ class ConversionController extends Controller
 
     function StatusMessage()
     {
+    }
 
+
+    public function HouseManifestMessage($awb_id = "0571070525")
+    {
+        // Fetch data from the database (this is just sample data for now)
+        $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
+        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
+        $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
+        $utc_current_date = gmdate("Y-m-d H:i:s");
+
+        // Start conversion to XML
+        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml->formatOutput = true;
+
+        // Create root element
+        $housemanifest = $xml->createElementNS('iata:housemanifest:1', 'ns2:HouseManifest');
+        $housemanifest->setAttribute('xmlns', 'iata:datamodel:3');
+        $housemanifest->setAttribute('xmlns:ns2', 'iata:housemanifest:1');
+
+        // Message Header Document
+        $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
+        $housemanifest->appendChild($messageHeaderDocument);
+        $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id'] . '_' . $waybill_data['reference_id']));
+        $messageHeaderDocument->appendChild($xml->createElement('Name', 'Cargo Manifest'));
+        $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '785'));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
+        $messageHeaderDocument->appendChild($xml->createElement('VersionID', '3.00'));
+
+        // SenderParty
+        $senderParty1 = $xml->createElement('SenderParty');
+        $senderParty1->appendChild($xml->createElement('PrimaryID', 'REUAGT82INKN/BLR01'));
+        $senderParty1->firstChild->setAttribute('schemeID', 'P');
+        $messageHeaderDocument->appendChild($senderParty1);
+
+        $recipientParty2 = $xml->createElement('RecipientParty');
+        $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
+        $recipientParty2->firstChild->setAttribute('schemeID', 'C');
+        $messageHeaderDocument->appendChild($recipientParty2);
+
+        // Business Header Document
+        $businessHeaderDocument = $xml->createElement('ns2:BusinessHeaderDocument');
+        $housemanifest->appendChild($businessHeaderDocument);
+
+        $businessHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
+
+        // Master Consignment
+        $masterConsignment = $xml->createElement('ns2:MasterConsignment');
+        $housemanifest->appendChild($masterConsignment);
+        $masterConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+        $masterConsignment->appendChild($xml->createElement('ConsignmentItemQuantity', 1));
+        if (!empty($consignment_data['slac']))
+            $masterConsignment->appendChild($xml->createElement('PackageQuantity', $consignment_data['slac']));
+        $masterConsignment->appendChild($xml->createElement('TotalPieceQuantity', $consignment_data['pieces']));
+
+        $TransportContractDocument = $xml->createElement('TransportContractDocument');
+        $TransportContractDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
+        $masterConsignment->appendChild($TransportContractDocument);
+
+        // Origin Location
+        $originLocation = $xml->createElement('OriginLocation');
+        $originLocation->appendChild($xml->createElement('ID', $waybill_data['departure_airport']));
+        $masterConsignment->appendChild($originLocation);
+
+        // Final Destination Location
+        $finalDestinationLocation = $xml->createElement('FinalDestinationLocation');
+        $finalDestinationLocation->appendChild($xml->createElement('ID', $waybill_data['destination_airport']));
+        $masterConsignment->appendChild($finalDestinationLocation);
+
+        for ($i = 0; $i < sizeof($custom_info); $i++) {
+            $IncludedCustomsNote = $xml->createElement('IncludedCustomsNote');
+            $IncludedCustomsNote->appendChild($xml->createElement('ContentCode', $custom_info[$i]['custom_info_identifier']));
+            $IncludedCustomsNote->appendChild($xml->createElement('Content', $custom_info[$i]['supplementary_info']));
+            $IncludedCustomsNote->appendChild($xml->createElement('SubjectCode', $custom_info[$i]['info_identifier']));
+            $IncludedCustomsNote->appendChild($xml->createElement('CountryID', $custom_info[$i]['country_code']));
+            $masterConsignment->appendChild($IncludedCustomsNote);
+        }
+
+        //============House data====================
+        $awb_code = substr($awb_id, 0, 3);
+        $awb_no = substr($awb_id, 3);
+        $house_data = HousewayBills::where([['awb_code', $awb_code], ['awb_no', $awb_no]])->get()->toArray();
+        for ($i = 0; $i < sizeof($house_data); $i++) {
+            $hawb_no = $house_data[$i]['id'];
+            $house_consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
+            $housewaybill = $xml->createElement('IncludedHouseConsignment');
+            $masterConsignment->appendChild($housewaybill);
+            $housewaybill->appendChild($xml->createElement('SequenceNumeric', $i + 1));
+            $housewaybill->appendChild($xml->createElement('GrossWeightMeasure', $house_consignment_data['gross_weight']))->setAttribute('unitCode', $house_consignment_data['weight_code']);
+            if (!empty($house_consignment_data['slac']))
+                $housewaybill->appendChild($xml->createElement('PackageQuantity', $house_consignment_data['slac']));
+            $housewaybill->appendChild($xml->createElement('TotalPieceQuantity', $house_consignment_data['pieces']));
+            if (!empty($house_consignment_data['description']))
+                $housewaybill->appendChild($xml->createElement('SummaryDescription', $house_consignment_data['description']));
+
+            $TransportContractDocument = $xml->createElement('TransportContractDocument');
+            $TransportContractDocument->appendChild($xml->createElement('ID', $house_data[$i]['id']));
+            $housewaybill->appendChild($TransportContractDocument);
+
+            // Origin Location
+            $originLocation = $xml->createElement('OriginLocation');
+            $originLocation->appendChild($xml->createElement('ID', $house_data[$i]['departure_airport']));
+            $housewaybill->appendChild($originLocation);
+
+            // Final Destination Location
+            $finalDestinationLocation = $xml->createElement('FinalDestinationLocation');
+            $finalDestinationLocation->appendChild($xml->createElement('ID', $house_data[$i]['destination_airport']));
+            $housewaybill->appendChild($finalDestinationLocation);
+
+            $special_handling_info = json_decode($house_data[$i]['special_handling_info'], true);
+            // Handling SPH Instructions
+            for ($i = 0; $i < sizeof($special_handling_info); $i++) {
+                $handlingSPHInstructions = $xml->createElement('HandlingSPHInstructions');
+                $handlingSPHInstructions->appendChild($xml->createElement('DescriptionCode', $special_handling_info[$i]));
+                $housewaybill->appendChild($handlingSPHInstructions);
+            }
+
+            if (!empty($house_data[$i]['special_service_request'])) {
+                // Handling SSR Instructions
+                $handlingSSRInstructions = $xml->createElement('HandlingSSRInstructions');
+                $handlingSSRInstructions->appendChild($xml->createElement('Description', $house_data[$i]['special_service_request']));
+                $housewaybill->appendChild($handlingSSRInstructions);
+            }
+
+            if (!empty($house_data[$i]['other_service_information'])) {
+                // Handling SSR Instructions
+                $HandlingOSIInstructions = $xml->createElement('HandlingOSIInstructions');
+                $HandlingOSIInstructions->appendChild($xml->createElement('Description', $house_data[$i]['other_service_information']));
+                $housewaybill->appendChild($HandlingOSIInstructions);
+            }
+            $house_custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
+            for ($j = 0; $j < sizeof($house_custom_info); $j++) {
+                $IncludedCustomsNote = $xml->createElement('IncludedCustomsNote');
+                $IncludedCustomsNote->appendChild($xml->createElement('ContentCode', $house_custom_info[$j]['custom_info_identifier']));
+                $IncludedCustomsNote->appendChild($xml->createElement('Content', $house_custom_info[$j]['supplementary_info']));
+                $IncludedCustomsNote->appendChild($xml->createElement('SubjectCode', $house_custom_info[$j]['info_identifier']));
+                $IncludedCustomsNote->appendChild($xml->createElement('CountryID', $house_custom_info[$j]['country_code']));
+                $housewaybill->appendChild($IncludedCustomsNote);
+            }
+        }
+
+        // Append to the root element
+        $xml->appendChild($housemanifest);
+        // Prepare response as an XML download
+        return response($xml->saveXML(), 200)
+            ->header('Content-Type', 'application/xml');
+    }
+
+    public function DirectDataMessage($awb_id = "0571070525")
+    {
+        // Fetch data from the database (this is just sample data for now)
+        $waybill_data = AirwayBills::where([['id', $awb_id]])->limit(1)->first()->toArray();
+        $carrier_code = Ams::select('carrier_code')->where('carrier_prefix', $waybill_data['awb_code'])->limit(1)->first()->toArray()['carrier_code'];
+        $house_data = HousewayBills::where([['awb_code', $waybill_data['awb_code']], ['awb_no', $waybill_data['awb_no']]])->get()->toArray();
+        $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
+        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
+        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
+        $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
+        $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
+        $utc_current_date = gmdate("Y-m-d H:i:s");
+        $time = time();
+
+        // Start conversion to XML
+        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml->formatOutput = true;
+
+        // Create root element
+        $direct_data = $xml->createElementNS('iata:directdataexchange:1', 'ns2:DirectDataExchange');
+        $direct_data->setAttribute('xmlns', 'iata:datamodel:5');
+        $direct_data->setAttribute('xmlns:ns2', 'iata:directdataexchange:1');
+
+        // Message Header Document
+        $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
+        $direct_data->appendChild($messageHeaderDocument);
+        $messageHeaderDocument->appendChild($xml->createElement('ID', $time));
+        $messageHeaderDocument->appendChild($xml->createElement('Name', 'Invoicing data sheet'));
+        $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '130'));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
+        $messageHeaderDocument->appendChild($xml->createElement('VersionID', '2.00'));
+
+        // SenderParty
+        $senderParty1 = $xml->createElement('SenderParty');
+        $senderParty1->appendChild($xml->createElement('PrimaryID', 'REUAGT82INKN/BLR01'));
+        $senderParty1->firstChild->setAttribute('schemeID', 'P');
+        $messageHeaderDocument->appendChild($senderParty1);
+
+        $recipientParty2 = $xml->createElement('RecipientParty');
+        $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
+        $recipientParty2->firstChild->setAttribute('schemeID', 'C');
+        $messageHeaderDocument->appendChild($recipientParty2);
+
+        $XDDHeader = $xml->createElement('XDDHeader');
+        $XDDHeader->appendChild($xml->createElement('SequenceNumeric', '1'));
+        $CarrierParty = $xml->createElement('CarrierParty');
+        $CarrierParty->appendChild($xml->createElement('TwoLetterPrefixID', $carrier_code));
+        $CarrierParty->appendChild($xml->createElement('ThreeLetterPrefixID', $waybill_data['awb_code']));
+        $XDDHeader->appendChild($CarrierParty);
+        $XDDHeader->appendChild($xml->createElement('AWBID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
+        $XDDHeader->appendChild($xml->createElement('AWBCheckDigitNumeric', substr($waybill_data['awb_no'], -1)));
+        $XDDHeader->appendChild($xml->createElement('AWBFlownDateTime', $waybill_data['date']));
+        $XDDHeader->appendChild($xml->createElement('AWBAccountDateTime', $waybill_data['execution_date_time']));
+        $XDDHeader->appendChild($xml->createElement('AWBExecutionDateTime', $waybill_data['execution_date_time']));
+        $XDDHeader->appendChild($xml->createElement('ConsolidationIndicator', $house_data ? 'true' : 'false'));
+        $XDDHeader->appendChild($xml->createElement('ElectronicIndicator', !$waybill_data['awb'] ? 'true' : 'false'));
+
+        // Origin Location
+        $WaybillOriginLocation = $xml->createElement('WaybillOriginLocation');
+        $WaybillOriginLocation->appendChild($xml->createElement('ID', $waybill_data['departure_airport']));
+        $XDDHeader->appendChild($WaybillOriginLocation);
+
+        // Final Destination Location
+        $WaybillDestinationLocation = $xml->createElement('WaybillDestinationLocation');
+        $WaybillDestinationLocation->appendChild($xml->createElement('ID', $waybill_data['destination_airport']));
+        $XDDHeader->appendChild($WaybillDestinationLocation);
+
+        // Freight Forwarder Party
+        $freightForwarderParty = $xml->createElement('FreightForwarderParty');
+        $freightForwarderParty->appendChild($xml->createElement('Name', $agent_details['agent_name']));
+        $freightForwarderParty->appendChild($xml->createElement('CargoAgentID', $agent_details['iata_agent_code']));
+        $freightForwarderParty->appendChild($xml->createElement('CASSAccountIndicator', 'true'));
+        $freightForwarderAddress = $xml->createElement('FreightForwarderAddress');
+        $freightForwarderAddress->appendChild($xml->createElement('PostcodeCode', $agent_details['agent_pincode']));
+        $freightForwarderAddress->appendChild($xml->createElement('StreetName', $agent_details['agent_address']));
+        $freightForwarderAddress->appendChild($xml->createElement('CityName', $agent_details['agent_city']));
+        $freightForwarderAddress->appendChild($xml->createElement('CountryID', $agent_details['agent_country'])); //
+        $freightForwarderParty->appendChild($freightForwarderAddress);
+
+        $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+        $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+        $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $agent_details['agent_contact_person_phone']));
+        $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+        $URIEmailCommunication = $xml->createElement('URIEmailCommunication');
+        $URIEmailCommunication->appendChild($xml->createElement('URIID', $agent_details['agent_contact_person_email']));
+        $DefinedTradeContact->appendChild($URIEmailCommunication);
+        $freightForwarderParty->appendChild($DefinedTradeContact);
+        $XDDHeader->appendChild($freightForwarderParty);
+
+        $special_handling_info = json_decode($waybill_data['special_handling_info'], true);
+        $check_custome_sph = ['ACT', 'AOG', 'ATT', 'AVI', 'BIG', 'BUP', 'CAO', 'CAT', 'COL', 'COM', 'CRT', 'DGD', 'DIP', 'EAP', 'EAW', 'EAT', 'ECC', 'ELI', 'ELM', 'EMD', 'ERT', 'FIL', 'FRI', 'FRO', 'GCO', 'GOG', 'HEA', 'HEG', 'HUM', 'ICE', 'LHO', 'LIC', 'MAG', 'MAL', 'MUW', 'NDA', 'NWP', 'OBX', 'OCI', 'OHG', 'OSI', 'PAC', 'PEA', 'PEF', 'PEM', 'PEP', 'PER', 'PES', 'PIL', 'QRT', 'RAC', 'RBI', 'RBM', 'RCL', 'RCM', 'RCX', 'RDS', 'REQ', 'REX', 'RFG', 'RFL', 'RFS', 'RFW', 'RGX', 'RIS', 'RLI', 'RLM', 'RMD', 'RNG', 'ROP', 'ROX', 'RPB', 'RPG', 'RRE', 'RRW', 'RRY', 'RSB', 'RSC', 'RXB', 'RXC', 'RXD', 'RXE', 'RXG', 'RXS', 'SAL', 'SCO', 'SFX', 'SHL', 'SHR', 'SPF', 'SPX', 'SUR', 'SWP', 'VAL', 'VOL', 'VUN', 'WET', 'XPH', 'XPS'];
+        // Handling SPH Instructions
+        for ($i = 0; $i < sizeof($special_handling_info); $i++) {
+            $handlingSPHInstructions = $xml->createElement('HandlingSPHInstructions');
+            $handlingSPHInstructions->appendChild($xml->createElement('CustomizationIndicator', in_array($special_handling_info[$i], $check_custome_sph) ? 'false' : 'true'));
+            $handlingSPHInstructions->appendChild($xml->createElement('DescriptionCode', $special_handling_info[$i]));
+            $XDDHeader->appendChild($handlingSPHInstructions);
+        }
+
+        if (!empty($waybill_data['special_service_request'])) {
+            // Handling SSR Instructions
+            $handlingSSRInstructions = $xml->createElement('HandlingSSRInstructions');
+            $handlingSSRInstructions->appendChild($xml->createElement('Description', $waybill_data['special_service_request']));
+            $XDDHeader->appendChild($handlingSSRInstructions);
+        }
+        //also notify
+        if (!empty($waybill_address['also_name'])) {
+            $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
+            $OtherParty = $xml->createElement('OtherParty');
+            $OtherParty->appendChild($xml->createElement('Name', $waybill_address['also_name']));
+
+            $roleCode = $xml->createElement('RoleCode', 'NI');
+            $roleCode->setAttribute('listID', '3035');
+            $roleCode->setAttribute('listAgencyID', '6');
+            $roleCode->setAttribute('listVersionID', 'D09A');
+            $OtherParty->appendChild($roleCode);
+
+            $postalStructuredAddress3 = $xml->createElement('PostalStructuredAddress');
+            $postalStructuredAddress3->appendChild($xml->createElement('PostcodeCode', $waybill_address['also_post_code']));
+            $postalStructuredAddress3->appendChild($xml->createElement('StreetName', $consignee_street_name));
+            $postalStructuredAddress3->appendChild($xml->createElement('CityName', $waybill_address['also_city']));
+            $postalStructuredAddress3->appendChild($xml->createElement('CountryID', $waybill_address['also_country']));
+            // $postalStructuredAddress3->appendChild($xml->createElement('CountrySubDivisionName', $waybill_address['also_state']));
+            $OtherParty->appendChild($postalStructuredAddress3);
+
+            if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
+                $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+                if (!empty($waybill_address['also_phone'])) {
+                    $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+                    $DirectTelephoneCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_phone']));
+                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+                }
+                if (!empty($waybill_address['also_fax'])) {
+                    $FaxCommunication = $xml->createElement('FaxCommunication');
+                    $FaxCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_fax']));
+                    $DefinedTradeContact->appendChild($FaxCommunication);
+                }
+                if ($waybill_address['also_telex']) {
+                    $TelexCommunication = $xml->createElement('TelexCommunication');
+                    $TelexCommunication->appendChild($xml->createElement('CompleteNumber', $waybill_address['also_telex']));
+                    $DefinedTradeContact->appendChild($TelexCommunication);
+                }
+                $OtherParty->appendChild($DefinedTradeContact);
+            }
+            $XDDHeader->appendChild($OtherParty);
+        }
+
+        if (!empty($waybill_data['other_service_information'])) {
+            // Handling SSR Instructions
+            $HandlingOSIInstructions = $xml->createElement('HandlingOSIInstructions');
+            $HandlingOSIInstructions->appendChild($xml->createElement('Description', $waybill_data['other_service_information']));
+            $XDDHeader->appendChild($HandlingOSIInstructions);
+        }
+        $StatisticalConsignment = $xml->createElement('StatisticalConsignment');
+        $StatisticalConsignment->appendChild($xml->createElement('TotalPieceQuantity', $consignment_data['pieces']));
+        $XDDHeader->appendChild($StatisticalConsignment);
+
+        $direct_data->appendChild($XDDHeader);
+
+
+        // Append to the root element
+        $xml->appendChild($direct_data);
+
+        // Prepare response as an XML download
+        return response($xml->saveXML(), 200)
+            ->header('Content-Type', 'application/xml');
+    }
+
+    public function RegisterPartner()
+    {
+        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $utc_current_date = gmdate("Y-m-d H:i:s");
+        $time = time();
+
+        // Start conversion to XML
+        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml->formatOutput = true;
+
+        // Create root element
+        $register_partner = $xml->createElementNS('iata:registrationforcargopartner:1', 'ns2:RegistrationforCargoPartner');
+        $register_partner->setAttribute('xmlns', 'iata:datamodel:3');
+        $register_partner->setAttribute('xmlns:ns2', 'iata:registrationforcargopartner:1');
+
+        // Message Header Document
+        $messageHeaderDocument = $xml->createElement('ns2:MessageHeaderDocument');
+        $register_partner->appendChild($messageHeaderDocument);
+        $messageHeaderDocument->appendChild($xml->createElement('ID', $time));
+        $messageHeaderDocument->appendChild($xml->createElement('Name', 'Registration document'));
+        $TypeCode = $xml->createElement('TypeCode', '101');
+        $TypeCode->setAttribute('listID', 1001);
+        $TypeCode->setAttribute('listVersionID', 'D09A');
+        $messageHeaderDocument->appendChild($TypeCode);
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
+        $messageHeaderDocument->appendChild($xml->createElement('VersionID', '1.00'));
+
+        // SenderParty
+        $senderParty1 = $xml->createElement('SenderParty');
+        $senderParty1->appendChild($xml->createElement('PrimaryID', 'REUAGT82INKN/BLR01'));
+        $senderParty1->firstChild->setAttribute('schemeID', 'P');
+        $messageHeaderDocument->appendChild($senderParty1);
+
+        $recipientParty2 = $xml->createElement('RecipientParty');
+        $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
+        $recipientParty2->firstChild->setAttribute('schemeID', 'C');
+        $messageHeaderDocument->appendChild($recipientParty2);
+
+        $InformationHeaderDocument = $xml->createElement('ns2:InformationHeaderDocument');
+        $InformationHeaderDocument->appendChild($xml->createElement('ID', $time));
+        $register_partner->appendChild($InformationHeaderDocument);
+
+        $RegistrationforCargoPartnerHeaderDocument = $xml->createElement('ns2:RegistrationforCargoPartnerHeaderDocument');
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($xml->createElement('ID', $time));
+        $SpecifiedDigitalConnectArea = $xml->createElement('SpecifiedDigitalConnectArea');
+        $SpecifiedDigitalConnectArea->appendChild($xml->createElement('CityID', $agent_details['agent_issue_loc_code']));
+        $SpecifiedDigitalConnectArea->appendChild($xml->createElement('CityName', $agent_details['agent_city']));
+        $SpecifiedDigitalConnectArea->appendChild($xml->createElement('CountryID', $agent_details['agent_country']));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDigitalConnectArea);
+
+        $SpecifiedDigitalConnectParty = $xml->createElement('SpecifiedDigitalConnectParty');
+        $SpecifiedDigitalConnectParty->appendChild($xml->createElement('Name', $agent_details['agent_name']));
+        $RoleCode = $xml->createElement('RoleCode', 'FW');
+        $RoleCode->setAttribute('listID', 3035);
+        $RoleCode->setAttribute('listVersionID', 'D09A');
+        $SpecifiedDigitalConnectParty->appendChild($RoleCode);
+        $SpecifiedDigitalConnectParty->appendChild($xml->createElement('AccountTypeIndicator', 'true'));
+        $PostalStructuredAddress = $xml->createElement('PostalStructuredAddress');
+        $PostalStructuredAddress->appendChild($xml->createElement('PostcodeCode', $agent_details['agent_pincode']));
+        $PostalStructuredAddress->appendChild($xml->createElement('StreetName', $agent_details['agent_address']));
+        $PostalStructuredAddress->appendChild($xml->createElement('CityName', $agent_details['agent_city']));
+        $PostalStructuredAddress->appendChild($xml->createElement('CountryID', $agent_details['agent_country']));
+        $SpecifiedDigitalConnectParty->appendChild($PostalStructuredAddress);
+
+        $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
+        $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');
+        $DirectTelephoneCommunication->appendChild($xml->createElement("CompleteNumber", $agent_details['agent_contact_person_phone']));
+        $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+
+        $URIEmailCommunication = $xml->createElement('URIEmailCommunication');
+        $URIEmailCommunication->appendChild($xml->createElement("URIID", $agent_details['agent_contact_person_email']));
+        $DefinedTradeContact->appendChild($URIEmailCommunication);
+        $SpecifiedDigitalConnectParty->appendChild($DefinedTradeContact);
+
+        $AssociatedCargoAgentParty = $xml->createElement('AssociatedCargoAgentParty');
+        $AssociatedCargoAgentParty->appendChild($xml->createElement('CargoAgentID', $agent_details['iata_agent_code']));
+        $SpecifiedCargoAgentLocation = $xml->createElement('SpecifiedCargoAgentLocation');
+        $SpecifiedCargoAgentLocation->appendChild($xml->createElement('ID', $agent_details['iata_agent_cass']));
+        $AssociatedCargoAgentParty->appendChild($SpecifiedCargoAgentLocation);
+        $SpecifiedDigitalConnectParty->appendChild($AssociatedCargoAgentParty);
+
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDigitalConnectParty);
+
+        $SpecifiedDataExchangeIdentity = $xml->createElement('SpecifiedDataExchangeIdentity');
+        $SpecifiedDataExchangeIdentity->appendChild($xml->createElement('ActionTypeCode', 'Create'));
+        $SpecifiedDataExchangeIdentity->appendChild($xml->createElement('TypeCode', 'PIMA'));
+        $SpecifiedDataExchangeIdentity->appendChild($xml->createElement('PartyID', 'TO BE ISSUED'));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeIdentity);
+
+        //for XFWB
+        $SpecifiedDataExchangeDocument = $xml->createElement('SpecifiedDataExchangeDocument');
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('TypeCode', 'Main'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('StandardName', 'CARGO-XML'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('MessageID', 'XFWB'));
+        $SupportedMessageVersion = $xml->createElement('SupportedMessageVersion');
+        $SupportedMessageVersion->appendChild($xml->createElement('ID', "5.00"));
+        $SupportedMessageVersion->appendChild($xml->createElement('CapabilityTypeCode', 'Transmit'));
+        $SpecifiedDataExchangeDocument->appendChild($SupportedMessageVersion);
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('ConversionIndicator', "false"));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeDocument);
+
+        //for XFZB
+        $SpecifiedDataExchangeDocument = $xml->createElement('SpecifiedDataExchangeDocument');
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('TypeCode', 'Main'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('StandardName', 'CARGO-XML'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('MessageID', 'XFZB'));
+        $SupportedMessageVersion = $xml->createElement('SupportedMessageVersion');
+        $SupportedMessageVersion->appendChild($xml->createElement('ID', "5.00"));
+        $SupportedMessageVersion->appendChild($xml->createElement('CapabilityTypeCode', 'Transmit'));
+        $SpecifiedDataExchangeDocument->appendChild($SupportedMessageVersion);
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('ConversionIndicator', "false"));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeDocument);
+
+        //for XFHL
+        $SpecifiedDataExchangeDocument = $xml->createElement('SpecifiedDataExchangeDocument');
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('TypeCode', 'Main'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('StandardName', 'CARGO-XML'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('MessageID', 'XFHL'));
+        $SupportedMessageVersion = $xml->createElement('SupportedMessageVersion');
+        $SupportedMessageVersion->appendChild($xml->createElement('ID', "3.00"));
+        $SupportedMessageVersion->appendChild($xml->createElement('CapabilityTypeCode', 'Transmit'));
+        $SpecifiedDataExchangeDocument->appendChild($SupportedMessageVersion);
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('ConversionIndicator', "false"));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeDocument);
+
+        //for XGRQ
+        $SpecifiedDataExchangeDocument = $xml->createElement('SpecifiedDataExchangeDocument');
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('TypeCode', 'Main'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('StandardName', 'CARGO-XML'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('MessageID', 'XGRQ'));
+        $SupportedMessageVersion = $xml->createElement('SupportedMessageVersion');
+        $SupportedMessageVersion->appendChild($xml->createElement('ID', "1.00"));
+        $SupportedMessageVersion->appendChild($xml->createElement('CapabilityTypeCode', 'Transmit'));
+        $SpecifiedDataExchangeDocument->appendChild($SupportedMessageVersion);
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('ConversionIndicator', "false"));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeDocument);
+
+        //for XFSU
+        $SpecifiedDataExchangeDocument = $xml->createElement('SpecifiedDataExchangeDocument');
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('TypeCode', 'Main'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('StandardName', 'CARGO-XML'));
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('MessageID', 'XFSU'));
+        $SupportedMessageVersion = $xml->createElement('SupportedMessageVersion');
+        $SupportedMessageVersion->appendChild($xml->createElement('ID', "6.00"));
+        $SupportedMessageVersion->appendChild($xml->createElement('CapabilityTypeCode', 'Both'));
+        $SpecifiedDataExchangeDocument->appendChild($SupportedMessageVersion);
+        $SpecifiedDataExchangeDocument->appendChild($xml->createElement('ConversionIndicator', "false"));
+        $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeDocument);
+
+        $register_partner->appendChild($RegistrationforCargoPartnerHeaderDocument);
+        // Append to the root element
+        $xml->appendChild($register_partner);
+
+        // Prepare response as an XML download
+        return response($xml->saveXML(), 200)
+            ->header('Content-Type', 'application/xml');
     }
 }

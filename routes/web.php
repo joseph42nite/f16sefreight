@@ -9,7 +9,7 @@ Route::get('message-response', [ConversionController::class, 'ResponseMessage'])
 Route::get('generic-message', [ConversionController::class, 'GenericRequestMessage']);
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
 Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
-Route::get('register-partner', [ConversionController::class, 'RegisterPartner']);
+Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
 
 Route::get('{any}', function () {
     return view('welcome');

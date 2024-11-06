@@ -11,6 +11,7 @@ use App\PaymentInfo;
 use App\OtherCharge;
 use App\OtherCustomInformation;
 use App\Ams;
+use App\Airline;
 use Illuminate\Http\Request;
 use DOMDocument;
 
@@ -1550,7 +1551,7 @@ class ConversionController extends Controller
             ->header('Content-Type', 'application/xml');
     }
 
-    public function RegisterPartner()
+    public function CreatePartner()
     {
         $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
@@ -1699,8 +1700,37 @@ class ConversionController extends Controller
         $SpecifiedDataExchangeDocument->appendChild($SupportedMessageVersion);
         $SpecifiedDataExchangeDocument->appendChild($xml->createElement('ConversionIndicator', "false"));
         $RegistrationforCargoPartnerHeaderDocument->appendChild($SpecifiedDataExchangeDocument);
-
         $register_partner->appendChild($RegistrationforCargoPartnerHeaderDocument);
+
+        $airlines = explode(',', $agent_details['agent_airlines']);
+        for ($i = 0; $i < sizeof($airlines); $i++) {
+            $airline_data = Airline::where('code', $airlines[$i])->limit(1)->first()->toArray();
+            $PartnerInformationDocument = $xml->createElement('PartnerInformationDocument');
+
+            $SpecifiedPartnerParty = $xml->createElement('SpecifiedPartnerParty');
+            $SpecifiedPartnerParty->appendChild($xml->createElement('Name', $airline_data['name']));
+            $RoleCode = $xml->createElement('RoleCode', 'CA');
+            $RoleCode->setAttribute('listID', 3035);
+            $RoleCode->setAttribute('listVersionID', 'D094');
+            $SpecifiedPartnerParty->appendChild($RoleCode);
+            $SpecifiedPartnerParty->appendChild($xml->createElement('AccountTypeIndicator', 'true'));
+            $PartnerInformationDocument->appendChild($SpecifiedPartnerParty);
+
+            $AssociatedCargoAgentParty = $xml->createElement('AssociatedCargoAgentParty');
+            $AssociatedCargoAgentParty->appendChild($xml->createElement('CargoAgentID', $agent_details['iata_agent_code']));
+            $SpecifiedCargoAgentLocation = $xml->createElement('SpecifiedCargoAgentLocation');
+            $SpecifiedCargoAgentLocation->appendChild($xml->createElement('ID', $agent_details['iata_agent_cass']));
+            $AssociatedCargoAgentParty->appendChild($SpecifiedCargoAgentLocation);
+            $PartnerInformationDocument->appendChild($AssociatedCargoAgentParty);
+
+            $AssociatedCarrierParty = $xml->createElement('AssociatedCarrierParty');
+            $AssociatedCarrierParty->appendChild($xml->createElement('TwoLetterPrefixID', $airline_data['code']));
+            $AssociatedCarrierParty->appendChild($xml->createElement('PrefixID', $airline_data['prefix']));
+            $AssociatedCarrierParty->appendChild($xml->createElement('Name', strtoupper($airline_data['name'])));
+            $PartnerInformationDocument->appendChild($AssociatedCarrierParty);
+
+            $register_partner->appendChild($PartnerInformationDocument);
+        }
         // Append to the root element
         $xml->appendChild($register_partner);
 

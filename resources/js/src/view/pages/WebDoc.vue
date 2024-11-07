@@ -186,7 +186,7 @@
                 </h4>
             </div>
             <template>
-                <b-form @submit="onSubmit">
+                <b-form @submit.prevent="onSubmit">
                     <div class="container">
                         <b-row class="mt-5">
                             <b-col cols="auto">
@@ -1398,16 +1398,16 @@
                                             label="Supplementary Shipment Information:"
                                             class="form-control-sm col-form-label">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.custom_origin.supplementary_shipment_Info"
-                                                :class="{ 'is-invalid': form.errors.has('supplementary_shipment_Info') }"></b-form-input>
-                                            <has-error :form="form" field="supplementary_shipment_Info"></has-error>
+                                                v-model="form.custom_origin.supplementary_shipment_info"
+                                                :class="{ 'is-invalid': form.errors.has('supplementary_shipment_info') }"></b-form-input>
+                                            <has-error :form="form" field="supplementary_shipment_info"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label ml-lg-30">
                                             <b-form-input id="input-horizontal"
                                                 class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto"
-                                                v-model="form.custom_origin.supplementary_shipment_Info"></b-form-input>
+                                                v-model="form.custom_origin.supplementary_shipment_info"></b-form-input>
                                         </b-form-group>
                                     </b-tab>
                                     <b-tab title="IATA and Cass">
@@ -3268,7 +3268,7 @@ export default {
                     accounting_information: '',
                     letter_credit: '',
                     shipment_ref_no: null,
-                    supplementary_shipment_Info: '',
+                    supplementary_shipment_info: '',
                     extra_print: null,
                 },
 
@@ -3998,6 +3998,14 @@ export default {
                 height: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Height must be a numeric value with a maximum of 5 digits." },
             };
             let { pcs, wgt, length, width, height,unit } = this.consignment_list;
+            if (this.remainingPieces <= 0) {
+                this.validationErrors.push('All pieces are already added.');
+                return;
+            }
+            if (pcs > this.remainingPieces) {
+                this.validationErrors.push(`You only need ${this.remainingPieces} more pieces to complete the total.`);
+                return;
+            }
             if (!pcs) {
                 this.validationErrors.push("When using dimensions or weight - pieces cannot be empty.");
             }
@@ -4276,19 +4284,6 @@ export default {
                 .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
                 .toFixed(2);
         },
-        // totalChargesPrepaid() {
-        //     return (
-        //         parseFloat(this.totalDueAgentPrepaid) +
-        //         parseFloat(this.totalDueCarrierPrepaid)
-        //     ).toFixed(2);
-        // },
-        // totalChargesCollect() {
-        //     return (
-        //         this.weightCharge +
-        //         parseFloat(this.totalDueAgentCollect) +
-        //         parseFloat(this.totalDueCarrierCollect)
-        //     ).toFixed(2);
-        // },
         totalChargesPrepaid() {
             return (
                 (this.isPrepaid ? this.weightCharge : 0) +
@@ -4373,6 +4368,10 @@ export default {
                 item.destination.toLowerCase().includes(query)
             );
         },
+        remainingPieces() {
+            const totalAddedPieces = this.consignment_list.itemss.reduce((sum, item) => sum + parseInt(item.pcs || 0), 0);
+            return this.consignment_list.pieces - totalAddedPieces;
+        }
        
     },
     beforeDestroy() {

@@ -238,29 +238,30 @@ class HousewayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $HousewayBill = HousewayBills::find($id);
-        if (!empty($id)) {
-            if ($HousewayBill) {
-                $HousewayBill->id = $first_box['hawb_no'];
-                $HousewayBill->awb_no = $first_box['awb_no'];
-                $HousewayBill->awb_code = $first_box['awb_code'];
-                $HousewayBill->save();
-                return response()->json([
-                    'message' => 'First box updated successfully',
-                    'data' => $HousewayBill
-                ], 200);
-            }
+        $HousewayBill = HousewayBills::find($first_box['hawb_no']);
+        if ($HousewayBill) {
+            // Update the existing record
+            $HousewayBill->awb_no = $first_box['awb_no'];
+            $HousewayBill->awb_code = $first_box['awb_code'];
+            $HousewayBill->save();
+    
+            return response()->json([
+                'message' => 'First box updated successfully',
+                'data' => $HousewayBill
+            ], 200);
+        } else {
+            // Create a new record
+            $HousewayBill = new HousewayBills();
+            $HousewayBill->id = $first_box['hawb_no'];
+            $HousewayBill->awb_no = $first_box['awb_no'];
+            $HousewayBill->awb_code = $first_box['awb_code'];
+            $HousewayBill->save();
+    
+            return response()->json([
+                'message' => 'First box created successfully',
+                'data' => $HousewayBill
+            ], 201);
         }
-        $HousewayBill = new HousewayBills();
-        $HousewayBill->hawb_no = $first_box['hawb_no'];
-        $HousewayBill->awb_no = $first_box['awb_no'];
-        $HousewayBill->awb_code = $first_box['awb_code'];
-        $HousewayBill->save();
-
-        return response()->json([
-            'message' => 'First box created successfully',
-            'data' => $HousewayBill
-        ], 201);
     }
 
     private function routingInformation($hawb_no, $routing_information)
@@ -290,12 +291,37 @@ class HousewayBill extends Controller
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);
+        if(!empty($hawb_no)){
+            $HousewayBills->id = $hawb_no;
+            $HousewayBills->departure_airport = $routing_information['departure_airport'];
+            $HousewayBills->destination_airport = $routing_information['destination_airport'];
+            $HousewayBills->from = $routing_information['departure_airport'];
+            $HousewayBills->to = $routing_information['to'];
+            $HousewayBills->by = $routing_information['by'];
+            $HousewayBills->flight = $routing_information['flight'];
+            $HousewayBills->date = $routing_information['date'];
+            $HousewayBills->to_2 = $routing_information['to_2'];
+            $HousewayBills->by_2 = $routing_information['by_2'];
+            $HousewayBills->flight_2 = $routing_information['flight_2'];
+            $HousewayBills->date_2 = $routing_information['date_2'];
+            $HousewayBills->to_3 = $routing_information['to_3'];
+            $HousewayBills->by_3 = $routing_information['by_3'];
+            $HousewayBills->flight_3 = $routing_information['flight_3'];
+            $HousewayBills->date_3 = $routing_information['date_3'];
+            $HousewayBills->master_origin = $routing_information['master_origin'];
+            $HousewayBills->master_destination = $routing_information['master_destination'];
+            $HousewayBills->save();
+                return response()->json([
+                    'message' => 'Routing Information updated successfully',
+                    'data' => $HousewayBills
+                ], 200);
+        }
+      
         if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
-
        $HousewayBills->departure_airport = $routing_information['departure_airport'];
        $HousewayBills->destination_airport = $routing_information['destination_airport'];
-       $HousewayBills->from = $routing_information['from'];
+       $HousewayBills->from = $routing_information['departure_airport'];
        $HousewayBills->to = $routing_information['to'];
        $HousewayBills->by = $routing_information['by'];
        $HousewayBills->flight = $routing_information['flight'];
@@ -310,6 +336,7 @@ class HousewayBill extends Controller
        $HousewayBills->date_3 = $routing_information['date_3'];
        $HousewayBills->master_origin = $routing_information['master_origin'];
        $HousewayBills->master_destination = $routing_information['master_destination'];
+    //    dd($HousewayBills);die;
        $HousewayBills->save();
         return "Routing Information saved successfull";
     }
@@ -348,7 +375,7 @@ class HousewayBill extends Controller
             'special_service_request' => 'nullable|string|max:195',
             'other_service_information' => 'nullable|string|max:195',
             'shipment_ref_no' => 'nullable|string|max:35',
-            'supplementary_shipment_Info' => 'nullable|string|max:35',
+            'supplementary_shipment_info' => 'nullable|string|max:35',
             'letter_credit' => 'nullable|string|size:3',
             'extra_print' => 'nullable|string|max:195'
         ]);
@@ -357,6 +384,17 @@ class HousewayBill extends Controller
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);
+        // if(!empty($hawb_no)){
+        //     $HousewayBills->customs_origin_code = $custom_origin['customs_origin_code'];
+        // $HousewayBills->accounting_information = $custom_origin['accounting_information'];
+        // $HousewayBills->special_service_request = $custom_origin['special_service_request'];
+        // $HousewayBills->other_service_information = $custom_origin['other_service_information'];
+        // $HousewayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
+        // $HousewayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
+        // $HousewayBills->letter_credit = $custom_origin['letter_credit'];
+        // $HousewayBills->extra_print = $custom_origin['extra_print'];
+        // $HousewayBills->save();
+        // }
         if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
 
@@ -365,7 +403,7 @@ class HousewayBill extends Controller
         $HousewayBills->special_service_request = $custom_origin['special_service_request'];
         $HousewayBills->other_service_information = $custom_origin['other_service_information'];
         $HousewayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
-        $HousewayBills->supplementary_shipment_Info = $custom_origin['supplementary_shipment_Info'];
+        $HousewayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
         $HousewayBills->letter_credit = $custom_origin['letter_credit'];
         $HousewayBills->extra_print = $custom_origin['extra_print'];
         $HousewayBills->save();
@@ -455,7 +493,7 @@ class HousewayBill extends Controller
             $HousewayBills = new PaymentInfo();
         $HousewayBills->awb_id = $hawb_no;
         $HousewayBills->type_of_payment = $payment_info['type_of_payment'];
-        $HousewayBills->total_charges = $payment_info['total_charges'];
+        // $HousewayBills->total_charges = $payment_info['total_charges'];
         $HousewayBills->currency = $payment_info['currency'];
         $HousewayBills->declear_value_carriage =  $payment_info['declear_value_carriage'];
         $HousewayBills->declear_value_customs =  $payment_info['declear_value_customs'];
@@ -522,14 +560,26 @@ class HousewayBill extends Controller
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);
-        if (!isset($HousewayBills))
+        if (!empty($hawb_no)) {
+            $HousewayBills->id = $hawb_no;
+            $HousewayBills->total_volume = $totals['total_volume'];
+            $HousewayBills->total_amount = $totals['total_amount'];
+            $HousewayBills->master_pcs = $totals['master_pcs'];
+            $HousewayBills->master_weight = $totals['master_weight'];
+            $HousewayBills->save();
+            return response()->json([
+                'message' => 'Toatl Amount and Total Volume updated successfully',
+                'data' => $HousewayBills
+            ], 200);
+        }else{
+        // if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
-
         $HousewayBills->total_volume = $totals['total_volume'];
         $HousewayBills->total_amount = $totals['total_amount'];
         $HousewayBills->master_pcs = $totals['master_pcs'];
         $HousewayBills->master_weight = $totals['master_weight'];
         $HousewayBills->save();
+        }
         return "Toatl Amount and Total Volume saved successfull";
     }
     private function saveSpecialHandlingCode($hawb_no, $tableCodes)
@@ -679,15 +729,73 @@ class HousewayBill extends Controller
                 $main_return_data['first_box'] = $error_data;
             }
         }
-
+        if (!empty($id) && !empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+            $error_data = $this->routingInformation($id, $request->routing_information);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['routing_information'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+            $error_data = $this->totalAmountValume($id, $request->totals);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['totals'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->custom_origin)) {
+            $error_data = $this->customOriginAndOsiInfo($id, $request->custom_origin);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['custom_origin'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->oci_entries)) {
+            $error_data = $this->otherCustomInformation($id, $request->oci_entries);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['oci_entries'] = $error_data;
+        }
         return response()->json([
             'message' => 'Update successful',
             'data' => $main_return_data
         ], 200);
+
+        if (!empty($id) && !empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+            $error_data = $this->saveShipperAddress($id, $request->shipper_address, $request->is_shipper_address_save);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['shipper_address'] = $error_data;
+        }
+        // for storing consignee address
+        if (!empty($id) && !empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
+            $error_data = $this->saveConsigneeAddress($id, $request->consignee_address, $request->is_consignee_address_save);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['consignee_address'] = $error_data;
+        }
+        //for storing also notify address
+        if (!empty($id) && !empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+            $error_data = $this->saveAlsoNotify($id, $request->also_notify_address, $request->is_also_notify_address_save);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['also_notify_address'] = $error_data;
+        }
     }
 
     public function show($id){
-        $housewayBill = HousewayBills::find($id);
+        $housewayBill = HousewayBills::with([
+            'paymentInfo',
+            'wayBillAddress',
+            'savedAddress',
+            'consignmentData',
+            'otherCharge',
+            'otherCustomInformation'
+        ])->find($id);
         if (!$housewayBill) {
             return response()->json(['message' => 'Record not found'], 404);
         }
@@ -695,10 +803,18 @@ class HousewayBill extends Controller
     }
 
     public function getAllHawb(){
-        $housewayBill = HousewayBills::all();
-        if (!$housewayBill) {
+        $housewayBill = HousewayBills::with([
+            'paymentInfo',
+            'wayBillAddress',
+            'savedAddress',
+            'consignmentData',
+            'otherCharge',
+            'otherCustomInformation'
+        ])->get();
+
+        if ($housewayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }
         return response()->json($housewayBill, 200);
-    }
+    }   
 }

@@ -23,16 +23,16 @@ class CreateHousewayBillsTable extends Migration
             $table->string('from')->nullable();//first
             $table->string('to')->nullable();
             $table->string('by')->nullable();
-            $table->integer('flight')->nullable();
-            $table->dateTime('date')->nullable(); 
+            $table->string('flight')->nullable();
+            $table->string('date')->nullable(); 
             $table->string('to_2')->nullable(); //second
             $table->string('by_2')->nullable();
-            $table->integer('flight_2')->nullable();
-            $table->dateTime('date_2')->nullable();
+            $table->string('flight_2')->nullable();
+            $table->string('date_2')->nullable();
             $table->string('to_3')->nullable();//third
             $table->string('by_3')->nullable();
-            $table->integer('flight_3')->nullable();
-            $table->dateTime('date_3')->nullable();
+            $table->string('flight_3')->nullable();
+            $table->string('date_3')->nullable();
             $table->string('master_origin')->nullable();
             $table->string('master_destination')->nullable();
             $table->string('customs_origin_code')->nullable();

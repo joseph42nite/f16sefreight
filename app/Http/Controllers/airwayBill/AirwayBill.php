@@ -25,7 +25,7 @@ class AirwayBill extends Controller
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [
-            'ship_name' => 'string|max:70',
+            'ship_name' => 'string|max:70', //required
             'ship_account' => 'required|regex:/^[a-zA-Z0-9]+$/|max:14',
             'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
             'ship_address_line_2' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
@@ -315,7 +315,7 @@ class AirwayBill extends Controller
             'special_service_request' => 'nullable|string|max:195',
             'other_service_information' => 'nullable|string|max:195',
             'shipment_ref_no' => 'nullable|string|max:35',
-            'supplementary_shipment_Info' => 'nullable|string|max:35',
+            'supplementary_shipment_info' => 'nullable|string|max:35',
             'letter_credit' => 'nullable|string|size:3',
             'extra_print' => 'nullable|string|max:195'
         ]);
@@ -332,7 +332,7 @@ class AirwayBill extends Controller
         $AirwayBills->special_service_request = $custom_origin['special_service_request'];
         $AirwayBills->other_service_information = $custom_origin['other_service_information'];
         $AirwayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
-        $AirwayBills->supplementary_shipment_Info = $custom_origin['supplementary_shipment_Info'];
+        $AirwayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
         $AirwayBills->letter_credit = $custom_origin['letter_credit'];
         $AirwayBills->extra_print = $custom_origin['extra_print'];
         $AirwayBills->save();
@@ -635,20 +635,31 @@ class AirwayBill extends Controller
         return response()->json(['msg' => 'No error'], 200);
     }
 
-    public function getShippers()
+    public function getShippers(Request $request)
     {
-        $shippers = SavedAddress::all();
+        // $shippers = SavedAddress::all();
+        $shippers = SavedAddress::where('user_id', 123456)->get();
+        // dd($shippers);
         return response()->json($shippers);
     }
     public function getShipperAddress(Request $request)
     {
-        $addressId = $request->query('id');
-        $address_type = $request->query('address_type', 'shipper_address');
-        // if (!$user_id) {
-        //     return response()->json(['error' => 'User ID is required'], 400);
-        // }
-        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
-
+        $addressId = $request->id;
+        $addressType = $request->address_type ?? 'shipper_address';
+        $agenData = SavedAddress::where('id', $addressId)->first();
+        if (!$agenData) {
+            return response()->json(['error' => 'Address not found'], 404);
+        }
+        $userId = $agenData->user_id;
+    
+        $query = SavedAddress::where('user_id', $userId);
+        if ($addressId) {
+            $query->where('id', $addressId);
+        } else {
+            $query->where('address_type', $addressType);
+        }
+        $address = $query->first();
+    
         if ($address) {
             return response()->json([
                 'ship_name' => $address->name,

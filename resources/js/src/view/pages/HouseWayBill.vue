@@ -102,7 +102,7 @@
                                        </router-link>
                                     </a>
                                 </div>
-                                <a href="" class="custom-link">Edit e-AWB Data</a>
+                                <!-- <a href="" class="custom-link">Edit e-AWB Data</a> -->
                                 <a href="" class="custom-link">Copy e-AWB Data</a>
                                 <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
                                 <a href="" class="custom-link">Create Booking from e-AWB Data</a>
@@ -639,21 +639,25 @@
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">
                                                                     ABZ, Aberdeen (ABZ), United Kingdom</option>
                                                             </b-form-select>
+                                                            
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 40px"
                                                                 v-model="form.routing_information.by_2"
                                                                 :class="{ 'is-invalid': form.errors.has('by_2') }" />
+                                                                <has-error :form="form" field="by_2"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 50px"
                                                                 v-model="form.routing_information.flight_2"
                                                                 :class="{ 'is-invalid': form.errors.has('flight_2') }" />
+                                                                <has-error :form="form" field="flight_2"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 60px"
                                                                 v-model="form.routing_information.date_2"
                                                                 :class="{ 'is-invalid': form.errors.has('date_2') }" />
+                                                            <has-error :form="form" field="date_2"></has-error>
                                                         </td>
                                                         <td class="editable-cell w-10" style="width: 60px !important;">
                                                             <date-picker valueType="format"
@@ -692,21 +696,25 @@
                                                                 <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ,
                                                                     Aberdeen (ABZ), United Kingdom</option>
                                                             </b-form-select>
+                                                            <has-error :form="form" field="to_3"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 40px"
                                                                 v-model="form.routing_information.by_3"
                                                                 :class="{ 'is-invalid': form.errors.has('by_3') }" />
+                                                                <has-error :form="form" field="by_3"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 50px"
                                                                 v-model="form.routing_information.flight_3"
                                                                 :class="{ 'is-invalid': form.errors.has('flight_3') }" />
+                                                            <has-error :form="form" field="flight_3"></has-error>
                                                         </td>
                                                         <td class="editable-cell">
                                                             <input type="text" class="form-control" style="width: 60px"
                                                                 v-model="form.routing_information.date_3"
                                                                 :class="{ 'is-invalid': form.errors.has('date_3') }" />
+                                                            <has-error :form="form" field="date_3"></has-error>
                                                         </td>
                                                         <td class="editable-cell" style="width: 60px !important;">
                                                             <date-picker valueType="format"
@@ -1242,18 +1250,18 @@
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2" :value="calculatedCharge"></b-form-input>
                                             </div>
                                             <div class="d-flex align-items-center">
-                                                <label for="input-horizontal" class="mr-2 mb-3" >Master Pcs:*</label>
-                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_pcs"></b-form-input>
+                                                <label for="input-horizontal1" class="mr-2 mb-3" >Master Pcs:*</label>
+                                                <b-form-input id="input-horizontal1" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_pcs"></b-form-input>
                                             </div>
                                             <div class="d-flex align-items-center">
-                                                <label for="input-horizontal" class="mr-2 mb-0" >Master Weight:*</label>
-                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_weight"></b-form-input>
+                                                <label for="input-horizontal2" class="mr-2 mb-0" >Master Weight:*</label>
+                                                <b-form-input id="input-horizontal2" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_weight"></b-form-input>
                                             </div>
                                         </b-form-group>
                                     </div>
                                 </div>
                             </div>
-                            <b-form-checkbox size="sm" class="mt-2 text-bold justify-content-lg-start">As Agreed</b-form-checkbox>
+                            <b-form-checkbox size="sm" class="mt-2 text-bold justify-content-lg-start" id="agreed">As Agreed</b-form-checkbox>
                         </div>
                         <hr class="hr" />
                         <div>
@@ -1320,16 +1328,16 @@
                                             label="Supplementary Shipment Information:"
                                             class="form-control-sm col-form-label">
                                             <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.custom_origin.supplementary_shipment_Info"
-                                                :class="{ 'is-invalid': form.errors.has('supplementary_shipment_Info') }"></b-form-input>
-                                            <has-error :form="form" field="supplementary_shipment_Info"></has-error>
+                                                v-model="form.custom_origin.supplementary_shipment_info"
+                                                :class="{ 'is-invalid': form.errors.has('supplementary_shipment_info') }"></b-form-input>
+                                            <has-error :form="form" field="supplementary_shipment_info"></has-error>
                                         </b-form-group>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label-for="input-horizontal"
                                             class="form-control-sm col-form-label ml-lg-30">
                                             <b-form-input id="input-horizontal"
                                                 class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto"
-                                                v-model="form.custom_origin.supplementary_shipment_Info"></b-form-input>
+                                                v-model="form.custom_origin.supplementary_shipment_info"></b-form-input>
                                         </b-form-group>
                                     </b-tab>
                                     <b-tab title="Customs Origin">
@@ -1974,8 +1982,21 @@
                                                                         v-model="form.payment_info.type_of_payment">
                                                                         <option disabled value=""> Please select one
                                                                         </option>
-                                                                        <option value="C">All Charges Collect CC</option>
-                                                                        <option value="P">All Charges Prepaid Cash PP</option>
+                                                                        <option value=""> Please select one</option>
+                                                                        <option value="CC">CA - Partial collect credit - partial prepaid cash</option>
+                                                                        <option value="CC">CB - Partial collect credit - partial prepaid credit</option>
+                                                                        <option value="CC">CC - All charges collect</option> <!-- CC -->
+                                                                        <option value="CC">CG - All Charges collect by GBL</option>
+                                                                        <option value="CC">CP - Destination collect cash</option>
+                                                                        <option value="CC">CX - Destination collect credit</option>
+                                                                        <option value="CP">NC - Service rate. No charge</option>
+                                                                        <option value="PP">PC - Partial prepaid cash - partial collect cash</option>
+                                                                        <option value="PP">PD - Partial prepaid credit - partial collect cash</option>
+                                                                        <option value="PP">PG - All charges prepaid by GBL</option>
+                                                                        <option value="PP">PP - All charges prepaid cash</option><!-- PP -->
+                                                                        <option value="PP">PX - All charges prepaid credit</option>
+                                                                        <!-- <option value="C">All Charges Collect CC</option>
+                                                                        <option value="P">All Charges Prepaid Cash PP</option> -->
                                                                     </b-form-select>
                                                                 </b-form-group>
                                                                 <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
@@ -3357,7 +3378,7 @@ export default {
                     accounting_information: '',
                     letter_credit: '',
                     shipment_ref_no: null,
-                    supplementary_shipment_Info: '',
+                    supplementary_shipment_info: '',
                     extra_print: null,
                 },
 
@@ -3472,7 +3493,7 @@ export default {
             showCalculationTable: false,
             editIndex: null,
             edit_entry_index: null,
-            existingData: null,
+            existingData: [],
             data_items:[],
             items: [
                 {
@@ -3695,7 +3716,7 @@ export default {
         // },
         onSubmit() {
             if (this.mode === 'add') {
-                this.form.post('/add-houseway-bill')
+                this.form.post('/create-houseway-bill')
                 .then(response => {
                     console.log('Add Successful:', response);
                 })
@@ -3735,10 +3756,26 @@ export default {
         openForm(mode, id = null) {
             this.mode = mode;
             if (mode === 'update' && id) {
-                console.log("Data prepared for update, ID:", id);
-                this.form.first_box = this.existingData;
-                this.form.first_box.hawb_no = this.existingData.id;
+                    console.log("Data prepared for update, ID:", this.existingData);
+                    this.form.first_box = this.existingData;
+                    this.form.first_box.hawb_no = this.existingData.id;
+                    this.form.routing_information = this.existingData;
+                    this.form.totals = this.existingData;
+                    this.form.custom_origin = this.existingData;
+                    // this.form.tableCodes = this.existingData;
+                    this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
+                    
+                    this.form.payment_info = this.existingData.payment_info || {};
+                    this.form.charges = Array.isArray(this.existingData.other_charge)
+                    ? this.existingData.other_charge
+                    : [];
+                    // this.form.entries = this.existingData;
+                    this.form.consignee_address = this.existingData.way_bill_address;
+                    console.log("oci ",this.form.consignee_address);
+                    this.form.shipper_address = this.existingData.way_bill_address;
+                    this.form.also_notify_address = this.existingData.way_bill_address;
             } else {
+                // console.error('existingData is not an array:', this.existingData);
                 console.log("Add mode activated");
             }
         },
@@ -4059,6 +4096,14 @@ export default {
                 height: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Height must be a numeric value with a maximum of 5 digits." },
             };
             let { pcs, wgt, length, width, height,unit } = this.consignment_list;
+            if (this.remainingPieces <= 0) {
+                this.validationErrors.push('All pieces are already added.');
+                return;
+            }
+            if (pcs > this.remainingPieces) {
+                this.validationErrors.push(`You only need ${this.remainingPieces} more pieces to complete the total.`);
+                return;
+            }
             if (!pcs) {
                 this.validationErrors.push("When using dimensions or weight - pieces cannot be empty.");
             }
@@ -4120,6 +4165,10 @@ export default {
     mounted(){
         this.calculateTotalVolume();
         this.allHousewayBill();
+        // const id = this.$route.params.id;
+        // if (id) {
+        // this.getHouseWayBill(id);
+        // }
     },
     watch: {
         // 'consignment_list': function () {
@@ -4181,7 +4230,7 @@ export default {
     },
     computed: {
         isPrepaid() {
-            const prepaidTypes = ['PC', 'PD', 'PG', 'OO', 'PX'];
+            const prepaidTypes = ['PP'];
             return prepaidTypes.includes(this.form.payment_info.type_of_payment);
         },
         weightCharge() {
@@ -4260,6 +4309,10 @@ export default {
         submitButtonText() {
             return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
         },
+        remainingPieces() {
+            const totalAddedPieces = this.consignment_list.itemss.reduce((sum, item) => sum + parseInt(item.pcs || 0), 0);
+            return this.consignment_list.pieces - totalAddedPieces;
+        }
     },
 
     components: {

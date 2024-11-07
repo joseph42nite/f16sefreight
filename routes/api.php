@@ -106,6 +106,7 @@ Route::post('/create-houseway-bill', [HousewayBill::class,'store']);
 Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 
 Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
+Route::get('/get-country', [HousewayBill::class,'getCountry']);
 
 Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion']);
 Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);

@@ -207,25 +207,62 @@ class HousewayBill extends Controller
         }
         return "Also notify address saved successfull";
     }
-    private function firstBox($first_box)
+    // private function firstBox($first_box)
+    // {
+    //     $validator = Validator::make($first_box, [
+    //         'hawb_no' =>'required|regex:/^[a-zA-Z0-9]+$/|max:35',
+    //         'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+    //         'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 422);
+    //     }
+    //     $HousewayBills = HousewayBills::find($first_box['hawb_no']);
+    //     if (!isset($HousewayBills))
+    //         $HousewayBills = new HousewayBills();
+    //     $HousewayBills->id = $first_box['hawb_no'];
+    //     $HousewayBills->awb_no = $first_box['awb_no'];
+    //     $HousewayBills->awb_code = $first_box['awb_code'];
+    //     $HousewayBills->save();
+    //     return "first box saved successfull";
+    // }
+    private function firstBox($first_box, $id = null)
     {
+        // Validate the data
         $validator = Validator::make($first_box, [
-            'hawb_no' =>'required|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'hawb_no' => 'required|regex:/^[a-zA-Z0-9]+$/|max:35',
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
         ]);
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $HousewayBills = HousewayBills::find($first_box['hawb_no']);
-        if (!isset($HousewayBills))
-            $HousewayBills = new HousewayBills();
-        $HousewayBills->id = $first_box['hawb_no'];
-        $HousewayBills->awb_no = $first_box['awb_no'];
-        $HousewayBills->awb_code = $first_box['awb_code'];
-        $HousewayBills->save();
-        return "first box saved successfull";
+        $HousewayBill = HousewayBills::find($id);
+        if (!empty($id)) {
+            if ($HousewayBill) {
+                $HousewayBill->id = $first_box['hawb_no'];
+                $HousewayBill->awb_no = $first_box['awb_no'];
+                $HousewayBill->awb_code = $first_box['awb_code'];
+                $HousewayBill->save();
+                return response()->json([
+                    'message' => 'First box updated successfully',
+                    'data' => $HousewayBill
+                ], 200);
+            }
+        }
+        $HousewayBill = new HousewayBills();
+        $HousewayBill->hawb_no = $first_box['hawb_no'];
+        $HousewayBill->awb_no = $first_box['awb_no'];
+        $HousewayBill->awb_code = $first_box['awb_code'];
+        $HousewayBill->save();
+
+        return response()->json([
+            'message' => 'First box created successfully',
+            'data' => $HousewayBill
+        ], 201);
     }
+
     private function routingInformation($hawb_no, $routing_information)
     {
         $validator = Validator::make($routing_information, [
@@ -372,25 +409,40 @@ class HousewayBill extends Controller
             'type_of_payment' => 'required',
             // 'total_charges' => 'required|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
-            //boolean
-            //carriage
-            // 'declear_value_carriage' => 'required',
-            // 'regex:/^NVD$|^\d+(\.\d{1,3})?$/',  // Either 'NVD' or a number with up to 3 decimal places
-            // 'nullable',
-            // 'numeric',
-            // 'min:0.000',
-            // 'max:999999999999',                   //'nullable|numeric|min:0.000|max:999999999999',
-
-            //customs
-            // 'declear_value_customs' => 'nullable|numeric|min:0.000|max:999999999999',
-            //Insurance
-            // 'declear_value_insurance' => 'nullable|numeric|min:0.001|max:99999999999',
+            'declear_value_carriage' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'NVD') {
+                        $fail($attribute.' must be a number or "NVD".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
+            'declear_value_customs' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'NCV') {
+                        $fail($attribute.' must be a number or "NCV".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
+            'declear_value_insurance' => [
+                'required', 
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && $value !== 'XXX') {
+                        $fail($attribute.' must be a number or "XXX".');
+                    } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
+                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                    }
+                }
+            ],
             'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
             'taxes' => 'nullable|integer',
             'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
             'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999',
-            // Custom validations with correct regex
-            'declear_value_carriage' => 'required|regex:/^(NVD|[0-9]+)$/|max:999999999999'   //'required|regex:#^(?:\d|NVD)$#'
         ]);
        
         
@@ -613,5 +665,40 @@ class HousewayBill extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         return response()->json(['msg' => 'No error'], 200);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $main_return_data = [];
+        $error_data = '';
+        if (!empty($id)) {
+            $error_data = $this->firstBox($request->first_box, $id);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422) {
+                return $error_data;
+            } else {
+                $main_return_data['first_box'] = $error_data;
+            }
+        }
+
+        return response()->json([
+            'message' => 'Update successful',
+            'data' => $main_return_data
+        ], 200);
+    }
+
+    public function show($id){
+        $housewayBill = HousewayBills::find($id);
+        if (!$housewayBill) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+        return response()->json($housewayBill, 200);
+    }
+
+    public function getAllHawb(){
+        $housewayBill = HousewayBills::all();
+        if (!$housewayBill) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+        return response()->json($housewayBill, 200);
     }
 }

@@ -133,6 +133,11 @@ export default new Router({
       component: () =>import("@/view/pages/HouseWayBill"),
     },
     {
+      path: '/edit-houseway-bill/:id?',
+      name: 'EditHousewayBill',
+      component: () => import("@/view/pages/HouseWayBill"),
+    },
+    {
       name: "Message Log",
       path: "/message-log",
       component: () =>import("@/view/pages/MessageLog"),

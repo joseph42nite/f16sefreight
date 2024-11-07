@@ -12,17 +12,23 @@ class PaymentInfo extends Model
     {
         return $this->belongsTo(AirWayBill::class, 'awb_id', 'id');
     }
-   // protected $fillable = [
-   //  'payment_type',
+   protected $fillable = [
    //  'currency',
-   //  'carriage',
-   //  'insurance',
+   //  'declear_value_carriage',
+   //  'declear_value_customs',
+   //  'declear_value_insurance',
    //  'other_charges_due_carrier',
    //  'other_charges_due_agent',
    //  'taxes',
    //  'weight_charge',
-   //  'total_charges',
+   // //  'total_charges',
    //  'awb_id',
-   //  'type_of_payment'
-   // ];
+   //  'type_of_payment',
+   //  'total_charges_collect',
+   //  'total_charges_prepaid',
+   //  'other_charges_due_agent_prepaid',
+   //  'other_charges_due_agent_collect',
+   //  'other_charges_due_carrier_prepaid',
+   //  'other_charges_due_carrier_collect'
+   ];
 }

@@ -99,7 +99,6 @@ Route::get('/all-contacts',[ContactController::class,'index']);
 Route::delete('/delete-contact/{id?}',[ContactController::class,'delete']);
 
 //airway bills route
-
 Route::post('/create-webdoc', [AirwayBill::class,'store']);
 Route::post('/get-consignment-error', [AirwayBill::class,'getConsignmentError']);
 Route::get('/agent-info',[AirwayBill::class,'get_agent']);
@@ -109,7 +108,13 @@ Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
 
 Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion']);
-
+Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
+Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
+Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
+Route::get('/get-location', [LocationController::class,'getLocation']);
+Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
+Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);
+Route::get('/all-houseway-bill', [HousewayBill::class,'getAllHawb']);
 
 
 

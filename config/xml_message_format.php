@@ -36,6 +36,18 @@ return [
         "type_code" => '703',
         "document" => 'XML House Waybill',
     ],
+    '785' => [
+        "short_code" => 'XFHL',
+        "name" => 'Cargo Manifest',
+        "type_code" => '785',
+        "document" => 'XML House Manifest',
+    ],
+    '962' => [
+        "short_code" => 'XCSN',
+        "name" => 'Document Response Customs',
+        "type_code" => '962',
+        "document" => 'XML Customs, Security and Regulatory Control Status Notification',
+    ],
     '21' => [
         "short_code" => 'XGRQ',
         "name" => 'Query',

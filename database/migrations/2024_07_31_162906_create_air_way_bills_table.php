@@ -17,12 +17,12 @@ class CreateAirWayBillsTable extends Migration
             $table->id();
             $table->string('awb_no',50)->nullable();
             $table->integer('awb_code')->nullable();
-            $table->string('reference_id',50)->nullable();
+            $table->string('reference_id', 50)->nullable();
             $table->boolean('awb')->nullable();
             $table->string('consolidated_mawb')->nullable();
             $table->string('departure_airport')->nullable();
             $table->string('destination_airport')->nullable();
-            $table->string('from')->nullable();//first
+            $table->string('from')->nullable(); //first
             $table->string('to')->nullable();
             $table->string('by')->nullable();
             $table->string('flight')->nullable();
@@ -49,9 +49,10 @@ class CreateAirWayBillsTable extends Migration
             $table->integer('payment_id')->nullable();
             $table->text('special_handling_info')->nullable();
             // $table->text('oci_info')->nullable(); //other custome information
-            $table->string('total_volume',20)->nullable();
+            $table->string('total_volume', 20)->nullable();
             $table->string('dimention_unit')->nullable();
-            $table->string('total_amount',20)->nullable();
+            $table->string('total_amount', 20)->nullable();
+            $table->dateTime('execution_date_time')->nullable();
             $table->timestamps();
         });
     }

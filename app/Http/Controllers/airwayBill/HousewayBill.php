@@ -25,7 +25,6 @@ class HousewayBill extends Controller
     }
     public function getCountry(){
         $countries = config('country');
-        dd($countries);
         return response()->json($countries);
     }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
@@ -49,9 +48,30 @@ class HousewayBill extends Controller
         }
         //for update
         $WayBillAddress = WayBillAddress::where('awb_id', $hawb_no)->first();
-
+        if(!empty($hawb_no)){
+            dd($hawb_no);die;
+            $WayBillAddress->awb_id = $hawb_no;
+            $WayBillAddress->ship_name = $shipper_address['ship_name'];
+            $WayBillAddress->ship_account = $shipper_address['ship_account'];
+            $WayBillAddress->ship_address = $shipper_address['ship_address'];
+            $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'];
+            $WayBillAddress->ship_city = $shipper_address['ship_city'];
+            $WayBillAddress->ship_airport_code = $shipper_address['ship_airport_code'];
+            $WayBillAddress->ship_post_code = $shipper_address['ship_post_code'];
+            $WayBillAddress->ship_state = $shipper_address['ship_state'];
+            $WayBillAddress->ship_country = $shipper_address['ship_country'];
+            $WayBillAddress->ship_phone = $shipper_address['ship_phone'];
+            $WayBillAddress->ship_fax = $shipper_address['ship_fax'];
+            $WayBillAddress->ship_telex = $shipper_address['ship_telex'];
+            $WayBillAddress->save();
+            return response()->json([
+                'message' => 'Shipper address updated successfully',
+                'data' => $WayBillAddress
+            ], 200);
+        }
         //for insert
         if (!isset($WayBillAddress))
+        dd("sdbfhdsfs",$hawb_no);die;
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
@@ -71,7 +91,31 @@ class HousewayBill extends Controller
         //insert address if saved button checked
         if ($is_shipper_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
+            if(!empty($hawb_no)){
+               
+                 $SavedAddress->awb_id = $hawb_no;
+                $SavedAddress->user_id = '123456';
+                $SavedAddress->address_type = 'shipper_address';
+                $SavedAddress->name = $shipper_address['ship_name'];
+                $SavedAddress->account = $shipper_address['ship_account'];
+                $SavedAddress->address = $shipper_address['ship_address'];
+                $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'];
+                $SavedAddress->city = $shipper_address['ship_city'];
+                $SavedAddress->airport_code = $shipper_address['ship_airport_code'];
+                $SavedAddress->post_code = $shipper_address['ship_post_code'];
+                $SavedAddress->state = $shipper_address['ship_state'];
+                $SavedAddress->country = $shipper_address['ship_country'];
+                $SavedAddress->phone = $shipper_address['ship_phone'];
+                $SavedAddress->fax = $shipper_address['ship_fax'];
+                $SavedAddress->telex = $shipper_address['ship_telex'];
+                $SavedAddress->save();
+                return response()->json([
+                    'message' => 'Shippers Information updated successfully',
+                    'data' => $SavedAddress
+                ], 200);
+            }
             if (!isset($SavedAddress))
+            dd("sdfd");die;
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
             $SavedAddress->user_id = '123456';
@@ -212,25 +256,6 @@ class HousewayBill extends Controller
         }
         return "Also notify address saved successfull";
     }
-    // private function firstBox($first_box)
-    // {
-    //     $validator = Validator::make($first_box, [
-    //         'hawb_no' =>'required|regex:/^[a-zA-Z0-9]+$/|max:35',
-    //         'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
-    //         'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json(['errors' => $validator->errors()], 422);
-    //     }
-    //     $HousewayBills = HousewayBills::find($first_box['hawb_no']);
-    //     if (!isset($HousewayBills))
-    //         $HousewayBills = new HousewayBills();
-    //     $HousewayBills->id = $first_box['hawb_no'];
-    //     $HousewayBills->awb_no = $first_box['awb_no'];
-    //     $HousewayBills->awb_code = $first_box['awb_code'];
-    //     $HousewayBills->save();
-    //     return "first box saved successfull";
-    // }
     private function firstBox($first_box, $id = null)
     {
         // Validate the data
@@ -316,10 +341,10 @@ class HousewayBill extends Controller
             $HousewayBills->master_origin = $routing_information['master_origin'];
             $HousewayBills->master_destination = $routing_information['master_destination'];
             $HousewayBills->save();
-                return response()->json([
-                    'message' => 'Routing Information updated successfully',
-                    'data' => $HousewayBills
-                ], 200);
+            return response()->json([
+                'message' => 'Routing Information updated successfully',
+                'data' => $HousewayBills
+            ], 200);
         }
       
         if (!isset($HousewayBills))

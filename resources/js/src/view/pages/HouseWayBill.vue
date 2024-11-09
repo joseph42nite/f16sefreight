@@ -326,9 +326,9 @@
                                                 v-model="form.shipper_address.ship_country"
                                                 :class="{ 'is-invalid': form.errors.has('ship_country') }">
                                                 <option disabled value=""> Please select one</option>
-                                                <option value="IN">India</option>
-                                                <option value="USA">United State</option>
-                                                <option Value="UK">United Kingdom</option>
+                                                <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                    {{ country.text }}
+                                                </option>
                                             </b-form-select>
                                             <has-error :form="form" field="ship_country"></has-error>
                                         </b-form-group>
@@ -458,10 +458,10 @@
                                             <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"
                                                 v-model="form.consignee_address.cons_country"
                                                 :class="{ 'is-invalid': form.errors.has('cons_country') }">
-                                                <option disabled value="Please select one"> Please select one</option>
-                                                <option value="IN">India</option>
-                                                <option value="USA">United State</option>
-                                                <option Value="UK">United Kingdom</option>
+                                                <option value="Please select one"> Please select one</option>
+                                                <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                    {{ country.text }}
+                                                </option>
                                             </b-form-select>
                                             <has-error :form="form" field="cons_country"></has-error>
                                         </b-form-group>
@@ -904,9 +904,9 @@
                                                                     style=" width: 320px;"
                                                                     v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
                                                                     <option value=""> Select a Country</option>
-                                                                    <option value="AF"> Afghanistan</option>
-                                                                    <option value="AX"> Åland Islands </option>
-                                                                    <option value="AL">Albania</option>
+                                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                        {{ country.text }}
+                                                                    </option>
                                                                 </b-form-select>
                                                                 <has-error :form="consignment_list" field="country_origin_goods"></has-error>
                                                             </td>
@@ -1417,286 +1417,9 @@
                                                                         style="width: 150px"
                                                                         v-model="agent_information.ho_country"  :class="{ 'is-invalid': form.errors.has('ho_country') }">
                                                                         <option value="">Select a country</option>
-                                                                        <option value="AF">Afghanistan</option>
-                                                                        <option value="AX">Åland Islands</option>
-                                                                        <option value="AL">Albania</option>
-                                                                        <option value="DZ">Algeria</option>
-                                                                        <option value="AS">American Samoa</option>
-                                                                        <option value="AD">Andorra</option>
-                                                                        <option value="AO">Angola</option>
-                                                                        <option value="AI">Anguilla</option>
-                                                                        <option value="AQ">Antarctica</option>
-                                                                        <option value="AG">Antigua and Barbuda</option>
-                                                                        <option value="AR">Argentina</option>
-                                                                        <option value="AM">Armenia</option>
-                                                                        <option value="AW">Aruba</option>
-                                                                        <option value="AU">Australia</option>
-                                                                        <option value="AT">Austria</option>
-                                                                        <option value="AZ">Azerbaijan</option>
-                                                                        <option value="BS">Bahamas</option>
-                                                                        <option value="BH">Bahrain</option>
-                                                                        <option value="BD">Bangladesh</option>
-                                                                        <option value="BB">Barbados</option>
-                                                                        <option value="BY">Belarus</option>
-                                                                        <option value="BE">Belgium</option>
-                                                                        <option value="BZ">Belize</option>
-                                                                        <option value="BJ">Benin</option>
-                                                                        <option value="BM">Bermuda</option>
-                                                                        <option value="BT">Bhutan</option>
-                                                                        <option value="BO">Bolivia</option>
-                                                                        <option value="BQ">Bonaire</option>
-                                                                        <option value="BA">Bosnia and Herzegovina
+                                                                        <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                            {{ country.text }}
                                                                         </option>
-                                                                        <option value="BW">Botswana</option>
-                                                                        <option value="BV">Bouvet Island</option>
-                                                                        <option value="BR">Brazil</option>
-                                                                        <option value="IO">British Indian Ocean
-                                                                            Territory</option>
-                                                                        <option value="BN">Brunei Darussalam</option>
-                                                                        <option value="BG">Bulgaria</option>
-                                                                        <option value="BF">Burkina Faso</option>
-                                                                        <option value="BI">Burundi</option>
-                                                                        <option value="KH">Cambodia</option>
-                                                                        <option value="CM">Cameroon</option>
-                                                                        <option value="CA">Canada</option>
-                                                                        <option value="CV">Cape Verde</option>
-                                                                        <option value="KY">Cayman Islands</option>
-                                                                        <option value="CF">Central African Republic
-                                                                        </option>
-                                                                        <option value="TD">Chad</option>
-                                                                        <option value="CL">Chile</option>
-                                                                        <option value="CN">China</option>
-                                                                        <option value="CX">Christmas Island</option>
-                                                                        <option value="CC">Cocos (Keeling) Islands
-                                                                        </option>
-                                                                        <option value="CO">Colombia</option>
-                                                                        <option value="KM">Comoros</option>
-                                                                        <option value="CG">Congo</option>
-                                                                        <option value="CD">Congo, the Democratic
-                                                                            Republic of the</option>
-                                                                        <option value="CK">Cook Islands</option>
-                                                                        <option value="CR">Costa Rica</option>
-                                                                        <option value="CI">Côte d'Ivoire</option>
-                                                                        <option value="HR">Croatia</option>
-                                                                        <option value="CU">Cuba</option>
-                                                                        <option value="CW">Curacao</option>
-                                                                        <option value="CY">Cyprus</option>
-                                                                        <option value="CZ">Czech Republic</option>
-                                                                        <option value="DK">Denmark</option>
-                                                                        <option value="DJ">Djibouti</option>
-                                                                        <option value="DM">Dominica</option>
-                                                                        <option value="DO">Dominican Republic</option>
-                                                                        <option value="EC">Ecuador</option>
-                                                                        <option value="EG">Egypt</option>
-                                                                        <option value="SV">El Salvador</option>
-                                                                        <option value="GQ">Equatorial Guinea</option>
-                                                                        <option value="ER">Eritrea</option>
-                                                                        <option value="EE">Estonia</option>
-                                                                        <option value="ET">Ethiopia</option>
-                                                                        <option value="FK">Falkland Islands (Malvinas)
-                                                                        </option>
-                                                                        <option value="FO">Faroe Islands</option>
-                                                                        <option value="FJ">Fiji</option>
-                                                                        <option value="FI">Finland</option>
-                                                                        <option value="FR">France</option>
-                                                                        <option value="GF">French Guiana</option>
-                                                                        <option value="PF">French Polynesia</option>
-                                                                        <option value="TF">French Southern Territories
-                                                                        </option>
-                                                                        <option value="GA">Gabon</option>
-                                                                        <option value="GM">Gambia</option>
-                                                                        <option value="GE">Georgia</option>
-                                                                        <option value="DE">Germany</option>
-                                                                        <option value="GH">Ghana</option>
-                                                                        <option value="GI">Gibraltar</option>
-                                                                        <option value="GR">Greece</option>
-                                                                        <option value="GL">Greenland</option>
-                                                                        <option value="GD">Grenada</option>
-                                                                        <option value="GP">Guadeloupe</option>
-                                                                        <option value="GU">Guam</option>
-                                                                        <option value="GT">Guatemala</option>
-                                                                        <option value="GG">Guernsey</option>
-                                                                        <option value="GN">Guinea</option>
-                                                                        <option value="GW">Guinea-Bissau</option>
-                                                                        <option value="GY">Guyana</option>
-                                                                        <option value="HT">Haiti</option>
-                                                                        <option value="HM">Heard Island and McDonald
-                                                                            Islands</option>
-                                                                        <option value="VA">Holy See (Vatican City State)
-                                                                        </option>
-                                                                        <option value="HN">Honduras</option>
-                                                                        <option value="HK">Hong Kong</option>
-                                                                        <option value="HU">Hungary</option>
-                                                                        <option value="IS">Iceland</option>
-                                                                        <option value="IN">India</option>
-                                                                        <option value="ID">Indonesia</option>
-                                                                        <option value="IR">Iran, Islamic Republic of
-                                                                        </option>
-                                                                        <option value="IQ">Iraq</option>
-                                                                        <option value="IE">Ireland</option>
-                                                                        <option value="IM">Isle of Man</option>
-                                                                        <option value="IL">Israel</option>
-                                                                        <option value="IT">Italy</option>
-                                                                        <option value="JM">Jamaica</option>
-                                                                        <option value="JP">Japan</option>
-                                                                        <option value="JE">Jersey</option>
-                                                                        <option value="JO">Jordan</option>
-                                                                        <option value="KZ">Kazakhstan</option>
-                                                                        <option value="KE">Kenya</option>
-                                                                        <option value="KI">Kiribati</option>
-                                                                        <option value="KP">Korea, Democratic People's
-                                                                            Republic of</option>
-                                                                        <option value="KR">Korea, Republic of</option>
-                                                                        <option value="XK">Kosovo, Republic of</option>
-                                                                        <option value="KW">Kuwait</option>
-                                                                        <option value="KG">Kyrgyzstan</option>
-                                                                        <option value="LA">Lao People's Democratic
-                                                                            Republic</option>
-                                                                        <option value="LV">Latvia</option>
-                                                                        <option value="LB">Lebanon</option>
-                                                                        <option value="LS">Lesotho</option>
-                                                                        <option value="LR">Liberia</option>
-                                                                        <option value="LY">Libya</option>
-                                                                        <option value="LI">Liechtenstein</option>
-                                                                        <option value="LT">Lithuania</option>
-                                                                        <option value="LU">Luxembourg</option>
-                                                                        <option value="MO">Macao</option>
-                                                                        <option value="MK">Macedonia, the former
-                                                                            Yugoslav Republic of</option>
-                                                                        <option value="MG">Madagascar</option>
-                                                                        <option value="MW">Malawi</option>
-                                                                        <option value="MY">Malaysia</option>
-                                                                        <option value="MV">Maldives</option>
-                                                                        <option value="ML">Mali</option>
-                                                                        <option value="MT">Malta</option>
-                                                                        <option value="MH">Marshall Islands</option>
-                                                                        <option value="MQ">Martinique</option>
-                                                                        <option value="MR">Mauritania</option>
-                                                                        <option value="MU">Mauritius</option>
-                                                                        <option value="YT">Mayotte</option>
-                                                                        <option value="MX">Mexico</option>
-                                                                        <option value="FM">Micronesia, Federated States
-                                                                            of</option>
-                                                                        <option value="MD">Moldova, Republic of</option>
-                                                                        <option value="MC">Monaco</option>
-                                                                        <option value="MN">Mongolia</option>
-                                                                        <option value="ME">Montenegro</option>
-                                                                        <option value="MS">Montserrat</option>
-                                                                        <option value="MA">Morocco</option>
-                                                                        <option value="MZ">Mozambique</option>
-                                                                        <option value="MM">Myanmar</option>
-                                                                        <option value="NA">Namibia</option>
-                                                                        <option value="NR">Nauru</option>
-                                                                        <option value="NP">Nepal</option>
-                                                                        <option value="NL">Netherlands</option>
-                                                                        <option value="NC">New Caledonia</option>
-                                                                        <option value="NZ">New Zealand</option>
-                                                                        <option value="NI">Nicaragua</option>
-                                                                        <option value="NE">Niger</option>
-                                                                        <option value="NG">Nigeria</option>
-                                                                        <option value="NU">Niue</option>
-                                                                        <option value="NF">Norfolk Island</option>
-                                                                        <option value="XI">Northern Ireland</option>
-                                                                        <option value="MP">Northern Mariana Islands
-                                                                        </option>
-                                                                        <option value="NO">Norway</option>
-                                                                        <option value="OM">Oman</option>
-                                                                        <option value="PK">Pakistan</option>
-                                                                        <option value="PW">Palau</option>
-                                                                        <option value="PS">Palestinian Territory,
-                                                                            Occupied</option>
-                                                                        <option value="PA">Panama</option>
-                                                                        <option value="PG">Papua New Guinea</option>
-                                                                        <option value="PY">Paraguay</option>
-                                                                        <option value="PE">Peru</option>
-                                                                        <option value="PH">Philippines</option>
-                                                                        <option value="PN">Pitcairn</option>
-                                                                        <option value="PL">Poland</option>
-                                                                        <option value="PT">Portugal</option>
-                                                                        <option value="PR">Puerto Rico</option>
-                                                                        <option value="QA">Qatar</option>
-                                                                        <option value="RE">Reunion Réunion</option>
-                                                                        <option value="RO">Romania</option>
-                                                                        <option value="RU">Russian Federation</option>
-                                                                        <option value="RW">Rwanda</option>
-                                                                        <option value="BL">Saint Barthélemy</option>
-                                                                        <option value="SH">Saint Helena</option>
-                                                                        <option value="KN">Saint Kitts and Nevis
-                                                                        </option>
-                                                                        <option value="LC">Saint Lucia</option>
-                                                                        <option value="MF">Saint Martin (French part)
-                                                                        </option>
-                                                                        <option value="PM">Saint Pierre and Miquelon
-                                                                        </option>
-                                                                        <option value="VC">Saint Vincent and the
-                                                                            Grenadines</option>
-                                                                        <option value="WS">Samoa</option>
-                                                                        <option value="SM">San Marino</option>
-                                                                        <option value="ST">Sao Tome and Principe
-                                                                        </option>
-                                                                        <option value="SA">Saudi Arabia</option>
-                                                                        <option value="SN">Senegal</option>
-                                                                        <option value="RS">Serbia</option>
-                                                                        <option value="SC">Seychelles</option>
-                                                                        <option value="SL">Sierra Leone</option>
-                                                                        <option value="SG">Singapore</option>
-                                                                        <option value="SX">Sint Maarten</option>
-                                                                        <option value="SK">Slovakia</option>
-                                                                        <option value="SI">Slovenia</option>
-                                                                        <option value="SB">Solomon Islands</option>
-                                                                        <option value="SO">Somalia</option>
-                                                                        <option value="ZA">South Africa</option>
-                                                                        <option value="GS">South Georgia and the South
-                                                                            Sandwich Islands</option>
-                                                                        <option value="SS">South Sudan</option>
-                                                                        <option value="ES">Spain</option>
-                                                                        <option value="LK">Sri Lanka</option>
-                                                                        <option value="SD">Sudan</option>
-                                                                        <option value="SR">Suriname</option>
-                                                                        <option value="SJ">Svalbard and Jan Mayen
-                                                                        </option>
-                                                                        <option value="SW">Swahili</option>
-                                                                        <option value="SZ">Swaziland</option>
-                                                                        <option value="SE">Sweden</option>
-                                                                        <option value="CH">Switzerland</option>
-                                                                        <option value="SY">Syrian Arab Republic</option>
-                                                                        <option value="TW">Taiwan, Republic of China
-                                                                        </option>
-                                                                        <option value="TJ">Tajikistan</option>
-                                                                        <option value="TZ">Tanzania, United Republic of
-                                                                        </option>
-                                                                        <option value="TH">Thailand</option>
-                                                                        <option value="TL">Timor-Leste</option>
-                                                                        <option value="TG">Togo</option>
-                                                                        <option value="TK">Tokelau</option>
-                                                                        <option value="TO">Tonga</option>
-                                                                        <option value="TT">Trinidad and Tobago</option>
-                                                                        <option value="TN">Tunisia</option>
-                                                                        <option value="TR">Turkey</option>
-                                                                        <option value="TM">Turkmenistan</option>
-                                                                        <option value="TC">Turks and Caicos Islands
-                                                                        </option>
-                                                                        <option value="TV">Tuvalu</option>
-                                                                        <option value="UG">Uganda</option>
-                                                                        <option value="UA">Ukraine</option>
-                                                                        <option value="AE">United Arab Emirates</option>
-                                                                        <option value="GB">United Kingdom</option>
-                                                                        <option value="US">United States</option>
-                                                                        <option value="UM">United States Minor Outlying
-                                                                            Islands</option>
-                                                                        <option value="UY">Uruguay</option>
-                                                                        <option value="UZ">Uzbekistan</option>
-                                                                        <option value="VU">Vanuatu</option>
-                                                                        <option value="VE">Venezuela</option>
-                                                                        <option value="VN">Viet Nam</option>
-                                                                        <option value="VG">Virgin Islands, British
-                                                                        </option>
-                                                                        <option value="VI">Virgin Islands, U.S.</option>
-                                                                        <option value="WF">Wallis and Futuna</option>
-                                                                        <option value="EH">Western Sahara</option>
-                                                                        <option value="YE">Yemen</option>
-                                                                        <option value="ZM">Zambia</option>
-                                                                        <option value="ZW">Zimbabwe</option>
                                                                     </b-form-select>
                                                                 </td>
                                                             </tr>
@@ -1919,9 +1642,9 @@
                                                 v-model="form.also_notify_address.also_country"
                                                 :class="{ 'is-invalid': form.errors.has('also_country') }">
                                                 <option disabled value=""> Please select one</option>
-                                                <option value="IN">India</option>
-                                                <option value="USA">United State</option>
-                                                <option Value="UK">United Kingdom</option>
+                                                <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                    {{ country.text }}
+                                                </option>
                                             </b-form-select>
                                             <has-error :form="form" field="also_country"></has-error>
                                         </b-form-group>
@@ -2424,7 +2147,8 @@
                                                 <tr v-for="(code, index) in form.tableCodes" :key="index">
                                                     <td class="editable-cell">{{ code }}</td>
                                                     <td class="editable-cell"><b-icon icon="trash" font-scale="1"
-                                                        @click="deleteSplCode(index)"></b-icon></td>
+                                                        @click="deleteSplCode(index)"></b-icon>
+                                                    </td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -2456,717 +2180,9 @@
                                                                         v-model="oci_info.country_code"
                                                                         :class="{ 'is-invalid': form.errors.has('country_code') }">
                                                                         <option value="">Select a country</option>
-                                                                        <option value="AF">Afghanistan</option>
-                                                                        <option value="AX">Åland Islands</option>
-                                                                        <option value="AL">Albania</option>
-                                                                        <option value="DZ">Algeria</option>
-                                                                        <option value="AS">American Samoa</option>
-                                                                        <option value="AD">Andorra</option>
-                                                                        <option value="AO">Angola</option>
-                                                                        <option value="AI">Anguilla</option>
-                                                                        <option value="AQ">Antarctica</option>
-                                                                        <option value="AG">Antigua and Barbuda</option>
-                                                                        <option value="AR">Argentina</option>
-                                                                        <option value="AM">Armenia</option>
-                                                                        <option value="AW">Aruba</option>
-                                                                        <option value="AU">Australia</option>
-                                                                        <option value="AT">Austria</option>
-                                                                        <option value="AZ">Azerbaijan</option>
-                                                                        <option value="BS">Bahamas</option>
-                                                                        <option value="BH">Bahrain</option>
-                                                                        <option value="BD">Bangladesh</option>
-                                                                        <option value="BB">Barbados</option>
-                                                                        <option value="BY">Belarus</option>
-                                                                        <option value="BE">Belgium</option>
-                                                                        <option value="BZ">Belize</option>
-                                                                        <option value="BJ">Benin</option>
-                                                                        <option value="BM">Bermuda</option>
-                                                                        <option value="BT">Bhutan</option>
-                                                                        <option value="BO">Bolivia</option>
-                                                                        <option value="BQ">Bonaire</option>
-                                                                        <option value="BA">Bosnia and Herzegovina
+                                                                        <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                            {{ country.text }}
                                                                         </option>
-                                                                        <option value="BW">Botswana</option>
-                                                                        <option value="BV">Bouvet Island</option>
-                                                                        <option value="BR">Brazil</option>
-                                                                        <option value="IO">British Indian Ocean
-                                                                            Territory</option>
-                                                                        <option value="BN">Brunei Darussalam</option>
-                                                                        <option value="BG">Bulgaria</option>
-                                                                        <option value="BF">Burkina Faso</option>
-                                                                        <option value="BI">Burundi</option>
-                                                                        <option value="KH">Cambodia</option>
-                                                                        <option value="CM">Cameroon</option>
-                                                                        <option value="CA">Canada</option>
-                                                                        <option value="CV">Cape Verde</option>
-                                                                        <option value="KY">Cayman Islands</option>
-                                                                        <option value="CF">Central African Republic
-                                                                        </option>
-                                                                        <option value="TD">Chad</option>
-                                                                        <option value="CL">Chile</option>
-                                                                        <option value="CN">China</option>
-                                                                        <option value="CX">Christmas Island</option>
-                                                                        <option value="CC">Cocos (Keeling) Islands
-                                                                        </option>
-                                                                        <option value="CO">Colombia</option>
-                                                                        <option value="KM">Comoros</option>
-                                                                        <option value="CG">Congo</option>
-                                                                        <option value="CD">Congo, the Democratic
-                                                                            Republic of the</option>
-                                                                        <option value="CK">Cook Islands</option>
-                                                                        <option value="CR">Costa Rica</option>
-                                                                        <option value="CI">Côte d'Ivoire</option>
-                                                                        <option value="HR">Croatia</option>
-                                                                        <option value="CU">Cuba</option>
-                                                                        <option value="CW">Curacao</option>
-                                                                        <option value="CY">Cyprus</option>
-                                                                        <option value="CZ">Czech Republic</option>
-                                                                        <option value="DK">Denmark</option>
-                                                                        <option value="DJ">Djibouti</option>
-                                                                        <option value="DM">Dominica</option>
-                                                                        <option value="DO">Dominican Republic</option>
-                                                                        <option value="EC">Ecuador</option>
-                                                                        <option value="EG">Egypt</option>
-                                                                        <option value="SV">El Salvador</option>
-                                                                        <option value="GQ">Equatorial Guinea</option>
-                                                                        <option value="ER">Eritrea</option>
-                                                                        <option value="EE">Estonia</option>
-                                                                        <option value="ET">Ethiopia</option>
-                                                                        <option value="FK">Falkland Islands (Malvinas)
-                                                                        </option>
-                                                                        <option value="FO">Faroe Islands</option>
-                                                                        <option value="FJ">Fiji</option>
-                                                                        <option value="FI">Finland</option>
-                                                                        <option value="FR">France</option>
-                                                                        <option value="GF">French Guiana</option>
-                                                                        <option value="PF">French Polynesia</option>
-                                                                        <option value="TF">French Southern Territories
-                                                                        </option>
-                                                                        <option value="GA">Gabon</option>
-                                                                        <option value="GM">Gambia</option>
-                                                                        <option value="GE">Georgia</option>
-                                                                        <option value="DE">Germany</option>
-                                                                        <option value="GH">Ghana</option>
-                                                                        <option value="GI">Gibraltar</option>
-                                                                        <option value="GR">Greece</option>
-                                                                        <option value="GL">Greenland</option>
-                                                                        <option value="GD">Grenada</option>
-                                                                        <option value="GP">Guadeloupe</option>
-                                                                        <option value="GU">Guam</option>
-                                                                        <option value="GT">Guatemala</option>
-                                                                        <option value="GG">Guernsey</option>
-                                                                        <option value="GN">Guinea</option>
-                                                                        <option value="GW">Guinea-Bissau</option>
-                                                                        <option value="GY">Guyana</option>
-                                                                        <option value="HT">Haiti</option>
-                                                                        <option value="HM">Heard Island and McDonald
-                                                                            Islands</option>
-                                                                        <option value="VA">Holy See (Vatican City State)
-                                                                        </option>
-                                                                        <option value="HN">Honduras</option>
-                                                                        <option value="HK">Hong Kong</option>
-                                                                        <option value="HU">Hungary</option>
-                                                                        <option value="IS">Iceland</option>
-                                                                        <option value="IN">India</option>
-                                                                        <option value="ID">Indonesia</option>
-                                                                        <option value="IR">Iran, Islamic Republic of
-                                                                        </option>
-                                                                        <option value="IQ">Iraq</option>
-                                                                        <option value="IE">Ireland</option>
-                                                                        <option value="IM">Isle of Man</option>
-                                                                        <option value="IL">Israel</option>
-                                                                        <option value="IT">Italy</option>
-                                                                        <option value="JM">Jamaica</option>
-                                                                        <option value="JP">Japan</option>
-                                                                        <option value="JE">Jersey</option>
-                                                                        <option value="JO">Jordan</option>
-                                                                        <option value="KZ">Kazakhstan</option>
-                                                                        <option value="KE">Kenya</option>
-                                                                        <option value="KI">Kiribati</option>
-                                                                        <option value="KP">Korea, Democratic People's
-                                                                            Republic of</option>
-                                                                        <option value="KR">Korea, Republic of</option>
-                                                                        <option value="XK">Kosovo, Republic of</option>
-                                                                        <option value="KW">Kuwait</option>
-                                                                        <option value="KG">Kyrgyzstan</option>
-                                                                        <option value="LA">Lao People's Democratic
-                                                                            Republic</option>
-                                                                        <option value="LV">Latvia</option>
-                                                                        <option value="LB">Lebanon</option>
-                                                                        <option value="LS">Lesotho</option>
-                                                                        <option value="LR">Liberia</option>
-                                                                        <option value="LY">Libya</option>
-                                                                        <option value="LI">Liechtenstein</option>
-                                                                        <option value="LT">Lithuania</option>
-                                                                        <option value="LU">Luxembourg</option>
-                                                                        <option value="MO">Macao</option>
-                                                                        <option value="MK">Macedonia, the former
-                                                                            Yugoslav Republic of</option>
-                                                                        <option value="MG">Madagascar</option>
-                                                                        <option value="MW">Malawi</option>
-                                                                        <option value="MY">Malaysia</option>
-                                                                        <option value="MV">Maldives</option>
-                                                                        <option value="ML">Mali</option>
-                                                                        <option value="MT">Malta</option>
-                                                                        <option value="MH">Marshall Islands</option>
-                                                                        <option value="MQ">Martinique</option>
-                                                                        <option value="MR">Mauritania</option>
-                                                                        <option value="MU">Mauritius</option>
-                                                                        <option value="YT">Mayotte</option>
-                                                                        <option value="MX">Mexico</option>
-                                                                        <option value="FM">Micronesia, Federated States
-                                                                            of</option>
-                                                                        <option value="MD">Moldova, Republic of</option>
-                                                                        <option value="MC">Monaco</option>
-                                                                        <option value="MN">Mongolia</option>
-                                                                        <option value="ME">Montenegro</option>
-                                                                        <option value="MS">Montserrat</option>
-                                                                        <option value="MA">Morocco</option>
-                                                                        <option value="MZ">Mozambique</option>
-                                                                        <option value="MM">Myanmar</option>
-                                                                        <option value="NA">Namibia</option>
-                                                                        <option value="NR">Nauru</option>
-                                                                        <option value="NP">Nepal</option>
-                                                                        <option value="NL">Netherlands</option>
-                                                                        <option value="NC">New Caledonia</option>
-                                                                        <option value="NZ">New Zealand</option>
-                                                                        <option value="NI">Nicaragua</option>
-                                                                        <option value="NE">Niger</option>
-                                                                        <option value="NG">Nigeria</option>
-                                                                        <option value="NU">Niue</option>
-                                                                        <option value="NF">Norfolk Island</option>
-                                                                        <option value="XI">Northern Ireland</option>
-                                                                        <option value="MP">Northern Mariana Islands
-                                                                        </option>
-                                                                        <option value="NO">Norway</option>
-                                                                        <option value="OM">Oman</option>
-                                                                        <option value="PK">Pakistan</option>
-                                                                        <option value="PW">Palau</option>
-                                                                        <option value="PS">Palestinian Territory,
-                                                                            Occupied</option>
-                                                                        <option value="PA">Panama</option>
-                                                                        <option value="PG">Papua New Guinea</option>
-                                                                        <option value="PY">Paraguay</option>
-                                                                        <option value="PE">Peru</option>
-                                                                        <option value="PH">Philippines</option>
-                                                                        <option value="PN">Pitcairn</option>
-                                                                        <option value="PL">Poland</option>
-                                                                        <option value="PT">Portugal</option>
-                                                                        <option value="PR">Puerto Rico</option>
-                                                                        <option value="QA">Qatar</option>
-                                                                        <option value="RE">Reunion Réunion</option>
-                                                                        <option value="RO">Romania</option>
-                                                                        <option value="RU">Russian Federation</option>
-                                                                        <option value="RW">Rwanda</option>
-                                                                        <option value="BL">Saint Barthélemy</option>
-                                                                        <option value="SH">Saint Helena</option>
-                                                                        <option value="KN">Saint Kitts and Nevis
-                                                                        </option>
-                                                                        <option value="LC">Saint Lucia</option>
-                                                                        <option value="MF">Saint Martin (French part)
-                                                                        </option>
-                                                                        <option value="PM">Saint Pierre and Miquelon
-                                                                        </option>
-                                                                        <option value="VC">Saint Vincent and the
-                                                                            Grenadines</option>
-                                                                        <option value="WS">Samoa</option>
-                                                                        <option value="SM">San Marino</option>
-                                                                        <option value="ST">Sao Tome and Principe
-                                                                        </option>
-                                                                        <option value="SA">Saudi Arabia</option>
-                                                                        <option value="SN">Senegal</option>
-                                                                        <option value="RS">Serbia</option>
-                                                                        <option value="SC">Seychelles</option>
-                                                                        <option value="SL">Sierra Leone</option>
-                                                                        <option value="SG">Singapore</option>
-                                                                        <option value="SX">Sint Maarten</option>
-                                                                        <option value="SK">Slovakia</option>
-                                                                        <option value="SI">Slovenia</option>
-                                                                        <option value="SB">Solomon Islands</option>
-                                                                        <option value="SO">Somalia</option>
-                                                                        <option value="ZA">South Africa</option>
-                                                                        <option value="GS">South Georgia and the South
-                                                                            Sandwich Islands</option>
-                                                                        <option value="SS">South Sudan</option>
-                                                                        <option value="ES">Spain</option>
-                                                                        <option value="LK">Sri Lanka</option>
-                                                                        <option value="SD">Sudan</option>
-                                                                        <option value="SR">Suriname</option>
-                                                                        <option value="SJ">Svalbard and Jan Mayen
-                                                                        </option>
-                                                                        <option value="SW">Swahili</option>
-                                                                        <option value="SZ">Swaziland</option>
-                                                                        <option value="SE">Sweden</option>
-                                                                        <option value="CH">Switzerland</option>
-                                                                        <option value="SY">Syrian Arab Republic</option>
-                                                                        <option value="TW">Taiwan, Republic of China
-                                                                        </option>
-                                                                        <option value="TJ">Tajikistan</option>
-                                                                        <option value="TZ">Tanzania, United Republic of
-                                                                        </option>
-                                                                        <option value="TH">Thailand</option>
-                                                                        <option value="TL">Timor-Leste</option>
-                                                                        <option value="TG">Togo</option>
-                                                                        <option value="TK">Tokelau</option>
-                                                                        <option value="TO">Tonga</option>
-                                                                        <option value="TT">Trinidad and Tobago</option>
-                                                                        <option value="TN">Tunisia</option>
-                                                                        <option value="TR">Turkey</option>
-                                                                        <option value="TM">Turkmenistan</option>
-                                                                        <option value="TC">Turks and Caicos Islands
-                                                                        </option>
-                                                                        <option value="TV">Tuvalu</option>
-                                                                        <option value="UG">Uganda</option>
-                                                                        <option value="UA">Ukraine</option>
-                                                                        <option value="AE">United Arab Emirates</option>
-                                                                        <option value="GB">United Kingdom</option>
-                                                                        <option value="US">United States</option>
-                                                                        <option value="UM">United States Minor Outlying
-                                                                            Islands</option>
-                                                                        <option value="UY">Uruguay</option>
-                                                                        <option value="UZ">Uzbekistan</option>
-                                                                        <option value="VU">Vanuatu</option>
-                                                                        <option value="VE">Venezuela</option>
-                                                                        <option value="VN">Viet Nam</option>
-                                                                        <option value="VG">Virgin Islands, British
-                                                                        </option>
-                                                                        <option value="VI">Virgin Islands, U.S.</option>
-                                                                        <option value="WF">Wallis and Futuna</option>
-                                                                        <option value="EH">Western Sahara</option>
-                                                                        <option value="YE">Yemen</option>
-                                                                        <option value="ZM">Zambia</option>
-                                                                        <option value="ZW">Zimbabwe</option>
-                                                                    </b-form-select>
-                                                                    <has-error :form="form"
-                                                                        field="country_code"></has-error>
-                                                                </b-form-group>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label"
-                                                                    style="width: 350px;">
-                                                                    <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.info_identifier"
-                                                                        :class="{ 'is-invalid': form.errors.has('info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="ABI">ABI - AWB Amount Detail
-                                                                            Information</option>
-                                                                        <option value="ABS">ABS - AWB Supplementary
-                                                                            Information</option>
-                                                                        <option value="ABT">ABT - AWB Total Amount
-                                                                            Information</option>
-                                                                        <option value="ACC">ACC - Accounting Information
-                                                                        </option>
-                                                                        <option value="ACD">ACD - AWB Consignment
-                                                                            Details</option>
-                                                                        <option value="ACK">ACK - Reason for
-                                                                            Acknowledgement</option>
-                                                                        <option value="ACS">ACS - AWB Charge Summary
-                                                                        </option>
-                                                                        <option value="ADR">ADR - Street Address
-                                                                        </option>
-                                                                        <option value="AGT">AGT - Agent</option>
-                                                                        <option value="AID">AID - Arrival Information
-                                                                            Details</option>
-                                                                        <option value="AIR">AIR - Airline Header
-                                                                        </option>
-                                                                        <option value="ALA">ALA - Allotment Availability
-                                                                            Information</option>
-                                                                        <option value="ALI">ALI - Allotment Information
-                                                                        </option>
-                                                                        <option value="ALR">ALR - Allotment Remaining
-                                                                        </option>
-                                                                        <option value="ALT">ALT - Allotment Total
-                                                                        </option>
-                                                                        <option value="AMD">AMD - Amendment
-                                                                            Identification</option>
-                                                                        <option value="API">API - Air Waybill Piece
-                                                                            Information</option>
-                                                                        <option value="ARD">ARD - Agent Reference Data
-                                                                        </option>
-                                                                        <option value="ARI">ARI - AWB Recapitulation
-                                                                            Information</option>
-                                                                        <option value="ATH">ATH - Authorisation</option>
-                                                                        <option value="ATW">ATW - AWB Total Weight
-                                                                            Summary</option>
-                                                                        <option value="AUD">AUD - Allotment Used Details
-                                                                        </option>
-                                                                        <option value="AVS">AVS - Availability
-                                                                            Supplementary Details</option>
-                                                                        <option value="BGD">BGD - Baggage Detail
-                                                                            Information</option>
-                                                                        <option value="BGT">BGT - Baggage Tag
-                                                                            Identification</option>
-                                                                        <option value="BRK">BRK - Broker</option>
-                                                                        <option value="CAI">CAI - CCA/Adjustment
-                                                                            Information</option>
-                                                                        <option value="CAN">CAN - Customs Action
-                                                                            Notification</option>
-                                                                        <option value="CAS">CAS - CCA/Adjustment
-                                                                            Supplementary Information</option>
-                                                                        <option value="CBD">CBD - CASS Billing Details
-                                                                        </option>
-                                                                        <option value="CBI">CBI - CASS Billing
-                                                                            Information</option>
-                                                                        <option value="CBP">CBP - CASS Billing Period
-                                                                        </option>
-                                                                        <option value="CBR">CBR - Courier Baggage
-                                                                            Receiver</option>
-                                                                        <option value="CBS">CBS - Courier Baggage Sender
-                                                                        </option>
-                                                                        <option value="CBV">CBV - Courier Baggage
-                                                                            Voucher Identification</option>
-                                                                        <option value="CCD">CCD - Consignment Control
-                                                                            Details</option>
-                                                                        <option value="CCL">CCL - Cargo Control Location
-                                                                        </option>
-                                                                        <option value="CDC">CDC - CC Charges in
-                                                                            Destination Currency</option>
-                                                                        <option value="CDI">CDI - Charge Declarations
-                                                                        </option>
-                                                                        <option value="CER">CER - AWB Content
-                                                                            Certification</option>
-                                                                        <option value="CID">CID - Correction
-                                                                            Identification</option>
-                                                                        <option value="CIH">CIH - CASS Invoice Header
-                                                                            Details</option>
-                                                                        <option value="CIN">CIN - CASS Identification
-                                                                            Number</option>
-                                                                        <option value="CMI">CMI - Consignment Onward
-                                                                            Movement Information</option>
-                                                                        <option value="CND">CND - Customs Notification
-                                                                            Details</option>
-                                                                        <option value="CNE">CNE - Consignee</option>
-                                                                        <option value="COI">COI - Commission Information
-                                                                        </option>
-                                                                        <option value="COL">COL - Collect Charge Summary
-                                                                        </option>
-                                                                        <option value="COM">COM - Embargoed Commodities
-                                                                        </option>
-                                                                        <option value="COR">COR - Customs Origin
-                                                                        </option>
-                                                                        <option value="CRD">CRD - Carrier Reference Data
-                                                                        </option>
-                                                                        <option value="CRR">CRR - Embargo Carriage
-                                                                            Restrictions</option>
-                                                                        <option value="CTI">CTI - CCA/Adjustment Total
-                                                                            Information</option>
-                                                                        <option value="CTW">CTW - CCA/Adjustment Total
-                                                                            Weight Summary</option>
-                                                                        <option value="CUR">CUR - Currency Details
-                                                                        </option>
-                                                                        <option value="CUS">CUS - Customer
-                                                                            Identification</option>
-                                                                        <option value="CVD">CVD - Charge Declarations
-                                                                        </option>
-                                                                        <option value="CWI">CWI - CASS AWB Information
-                                                                        </option>
-                                                                        <option value="DAI">DAI - DGD Additional
-                                                                            Handling Information</option>
-                                                                        <option value="DAP">DAP - DGD “All Packed in
-                                                                            One” Indication</option>
-                                                                        <option value="DAT">DAT - DGD “All Packed in
-                                                                            One” Total</option>
-                                                                        <option value="DAU">DAU - DGD Item Authorisation
-                                                                        </option>
-                                                                        <option value="DCI">DCI - DGD Emergency Contact
-                                                                            Information</option>
-                                                                        <option value="DCL">DCL - Declarant</option>
-                                                                        <option value="DES">DES - Despatch Information
-                                                                        </option>
-                                                                        <option value="DHD">DHD - DGD Header Details
-                                                                        </option>
-                                                                        <option value="DII">DII - DGD Item Information
-                                                                        </option>
-                                                                        <option value="DIM">DIM - Dimensions Information
-                                                                        </option>
-                                                                        <option value="DNR">DNR - DGD Item Number
-                                                                        </option>
-                                                                        <option value="DOC">DOC - Documentation
-                                                                            Identification</option>
-                                                                        <option value="DOS">DOS - DGD Overpack Summary
-                                                                        </option>
-                                                                        <option value="DPI">DPI - DGD Item Packing Group
-                                                                            and Instructions</option>
-                                                                        <option value="DQP">DQP - DGD Item Quantity and
-                                                                            Type of Packing</option>
-                                                                        <option value="DRA">DRA - DGD Radioactive
-                                                                            Activity Information</option>
-                                                                        <option value="DRC">DRC - DGD Radioactive
-                                                                            Consignment Information</option>
-                                                                        <option value="DRP">DRP - DGD Radioactive
-                                                                            Packing Instructions</option>
-                                                                        <option value="DSN">DSN - DGD Item Shipping Name
-                                                                        </option>
-                                                                        <option value="DSU">DSU - DGD Signatory Details
-                                                                        </option>
-                                                                        <option value="DTN">DTN - Date/Time of
-                                                                            Notification</option>
-                                                                        <option value="EIC">EIC - Empty Equipment in
-                                                                            Compartment Information</option>
-                                                                        <option value="EXP">EXP - Export</option>
-                                                                        <option value="FLT">FLT - Flight Booking
-                                                                        </option>
-                                                                        <option value="FLT">FLT - Flight Information
-                                                                        </option>
-                                                                        <option value="GRI">GRI - Grand AWB
-                                                                            Recapitulation Information</option>
-                                                                        <option value="GTI">GTI - Grand Total
-                                                                            Information</option>
-                                                                        <option value="HAH">HAH - HWB Agent’s Head
-                                                                            Office</option>
-                                                                        <option value="HBS">HBS - House Waybill Summary
-                                                                            Details</option>
-                                                                        <option value="HCD">HCD - HWB Consignment
-                                                                            Details</option>
-                                                                        <option value="HDL">HDL - Handling Details
-                                                                        </option>
-                                                                        <option value="HLC">HLC - HWB Letter of Credit
-                                                                            Details</option>
-                                                                        <option value="HPI">HPI - House Waybill Piece
-                                                                            Information</option>
-                                                                        <option value="HTS">HTS - Harmonised Tariff
-                                                                            Schedule Information</option>
-                                                                        <option value="HWB">HWB - House Waybill</option>
-                                                                        <option value="IMP">IMP - Import</option>
-                                                                        <option value="ISS">ISS - The Regulated Agent
-                                                                            Issuing the Security Status for a
-                                                                            Consignment</option>
-                                                                        <option value="ISU">ISU - AWB Issue Details
-                                                                        </option>
-                                                                        <option value="ITA">ITA - Invoice Total Amount
-                                                                            Information</option>
-                                                                        <option value="ITW">ITW - Invoice Total Weight
-                                                                            Summary</option>
-                                                                        <option value="JST">JST - Embargo Justification
-                                                                        </option>
-                                                                        <option value="LOC">LOC - Location</option>
-                                                                        <option value="MAL">MAL - Mail</option>
-                                                                        <option value="MAT">MAT - Message Advice Type
-                                                                        </option>
-                                                                        <option value="MBI">MBI - Master Waybill
-                                                                            Identification</option>
-                                                                        <option value="MCH">MCH - Mail Consignment
-                                                                            Header</option>
-                                                                        <option value="MCT">MCT - Mail Consignment Total
-                                                                        </option>
-                                                                        <option value="MHU">MHU - Mail Handling Unit
-                                                                        </option>
-                                                                        <option value="MID">MID - Mail Inbound Data
-                                                                        </option>
-                                                                        <option value="MLI">MLI - Mail Label
-                                                                            Identification</option>
-                                                                        <option value="MOD">MOD - Mail Outbound Data
-                                                                        </option>
-                                                                        <option value="MPI">MPI - Movement Priority
-                                                                            Information</option>
-                                                                        <option value="MSD">MSD - Mail Status Details
-                                                                        </option>
-                                                                        <option value="MSU">MSU - Message Sequence and
-                                                                            ULD Origin</option>
-                                                                        <option value="MUD">MUD - Mail ULD Information
-                                                                        </option>
-                                                                        <option value="NAM">NAM - Name</option>
-                                                                        <option value="NBI">NBI - Net Billing
-                                                                            Information</option>
-                                                                        <option value="NEW">NEW - New Information
-                                                                        </option>
-                                                                        <option value="NFY">NFY - Also Notify</option>
-                                                                        <option value="NFY">NFY - Notify Name and
-                                                                            Address</option>
-                                                                        <option value="NNS">NNS - Net/Net Sales</option>
-                                                                        <option value="NOM">NOM - Nominated Handling
-                                                                            Party</option>
-                                                                        <option value="OCI">OCI - Other Customs,
-                                                                            Security and Regulatory Control Information
-                                                                        </option>
-                                                                        <option value="OLD">OLD - Original Information
-                                                                        </option>
-                                                                        <option value="OPI">OPI - Other Participant
-                                                                            Information</option>
-                                                                        <option value="OSI">OSI - Other Service
-                                                                            Information</option>
-                                                                        <option value="OSS">OSS - The Regulated Agent
-                                                                            Accepting the Security Status for a
-                                                                            Consignment Issued by Another RA</option>
-                                                                        <option value="OTH">OTH - Other Charges</option>
-                                                                        <option value="PAS">PAS - Passenger Information
-                                                                        </option>
-                                                                        <option value="PID">PID - Product Information
-                                                                        </option>
-                                                                        <option value="PPD">PPD - Prepaid Charge Summary
-                                                                        </option>
-                                                                        <option value="PRD">PRD - Planning Request
-                                                                            Details</option>
-                                                                        <option value="RCI">RCI - Recapitulation Amount
-                                                                            Information</option>
-                                                                        <option value="REC">REC - Receptacle Information
-                                                                        </option>
-                                                                        <option value="REF">REF - References</option>
-                                                                        <option value="RID">RID - Rate Information
-                                                                            Answer Details</option>
-                                                                        <option value="RIH">RIH - Rate Information
-                                                                            Answer Header</option>
-                                                                        <option value="RIR">RIR - Rate Information
-                                                                            Request Details</option>
-                                                                        <option value="RQD">RQD - Charge Calculation
-                                                                            Answer Details</option>
-                                                                        <option value="RQH">RQH - Charge Calculation
-                                                                            Request Header</option>
-                                                                        <option value="RQT">RQT - Charge Calculation
-                                                                            Answer Totals</option>
-                                                                        <option value="RQU">RQU - Charge Calculation
-                                                                            Request — ULD</option>
-                                                                        <option value="RQV">RQV - Charge Calculation
-                                                                            Request — Volume</option>
-                                                                        <option value="RTD">RTD - Rate Description
-                                                                        </option>
-                                                                        <option value="RTG">RTG - Routing</option>
-                                                                        <option value="RTI">RTI - Recapitulation Total
-                                                                            Information</option>
-                                                                        <option value="RTS">RTS - Embargo Routes/Areas
-                                                                        </option>
-                                                                        <option value="SAA">SAA - Schedule and
-                                                                            Availability Information Answer Details
-                                                                        </option>
-                                                                        <option value="SAR">SAR - Schedule and
-                                                                            Availability Information Request Details
-                                                                        </option>
-                                                                        <option value="SCI">SCI - Special Customs
-                                                                            Information</option>
-                                                                        <option value="SCS">SCS - Surface Charge Summary
-                                                                        </option>
-                                                                        <option value="SDI">SDI - Surface Delivery
-                                                                            Information</option>
-                                                                        <option value="SHP">SHP - Shipper</option>
-                                                                        <option value="SII">SII - Sales Incentive
-                                                                            Information</option>
-                                                                        <option value="SKH">SKH - Schedule Information
-                                                                            Answer Header</option>
-                                                                        <option value="SLC">SLC - Status List Criteria
-                                                                        </option>
-                                                                        <option value="SPH">SPH - Special Handling
-                                                                            Details</option>
-                                                                        <option value="SPI">SPI - Surface Pickup
-                                                                            Information</option>
-                                                                        <option value="SRA">SRA - Supplementary Rate
-                                                                            Information Answer Details</option>
-                                                                        <option value="SRI">SRI - Shipment Reference
-                                                                            Information</option>
-                                                                        <option value="SRR">SRR - Supplementary Rate
-                                                                            Information Request Details</option>
-                                                                        <option value="SSI">SSI - Supplementary Status
-                                                                            Information</option>
-                                                                        <option value="SSR">SSR - Special Service
-                                                                            Request</option>
-                                                                        <option value="STI">STI - Storage Information
-                                                                        </option>
-                                                                        <option value="STS">STS - Status Details
-                                                                        </option>
-                                                                        <option value="SVA">SVA - Surface Vehicle
-                                                                            Arrival Information</option>
-                                                                        <option value="SVD">SVD - Surface Vehicle
-                                                                            Departure Information</option>
-                                                                        <option value="SVL">SVL - Surface Vehicle Delay
-                                                                            Information</option>
-                                                                        <option value="SVN">SVN - Surface Vehicle Next
-                                                                            Information</option>
-                                                                        <option value="TAR">TAR - Total AWB
-                                                                            Recapitulation Information</option>
-                                                                        <option value="TCC">TCC - Total Collect Charges
-                                                                        </option>
-                                                                        <option value="TID">TID - Terminal
-                                                                            Identification</option>
-                                                                        <option value="TOT">TOT - Total Amount</option>
-                                                                        <option value="TRA">TRA - Transit</option>
-                                                                        <option value="TRN">TRN - Transfer/Transit
-                                                                            Information</option>
-                                                                        <option value="TXS">TXS - Tax Summary</option>
-                                                                        <option value="TXT">TXT - Free Text Description
-                                                                        </option>
-                                                                        <option value="UCI">UCI - ULD Connection
-                                                                            Information</option>
-                                                                        <option value="UDI">UDI - ULD Destination
-                                                                            Information</option>
-                                                                        <option value="UII">UII - ULD Inclusion
-                                                                            Information</option>
-                                                                        <option value="ULD">ULD - ULD Description
-                                                                        </option>
-                                                                        <option value="UMI">UMI - ULD Movement
-                                                                            Information</option>
-                                                                        <option value="UPI">UPI - Unique Piece
-                                                                            Information</option>
-                                                                        <option value="VCD">VCD - Void/Cancel Details
-                                                                        </option>
-                                                                        <option value="VOD">VOD - Vehicle Operator
-                                                                            Details</option>
-                                                                        <option value="WBD">WBD - Waybill Details
-                                                                        </option>
-                                                                        <option value="WBH">WBH - Waybill Header Details
-                                                                        </option>
-                                                                        <option value="WBI">WBI - Waybill Information
-                                                                        </option>
-                                                                        <option value="WBL">WBL - Waybill Details
-                                                                        </option>
-                                                                    </b-form-select>
-                                                                    <has-error :form="form"
-                                                                        field="info_identifier"></has-error>
-                                                                </b-form-group>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label"
-                                                                    style="width: 350px;">
-                                                                    <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.custom_info_identifier"
-                                                                        :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="A">A - Automated Broker Interface
-                                                                            (ABI) Filer Code</option>
-                                                                        <option value="AC">AC - Account Consignor
-                                                                            (consignor for all cargo aircraft)</option>
-                                                                        <option value="C">C - Certificate Number
-                                                                        </option>
-                                                                        <option value="CP">CP - Contact Person</option>
-                                                                        <option value="CT">CT- Contact Telephone Number
-                                                                        </option>
-                                                                        <option value="D">D - Dangerous Goods</option>
-                                                                        <option value="DI">DI - Declaration
-                                                                            Identification</option>
-                                                                        <option value="E">E - Authorised Economic
-                                                                            Operator</option>
-                                                                        <option value="ED">ED - Expiry Date</option>
-                                                                        <option value="F">F - Facilities Information and
-                                                                            Resource Management</option>
-                                                                        <option value="I">I - Item Number</option>
-                                                                        <option value="KC">KC - Known Consignor</option>
-                                                                        <option value="L">L - Exemption Legend</option>
-                                                                        <option value="LI">LI - License Identification
-                                                                        </option>
-                                                                        <option value="M">M - Movement Reference Number
-                                                                        </option>
-                                                                        <option value="N">N - Seal Number</option>
-                                                                        <option value="P">P - Packing List Number
-                                                                        </option>
-                                                                        <option value="RA">RA - Regulated Agent</option>
-                                                                        <option value="RC">RC - Regulated Carrier
-                                                                        </option>
-                                                                        <option value="S">S - System Downtime Reference
-                                                                        </option>
-                                                                        <option value="SD">SD - Security Status Date
-                                                                            &amp; Time</option>
-                                                                        <option value="SM">SM - Screening Method
-                                                                        </option>
-                                                                        <option value="SN">SN - Security Status Name of
-                                                                            Issuer</option>
-                                                                        <option value="SS">SS - Security Status</option>
-                                                                        <option value="ST">ST - Security Textual
-                                                                            Statement</option>
-                                                                        <option value="T">T - Trader Identification
-                                                                            Number</option>
-                                                                        <option value="U">U - Unique Consignment
-                                                                            Reference Number</option>
-                                                                        <option value="V">V - Invoice Number</option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
                                                                         field="custom_info_identifier"></has-error>
@@ -3495,6 +2511,7 @@ export default {
             edit_entry_index: null,
             existingData: [],
             data_items:[],
+            countries:[],
             items: [
                 {
                     url: "#webdoc",
@@ -3762,22 +2779,34 @@ export default {
                     this.form.routing_information = this.existingData;
                     this.form.totals = this.existingData;
                     this.form.custom_origin = this.existingData;
-                    // this.form.tableCodes = this.existingData;
+                    this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
                     
                     this.form.payment_info = this.existingData.payment_info || {};
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
+                    this.form.entries = this.existingData.consignment_data;
+                    // this.consignment_list = this.existingData.consignment_data;
+                    console.log("entries",this.form.entries);
                     // this.form.entries = this.existingData;
                     this.form.consignee_address = this.existingData.way_bill_address;
-                    console.log("oci ",this.form.consignee_address);
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
             } else {
                 // console.error('existingData is not an array:', this.existingData);
                 console.log("Add mode activated");
             }
+        },
+        getCountry(){
+            ApiService.get('/get-country').then(({ data }) => {
+                this.countries = Object.keys(data).map(key => ({
+                    value: key,
+                    text: data[key]
+                }));
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+            });
         },
         getAgent(){
             ApiService.get(`/agent-info/`)
@@ -4165,6 +3194,7 @@ export default {
     mounted(){
         this.calculateTotalVolume();
         this.allHousewayBill();
+        this.getCountry();
         // const id = this.$route.params.id;
         // if (id) {
         // this.getHouseWayBill(id);

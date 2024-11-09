@@ -340,10 +340,10 @@
                                             <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
                                                 v-model="form.shipper_address.ship_country"
                                                 :class="{ 'is-invalid': form.errors.has('ship_country') }">
-                                                <option disabled value=""> Please select one</option>
-                                                <option value="IN">India</option>
-                                                <option value="USA">United State</option>
-                                                <option Value="UK">United Kingdom</option>
+                                                <option value=""> Please select one</option>
+                                                <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                    {{ country.text }}
+                                                </option>
                                             </b-form-select>
                                             <has-error :form="form" field="ship_country"></has-error>
                                         </b-form-group>
@@ -479,10 +479,10 @@
                                             <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"
                                                 v-model="form.consignee_address.cons_country"
                                                 :class="{ 'is-invalid': form.errors.has('cons_country') }">
-                                                <option disabled value="Please select one"> Please select one</option>
-                                                <option value="IN">India</option>
-                                                <option value="USA">United State</option>
-                                                <option Value="UK">United Kingdom</option>
+                                                <option value="Please select one"> Please select one</option>
+                                                <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                    {{ country.text }}
+                                                </option>
                                             </b-form-select>
                                             <has-error :form="form" field="cons_country"></has-error>
                                         </b-form-group>
@@ -966,9 +966,9 @@
                                                                     style=" width: 320px;"
                                                                     v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
                                                                     <option value=""> Select a Country</option>
-                                                                    <option value="AF"> Afghanistan</option>
-                                                                    <option value="AX"> Åland Islands </option>
-                                                                    <option value="AL">Albania</option>
+                                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                        {{ country.text }}
+                                                                    </option>
                                                                 </b-form-select>
                                                                 <has-error :form="consignment_list" field="country_origin_goods"></has-error>
                                                             </td>
@@ -1761,10 +1761,10 @@
                                             <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
                                                 v-model="form.also_notify_address.also_country"
                                                 :class="{ 'is-invalid': form.errors.has('also_country') }">
-                                                <option disabled value=""> Please select one</option>
-                                                <option value="IN">India</option>
-                                                <option value="USA">United State</option>
-                                                <option Value="UK">United Kingdom</option>
+                                                <option value=""> Please select one</option>
+                                                <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                    {{ country.text }}
+                                                </option>
                                             </b-form-select>
                                             <has-error :form="form" field="also_country"></has-error>
                                         </b-form-group>
@@ -3402,6 +3402,7 @@ export default {
             showCalculationTable: false,
             editIndex: null,
             edit_entry_index: null,
+            countries: [],
             items: [
                 {
                     url: "#webdoc",
@@ -3693,6 +3694,16 @@ export default {
                 .catch(error => {
                     console.error("Error fetching agent information:", error);
                 });
+        },
+        getCountry(){
+            ApiService.get('/get-country').then(({ data }) => {
+                this.countries = Object.keys(data).map(key => ({
+                    value: key,
+                    text: data[key]
+                }));
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+            });
         },
         handleRadioChange() {
             const selectedCode = this.selectedCode;
@@ -4189,6 +4200,7 @@ export default {
         this.fillShipperDetails();
         this.fillConsigneeDetails();
         this.fetchConsignee();
+        this.getCountry();
         this.location = [];
     },
     watch: {

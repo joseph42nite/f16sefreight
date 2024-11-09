@@ -16,6 +16,31 @@ export default new Router({
           component: () => import("@/view/pages/Rate.vue"),
           meta: { userType: 'user' }
         },
+        {
+          name: "Web Doc",
+          path: "/web-doc",
+          component: () =>import("@/view/pages/WebDoc"),
+        },
+        {
+          name: "House Way Bill",
+          path: "/house-way-bill",
+          component: () =>import("@/view/pages/HouseWayBill"),
+        },
+        {
+          path: '/edit-houseway-bill/:id?',
+          name: 'EditHousewayBill',
+          component: () => import("@/view/pages/HouseWayBill"),
+        },
+        {
+          name: "Message Log",
+          path: "/message-log",
+          component: () =>import("@/view/pages/MessageLog"),
+        },
+        {
+          name: "Test",
+          path: "/test-view",
+          component: () =>import("@/view/pages/Test"),
+        },
       ]
     },
     //-----------superadmin route-------------------
@@ -122,31 +147,6 @@ export default new Router({
     //   path: "/web-doc",
     //   component: () =>import("@/view/pages/WebDoc"),
     // },
-    {
-      name: "Web Doc",
-      path: "/web-doc",
-      component: () =>import("@/view/pages/WebDoc"),
-    },
-    {
-      name: "House Way Bill",
-      path: "/house-way-bill",
-      component: () =>import("@/view/pages/HouseWayBill"),
-    },
-    {
-      path: '/edit-houseway-bill/:id?',
-      name: 'EditHousewayBill',
-      component: () => import("@/view/pages/HouseWayBill"),
-    },
-    {
-      name: "Message Log",
-      path: "/message-log",
-      component: () =>import("@/view/pages/MessageLog"),
-    },
-    {
-      name: "Test",
-      path: "/test-view",
-      component: () =>import("@/view/pages/Test"),
-    },
     //-----------for admin login-------------------
     // {
     //   path: "/admin/",

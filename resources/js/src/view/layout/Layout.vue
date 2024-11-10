@@ -18,6 +18,7 @@
               <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item>
               <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
               <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
+              <b-nav-item to="/web-doc" class="nav-link-custom text-white"> Web Doc</b-nav-item>
             </b-navbar-nav>
 
             <b-navbar-nav class="ml-auto m_desk">
@@ -77,6 +78,7 @@ export default {
   },
   mounted() {
     // check if current user is authenticated
+    console.log(this.currentUser);
     if (!this.isAuthenticated) {
       this.$router.push({ name: "userlogin" });
     }

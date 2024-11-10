@@ -2436,7 +2436,7 @@ export default {
                 supplementary_info: '',
             },
             consignment_list: new Form({
-                pieces: '',
+                pieces: null,
                 description: '',
                 rate_class: '',
                 uld_rate_class: '',
@@ -2786,18 +2786,21 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    this.form.entries = this.existingData.consignment_data;
+                    this.form.entries = Array.isArray(this.existingData.consignment_data)
+                        ? this.existingData.consignment_data
+                        : [this.existingData.consignment_data];
+                    
+                    console.log("entries", this.form.entries);
                     // this.consignment_list = this.existingData.consignment_data;
-                    console.log("entries",this.form.entries);
                     // this.form.entries = this.existingData;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
-            } else {
-                // console.error('existingData is not an array:', this.existingData);
-                console.log("Add mode activated");
-            }
-        },
+                } else {
+                    // console.error('existingData is not an array:', this.existingData);
+                    console.log("Add mode activated");
+                }
+            },
         getCountry(){
             ApiService.get('/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({

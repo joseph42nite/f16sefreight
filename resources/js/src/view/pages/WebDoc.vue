@@ -3428,7 +3428,7 @@ export default {
                             name: "House Waybill(FHL)",
                         },
                         {
-                            url: "#consolidation",
+                            url: "/consolidation",
                             name: "Consolidation(FHL)",
                         },
                         {

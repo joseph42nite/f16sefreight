@@ -253,5 +253,3 @@ return [
     "ZM" => "Zambia",
     "ZW" => "Zimbabwe"
 ];
-
-// $all_country= config("country");

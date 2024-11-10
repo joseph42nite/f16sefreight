@@ -6,13 +6,16 @@ use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\GeneratePdfController;
 use App\Http\Controllers\GenerateConsolidationPdfController;
 
-Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
+use App\Http\Controllers\airwayBill\HousewayBill;
+
+// Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
 Route::get('test-route1', [ConversionController::class, 'HouseWayBillConversion']);
 Route::get('message-response', [ConversionController::class, 'ResponseMessage']);
 Route::get('generic-message', [ConversionController::class, 'GenericRequestMessage']);
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
 Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
 Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
+Route::get('/test-route', [HousewayBill::class,'getCountry']);
 
 Route::view('/generate-pdf', 'generate-pdf');
 Route::get('download-pdf', [GeneratePdfController::class, 'downloadPdf']);

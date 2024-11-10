@@ -23,11 +23,11 @@ class HousewayBill extends Controller
         $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         return json_encode($data);
     }
-    public function getCountry(){
-        $countries = config('country');
-        dd($countries);
-        return response()->json($countries);
-    }
+    // public function getCountry(){
+    //     $countries = config('country');
+    //     dd($countries);
+    //     return response()->json($countries);
+    // }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [

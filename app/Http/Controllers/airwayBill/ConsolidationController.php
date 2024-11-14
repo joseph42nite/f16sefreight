@@ -56,19 +56,21 @@ class ConsolidationController extends Controller
             )
             ->get();
             $groupedWayBills = $wayBills->groupBy('id')->map(function ($group) {
-                $waybill = $group->first();
-                $customInfo = $group->pluck('country_code', 'info_identifier')->map(function ($item, $key) use ($group) {
+                $waybill = $group->first()->toArray();
+                // Extract custom information based on `country_code` and `info_identifier`
+                $customInfo = $group->map(function ($item) {
                     return [
-                        'country_code' => $key,
-                        'info_identifier' => $item,
-                        'custom_info_identifier' => $item,
-                        'supplementary_info' => $item
+                        'country_code' => $item->country_code,
+                        'info_identifier' => $item->info_identifier,
+                        'custom_info_identifier' => $item->custom_info_identifier,
+                        'supplementary_info' => $item->supplementary_info,
                     ];
                 });
-                $waybill->custom_info = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
-        
+                $waybill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
+            
                 return $waybill;
             });
+            
         return response()->json($groupedWayBills->values());
     }
     public function update(Request $request, $id)

@@ -1165,32 +1165,6 @@ export default {
                 custom_info_identifier: '',
                 supplementary_info: '',
             },
-            iata_cass:{
-                iata_agent_code: null,
-                iata_agent_cass: null,
-            },
-            agent_information:{
-                agent_name: '',
-                agent_address: '',
-                agent_city: '',
-                agent_pincode: '',
-                agent_issue_sign: '',
-                agent_issue_loc_code: '',
-                agent_issue_date: '',
-                agent_account: null,
-
-                //Participate Sender Reference
-                participate: '0',
-                participate_airport: '',
-                prticipant_identifer: '',
-                participant_code: null,
-                office_file_reference: '',
-               
-                //Office Sender Reference
-                office_airport: null,
-                office_function_designator: null,
-                office_company_designator: null,
-            },
             countries:[],
             searchQuery_to: '',
             isDropdownOpen_to: false,
@@ -1458,14 +1432,7 @@ export default {
                 this.form.pieces = item.pieces;
                 this.form.gross_weight = item.gross_weight;
                 this.form.other_service_information = item.other_service_information;
-                this.form.oci_entries = [
-                    {
-                        country_code: item.country_code,
-                        info_identifier: item.info_identifier,
-                        custom_info_identifier: item.custom_info_identifier,
-                        supplementary_info: item.supplementary_info
-                    }
-                ];
+                this.form.oci_entries = item.custom_info || [];
                 if (item.special_handling_info && typeof item.special_handling_info === 'string') {
                     try {
                         this.form.tableCodes = JSON.parse(item.special_handling_info);
@@ -1482,9 +1449,8 @@ export default {
             }
         },
         deleteConsolidation(index) {
-            // Handle deletion logic here
             console.log("Deleting code at index", index);
-            this.form.tableCodes.splice(index, 1); // Remove item at index
+            this.form.tableCodes.splice(index, 1);
         },
         getCountry(){
             ApiService.get('/get-country').then(({ data }) => {

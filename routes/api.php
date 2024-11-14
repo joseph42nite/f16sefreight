@@ -113,9 +113,10 @@ Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion'
 Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
 Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
 Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
-Route::get('/get-location', [LocationController::class,'getLocation']);
-
+Route::get('/all-airway-bill', [AirwayBill::class,'getAllawb']);
 Route::put('/update-airway-bill/{id}', [AirwayBill::class,'update']);
+Route::get('/airway-bill/{id}', [AirwayBill::class,'show']);
+
 Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);
 Route::get('/all-houseway-bill', [HousewayBill::class,'getAllHawb']);
@@ -124,4 +125,5 @@ Route::put('/update-consolidation/{id}', [ConsolidationController::class,'update
 Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
 
 
+Route::get('/get-location', [LocationController::class,'getLocation']);
 

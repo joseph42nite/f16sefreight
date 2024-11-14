@@ -3112,10 +3112,8 @@
                                                                 </td>
                                                                 <td class="editable-cell">{{ row.info_identifier }}
                                                                 </td>
-                                                                <td class="editable-cell">{{
-                                                                    row.custom_info_identifier }}</td>
-                                                                <td class="editable-cell">{{ row.supplementary_info
-                                                                    }}</td>
+                                                                <td class="editable-cell">{{ row.custom_info_identifier }}</td>
+                                                                <td class="editable-cell">{{ row.supplementary_info }}</td>
                                                                 <td class="editable-cell"
                                                                     style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                                                     <b-icon icon="pencil" font-scale="1" class="mr-2" style="cursor: pointer;" @click="editOciInfo(index)"></b-icon>
@@ -3429,7 +3427,7 @@ export default {
                             name: "House Waybill(FHL)",
                         },
                         {
-                            url: "#consolidation",
+                            url: "/consolidation",
                             name: "Consolidation(FHL)",
                         },
                         {

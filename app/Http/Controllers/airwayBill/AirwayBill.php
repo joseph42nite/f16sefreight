@@ -209,7 +209,7 @@ class AirwayBill extends Controller
         }
         return "Also notify address saved successfull";
     }
-    private function firstBox($first_box)
+    private function firstBox($first_box,  $id = null)
     {
         $validator = Validator::make($first_box, [
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
@@ -223,14 +223,37 @@ class AirwayBill extends Controller
         $awb_id = $first_box['awb_code'] . $first_box['awb_no'];
         // $AirwayBills = AirwayBills::find($first_box['awb_no']);
         $AirwayBills = AirwayBills::find($awb_id);
-        if (!isset($AirwayBills))
+        if($AirwayBills){
+            // $AirwayBills->id = $awb_id;
+            $AirwayBills->awb_no = $first_box['awb_no'];
+            $AirwayBills->awb_code = $first_box['awb_code'];
+            $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
+            $AirwayBills->awb = $first_box['awb'];
+            return response()->json([
+                'message' => 'First box created successfully',
+                'data' => $AirwayBills
+            ], 201);
+        } else {
             $AirwayBills = new AirwayBills();
-        $AirwayBills->id = $awb_id;
-        $AirwayBills->awb_no = $first_box['awb_no'];
-        $AirwayBills->awb_code = $first_box['awb_code'];
-        $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
-        $AirwayBills->awb = $first_box['awb'];
-        $AirwayBills->save();
+            $AirwayBills->id = $awb_id;
+            $AirwayBills->awb_no = $first_box['awb_no'];
+            $AirwayBills->awb_code = $first_box['awb_code'];
+            $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
+            $AirwayBills->awb = $first_box['awb'];
+            $AirwayBills->save();
+            return response()->json([
+                'message' => 'First box created successfully',
+                'data' => $AirwayBills
+            ], 201);
+        }
+        // if (!isset($AirwayBills))
+          
+        // $AirwayBills->id = $awb_id;
+        // $AirwayBills->awb_no = $first_box['awb_no'];
+        // $AirwayBills->awb_code = $first_box['awb_code'];
+        // $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
+        // $AirwayBills->awb = $first_box['awb'];
+        // $AirwayBills->save();
         return "first box saved successfull";
     }
     private function routingInformation($awb_no, $awb_code, $routing_information)
@@ -702,4 +725,115 @@ class AirwayBill extends Controller
         }
         return response()->json(['error' => 'Address not found'], 404);
     }
+
+    public function update(Request $request, $id, $awb_no = null)
+    {
+        $main_return_data = [];
+        $error_data = '';
+        if (!empty($id)) {
+            $error_data = $this->firstBox($request->first_box, $id);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422) {
+                return $error_data;
+            } else {
+                $main_return_data['first_box'] = $error_data;
+            }
+        }
+        if (!empty($id) && !empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+            $error_data = $this->routingInformation($id, $request->routing_information,$awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['routing_information'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+            $error_data = $this->totalAmountValume($id, $request->totals, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['totals'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->custom_origin)) {
+            $error_data = $this->customOriginAndOsiInfo($id, $request->custom_origin, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['custom_origin'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->oci_entries)) {
+            $error_data = $this->otherCustomInformation($id, $request->oci_entries, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['oci_entries'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+            $error_data = $this->saveShipperAddress($id, $request->shipper_address, $request->is_shipper_address_save, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['shipper_address'] = $error_data;
+        }
+        // for storing consignee address
+        if (!empty($id) && !empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
+            $error_data = $this->saveConsigneeAddress($id, $request->consignee_address, $request->is_consignee_address_save, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['consignee_address'] = $error_data;
+        }
+        //for storing also notify address
+        if (!empty($id) && !empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+            $error_data = $this->saveAlsoNotify($id, $request->also_notify_address, $request->is_also_notify_address_save, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['also_notify_address'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+            $error_data = $this->paymentInformation($id, $request->payment_info, $awb_no = null);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['payment_info'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->charges)) {
+            $main_return_data['charges'] = $this->otherCharges($id, $request->charges, $awb_no = null);
+        }
+        if (!empty($id) && !empty($request->entries)) {
+            $main_return_data['entries'] = $this->consignmentInformation($id, $request->entries, $awb_no = null);
+        }
+        if (!empty($id) && !empty($request->tableCodes) && is_array($request->tableCodes)) {
+            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($id, $request->tableCodes, $awb_no = null);
+        }
+    }
+
+    public function show($id){
+        $airwayBill = AirwayBills::with([
+            'paymentInfo',
+            'wayBillAddress',
+            'savedAddress',
+            'consignmentData',
+            'otherCharge',
+            'otherCustomInformation'
+        ])->find($id);
+        if (!$airwayBill) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+        return response()->json($airwayBill, 200);
+    }
+
+    public function getAllHawb(){
+        $airwayBill = AirwayBills::with([
+            'paymentInfo',
+            'wayBillAddress',
+            'savedAddress',
+            'consignmentData',
+            'otherCharge',
+            'otherCustomInformation'
+        ])->get();
+        if ($airwayBill->isEmpty()) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+        return response()->json($airwayBill, 200);
+    }  
 }

@@ -2,6 +2,7 @@
 // auth()->guard('admin-api')->user()->id;
 
 use App\Http\Controllers\airwayBill\AirwayBill;
+use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
@@ -113,10 +114,14 @@ Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
 Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
 Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
 Route::get('/get-location', [LocationController::class,'getLocation']);
+
+Route::put('/update-airway-bill/{id}', [AirwayBill::class,'update']);
 Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);
 Route::get('/all-houseway-bill', [HousewayBill::class,'getAllHawb']);
-
+Route::get('/all-consolidation',[ConsolidationController::class,'index']);
+Route::put('/update-consolidation/{id}', [ConsolidationController::class,'update']);
+Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
 
 
 

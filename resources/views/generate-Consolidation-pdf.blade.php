@@ -904,13 +904,13 @@
                                                         @foreach ($houseWayBills as $houseWayBill)
                                                             <tr>
                                                                 <td align="left" valign="top" width="200px" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
-                                                                    <b>HAWB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;LOG/HR/00641<br />
-                                                                    <b>Job Ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;HRS/AE/0538/24-25<br />
-                                                                    <b>Wgt / Vol / Pkg&nbsp;:</b>&nbsp;1.000 KGS / 0.006 CBM / 1 NOS<br />
-                                                                    <b>INCO Terms&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;EX WORKS<br />
+                                                                    <b>HAWB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->id }}<br />
+                                                                    {{-- <b>Job Ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;HRS/AE/0538/24-25<br /> --}}
+                                                                    <b>Wgt / Vol / Pkg&nbsp;:</b>&nbsp;{{ $decodedInfo[0]['wgt'] }} / {{ $houseWayBill->total_volume }} / {{ $decodedInfo[0]['pcs'].' NOS' }}<br />
+                                                                    {{-- <b>INCO Terms&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;EX WORKS<br /> --}}
                                                                     <b>Origin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->master_origin }}<br />
                                                                     <b>Destination&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->master_destination }}<br />
-                                                                    <b>Shippers Ref&nbsp;&nbsp;&nbsp;:</b>&nbsp;<br />
+                                                                    {{-- <b>Shippers Ref&nbsp;&nbsp;&nbsp;:</b>&nbsp;<br /> --}}
                                                                     <b>Master&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->awb_code.' - '.$houseWayBill->awb_no }}
                                                                 </td>
                                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
@@ -929,7 +929,7 @@
                                                                 </td>
                                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
                                                                     <b>Goods Description&nbsp;:</b>
-                                                                    HRS/AE/0538/24-25 LOCTITE® 271, 50 ml Tube
+                                                                    {{ $wayBillConsignmentData->description }}
                                                                     HS CODE: 
                                                                     <br>
                                                                     @php
@@ -942,10 +942,7 @@
                                                                     @endphp
                                                                 </td>
                                                                 <td align="left" valign="top" width="135px" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding: 0px 2px 10px;">
-                                                                    INFRM CNEE IMDTLY
-                                                                    UPON ARVL OF CARGO
-                                                                    AT DEST // MARKS AND
-                                                                    NOS: 01 CARTON ONLY
+                                                                    {{ $houseWayBill->other_service_information }}
                                                                 </td>
                                                             </tr>
                                                         @endforeach

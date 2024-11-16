@@ -94,7 +94,17 @@
                         <hr class="hr" />
                         <b-row class="mt-5">
                             <b-col>
-                                <a href="" class="custom-link">Edit e-AWB Data</a>
+                                <div v-for="item in data_items" :key="item.id">
+                                    <a href="#" class="custom-link" @click="getAirWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                            <span class="mr-2 mt-3c">
+                                                <!-- <a href="#" class="custom-link" @click="navigate">Edit e-AWB Data</a> -->
+                                                <p @click="navigate">Edit e-AWB Data </p>
+                                            </span>
+                                       </router-link>
+                                    </a>
+                                </div>
+                                <!-- <a href="" class="custom-link">Edit e-AWB Data</a> -->
                                 <a href="" class="custom-link">Copy e-AWB Data</a>
                                 <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
                                 <a href="" class="custom-link">Create Booking from e-AWB Data</a>
@@ -3112,10 +3122,8 @@
                                                                 </td>
                                                                 <td class="editable-cell">{{ row.info_identifier }}
                                                                 </td>
-                                                                <td class="editable-cell">{{
-                                                                    row.custom_info_identifier }}</td>
-                                                                <td class="editable-cell">{{ row.supplementary_info
-                                                                    }}</td>
+                                                                <td class="editable-cell">{{ row.custom_info_identifier }}</td>
+                                                                <td class="editable-cell">{{ row.supplementary_info }}</td>
                                                                 <td class="editable-cell"
                                                                     style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                                                     <b-icon icon="pencil" font-scale="1" class="mr-2" style="cursor: pointer;" @click="editOciInfo(index)"></b-icon>
@@ -3167,7 +3175,7 @@
                                 <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
-                                <b-button type="submit">Save Draft</b-button>
+                                <b-button type="submit">{{submitButtonText}}</b-button>
                             </div>
                         </div>
                     </div>
@@ -3403,6 +3411,9 @@ export default {
             editIndex: null,
             edit_entry_index: null,
             countries: [],
+            existingData: [],
+            data_items: [],
+            mode: 'add',
             items: [
                 {
                     url: "#webdoc",
@@ -3672,12 +3683,82 @@ export default {
                 };
             }
         },
-        onSubmit(evt) {
-            evt.preventDefault();
-            this.form.post(`/create-webdoc`).then(response => {
-                console.log(response);
-            })
+        // onSubmit(evt) {
+        //     evt.preventDefault();
+        //     this.form.post(`/create-webdoc`).then(response => {
+        //         console.log(response);
+        //     })
+        // },
+        onSubmit() {
+            if (this.mode === 'add') {
+                this.form.post('/create-webdoc')
+                .then(response => {
+                    console.log('Add Successful:', response);
+                })
+                .catch(error => {
+                    console.error('Add Failed:', error);
+                });
+            } else if (this.mode === 'update') {
+                this.form.put(`/update-airway-bill/${this.existingData.id}`)
+                .then(response => {
+                    console.log('Update Successful:', response);
+                    // this.$router.push({ path: '/house-way-bill' });
+                })
+                .catch(error => {
+                    console.error('Update Failed:', error);
+                });
+            }
         },
+        allAirwayBill() {
+            ApiService.get('/all-airway-bill')
+                .then(response => {
+                    this.data_items = response.data;
+                })
+                .catch(error => {
+                    console.error("Failed to fetch items:", error);
+                });
+        },
+        getAirWayBill(id) { 
+            ApiService.get(`/airway-bill/${id}`)
+                .then(response => {
+                    this.existingData = response.data;
+                    this.openForm('update', this.existingData.id);
+                })
+                .catch(error => {
+                    console.error("Failed to fetch data for updating:", error);
+                });
+        },
+        openForm(mode, id = null) {
+            this.mode = mode;
+            if (mode === 'update' && id) {
+                    console.log("Data prepared for update, ID:", this.existingData);
+                    this.form.first_box = this.existingData;
+                    this.form.first_box.hawb_no = this.existingData.id;
+                    this.form.routing_information = this.existingData;
+                    this.form.totals = this.existingData;
+                    this.form.custom_origin = this.existingData;
+                    this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
+                    this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
+                    
+                    this.form.payment_info = this.existingData.payment_info || {};
+                    this.form.charges = Array.isArray(this.existingData.other_charge)
+                    ? this.existingData.other_charge
+                    : [];
+                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
+                    //     ? this.existingData.consignment_data
+                    //     : [this.existingData.consignment_data];
+                    
+                    console.log("entries", this.form.entries);
+                    // this.consignment_list = this.existingData.consignment_data;
+                    // this.form.entries = this.existingData;
+                    this.form.consignee_address = this.existingData.way_bill_address;
+                    this.form.shipper_address = this.existingData.way_bill_address;
+                    this.form.also_notify_address = this.existingData.way_bill_address;
+                } else {
+                    // console.error('existingData is not an array:', this.existingData);
+                    console.log("Add mode activated");
+                }
+            },
         getAgent(){
             ApiService.get(`/agent-info/`)
                 .then(({ data }) => {
@@ -3833,16 +3914,6 @@ export default {
                 console.error("There was an error with the consignment request:", error);
             });
         },
-        // calculateTotalVolume() {
-        //     let totalVolume = this.form.entries.reduce((total, entry) => {
-        //         return total + entry.itemss.reduce((entryTotal, item) => {
-        //             let volumePerPiece = (item.length * item.width * item.height) / 1e6;
-        //             return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
-        //         }, 0);
-        //     }, 0);
-        //     return this.form.totals.total_volume = totalVolume;
-        // },
-       
         calculateTotalVolume() {
             let totalVolume = this.form.entries.reduce((total, entry) => {
                 return total + entry.itemss.reduce((entryTotal, item) => {
@@ -4189,6 +4260,7 @@ export default {
     },
     mounted(){
         this.calculateTotalVolume();
+        this.allAirwayBill();
         window.addEventListener('click', this.closeDropdown_to);
         window.addEventListener('click', this.closeDropdown_to2);
         window.addEventListener('click', this.closeDropdown_to3);
@@ -4383,7 +4455,10 @@ export default {
         remainingPieces() {
             const totalAddedPieces = this.consignment_list.itemss.reduce((sum, item) => sum + parseInt(item.pcs || 0), 0);
             return this.consignment_list.pieces - totalAddedPieces;
-        }
+        },
+        submitButtonText() {
+            return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
+        },
        
     },
     beforeDestroy() {

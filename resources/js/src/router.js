@@ -22,6 +22,11 @@ export default new Router({
           component: () =>import("@/view/pages/WebDoc"),
         },
         {
+          path: '/edit-airway-bill/:id?',
+          name: 'EditAirwayBill',
+          component: () => import("@/view/pages/WebDoc"),
+        },
+        {
           name: "House Way Bill",
           path: "/house-way-bill",
           component: () =>import("@/view/pages/HouseWayBill"),

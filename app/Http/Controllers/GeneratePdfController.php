@@ -14,7 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class GeneratePdfController extends Controller
 {
-    public function downloadPdf($awb_code = '57', $awbId = '51929872')
+    public function downloadPdf($awb_code = '123', $awbId = '12345678')
     {
         // Fetch the AirWayBill along with related data
        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'customInfo' => function ($query) {
@@ -22,6 +22,7 @@ class GeneratePdfController extends Controller
     }, 'agentsInfo', 'otherCharge'])
             ->where('awb_no', $awbId)
             ->first();
+            
             $specialHandlingInfo = '';
             if ($airWayBill && !empty($airWayBill->special_handling_info)) {
                 $decodedInfo = json_decode($airWayBill->special_handling_info, true);

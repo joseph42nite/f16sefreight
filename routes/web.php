@@ -5,6 +5,7 @@ use App\Http\Controllers\ConversionController;
 
 use App\Http\Controllers\GeneratePdfController;
 use App\Http\Controllers\GenerateConsolidationPdfController;
+use App\Http\Controllers\GenerateHawbPdfController;
 
 use App\Http\Controllers\airwayBill\HousewayBill;
 
@@ -15,12 +16,11 @@ Route::get('generic-message', [ConversionController::class, 'GenericRequestMessa
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
 Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
 Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
-Route::get('/test-route', [HousewayBill::class,'getCountry']);
+Route::get('test-route', [HousewayBill::class,'getCountry']);
 
-Route::view('/generate-pdf', 'generate-pdf');
 Route::get('download-pdf', [GeneratePdfController::class, 'downloadPdf']);
-Route::view('/consolidation-pdf', 'consolidation-pdf');
 Route::get('download-consolidation-pdf', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
+Route::get('download-hawb-pdf', [GenerateHawbPdfController::class, 'downloadHawbPdf']);
 
 Route::get('{any}', function () {
     return view('welcome');

@@ -70,10 +70,10 @@
                                             <tr>
                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
-                                                    $destination_airport =  explode(',', $airWayBill->departure_airport);
+                                                    $destination_airport =  explode(',', $houseWayBill->departure_airport);
                                                     $destination_airport = $destination_airport[0];
                                                     @endphp
-                                                    {{$airWayBill->awb_code .' '. $destination_airport .' '. $airWayBill->awb_no}}
+                                                    {{$houseWayBill->awb_code .' '. $destination_airport .' '. $houseWayBill->awb_no}}
                                                 </td>
                                             </tr>
                                         </table>
@@ -87,7 +87,7 @@
                                                     &nbsp;
                                                     </td>
                                                 <td align="center" valign="top" width="140px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                    {{$airWayBill->awb_code . ' - '. $airWayBill->awb_no}}
+                                                    {{$houseWayBill->house_way_bills_id}}
                                                 </td>
                                             </tr>
                                         </table>
@@ -124,8 +124,8 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
-                                                                                        {{ $airWayBill->wayBillAddress->ship_name }} <br/>
-                                                                                        {{ $airWayBill->wayBillAddress->ship_address }}
+                                                                                        {{ $houseWayBill->ship_name }} <br/>
+                                                                                        {{ $houseWayBill->ship_address }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -144,7 +144,7 @@
                                                                                             </tr>
                                                                                             <tr>
                                                                                                 <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->wayBillAddress->ship_account }}
+                                                                                                    {{ $houseWayBill->ship_account }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -188,7 +188,7 @@
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;">
-                                                                                        Air Waybill
+                                                                                        House Waybill
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
@@ -230,8 +230,8 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
-                                                                            {{ $airWayBill->wayBillAddress->cons_name }}<br/>
-                                                                            {{ $airWayBill->wayBillAddress->cons_address }}
+                                                                            {{ $houseWayBill->cons_name }}<br/>
+                                                                            {{ $houseWayBill->cons_address }}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -250,7 +250,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                       {{ $airWayBill->wayBillAddress->cons_account }}
+                                                                                       {{ $houseWayBill->cons_account }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -304,9 +304,9 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 10px 20px;">
-                                                                            {{ $airWayBill->agentsInfo->agent_name }}
+                                                                            {{ $houseWayBill->agent_name }}
                                                                             <br>
-                                                                            {{ $airWayBill->agentsInfo->agent_address }}
+                                                                            {{ $houseWayBill->agent_address }}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -335,7 +335,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
-                                                                                                                {{ $airWayBill->agentsInfo->iata_agent_code }}  
+                                                                                                                {{ $houseWayBill->iata_agent_code }}  
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -345,8 +345,8 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                            {{ $airWayBill->agentsInfo->iata_agent_cass }}   
+                                                                                                            <td align="right" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            {{ $houseWayBill->iata_agent_cass }}   
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -373,7 +373,7 @@
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
                                                                                                 <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:19px;">
-                                                                                                    {{ $airWayBill->agentsInfo->agent_account }}  
+                                                                                                    {{ $houseWayBill->agent_account }}  
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -435,11 +435,10 @@
                                                         <tr>
                                                             <td align="left" valign="top" width="292px" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
                                                                 @php
-                                                                // $departureAirport = explode(',', $airWayBill->departure_airport);
-                                                                // $departureAirport = $departureAirport[0] . ' - ' . $departureAirport[2];  
+                                                                $departureAirport = explode(',', $houseWayBill->departure_airport);
+                                                                $departureAirport = $departureAirport[0];  
                                                                 @endphp
-                                                                {{-- {{ $departureAirport }} --}}
-                                                                {{ $airWayBill->departure_airport }}
+                                                                {{ $departureAirport }}
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -539,7 +538,7 @@
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
                                                                                 @php
-                                                                                    $to1 = explode(',', $airWayBill->to);
+                                                                                    $to1 = explode(',', $houseWayBill->to);
                                                                                     $to1 = $to1[0];
                                                                                 @endphp
                                                                                 {{ $to1 }}
@@ -558,7 +557,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
-                                                                                {{ $airWayBill->by }}
+                                                                                {{ $houseWayBill->by }}
                                                                             </td>
                                                                     </tr>
                                                                     </table>
@@ -586,7 +585,7 @@
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
-                                                                                    $to2 = explode(',', $airWayBill->to_2);
+                                                                                    $to2 = explode(',', $houseWayBill->to_2);
                                                                                     $to2 = $to2[0];
                                                                                 @endphp
                                                                                 {{ $to2 }}
@@ -605,7 +604,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->by_2 }}
+                                                                                {{ $houseWayBill->by_2 }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -622,7 +621,7 @@
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
-                                                                                    $to3 = explode(',', $airWayBill->to_3);
+                                                                                    $to3 = explode(',', $houseWayBill->to_3);
                                                                                     $to3 = $to3[0];
                                                                                 @endphp
                                                                                 {{ $to3 }}
@@ -641,7 +640,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->by_3 }}
+                                                                                {{ $houseWayBill->by_3 }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -665,7 +664,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
-                                                                                {{ $airWayBill->paymentInfo->currency }} 
+                                                                                {{ $houseWayBill->currency }} 
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -681,7 +680,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->paymentInfo->type_of_payment }}
+                                                                                {{ $houseWayBill->type_of_payment }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -709,7 +708,7 @@
                                                                                                 <tr>
                                                                                                     <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
-                                                                                                            if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'PP') {
+                                                                                                            if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'PP') {
                                                                                                                 echo "X";
                                                                                                             }
                                                                                                         @endphp
@@ -727,7 +726,7 @@
                                                                                                 <tr>
                                                                                                     <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
-                                                                                                        if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'CC') {
+                                                                                                        if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'CC') {
                                                                                                             echo "X";
                                                                                                         }
                                                                                                     @endphp
@@ -764,7 +763,7 @@
                                                                                                 <tr>
                                                                                                     <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
-                                                                                                            if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'PP') {
+                                                                                                            if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'PP') {
                                                                                                                 echo "X";
                                                                                                             }
                                                                                                         @endphp
@@ -782,7 +781,7 @@
                                                                                                 <tr>
                                                                                                     <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
-                                                                                                            if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'CC') {
+                                                                                                            if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'CC') {
                                                                                                                 echo "X";
                                                                                                             }
                                                                                                         @endphp
@@ -807,7 +806,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->paymentInfo->declear_value_carriage }}
+                                                                                {{ $houseWayBill->declear_value_carriage }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -823,7 +822,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->paymentInfo->declear_value_customs }}
+                                                                                {{ $houseWayBill->declear_value_customs }}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -861,7 +860,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
-                                                                                        {{ $airWayBill->destination_airport }}
+                                                                                        {{ $houseWayBill->destination_airport }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -890,7 +889,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date }}
+                                                                                                                {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date }}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>           
@@ -901,7 +900,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date }}
+                                                                                                                {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date }}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>           
@@ -938,7 +937,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                        {{ $airWayBill->paymentInfo->declear_value_insurance }}
+                                                                                        {{ $houseWayBill->declear_value_insurance }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1021,7 +1020,12 @@
                                                                                             <tr>
                                                                                                 <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     @php
-                                                                                                        echo str_replace('"', '', $specialHandlingInfo);
+                                                                                                        $decodedInfo = json_decode($houseWayBill->special_handling_info, true);
+                                                                                                        foreach ($decodedInfo as $key => $value) 
+                                                                                                        {
+                                                                                                            echo $decodedInfo[$key] .'<br>';
+
+                                                                                                        }
                                                                                                     @endphp
                                                                                                 </td>
                                                                                             </tr>
@@ -1063,17 +1067,17 @@
                                 <!-- Pieces -->
                                 <tr>
                                     <td align="center">
-                                        <table cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td align="center">
-                                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0">
                                                         <tr>
                                                             <!-- One -->
                                                             <td align="center" valign="top" width="100px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top" style="border-right:1px solid #000000;">
@@ -1114,14 +1118,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="top" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="39px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->pieces }} 
+                                                                                                <td align="right" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    {{ $houseWayBill->pieces }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1132,7 +1136,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->gross_weight }}
+                                                                                                    {{ $houseWayBill->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1155,14 +1159,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="bottom">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->pieces }}
+                                                                                                    {{ $houseWayBill->pieces }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1173,7 +1177,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->gross_weight }}
+                                                                                                    {{ $houseWayBill->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1199,16 +1203,16 @@
                                                             <!-- One -->
                                                             <!-- Two -->
                                                             <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="8px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
-                                                                                                   {{ $airWayBill->consignmentData->service_code }} 
+                                                                                                   {{ $houseWayBill->service_code }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1222,10 +1226,10 @@
                                                             <!-- Two -->
                                                             <!-- Three -->
                                                             <td align="center" valign="top" width="100px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top" >
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top">
@@ -1244,14 +1248,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
-                                                                                                    {{ $airWayBill->consignmentData->rate_class }}
+                                                                                                    {{ $houseWayBill->rate_class }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1277,10 +1281,10 @@
                                                             <!-- Three -->
                                                             <!-- Four -->
                                                             <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="8px">
                                                                                         &nbsp;
@@ -1294,10 +1298,10 @@
                                                             <!-- Four -->
                                                             <!-- Five -->
                                                             <td align="center" valign="top" width="70px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top">
@@ -1316,14 +1320,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->chargable_weight }}
+                                                                                                    {{ $houseWayBill->chargable_weight }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1338,10 +1342,10 @@
                                                             <!-- Five -->
                                                             <!-- Six -->
                                                             <td align="center" valign="top" width="width:8px" bgcolor="bee3fe" >
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
@@ -1355,10 +1359,10 @@
                                                             <!-- Six -->
                                                             <!-- Seven -->
                                                             <td align="center" valign="top" width="50px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
@@ -1392,35 +1396,33 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="center" valign="top" style="">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="center" valign="top">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="75px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->rate }} 
+                                                                                                    {{ $houseWayBill->rate }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- One -->
-                                                                                    
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    
                                                                 </table>
                                                             </td>
                                                             <!-- Seven -->
                                                             <!-- Eight -->
                                                             <td align="center" valign="top" width="width:8px" bgcolor="bee3fe" >
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
@@ -1435,10 +1437,10 @@
                                                             <!-- Eight -->
                                                             <!-- Nine -->
                                                             <td align="center" valign="top" width="80px;" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="center" valign="top">
@@ -1457,14 +1459,14 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="top" style="border-bottom: 1px solid #000;padding-bottom: 130px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->total_amount }}  
+                                                                                                    {{ $houseWayBill->total_amount }}  
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1477,20 +1479,20 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->total_amount }} 
+                                                                                                    {{ $houseWayBill->total_amount }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- One -->
-                                                                                    
+
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
@@ -1500,10 +1502,10 @@
                                                             <!-- Nine -->
                                                             <!-- Ten -->
                                                             <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td lign="center" valign="top" width="8px">
                                                                                         &nbsp;
@@ -1516,14 +1518,14 @@
                                                             </td>
                                                             <!-- Ten -->
                                                             <!-- Eleven -->
-                                                            <td align="center" valign="top" width="162px" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
-                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                            <td align="center" valign="top" style="border-right:1px solid #000000;border-left: 1px solid #000000;">
+                                                                <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top" style="border-bottom:1px solid #000000;">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="center" valign="top" width="160px">
+                                                                                    <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
@@ -1539,27 +1541,28 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="center" valign="top" style="">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
-                                                                                    <td align="left" valign="top" width="160px">
+                                                                                    <td align="left" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" width="160px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
-                                                                                                    {{ $airWayBill->consignmentData->description }}<br>
+                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                    {{ $houseWayBill->description }}<br>
 
                                                                                                         @php
-                                                                                                            $decodedInfo = json_decode($airWayBill->consignmentData->pieces_info, true);
-                                                                                                            foreach ($decodedInfo as $key => $value) 
+                                                                                                            $piecesInfo = json_decode($houseWayBill->pieces_info, true);
+                                                                                                            foreach ($piecesInfo as $key => $value) 
                                                                                                             {
-                                                                                                                echo $piecesInfo = $decodedInfo[$key]['pcs'].'/'.$decodedInfo[$key]['length'].'x'.$decodedInfo[$key]['width'].'x'.$decodedInfo[$key]['height'].' '.$decodedInfo[$key]['unit'].'<br/>' ;
+                                                                                                                echo $piecesInfo[$key]['pcs'].'/'.$piecesInfo[$key]['length'].'x'.$piecesInfo[$key]['width'].'x'.$piecesInfo[$key]['height'].' '.$piecesInfo[$key]['unit'].'<br/>' ;
 
                                                                                                             }
                                                                                                             // Getting Hs code
-                                                                                                            $hsCode = str_replace('"', '', $hsCode);
-                                                                                                            $hsCode = explode(' ', $hsCode);
-                                                                                                            foreach ($hsCode as $value) {
-                                                                                                                echo "Hs Code: ".$value."<br>";
+                                                                                                            $hsCode = json_decode($houseWayBill->hs_code, true);
+                                                                                                            foreach ($hsCode as $key => $value) 
+                                                                                                            {
+                                                                                                                echo 'Hs Code: '. $hsCode[$key] .'<br/>' ;
+
                                                                                                             }
                                                                                                         @endphp
                                                                                                 </td>
@@ -1572,14 +1575,14 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="bottom" style="">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="left" valign="bottom">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="left" valign="bottom" style="text-align:center;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" width="160px" style="padding-left:5px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="left" valign="bottom" style="padding-left:5px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     Total Volume: 6MC 
                                                                                                 </td>
                                                                                             </tr>
@@ -1684,17 +1687,17 @@
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
-                                                                                                            echo $airWayBill->paymentInfo->total_charges_prepaid;
+                                                                                                            echo $houseWayBill->total_charges_prepaid;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
-                                                                                                            echo $airWayBill->paymentInfo->total_charges_collect;
+                                                                                                            echo $houseWayBill->total_charges_collect;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
@@ -1868,17 +1871,17 @@
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
-                                                                                                            echo $airWayBill->paymentInfo->taxes;
+                                                                                                            echo $houseWayBill->taxes;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
-                                                                                                            echo $airWayBill->paymentInfo->taxes;
+                                                                                                            echo $houseWayBill->taxes;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
@@ -1964,10 +1967,10 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_prepaid }}
+                                                                                                    {{ $houseWayBill->other_charges_due_agent_prepaid }}
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_collect }}
+                                                                                                    {{ $houseWayBill->other_charges_due_agent_collect }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -2046,10 +2049,10 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_prepaid }}
+                                                                                                    {{ $houseWayBill->other_charges_due_carrier_prepaid }}
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_collect }}
+                                                                                                    {{ $houseWayBill->other_charges_due_carrier_collect }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -2125,7 +2128,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $airWayBill->paymentInfo->total_charges_prepaid }}
+                                                                                                                {{ $houseWayBill->total_charges_prepaid }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2134,7 +2137,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $airWayBill->paymentInfo->total_charges_collect }}
+                                                                                                                {{ $houseWayBill->total_charges_collect }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2296,8 +2299,8 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
-                                                                                        @foreach ($airWayBill->otherCharge as $charge)
-                                                                                            {{ $charge->other_charge_code }} {{ $charge->due }} {{ $charge->amount }}<br> 
+                                                                                        @foreach ($houseWayBill->other_charges as $otherChargesRow)
+                                                                                            {{ $otherChargesRow->other_charge_code }} {{ $otherChargesRow->due }} {{ $otherChargesRow->amount }}<br> 
                                                                                         @endforeach
                                                                                     </td>
                                                                                 </tr>
@@ -2327,7 +2330,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
-                                                                                                                {{ $airWayBill->agentsInfo->agent_name }}
+                                                                                                                {{ $houseWayBill->agent_name }}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -2365,7 +2368,7 @@
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="bottom" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         @php
-                                                                                                                            echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
+                                                                                                                            echo date('d-M-y', strtotime($houseWayBill->agent_issue_date));
                                                                                                                         @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2376,8 +2379,8 @@
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         @php
-                                                                                                                            $locationCode = explode(',', $airWayBill->agentsInfo->agent_issue_loc_code);
-                                                                                                                            echo $locationCode = $locationCode[0];
+                                                                                                                            $locationCode = explode(',', $houseWayBill->agent_issue_loc_code);
+                                                                                                                            echo $locationCode[0];
                                                                                                                         @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2387,7 +2390,7 @@
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="top" width="160px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
-                                                                                                                        {{ $airWayBill->agentsInfo->agent_issue_sign }}
+                                                                                                                        {{ $houseWayBill->agent_issue_sign }}
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                             </table>
@@ -2457,7 +2460,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
-                                                                                                                {{$airWayBill->awb_code . ' '. $airWayBill->awb_no}}
+                                                                                                                {{$houseWayBill->awb_code . ' '. $houseWayBill->awb_no}}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>

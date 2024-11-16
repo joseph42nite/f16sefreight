@@ -38,7 +38,7 @@ class AirwayBills extends Model
     {
         return $this->hasMany(OtherCharge::class, 'awb_id', 'id');
     }
-    
+
     // protected $fillable = [
     //     'awb_code',
     //     'awb_no',

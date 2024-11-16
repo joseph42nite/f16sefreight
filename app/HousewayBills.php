@@ -23,7 +23,7 @@ class HousewayBills extends Model
 
     public function wayBillAddress()
     {
-        return $this->hasOne(WayBillAddress::class, 'awb_id');
+        return $this->hasOne(WayBillAddress::class, 'awb_id', 'id');
     }
 
     public function savedAddress()
@@ -45,4 +45,6 @@ class HousewayBills extends Model
     {
         return $this->hasMany(OtherCustomInformation::class, 'awb_id', 'id');
     }
+
+
 }

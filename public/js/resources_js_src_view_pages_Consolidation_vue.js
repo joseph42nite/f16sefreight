@@ -27,43 +27,22 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
-    return {
+    var _ref;
+    return _ref = {
       form: new Form({
+        id: '',
+        master_origin: '',
+        master_destination: '',
+        description: '',
+        gross_weight: '',
+        special_handling_info: '',
+        special_service_request: '',
+        other_service_information: '',
+        awb_code: '',
+        awb_no: '',
         first_box: {
           awb_code: '',
-          awb_no: '',
-          consolidated_MAWB: false,
-          awb: true
-        },
-        shipper_address: {
-          ship_name: '',
-          ship_account: '',
-          ship_address: '',
-          ship_address_line_2: '',
-          ship_city: '',
-          ship_post_code: '',
-          ship_state: '',
-          ship_country: '',
-          ship_phone: '',
-          ship_fax: '',
-          ship_telex: '',
-          ship_new_address: '',
-          ship_airport_code: null
-        },
-        consignee_address: {
-          cons_name: '',
-          cons_account: '',
-          cons_address: '',
-          cons_address_line_2: '',
-          cons_city: '',
-          cons_airport_code: null,
-          cons_post_code: '',
-          cons_state: '',
-          cons_country: '',
-          cons_phone: '',
-          cons_fax: '',
-          cons_telex: '',
-          cons_new_address: ''
+          awb_no: ''
         },
         also_notify_address: {
           also_name: '',
@@ -79,211 +58,14 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
           also_telex: '',
           also_new_address: ''
         },
-        routing_information: {
-          departure_airport: '',
-          destination_airport: '',
-          from: '',
-          to: '',
-          to_2: '',
-          to_3: '',
-          by: '',
-          by_2: '',
-          by_3: '',
-          flight: '',
-          flight_2: '',
-          flight_3: '',
-          date: this.getCurrentDate(),
-          date_2: this.getCurrentDate(),
-          date_3: this.getCurrentDate()
-        },
         entries: [],
         oci_entries: [],
         tableCodes: [],
-        charges: [],
         totals: {
           total_volume: null,
           total_amount: 0
-        },
-        custom_origin: {
-          customs_origin_code: null,
-          other_service_information: '',
-          special_service_request: '',
-          accounting_information: '',
-          letter_credit: '',
-          shipment_ref_no: null,
-          supplementary_shipment_info: '',
-          extra_print: null
-        },
-        carr_namr: '',
-        carr_prefix: '',
-        carr_address: '',
-        carr_city: '',
-        carr_post_code: '',
-        carr_state: '',
-        carr_country: '',
-        payment_info: {
-          type_of_payment: '',
-          currency: 'INR',
-          declear_value_carriage: 'NVD',
-          declear_value_insurance: 'XXX',
-          declear_value_customs: 'NCV',
-          // other_charges_due_carrier: '',
-          // other_charges_due_agent: '',
-          taxes: null,
-          weight_charge: null,
-          total_charges_prepaid: null,
-          total_charges_collect: null,
-          total_charges: null,
-          other_charges_due_agent_prepaid: null,
-          other_charges_due_agent_collect: null,
-          other_charges_due_carrier_prepaid: null,
-          other_charges_due_carrier_collect: null
-        },
-        is_consignee_address_save: false,
-        is_shipper_address_save: false,
-        is_also_notify_address_save: false,
-        is_iata_login_later: false
+        }
       }),
-      oci_info: {
-        country_code: '',
-        info_identifier: '',
-        custom_info_identifier: '',
-        supplementary_info: ''
-      },
-      consignment_list: new Form({
-        pieces: '',
-        description: '',
-        rate_class: '',
-        uld_rate_class: '',
-        service_code: '',
-        commodity_item: '',
-        country_origin_goods: '',
-        slac: '',
-        hs_code: '',
-        gross_weight: '',
-        weight_code: 'KGM',
-        //kgs/lbs
-        chargable_weight: '',
-        other_charge: '',
-        rate: '',
-        pcs: '',
-        wgt: '',
-        length: '',
-        width: '',
-        height: '',
-        unit: 'CMT',
-        volume: '',
-        dimention_unit: 'MTQ',
-        //cm3,m3,ft3
-
-        uld_type: '',
-        uld_serial: '',
-        owner: '',
-        itemss: [],
-        hsCodes: [],
-        uld_info: []
-      }),
-      iata_cass: {
-        iata_agent_code: null,
-        iata_agent_cass: null
-      },
-      agent_information: {
-        agent_name: '',
-        agent_address: '',
-        agent_city: '',
-        agent_pincode: '',
-        agent_issue_sign: '',
-        agent_issue_loc_code: '',
-        agent_issue_date: '',
-        agent_account: null,
-        //Participate Sender Reference
-        participate: '0',
-        participate_airport: '',
-        prticipant_identifer: '',
-        participant_code: null,
-        office_file_reference: '',
-        //Office Sender Reference
-        office_airport: null,
-        office_function_designator: null,
-        office_company_designator: null
-      },
-      other_charges: {
-        other_charge_code: '',
-        other_code: '',
-        amount: '',
-        due: "C",
-        payment_type: "P",
-        charge: '',
-        chargable_weight1: ''
-      },
-      selectedShipper: null,
-      selectedConsignee: null,
-      shippers: [],
-      consignees: [],
-      searchQuery_to: '',
-      isDropdownOpen_to: false,
-      isDropdownOpen_departure: false,
-      isDropdownOpen_destination: false,
-      isDropdownOpen_to2: false,
-      isDropdownOpen_to3: false,
-      isDropdownOpen_from: false,
-      selectedCode: '',
-      manualCode: '',
-      validationErrors: [],
-      hs_code_error: [],
-      uld_error: [],
-      location: [],
-      newHsCode: '',
-      isOpen: false,
-      showShipper: false,
-      showConsignee: false,
-      showCalculationTable: false,
-      editIndex: null,
-      edit_entry_index: null,
-      items: [{
-        url: "#webdoc",
-        name: "WebDoc"
-      }, {
-        url: "#booking",
-        name: "Booking(FFR)"
-      }, {
-        url: "#webdoc",
-        name: "WebDoc",
-        children: [{
-          url: "#booking",
-          name: "Booking(FFR)"
-        }, {
-          url: "#air_waybill",
-          name: "Air Waybill(FWB)"
-        }, {
-          url: "/house-way-bill",
-          name: "House Waybill(FHL)"
-        }, {
-          url: "/consolidation",
-          name: "Consolidation(FHL)"
-        }, {
-          url: "#import_mail_data",
-          name: "Import Mail Data"
-        }, {
-          url: "#create_label",
-          name: "Create Label"
-        }, {
-          url: "message-log",
-          name: "Message Log"
-        }, {
-          url: "#maintain_contracts",
-          name: "Maintain Contracts"
-        }, {
-          url: "#web_doc_printer_setup",
-          name: "WebDoc Printer Setup"
-        }, {
-          url: "#help",
-          name: "Help"
-        }]
-      }, {
-        url: "#contact",
-        name: "Contact"
-      }],
       codes: [{
         value: 'ACT',
         text: 'ACT - Active Temperature Controlled System'
@@ -582,15 +364,377 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         value: 'XPS',
         text: 'XPS - 236 XPS'
       }],
-      options: [{
-        text: "Me",
-        value: "1"
+      oci_info: {
+        country_code: '',
+        info_identifier: '',
+        custom_info_identifier: '',
+        supplementary_info: ''
+      },
+      countries: [],
+      searchQuery_to: '',
+      isDropdownOpen_to: false,
+      isDropdownOpen_departure: false,
+      isDropdownOpen_destination: false,
+      isDropdownOpen_to2: false,
+      isDropdownOpen_to3: false,
+      isDropdownOpen_from: false,
+      selectedCode: '',
+      manualCode: '',
+      validationErrors: [],
+      hs_code_error: [],
+      location: [],
+      isOpen: false,
+      consolidation: [],
+      editIndex: null,
+      edit_entry_index: null,
+      items: [{
+        url: "#webdoc",
+        name: "WebDoc"
       }, {
-        text: "Participant Group",
-        value: "1"
-      }],
-      logoSrc: "/media/custome/logo-1.png"
-    };
+        url: "#booking",
+        name: "Booking(FFR)"
+      }, {
+        url: "#webdoc",
+        name: "WebDoc",
+        children: [{
+          url: "#booking",
+          name: "Booking(FFR)"
+        }, {
+          url: "#air_waybill",
+          name: "Air Waybill(FWB)"
+        }, {
+          url: "/house-way-bill",
+          name: "House Waybill(FHL)"
+        }, {
+          url: "/consolidation",
+          name: "Consolidation(FHL)"
+        }, {
+          url: "#import_mail_data",
+          name: "Import Mail Data"
+        }, {
+          url: "#create_label",
+          name: "Create Label"
+        }, {
+          url: "message-log",
+          name: "Message Log"
+        }, {
+          url: "#maintain_contracts",
+          name: "Maintain Contracts"
+        }, {
+          url: "#web_doc_printer_setup",
+          name: "WebDoc Printer Setup"
+        }, {
+          url: "#help",
+          name: "Help"
+        }]
+      }, {
+        url: "#contact",
+        name: "Contact"
+      }]
+    }, _defineProperty(_ref, "codes", [{
+      value: 'ACT',
+      text: 'ACT - Active Temperature Controlled System'
+    }, {
+      value: 'AOG',
+      text: 'AOG - Aircraft on ground'
+    }, {
+      value: 'ATT',
+      text: 'ATT - Cargo attached to AWB'
+    }, {
+      value: 'AVI',
+      text: 'AVI - Live animals'
+    }, {
+      value: 'BIG',
+      text: 'BIG - Outsized'
+    }, {
+      value: 'BUP',
+      text: 'BUP - Built up pallet'
+    }, {
+      value: 'CAO',
+      text: 'CAO - Cargo Aircraft Only'
+    }, {
+      value: 'CAT',
+      text: 'CAT - Cargo Attendant Accompanying Shipment'
+    }, {
+      value: 'COL',
+      text: 'COL – Cool Goods/Refrigerated Goods'
+    }, {
+      value: 'COM',
+      text: 'COM - Company mail'
+    }, {
+      value: 'CRT',
+      text: 'CRT - Control Room Temperature '
+    }, {
+      value: 'DGD',
+      text: 'DGD - Dangerous Goods as per attached DGD or DGD-CAO'
+    }, {
+      value: 'DIP',
+      text: 'DIP - Diplomatic mail'
+    }, {
+      value: 'EAP',
+      text: 'EAP - e-freight Consignment with Accompanying Documents'
+    }, {
+      value: 'EAW',
+      text: 'EAW - e-freight Consignment with No Accompanying Documents'
+    }, {
+      value: 'EAT',
+      text: 'EAT - Foodstuffs'
+    }, {
+      value: 'ECC',
+      text: 'ECC - Electronically Concluded Cargo Contract'
+    }, {
+      value: 'ELI',
+      text: 'ELI - Lithium Ion batteries excepted class 9'
+    }, {
+      value: 'ELM',
+      text: 'ELM - Lithium Metal batteries excepted class 9'
+    }, {
+      value: 'EMD',
+      text: 'EMD - Electronic Monitoring Devices on/in Cargo/Container'
+    }, {
+      value: 'ERT',
+      text: 'ERT - Extended Room Temperature +2°C to +25°C'
+    }, {
+      value: 'FIL',
+      text: 'FIL - Undeveloped/unexposed film'
+    }, {
+      value: 'FRI',
+      text: 'FRI - Frozen Goods Subject to Veterinary/Phytosanitary Inspections'
+    }, {
+      value: 'FRO',
+      text: 'FRO - Frozen Goods (not for dry ice but -20 C products)'
+    }, {
+      value: 'GCO',
+      text: 'GCO - General Cargo'
+    }, {
+      value: 'GOG',
+      text: 'GOG - Hanging Garments'
+    }, {
+      value: 'HEA',
+      text: 'HEA - Heavy Cargo, over 150kg pc'
+    }, {
+      value: 'HEG',
+      text: 'HEG - Hatching Eggs'
+    }, {
+      value: 'HUM',
+      text: 'HUM - Human remains'
+    }, {
+      value: 'ICE',
+      text: 'ICE - Dry ice'
+    }, {
+      value: 'LHO',
+      text: 'LHO - Living Human Organs/Blood'
+    }, {
+      value: 'LIC',
+      text: 'LIC - License Required'
+    }, {
+      value: 'MAG',
+      text: 'MAG - Magnetised Material'
+    }, {
+      value: 'MAL',
+      text: 'MAL - Mail '
+    }, {
+      value: 'MUW',
+      text: 'MUW - Munitions / Guns'
+    }, {
+      value: 'NDA',
+      text: 'NDA - No dims Available'
+    }, {
+      value: 'NWP',
+      text: 'NWP - Newspapers / Magazines'
+    }, {
+      value: 'OBX',
+      text: 'OBX - Obnoxious Cargo'
+    }, {
+      value: 'OCI',
+      text: 'OCI - Other Customs, Security and Regulatory Control Information'
+    }, {
+      value: 'OHG',
+      text: 'OHG - Overhang Items '
+    }, {
+      value: 'OSI',
+      text: 'OSI - Other Service Information'
+    }, {
+      value: 'PAC',
+      text: 'PAC - Passenger and Cargo'
+    }, {
+      value: 'PEA',
+      text: 'PEA - Hunting trophies'
+    }, {
+      value: 'PEF',
+      text: 'PEF - Flowers'
+    }, {
+      value: 'PEM',
+      text: 'PEM - Meat'
+    }, {
+      value: 'PEP',
+      text: 'PEP - Fruits and Vegetables'
+    }, {
+      value: 'PER',
+      text: 'PER - Perishable cargo'
+    }, {
+      value: 'PES',
+      text: 'PES - Fish / Seafood'
+    }, {
+      value: 'PIL',
+      text: 'PIL - Pharmaceuticals'
+    }, {
+      value: 'QRT',
+      text: 'QRT - Quick Ramp Transfer '
+    }, {
+      value: 'RAC',
+      text: 'RAC - Reserverd Air Cargo'
+    }, {
+      value: 'RBI',
+      text: 'RBI - Fully regulated lithium ion batteries (Class 9, UN 3480) as per Section IA and IB of PI 965'
+    }, {
+      value: 'RBM',
+      text: 'RBM - Cargo-XML Manual and ToolkitFully regulated lithium metal batteries (Class 9, UN 3090) as per Section IA and IB of PI 968'
+    }, {
+      value: 'RCL',
+      text: 'RCL - Cryogenic Liquid'
+    }, {
+      value: 'RCM',
+      text: 'RCM - Corrosive'
+    }, {
+      value: 'RCX',
+      text: 'RCX - Explosives 1.3C'
+    }, {
+      value: 'RDS',
+      text: 'RDS - Biological Substance'
+    }, {
+      value: 'REQ',
+      text: 'REQ - Dangerous Goods in Excepted Quantities'
+    }, {
+      value: 'REX',
+      text: 'REX - To be reserved for normally forbidden Explosives, Divisions 1.1, 1.2, 1.3, 1.4F, 1.5 and 1.6'
+    }, {
+      value: 'RFG',
+      text: '>RFG - Flammable Gas'
+    }, {
+      value: 'RFL',
+      text: 'RFL - Flammable Liquid'
+    }, {
+      value: 'RFS',
+      text: 'RFS - Flammable Solid'
+    }, {
+      value: 'RFW',
+      text: 'RFW - Dangerous When Wet'
+    }, {
+      value: 'RGX',
+      text: 'RGX - Explosives 1.3G'
+    }, {
+      value: 'RIS',
+      text: 'RIS - Infectious Substance'
+    }, {
+      value: 'RLI',
+      text: 'RLI - Litium Ion batteries'
+    }, {
+      value: 'RLM',
+      text: 'RLM - Litium Metal batteries'
+    }, {
+      value: 'RMD',
+      text: 'RMD - Miscellaneous Dangerous Goods'
+    }, {
+      value: 'RNG',
+      text: 'RNG - Non-Flammable Gas'
+    }, {
+      value: 'ROP',
+      text: 'ROP - Organic Peroxide'
+    }, {
+      value: 'ROX',
+      text: 'ROX - Oxidiser'
+    }, {
+      value: 'RPB',
+      text: 'RPB - Poison'
+    }, {
+      value: 'RPG',
+      text: 'RPG - Toxic (Poison) Gas'
+    }, {
+      value: 'RRE',
+      text: 'RRE - Excepted Quantities of Radioactive Material'
+    }, {
+      value: 'RRW',
+      text: 'RRW - Radioactive - White'
+    }, {
+      value: 'RRY',
+      text: 'RRY - Radioactive - Yellow'
+    }, {
+      value: 'RSB',
+      text: 'RSB - Polystyrene Beads'
+    }, {
+      value: 'RSC',
+      text: 'RSC - Spontaneously Combustible'
+    }, {
+      value: 'RXB',
+      text: 'RXB - Explosives 1.4B'
+    }, {
+      value: 'RXC',
+      text: 'RXC - Explosives 1.4C'
+    }, {
+      value: 'RXD',
+      text: 'RXD - Explosives 1.4D'
+    }, {
+      value: 'RXE',
+      text: 'RXE - Explosives 1.4E'
+    }, {
+      value: 'RXG',
+      text: 'RXG - Explosives 1.4G'
+    }, {
+      value: 'RXS',
+      text: 'RXS - Explosives'
+    }, {
+      value: 'SAL',
+      text: 'SAL - Surface Mail '
+    }, {
+      value: 'SCO',
+      text: 'SCO - Cargo Secure for All-Cargo Aircraft Only '
+    }, {
+      value: 'SFX',
+      text: 'SFX - Expedair Service '
+    }, {
+      value: 'SHL',
+      text: 'SHL - Save Human Life '
+    }, {
+      value: 'SHR',
+      text: 'SHR - Secure for Passenger, All-Cargo and All-Mail Aircraft in Accordance with High Risk Requirements '
+    }, {
+      value: 'SPF',
+      text: 'SPF - Laboratory Animals'
+    }, {
+      value: 'SPX',
+      text: 'SPX - Cargo Secure for Passenger and All-Cargo Aircraft '
+    }, {
+      value: 'SUR',
+      text: 'SUR - Surface Transportation'
+    }, {
+      value: 'SWP',
+      text: 'SWP - Sporting weapons'
+    }, {
+      value: 'VAL',
+      text: 'VAL - Valuable cargo'
+    }, {
+      value: 'VOL',
+      text: 'VOL - Volume'
+    }, {
+      value: 'VUN',
+      text: 'VUN - Vulnerable Cargo'
+    }, {
+      value: 'WET',
+      text: 'WET - Shipments of Wet Material not Packed in Watertight Containers'
+    }, {
+      value: 'XPH',
+      text: 'XPH - Equation Heavy for KLM'
+    }, {
+      value: 'XPS',
+      text: 'XPS - 236 XPS'
+    }]), _defineProperty(_ref, "options", [{
+      text: "Me",
+      value: "1"
+    }, {
+      text: "Participant Group",
+      value: "1"
+    }]), _defineProperty(_ref, "logoSrc", "/media/custome/logo-1.png"), _ref;
   },
   methods: {
     mouseover: function mouseover() {
@@ -600,8 +744,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       this.isOpen = false;
     },
     converXml: function converXml(awb_no) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/waybill/".concat(awb_no)).then(function (_ref) {
-        var data = _ref.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/waybill/".concat(awb_no)).then(function (_ref2) {
+        var data = _ref2.data;
         console.log(data);
       });
     },
@@ -617,104 +761,109 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     handleOk: function handleOk(bvModalEvent) {
       bvModalEvent.preventDefault();
     },
-    getCurrentDate: function getCurrentDate() {
-      var today = new Date();
-      var day = today.getDate().toString().padStart(2, '0');
-      var month = today.toLocaleString('en-GB', {
-        month: 'short'
-      });
-      return "".concat(day).concat(month);
-    },
-    formatDate: function formatDate(date) {
-      if (!date) return '';
-      var day = new Date(date).getDate().toString().padStart(2, '0');
-      var month = new Date(date).toLocaleString('en-GB', {
-        month: 'short'
-      });
-      return "".concat(day).concat(month);
-    },
-    handleDateChange: function handleDateChange(date) {
-      this.form.date = this.formatDate(date);
-    },
-    issueDateChange: function issueDateChange(date) {
-      this.form.issue_date = this.formatDate(date);
-    },
     // location
     getLocation: function getLocation() {
       var _this = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/get-location").then(function (_ref2) {
-        var data = _ref2.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/get-location").then(function (_ref3) {
+        var data = _ref3.data;
         _this.location = data;
       });
     },
-    fetchShippers: function fetchShippers() {
-      var _this2 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/get-shippers").then(function (response) {
-        _this2.shippers = response.data;
-        // console.log('Shipper', response.data);
-      });
-    },
-    fetchConsignee: function fetchConsignee() {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/get-shippers").then(function (response) {
-        _this3.consignees = response.data;
-        // console.log('Shipper', response.data);
-      });
-    },
-    fillShipperDetails: function fillShipperDetails() {
-      var _this4 = this;
-      if (this.selectedShipper) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/get-shipper-address?id=".concat(this.selectedShipper)).then(function (response) {
-          _this4.form.shipper_address = response.data;
-          // console.log('Shipper', response.data);
-        })["catch"](function (error) {
-          console.error('Error fetching shipper address:', error);
-        });
-      } else {
-        this.form.shipper_address = {
-          ship_name: '',
-          ship_account: '',
-          ship_address: '',
-          ship_city: ''
-        };
-      }
-    },
-    fillConsigneeDetails: function fillConsigneeDetails() {
-      var _this5 = this;
-      if (this.selectedConsignee) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/get-consignee-address?id=".concat(this.selectedConsignee)).then(function (response) {
-          _this5.form.consignee_address = response.data;
-          console.log('Consignee', response.data);
-        })["catch"](function (error) {
-          console.error('Error fetching shipper address:', error);
-        });
-      } else {
-        this.form.consignee_address = {
-          cons_name: '',
-          cons_account: '',
-          cons_address: '',
-          cons_city: ''
-        };
-      }
-    },
     onSubmit: function onSubmit(evt) {
       evt.preventDefault();
-      this.form.post("/create-webdoc").then(function (response) {
-        console.log(response);
+      // this.form.put(`/update-consolidation`).then(response => {
+      //     console.log(response);
+      // })
+    },
+    allConsolidation: function allConsolidation() {
+      // ApiService.get(`/all-consolidation`).then(({ data }) => {
+      //     this.consolidation =  data;
+      //     console.log("consolidation", data);
+      // });
+    },
+    searchWayBills: function searchWayBills() {
+      var _this2 = this;
+      this.form.post('/search-house-way-bills', {
+        awb_no: this.form.awb_no,
+        awb_code: this.form.awb_code
+      }).then(function (response) {
+        if (response.data && response.data.length) {
+          console.log("console data", response.data);
+          _this2.consolidation = response.data;
+        } else {
+          _this2.form = [];
+        }
+      })["catch"](function (error) {
+        console.error('Error fetching data:', error);
+        _this2.form = [];
+      });
+    },
+    updateform: function updateform(id) {
+      this.form.put("/update-consolidation/".concat(this.form.id)).then(function (response) {
+        console.log("Waybill updated:", response.data);
+      })["catch"](function (error) {
+        console.error("Error updating waybill:", error);
+      });
+    },
+    editConsolidation: function editConsolidation(id) {
+      var item = this.consolidation.find(function (waybill) {
+        return waybill.id === id;
+      });
+      if (item) {
+        console.log("item.country_code:", this.consolidation);
+        this.form.id = item.id;
+        this.form.master_origin = item.master_origin;
+        this.form.master_destination = item.master_destination;
+        this.form.description = item.description;
+        this.form.pieces = item.pieces;
+        this.form.gross_weight = item.gross_weight;
+        this.form.other_service_information = item.other_service_information;
+        this.form.oci_entries = item.custom_info || [];
+        if (item.special_handling_info && typeof item.special_handling_info === 'string') {
+          try {
+            this.form.tableCodes = JSON.parse(item.special_handling_info);
+          } catch (error) {
+            console.error("Error parsing special_handling_info:", error);
+            this.form.tableCodes = [];
+          }
+        } else {
+          this.form.tableCodes = [];
+        }
+        console.log("Editing consolidation with ID:", id);
+      } else {
+        console.warn("Item not found for ID:", id);
+      }
+    },
+    deleteConsolidation: function deleteConsolidation(index) {
+      console.log("Deleting code at index", index);
+      this.form.tableCodes.splice(index, 1);
+    },
+    getCountry: function getCountry() {
+      var _this3 = this;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/get-country').then(function (_ref4) {
+        var data = _ref4.data;
+        _this3.countries = Object.keys(data).map(function (key) {
+          return {
+            value: key,
+            text: data[key]
+          };
+        });
+      })["catch"](function (error) {
+        console.error("Error fetching countries:", error);
       });
     },
     getAgent: function getAgent() {
-      var _this6 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/agent-info/").then(function (_ref3) {
-        var data = _ref3.data;
+      var _this4 = this;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/agent-info/").then(function (_ref5) {
+        var data = _ref5.data;
         if (Array.isArray(data) && data.length > 0) {
-          _this6.agent_information = data[0];
-          _this6.iata_cass = {
-            iata_agent_code: _this6.agent_information.iata_agent_code || null,
-            iata_agent_cass: _this6.agent_information.iata_agent_cass || null
+          _this4.agent_information = data[0];
+          _this4.iata_cass = {
+            iata_agent_code: _this4.agent_information.iata_agent_code || null,
+            iata_agent_cass: _this4.agent_information.iata_agent_cass || null
           };
         } else {
-          _this6.agent_information = data;
+          _this4.agent_information = data;
         }
       })["catch"](function (error) {
         console.error("Error fetching agent information:", error);
@@ -755,245 +904,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       }
       return '';
     },
-    calculateCharge: function calculateCharge() {
-      var chargeRate = parseFloat(this.other_charges.charge);
-      var weight = parseFloat(this.other_charges.chargable_weight1);
-      if (!isNaN(weight) && this.other_charges.charge > 0 && !isNaN(chargeRate) && chargeRate > 0) {
-        var calculatedAmount = weight * chargeRate;
-        this.other_charges.amount = calculatedAmount.toFixed(2);
-      } else {
-        alert('Please enter valid numeric values for chargeable weight and charge rate.');
-      }
-    },
-    addCharge: function addCharge() {
-      if (!this.other_charges.other_charge_code) {
-        alert("Other charge code is mandatory.");
-        return;
-      }
-      var amount = parseFloat(this.other_charges.amount);
-      if (isNaN(amount) || amount <= 0) {
-        alert("Amount is mandatory and must be a valid number greater than 0.");
-        return;
-      }
-      var chargeData = {
-        other_charge_code: this.other_charges.other_charge_code,
-        other_code: this.other_charges.other_code,
-        amount: parseFloat(this.other_charges.amount) || 0,
-        due: this.other_charges.due,
-        payment_type: this.other_charges.payment_type
-      };
-      if (this.editIndex !== null) {
-        this.$set(this.form.charges, this.editIndex, chargeData);
-        this.editIndex = null;
-      } else {
-        this.form.charges.push(chargeData);
-        console.log('Added new charge:', chargeData);
-      }
-      for (var key in this.other_charges) {
-        if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
-          this.other_charges[key] = '';
-        }
-      }
-    },
-    editCharge: function editCharge(index) {
-      this.editIndex = index;
-      this.other_charges = _objectSpread({}, this.form.charges[index]);
-      // this.editIndex = null;
-    },
-    removeCharge: function removeCharge(index) {
-      this.form.charges.splice(index, 1);
-    },
-    editEntry: function editEntry(index) {
-      this.edit_entry_index = index;
-      this.consignment_list = _objectSpread({}, this.form.entries[index]);
-      this.$refs.modalConsignment.show();
-      this.calculateTotalAmount();
-    },
-    deleteEntry: function deleteEntry(index) {
-      this.form.entries.splice(index, 1);
-      this.calculateTotalVolume();
-      this.calculateTotalAmount();
-    },
-    addOrUpdateEntry: function addOrUpdateEntry(evt) {
-      var _this7 = this;
-      evt.preventDefault();
-      if (!(this.consignment_list instanceof Form)) {
-        this.consignment_list = new Form(this.consignment_list);
-      }
-      this.consignment_list.post("/get-consignment-error").then(function (response) {
-        if (_this7.edit_entry_index !== null) {
-          _this7.form.entries[_this7.edit_entry_index] = _objectSpread({}, _this7.consignment_list);
-          // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
-          _this7.edit_entry_index = null;
-        } else {
-          _this7.form.entries.push(_objectSpread({}, _this7.consignment_list));
-        }
-        _this7.calculateTotalVolume();
-        _this7.calculateTotalAmount();
-        _this7.closeModal();
-        //clear consignment_list data
-        for (var key in _this7.consignment_list) {
-          if (key != 'busy' && key != 'successful' && key != 'errors' && key != 'originalData') {
-            if (_typeof(_this7.consignment_list[key]) === 'object') {
-              _this7.consignment_list[key] = [];
-            } else {
-              _this7.consignment_list[key] = '';
-            }
-          }
-        }
-      })["catch"](function (error) {
-        console.error("There was an error with the consignment request:", error);
-      });
-    },
-    // calculateTotalVolume() {
-    //     let totalVolume = this.form.entries.reduce((total, entry) => {
-    //         return total + entry.itemss.reduce((entryTotal, item) => {
-    //             let volumePerPiece = (item.length * item.width * item.height) / 1e6;
-    //             return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
-    //         }, 0);
-    //     }, 0);
-    //     return this.form.totals.total_volume = totalVolume;
-    // },
-    calculateTotalVolume: function calculateTotalVolume() {
-      var _this8 = this;
-      var totalVolume = this.form.entries.reduce(function (total, entry) {
-        return total + entry.itemss.reduce(function (entryTotal, item) {
-          // Parse dimensions and pcs
-          var length = parseFloat(item.length) || 0; // Length
-          var width = parseFloat(item.width) || 0; // Width
-          var height = parseFloat(item.height) || 0; // Height
-          var pcs = parseFloat(item.pcs) || 0; // Pieces
-          var dimensionUnit = item.unit; // Get the dimension unit (CMT, INH, FOT)
-          var volumeInCMT = length * width * height * pcs / 1000000;
-          var volumeInCM3, volumeInFt3, volumeInIn3, volumeInM3;
-          if (dimensionUnit === 'CMT') {
-            volumeInCM3 = volumeInCM3;
-            volumeInCM3 = volumeInCMT * 1000000; // m³ to cm³
-            volumeInFt3 = volumeInCMT * 35.3147; // m³ to ft³
-            volumeInIn3 = volumeInCMT * 61023.7441; // m³ to in³
-          } else if (dimensionUnit === 'INH') {
-            var volumeInInch = length * width * height * pcs; // in³
-            volumeInIn3 = volumeInInch; // Already in in³
-            volumeInCM3 = volumeInInch * 16.387; // in³ to cm³
-            volumeInFt3 = volumeInInch * 0.0005787037; // in³ to ft³
-            volumeInM3 = volumeInInch * 0.000016387064; // in³ to m³
-          } else if (dimensionUnit === 'FOT') {
-            var volumeInFoot = length * width * height * pcs; // in ft³
-            volumeInFt3 = volumeInFoot;
-            volumeInCM3 = volumeInFoot * 28316.8466; // ft³ to cm³
-            volumeInM3 = volumeInFoot * 0.0283168466; // ft³ to m³
-            volumeInIn3 = volumeInFoot * 1728; // ft³ to in³
-          }
-
-          var selectedUnit = _this8.form.entries.dimention_unit;
-          var finalVolume = 0;
-          switch (selectedUnit) {
-            case 'CMQ':
-              // cm³
-              finalVolume = volumeInCM3;
-              break;
-            case 'MTQ':
-              // m³
-              finalVolume = volumeInM3 || volumeInCMT; // Use volumeInCMT directly if in m³
-              break;
-            case 'FTQ':
-              // ft³
-              finalVolume = volumeInFt3;
-              break;
-            case 'INQ':
-              // in³
-              finalVolume = volumeInIn3;
-              break;
-            default:
-              finalVolume = volumeInCM3;
-            // Default case
-          }
-
-          return entryTotal + finalVolume;
-        }, 0);
-      }, 0);
-
-      // Set total volume in the form
-      this.form.totals.total_volume = totalVolume.toFixed(2);
-    },
-    calculateTotalAmount: function calculateTotalAmount() {
-      var chargeableWeight = this.form.entries.reduce(function (total, entry) {
-        var weight = parseFloat(entry.chargable_weight) || 0;
-        return total + weight;
-      }, 0);
-      var rate_class = this.consignment_list.rate_class;
-      var rates = 0;
-      this.form.totals.total_amount = 0;
-      if (rate_class === "B" || rate_class === "M") {
-        this.form.totals.total_amount = this.consignment_list.rate || 0;
-      } else if (rate_class === "P" || rate_class === "X") {
-        this.form.totals.total_amount = 0;
-      } else {
-        rates = parseFloat(this.form.entries.reduce(function (total, entry) {
-          return total + (parseFloat(entry.rate) || 0);
-        }, 0)) || 0;
-        this.form.totals.total_amount = chargeableWeight * rates;
-      }
-    },
-    addHsCode: function addHsCode() {
-      this.hs_code_error = [];
-      var hsCodeRegex = /^[a-zA-Z0-9]+$/;
-      if (!this.consignment_list.hs_code) {
-        this.hs_code_error.push("This field is empty.");
-      } else if (!hsCodeRegex.test(this.consignment_list.hs_code)) {
-        this.hs_code_error.push("HS Code can only contain letters,numbers");
-      } else if (this.consignment_list.hs_code.length < 6 || this.consignment_list.hs_code.length > 18) {
-        this.hs_code_error.push("HS Code must be between 6 to 18 characters/digits.");
-      } else {
-        this.consignment_list.hsCodes.push(this.consignment_list.hs_code);
-        this.consignment_list.hs_code = "";
-      }
-    },
-    removeHsCode: function removeHsCode(index) {
-      this.consignment_list.hs_code = '';
-      if (confirm('Are you sure you want to delete this HS Code?')) {
-        this.consignment_list.hsCodes.splice(index, 1);
-      }
-    },
-    displayModal: function displayModal() {
-      this.$refs.modalConsignment.show();
-    },
-    closeModal: function closeModal() {
-      this.$refs.modalConsignment.hide();
-    },
-    addUldInfo: function addUldInfo() {
-      this.uld_error = [];
-      var _this$consignment_lis = this.consignment_list,
-        uld_type = _this$consignment_lis.uld_type,
-        uld_serial = _this$consignment_lis.uld_serial,
-        owner = _this$consignment_lis.owner;
-      var regex = {
-        uldType: /^[a-zA-Z][A-Za-z0-9]{2}$/,
-        // ULD Type
-        uldSerial: /^[A-Za-z0-9]\d{3,4}$/,
-        // ULD Serial
-        owner: /^[a-zA-Z0-9]{2}$/ // Owner
-      };
-
-      if (!uld_type) this.uld_error.push("ULD Type is required.");else if (!regex.uldType.test(uld_type)) this.uld_error.push("ULD Type must be 3 characters: 1 alphabetic and 2 alphanumeric.");
-      if (!uld_serial) this.uld_error.push("ULD Serial is required.");else if (!regex.uldSerial.test(uld_serial)) this.uld_error.push("ULD Serial must be in the format 'mnnn(n)' where 'm' is an alpha character and 'n' is a digit.");
-      if (!owner) this.uld_error.push("Owner is required.");else if (!regex.owner.test(owner)) this.uld_error.push("Owner must be exactly 2 characters long and can only contain letters and digits.");
-      if (this.uld_error.length > 0) {
-        return;
-      }
-      // Push validated data to uld_info
-      this.consignment_list.uld_info.push({
-        uld_type: uld_type,
-        uld_serial: uld_serial,
-        owner: owner
-      });
-      this.consignment_list.uld_type = this.consignment_list.uld_serial = this.consignment_list.owner = "";
-    },
-    deleteUldInfo: function deleteUldInfo(index) {
-      if (this.consignment_list.uld_info && this.consignment_list.uld_info.length > index) {
-        this.consignment_list.uld_info.splice(index, 1);
-      }
-    },
     editOciInfo: function editOciInfo(index) {
       this.editIndex = index;
       this.oci_info = _objectSpread({}, this.form.oci_entries[index]);
@@ -1021,213 +931,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       if (this.form.oci_entries.length > index) {
         this.form.oci_entries.splice(index, 1);
       }
-    },
-    addPcsInfo: function addPcsInfo() {
-      var _this9 = this;
-      this.validationErrors = [];
-      var rules = {
-        pcs: {
-          type: 'numeric',
-          message: "PCS must be a valid number."
-        },
-        wgt: {
-          type: 'numeric',
-          min: 0.1,
-          max: 9999999,
-          message: "Weight must be between 0.1 and 9999999."
-        },
-        length: {
-          type: 'regex',
-          regex: /^[0-9]+$/,
-          maxLength: 5,
-          message: "Length must be a numeric value with a maximum of 5 digits."
-        },
-        width: {
-          type: 'regex',
-          regex: /^[0-9]+$/,
-          maxLength: 5,
-          message: "Width must be a numeric value with a maximum of 5 digits."
-        },
-        height: {
-          type: 'regex',
-          regex: /^[0-9]+$/,
-          maxLength: 5,
-          message: "Height must be a numeric value with a maximum of 5 digits."
-        }
-      };
-      var _this$consignment_lis2 = this.consignment_list,
-        pcs = _this$consignment_lis2.pcs,
-        wgt = _this$consignment_lis2.wgt,
-        length = _this$consignment_lis2.length,
-        width = _this$consignment_lis2.width,
-        height = _this$consignment_lis2.height,
-        unit = _this$consignment_lis2.unit;
-      if (this.remainingPieces <= 0) {
-        this.validationErrors.push('All pieces are already added.');
-        return;
-      }
-      if (pcs > this.remainingPieces) {
-        this.validationErrors.push("You only need ".concat(this.remainingPieces, " more pieces to complete the total."));
-        return;
-      }
-      if (!pcs) {
-        this.validationErrors.push("When using dimensions or weight - pieces cannot be empty.");
-      }
-      // If any one dimension is added, all other dimensions are required
-      if (length || width || height) {
-        if (!length) {
-          this.validationErrors.push("Please add length to the dimension");
-        }
-        if (!width) {
-          this.validationErrors.push("Please add width to the dimension");
-        }
-        if (!height) {
-          this.validationErrors.push("Please add height to the dimension");
-        }
-      }
-      if (!length && !width && !height && !wgt) {
-        this.validationErrors.push("Only pieces filled in, please add also weight (WGT) and/or dimensions.");
-      }
-      // Validate individual fields based on their rules
-      Object.keys(rules).forEach(function (field) {
-        var rule = rules[field];
-        var value = _this9.consignment_list[field];
-        if (value) {
-          if (rule.type === 'numeric' && (isNaN(value) || value < rule.min || value > rule.max)) {
-            _this9.validationErrors.push(rule.message);
-          } else if (rule.type === 'regex' && (!rule.regex.test(value) || value.length > rule.maxLength)) {
-            _this9.validationErrors.push(rule.message);
-          }
-        }
-      });
-      if (this.validationErrors.length > 0) {
-        return;
-      }
-      this.consignment_list.itemss.push({
-        pcs: pcs,
-        wgt: wgt,
-        length: length,
-        width: width,
-        height: height,
-        unit: unit
-      });
-      // this.calculateTotalAmount();
-      this.consignment_list.pcs = '';
-      this.consignment_list.wgt = '';
-      this.consignment_list.length = '';
-      this.consignment_list.width = '';
-      this.consignment_list.height = '';
-      this.consignment_list.unit = 'CMT';
-    },
-    deletePcs: function deletePcs(index) {
-      if (this.consignment_list.itemss.length > index) {
-        this.consignment_list.itemss.splice(index, 1);
-      }
-    },
-    calculateTotalCharges: function calculateTotalCharges() {
-      this.form.totals.total_amount = this.calculateTotalAmount();
-    },
-    toggleDropdown_departure: function toggleDropdown_departure() {
-      this.isDropdownOpen_departure = !this.isDropdownOpen_departure;
-    },
-    selectOption_departure: function selectOption_departure(item) {
-      this.form.routing_information.departure_airport = item.iata_code;
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
-      // this.searchQuery_to = final_set;
-      this.form.routing_information.departure_airport = final_set;
-      this.isDropdownOpen_departure = false;
-    },
-    toggleDropdown_destination: function toggleDropdown_destination() {
-      this.isDropdownOpen_destination = !this.isDropdownOpen_destination;
-    },
-    selectOption_destination: function selectOption_destination(item) {
-      this.form.routing_information.destination_airport = item.iata_code;
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
-      // this.searchQuery_to = final_set;
-      this.form.routing_information.destination_airport = final_set;
-      this.isDropdownOpen_destination = false;
-    },
-    toggleDropdown_to: function toggleDropdown_to() {
-      this.isDropdownOpen_to = !this.isDropdownOpen_to;
-    },
-    selectOption_to: function selectOption_to(item) {
-      this.form.routing_information.to = item.iata_code;
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
-      // this.searchQuery_to = final_set;
-      this.form.routing_information.to = final_set;
-      this.isDropdownOpen_to = false;
-    },
-    toggleDropdown_to2: function toggleDropdown_to2() {
-      this.isDropdownOpen_to2 = !this.isDropdownOpen_to2;
-    },
-    selectOption_to2: function selectOption_to2(item) {
-      this.form.routing_information.to_2 = item.iata_code;
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
-      // this.searchQuery_to = final_set;
-      this.form.routing_information.to_2 = final_set;
-      this.isDropdownOpen_to2 = false;
-    },
-    toggleDropdown_to3: function toggleDropdown_to3() {
-      this.isDropdownOpen_to3 = !this.isDropdownOpen_to3;
-    },
-    selectOption_to3: function selectOption_to3(item) {
-      this.form.routing_information.to_3 = item.iata_code;
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
-      // this.searchQuery_to = final_set;
-      this.form.routing_information.to_3 = final_set;
-      this.isDropdownOpen_to3 = false;
-    },
-    toggleDropdown_from: function toggleDropdown_from() {
-      this.isDropdownOpen_from = !this.isDropdownOpen_from;
-    },
-    selectOption_from: function selectOption_from(item) {
-      this.form.routing_information.from = item.iata_code;
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
-      // this.searchQuery_to = final_set;
-      this.form.routing_information.from = final_set;
-      this.isDropdownOpen_from = false;
-    },
-    closeDropdown_to: function closeDropdown_to(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_to;
-      if (!dropdownContainer_to.contains(event.target)) {
-        this.isDropdownOpen_to = false;
-      }
-    },
-    closeDropdown_to2: function closeDropdown_to2(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_to2;
-      if (!dropdownContainer_to.contains(event.target)) {
-        this.isDropdownOpen_to2 = false;
-      }
-    },
-    closeDropdown_to3: function closeDropdown_to3(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_to3;
-      if (!dropdownContainer_to.contains(event.target)) {
-        this.isDropdownOpen_to3 = false;
-      }
-    },
-    closeDropdown_departure: function closeDropdown_departure(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_departure;
-      if (!dropdownContainer_to.contains(event.target)) {
-        this.isDropdownOpen_departure = false;
-      }
-    },
-    closeDropdown_destination: function closeDropdown_destination(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_destination;
-      if (!dropdownContainer_to.contains(event.target)) {
-        this.isDropdownOpen_destination = false;
-      }
-    },
-    closeDropdown_from: function closeDropdown_from(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_from;
-      if (!dropdownContainer_to.contains(event.target)) {
-        this.isDropdownOpen_from = false;
-      }
     } // selectOption_to(item) {
     //     const { iata_code, destination } = item;
     //     const finalSet = `${iata_code}, ${destination}`;
@@ -1239,192 +942,16 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     // },
   },
   mounted: function mounted() {
-    this.calculateTotalVolume();
-    window.addEventListener('click', this.closeDropdown_to);
-    window.addEventListener('click', this.closeDropdown_to2);
-    window.addEventListener('click', this.closeDropdown_to3);
-    window.addEventListener('click', this.closeDropdown_from);
-    window.addEventListener('click', this.closeDropdown_destination);
-    window.addEventListener('click', this.closeDropdown_departure);
     this.getLocation();
-    this.fetchShippers();
-    this.fillShipperDetails();
-    this.fillConsigneeDetails();
-    this.fetchConsignee();
+    this.getCountry();
+    // this.allConsolidation();
     this.location = [];
   },
-  watch: {
-    // 'consignment_list': function () {
-    //     this.form.totals.total_amount = this.calculateTotalAmount();
-    // },
-    'form.entries.dimention_unit': function formEntriesDimention_unit() {
-      this.calculateTotalVolume();
-    },
-    'form.charges': {
-      handler: function handler(newVal) {
-        this.totalChargesPrepaid;
-        this.totalChargesCollect;
-        this.weightCharge;
-        this.taxes;
-        this.totalCharges;
-        this.totalDueAgentPrepaid;
-        this.totalDueAgentCollect;
-        this.totalDueCarrierPrepaid;
-        this.totalDueCarrierCollect;
-      },
-      deep: true
-    },
-    // 'form.payment_info.type_of_payment'(newVal) {
-    //     this.calculateTotalCharges();
-    // },
-    totalChargesPrepaid: function totalChargesPrepaid(newVal) {
-      this.form.payment_info.total_charges_prepaid = newVal;
-    },
-    totalChargesCollect: function totalChargesCollect(newVal) {
-      this.form.payment_info.total_charges_collect = newVal;
-    },
-    weightCharge: function weightCharge(newVal) {
-      this.form.payment_info.weight_charge = newVal;
-    },
-    taxes: function taxes(newVal) {
-      this.form.payment_info.taxes = newVal;
-    },
-    totalCharges: function totalCharges(newVal) {
-      this.form.payment_info.total_charges = newVal;
-    },
-    totalDueAgentPrepaid: function totalDueAgentPrepaid(newVal) {
-      this.form.payment_info.other_charges_due_agent_prepaid = newVal;
-    },
-    totalDueAgentCollect: function totalDueAgentCollect(newVal) {
-      this.form.payment_info.other_charges_due_agent_collect = newVal;
-    },
-    totalDueCarrierPrepaid: function totalDueCarrierPrepaid(newVal) {
-      this.form.payment_info.other_charges_due_carrier_prepaid = newVal;
-    },
-    totalDueCarrierCollect: function totalDueCarrierCollect(newVal) {
-      this.form.payment_info.other_charges_due_carrier_collect = newVal;
-    },
-    'agent_information.participate': function agent_informationParticipate(newValue) {
-      console.log('Participate value changed to:', newValue);
-    }
-  },
+  watch: {},
   created: function created() {
     // this.getAgent();
   },
-  computed: {
-    isPrepaid: function isPrepaid() {
-      var prepaidTypes = ['PP'];
-      return prepaidTypes.includes(this.form.payment_info.type_of_payment);
-    },
-    weightCharge: function weightCharge() {
-      return parseFloat(this.form.totals.total_amount || 0);
-    },
-    taxes: function taxes() {
-      return 0.00;
-    },
-    totalDueAgentPrepaid: function totalDueAgentPrepaid() {
-      return this.form.charges.filter(function (charge) {
-        return charge.due === 'A' && charge.payment_type === 'P';
-      }).reduce(function (sum, charge) {
-        return sum + parseFloat(charge.amount);
-      }, 0).toFixed(2);
-    },
-    totalDueAgentCollect: function totalDueAgentCollect() {
-      return this.form.charges.filter(function (charge) {
-        return charge.due === 'A' && charge.payment_type === 'C';
-      }).reduce(function (sum, charge) {
-        return sum + parseFloat(charge.amount);
-      }, 0).toFixed(2);
-    },
-    totalDueCarrierPrepaid: function totalDueCarrierPrepaid() {
-      return this.form.charges.filter(function (charge) {
-        return charge.due === 'C' && charge.payment_type === 'P';
-      }).reduce(function (sum, charge) {
-        return sum + parseFloat(charge.amount);
-      }, 0).toFixed(2);
-    },
-    totalDueCarrierCollect: function totalDueCarrierCollect() {
-      return this.form.charges.filter(function (charge) {
-        return charge.due === 'C' && charge.payment_type === 'C';
-      }).reduce(function (sum, charge) {
-        return sum + parseFloat(charge.amount);
-      }, 0).toFixed(2);
-    },
-    totalChargesPrepaid: function totalChargesPrepaid() {
-      return ((this.isPrepaid ? this.weightCharge : 0) + parseFloat(this.totalDueAgentPrepaid) + parseFloat(this.totalDueCarrierPrepaid)).toFixed(2);
-    },
-    totalChargesCollect: function totalChargesCollect() {
-      return ((this.isPrepaid ? 0 : this.weightCharge) + parseFloat(this.totalDueAgentCollect) + parseFloat(this.totalDueCarrierCollect)).toFixed(2);
-    },
-    totalChrage: function totalChrage() {
-      return (this.weightCharge + parseFloat(this.totalDueAgentCollect) + parseFloat(this.totalDueCarrierCollect)).toFixed(2);
-    },
-    totalCharges: function totalCharges() {
-      return {
-        prepaid: this.isPrepaid ? this.weightCharge.toFixed(2) : '0.00',
-        collect: this.isPrepaid ? '0.00' : this.weightCharge.toFixed(2)
-      };
-    },
-    calculatedCharge: function calculatedCharge() {
-      return this.form.totals.total_amount;
-    },
-    filteredLocations_to: function filteredLocations_to() {
-      var query = this.form.routing_information.to.toLowerCase().trim();
-      if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
-    },
-    filteredLocations_to2: function filteredLocations_to2() {
-      var query = this.form.routing_information.to_2.toLowerCase().trim();
-      if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
-    },
-    filteredLocations_to3: function filteredLocations_to3() {
-      var query = this.form.routing_information.to_3.toLowerCase().trim();
-      if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
-    },
-    filteredLocations_from: function filteredLocations_from() {
-      var query = this.form.routing_information.from.toLowerCase().trim();
-      if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
-    },
-    filteredLocations_destination: function filteredLocations_destination() {
-      var query = this.form.routing_information.destination_airport.toLowerCase().trim();
-      if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
-    },
-    filteredLocations_departure: function filteredLocations_departure() {
-      var query = this.form.routing_information.departure_airport.toLowerCase().trim();
-      if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
-    },
-    remainingPieces: function remainingPieces() {
-      var totalAddedPieces = this.consignment_list.itemss.reduce(function (sum, item) {
-        return sum + parseInt(item.pcs || 0);
-      }, 0);
-      return this.consignment_list.pieces - totalAddedPieces;
-    }
-  },
-  beforeDestroy: function beforeDestroy() {
-    // window.removeEventListener('click', this.closeDropdown_to);
-    // window.removeEventListener('click', this.closeDropdown_to2);
-    // window.removeEventListener('click', this.closeDropdown_to3);
-    // window.removeEventListener('click', this.closeDropdown_from);
-    // window.removeEventListener('click', this.closeDropdown_destination);
-    // window.removeEventListener('click', this.closeDropdown_departure);
-  },
+  computed: {},
   components: {
     Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__["default"],
     DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"]
@@ -1497,18 +1024,6 @@ var render = function render() {
       id: "show-btn"
     }
   }, [_vm._v("Activity")]), _vm._v(" "), _c("b-button", {
-    directives: [{
-      name: "b-modal",
-      rawName: "v-b-modal.modal-prevent-closing",
-      modifiers: {
-        "modal-prevent-closing": true
-      }
-    }],
-    staticClass: "mx-2 custom-btn",
-    attrs: {
-      id: "toggle-btn"
-    }
-  }, [_vm._v("Search")]), _vm._v(" "), _c("b-button", {
     directives: [{
       name: "b-modal",
       rawName: "v-b-modal.modal-s",
@@ -1875,20 +1390,9 @@ var render = function render() {
       "margin-bottom": "20px",
       "border-bottom": "1px solid black"
     }
-  }, [[_c("b-form", {
-    on: {
-      submit: function submit($event) {
-        $event.preventDefault();
-        return _vm.onSubmit.apply(null, arguments);
-      }
-    }
-  }, [_c("div", {
+  }, [[_c("div", {
     staticClass: "container"
-  }, [_c("div", {
-    staticClass: "h_background_color text-white pt-2 pb-2"
-  }, [_c("table", [_c("tr", [_c("th", {
-    staticClass: "pl-2"
-  }, [_vm._v("\n                                    Create Electronic Consolidation (FHL)\n                                ")])])])]), _vm._v(" "), _c("div", {
+  }, [_vm._m(0), _vm._v(" "), _c("div", {
     staticClass: "d-flex mt-5"
   }, [_c("div", [_c("b-form-group", {
     staticClass: "form-control-sm",
@@ -1900,7 +1404,7 @@ var render = function render() {
     scopedSlots: _vm._u([{
       key: "label",
       fn: function fn() {
-        return [_c("label", [_vm._v("HWB No: "), _c("span", {
+        return [_c("label", [_vm._v("Master no: "), _c("span", {
           staticClass: "text-danger"
         }, [_vm._v("*")])])];
       },
@@ -1908,9 +1412,6 @@ var render = function render() {
     }])
   }, [_vm._v(" "), _c("b-form-input", {
     staticClass: "form-control-sm",
-    "class": {
-      "is-invalid": _vm.form.errors.has("master_code")
-    },
     staticStyle: {
       width: "40px",
       "border-radius": "0px"
@@ -1919,16 +1420,11 @@ var render = function render() {
       id: "input-horizontal"
     },
     model: {
-      value: _vm.form.first_box.master_code,
+      value: _vm.form.awb_code,
       callback: function callback($$v) {
-        _vm.$set(_vm.form.first_box, "master_code", $$v);
+        _vm.$set(_vm.form, "awb_code", $$v);
       },
-      expression: "form.first_box.master_code"
-    }
-  }), _vm._v(" "), _c("has-error", {
-    attrs: {
-      form: _vm.form,
-      field: "master_code"
+      expression: "form.awb_code"
     }
   })], 1)], 1), _vm._v("\n                        -\n                        "), _c("div", [_c("b-form-group", {
     staticClass: "form-control-sm",
@@ -1939,9 +1435,6 @@ var render = function render() {
     }
   }, [_c("b-form-input", {
     staticClass: "form-control-sm",
-    "class": {
-      "is-invalid": _vm.form.errors.has("master_no")
-    },
     staticStyle: {
       width: "120px"
     },
@@ -1949,45 +1442,21 @@ var render = function render() {
       id: "input-horizontal"
     },
     model: {
-      value: _vm.form.first_box.master_no,
+      value: _vm.form.awb_no,
       callback: function callback($$v) {
-        _vm.$set(_vm.form.first_box, "master_no", $$v);
+        _vm.$set(_vm.form, "awb_no", $$v);
       },
-      expression: "form.first_box.master_no"
+      expression: "form.awb_no"
     }
-  }), _vm._v(" "), _c("has-error", {
-    attrs: {
-      form: _vm.form,
-      field: "master_no"
+  })], 1)], 1), _vm._v(" "), _c("button", {
+    on: {
+      click: _vm.searchWayBills
     }
-  })], 1)], 1)]), _vm._v(" "), _c("hr", {
+  }, [_vm._v("Search")])]), _vm._v(" "), _c("hr", {
     staticClass: "hr"
   }), _vm._v(" "), _c("div", {
     staticClass: "d-flex flex-column align-items-start pt-2 pb-2"
-  }, [_c("table", [_c("thead", [_c("tr", {
-    staticClass: "h_background_color"
-  }, [_c("th", {
-    staticClass: "form-control1 text-white",
-    staticStyle: {
-      width: "60px !important"
-    }
-  }, [_vm._v("Action")]), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }, [_vm._v("Air Waybill Number")]), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }, [_vm._v("Master Origin")]), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }, [_vm._v("Master Destination")]), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }, [_vm._v("Air Waybill Quantity")]), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  }), _vm._v(" "), _c("th", {
-    staticClass: "form-control1 text-white"
-  })])]), _vm._v(" "), _c("tr", [_c("td", {}, [_c("b-button", {
+  }, [_c("table", [_vm._m(1), _vm._v(" "), _c("tr", [_c("td", {}, [_c("b-button", {
     staticStyle: {
       background: "#A4D3EE"
     }
@@ -2044,14 +1513,15 @@ var render = function render() {
       width: "250px"
     },
     attrs: {
-      id: "input-hwb"
+      id: "input-hwb",
+      disabled: ""
     },
     model: {
-      value: _vm.iata_cass.hwb_no,
+      value: _vm.form.id,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "hwb_no", $$v);
+        _vm.$set(_vm.form, "id", $$v);
       },
-      expression: "iata_cass.hwb_no"
+      expression: "form.id"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     attrs: {
@@ -2083,11 +1553,11 @@ var render = function render() {
       id: "input-destination"
     },
     model: {
-      value: _vm.iata_cass.destination,
+      value: _vm.form.master_origin,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "destination", $$v);
+        _vm.$set(_vm.form, "master_origin", $$v);
       },
-      expression: "iata_cass.destination"
+      expression: "form.master_origin"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
@@ -2123,11 +1593,11 @@ var render = function render() {
       id: "input-destination"
     },
     model: {
-      value: _vm.iata_cass.destination,
+      value: _vm.form.master_destination,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "destination", $$v);
+        _vm.$set(_vm.form, "master_destination", $$v);
       },
-      expression: "iata_cass.destination"
+      expression: "form.master_destination"
     }
   })], 1)], 1)], 1), _vm._v(" "), _c("b-row", {
     staticClass: "hwb-details mb-2"
@@ -2156,33 +1626,26 @@ var render = function render() {
     staticClass: "form-control-sm",
     staticStyle: {
       width: "180px"
-    },
-    model: {
-      value: _vm.form.payment_info.type_of_payment,
-      callback: function callback($$v) {
-        _vm.$set(_vm.form.payment_info, "type_of_payment", $$v);
-      },
-      expression: "form.payment_info.type_of_payment"
     }
   }, [_c("option", {
     attrs: {
-      value: ""
+      value: "T"
     }
   }, [_vm._v(" Total Consignment")]), _vm._v(" "), _c("option", {
     attrs: {
-      value: "CC"
+      value: "D"
     }
   }, [_vm._v("Divided Consignment")]), _vm._v(" "), _c("option", {
     attrs: {
-      value: "CC"
+      value: "M"
     }
   }, [_vm._v("Multi Shipments")]), _vm._v(" "), _c("option", {
     attrs: {
-      value: "CC"
+      value: "P"
     }
   }, [_vm._v("Part Consignment")]), _vm._v(" "), _c("option", {
     attrs: {
-      value: "CC"
+      value: "S"
     }
   }, [_vm._v("Split Consignment")])])], 1)], 1)], 1), _vm._v(" "), _c("b-row", {
     staticClass: "hwb-details mb-1"
@@ -2219,11 +1682,11 @@ var render = function render() {
       id: "input-hwb"
     },
     model: {
-      value: _vm.iata_cass.hwb_no,
+      value: _vm.form.pieces,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "hwb_no", $$v);
+        _vm.$set(_vm.form, "pieces", $$v);
       },
-      expression: "iata_cass.hwb_no"
+      expression: "form.pieces"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
@@ -2255,11 +1718,11 @@ var render = function render() {
       id: "input-origin"
     },
     model: {
-      value: _vm.iata_cass.origin,
+      value: _vm.form.pieces,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "origin", $$v);
+        _vm.$set(_vm.form, "pieces", $$v);
       },
-      expression: "iata_cass.origin"
+      expression: "form.pieces"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     attrs: {
@@ -2291,11 +1754,11 @@ var render = function render() {
       id: "input-destination"
     },
     model: {
-      value: _vm.iata_cass.destination,
+      value: _vm.form.gross_weight,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "destination", $$v);
+        _vm.$set(_vm.form, "gross_weight", $$v);
       },
-      expression: "iata_cass.destination"
+      expression: "form.gross_weight"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
@@ -2329,13 +1792,6 @@ var render = function render() {
     },
     attrs: {
       id: "input-destination"
-    },
-    model: {
-      value: _vm.iata_cass.destination,
-      callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "destination", $$v);
-      },
-      expression: "iata_cass.destination"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
@@ -2361,13 +1817,6 @@ var render = function render() {
     staticClass: "form-control-sm",
     staticStyle: {
       width: "70px"
-    },
-    model: {
-      value: _vm.form.payment_info.type_of_payment,
-      callback: function callback($$v) {
-        _vm.$set(_vm.form.payment_info, "type_of_payment", $$v);
-      },
-      expression: "form.payment_info.type_of_payment"
     }
   }, [_c("option", {
     attrs: {
@@ -2417,11 +1866,11 @@ var render = function render() {
       id: "input-hwb"
     },
     model: {
-      value: _vm.iata_cass.hwb_no,
+      value: _vm.form.description,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "hwb_no", $$v);
+        _vm.$set(_vm.form, "description", $$v);
       },
-      expression: "iata_cass.hwb_no"
+      expression: "form.description"
     }
   })], 1)], 1)], 1), _vm._v(" "), _c("b-row", {
     staticClass: "hwb-details mb-4"
@@ -2455,17 +1904,29 @@ var render = function render() {
       width: "500px"
     },
     model: {
-      value: _vm.form.payment_info.type_of_payment,
+      value: _vm.selectedCode,
       callback: function callback($$v) {
-        _vm.$set(_vm.form.payment_info, "type_of_payment", $$v);
+        _vm.selectedCode = $$v;
       },
-      expression: "form.payment_info.type_of_payment"
+      expression: "selectedCode"
     }
   }, [_c("option", {
     attrs: {
+      disabled: "",
       value: ""
     }
-  }, [_vm._v("Select Special Handling Codes")])])], 1)], 1), _vm._v(" "), _c("b-col", {
+  }, [_vm._v("Select Special Handling Codes")]), _vm._v(" "), _vm._l(_vm.codes, function (code) {
+    return _c("option", {
+      key: code.value,
+      domProps: {
+        value: code.value
+      }
+    }, [_vm._v(_vm._s(code.text))]);
+  }), _vm._v(" "), _c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Select Special Handling Codes")])], 2)], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
       "padding-left": "0px",
       "padding-right": "0px"
@@ -2487,13 +1948,6 @@ var render = function render() {
     staticClass: "form-control-sm",
     attrs: {
       id: "input-origin"
-    },
-    model: {
-      value: _vm.iata_cass.origin,
-      callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "origin", $$v);
-      },
-      expression: "iata_cass.origin"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
@@ -2502,7 +1956,11 @@ var render = function render() {
     attrs: {
       cols: "auto"
     }
-  }, [_c("b-button", {}, [_vm._v("Add")])], 1)], 1), _vm._v(" "), _c("b-row", {
+  }, [_c("b-button", {
+    on: {
+      click: _vm.addManualCode
+    }
+  }, [_vm._v("Add")])], 1)], 1), _vm._v(" "), _c("b-row", {
     staticClass: "mb-4"
   }, [_c("div", {
     staticClass: "d-flex text-align-center flex-column",
@@ -2517,12 +1975,29 @@ var render = function render() {
     staticClass: "h_background_color"
   }, [_c("th", {
     staticClass: "form-control1 text-white"
-  }, [_vm._v("codes")])])]), _vm._v(" "), _c("tr", [_c("td", {
-    staticStyle: {
-      border: "1px solid #c2c0c0",
-      padding: "4px 20px"
-    }
-  }, [_vm._v("\n                                                        057-51929872\n                                                    ")])])])])])], 1), _vm._v(" "), _c("b-tab", {
+  }, [_vm._v("codes")])])]), _vm._v(" "), _vm._l(_vm.form.tableCodes, function (code, index) {
+    return _c("tr", {
+      key: index,
+      staticStyle: {
+        border: "1px solid #c2c0c0",
+        padding: "4px 20px"
+      }
+    }, [_c("td", {
+      staticClass: "editable-cell"
+    }, [_vm._v(_vm._s(code))]), _vm._v(" "), _c("td", {
+      staticClass: "editable-cell"
+    }, [_c("b-icon", {
+      attrs: {
+        icon: "trash",
+        "font-scale": "1"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.deleteSplCode(index);
+        }
+      }
+    })], 1)]);
+  })], 2)])])], 1), _vm._v(" "), _c("b-tab", {
     staticClass: "bg-white",
     staticStyle: {
       border: "1px solid #000 !important"
@@ -2578,17 +2053,24 @@ var render = function render() {
       "border-radius": "0px"
     },
     model: {
-      value: _vm.form.payment_info.type_of_payment,
+      value: _vm.oci_info.country_code,
       callback: function callback($$v) {
-        _vm.$set(_vm.form.payment_info, "type_of_payment", $$v);
+        _vm.$set(_vm.oci_info, "country_code", $$v);
       },
-      expression: "form.payment_info.type_of_payment"
+      expression: "oci_info.country_code"
     }
   }, [_c("option", {
     attrs: {
       value: ""
     }
-  }, [_vm._v("Select a country")])])], 1)], 1), _vm._v(" "), _c("b-col", {
+  }, [_vm._v("Select a country")]), _vm._v(" "), _vm._l(_vm.countries, function (country) {
+    return _c("option", {
+      key: country.value,
+      domProps: {
+        value: country.value
+      }
+    }, [_vm._v("\n                                                                " + _vm._s(country.text) + "\n                                                            ")]);
+  })], 2)], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
       "padding-left": "2px",
       "padding-right": "2px"
@@ -2610,17 +2092,765 @@ var render = function render() {
       "border-radius": "0px"
     },
     model: {
-      value: _vm.form.payment_info.type_of_payment,
+      value: _vm.oci_info.info_identifier,
       callback: function callback($$v) {
-        _vm.$set(_vm.form.payment_info, "type_of_payment", $$v);
+        _vm.$set(_vm.oci_info, "info_identifier", $$v);
       },
-      expression: "form.payment_info.type_of_payment"
+      expression: "oci_info.info_identifier"
     }
   }, [_c("option", {
     attrs: {
       value: ""
     }
-  }, [_vm._v("Select a code")])])], 1)], 1), _vm._v(" "), _c("b-col", {
+  }, [_vm._v("Select a code")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ABI"
+    }
+  }, [_vm._v("ABI - AWB Amount Detail\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ABS"
+    }
+  }, [_vm._v("ABS - AWB Supplementary\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ABT"
+    }
+  }, [_vm._v("ABT - AWB Total Amount\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ACC"
+    }
+  }, [_vm._v("ACC - Accounting Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ACD"
+    }
+  }, [_vm._v("ACD - AWB Consignment\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ACK"
+    }
+  }, [_vm._v("ACK - Reason for\n                                                                    Acknowledgement")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ACS"
+    }
+  }, [_vm._v("ACS - AWB Charge Summary\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ADR"
+    }
+  }, [_vm._v("ADR - Street Address\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AGT"
+    }
+  }, [_vm._v("AGT - Agent")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AID"
+    }
+  }, [_vm._v("AID - Arrival Information\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AIR"
+    }
+  }, [_vm._v("AIR - Airline Header\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ALA"
+    }
+  }, [_vm._v("ALA - Allotment Availability\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ALI"
+    }
+  }, [_vm._v("ALI - Allotment Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ALR"
+    }
+  }, [_vm._v("ALR - Allotment Remaining\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ALT"
+    }
+  }, [_vm._v("ALT - Allotment Total\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AMD"
+    }
+  }, [_vm._v("AMD - Amendment\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "API"
+    }
+  }, [_vm._v("API - Air Waybill Piece\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ARD"
+    }
+  }, [_vm._v("ARD - Agent Reference Data\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ARI"
+    }
+  }, [_vm._v("ARI - AWB Recapitulation\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ATH"
+    }
+  }, [_vm._v("ATH - Authorisation")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ATW"
+    }
+  }, [_vm._v("ATW - AWB Total Weight\n                                                                    Summary")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AUD"
+    }
+  }, [_vm._v("AUD - Allotment Used Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AVS"
+    }
+  }, [_vm._v("AVS - Availability\n                                                                    Supplementary Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "BGD"
+    }
+  }, [_vm._v("BGD - Baggage Detail\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "BGT"
+    }
+  }, [_vm._v("BGT - Baggage Tag\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "BRK"
+    }
+  }, [_vm._v("BRK - Broker")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CAI"
+    }
+  }, [_vm._v("CAI - CCA/Adjustment\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CAN"
+    }
+  }, [_vm._v("CAN - Customs Action\n                                                                    Notification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CAS"
+    }
+  }, [_vm._v("CAS - CCA/Adjustment\n                                                                    Supplementary Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CBD"
+    }
+  }, [_vm._v("CBD - CASS Billing Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CBI"
+    }
+  }, [_vm._v("CBI - CASS Billing\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CBP"
+    }
+  }, [_vm._v("CBP - CASS Billing Period\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CBR"
+    }
+  }, [_vm._v("CBR - Courier Baggage\n                                                                    Receiver")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CBS"
+    }
+  }, [_vm._v("CBS - Courier Baggage Sender\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CBV"
+    }
+  }, [_vm._v("CBV - Courier Baggage\n                                                                    Voucher Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CCD"
+    }
+  }, [_vm._v("CCD - Consignment Control\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CCL"
+    }
+  }, [_vm._v("CCL - Cargo Control Location\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CDC"
+    }
+  }, [_vm._v("CDC - CC Charges in\n                                                                    Destination Currency")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CDI"
+    }
+  }, [_vm._v("CDI - Charge Declarations\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CER"
+    }
+  }, [_vm._v("CER - AWB Content\n                                                                    Certification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CID"
+    }
+  }, [_vm._v("CID - Correction\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CIH"
+    }
+  }, [_vm._v("CIH - CASS Invoice Header\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CIN"
+    }
+  }, [_vm._v("CIN - CASS Identification\n                                                                    Number")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CMI"
+    }
+  }, [_vm._v("CMI - Consignment Onward\n                                                                    Movement Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CND"
+    }
+  }, [_vm._v("CND - Customs Notification\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CNE"
+    }
+  }, [_vm._v("CNE - Consignee")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "COI"
+    }
+  }, [_vm._v("COI - Commission Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "COL"
+    }
+  }, [_vm._v("COL - Collect Charge Summary\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "COM"
+    }
+  }, [_vm._v("COM - Embargoed Commodities\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "COR"
+    }
+  }, [_vm._v("COR - Customs Origin\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CRD"
+    }
+  }, [_vm._v("CRD - Carrier Reference Data\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CRR"
+    }
+  }, [_vm._v("CRR - Embargo Carriage\n                                                                    Restrictions")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CTI"
+    }
+  }, [_vm._v("CTI - CCA/Adjustment Total\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CTW"
+    }
+  }, [_vm._v("CTW - CCA/Adjustment Total\n                                                                    Weight Summary")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CUR"
+    }
+  }, [_vm._v("CUR - Currency Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CUS"
+    }
+  }, [_vm._v("CUS - Customer\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CVD"
+    }
+  }, [_vm._v("CVD - Charge Declarations\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CWI"
+    }
+  }, [_vm._v("CWI - CASS AWB Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DAI"
+    }
+  }, [_vm._v("DAI - DGD Additional\n                                                                    Handling Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DAP"
+    }
+  }, [_vm._v("DAP - DGD “All Packed in\n                                                                    One” Indication")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DAT"
+    }
+  }, [_vm._v("DAT - DGD “All Packed in\n                                                                    One” Total")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DAU"
+    }
+  }, [_vm._v("DAU - DGD Item Authorisation\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DCI"
+    }
+  }, [_vm._v("DCI - DGD Emergency Contact\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DCL"
+    }
+  }, [_vm._v("DCL - Declarant")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DES"
+    }
+  }, [_vm._v("DES - Despatch Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DHD"
+    }
+  }, [_vm._v("DHD - DGD Header Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DII"
+    }
+  }, [_vm._v("DII - DGD Item Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DIM"
+    }
+  }, [_vm._v("DIM - Dimensions Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DNR"
+    }
+  }, [_vm._v("DNR - DGD Item Number\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DOC"
+    }
+  }, [_vm._v("DOC - Documentation\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DOS"
+    }
+  }, [_vm._v("DOS - DGD Overpack Summary\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DPI"
+    }
+  }, [_vm._v("DPI - DGD Item Packing Group\n                                                                    and Instructions")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DQP"
+    }
+  }, [_vm._v("DQP - DGD Item Quantity and\n                                                                    Type of Packing")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DRA"
+    }
+  }, [_vm._v("DRA - DGD Radioactive\n                                                                    Activity Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DRC"
+    }
+  }, [_vm._v("DRC - DGD Radioactive\n                                                                    Consignment Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DRP"
+    }
+  }, [_vm._v("DRP - DGD Radioactive\n                                                                    Packing Instructions")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DSN"
+    }
+  }, [_vm._v("DSN - DGD Item Shipping Name\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DSU"
+    }
+  }, [_vm._v("DSU - DGD Signatory Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DTN"
+    }
+  }, [_vm._v("DTN - Date/Time of\n                                                                    Notification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "EIC"
+    }
+  }, [_vm._v("EIC - Empty Equipment in\n                                                                    Compartment Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "EXP"
+    }
+  }, [_vm._v("EXP - Export")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "FLT"
+    }
+  }, [_vm._v("FLT - Flight Booking\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "FLT"
+    }
+  }, [_vm._v("FLT - Flight Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "GRI"
+    }
+  }, [_vm._v("GRI - Grand AWB\n                                                                    Recapitulation Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "GTI"
+    }
+  }, [_vm._v("GTI - Grand Total\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HAH"
+    }
+  }, [_vm._v("HAH - HWB Agent’s Head\n                                                                    Office")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HBS"
+    }
+  }, [_vm._v("HBS - House Waybill Summary\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HCD"
+    }
+  }, [_vm._v("HCD - HWB Consignment\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HDL"
+    }
+  }, [_vm._v("HDL - Handling Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HLC"
+    }
+  }, [_vm._v("HLC - HWB Letter of Credit\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HPI"
+    }
+  }, [_vm._v("HPI - House Waybill Piece\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HTS"
+    }
+  }, [_vm._v("HTS - Harmonised Tariff\n                                                                    Schedule Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "HWB"
+    }
+  }, [_vm._v("HWB - House Waybill")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "IMP"
+    }
+  }, [_vm._v("IMP - Import")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ISS"
+    }
+  }, [_vm._v("ISS - The Regulated Agent\n                                                                    Issuing the Security Status for a\n                                                                    Consignment")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ISU"
+    }
+  }, [_vm._v("ISU - AWB Issue Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ITA"
+    }
+  }, [_vm._v("ITA - Invoice Total Amount\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ITW"
+    }
+  }, [_vm._v("ITW - Invoice Total Weight\n                                                                    Summary")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "JST"
+    }
+  }, [_vm._v("JST - Embargo Justification\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "LOC"
+    }
+  }, [_vm._v("LOC - Location")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MAL"
+    }
+  }, [_vm._v("MAL - Mail")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MAT"
+    }
+  }, [_vm._v("MAT - Message Advice Type\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MBI"
+    }
+  }, [_vm._v("MBI - Master Waybill\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MCH"
+    }
+  }, [_vm._v("MCH - Mail Consignment\n                                                                    Header")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MCT"
+    }
+  }, [_vm._v("MCT - Mail Consignment Total\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MHU"
+    }
+  }, [_vm._v("MHU - Mail Handling Unit\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MID"
+    }
+  }, [_vm._v("MID - Mail Inbound Data\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MLI"
+    }
+  }, [_vm._v("MLI - Mail Label\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MOD"
+    }
+  }, [_vm._v("MOD - Mail Outbound Data\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MPI"
+    }
+  }, [_vm._v("MPI - Movement Priority\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MSD"
+    }
+  }, [_vm._v("MSD - Mail Status Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MSU"
+    }
+  }, [_vm._v("MSU - Message Sequence and\n                                                                    ULD Origin")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "MUD"
+    }
+  }, [_vm._v("MUD - Mail ULD Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NAM"
+    }
+  }, [_vm._v("NAM - Name")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NBI"
+    }
+  }, [_vm._v("NBI - Net Billing\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NEW"
+    }
+  }, [_vm._v("NEW - New Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NFY"
+    }
+  }, [_vm._v("NFY - Also Notify")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NFY"
+    }
+  }, [_vm._v("NFY - Notify Name and\n                                                                    Address")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NNS"
+    }
+  }, [_vm._v("NNS - Net/Net Sales")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "NOM"
+    }
+  }, [_vm._v("NOM - Nominated Handling\n                                                                    Party")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "OCI"
+    }
+  }, [_vm._v("OCI - Other Customs,\n                                                                    Security and Regulatory Control Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "OLD"
+    }
+  }, [_vm._v("OLD - Original Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "OPI"
+    }
+  }, [_vm._v("OPI - Other Participant\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "OSI"
+    }
+  }, [_vm._v("OSI - Other Service\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "OSS"
+    }
+  }, [_vm._v("OSS - The Regulated Agent\n                                                                    Accepting the Security Status for a\n                                                                    Consignment Issued by Another RA")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "OTH"
+    }
+  }, [_vm._v("OTH - Other Charges")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "PAS"
+    }
+  }, [_vm._v("PAS - Passenger Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "PID"
+    }
+  }, [_vm._v("PID - Product Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "PPD"
+    }
+  }, [_vm._v("PPD - Prepaid Charge Summary\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "PRD"
+    }
+  }, [_vm._v("PRD - Planning Request\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RCI"
+    }
+  }, [_vm._v("RCI - Recapitulation Amount\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "REC"
+    }
+  }, [_vm._v("REC - Receptacle Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "REF"
+    }
+  }, [_vm._v("REF - References")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RID"
+    }
+  }, [_vm._v("RID - Rate Information\n                                                                    Answer Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RIH"
+    }
+  }, [_vm._v("RIH - Rate Information\n                                                                    Answer Header")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RIR"
+    }
+  }, [_vm._v("RIR - Rate Information\n                                                                    Request Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RQD"
+    }
+  }, [_vm._v("RQD - Charge Calculation\n                                                                    Answer Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RQH"
+    }
+  }, [_vm._v("RQH - Charge Calculation\n                                                                    Request Header")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RQT"
+    }
+  }, [_vm._v("RQT - Charge Calculation\n                                                                    Answer Totals")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RQU"
+    }
+  }, [_vm._v("RQU - Charge Calculation\n                                                                    Request — ULD")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RQV"
+    }
+  }, [_vm._v("RQV - Charge Calculation\n                                                                    Request — Volume")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RTD"
+    }
+  }, [_vm._v("RTD - Rate Description\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RTG"
+    }
+  }, [_vm._v("RTG - Routing")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RTI"
+    }
+  }, [_vm._v("RTI - Recapitulation Total\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RTS"
+    }
+  }, [_vm._v("RTS - Embargo Routes/Areas\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SAA"
+    }
+  }, [_vm._v("SAA - Schedule and\n                                                                    Availability Information Answer Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SAR"
+    }
+  }, [_vm._v("SAR - Schedule and\n                                                                    Availability Information Request Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SCI"
+    }
+  }, [_vm._v("SCI - Special Customs\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SCS"
+    }
+  }, [_vm._v("SCS - Surface Charge Summary\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SDI"
+    }
+  }, [_vm._v("SDI - Surface Delivery\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SHP"
+    }
+  }, [_vm._v("SHP - Shipper")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SII"
+    }
+  }, [_vm._v("SII - Sales Incentive\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SKH"
+    }
+  }, [_vm._v("SKH - Schedule Information\n                                                                    Answer Header")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SLC"
+    }
+  }, [_vm._v("SLC - Status List Criteria\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SPH"
+    }
+  }, [_vm._v("SPH - Special Handling\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SPI"
+    }
+  }, [_vm._v("SPI - Surface Pickup\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SRA"
+    }
+  }, [_vm._v("SRA - Supplementary Rate\n                                                                    Information Answer Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SRI"
+    }
+  }, [_vm._v("SRI - Shipment Reference\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SRR"
+    }
+  }, [_vm._v("SRR - Supplementary Rate\n                                                                    Information Request Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SSI"
+    }
+  }, [_vm._v("SSI - Supplementary Status\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SSR"
+    }
+  }, [_vm._v("SSR - Special Service\n                                                                    Request")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "STI"
+    }
+  }, [_vm._v("STI - Storage Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "STS"
+    }
+  }, [_vm._v("STS - Status Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SVA"
+    }
+  }, [_vm._v("SVA - Surface Vehicle\n                                                                    Arrival Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SVD"
+    }
+  }, [_vm._v("SVD - Surface Vehicle\n                                                                    Departure Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SVL"
+    }
+  }, [_vm._v("SVL - Surface Vehicle Delay\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SVN"
+    }
+  }, [_vm._v("SVN - Surface Vehicle Next\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TAR"
+    }
+  }, [_vm._v("TAR - Total AWB\n                                                                    Recapitulation Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TCC"
+    }
+  }, [_vm._v("TCC - Total Collect Charges\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TID"
+    }
+  }, [_vm._v("TID - Terminal\n                                                                    Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TOT"
+    }
+  }, [_vm._v("TOT - Total Amount")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TRA"
+    }
+  }, [_vm._v("TRA - Transit")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TRN"
+    }
+  }, [_vm._v("TRN - Transfer/Transit\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TXS"
+    }
+  }, [_vm._v("TXS - Tax Summary")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "TXT"
+    }
+  }, [_vm._v("TXT - Free Text Description\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "UCI"
+    }
+  }, [_vm._v("UCI - ULD Connection\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "UDI"
+    }
+  }, [_vm._v("UDI - ULD Destination\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "UII"
+    }
+  }, [_vm._v("UII - ULD Inclusion\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ULD"
+    }
+  }, [_vm._v("ULD - ULD Description\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "UMI"
+    }
+  }, [_vm._v("UMI - ULD Movement\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "UPI"
+    }
+  }, [_vm._v("UPI - Unique Piece\n                                                                    Information")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "VCD"
+    }
+  }, [_vm._v("VCD - Void/Cancel Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "VOD"
+    }
+  }, [_vm._v("VOD - Vehicle Operator\n                                                                    Details")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "WBD"
+    }
+  }, [_vm._v("WBD - Waybill Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "WBH"
+    }
+  }, [_vm._v("WBH - Waybill Header Details\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "WBI"
+    }
+  }, [_vm._v("WBI - Waybill Information\n                                                                ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "WBL"
+    }
+  }, [_vm._v("WBL - Waybill Details\n                                                                ")])])], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
       "padding-left": "2px"
     },
@@ -2641,17 +2871,129 @@ var render = function render() {
       "border-radius": "0px"
     },
     model: {
-      value: _vm.form.payment_info.type_of_payment,
+      value: _vm.oci_info.custom_info_identifier,
       callback: function callback($$v) {
-        _vm.$set(_vm.form.payment_info, "type_of_payment", $$v);
+        _vm.$set(_vm.oci_info, "custom_info_identifier", $$v);
       },
-      expression: "form.payment_info.type_of_payment"
+      expression: "oci_info.custom_info_identifier"
     }
   }, [_c("option", {
     attrs: {
       value: ""
     }
-  }, [_vm._v("Select a code")])])], 1)], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }, [_vm._v("Select a code")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "A"
+    }
+  }, [_vm._v("A - Automated Broker Interface\n                                                               (ABI) Filer Code")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "AC"
+    }
+  }, [_vm._v("AC - Account Consignor\n                                                               (consignor for all cargo aircraft)")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "C"
+    }
+  }, [_vm._v("C - Certificate Number\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CP"
+    }
+  }, [_vm._v("CP - Contact Person")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "CT"
+    }
+  }, [_vm._v("CT- Contact Telephone Number\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "D"
+    }
+  }, [_vm._v("D - Dangerous Goods")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "DI"
+    }
+  }, [_vm._v("DI - Declaration\n                                                               Identification")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "E"
+    }
+  }, [_vm._v("E - Authorised Economic\n                                                               Operator")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ED"
+    }
+  }, [_vm._v("ED - Expiry Date")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "F"
+    }
+  }, [_vm._v("F - Facilities Information and\n                                                               Resource Management")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "I"
+    }
+  }, [_vm._v("I - Item Number")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "KC"
+    }
+  }, [_vm._v("KC - Known Consignor")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "L"
+    }
+  }, [_vm._v("L - Exemption Legend")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "LI"
+    }
+  }, [_vm._v("LI - License Identification\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "M"
+    }
+  }, [_vm._v("M - Movement Reference Number\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "N"
+    }
+  }, [_vm._v("N - Seal Number")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "P"
+    }
+  }, [_vm._v("P - Packing List Number\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RA"
+    }
+  }, [_vm._v("RA - Regulated Agent")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "RC"
+    }
+  }, [_vm._v("RC - Regulated Carrier\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "S"
+    }
+  }, [_vm._v("S - System Downtime Reference\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SD"
+    }
+  }, [_vm._v("SD - Security Status Date\n                                                               & Time")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SM"
+    }
+  }, [_vm._v("SM - Screening Method\n                                                           ")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SN"
+    }
+  }, [_vm._v("SN - Security Status Name of\n                                                               Issuer")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "SS"
+    }
+  }, [_vm._v("SS - Security Status")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "ST"
+    }
+  }, [_vm._v("ST - Security Textual\n                                                               Statement")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "T"
+    }
+  }, [_vm._v("T - Trader Identification\n                                                               Number")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "U"
+    }
+  }, [_vm._v("U - Unique Consignment\n                                                               Reference Number")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "V"
+    }
+  }, [_vm._v("V - Invoice Number")])])], 1)], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
     attrs: {
       cols: "auto"
     }
@@ -2689,11 +3031,11 @@ var render = function render() {
       id: "input-origin"
     },
     model: {
-      value: _vm.iata_cass.origin,
+      value: _vm.oci_info.supplementary_info,
       callback: function callback($$v) {
-        _vm.$set(_vm.iata_cass, "origin", $$v);
+        _vm.$set(_vm.oci_info, "supplementary_info", $$v);
       },
-      expression: "iata_cass.origin"
+      expression: "oci_info.supplementary_info"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
     staticStyle: {
@@ -2707,8 +3049,11 @@ var render = function render() {
       "border-radius": "2px",
       border: "1px solid #000",
       padding: "4px 20px"
+    },
+    on: {
+      click: _vm.addOtherCustomInfo
     }
-  }, [_vm._v("Add")])], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }, [_vm._v(" " + _vm._s(_vm.editIndex !== null ? "Update" : "Add"))])], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mt-2",
     attrs: {
       cols: "auto"
@@ -2720,32 +3065,60 @@ var render = function render() {
     staticStyle: {
       width: "650px"
     }
-  }, [_vm._v("Other Customs Information")])])])])])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
-    staticStyle: {
-      width: "300px"
-    },
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("p", {
-    staticClass: "pl-2"
-  }, [_vm._v("AZ")])]), _vm._v(" "), _c("b-col", {
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("p", [_vm._v("API")])]), _vm._v(" "), _c("b-col", {
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("p", [_vm._v("DI")])]), _vm._v(" "), _c("b-col", {
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("p", [_vm._v("ad12")])]), _vm._v(" "), _c("b-col", {
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("p", [_vm._v("delete")])])], 1)], 1)], 1)], 1)], 1), _vm._v(" "), _c("div", {
+  }, [_vm._v("Other Customs Information")])])])])])], 1), _vm._v(" "), _vm._l(_vm.form.oci_entries, function (row, index) {
+    return _c("b-row", {
+      key: index
+    }, [_c("b-col", {
+      staticStyle: {
+        width: "300px"
+      },
+      attrs: {
+        cols: "auto"
+      }
+    }, [_c("p", {
+      staticClass: "pl-2"
+    }, [_vm._v(_vm._s(row.country_code))])]), _vm._v(" "), _c("b-col", {
+      attrs: {
+        cols: "auto"
+      }
+    }, [_c("p", [_vm._v(_vm._s(row.info_identifier))])]), _vm._v(" "), _c("b-col", {
+      attrs: {
+        cols: "auto"
+      }
+    }, [_c("p", [_vm._v(_vm._s(row.custom_info_identifier))])]), _vm._v(" "), _c("b-col", {
+      attrs: {
+        cols: "auto"
+      }
+    }, [_c("p", [_vm._v(_vm._s(row.supplementary_info))])]), _vm._v(" "), _c("b-col", {
+      attrs: {
+        cols: "auto"
+      }
+    }, [row.country_code && row.info_identifier && row.custom_info_identifier && row.supplementary_info ? _c("p", [_c("b-icon", {
+      staticClass: "mr-2",
+      staticStyle: {
+        cursor: "pointer"
+      },
+      attrs: {
+        icon: "pencil",
+        "font-scale": "1"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.editOciInfo(index);
+        }
+      }
+    }), _vm._v(" "), _c("b-icon", {
+      attrs: {
+        icon: "trash",
+        "font-scale": "1"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.deleteOciInfo(index);
+        }
+      }
+    })], 1) : _vm._e()])], 1);
+  })], 2)], 1)], 1)], 1), _vm._v(" "), _c("div", {
     staticClass: "pt-6"
   }, [_c("div", {
     staticClass: "d-flex justify-content-end"
@@ -2756,11 +3129,124 @@ var render = function render() {
       "border-radius": "0px"
     },
     on: {
-      click: function click($event) {}
+      click: function click($event) {
+        return _vm.updateform(_vm.consolidation.id);
+      }
     }
-  }, [_vm._v("Add detail row")])], 1)])], 1)]), _vm._v(" "), _c("hr", {
+  }, [_vm._v("Update detail row")])], 1)])], 1)]), _vm._v(" "), _c("hr", {
     staticClass: "hr"
-  }), _vm._v(" "), _c("div", {
+  }), _vm._v(" "), _vm._m(2), _vm._v(" "), _vm._l(_vm.consolidation, function (waybill, index) {
+    return _c("div", {
+      key: index,
+      staticClass: "d-flex",
+      staticStyle: {
+        "background-color": "#E6EBFF"
+      }
+    }, [_c("div", {
+      staticClass: "d-flex justify-content-center",
+      staticStyle: {
+        width: "70px",
+        background: "#A4D3EE"
+      }
+    }, [_c("div", [_c("b-icon", {
+      attrs: {
+        icon: "pencil",
+        "font-scale": "1"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.editConsolidation(waybill.id);
+        }
+      }
+    }), _vm._v("\n                                 \n                                "), _c("b-icon", {
+      attrs: {
+        icon: "trash",
+        "font-scale": "1"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.deleteConsolidation(waybill.id);
+        }
+      }
+    })], 1)]), _vm._v(" "), _c("div", {
+      staticClass: "pl-2",
+      staticStyle: {
+        width: "200px"
+      }
+    }, [_vm._v("\n                            " + _vm._s(waybill.id) + "\n                        ")]), _vm._v(" "), _c("div", {
+      staticStyle: {
+        width: "200px"
+      }
+    }, [_vm._v("\n                            " + _vm._s(waybill.master_origin) + "\n                        ")]), _vm._v(" "), _c("div", {
+      staticStyle: {
+        width: "200px"
+      }
+    }, [_vm._v("\n                            " + _vm._s(waybill.master_destination) + "\n                        ")]), _vm._v(" "), _c("div", {
+      staticStyle: {
+        width: "200px"
+      }
+    }, [_vm._v("\n                            T/" + _vm._s(waybill.pieces) + "/K/" + _vm._s(waybill.gross_weight) + " \n                        ")]), _vm._v(" "), _c("div", {
+      staticStyle: {
+        width: "407px"
+      }
+    }, [_vm._v("\n                            " + _vm._s(waybill.description) + "\n                        ")])]);
+  }), _vm._v(" "), _vm._m(3), _vm._v(" "), _c("div", {
+    staticClass: "py-2"
+  }, [_c("div", {
+    staticClass: "d-flex justify-content-end"
+  }, [_c("b-button", {
+    staticClass: "mr-2",
+    on: {
+      click: _vm.getAgent
+    }
+  }, [_vm._v("Generate PDF")]), _vm._v(" "), _c("b-button", {
+    staticClass: "mr-2",
+    on: {
+      click: function click($event) {
+        return _vm.converXml(_vm.form.awb_no);
+      }
+    }
+  }, [_vm._v("Send")])], 1)])], 2)]], 2)], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
+    staticClass: "h_background_color text-white pt-2 pb-2"
+  }, [_c("table", [_c("tr", [_c("th", {
+    staticClass: "pl-2"
+  }, [_vm._v("\n                                    Create Electronic Consolidation (FHL)\n                                ")])])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", {
+    staticClass: "h_background_color"
+  }, [_c("th", {
+    staticClass: "form-control1 text-white",
+    staticStyle: {
+      width: "60px !important"
+    }
+  }, [_vm._v("Action")]), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }, [_vm._v("Air Waybill Number")]), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }, [_vm._v("Master Origin")]), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }, [_vm._v("Master Destination")]), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }, [_vm._v("Air Waybill Quantity")]), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  }), _vm._v(" "), _c("th", {
+    staticClass: "form-control1 text-white"
+  })])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
     staticClass: "pt-6"
   }, [_c("table", [_c("tr", {
     staticClass: "h_background_color"
@@ -2794,49 +3280,11 @@ var render = function render() {
     staticStyle: {
       width: "407px"
     }
-  }, [_vm._v("Nature of Goods")])])])]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex",
-    staticStyle: {
-      "background-color": "#E6EBFF"
-    }
-  }, [_c("div", {
-    staticClass: "d-flex justify-content-center",
-    staticStyle: {
-      width: "70px",
-      background: "#A4D3EE"
-    }
-  }, [_c("div", {}, [_c("b-icon", {
-    attrs: {
-      icon: "pencil",
-      "font-scale": "1"
-    }
-  }), _vm._v("\n                                 \n                                "), _c("b-icon", {
-    attrs: {
-      icon: "trash",
-      "font-scale": "1"
-    }
-  })], 1)]), _vm._v(" "), _c("div", {
-    staticClass: "pl-2",
-    staticStyle: {
-      width: "200px"
-    }
-  }, [_vm._v("\n                            EX17093006IN\n                        ")]), _vm._v(" "), _c("div", {
-    staticStyle: {
-      width: "200px"
-    }
-  }, [_vm._v("\n                            BLR\n                        ")]), _vm._v(" "), _c("div", {
-    staticStyle: {
-      width: "200px"
-    }
-  }, [_vm._v("\n                            LAX\n                        ")]), _vm._v(" "), _c("div", {
-    staticStyle: {
-      width: "200px"
-    }
-  }, [_vm._v("\n                            T/1/K/10.5 \n                        ")]), _vm._v(" "), _c("div", {
-    staticStyle: {
-      width: "407px"
-    }
-  }, [_vm._v("\n                            BRANDED SNACKS BISCU\n                        ")])]), _vm._v(" "), _c("div", {
+  }, [_vm._v("Nature of Goods")])])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
     staticClass: "d-flex justify-content-center text-danger mt-2"
   }, [_c("div", {
     staticStyle: {
@@ -2848,25 +3296,8 @@ var render = function render() {
     staticStyle: {
       margin: "0px"
     }
-  }, [_vm._v("Please note the following warning(s):")]), _vm._v(" "), _c("ul", [_c("li", [_vm._v("Weight mismatch. Master weight (723) is not the same as HWBs weight (1050.86)")])])])]), _vm._v(" "), _c("div", {
-    staticClass: "py-2"
-  }, [_c("div", {
-    staticClass: "d-flex justify-content-end"
-  }, [_c("b-button", {
-    staticClass: "mr-2",
-    on: {
-      click: _vm.getAgent
-    }
-  }, [_vm._v("Generate PDF")]), _vm._v(" "), _c("b-button", {
-    staticClass: "mr-2",
-    on: {
-      click: function click($event) {
-        return _vm.converXml(_vm.form.first_box.awb_no);
-      }
-    }
-  }, [_vm._v("Send")])], 1)])])])]], 2)], 2);
-};
-var staticRenderFns = [];
+  }, [_vm._v("Please note the following warning(s):")]), _vm._v(" "), _c("ul", [_c("li", [_vm._v("Weight mismatch. Master weight (723) is not the same as HWBs weight (1050.86)")])])])]);
+}];
 render._withStripped = true;
 
 

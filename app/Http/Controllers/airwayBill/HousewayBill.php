@@ -36,7 +36,7 @@ class HousewayBill extends Controller
             'ship_address_line_2' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'ship_post_code' => 'nullable|string|max:9',
+            'ship_post_code' => 'nullable|regex:/^[0-9]+$/|max:9',
             'ship_state' => 'nullable|string|max:9',
             'ship_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'ship_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
@@ -48,8 +48,7 @@ class HousewayBill extends Controller
         }
         //for update
         $WayBillAddress = WayBillAddress::where('awb_id', $hawb_no)->first();
-        if(!empty($hawb_no)){
-            dd($hawb_no);die;
+        if(!empty($WayBillAddress)){
             $WayBillAddress->awb_id = $hawb_no;
             $WayBillAddress->ship_name = $shipper_address['ship_name'];
             $WayBillAddress->ship_account = $shipper_address['ship_account'];
@@ -71,7 +70,6 @@ class HousewayBill extends Controller
         }
         //for insert
         if (!isset($WayBillAddress))
-        dd("sdbfhdsfs",$hawb_no);die;
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
@@ -92,7 +90,7 @@ class HousewayBill extends Controller
         if ($is_shipper_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
             if(!empty($hawb_no)){
-               
+                dd();
                  $SavedAddress->awb_id = $hawb_no;
                 $SavedAddress->user_id = '123456';
                 $SavedAddress->address_type = 'shipper_address';
@@ -108,6 +106,7 @@ class HousewayBill extends Controller
                 $SavedAddress->phone = $shipper_address['ship_phone'];
                 $SavedAddress->fax = $shipper_address['ship_fax'];
                 $SavedAddress->telex = $shipper_address['ship_telex'];
+                dd($SavedAddress);die;
                 $SavedAddress->save();
                 return response()->json([
                     'message' => 'Shippers Information updated successfully',
@@ -145,7 +144,7 @@ class HousewayBill extends Controller
             'cons_address_line_2' => 'required|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'cons_post_code' => 'nullable|string|max:9',
+            'cons_post_code' => 'nullable|regex:/^[0-9]+$/|max:9',
             'cons_state' => 'nullable|string|max:9',
             'cons_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'cons_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
@@ -206,7 +205,7 @@ class HousewayBill extends Controller
             'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'also_post_code' => 'nullable|string|max:9',
+            'also_post_code' => 'nullable|regex:/^[0-9]+$/|max:9',
             'also_state' => 'nullable|string|max:9',
             'also_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'also_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
@@ -222,7 +221,7 @@ class HousewayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->also_name = $also_notify_address['also_name'];
-        $WayBillAddress->cons_address = $also_notify_address['also_address'];
+        $WayBillAddress->also_address = $also_notify_address['also_address'];
         $WayBillAddress->also_address_line_2 = $also_notify_address['also_address_line_2'];
         $WayBillAddress->also_city = $also_notify_address['also_city'];
         $WayBillAddress->also_airport_code = $also_notify_address['also_airport_code'];
@@ -258,7 +257,6 @@ class HousewayBill extends Controller
     }
     private function firstBox($first_box, $id = null)
     {
-        // Validate the data
         $validator = Validator::make($first_box, [
             'hawb_no' => 'required|regex:/^[a-zA-Z0-9]+$/|max:35',
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
@@ -414,17 +412,6 @@ class HousewayBill extends Controller
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);
-        // if(!empty($hawb_no)){
-        //     $HousewayBills->customs_origin_code = $custom_origin['customs_origin_code'];
-        // $HousewayBills->accounting_information = $custom_origin['accounting_information'];
-        // $HousewayBills->special_service_request = $custom_origin['special_service_request'];
-        // $HousewayBills->other_service_information = $custom_origin['other_service_information'];
-        // $HousewayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
-        // $HousewayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
-        // $HousewayBills->letter_credit = $custom_origin['letter_credit'];
-        // $HousewayBills->extra_print = $custom_origin['extra_print'];
-        // $HousewayBills->save();
-        // }
         if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
 
@@ -787,11 +774,6 @@ class HousewayBill extends Controller
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
-        return response()->json([
-            'message' => 'Update successful',
-            'data' => $main_return_data
-        ], 200);
-
         if (!empty($id) && !empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
             $error_data = $this->saveShipperAddress($id, $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
@@ -814,6 +796,22 @@ class HousewayBill extends Controller
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+            $error_data = $this->paymentInformation($id, $request->payment_info);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['payment_info'] = $error_data;
+        }
+        if (!empty($id) && !empty($request->charges)) {
+            $main_return_data['charges'] = $this->otherCharges($id, $request->charges);
+        }
+        if (!empty($id) && !empty($request->entries)) {
+            $main_return_data['entries'] = $this->consignmentInformation($id, $request->entries);
+        }
+        if (!empty($id) && !empty($request->tableCodes) && is_array($request->tableCodes)) {
+            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($id, $request->tableCodes);
         }
     }
 
@@ -841,7 +839,6 @@ class HousewayBill extends Controller
             'otherCharge',
             'otherCustomInformation'
         ])->get();
-
         if ($housewayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }

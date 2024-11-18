@@ -2,6 +2,7 @@
 // auth()->guard('admin-api')->user()->id;
 
 use App\Http\Controllers\airwayBill\AirwayBill;
+use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
@@ -106,17 +107,23 @@ Route::post('/create-houseway-bill', [HousewayBill::class,'store']);
 Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 
 Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
-// Route::get('/get-country', [HousewayBill::class,'getCountry']);
+Route::get('/get-country', [HousewayBill::class,'getCountry']);
 
 Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion']);
 Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
 Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
 Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
-Route::get('/get-location', [LocationController::class,'getLocation']);
+Route::get('/all-airway-bill', [AirwayBill::class,'getAllawb']);
+Route::put('/update-airway-bill/{id}', [AirwayBill::class,'update']);
+Route::get('/airway-bill/{id}', [AirwayBill::class,'show']);
+
 Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);
 Route::get('/all-houseway-bill', [HousewayBill::class,'getAllHawb']);
+Route::get('/all-consolidation',[ConsolidationController::class,'index']);
+Route::put('/update-consolidation/{id}', [ConsolidationController::class,'update']);
+Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
 
 
-
+Route::get('/get-location', [LocationController::class,'getLocation']);
 

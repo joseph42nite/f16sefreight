@@ -38,7 +38,16 @@ class AirwayBills extends Model
     {
         return $this->hasMany(OtherCharge::class, 'awb_id', 'id');
     }
-    
+
+    public function otherCustomInformation()
+    {
+        return $this->hasMany(OtherCustomInformation::class, 'awb_id', 'id');
+    }
+
+    public function savedAddress()
+    {
+        return $this->hasOne(SavedAddress::class, 'awb_id', 'id');
+    }
     // protected $fillable = [
     //     'awb_code',
     //     'awb_no',

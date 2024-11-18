@@ -15837,6 +15837,12 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
         return __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_WebDoc_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/WebDoc */ "./resources/js/src/view/pages/WebDoc.vue"));
       }
     }, {
+      path: '/edit-airway-bill/:id?',
+      name: 'EditAirwayBill',
+      component: function component() {
+        return __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_WebDoc_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/WebDoc */ "./resources/js/src/view/pages/WebDoc.vue"));
+      }
+    }, {
       name: "House Way Bill",
       path: "/house-way-bill",
       component: function component() {

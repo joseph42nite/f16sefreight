@@ -65,6 +65,24 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "all-company",
+          name: "superadmin-allcompany",
+          component: () => import("@/view/superadmin/AllCompany.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "all-branch",
+          name: "superadmin-allbranch",
+          component: () => import("@/view/superadmin/AllBranch.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "branch-users",
+          name: "superadmin-branchusers",
+          component: () => import("@/view/superadmin/BranchUsers.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "rate-import",
           name: "superadmin-ImportExcel",
           component: () => import("@/view/superadmin/ImportExcel.vue"),

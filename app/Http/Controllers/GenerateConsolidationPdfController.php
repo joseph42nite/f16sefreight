@@ -45,7 +45,7 @@ class GenerateConsolidationPdfController extends Controller
                 $paymentInfo = PaymentInfo::where('awb_id', $awb_id)
                 ->first();
 
-                $pdf = Pdf::loadView('generate-Consolidation-pdf', compact('airWayBill', 'houseWayBills', 'agentInfo', 'wayBillAddress', 'wayBillConsignmentData', 'paymentInfo'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
+                $pdf = Pdf::loadView('./pdf/generate-Consolidation-pdf', compact('airWayBill', 'houseWayBills', 'agentInfo', 'wayBillAddress', 'wayBillConsignmentData', 'paymentInfo'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
                 return $pdf->stream();
             }
     

@@ -12,15 +12,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class GeneratePdfController extends Controller
+class GenerateAwbPdfController extends Controller
 {
-    public function downloadPdf($awb_code = '123', $awbId = '12345678')
+    public function downloadPdf($id)
     {
         // Fetch the AirWayBill along with related data
        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'customInfo' => function ($query) {
         $query->select('awb_id'); // Specify limited columns
     }, 'agentsInfo', 'otherCharge'])
-            ->where('awb_no', $awbId)
+            ->where('id', $id)
             ->first();
             
             $specialHandlingInfo = '';
@@ -38,11 +38,8 @@ class GeneratePdfController extends Controller
                     $hsCode = implode(' ', $decodedInfo);
                 }
             }   
-            // dd($airWayBill);
-            // Return a view with the data or handle it as needed
-            //return view('airwaybills.show', compact('airWayBill'));
 
-        $pdf = Pdf::loadView('generate-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
+        $pdf = Pdf::loadView('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
         return $pdf->stream();
     
     }

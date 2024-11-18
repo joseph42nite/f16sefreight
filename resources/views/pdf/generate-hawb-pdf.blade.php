@@ -1020,11 +1020,13 @@
                                                                                             <tr>
                                                                                                 <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     @php
-                                                                                                        $decodedInfo = json_decode($houseWayBill->special_handling_info, true);
-                                                                                                        foreach ($decodedInfo as $key => $value) 
-                                                                                                        {
-                                                                                                            echo $decodedInfo[$key] .'<br>';
+                                                                                                        $splHandlingInfo = json_decode($houseWayBill->special_handling_info, true);
+                                                                                                        if ($splHandlingInfo != null) {
+                                                                                                            foreach ($splHandlingInfo as $key => $value) 
+                                                                                                            {
+                                                                                                                echo $splHandlingInfo[$key].'<br>';
 
+                                                                                                            }
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>

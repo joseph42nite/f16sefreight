@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\airwayBill;
 
 use App\Agent;
+use App\Airline;
 use App\AirwayBills;
 use App\Http\Controllers\Controller;
 use App\PaymentInfo;
@@ -836,5 +837,44 @@ class AirwayBill extends Controller
             ], 200);
         }
         return response()->json(['error' => 'Address not found'], 404);
+    }
+
+    public function loadAWB(Request $request)
+    {
+        $validated = $request->validate([
+            'awb_code' => 'required|regex:/^[0-9]+$/|size:3', // AWB Code: 3 numeric characters
+            'awb_no' => 'required',
+        ]);
+        $awb_code = $request->input('awb_code');
+        $awb_no = $request->input('awb_no');
+        $data = AirwayBills::where('awb_code', $awb_code)
+            ->where('awb_no', $awb_no)
+            ->first();
+        if ($data) {
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No data found for the provided AWB code and number.',
+            ]);
+        }
+    }
+
+    public function getAwbPrefixData($code){
+        $awbDetails = Airline::where('prefix', $code)->first();
+       
+        if (!empty($awbDetails)) {
+            return response()->json([
+                'name' => $awbDetails->name,
+                'code' => $awbDetails->code,
+                'prefix' => $awbDetails->prefix,
+            ]);
+        }
+        else{
+            return response()->json(null, 404);
+        }
     }
 }

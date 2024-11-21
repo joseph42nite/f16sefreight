@@ -95,7 +95,7 @@
                         <b-row class="mt-5">
                             <b-col>
                                 <div v-for="item in data_items" :key="item.id">
-                                    <a href="#" class="custom-link" @click="getAirWayBill(item.id)">
+                                    <a href="#" class="custom-link" >
                                         <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
                                             <span class="mr-2 mt-3c">
                                                 <!-- <a href="#" class="custom-link" @click="navigate">Edit e-AWB Data</a> -->
@@ -205,10 +205,12 @@
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"
                                         v-model="form.first_box.awb_code"
-                                        :class="{ 'is-invalid': form.errors.has('awb_code') }"></b-form-input>
+                                        :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput"></b-form-input>
                                     <has-error :form="form" field="awb_code"></has-error>
                                 </b-form-group>
+                                <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p>
                             </b-col>
+                            
                             -
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -216,7 +218,7 @@
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px"
                                         v-model="form.first_box.awb_no"
-                                        :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
+                                        :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput"></b-form-input>
                                     <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
                             </b-col>
@@ -234,6 +236,27 @@
                                         value="true">AWB</b-form-radio>
                                 </b-form-group>
                             </b-col>
+                        </b-row>
+                        <b-row class="justify-content-start">
+                            <div v-if="awbDetails && awbId && existingData">
+                                <p>The Air Waybill number has been used (printed at:)</p>
+                                <p>
+                                    Load content:
+                                    <span style="cursor: pointer; color: blue;" >
+                                        <router-link
+                                            v-slot="{ navigate, href }"
+                                            :to="'/edit-airway-bill/' + awbId"
+                                            custom
+                                        >
+                                            <p @click="confirmReload">{{ awbId}}</p>
+                                        </router-link>
+                                    </span>
+                                </p>
+                            </div>
+                            <!-- Error Message -->
+                            <!-- <div v-if="awbError" class="alert alert-danger">
+                                {{ awbError }}
+                            </div> -->
                         </b-row>
                         <b-row class="justify-content-center mt-5">
                             <b-col cols="auto" style="padding-left: 33.6%">
@@ -268,13 +291,27 @@
                                         content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
+                                            <!-- <div class="flex-grow-1">
                                                 <select class="custom-select form-control-sm" style="width: 320px" v-model="selectedShipper" @change="fillShipperDetails">
                                                     <option v-for="shipper in shippers" :key="shipper.id" :value="shipper.id">
                                                         {{ shipper.name }}
                                                     </option>
                                                 </select>
-                                            </div>
+                                            </div> -->
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
+                                                <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
+                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                    @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
+
+                                                    <div v-if="isDropdownOpen_shipper && filteredShippers.length" class="dropdown-options">
+                                                        <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
+                                                            {{ shipper.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="ship_name"></has-error>
+                                            </b-form-group>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
                                                 @click="showShipper = !showShipper"></b-icon>
                                         </div>
@@ -401,19 +438,24 @@
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1">
-                                                <!-- <select class="custom-select form-control-sm" style="width: 320px"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                    v-model="form.cons_name">
-                                                    <option disabled value=""> Select a Consignee</option>
-                                                    <option value="ABC">A</option>
-                                                    <option value="BDE">B</option>
-                                                    <option value="CAB">C</option>
-                                                </select> -->
-                                                <select class="custom-select form-control-sm" style="width: 320px" v-model="selectedConsignee" @change="fillConsigneeDetails">
+                                                <!-- <select class="custom-select form-control-sm" style="width: 320px" v-model="selectedConsignee" @change="fillConsigneeDetails">
                                                     <option v-for="consignee in consignees" :key="consignee.id" :value="consignee.id">
                                                         {{ consignee.name }}
                                                     </option>
-                                                </select>
+                                                </select> -->
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
+                                                    <div class="custom-dropdown" ref="dropdownContainer_consignee" @click="toggleDropdown_consignee">
+                                                        <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control" autocomplete="off"
+                                                        :class="{ 'is-invalid': form.errors.has('cons_name') }"
+                                                        @input="filterConsignee" @focus="toggleDropdown_consignee(true)" @blur="closeDropdown_consignee" />
+
+                                                        <div v-if="isDropdownOpen_consignee && filteredConsignees.length" class="dropdown-options">
+                                                            <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
+                                                                {{ consignee.name }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </b-form-group>
                                                 <has-error :form="form" field="cons_name"></has-error>
                                             </div>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
@@ -664,7 +706,7 @@
                                                             <td class="editable-cell w-10" style="width: 60px">
                                                                 <date-picker valueType="format"
                                                                     style="width: 30px !important;"
-                                                                    @change="handleDateChange"></date-picker>
+                                                                    @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -723,7 +765,7 @@
                                                         <td class="editable-cell w-10" style="width: 60px !important;">
                                                             <date-picker valueType="format"
                                                                 style=" width: 30px !important;"
-                                                                @change="handleDateChange"></date-picker>
+                                                                @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -782,7 +824,7 @@
                                                         <td class="editable-cell" style="width: 60px !important;">
                                                             <date-picker valueType="format"
                                                                 style=" width: 30px !important;"
-                                                                @change="handleDateChange"></date-picker>
+                                                                @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -853,8 +895,7 @@
                                     </b-button>
                                 </div>
                             </div>
-                            <b-button class="mt-5" v-b-modal.modal-consignment variant="warning">Add Consignment
-                                Information</b-button>
+                            <b-button class="mt-5" v-b-modal.modal-consignment variant="warning" @click="handleAddConsignment" :disabled="isConsignmentAdded">Add Consignment Information</b-button>
                             <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
                                 size="xl" ok-only hide-footer>
                                 <div class="d-block">
@@ -1544,7 +1585,7 @@
                                                                         v-model="agent_information.agent_issue_date" />
                                                                 </td>
                                                                 <date-picker valueType="format"
-                                                                    style=" width: 30px !important;"></date-picker>
+                                                                    style=" width: 30px !important;" @change="handleDateChange($event, 'agent_information.agent_issue_date')"></date-picker>
                                                             </tr>
                                                             <tr>
                                                                 <td class="editable-cell">Agent Account:</td>
@@ -3189,6 +3230,7 @@ import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
 import "vue2-datepicker/index.css";
+import debounce from 'lodash.debounce';
 export default {
     data() {
         return {
@@ -3264,6 +3306,7 @@ export default {
                 oci_entries: [],
                 tableCodes: [],
                 charges: [],
+                shipper_name: '',
                 totals:{
                     total_volume: null,
                     total_amount: 0,
@@ -3397,6 +3440,8 @@ export default {
             isDropdownOpen_to2: false,
             isDropdownOpen_to3: false,
             isDropdownOpen_from: false,
+            isDropdownOpen_shipper: false,
+            isDropdownOpen_consignee: false,
             selectedCode: '',
             manualCode: '',
             validationErrors: [],
@@ -3411,9 +3456,16 @@ export default {
             editIndex: null,
             edit_entry_index: null,
             countries: [],
-            existingData: [],
+            existingData: {},
             data_items: [],
             mode: 'add',
+            awbDetails: false,
+            awbError: null,
+            isConsignmentAdded: false, 
+            awbId: null,
+            filteredShippers: [],
+            filteredConsignees: [],
+            awb_prefix_message: '',
             items: [
                 {
                     url: "#webdoc",
@@ -3608,6 +3660,18 @@ export default {
         handleOk(bvModalEvent) {
             bvModalEvent.preventDefault();
         },
+        handleAddConsignment() {
+            if (this.isConsignmentAdded) {
+                this.$bvToast.toast('Consignment Information is already added.', {
+                title: 'Information',
+                variant: 'warning',
+                solid: true,
+                });
+            } else {
+                this.$refs.modalConsignment.show();
+                this.isConsignmentAdded = true;
+            }
+        },
         getCurrentDate() {
             const today = new Date();
             const day = today.getDate().toString().padStart(2, '0');
@@ -3621,11 +3685,15 @@ export default {
 
             return `${day}${month}`;
         },
-        handleDateChange(date) {
-            this.form.date = this.formatDate(date);
-        },
-        issueDateChange(date) {
-            this.form.issue_date = this.formatDate(date);
+        handleDateChange(date, field) {
+            const formattedDate = this.formatDate(date);
+            const keys = field.split('.');
+            let target = this;
+
+            for (let i = 0; i < keys.length - 1; i++) {
+            target = target[keys[i]];
+            }
+            target[keys[keys.length - 1]] = formattedDate;
         },
         // location
         getLocation() {
@@ -3636,12 +3704,14 @@ export default {
         fetchShippers() {
             ApiService.get(`/get-shippers`).then(response => {
                 this.shippers = response.data;
+                this.filteredShippers = this.shippers;
                 // console.log('Shipper', response.data);
             });
         },
         fetchConsignee() {
             ApiService.get(`/get-shippers`).then(response => {
                 this.consignees = response.data;
+                this.filteredConsignees = this.consignees;
                 // console.log('Shipper', response.data);
             });
         },
@@ -3722,9 +3792,13 @@ export default {
             ApiService.get(`/airway-bill/${id}`)
                 .then(response => {
                     this.existingData = response.data;
+                    this.awbDetails = true;
                     this.openForm('update', this.existingData.id);
                 })
                 .catch(error => {
+                    this.existingData = null;
+                    this.awbError = "No data found for this AWB ID.";
+                    this.awbDetails = false;
                     console.error("Failed to fetch data for updating:", error);
                 });
         },
@@ -3758,7 +3832,15 @@ export default {
                     // console.error('existingData is not an array:', this.existingData);
                     console.log("Add mode activated");
                 }
-            },
+        },
+        beforeRouteEnter(to, from) {
+            const awbId = to.params.id;
+            next(vm => {
+                if (awbId) {
+                    vm.getAirWayBill(awbId);
+                }
+            });
+        },
         getAgent(){
             ApiService.get(`/agent-info/`)
                 .then(({ data }) => {
@@ -3790,6 +3872,8 @@ export default {
             const selectedCode = this.selectedCode;
             this.form.tableCodes = [];
             this.form.tableCodes.push(selectedCode);
+            
+            this.form.first_box.awb = false;
         },
         addManualCode() {
             const code = this.selectedCode || this.manualCode.trim();
@@ -3881,6 +3965,9 @@ export default {
             this.form.entries.splice(index, 1);
             this.calculateTotalVolume();
             this.calculateTotalAmount();
+            if (this.form.entries.length === 0) {
+                this.isConsignmentAdded = false;
+            }
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
@@ -4248,15 +4335,119 @@ export default {
                 this.isDropdownOpen_from = false;
             }
         },
-        // selectOption_to(item) {
-        //     const { iata_code, destination } = item;
-        //     const finalSet = `${iata_code}, ${destination}`;
-        //     if (this.activeField) {
-        //         this.form.routing_information[this.activeField] = finalSet;
-        //     }
-        //     this.searchQuery_to = finalSet;
-        //     this.isDropdownOpen_to = false;
-        // },
+        onAWBInput: debounce(function () {
+            const { awb_code, awb_no } = this.form.first_box;
+            if (awb_code && awb_code.length === 3) {
+                ApiService.get(`/get-awbcode-prefix/${awb_code}`)
+                    .then((response) => {
+                        if (response.data) {
+                            const { name, code} = response.data;
+                            this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
+                        } else {
+                            this.awb_prefix_message = "No details found for this AWB code.";
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching AWB details:", error);
+                        this.awb_prefix_message = "Failed to fetch AWB details.";
+                    });
+            } else {
+                this.awb_prefix_message = "";
+            }
+            if (awb_code && awb_no) {
+                // this.awbError = null;
+                this.awb_prefix_message = "";
+                this.awbId = `${awb_code}${awb_no}`;
+                this.$router.push({ query: { awb_code, awb_no } });
+                this.getAirWayBill(this.awbId); 
+            } else{
+                this.awbId = null;
+                return;
+            }
+        }, 500),
+        confirmReload() {
+            const confirmed = window.confirm(
+            `Are you sure you want to reload the content for AWB: ${this.awbId}?`
+            );
+            if (confirmed) { 
+                this.awbDetails = false;
+                this.reloadPageWithContent();
+                // this.loadAWBData();
+            }
+        },
+        reloadPageWithContent() {
+            const awbId = this.awbId;
+            if (!awbId) {
+                console.error('AWB ID is missing');
+                return;
+            }
+               ApiService.get(`/airway-bill/${awbId}`)
+                .then(response => {
+                    this.existingData = response.data;
+                    if (this.existingData) {
+                        this.awbDetails = false;
+                        this.openForm('update', this.existingData.id);
+                        this.$router.push({ path: `/edit-airway-bill/${awbId}`});
+                        this.location.reload();
+                        // this.$router.push({ path: `/edit-airway-bill/${awbId}` });
+                       
+                    }else{
+                        this.awbDetails = false;
+                    }
+                })
+                .catch(error => {
+                    this.existingData = null;
+                    // this.awbError = "No data found for this AWB ID.";
+                    this.awbDetails = false;
+                    console.error("Failed to fetch data for updating:", error);
+                });
+        },
+        selectShipper(shipper) {
+            this.selectedShipper = shipper.id;
+            this.form.shipper_address = shipper.name;
+            // this.form.shipper_name = shipper.name;
+            this.fillShipperDetails(shipper.id);
+            this.isDropdownOpen_shipper = false;
+        },
+        toggleDropdown_shipper(event) {
+             this.isDropdownOpen_shipper = event;
+        },
+        closeDropdown_shipper(event) {
+            const dropdownContainer_shipper = this.$refs.dropdownContainer_shipper;
+            if (!dropdownContainer_shipper.contains(event.target)) {
+                this.isDropdownOpen_shipper = false;
+            }
+        },
+        filterShippers() {
+            // const query = this.form.shipper_name.toLowerCase();
+            const query = this.form.shipper_address.ship_name.toLowerCase()
+            if (!query) return this.shippers;
+            return this.filteredShippers = this.shippers.filter(shipper =>
+                shipper.name.toLowerCase().includes(query)
+            );
+        },
+        selectConsignee(consignee) {
+            this.selectedConsignee = consignee.id;
+            this.form.consignee_address = consignee.name;
+            this.fillConsigneeDetails(consignee.id);
+            this.isDropdownOpen_consignee = false;
+        },
+        toggleDropdown_consignee(event) {
+             this.isDropdownOpen_consignee = event;
+        },
+        closeDropdown_consignee(event) {
+            const dropdownContainer_consignee = this.$refs.dropdownContainer_consignee;
+            if (!dropdownContainer_consignee.contains(event.target)) {
+                this.isDropdownOpen_consignee = false;
+            }
+        },
+        filterConsignee() {
+            const query = this.form.consignee_address.cons_name.toLowerCase()
+            if (!query) return this.consignees;
+            return this.filteredConsignees = this.consignees.filter(consignee =>
+            consignee.name.toLowerCase().includes(query)
+            );
+        },
     },
     mounted(){
         this.calculateTotalVolume();
@@ -4267,6 +4458,7 @@ export default {
         window.addEventListener('click', this.closeDropdown_from);
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);
+        // window.addEventListener('click', this.closeDropdown_shipper);
         this.getLocation(); 
         this.fetchShippers();
         this.fillShipperDetails();
@@ -4274,6 +4466,16 @@ export default {
         this.fetchConsignee();
         this.getCountry();
         this.location = [];
+        const { awb_code, awb_no } = this.$route.query;
+        if (awb_code && awb_no) {
+            this.form.first_box.awb_code = awb_code;
+            this.form.first_box.awb_no = awb_no;
+        }
+        const awbId = this.$route.params.awbId; 
+        // const awbId = this.$route.params;
+        if (awbId) {
+            this.getAirWayBill(awbId);
+        }
     },
     watch: {
         // 'consignment_list': function () {
@@ -4328,9 +4530,38 @@ export default {
         },
         'agent_information.participate': function(newValue) {
             console.log('Participate value changed to:', newValue);
+        },
+        "form.shipper_address.ship_name"(newVal) {
+            if (!newVal) {
+                this.selectedShipper = null;
+                this.form.shipper_address = {
+                    ship_name: "",
+                };
+                this.filteredShippers = this.shippers;
+            }
+        },
+        "form.consignee_address.ship_name"(newVal) {
+            if (!newVal) {
+                this.selectedConsignee = null;
+                this.form.consignee_address = {
+                    cons_name: "",
+                };
+                this.filteredConsignees = this.consignees;
+            }
+        },
+        '$route.params.id'(newId) {
+            if (newId) {
+                this.getAirWayBill(newId);
+            }
         }
     },
     created() {
+        const id = this.$route.params.id;
+        if (id) {
+            this.isEdit = true;
+            this.getAirWayBill(id);
+        }
+        this.allAirwayBill();
         // this.getAgent();
     },
     computed: {

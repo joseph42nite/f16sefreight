@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\airwayBill\AirwayBill;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConversionController;
 
@@ -21,7 +22,6 @@ Route::get('test-route', [HousewayBill::class,'getCountry']);
 Route::get('download-pdf', [GeneratePdfController::class, 'downloadPdf']);
 Route::get('download-consolidation-pdf', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
 Route::get('download-hawb-pdf', [GenerateHawbPdfController::class, 'downloadHawbPdf']);
-
 Route::get('{any}', function () {
     return view('welcome');
 })->where('any', '(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');

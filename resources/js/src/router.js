@@ -18,17 +18,17 @@ export default new Router({
         },
         {
           name: "Web Doc",
-          path: "/web-doc",
+          path: "web-doc",
           component: () =>import("@/view/pages/WebDoc"),
         },
         {
-          path: '/edit-airway-bill/:id?',
+          path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',
           component: () => import("@/view/pages/WebDoc"),
         },
         {
           name: "House Way Bill",
-          path: "/house-way-bill",
+          path: "house-way-bill",
           component: () =>import("@/view/pages/HouseWayBill"),
         },
         {

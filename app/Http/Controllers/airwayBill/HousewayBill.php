@@ -90,7 +90,6 @@ class HousewayBill extends Controller
         if ($is_shipper_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
             if(!empty($hawb_no)){
-                dd();
                  $SavedAddress->awb_id = $hawb_no;
                 $SavedAddress->user_id = '123456';
                 $SavedAddress->address_type = 'shipper_address';
@@ -106,7 +105,6 @@ class HousewayBill extends Controller
                 $SavedAddress->phone = $shipper_address['ship_phone'];
                 $SavedAddress->fax = $shipper_address['ship_fax'];
                 $SavedAddress->telex = $shipper_address['ship_telex'];
-                dd($SavedAddress);die;
                 $SavedAddress->save();
                 return response()->json([
                     'message' => 'Shippers Information updated successfully',
@@ -114,7 +112,6 @@ class HousewayBill extends Controller
                 ], 200);
             }
             if (!isset($SavedAddress))
-            dd("sdfd");die;
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
             $SavedAddress->user_id = '123456';
@@ -838,7 +835,9 @@ class HousewayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->get();
+        ])->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
         if ($housewayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }

@@ -4,7 +4,7 @@ use App\Http\Controllers\airwayBill\AirwayBill;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConversionController;
 
-use App\Http\Controllers\GeneratePdfController;
+use App\Http\Controllers\GenerateAwbPdfController;
 use App\Http\Controllers\GenerateConsolidationPdfController;
 use App\Http\Controllers\GenerateHawbPdfController;
 
@@ -19,9 +19,10 @@ Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
 Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
 Route::get('test-route', [HousewayBill::class,'getCountry']);
 
-Route::get('download-pdf', [GeneratePdfController::class, 'downloadPdf']);
+Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
 Route::get('download-consolidation-pdf', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
-Route::get('download-hawb-pdf', [GenerateHawbPdfController::class, 'downloadHawbPdf']);
+Route::get('download-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadHawbPdf']);
+
 Route::get('{any}', function () {
     return view('welcome');
 })->where('any', '(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');

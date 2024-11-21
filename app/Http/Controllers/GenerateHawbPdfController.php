@@ -15,8 +15,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class GenerateHawbPdfController extends Controller
 {
-    public function downloadHawbPdf($hawb_id = '123456789') {
-
+    public function downloadHawbPdf($hawb_id) {
+        // $houseWayBill = HouseWayBills::where('id', $hawb_id)->first();
         $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
             ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
             ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
@@ -48,7 +48,7 @@ class GenerateHawbPdfController extends Controller
             }
         
             // dd($houseWayBill);
-        $pdf = Pdf::loadView('generate-hawb-pdf', compact('houseWayBill'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
+        $pdf = Pdf::loadView('./pdf/generate-hawb-pdf', compact('houseWayBill'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
         return $pdf->stream();
     }
 }

@@ -739,7 +739,9 @@ class AirwayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->get();
+        ])->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
         if ($airwayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }

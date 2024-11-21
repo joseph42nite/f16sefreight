@@ -87,41 +87,41 @@
 
                 <b-modal id="modal-s" title="Latest Messages" ok-only>
                     <div class="d-block">
-                        <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
+                        <!-- <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
                             <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
                                 name="radio-options-slots"></b-form-radio-group>
                         </b-form-group>
-                        <hr class="hr" />
-                        <b-row class="mt-5">
+                        <hr class="hr" /> -->
+                        <b-row>
                             <b-col>
                                 <div v-for="item in data_items" :key="item.id">
                                     <a href="#" class="custom-link" >
                                         <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                            <span class="mr-2 mt-3c">
-                                                <!-- <a href="#" class="custom-link" @click="navigate">Edit e-AWB Data</a> -->
-                                                <p @click="navigate">Edit e-AWB Data </p>
-                                            </span>
+                                            <p @click="navigate" class="mb-0">
+                                                {{ item.awb_code }}-{{ item.awb_no }} 
+                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                            </p>
                                        </router-link>
                                     </a>
+                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                            <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                        </router-link>
+                                    </a>
+                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                            <p @click="navigate" class="mb-0 ml-2">Create House Waybill from e-AWB Data </p>
+                                        </router-link>
+                                    </a>
+                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                        </router-link>
+                                    </a>
+                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                 </div>
-                                <!-- <a href="" class="custom-link">Edit e-AWB Data</a> -->
-                                <a href="" class="custom-link">Copy e-AWB Data</a>
-                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                <a href="" class="custom-link">Create Booking from e-AWB Data</a>
-                                <a href="" class="custom-link">Create Flight Status from e-AWB Data</a>
-                                <a href="" class="custom-link">Edit label</a>
-                            </b-col>
-                            <b-col>
-                                <a href="" class="custom-link">e-AWB Pdf file</a>
-                                <a href="" class="custom-link">Multipage e-AWB Pdf</a>
-                                <a href="" class="custom-link">Multipage e-AWB Pdf with back pages</a>
-                                <a href="" class="custom-link">Without IATA template</a>
-                                <a href="" class="custom-link">1 Page generic e-AWB label</a>
-                                <a href="" class="custom-link">e-AWB label per item (50 pages)</a>
-                                <a href="" class="custom-link">Cargo Pouch label as a PDF</a>
                             </b-col>
                         </b-row>
-                        <p>Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                     </div>
                 </b-modal>
                 <b-modal id="modal-templates" title="Templates" ok-only>
@@ -3213,7 +3213,7 @@
                         <hr class="hr" />
                         <div class="py-7">
                             <div class="d-flex justify-content-end">
-                                <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
+                                <b-button class="mr-2" @click="generateAwbPDF">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
                                 <b-button type="submit">{{submitButtonText}}</b-button>
@@ -3636,6 +3636,11 @@ export default {
     },
 
     methods: {
+        generateAwbPDF() {
+            const itemId = this.$route.params.id; // Get the ID from the URL
+            const pdfUrl = `/download-awb-pdf/${itemId}`; // Construct the URL for the PDF
+            window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+        },
         mouseover: function () {
             this.isOpen = true;
         },

@@ -821,7 +821,6 @@ class AirwayBill extends Controller
         $addressId = $request->query('id');
         $address_type = $request->query('address_type', 'consignee_address');
         $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
-
         if ($address) {
             return response()->json([
                 'cons_name' => $address->name,
@@ -840,7 +839,29 @@ class AirwayBill extends Controller
         }
         return response()->json(['error' => 'Address not found'], 404);
     }
-
+    public function getAlsoNotifyAddress(Request $request)
+    {
+        $addressId = $request->query('id');
+        $address_type = $request->query('address_type', 'also_notify_address');
+        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+        if ($address) {
+            return response()->json([
+                'also_name' => $address->name,
+                'also_account' => $address->account,
+                'also_address' => $address->address,
+                'also_address_line_2' => $address->address_line_2,
+                'also_city' => $address->city,
+                'also_airport_code' => $address->airport_code,
+                'also_post_code' => $address->post_code,
+                'also_state' => $address->state,
+                'also_country' => $address->country,
+                'also_phone' => $address->phone,
+                'also_fax' => $address->fax,
+                'also_telex' => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
     public function loadAWB(Request $request)
     {
         $validated = $request->validate([

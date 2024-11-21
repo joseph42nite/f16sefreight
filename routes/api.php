@@ -116,6 +116,7 @@ Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion'
 Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
 Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
 Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
+Route::get('/get-alsonotify-address', [AirwayBill::class, 'getAlsoNotifyAddress']);
 Route::get('/all-airway-bill', [AirwayBill::class,'getAllawb']);
 Route::put('/update-airway-bill/{id}', [AirwayBill::class,'update']);
 Route::get('/airway-bill/{id}', [AirwayBill::class,'show']);

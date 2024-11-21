@@ -1742,11 +1742,25 @@
                                     <b-tab title="Also Notify">
                                         <h4 class="h-color font-weight-bolder ml-2 mt-2"> Also Notify </h4>
                                         <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                            <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3" label="Name:">
                                                 <b-form-input id="input-horizontal"
                                                     class="form-control-sm ml-lg-20"></b-form-input>
+                                            </b-form-group> -->
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-notify" class="form-control-sm col-form-label">
+                                                <div class="custom-dropdown" ref="dropdownContainer_alsoNotify" @click="toggleDropdown_alsoNotify">
+                                                    <input type="text" v-model="form.also_notify_address.also_name" placeholder="Search address" id="also_notify" class="form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"
+                                                    @input="filteralsoNotify" @focus="toggleDropdown_alsoNotify(true)" @blur="closeDropdown_alsoNotify" />
+
+                                                    <div v-if="isDropdownOpen_alsoNotify && filteredAlsoNotify.length" class="dropdown-options">
+                                                        <div v-for="(also_notify, index) in filteredAlsoNotify" :key="also_notify.id" @click.stop="selectAlsoNotifyA(also_notify)" class="option">
+                                                            {{ also_notify.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="also_name"></has-error>
                                             </b-form-group>
                                             <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
                                         </div>
@@ -3431,8 +3445,10 @@ export default {
             },
             selectedShipper: null,
             selectedConsignee: null,
+            selectAlsoNotify: null,
             shippers: [],
             consignees: [],
+            alsoNotify: [],
             searchQuery_to: '',
             isDropdownOpen_to: false,
             isDropdownOpen_departure: false,
@@ -3442,6 +3458,7 @@ export default {
             isDropdownOpen_from: false,
             isDropdownOpen_shipper: false,
             isDropdownOpen_consignee: false,
+            isDropdownOpen_alsoNotify: false,
             selectedCode: '',
             manualCode: '',
             validationErrors: [],
@@ -3465,6 +3482,7 @@ export default {
             awbId: null,
             filteredShippers: [],
             filteredConsignees: [],
+            filteredAlsoNotify: [],
             awb_prefix_message: '',
             items: [
                 {
@@ -3709,14 +3727,25 @@ export default {
         fetchShippers() {
             ApiService.get(`/get-shippers`).then(response => {
                 this.shippers = response.data;
-                this.filteredShippers = this.shippers;
+                this.filteredShippers = this.shippers.filter(shipper => shipper.address_type === 'shipper_address');
+                // this.filteredShippers = this.shippers;
                 // console.log('Shipper', response.data);
             });
         },
         fetchConsignee() {
             ApiService.get(`/get-shippers`).then(response => {
                 this.consignees = response.data;
-                this.filteredConsignees = this.consignees;
+                this.filteredConsignees = this.consignees.filter(consignee => consignee.address_type === 'consignee_address');
+                // this.filteredConsignees = this.consignees;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fetchAlsoNotify() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.alsoNotify = response.data;
+                console.log("fgweuf", response.data);
+                this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
+                // this.filteredConsignees = this.consignees;
                 // console.log('Shipper', response.data);
             });
         },
@@ -3755,6 +3784,25 @@ export default {
                 cons_account: '',
                 cons_address: '',
                 cons_city: '',
+                };
+            }
+        },
+        fillAlsoNotifyDetails() {
+            if (this.selectAlsoNotify) {
+                ApiService.get(`/get-alsonotify-address?id=${this.selectAlsoNotify}`)
+                .then( response => {
+                    this.form.also_notify_address = response.data; 
+                    console.log('Also Notify address', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching Also notify address address:', error);
+                });
+            } else {
+                this.form.also_notify_address = {
+                also_name: '',
+                also_account: '',
+                also_address: '',
+                also_city: '',
                 };
             }
         },
@@ -4453,6 +4501,30 @@ export default {
             consignee.name.toLowerCase().includes(query)
             );
         },
+
+        selectAlsoNotifyA(also_notify) {
+            this.selectAlsoNotify = also_notify.id;
+            this.form.also_notify_address = also_notify.name;
+            // this.form.shipper_name = shipper.name;
+            this.fillAlsoNotifyDetails(also_notify.id);
+            this.isDropdownOpen_alsoNotify = false;
+        },
+        toggleDropdown_alsoNotify(event) {
+             this.isDropdownOpen_alsoNotify = event;
+        },
+        closeDropdown_alsoNotify(event) {
+            const dropdownContainer_alsoNotify = this.$refs.dropdownContainer_alsoNotify;
+            if (!dropdownContainer_alsoNotify.contains(event.target)) {
+                this.isDropdownOpen_alsoNotify = false;
+            }
+        },
+        filteralsoNotify() {
+            const query = this.form.also_notify_address.also_name.toLowerCase()
+            if (!query) return this.alsoNotify;
+                return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
+                also_notify.name.toLowerCase().includes(query)
+            );
+        },
     },
     mounted(){
         this.calculateTotalVolume();
@@ -4463,11 +4535,15 @@ export default {
         window.addEventListener('click', this.closeDropdown_from);
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);
-        // window.addEventListener('click', this.closeDropdown_shipper);
+        window.addEventListener('click', this.closeDropdown_shipper);
+        window.addEventListener('click', this.closeDropdown_consignee);
+        window.addEventListener('click', this.closeDropdown_alsoNotify);
         this.getLocation(); 
         this.fetchShippers();
+        this.fetchAlsoNotify();
         this.fillShipperDetails();
         this.fillConsigneeDetails();
+        this.fillAlsoNotifyDetails();
         this.fetchConsignee();
         this.getCountry();
         this.location = [];
@@ -4545,13 +4621,22 @@ export default {
                 this.filteredShippers = this.shippers;
             }
         },
-        "form.consignee_address.ship_name"(newVal) {
+        "form.consignee_address.cons_name"(newVal) {
             if (!newVal) {
                 this.selectedConsignee = null;
                 this.form.consignee_address = {
                     cons_name: "",
                 };
                 this.filteredConsignees = this.consignees;
+            }
+        },
+        "form.also_notify_address.also_name"(newVal) {
+            if (!newVal) {
+                this.selectAlsoNotify = null;
+                this.form.also_notify_address = {
+                    also_name: "",
+                };
+                this.filteredAlsoNotify = this.alsoNotify;
             }
         },
         '$route.params.id'(newId) {

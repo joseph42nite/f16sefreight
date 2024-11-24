@@ -19,8 +19,13 @@ Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
 Route::get('test-route', [HousewayBill::class,'getCountry']);
 
 Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
-Route::get('download-consolidation-pdf', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
+Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf']);
+Route::get('download-multiple-both-page-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleWithBackAwbPdf']);
 Route::get('download-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadHawbPdf']);
+Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleHawbPdf']);
+Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf']);
+Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
+Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf']);
 
 Route::get('{any}', function () {
     return view('welcome');

@@ -116,6 +116,16 @@
                                                 <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
                                         </router-link>
                                     </a>
+                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
+                                        </router-link>
+                                    </a>
+                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
+                                        </router-link>
+                                    </a>
                                     <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                 </div>
                             </b-col>

@@ -84,14 +84,14 @@
 
                 <b-modal id="modal-s" title="Latest Messages" ok-only>
                     <div class="d-block">
-                        <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
+                        <!-- <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
                             <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
                                 name="radio-options-slots"></b-form-radio-group>
                         </b-form-group>
-                        <hr class="hr" />
+                        <hr class="hr" /> -->
                         <b-row class="mt-5">
                             <b-col>
-                                <a href="" class="custom-link">Edit e-AWB Data</a>
+                                <!-- <a href="" class="custom-link">Edit e-AWB Data</a>
                                 <a href="" class="custom-link">Copy e-AWB Data</a>
                                 <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
                                 <a href="" class="custom-link">Create Booking from e-AWB Data</a>
@@ -105,10 +105,30 @@
                                 <a href="" class="custom-link">Without IATA template</a>
                                 <a href="" class="custom-link">1 Page generic e-AWB label</a>
                                 <a href="" class="custom-link">e-AWB label per item (50 pages)</a>
-                                <a href="" class="custom-link">Cargo Pouch label as a PDF</a>
+                                <a href="" class="custom-link">Cargo Pouch label as a PDF</a> -->
+                                <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
+                                    <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                            <p @click="navigate" class="mb-0">
+                                                {{ item.awb_code }}-{{ item.awb_no }} 
+                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                            </p>
+                                       </router-link>
+                                    </a>
+                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + item.awb_code+'/' + item.awb_no" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
+                                        </router-link>
+                                    </a>
+                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + item.id" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
+                                        </router-link>
+                                    </a>
+                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                </div>
                             </b-col>
                         </b-row>
-                        <p>Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                     </div>
                 </b-modal>
                 <b-modal id="modal-templates" title="Templates" ok-only>
@@ -1022,7 +1042,7 @@
                             </div>
                             <div class="py-2">
                                 <div class="d-flex justify-content-end">
-                                    <b-button class="mr-2" @click="getAgent">Generate PDF</b-button>
+                                    <b-button class="mr-2" @click="generateAwbPDF">Generate PDF</b-button>
                                     <b-button class="mr-2" @click="converXml(form.awb_no)">Send</b-button>
                                 </div>
                             </div>
@@ -1185,6 +1205,7 @@ export default {
             editIndex: null,
             edit_entry_index: null,
             hasSearchResults: false,
+            data_items: [],
             items: [
                 {
                     url: "#webdoc",
@@ -1355,6 +1376,14 @@ export default {
     },
 
     methods: {
+        generateAwbPDF(awbNo = this.form.awb_no, awbCode = this.form.awb_code) {
+            const awb_code = this.form.awb_code; // Access the awb_code from the form data
+            const awb_no = this.form.awb_no;
+            const itemId = awb_code+awb_no; // Access the awb_no from the form data
+            const pdfUrl = `/download-consolidation-pdf/${awb_code}/${awb_no}`; // Construct the URL for the PDF
+            window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+            
+        },
         mouseover: function () {
             this.isOpen = true;
         },
@@ -1390,6 +1419,15 @@ export default {
             // this.form.put(`/update-consolidation`).then(response => {
             //     console.log(response);
             // })
+        },
+        allHousewayBill() {
+            ApiService.get('/all-houseway-bill')
+                .then(response => {
+                    this.data_items = response.data;
+                })
+                .catch(error => {
+                    console.error("Failed to fetch items:", error);
+                });
         },
         allConsolidation(){
             // ApiService.get(`/all-consolidation`).then(({ data }) => {
@@ -1594,6 +1632,7 @@ export default {
         this.getLocation(); 
         this.getCountry();
         // this.allConsolidation();
+        this.allHousewayBill();
         this.location = [];
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);

@@ -3,7 +3,7 @@
     <router-link
       to="/superadmin/all-users"
       v-slot="{ href, navigate, isActive, isExactActive }"
-    >
+     >
       <li
         aria-haspopup="true"
         data-menu-toggle="hover"
@@ -23,6 +23,84 @@
           />
           &nbsp;&nbsp;&nbsp;
           <span class="menu-text">Users</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link
+      to="/superadmin/all-company"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/custome/menu-icons/customer.svg"
+            alt="company"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">Company</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link
+      to="/superadmin/all-branch"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/custome/menu-icons/customer.svg"
+            alt="branch"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">All Branch</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link
+      to="/superadmin/branch-user"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/custome/menu-icons/customer.svg"
+            alt="branch user"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">Branch User</span>
         </a>
       </li>
     </router-link>

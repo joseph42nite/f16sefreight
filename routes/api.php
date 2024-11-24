@@ -1,6 +1,7 @@
 <?php
 // auth()->guard('admin-api')->user()->id;
 
+use App\Airline;
 use App\Http\Controllers\airwayBill\AirwayBill;
 use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
@@ -19,6 +20,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\HousewayBill\HousewayBill as HousewayBillHousewayBill;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,6 +116,7 @@ Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion'
 Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
 Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
 Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
+Route::get('/get-alsonotify-address', [AirwayBill::class, 'getAlsoNotifyAddress']);
 Route::get('/all-airway-bill', [AirwayBill::class,'getAllawb']);
 Route::put('/update-airway-bill/{id}', [AirwayBill::class,'update']);
 Route::get('/airway-bill/{id}', [AirwayBill::class,'show']);
@@ -127,3 +131,5 @@ Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchH
 
 Route::get('/get-location', [LocationController::class,'getLocation']);
 
+Route::get('/load-awb', [AirwayBill::class, 'loadAWB']);
+Route::get('/get-awbcode-prefix/{code}', [AirwayBill::class,'getAwbPrefixData']);

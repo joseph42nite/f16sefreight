@@ -18,17 +18,17 @@ export default new Router({
         },
         {
           name: "Web Doc",
-          path: "/web-doc",
+          path: "web-doc",
           component: () =>import("@/view/pages/WebDoc"),
         },
         {
-          path: '/edit-airway-bill/:id?',
+          path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',
           component: () => import("@/view/pages/WebDoc"),
         },
         {
           name: "House Way Bill",
-          path: "/house-way-bill",
+          path: "house-way-bill",
           component: () =>import("@/view/pages/HouseWayBill"),
         },
         {
@@ -62,6 +62,24 @@ export default new Router({
           path: "all-users",
           name: "superadmin-allusers",
           component: () => import("@/view/superadmin/AllUsers.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "all-company",
+          name: "superadmin-allcompany",
+          component: () => import("@/view/superadmin/AllCompany.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "all-branch",
+          name: "superadmin-allbranch",
+          component: () => import("@/view/superadmin/AllBranch.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "branch-users",
+          name: "superadmin-branchusers",
+          component: () => import("@/view/superadmin/BranchUsers.vue"),
           meta: { userType: 'superadmin' }
         },
         {

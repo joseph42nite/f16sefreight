@@ -642,8 +642,8 @@
                                                             </td>
                                                             <td class="editable-cell w-10" style="width: 60px">
                                                                 <date-picker valueType="format"
-                                                                    style="width: 30px !important;"
-                                                                    @change="handleDateChange"></date-picker>
+                                                                    style="width: 30px !important;" format="DDMMM"
+                                                                    @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -705,7 +705,7 @@
                                                         <td class="editable-cell w-10" style="width: 60px !important;">
                                                             <date-picker valueType="format"
                                                                 style=" width: 30px !important;"
-                                                                @change="handleDateChange"></date-picker>
+                                                                @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -767,7 +767,7 @@
                                                         <td class="editable-cell" style="width: 60px !important;">
                                                             <date-picker valueType="format"
                                                                 style=" width: 30px !important;"
-                                                                @change="handleDateChange"></date-picker>
+                                                                @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -829,8 +829,7 @@
                                     Consignment Rate Description
                                 </h4>
                             </div>
-                            <b-button class="mt-5" v-b-modal.modal-consignment variant="warning">Add Consignment
-                                Information</b-button>
+                            <b-button class="mt-5" v-b-modal.modal-consignment variant="warning" :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
                             <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
                                 size="xl" ok-only hide-footer>
                                 <div class="d-block">
@@ -1595,7 +1594,7 @@
                                                                         v-model="agent_information.agent_issue_date" />
                                                                 </td>
                                                                 <date-picker valueType="format"
-                                                                    style=" width: 30px !important;"></date-picker>
+                                                                    style=" width: 30px !important;" @change="handleDateChange($event, 'agent_information.agent_issue_date')"></date-picker>
                                                             </tr>
                                                             <!-- <tr>
                                                                 <td class="editable-cell">Agent Account:</td>
@@ -3000,6 +2999,7 @@ export default {
             data_items:[],
             countries:[],
             location:[],
+            isConsignmentAdded: false,
             items: [
                 {
                     url: "#webdoc",
@@ -3199,6 +3199,18 @@ export default {
         handleOk(bvModalEvent) {
             bvModalEvent.preventDefault();
         },
+        handleAddConsignment() {
+            if (this.isConsignmentAdded) {
+                this.$bvToast.toast('Consignment Information is already added.', {
+                title: 'Information',
+                variant: 'warning',
+                solid: true,
+                });
+            } else {
+                this.$refs.modalConsignment.show();
+                this.isConsignmentAdded = true;
+            }
+        },
         getCurrentDate() {
             const today = new Date();
             const day = today.getDate().toString().padStart(2, '0');
@@ -3212,11 +3224,21 @@ export default {
 
             return `${day}${month}`;
         },
-        handleDateChange(date) {
-            this.form.date = this.formatDate(date);
+        // handleDateChange(date) {
+        //     this.form.routing_information.date = this.formatDate(date);
+        // },
+        handleDateChange(date, field) {
+            const formattedDate = this.formatDate(date);
+            const keys = field.split('.');
+            let target = this;
+
+            for (let i = 0; i < keys.length - 1; i++) {
+            target = target[keys[i]];
+            }
+            target[keys[keys.length - 1]] = formattedDate;
         },
         issueDateChange(date) {
-            this.form.issue_date = this.formatDate(date);
+            this.form.agent_issue_date = this.formatDate(date);
         },
         // onSubmit(evt) {
         //     evt.preventDefault();
@@ -3279,13 +3301,14 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
-                    //     ? this.existingData.consignment_data
-                    //     : [this.existingData.consignment_data];
+                    this.form.entries = Array.isArray(this.existingData.consignment_data)
+                        ? this.existingData.consignment_data
+                        : [this.existingData.consignment_data];
+                    console.log("Entries in form:", this.form.entries);
                     
-                    console.log("entries", this.form.entries);
                     // this.consignment_list = this.existingData.consignment_data;
-                    // this.form.entries = this.existingData;
+                    // this.form.entries = this.existingData.consignment_data;
+                    // console.log("entries", this.form.entries);
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
@@ -3293,7 +3316,7 @@ export default {
                     // console.error('existingData is not an array:', this.existingData);
                     console.log("Add mode activated");
                 }
-            },
+        },
         getCountry(){
             ApiService.get('/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({
@@ -3417,6 +3440,9 @@ export default {
             this.form.entries.splice(index, 1);
             this.calculateTotalVolume();
             this.calculateTotalAmount();
+            if (this.form.entries.length === 0) {
+                this.isConsignmentAdded = false;
+            }
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();

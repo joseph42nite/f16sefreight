@@ -205,14 +205,14 @@
                             </b-col>
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Master No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)"></b-form-input>
                                     <has-error :form="form" field="awb_code"></has-error>
                                 </b-form-group>
                             </b-col>
                             -
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)"></b-form-input>
                                     <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
                             </b-col>
@@ -242,14 +242,28 @@
                                         content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
+                                            <!-- <div class="flex-grow-1">
                                                 <select class="custom-select form-control-sm" style="width: 320px">
                                                     <option disabled value=""> Select a Shipper</option>
                                                     <option value="ABS">A</option>
                                                     <option value="BDE">B</option>
                                                     <option value="RTY">C</option>  
                                                 </select>
-                                            </div>
+                                            </div> -->
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
+                                                <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
+                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                    @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
+
+                                                    <div v-if="isDropdownOpen_shipper && filteredShippers.length" class="dropdown-options">
+                                                        <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
+                                                            {{ shipper.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="ship_name"></has-error>
+                                            </b-form-group>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
                                                 @click="showShipper = !showShipper"></b-icon>
                                         </div>
@@ -375,14 +389,19 @@
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1">
-                                                <select class="custom-select form-control-sm" style="width: 320px"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                    v-model="form.cons_name">
-                                                    <option disabled value=""> Select a Consignee</option>
-                                                    <option value="ABC">A</option>
-                                                    <option value="BDE">B</option>
-                                                    <option value="CAB">C</option>
-                                                </select>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
+                                                    <div class="custom-dropdown" ref="dropdownContainer_consignee" @click="toggleDropdown_consignee">
+                                                        <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control" autocomplete="off"
+                                                        :class="{ 'is-invalid': form.errors.has('cons_name') }"
+                                                        @input="filterConsignee" @focus="toggleDropdown_consignee(true)" @blur="closeDropdown_consignee" />
+
+                                                        <div v-if="isDropdownOpen_consignee && filteredConsignees.length" class="dropdown-options">
+                                                            <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
+                                                                {{ consignee.name }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </b-form-group>
                                                 <has-error :form="form" field="cons_name"></has-error>
                                             </div>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
@@ -1542,34 +1561,22 @@
                                                             <tr>
                                                                 <td class="editable-cell">Issuing Location Code:* </td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_issue_loc_code">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="BLR">BLR, Bangalore (BLR), India
-                                                                        </option>
-                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria
-                                                                        </option>
-                                                                        <option value="AAH">AAH, Aachen (AAH), Germany
-                                                                        </option>
-                                                                        <option value="AAI">AAI, Arraias (AAI), Brazil
-                                                                        </option>
-                                                                        <option value="AAL">AAL, Aalborg (AAL), Denmark
-                                                                        </option>
-                                                                        <option value="AAM">AAM, Mala Mala (AAM), South
-                                                                            Africa</option>
-                                                                        <option value="AAN">AAN, Al Ain (AAN), United
-                                                                            Arab Emirates</option>
-                                                                        <option value="AAP">AAP, Samarinda (AAP),
-                                                                            Indonesia</option>
-                                                                        <option value="AAR">AAR, Aarhus (AAR), Denmark
-                                                                        </option>
-                                                                        <option value="ABA">ABA, Abakan (ABA), Russian
-                                                                            Federation</option>
-                                                                        <option value="ABC">ABC, Albacete (ABC), Spain
-                                                                        </option>
-                                                                    </b-form-select>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-agent_issue_loc_code"
+                                                                        class="form-control-sm col-form-label">
+                                                                            <div class="custom-dropdown" ref="dropdownContainer_issue" @click="toggleDropdown_issuing_loc">
+                                                                                <input type="text" v-model="agent_information.agent_issue_loc_code" placeholder="Search location" id="agent_issue_loc_code" class="form-control" 
+                                                                                    autocomplete="off" :class="{ 'is-invalid': form.errors.has('agent_issue_loc_code') }">
+                                                                                <div v-if="isDropdownOpen_issuing_loc && filteredLocations_issuing.length" class="dropdown-options">
+                                                                                    <div v-for="(item, index) in filteredLocations_issuing" 
+                                                                                        :key="index" 
+                                                                                        @click.stop="selectOption_issuing_loc(item)" 
+                                                                                        class="option">
+                                                                                        {{ item.iata_code }} ({{ item.destination }})
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        <has-error :form="form" field="agent_issue_loc_code"></has-error>
+                                                                    </b-form-group>
                                                                 </td>
                                                                 <td class="editable-cell">
                                                                     <b-form-checkbox size="sm">Save information for
@@ -1608,11 +1615,19 @@
                                     <b-tab title="Also Notify">
                                         <h4 class="h-color font-weight-bolder ml-2 mt-2"> Also Notify </h4>
                                         <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3" label="Name:">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm ml-lg-20"></b-form-input>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-notify" class="form-control-sm col-form-label">
+                                                <div class="custom-dropdown" ref="dropdownContainer_alsoNotify" @click="toggleDropdown_alsoNotify">
+                                                    <input type="text" v-model="form.also_notify_address.also_name" placeholder="Search address" id="also_notify" class="form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"
+                                                    @input="filteralsoNotify" @focus="toggleDropdown_alsoNotify(true)" @blur="closeDropdown_alsoNotify" />
+
+                                                    <div v-if="isDropdownOpen_alsoNotify && filteredAlsoNotify.length" class="dropdown-options">
+                                                        <div v-for="(also_notify, index) in filteredAlsoNotify" :key="also_notify.id" @click.stop="selectAlsoNotifyA(also_notify)" class="option">
+                                                            {{ also_notify.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="also_name"></has-error>
                                             </b-form-group>
                                             <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
                                         </div>
@@ -2973,6 +2988,11 @@ export default {
             isDropdownOpen_to2: false,
             isDropdownOpen_to3: false,
             isDropdownOpen_from: false,
+            isDropdownOpen_shipper: false,
+            isDropdownOpen_consignee: false,
+            isDropdownOpen_alsoNotify: false,
+            isDropdownOpen_issuing_loc: false,
+            isDropdownOpen_participant: false,
             selectedCode: '',
             manualCode: '',
             validationErrors: [],
@@ -2989,6 +3009,9 @@ export default {
             data_items:[],
             countries:[],
             location:[],
+            filteredShippers: [],
+            filteredConsignees: [],
+            filteredAlsoNotify: [],
             isConsignmentAdded: false,
             items: [
                 {
@@ -3334,6 +3357,88 @@ export default {
                 .catch(error => {
                     console.error("Error fetching agent information:", error);
                 });
+        },
+        fetchShippers() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.shippers = response.data;
+                this.filteredShippers = this.shippers.filter(shipper => shipper.address_type === 'shipper_address');
+                // this.filteredShippers = this.shippers;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fetchConsignee() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.consignees = response.data;
+                this.filteredConsignees = this.consignees.filter(consignee => consignee.address_type === 'consignee_address');
+                // this.filteredConsignees = this.consignees;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fetchAlsoNotify() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.alsoNotify = response.data;
+                console.log("fgweuf", response.data);
+                this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
+                // this.filteredConsignees = this.consignees;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fillShipperDetails() {
+            if (this.selectedShipper) {
+                ApiService.get(`/get-shipper-address?id=${this.selectedShipper}`)
+                .then( response => {
+                    this.form.shipper_address = response.data; 
+                    // console.log('Shipper', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching shipper address:', error);
+                });
+            } else {
+                this.form.shipper_address = {
+                ship_name: '',
+                ship_account: '',
+                ship_address: '',
+                ship_city: '',
+                };
+            }
+        },
+        fillConsigneeDetails() {
+            if (this.selectedConsignee) {
+                ApiService.get(`/get-consignee-address?id=${this.selectedConsignee}`)
+                .then( response => {
+                    this.form.consignee_address = response.data; 
+                    console.log('Consignee', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching shipper address:', error);
+                });
+            } else {
+                this.form.consignee_address = {
+                cons_name: '',
+                cons_account: '',
+                cons_address: '',
+                cons_city: '',
+                };
+            }
+        },
+        fillAlsoNotifyDetails() {
+            if (this.selectAlsoNotify) {
+                ApiService.get(`/get-alsonotify-address?id=${this.selectAlsoNotify}`)
+                .then( response => {
+                    this.form.also_notify_address = response.data; 
+                    console.log('Also Notify address', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching Also notify address address:', error);
+                });
+            } else {
+                this.form.also_notify_address = {
+                also_name: '',
+                also_account: '',
+                also_address: '',
+                also_city: '',
+                };
+            }
         },
         handleRadioChange() {
             const selectedCode = this.selectedCode;
@@ -3810,6 +3915,103 @@ export default {
                 this.isDropdownOpen_from = false;
             }
         },
+        selectShipper(shipper) {
+            this.selectedShipper = shipper.id;
+            this.form.shipper_address = shipper.name;
+            // this.form.shipper_name = shipper.name;
+            this.fillShipperDetails(shipper.id);
+            this.isDropdownOpen_shipper = false;
+        },
+        toggleDropdown_shipper(event) {
+             this.isDropdownOpen_shipper = event;
+        },
+        closeDropdown_shipper(event) {
+            const dropdownContainer_shipper = this.$refs.dropdownContainer_shipper;
+            if (!dropdownContainer_shipper.contains(event.target)) {
+                this.isDropdownOpen_shipper = false;
+            }
+        },
+        filterShippers() {
+            // const query = this.form.shipper_name.toLowerCase();
+            const query = this.form.shipper_address.ship_name.toLowerCase()
+            if (!query) return this.shippers;
+            return this.filteredShippers = this.shippers.filter(shipper =>
+                shipper.name.toLowerCase().includes(query)
+            );
+        },
+        selectConsignee(consignee) {
+            this.selectedConsignee = consignee.id;
+            this.form.consignee_address = consignee.name;
+            this.fillConsigneeDetails(consignee.id);
+            this.isDropdownOpen_consignee = false;
+        },
+        toggleDropdown_consignee(event) {
+             this.isDropdownOpen_consignee = event;
+        },
+        closeDropdown_consignee(event) {
+            const dropdownContainer_consignee = this.$refs.dropdownContainer_consignee;
+            if (!dropdownContainer_consignee.contains(event.target)) {
+                this.isDropdownOpen_consignee = false;
+            }
+        },
+        filterConsignee() {
+            const query = this.form.consignee_address.cons_name.toLowerCase()
+            if (!query) return this.consignees;
+            return this.filteredConsignees = this.consignees.filter(consignee =>
+            consignee.name.toLowerCase().includes(query)
+            );
+        },
+
+        selectAlsoNotifyA(also_notify) {
+            this.selectAlsoNotify = also_notify.id;
+            this.form.also_notify_address = also_notify.name;
+            // this.form.shipper_name = shipper.name;
+            this.fillAlsoNotifyDetails(also_notify.id);
+            this.isDropdownOpen_alsoNotify = false;
+        },
+        toggleDropdown_alsoNotify(event) {
+             this.isDropdownOpen_alsoNotify = event;
+        },
+        closeDropdown_alsoNotify(event) {
+            const dropdownContainer_alsoNotify = this.$refs.dropdownContainer_alsoNotify;
+            if (!dropdownContainer_alsoNotify.contains(event.target)) {
+                this.isDropdownOpen_alsoNotify = false;
+            }
+        },
+        filteralsoNotify() {
+            const query = this.form.also_notify_address.also_name.toLowerCase()
+            if (!query) return this.alsoNotify;
+                return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
+                also_notify.name.toLowerCase().includes(query)
+            );
+        },
+        toggleDropdown_issuing_loc() {
+            this.isDropdownOpen_issuing_loc = !this.isDropdownOpen_issuing_loc;
+        },
+        selectOption_issuing_loc(item) {
+            this.agent_information.agent_issue_loc_code = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.agent_information.agent_issue_loc_code = final_set;
+            this.isDropdownOpen_issuing_loc = false;
+        },
+        closeDropdown_issue_location(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_issue;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_issuing_loc = false;
+            }
+        },
+        validateNumericInput(evt,field, maxLength) {
+            evt = evt || window.event;
+            const charCode = evt.which || evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+            if (this.form.first_box[field].length >= maxLength) {
+                evt.preventDefault();
+            }
+        },
     },
     mounted(){
         this.calculateTotalVolume();
@@ -3821,7 +4023,17 @@ export default {
         window.addEventListener('click', this.closeDropdown_from);
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);
+        window.addEventListener('click', this.closeDropdown_shipper);
+        window.addEventListener('click', this.closeDropdown_consignee);
+        window.addEventListener('click', this.closeDropdown_alsoNotify);
+        window.addEventListener('click', this.closeDropdown_issue_location);
         this.getLocation(); 
+        this.fetchShippers();
+        this.fetchAlsoNotify();
+        this.fillShipperDetails();
+        this.fillConsigneeDetails();
+        this.fillAlsoNotifyDetails();
+        this.fetchConsignee();
         // const id = this.$route.params.id;
         // if (id) {
         // this.getHouseWayBill(id);
@@ -3880,7 +4092,34 @@ export default {
         },
         'agent_information.participate': function(newValue) {
             console.log('Participate value changed to:', newValue);
-        }
+        },
+        "form.shipper_address.ship_name"(newVal) {
+            if (!newVal) {
+                this.selectedShipper = null;
+                this.form.shipper_address = {
+                    ship_name: "",
+                };
+                this.filteredShippers = this.shippers;
+            }
+        },
+        "form.consignee_address.cons_name"(newVal) {
+            if (!newVal) {
+                this.selectedConsignee = null;
+                this.form.consignee_address = {
+                    cons_name: "",
+                };
+                this.filteredConsignees = this.consignees;
+            }
+        },
+        "form.also_notify_address.also_name"(newVal) {
+            if (!newVal) {
+                this.selectAlsoNotify = null;
+                this.form.also_notify_address = {
+                    also_name: "",
+                };
+                this.filteredAlsoNotify = this.alsoNotify;
+            }
+        },
     },
     created() {
         // this.getAgent();
@@ -4002,6 +4241,14 @@ export default {
             const query = this.form.routing_information.departure_airport.toLowerCase().trim();
             if (!query) return this.location;
 
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_issuing() {
+            const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
+            if (!query) return this.location;
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query) ||
                 item.destination.toLowerCase().includes(query)

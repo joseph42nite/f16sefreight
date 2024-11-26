@@ -906,10 +906,13 @@
                                                                 <td align="left" valign="top" width="200px" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
                                                                     <b>HAWB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->id }}<br />
                                                                     {{-- <b>Job Ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;HRS/AE/0538/24-25<br /> --}}
+                                                                    @php
+                                                                        $decodedInfo = json_decode($wayBillConsignmentData->pieces_info, true);
+                                                                    @endphp
                                                                     <b>Wgt / Vol / Pkg&nbsp;:</b>&nbsp;{{ $decodedInfo[0]['wgt'] }} / {{ $houseWayBill->total_volume }} / {{ $decodedInfo[0]['pcs'].' NOS' }}<br />
                                                                     {{-- <b>INCO Terms&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;EX WORKS<br /> --}}
-                                                                    <b>Origin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->master_origin }}<br />
-                                                                    <b>Destination&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->master_destination }}<br />
+                                                                    <b>Origin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->departure_airport }}<br />
+                                                                    <b>Destination&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->destination_airport }}<br />
                                                                     {{-- <b>Shippers Ref&nbsp;&nbsp;&nbsp;:</b>&nbsp;<br /> --}}
                                                                     <b>Master&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->awb_code.' - '.$houseWayBill->awb_no }}
                                                                 </td>

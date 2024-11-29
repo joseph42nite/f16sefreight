@@ -27,6 +27,10 @@ class HousewayBill extends Controller
         $countries = config('country');
         return response()->json($countries);
     }
+    public function getOtherCharges(){
+        $other_charge_code = config('info_identifier.Other_charge');
+        return response()->json($other_charge_code);
+    }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [
@@ -361,7 +365,7 @@ class HousewayBill extends Controller
        $HousewayBills->date_3 = $routing_information['date_3'];
        $HousewayBills->master_origin = $routing_information['master_origin'];
        $HousewayBills->master_destination = $routing_information['master_destination'];
-    //    dd($HousewayBills);die;
+       //    dd($HousewayBills);die;
        $HousewayBills->save();
         return "Routing Information saved successfull";
     }
@@ -388,6 +392,7 @@ class HousewayBill extends Controller
             $ConsignmentData->rate = $entries[$i]['rate'];
             $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
             $ConsignmentData->uld_info = json_encode($entries[$i]['uld_info']);
+            // $ConsignmentData->dimention_unit = $entries[$i]['dimention_unit'];
             $ConsignmentData->save();
             return "Consignment Data saved successfull";
         }
@@ -568,6 +573,7 @@ class HousewayBill extends Controller
             'total_amount' => 'required|numeric|min:0.01|max:999999999',
             'master_pcs' => 'required|regex:/^[0-9]+$/|max:4',
             'master_weight' => 'required|numeric|min:0.1|max:9999999|regex:/^\d{1,7}(\.\d{1,3})?$/',
+            'dimention_unit' => 'nullable|string|max:3',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -580,6 +586,7 @@ class HousewayBill extends Controller
             $HousewayBills->total_amount = $totals['total_amount'];
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
+            $HousewayBills->dimention_unit = $totals['dimention_unit'];
             $HousewayBills->save();
             return response()->json([
                 'message' => 'Toatl Amount and Total Volume updated successfully',
@@ -592,6 +599,7 @@ class HousewayBill extends Controller
         $HousewayBills->total_amount = $totals['total_amount'];
         $HousewayBills->master_pcs = $totals['master_pcs'];
         $HousewayBills->master_weight = $totals['master_weight'];
+        $HousewayBills->dimention_unit = $totals['dimention_unit'];
         $HousewayBills->save();
         }
         return "Toatl Amount and Total Volume saved successfull";
@@ -721,7 +729,7 @@ class HousewayBill extends Controller
             'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'weight_code' => 'nullable|string|max:3',
             'volume' => 'nullable|string',
-            'dimention_unit' => 'nullable|string|max:3',
+            // 'dimention_unit' => 'nullable|string|max:3',
             'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
         ]);

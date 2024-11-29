@@ -850,7 +850,7 @@
                             </div>
                             <b-button class="mt-5" v-b-modal.modal-consignment variant="warning" :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
                             <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
-                                size="xl" ok-only hide-footer>
+                                size="xl" ok-only hide-footer @hide="handleModalClose">
                                 <div class="d-block">
                                     <b-row>
                                         <!-- First Column -->
@@ -917,7 +917,7 @@
                                                                     <span class="mr-2">Charge:</span>
                                                                     <input type="text" class="form-control"
                                                                         style="width: 170px;"
-                                                                        :value="calculatedCharge" />
+                                                                        v-model="calculatedCharge" />
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -1304,7 +1304,7 @@
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2" v-model="form.totals.total_volume"></b-form-input>
-                                                <b-form-select class="form-control-sm" v-model="form.entries.dimention_unit">
+                                                <b-form-select class="form-control-sm" v-model="form.totals.dimention_unit">
                                                     <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
                                                     <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
                                                     <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
@@ -1737,12 +1737,12 @@
                                             v-model="form.is_also_notify_address_save"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-tab>
-                                    <b-tab title="Exta Print Information">
+                                    <!-- <b-tab title="Exta Print Information">
                                         <h5> Extra information printed on House Way Bill (Only printed - not saved or sent to Airlines):</h5>
                                         <b-form-textarea class=""
                                             style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
                                             rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
-                                    </b-tab>
+                                    </b-tab> -->
                                 </b-tabs>
                             </div>
                         </div>
@@ -1891,154 +1891,15 @@
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
+                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                <b-form-select class="form-control-sm" v-model="oci_info.country_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
                                                     <option value="">Select an Other Charge Code</option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                    <option value="SC - Security Charge">SC - Security Charge</option>
-                                                    <option value="AC - Animal Container">AC - Animal Container</option>
-                                                    <option value="AS - Assembly Service Fee">AS - Assembly Service Fee</option>
-                                                    <option value="AT - Attendant">AT - Attendant</option>
-                                                    <option value="AW - Air Waybill Fee">AW - Air Waybill Fee</option>
-                                                    <option value="BA - Advances And/or Guarantees">BA - Advances And/or Guarantees</option>
-                                                    <option value="BB - Appraisal Service">BB - Appraisal Service</option>
-                                                    <option value="BC - AWB Copy">BC - AWB Copy</option>
-                                                    <option value="BE - Collection Of Funds">BE - Collection Of Funds</option>
-                                                    <option value="BF - Copies Of Documents">BF - Copies Of Documents</option>
-                                                    <option value="BH - Messenger Service">BH - Messenger Service</option>
-                                                    <option value="BI - Import/export Documents Processing">BI - Import/export Documents Processing</option>
-                                                    <option value="BL - Blacklist Certificate">BL - Blacklist Certificate</option>
-                                                    <option value="BM - Withdrawal Of Shipment After Clearance">BM - Withdrawal Of Shipment After Clearance</option>
-                                                    <option value="BR - Bank Release">BR - Bank Release</option>
-                                                    <option value="CA - Bonding">CA - Bonding</option>
-                                                    <option value="CB - Completion/preparation Of Documents">CB - Completion/preparation Of Documents</option>
-                                                    <option value="CC - Manual Data Entry For Customs Purposes">CC - Manual Data Entry For Customs Purposes</option>
-                                                    <option value="CD - Clearance And Handling">CD - Clearance And Handling</option>
-                                                    <option value="CE - Export/Import Warrant">CE - Export/Import Warrant</option>
-                                                    <option value="CF - Inventory And/or Inspection">CF - Inventory And/or Inspection</option>
-                                                    <option value="CG - Electronic Proc. Or Trans. Of Data For Customs">CG - Electronic Proc. Or Trans. Of Data For Customs</option>
-                                                    <option value="CH - Clearance And Handling">CH - Clearance And Handling</option>
-                                                    <option value="CI - Overtime And Other Customs Imposed Charges">CI - Overtime And Other Customs Imposed Charges</option>
-                                                    <option value="CJ - Removal (carrier Warehouse To Warehouse)">CJ - Removal (carrier Warehouse To Warehouse)</option>
-                                                    <option value="DB - Disbursement Fee">DB - Disbursement Fee</option>
-                                                    <option value="DC - Certificate Of Origin">DC - Certificate Of Origin</option>
-                                                    <option value="DD - Preparation Of Cargo Manifest">DD - Preparation Of Cargo Manifest</option>
-                                                    <option value="DF - Distribution Service Fee">DF - Distribution Service Fee</option>
-                                                    <option value="DG - AWB Cancellation">DG - AWB Cancellation</option>
-                                                    <option value="DH - AWB Charges Correction Advice">DH - AWB Charges Correction Advice</option>
-                                                    <option value="DI - AWB Re-waybilling">DI - AWB Re-waybilling</option>
-                                                    <option value="DJ - Proof Of Delivery (documentation)">DJ - Proof Of Delivery (documentation)</option>
-                                                    <option value="DK - Release Order">DK - Release Order</option>
-                                                    <option value="DV - Veterinary And/or Phytosanitary Purposes">DV - Veterinary And/or Phytosanitary Purposes</option>
-                                                    <option value="EA - Handling (Express)">EA - Handling (Express)</option>
-                                                    <option value="FA - Airport Arrival">FA - Airport Arrival</option>
-                                                    <option value="FB - Domestic Shipments">FB - Domestic Shipments</option>
-                                                    <option value="FC - Charges Collect Fee">FC - Charges Collect Fee</option>
-                                                    <option value="FD - Priority">FD - Priority</option>
-                                                    <option value="FE - General (Handling)">FE - General (Handling)</option>
-                                                    <option value="FF - Loading/unloading">FF - Loading/unloading</option>
-                                                    <option value="FI - Weighing">FI - Weighing</option>
-                                                    <option value="FS - Fuel Surcharge">FS - Fuel Surcharge</option>
-                                                    <option value="GA - Diplomatic Consignment">GA - Diplomatic Consignment</option>
-                                                    <option value="GT - Government Tax">GT - Government Tax</option>
-                                                    <option value="HB - Mortuary">HB - Mortuary</option>
-                                                    <option value="HR - Human Remains">HR - Human Remains</option>
-                                                    <option value="IA - Very Important Cargo (VIC)">IA - Very Important Cargo (VIC)</option>
-                                                    <option value="IN - Insurance Premium">IN - Insurance Premium</option>
-                                                    <option value="IR - War Risk">IR - War Risk</option>
-                                                    <option value="IS - War Risk">IS - War Risk</option>
-                                                    <option value="JA - Clearance OCText=General">JA - Clearance OCText=General</option>
-                                                    <option value="KA - Handling (Heavy/Bulky Cargo)">KA - Handling (Heavy/Bulky Cargo)</option>
-                                                    <option value="KB - Loading/unloading Equipment (forklift Etc.)">KB - Loading/unloading Equipment (forklift Etc.)</option>
-                                                    <option value="LA - Live Animals">LA - Live Animals</option>
-                                                    <option value="LC - Cleaning">LC - Cleaning</option>
-                                                    <option value="LE - Hotel">LE - Hotel</option>
-                                                    <option value="LF - Quarantine">LF - Quarantine</option>
-                                                    <option value="LG - Veterinary Inspection">LG - Veterinary Inspection</option>
-                                                    <option value="LH - Storage (Live Animals)">LH - Storage (Live Animals)</option>
-                                                    <option value="LI - Cleaning Of Stalls/pens">LI - Cleaning Of Stalls/pens</option>
-                                                    <option value="LJ - Rental Of Stalls/pens">LJ - Rental Of Stalls/pens</option>
-                                                    <option value="MA - Miscellaneous A">MA - Miscellaneous A</option>
-                                                    <option value="MB - Miscellaneous B">MB - Miscellaneous B</option>
-                                                    <option value="MC - Miscellaneous C">MC - Miscellaneous C</option>
-                                                    <option value="MD - Miscellaneous D">MD - Miscellaneous D</option>
-                                                    <option value="ME - Miscellaneous E">ME - Miscellaneous E</option>
-                                                    <option value="MF - Miscellaneous F">MF - Miscellaneous F</option>
-                                                    <option value="MG - Miscellaneous G">MG - Miscellaneous G</option>
-                                                    <option value="MH - Miscellaneous H">MH - Miscellaneous H</option>
-                                                    <option value="MI - Miscellaneous I">MI - Miscellaneous I</option>
-                                                    <option value="MJ - Miscellaneous J">MJ - Miscellaneous J</option>
-                                                    <option value="MK - Miscellaneous K">MK - Miscellaneous K</option>
-                                                    <option value="ML - Miscellaneous L">ML - Miscellaneous L</option>
-                                                    <option value="MM - Miscellaneous M">MM - Miscellaneous M</option>
-                                                    <option value="MN - Miscellaneous N">MN - Miscellaneous N</option>
-                                                    <option value="MO - Miscellaneous O">MO - Miscellaneous O</option>
-                                                    <option value="MP - Miscellaneous P">MP - Miscellaneous P</option>
-                                                    <option value="MQ - Miscellaneous Q">MQ - Miscellaneous Q</option>
-                                                    <option value="MR - Airfreight Surcharge">MR - Airfreight Surcharge</option>
-                                                    <option value="MS - Miscellaneous S">MS - Miscellaneous S</option>
-                                                    <option value="MT - Miscellaneous T">MT - Miscellaneous T</option>
-                                                    <option value="MU - Miscellaneous U">MU - Miscellaneous U</option>
-                                                    <option value="MV - Miscellaneous V">MV - Miscellaneous V</option>
-                                                    <option value="MW - Miscellaneous W">MW - Miscellaneous W</option>
-                                                    <option value="MX - Miscellaneous X">MX - Miscellaneous X</option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                    <option value="MZ - Miscellaneous Z">MZ - Miscellaneous Z</option>
-                                                    <option value="NS - Navigation Surcharge">NS - Navigation Surcharge</option>
-                                                    <option value="PA - Handling (Perishables)">PA - Handling (Perishables)</option>
-                                                    <option value="PB - Cool/Cold Room OCText=freezer (Perishables)">PB - Cool/Cold Room OCText=freezer (Perishables)</option>
-                                                    <option value="PK - Packing/Repacking">PK - Packing/Repacking</option>
-                                                    <option value="PU - Pick-Up">PU - Pick-Up</option>
-                                                    <option value="RA - Dangerous Goods Fee">RA - Dangerous Goods Fee</option>
-                                                    <option value="RB - Rejection">RB - Rejection</option>
-                                                    <option value="RC - Referral Of Charge">RC - Referral Of Charge</option>
-                                                    <option value="RD - Radio-active Room">RD - Radio-active Room</option>
-                                                    <option value="RF - Remit Following Collection Fee">RF - Remit Following Collection Fee</option>
-                                                    <option value="SA - Delivery">SA - Delivery</option>
-                                                    <option value="SB - Delivery Notification">SB - Delivery Notification</option>
-                                                    <option value="SC - Security Charge">SC - Security Charge</option>
-                                                    <option value="SD - Surface Charge">SD - Surface Charge</option>
-                                                    <option value="SE - Proof Of Delivery (pickup And Delivery)">SE - Proof Of Delivery (pickup And Delivery)</option>
-                                                    <option value="SF - Delivery Order">SF - Delivery Order</option>
-                                                    <option value="SI - Stop In Transit">SI - Stop In Transit</option>
-                                                    <option value="SO - Storage">SO - Storage</option>
-                                                    <option value="SP - Separate Early Release">SP - Separate Early Release</option>
-                                                    <option value="SR - Storage">SR - Storage</option>
-                                                    <option value="SS - Signature Service">SS - Signature Service</option>
-                                                    <option value="ST - State Sales Tax">ST - State Sales Tax</option>
-                                                    <option value="SU - Surface Charge">SU - Surface Charge</option>
-                                                    <option value="TA - Postal Tax">TA - Postal Tax</option>
-                                                    <option value="TB - Sales Tax">TB - Sales Tax</option>
-                                                    <option value="TC - Stamp Tax">TC - Stamp Tax</option>
-                                                    <option value="TD - State Tax">TD - State Tax</option>
-                                                    <option value="TE - Statistical Tax">TE - Statistical Tax</option>
-                                                    <option value="TH - Terminal Handling">TH - Terminal Handling</option>
-                                                    <option value="TI - Value Added Tax (For Import Only)">TI - Value Added Tax (For Import Only)</option>
-                                                    <option value="TR - Transit">TR - Transit</option>
-                                                    <option value="TV - Value Added Tax (General Or For Export)">TV - Value Added Tax (General Or For Export)</option>
-                                                    <option value="TX - General Taxes">TX - General Taxes</option>
-                                                    <option value="UB - Disassembly">UB - Disassembly</option>
-                                                    <option value="UC - Adjusting Of Improperly Loaded ULD">UC - Adjusting Of Improperly Loaded ULD</option>
-                                                    <option value="UD - Demurrage">UD - Demurrage</option>
-                                                    <option value="UE - Leasing">UE - Leasing</option>
-                                                    <option value="UF - Recontouring">UF - Recontouring</option>
-                                                    <option value="UG - Unloading (Unit Load Device)">UG - Unloading (Unit Load Device)</option>
-                                                    <option value="UH - Handling (Unit Load Device)">UH - Handling (Unit Load Device)</option>
-                                                    <option value="VA - Handling (Valuable Cargo)">VA - Handling (Valuable Cargo)</option>
-                                                    <option value="VB - Security (armed Guard/escort) Handling">VB - Security (armed Guard/escort) Handling</option>
-                                                    <option value="VC - Strongroom">VC - Strongroom</option>
-                                                    <option value="VE - Vetrinarian Charge">VE - Vetrinarian Charge</option>
-                                                    <option value="VS - VARIOUS SURCHARGE">VS - VARIOUS SURCHARGE</option>
-                                                    <option value="WA - Handling (Vulnerable Cargo)">WA - Handling (Vulnerable Cargo)</option>
-                                                    <option value="WR - War Risk">WR - War Risk</option>
-                                                    <option value="XB - Security (Surcharge/premiums)">XB - Security (Surcharge/premiums)</option>
-                                                    <option value="XC - Time">XC - Time</option>
-                                                    <option value="XD - War Risk">XD - War Risk</option>
-                                                    <option value="XE - Weight">XE - Weight</option>
-                                                    <option value="XR - Security Handling">XR - Security Handling</option>
-                                                    <option value="ZA - Re-warehousing">ZA - Re-warehousing</option>
-                                                    <option value="ZB - General (Storage)">ZB - General (Storage)</option>
-                                                    <option value="ZC - Cool/Cold Room Freezer (Storage)">ZC - Cool/Cold Room Freezer (Storage)</option>
+                                                    <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
+                                                        {{ charge.text }}
+                                                    </option>
                                                 </b-form-select>
+                                                <has-error :form="form" field="other_charge_code"></has-error>
+                                            </b-form-group>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
@@ -2879,6 +2740,7 @@ export default {
                     total_amount: 0,
                     master_pcs: null,
                     master_weight: null,
+                    dimention_unit: "MTQ"
                 },
 
                 custom_origin:{
@@ -2952,7 +2814,7 @@ export default {
                 height: '',
                 unit: 'CMT',
                 volume: '',
-                dimention_unit: 'MTQ', //cm3,m3,ft3
+                // dimention_unit: 'MTQ', //cm3,m3,ft3
 
                 uld_type: '',
                 uld_serial: '',
@@ -3018,6 +2880,7 @@ export default {
             existingData: [],
             data_items:[],
             countries:[],
+            other_charges_code: [],
             location:[],
             filteredShippers: [],
             filteredConsignees: [],
@@ -3324,10 +3187,10 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    this.form.entries = Array.isArray(this.existingData.consignment_data)
-                        ? this.existingData.consignment_data
-                        : [this.existingData.consignment_data];
-                    console.log("Entries in form:", this.form.entries);
+                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
+                    //     ? this.existingData.consignment_data
+                    //     : [this.existingData.consignment_data];
+                    // console.log("Entries in form:", this.form.entries);
                     
                     // this.consignment_list = this.existingData.consignment_data;
                     // this.form.entries = this.existingData.consignment_data;
@@ -3353,6 +3216,16 @@ export default {
         getLocation() {
             ApiService.get(`/get-location`).then(({ data }) => {
                 this.location=data;
+            });
+        },
+        getOtherChargesCode(){
+            ApiService.get('/other-charges').then(({ data }) => {
+                this.other_charges_code = Object.keys(data).map(key => ({
+                    value: key,
+                    text: data[key]
+                }));
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
             });
         },
         getAgent(){
@@ -3620,7 +3493,9 @@ export default {
                         volumeInM3 = volumeInFoot * 0.0283168466; // ft³ to m³
                         volumeInIn3 = volumeInFoot * 1_728; // ft³ to in³
                     }
-                    let selectedUnit = this.form.entries.dimention_unit; 
+                    // let selectedUnit = this.form.entries.dimention_unit; 
+                    // let selectedUnit = this.consignment_list.dimention_unit; form.totals.
+                    let selectedUnit = this.form.totals.dimention_unit;
                     let finalVolume = 0;
 
                     switch (selectedUnit) {
@@ -3647,22 +3522,28 @@ export default {
             this.form.totals.total_volume = totalVolume.toFixed(2);
         },
         calculateTotalAmount() {
-            const chargeableWeight = this.form.entries.reduce((total, entry) => {
-                let weight = parseFloat(entry.chargable_weight) || 0;
-                return total + weight;
-            }, 0);
+            // const chargeableWeight = this.form.entries.reduce((total, entry) => {
+            //     let weight = parseFloat(entry.chargable_weight) || 0;
+            //     return total + weight;
+            // }, 0);
+
+            const chargeableWeight = this.consignment_list.chargable_weight;
+            
             const { rate_class } = this.consignment_list;
             let rates = 0;
             this.form.totals.total_amount = 0;
             if (rate_class === "B" || rate_class === "M") {
-                this.form.totals.total_amount = this.consignment_list.rate || 0;
+                this.form.totals.total_amount = parseFloat(this.consignment_list.rate) || 0;
+                // this.form.totals.total_amount = this.consignment_list.rate || 0;
             } else if (rate_class === "P" || rate_class === "X") {
                 this.form.totals.total_amount = 0;
             } else {
-                rates = parseFloat(this.form.entries.reduce((total, entry) => {
-                    return total + (parseFloat(entry.rate) || 0);
-                }, 0)) || 0;
-                this.form.totals.total_amount = chargeableWeight * rates;
+                // rates = parseFloat(this.form.entries.reduce((total, entry) => {
+                //     return total + (parseFloat(entry.rate) || 0);
+                // }, 0)) || 0;
+                // this.form.totals.total_amount = chargeableWeight * rates;
+                // console.log("test", this.form.totals.total_amount);
+                this.form.totals.total_amount = chargeableWeight * this.consignment_list.rate;
             }
         },
         addHsCode() {
@@ -3690,6 +3571,11 @@ export default {
         },
         closeModal() {
             this.$refs.modalConsignment.hide();
+        },
+        handleModalClose() {
+            if (this.form.entries.length === 0) {
+                this.isConsignmentAdded = false;
+            }
         },
         addUldInfo() {
             this.uld_error = [];
@@ -4044,6 +3930,7 @@ export default {
         this.fillConsigneeDetails();
         this.fillAlsoNotifyDetails();
         this.fetchConsignee();
+        this.getOtherChargesCode();
         // const id = this.$route.params.id;
         // if (id) {
         // this.getHouseWayBill(id);
@@ -4053,7 +3940,10 @@ export default {
         // 'consignment_list': function () {
         //     this.form.totals.total_amount = this.calculateTotalAmount();
         // },
-        'form.entries.dimention_unit': function() {
+        // 'consignment_list.dimention_unit': function() {
+        //     this.calculateTotalVolume();
+        // },
+        'form.totals.dimention_unit': function() {
             this.calculateTotalVolume();
         },
         'form.charges': {
@@ -4197,6 +4087,7 @@ export default {
             };
         },
         calculatedCharge() {
+            // return this.form.totals.total_amount.toFixed(2);
             return this.form.totals.total_amount;
         },
         submitButtonText() {

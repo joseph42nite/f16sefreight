@@ -1612,9 +1612,6 @@ export default {
         },
         closeDropdown_departure(event) {
             const dropdownContainer_to = this.$refs.dropdownContainer_departure;
-            // if (!dropdownContainer_to.contains(event.target)) {
-            //     this.isDropdownOpen_departure = false;
-            // }
             if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
                 this.isDropdownOpen_destination = false;
             }
@@ -1624,8 +1621,6 @@ export default {
             if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
-            // if (!dropdownContainer_to.contains(event.target)) {
-            //     this.isDropdownOpen_destination = false;
         }
     },
     mounted(){

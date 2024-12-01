@@ -106,12 +106,6 @@ Route::delete('/delete-contact/{id?}',[ContactController::class,'delete']);
 Route::post('/create-webdoc', [AirwayBill::class,'store']);
 Route::post('/get-consignment-error', [AirwayBill::class,'getConsignmentError']);
 Route::get('/agent-info',[AirwayBill::class,'get_agent']);
-Route::post('/create-houseway-bill', [HousewayBill::class,'store']);
-Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
-
-Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
-Route::get('/get-country', [HousewayBill::class,'getCountry']);
-
 Route::get('/waybill/{awb_id?}',[ConversionController::class,'WayBillConversion']);
 Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
 Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
@@ -120,10 +114,9 @@ Route::get('/get-alsonotify-address', [AirwayBill::class, 'getAlsoNotifyAddress'
 Route::get('/all-airway-bill', [AirwayBill::class,'getAllawb']);
 Route::put('/update-airway-bill/{id}', [AirwayBill::class,'update']);
 Route::get('/airway-bill/{id}', [AirwayBill::class,'show']);
+Route::get('/get-awbcode-prefix/{code}', [AirwayBill::class,'getAwbPrefixData']);
+Route::get('/load-awb', [AirwayBill::class, 'loadAWB']);
 
-Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
-Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);
-Route::get('/all-houseway-bill', [HousewayBill::class,'getAllHawb']);
 Route::get('/all-consolidation',[ConsolidationController::class,'index']);
 Route::put('/update-consolidation/{id}', [ConsolidationController::class,'update']);
 Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
@@ -131,5 +124,22 @@ Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchH
 
 Route::get('/get-location', [LocationController::class,'getLocation']);
 
-Route::get('/load-awb', [AirwayBill::class, 'loadAWB']);
-Route::get('/get-awbcode-prefix/{code}', [AirwayBill::class,'getAwbPrefixData']);
+
+
+//houseWaybills
+
+Route::post('/create-houseway-bill', [HousewayBill::class,'store']);
+Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
+
+Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
+Route::get('/get-country', [HousewayBill::class,'getCountry']);
+Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
+
+Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
+Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);
+Route::get('/all-houseway-bill', [HousewayBill::class,'getAllHawb']);
+
+Route::get('/get-shippers', [HousewayBill::class, 'getShippers']);
+Route::get('/get-shipper-address', [HousewayBill::class, 'getShipperAddress']);
+Route::get('/get-consignee-address', [HousewayBill::class, 'getConsigneeAddress']);
+Route::get('/get-alsonotify-address', [HousewayBill::class, 'getAlsoNotifyAddress']);

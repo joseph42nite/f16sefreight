@@ -15,10 +15,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class GenerateConsolidationPdfController extends Controller
 {
-    public function downloadConsolidationPdf($awb_code = 123, $awbId = '12345678')
+    public function downloadConsolidationPdf($awb_code, $awb_no)
     {
         $airWayBill = AirWayBills::where('awb_code', $awb_code)
-            ->where('awb_no', $awbId)
+            ->where('awb_no', $awb_no)
             ->first();
 
             if($airWayBill)

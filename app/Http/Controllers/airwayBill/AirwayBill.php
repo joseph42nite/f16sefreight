@@ -509,6 +509,7 @@ class AirwayBill extends Controller
             'total_volume' => 'required|numeric|min:0|max:999999999',
             //'required|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'required|numeric|min:0.01|max:999999999',
+            'dimention_unit' => 'nullable|string|max:3',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -520,6 +521,7 @@ class AirwayBill extends Controller
 
         $AirwayBills->total_volume = $totals['total_volume'];
         $AirwayBills->total_amount = $totals['total_amount'];
+        $AirwayBills->dimention_unit = $totals['dimention_unit'];
         $AirwayBills->save();
         return "Toatl Amount and Total Volume saved successfull";
     }
@@ -634,7 +636,6 @@ class AirwayBill extends Controller
         return json_encode($main_return_data);
     }
    
-
     public function update(Request $request, $id, $awb_no = null)
     {
         $main_return_data = [];
@@ -763,7 +764,7 @@ class AirwayBill extends Controller
             'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'weight_code' => 'nullable|string|max:3',
             'volume' => 'nullable|string',
-            'dimention_unit' => 'nullable|string|max:3',
+            // 'dimention_unit' => 'nullable|string|max:3',
             'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
         ]);

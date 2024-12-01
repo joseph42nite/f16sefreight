@@ -27,6 +27,10 @@ class HousewayBill extends Controller
         $countries = config('country');
         return response()->json($countries);
     }
+    public function getOtherCharges(){
+        $other_charge_code = config('info_identifier.Other_charge');
+        return response()->json($other_charge_code);
+    }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [
@@ -361,7 +365,7 @@ class HousewayBill extends Controller
        $HousewayBills->date_3 = $routing_information['date_3'];
        $HousewayBills->master_origin = $routing_information['master_origin'];
        $HousewayBills->master_destination = $routing_information['master_destination'];
-    //    dd($HousewayBills);die;
+       //    dd($HousewayBills);die;
        $HousewayBills->save();
         return "Routing Information saved successfull";
     }
@@ -388,6 +392,7 @@ class HousewayBill extends Controller
             $ConsignmentData->rate = $entries[$i]['rate'];
             $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
             $ConsignmentData->uld_info = json_encode($entries[$i]['uld_info']);
+            // $ConsignmentData->dimention_unit = $entries[$i]['dimention_unit'];
             $ConsignmentData->save();
             return "Consignment Data saved successfull";
         }
@@ -568,6 +573,7 @@ class HousewayBill extends Controller
             'total_amount' => 'required|numeric|min:0.01|max:999999999',
             'master_pcs' => 'required|regex:/^[0-9]+$/|max:4',
             'master_weight' => 'required|numeric|min:0.1|max:9999999|regex:/^\d{1,7}(\.\d{1,3})?$/',
+            'dimention_unit' => 'nullable|string|max:3',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -580,6 +586,7 @@ class HousewayBill extends Controller
             $HousewayBills->total_amount = $totals['total_amount'];
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
+            $HousewayBills->dimention_unit = $totals['dimention_unit'];
             $HousewayBills->save();
             return response()->json([
                 'message' => 'Toatl Amount and Total Volume updated successfully',
@@ -592,6 +599,7 @@ class HousewayBill extends Controller
         $HousewayBills->total_amount = $totals['total_amount'];
         $HousewayBills->master_pcs = $totals['master_pcs'];
         $HousewayBills->master_weight = $totals['master_weight'];
+        $HousewayBills->dimention_unit = $totals['dimention_unit'];
         $HousewayBills->save();
         }
         return "Toatl Amount and Total Volume saved successfull";
@@ -721,7 +729,7 @@ class HousewayBill extends Controller
             'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'weight_code' => 'nullable|string|max:3',
             'volume' => 'nullable|string',
-            'dimention_unit' => 'nullable|string|max:3',
+            // 'dimention_unit' => 'nullable|string|max:3',
             'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
         ]);
@@ -842,5 +850,95 @@ class HousewayBill extends Controller
             return response()->json(['message' => 'Record not found'], 404);
         }
         return response()->json($housewayBill, 200);
-    }   
+    } 
+    
+    public function getShippers(Request $request)
+    {
+        // $shippers = SavedAddress::all();
+        $shippers = SavedAddress::where('user_id', 123456)->get();
+        // dd($shippers);
+        return response()->json($shippers);
+    }
+    public function getShipperAddress(Request $request)
+    {
+        $addressId = $request->id;
+        $addressType = $request->address_type ?? 'shipper_address';
+        $agenData = SavedAddress::where('id', $addressId)->first();
+        if (!$agenData) {
+            return response()->json(['error' => 'Address not found'], 404);
+        }
+        $userId = $agenData->user_id;
+    
+        $query = SavedAddress::where('user_id', $userId);
+        if ($addressId) {
+            $query->where('id', $addressId);
+        } else {
+            $query->where('address_type', $addressType);
+        }
+        $address = $query->first();
+    
+        if ($address) {
+            return response()->json([
+                'ship_name' => $address->name,
+                'ship_account' => $address->account,
+                'ship_address' => $address->address,
+                'ship_address_line_2' => $address->address_line_2,
+                'ship_city' => $address->city,
+                'ship_airport_code' => $address->airport_code,
+                'ship_post_code' => $address->post_code,
+                'ship_state' => $address->state,
+                'ship_country' => $address->country,
+                'ship_phone' => $address->phone,
+                'ship_fax' => $address->fax,
+                'ship_telex' => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
+    public function getConsigneeAddress(Request $request)
+    {
+        $addressId = $request->query('id');
+        $address_type = $request->query('address_type', 'consignee_address');
+        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+        if ($address) {
+            return response()->json([
+                'cons_name' => $address->name,
+                'cons_account' => $address->account,
+                'cons_address' => $address->address,
+                'cons_address_line_2' => $address->address_line_2,
+                'cons_city' => $address->city,
+                'cons_airport_code' => $address->airport_code,
+                'cons_post_code' => $address->post_code,
+                'cons_state' => $address->state,
+                'cons_country' => $address->country,
+                'cons_phone' => $address->phone,
+                'cons_fax' => $address->fax,
+                'cons_telex' => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
+    public function getAlsoNotifyAddress(Request $request)
+    {
+        $addressId = $request->query('id');
+        $address_type = $request->query('address_type', 'also_notify_address');
+        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+        if ($address) {
+            return response()->json([
+                'also_name' => $address->name,
+                'also_account' => $address->account,
+                'also_address' => $address->address,
+                'also_address_line_2' => $address->address_line_2,
+                'also_city' => $address->city,
+                'also_airport_code' => $address->airport_code,
+                'also_post_code' => $address->post_code,
+                'also_state' => $address->state,
+                'also_country' => $address->country,
+                'also_phone' => $address->phone,
+                'also_fax' => $address->fax,
+                'also_telex' => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
 }

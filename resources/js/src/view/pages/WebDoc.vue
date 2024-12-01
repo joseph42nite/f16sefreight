@@ -118,6 +118,16 @@
                                                 <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
                                         </router-link>
                                     </a>
+                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                        </router-link>
+                                    </a>
+                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                        </router-link>
+                                    </a>
                                     <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                 </div>
                             </b-col>
@@ -205,7 +215,7 @@
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"
                                         v-model="form.first_box.awb_code"
-                                        :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput"></b-form-input>
+                                        :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_code', 3)"></b-form-input>
                                     <has-error :form="form" field="awb_code"></has-error>
                                 </b-form-group>
                                 <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p>
@@ -218,7 +228,7 @@
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px"
                                         v-model="form.first_box.awb_no"
-                                        :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput"></b-form-input>
+                                        :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)"></b-form-input>
                                     <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
                             </b-col>
@@ -714,7 +724,7 @@
                                             </div>
                                         </div>
                                     </b-row>
-                                    <b-row class="justify-content-end" style="margin-right: 23%">
+                                    <b-row class="justify-content-end" style="margin-right: 17.5%">
                                         <div class="d-flex flex-column justify-content-end">
                                             <table class="mx-auto table-sm">
                                                 <tbody>
@@ -773,7 +783,7 @@
                                             <!-- </div> -->
                                         </div>
                                     </b-row>
-                                    <b-row class="justify-content-end" style="margin-right: 23%">
+                                    <b-row class="justify-content-end" style="margin-right: 17.5%">
                                         <div class="d-flex flex-column justify-content-end">
                                             <table class="mx-auto table-sm">
                                                 <tbody>
@@ -897,7 +907,7 @@
                             </div>
                             <b-button class="mt-5" v-b-modal.modal-consignment variant="warning" @click="handleAddConsignment" :disabled="isConsignmentAdded">Add Consignment Information</b-button>
                             <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
-                                size="xl" ok-only hide-footer>
+                                size="xl" ok-only hide-footer @hide="handleModalClose">
                                 <div class="d-block">
                                     <b-row>
                                         <!-- First Column -->
@@ -1013,8 +1023,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style=" width: 320px;"
+                                                                <b-form-select class="form-control" style=" width: 320px;"
                                                                     v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
                                                                     <option value=""> Select a Country</option>
                                                                     <option v-for="country in countries" :key="country.value" :value="country.value">
@@ -1024,10 +1033,8 @@
                                                                 <has-error :form="consignment_list" field="country_origin_goods"></has-error>
                                                             </td>
                                                             <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 170px;"
-                                                                    v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
-                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
+                                                                <input type="text" class="form-control" style="width: 170px;" v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
+                                                                <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -1352,7 +1359,7 @@
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2"
                                                     v-model="form.totals.total_volume"></b-form-input>
-                                                <b-form-select class="form-control-sm" v-model="form.entries.dimention_unit">
+                                                <b-form-select class="form-control-sm" v-model="form.totals.dimention_unit">
                                                     <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
                                                     <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
                                                     <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
@@ -1543,34 +1550,22 @@
                                                             <tr>
                                                                 <td class="editable-cell">Issuing Location Code:* </td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_issue_loc_code">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="BLR">BLR, Bangalore (BLR), India
-                                                                        </option>
-                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria
-                                                                        </option>
-                                                                        <option value="AAH">AAH, Aachen (AAH), Germany
-                                                                        </option>
-                                                                        <option value="AAI">AAI, Arraias (AAI), Brazil
-                                                                        </option>
-                                                                        <option value="AAL">AAL, Aalborg (AAL), Denmark
-                                                                        </option>
-                                                                        <option value="AAM">AAM, Mala Mala (AAM), South
-                                                                            Africa</option>
-                                                                        <option value="AAN">AAN, Al Ain (AAN), United
-                                                                            Arab Emirates</option>
-                                                                        <option value="AAP">AAP, Samarinda (AAP),
-                                                                            Indonesia</option>
-                                                                        <option value="AAR">AAR, Aarhus (AAR), Denmark
-                                                                        </option>
-                                                                        <option value="ABA">ABA, Abakan (ABA), Russian
-                                                                            Federation</option>
-                                                                        <option value="ABC">ABC, Albacete (ABC), Spain
-                                                                        </option>
-                                                                    </b-form-select>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-agent_issue_loc_code"
+                                                                        class="form-control-sm col-form-label">
+                                                                            <div class="custom-dropdown" ref="dropdownContainer_issue" @click="toggleDropdown_issuing_loc">
+                                                                                <input type="text" v-model="agent_information.agent_issue_loc_code" placeholder="Search location" id="agent_issue_loc_code" class="form-control" 
+                                                                                    autocomplete="off" :class="{ 'is-invalid': form.errors.has('agent_issue_loc_code') }">
+                                                                                <div v-if="isDropdownOpen_issuing_loc && filteredLocations_issuing.length" class="dropdown-options">
+                                                                                    <div v-for="(item, index) in filteredLocations_issuing" 
+                                                                                        :key="index" 
+                                                                                        @click.stop="selectOption_issuing_loc(item)" 
+                                                                                        class="option">
+                                                                                        {{ item.iata_code }} ({{ item.destination }})
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        <has-error :form="form" field="agent_issue_loc_code"></has-error>
+                                                                    </b-form-group>
                                                                 </td>
                                                                 <td class="editable-cell">
                                                                     <b-form-checkbox size="sm">Save information for
@@ -1627,34 +1622,22 @@
                                                             <tr v-if="agent_information.participate === '0'">
                                                                 <td class="editable-cell">Participant Airport:</td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.participate_airport">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="BLR">BLR, Bangalore (BLR), India
-                                                                        </option>
-                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria
-                                                                        </option>
-                                                                        <option value="AAH">AAH, Aachen (AAH), Germany
-                                                                        </option>
-                                                                        <option value="AAI">AAI, Arraias (AAI), Brazil
-                                                                        </option>
-                                                                        <option value="AAL">AAL, Aalborg (AAL), Denmark
-                                                                        </option>
-                                                                        <option value="AAM">AAM, Mala Mala (AAM), South
-                                                                            Africa</option>
-                                                                        <option value="AAN">AAN, Al Ain (AAN), United
-                                                                            Arab Emirates</option>
-                                                                        <option value="AAP">AAP, Samarinda (AAP),
-                                                                            Indonesia</option>
-                                                                        <option value="AAR">AAR, Aarhus (AAR), Denmark
-                                                                        </option>
-                                                                        <option value="ABA">ABA, Abakan (ABA), Russian
-                                                                            Federation</option>
-                                                                        <option value="ABC">ABC, Albacete (ABC), Spain
-                                                                        </option>
-                                                                    </b-form-select>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-departure-airport"
+                                                                        class="form-control-sm col-form-label">
+                                                                            <div class="custom-dropdown" ref="dropdownContainer_participant" @click="toggleDropdown_participant_airport">
+                                                                                <input type="text" v-model="agent_information.participate_airport" placeholder="Search location" id="participant" class="form-control" 
+                                                                                    autocomplete="off" :class="{ 'is-invalid': form.errors.has('participate_airport') }">
+                                                                                <div v-if="isDropdownOpen_participant && filteredLocations_participant.length" class="dropdown-options">
+                                                                                    <div v-for="(item, index) in filteredLocations_participant" 
+                                                                                        :key="index" 
+                                                                                        @click.stop="selectOption_participant_airport(item)" 
+                                                                                        class="option">
+                                                                                        {{ item.iata_code }} ({{ item.destination }})
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        <has-error :form="form" field="participate_airport"></has-error>
+                                                                    </b-form-group>
                                                                 </td>
                                                             </tr>
                                                             <tr v-if="agent_information.participate === '0'">
@@ -1860,14 +1843,14 @@
                                             v-model="form.is_also_notify_address_save"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-tab>
-                                    <b-tab title="Exta Print Information">
+                                    <!-- <b-tab title="Exta Print Information">
                                         <h5> Extra information printed of Air Way Bill (Only printed - not saved or sent
                                             to Airlines): </h5>
                                         <b-form-textarea class=""
                                             style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
                                             rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
-                                    </b-tab>
-                                    <b-tab title="Carrier Address">
+                                    </b-tab> -->
+                                    <!-- <b-tab title="Carrier Address">
                                         <h4 class="h-color font-weight-bolder ml-2 mt-2">Override the Carrier Address on
                                             the PDF Document
                                         </h4>
@@ -1917,7 +1900,7 @@
                                             <b-form-input id="input-horizontal"
                                                 class="form-control-sm ml-lg-20"></b-form-input>
                                         </b-form-group>
-                                    </b-tab>
+                                    </b-tab> -->
                                 </b-tabs>
                             </div>
                         </div>
@@ -1938,156 +1921,14 @@
 
                                     <b-row>
                                         <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
+                                            <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                <b-form-select class="form-control-sm" v-model="oci_info.country_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
                                                     <option value="">Select an Other Charge Code</option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                    <option value="SC - Security Charge">SC - Security Charge</option>
-                                                    <option value="AC - Animal Container">AC - Animal Container</option>
-                                                    <option value="AS - Assembly Service Fee">AS - Assembly Service Fee</option>
-                                                    <option value="AT - Attendant">AT - Attendant</option>
-                                                    <option value="AW - Air Waybill Fee">AW - Air Waybill Fee</option>
-                                                    <option value="BA - Advances And/or Guarantees">BA - Advances And/or Guarantees</option>
-                                                    <option value="BB - Appraisal Service">BB - Appraisal Service</option>
-                                                    <option value="BC - AWB Copy">BC - AWB Copy</option>
-                                                    <option value="BE - Collection Of Funds">BE - Collection Of Funds</option>
-                                                    <option value="BF - Copies Of Documents">BF - Copies Of Documents</option>
-                                                    <option value="BH - Messenger Service">BH - Messenger Service</option>
-                                                    <option value="BI - Import/export Documents Processing">BI - Import/export Documents Processing</option>
-                                                    <option value="BL - Blacklist Certificate">BL - Blacklist Certificate</option>
-                                                    <option value="BM - Withdrawal Of Shipment After Clearance">BM - Withdrawal Of Shipment After Clearance</option>
-                                                    <option value="BR - Bank Release">BR - Bank Release</option>
-                                                    <option value="CA - Bonding">CA - Bonding</option>
-                                                    <option value="CB - Completion/preparation Of Documents">CB - Completion/preparation Of Documents</option>
-                                                    <option value="CC - Manual Data Entry For Customs Purposes">CC - Manual Data Entry For Customs Purposes</option>
-                                                    <option value="CD - Clearance And Handling">CD - Clearance And Handling</option>
-                                                    <option value="CE - Export/Import Warrant">CE - Export/Import Warrant</option>
-                                                    <option value="CF - Inventory And/or Inspection">CF - Inventory And/or Inspection</option>
-                                                    <option value="CG - Electronic Proc. Or Trans. Of Data For Customs">CG - Electronic Proc. Or Trans. Of Data For Customs</option>
-                                                    <option value="CH - Clearance And Handling">CH - Clearance And Handling</option>
-                                                    <option value="CI - Overtime And Other Customs Imposed Charges">CI - Overtime And Other Customs Imposed Charges</option>
-                                                    <option value="CJ - Removal (carrier Warehouse To Warehouse)">CJ - Removal (carrier Warehouse To Warehouse)</option>
-                                                    <option value="DB - Disbursement Fee">DB - Disbursement Fee</option>
-                                                    <option value="DC - Certificate Of Origin">DC - Certificate Of Origin</option>
-                                                    <option value="DD - Preparation Of Cargo Manifest">DD - Preparation Of Cargo Manifest</option>
-                                                    <option value="DF - Distribution Service Fee">DF - Distribution Service Fee</option>
-                                                    <option value="DG - AWB Cancellation">DG - AWB Cancellation</option>
-                                                    <option value="DH - AWB Charges Correction Advice">DH - AWB Charges Correction Advice</option>
-                                                    <option value="DI - AWB Re-waybilling">DI - AWB Re-waybilling</option>
-                                                    <option value="DJ - Proof Of Delivery (documentation)">DJ - Proof Of Delivery (documentation)</option>
-                                                    <option value="DK - Release Order">DK - Release Order</option>
-                                                    <option value="DV - Veterinary And/or Phytosanitary Purposes">DV - Veterinary And/or Phytosanitary Purposes</option>
-                                                    <option value="EA - Handling (Express)">EA - Handling (Express)</option>
-                                                    <option value="FA - Airport Arrival">FA - Airport Arrival</option>
-                                                    <option value="FB - Domestic Shipments">FB - Domestic Shipments</option>
-                                                    <option value="FC - Charges Collect Fee">FC - Charges Collect Fee</option>
-                                                    <option value="FD - Priority">FD - Priority</option>
-                                                    <option value="FE - General (Handling)">FE - General (Handling)</option>
-                                                    <option value="FF - Loading/unloading">FF - Loading/unloading</option>
-                                                    <option value="FI - Weighing">FI - Weighing</option>
-                                                    <option value="FS - Fuel Surcharge">FS - Fuel Surcharge</option>
-                                                    <option value="GA - Diplomatic Consignment">GA - Diplomatic Consignment</option>
-                                                    <option value="GT - Government Tax">GT - Government Tax</option>
-                                                    <option value="HB - Mortuary">HB - Mortuary</option>
-                                                    <option value="HR - Human Remains">HR - Human Remains</option>
-                                                    <option value="IA - Very Important Cargo (VIC)">IA - Very Important Cargo (VIC)</option>
-                                                    <option value="IN - Insurance Premium">IN - Insurance Premium</option>
-                                                    <option value="IR - War Risk">IR - War Risk</option>
-                                                    <option value="IS - War Risk">IS - War Risk</option>
-                                                    <option value="JA - Clearance OCText=General">JA - Clearance OCText=General</option>
-                                                    <option value="KA - Handling (Heavy/Bulky Cargo)">KA - Handling (Heavy/Bulky Cargo)</option>
-                                                    <option value="KB - Loading/unloading Equipment (forklift Etc.)">KB - Loading/unloading Equipment (forklift Etc.)</option>
-                                                    <option value="LA - Live Animals">LA - Live Animals</option>
-                                                    <option value="LC - Cleaning">LC - Cleaning</option>
-                                                    <option value="LE - Hotel">LE - Hotel</option>
-                                                    <option value="LF - Quarantine">LF - Quarantine</option>
-                                                    <option value="LG - Veterinary Inspection">LG - Veterinary Inspection</option>
-                                                    <option value="LH - Storage (Live Animals)">LH - Storage (Live Animals)</option>
-                                                    <option value="LI - Cleaning Of Stalls/pens">LI - Cleaning Of Stalls/pens</option>
-                                                    <option value="LJ - Rental Of Stalls/pens">LJ - Rental Of Stalls/pens</option>
-                                                    <option value="MA - Miscellaneous A">MA - Miscellaneous A</option>
-                                                    <option value="MB - Miscellaneous B">MB - Miscellaneous B</option>
-                                                    <option value="MC - Miscellaneous C">MC - Miscellaneous C</option>
-                                                    <option value="MD - Miscellaneous D">MD - Miscellaneous D</option>
-                                                    <option value="ME - Miscellaneous E">ME - Miscellaneous E</option>
-                                                    <option value="MF - Miscellaneous F">MF - Miscellaneous F</option>
-                                                    <option value="MG - Miscellaneous G">MG - Miscellaneous G</option>
-                                                    <option value="MH - Miscellaneous H">MH - Miscellaneous H</option>
-                                                    <option value="MI - Miscellaneous I">MI - Miscellaneous I</option>
-                                                    <option value="MJ - Miscellaneous J">MJ - Miscellaneous J</option>
-                                                    <option value="MK - Miscellaneous K">MK - Miscellaneous K</option>
-                                                    <option value="ML - Miscellaneous L">ML - Miscellaneous L</option>
-                                                    <option value="MM - Miscellaneous M">MM - Miscellaneous M</option>
-                                                    <option value="MN - Miscellaneous N">MN - Miscellaneous N</option>
-                                                    <option value="MO - Miscellaneous O">MO - Miscellaneous O</option>
-                                                    <option value="MP - Miscellaneous P">MP - Miscellaneous P</option>
-                                                    <option value="MQ - Miscellaneous Q">MQ - Miscellaneous Q</option>
-                                                    <option value="MR - Airfreight Surcharge">MR - Airfreight Surcharge</option>
-                                                    <option value="MS - Miscellaneous S">MS - Miscellaneous S</option>
-                                                    <option value="MT - Miscellaneous T">MT - Miscellaneous T</option>
-                                                    <option value="MU - Miscellaneous U">MU - Miscellaneous U</option>
-                                                    <option value="MV - Miscellaneous V">MV - Miscellaneous V</option>
-                                                    <option value="MW - Miscellaneous W">MW - Miscellaneous W</option>
-                                                    <option value="MX - Miscellaneous X">MX - Miscellaneous X</option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                    <option value="MZ - Miscellaneous Z">MZ - Miscellaneous Z</option>
-                                                    <option value="NS - Navigation Surcharge">NS - Navigation Surcharge</option>
-                                                    <option value="PA - Handling (Perishables)">PA - Handling (Perishables)</option>
-                                                    <option value="PB - Cool/Cold Room OCText=freezer (Perishables)">PB - Cool/Cold Room OCText=freezer (Perishables)</option>
-                                                    <option value="PK - Packing/Repacking">PK - Packing/Repacking</option>
-                                                    <option value="PU - Pick-Up">PU - Pick-Up</option>
-                                                    <option value="RA - Dangerous Goods Fee">RA - Dangerous Goods Fee</option>
-                                                    <option value="RB - Rejection">RB - Rejection</option>
-                                                    <option value="RC - Referral Of Charge">RC - Referral Of Charge</option>
-                                                    <option value="RD - Radio-active Room">RD - Radio-active Room</option>
-                                                    <option value="RF - Remit Following Collection Fee">RF - Remit Following Collection Fee</option>
-                                                    <option value="SA - Delivery">SA - Delivery</option>
-                                                    <option value="SB - Delivery Notification">SB - Delivery Notification</option>
-                                                    <option value="SC - Security Charge">SC - Security Charge</option>
-                                                    <option value="SD - Surface Charge">SD - Surface Charge</option>
-                                                    <option value="SE - Proof Of Delivery (pickup And Delivery)">SE - Proof Of Delivery (pickup And Delivery)</option>
-                                                    <option value="SF - Delivery Order">SF - Delivery Order</option>
-                                                    <option value="SI - Stop In Transit">SI - Stop In Transit</option>
-                                                    <option value="SO - Storage">SO - Storage</option>
-                                                    <option value="SP - Separate Early Release">SP - Separate Early Release</option>
-                                                    <option value="SR - Storage">SR - Storage</option>
-                                                    <option value="SS - Signature Service">SS - Signature Service</option>
-                                                    <option value="ST - State Sales Tax">ST - State Sales Tax</option>
-                                                    <option value="SU - Surface Charge">SU - Surface Charge</option>
-                                                    <option value="TA - Postal Tax">TA - Postal Tax</option>
-                                                    <option value="TB - Sales Tax">TB - Sales Tax</option>
-                                                    <option value="TC - Stamp Tax">TC - Stamp Tax</option>
-                                                    <option value="TD - State Tax">TD - State Tax</option>
-                                                    <option value="TE - Statistical Tax">TE - Statistical Tax</option>
-                                                    <option value="TH - Terminal Handling">TH - Terminal Handling</option>
-                                                    <option value="TI - Value Added Tax (For Import Only)">TI - Value Added Tax (For Import Only)</option>
-                                                    <option value="TR - Transit">TR - Transit</option>
-                                                    <option value="TV - Value Added Tax (General Or For Export)">TV - Value Added Tax (General Or For Export)</option>
-                                                    <option value="TX - General Taxes">TX - General Taxes</option>
-                                                    <option value="UB - Disassembly">UB - Disassembly</option>
-                                                    <option value="UC - Adjusting Of Improperly Loaded ULD">UC - Adjusting Of Improperly Loaded ULD</option>
-                                                    <option value="UD - Demurrage">UD - Demurrage</option>
-                                                    <option value="UE - Leasing">UE - Leasing</option>
-                                                    <option value="UF - Recontouring">UF - Recontouring</option>
-                                                    <option value="UG - Unloading (Unit Load Device)">UG - Unloading (Unit Load Device)</option>
-                                                    <option value="UH - Handling (Unit Load Device)">UH - Handling (Unit Load Device)</option>
-                                                    <option value="VA - Handling (Valuable Cargo)">VA - Handling (Valuable Cargo)</option>
-                                                    <option value="VB - Security (armed Guard/escort) Handling">VB - Security (armed Guard/escort) Handling</option>
-                                                    <option value="VC - Strongroom">VC - Strongroom</option>
-                                                    <option value="VE - Vetrinarian Charge">VE - Vetrinarian Charge</option>
-                                                    <option value="VS - VARIOUS SURCHARGE">VS - VARIOUS SURCHARGE</option>
-                                                    <option value="WA - Handling (Vulnerable Cargo)">WA - Handling (Vulnerable Cargo)</option>
-                                                    <option value="WR - War Risk">WR - War Risk</option>
-                                                    <option value="XB - Security (Surcharge/premiums)">XB - Security (Surcharge/premiums)</option>
-                                                    <option value="XC - Time">XC - Time</option>
-                                                    <option value="XD - War Risk">XD - War Risk</option>
-                                                    <option value="XE - Weight">XE - Weight</option>
-                                                    <option value="XR - Security Handling">XR - Security Handling</option>
-                                                    <option value="ZA - Re-warehousing">ZA - Re-warehousing</option>
-                                                    <option value="ZB - General (Storage)">ZB - General (Storage)</option>
-                                                    <option value="ZC - Cool/Cold Room Freezer (Storage)">ZC - Cool/Cold Room Freezer (Storage)</option>
+                                                    <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
+                                                        {{ charge.text }}
+                                                    </option>
                                                 </b-form-select>
+                                                <has-error :form="form" field="other_charge_code"></has-error>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
@@ -2411,295 +2252,15 @@
                                                         <tr>
                                                             <td class="editable-cell">
                                                                 <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label"
-                                                                    style="width: 350px;">
+                                                                    class="form-control-sm col-form-label" style="width: 350px;">
                                                                     <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.country_code"
-                                                                        :class="{ 'is-invalid': form.errors.has('country_code') }">
+                                                                        v-model="oci_info.country_code" :class="{ 'is-invalid': form.errors.has('country_code') }">
                                                                         <option value="">Select a country</option>
-                                                                        <option value="AF">Afghanistan</option>
-                                                                        <option value="AX">Åland Islands</option>
-                                                                        <option value="AL">Albania</option>
-                                                                        <option value="DZ">Algeria</option>
-                                                                        <option value="AS">American Samoa</option>
-                                                                        <option value="AD">Andorra</option>
-                                                                        <option value="AO">Angola</option>
-                                                                        <option value="AI">Anguilla</option>
-                                                                        <option value="AQ">Antarctica</option>
-                                                                        <option value="AG">Antigua and Barbuda</option>
-                                                                        <option value="AR">Argentina</option>
-                                                                        <option value="AM">Armenia</option>
-                                                                        <option value="AW">Aruba</option>
-                                                                        <option value="AU">Australia</option>
-                                                                        <option value="AT">Austria</option>
-                                                                        <option value="AZ">Azerbaijan</option>
-                                                                        <option value="BS">Bahamas</option>
-                                                                        <option value="BH">Bahrain</option>
-                                                                        <option value="BD">Bangladesh</option>
-                                                                        <option value="BB">Barbados</option>
-                                                                        <option value="BY">Belarus</option>
-                                                                        <option value="BE">Belgium</option>
-                                                                        <option value="BZ">Belize</option>
-                                                                        <option value="BJ">Benin</option>
-                                                                        <option value="BM">Bermuda</option>
-                                                                        <option value="BT">Bhutan</option>
-                                                                        <option value="BO">Bolivia</option>
-                                                                        <option value="BQ">Bonaire</option>
-                                                                        <option value="BA">Bosnia and Herzegovina
+                                                                        <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                            {{ country.text }}
                                                                         </option>
-                                                                        <option value="BW">Botswana</option>
-                                                                        <option value="BV">Bouvet Island</option>
-                                                                        <option value="BR">Brazil</option>
-                                                                        <option value="IO">British Indian Ocean
-                                                                            Territory</option>
-                                                                        <option value="BN">Brunei Darussalam</option>
-                                                                        <option value="BG">Bulgaria</option>
-                                                                        <option value="BF">Burkina Faso</option>
-                                                                        <option value="BI">Burundi</option>
-                                                                        <option value="KH">Cambodia</option>
-                                                                        <option value="CM">Cameroon</option>
-                                                                        <option value="CA">Canada</option>
-                                                                        <option value="CV">Cape Verde</option>
-                                                                        <option value="KY">Cayman Islands</option>
-                                                                        <option value="CF">Central African Republic
-                                                                        </option>
-                                                                        <option value="TD">Chad</option>
-                                                                        <option value="CL">Chile</option>
-                                                                        <option value="CN">China</option>
-                                                                        <option value="CX">Christmas Island</option>
-                                                                        <option value="CC">Cocos (Keeling) Islands
-                                                                        </option>
-                                                                        <option value="CO">Colombia</option>
-                                                                        <option value="KM">Comoros</option>
-                                                                        <option value="CG">Congo</option>
-                                                                        <option value="CD">Congo, the Democratic
-                                                                            Republic of the</option>
-                                                                        <option value="CK">Cook Islands</option>
-                                                                        <option value="CR">Costa Rica</option>
-                                                                        <option value="CI">Côte d'Ivoire</option>
-                                                                        <option value="HR">Croatia</option>
-                                                                        <option value="CU">Cuba</option>
-                                                                        <option value="CW">Curacao</option>
-                                                                        <option value="CY">Cyprus</option>
-                                                                        <option value="CZ">Czech Republic</option>
-                                                                        <option value="DK">Denmark</option>
-                                                                        <option value="DJ">Djibouti</option>
-                                                                        <option value="DM">Dominica</option>
-                                                                        <option value="DO">Dominican Republic</option>
-                                                                        <option value="EC">Ecuador</option>
-                                                                        <option value="EG">Egypt</option>
-                                                                        <option value="SV">El Salvador</option>
-                                                                        <option value="GQ">Equatorial Guinea</option>
-                                                                        <option value="ER">Eritrea</option>
-                                                                        <option value="EE">Estonia</option>
-                                                                        <option value="ET">Ethiopia</option>
-                                                                        <option value="FK">Falkland Islands (Malvinas)
-                                                                        </option>
-                                                                        <option value="FO">Faroe Islands</option>
-                                                                        <option value="FJ">Fiji</option>
-                                                                        <option value="FI">Finland</option>
-                                                                        <option value="FR">France</option>
-                                                                        <option value="GF">French Guiana</option>
-                                                                        <option value="PF">French Polynesia</option>
-                                                                        <option value="TF">French Southern Territories
-                                                                        </option>
-                                                                        <option value="GA">Gabon</option>
-                                                                        <option value="GM">Gambia</option>
-                                                                        <option value="GE">Georgia</option>
-                                                                        <option value="DE">Germany</option>
-                                                                        <option value="GH">Ghana</option>
-                                                                        <option value="GI">Gibraltar</option>
-                                                                        <option value="GR">Greece</option>
-                                                                        <option value="GL">Greenland</option>
-                                                                        <option value="GD">Grenada</option>
-                                                                        <option value="GP">Guadeloupe</option>
-                                                                        <option value="GU">Guam</option>
-                                                                        <option value="GT">Guatemala</option>
-                                                                        <option value="GG">Guernsey</option>
-                                                                        <option value="GN">Guinea</option>
-                                                                        <option value="GW">Guinea-Bissau</option>
-                                                                        <option value="GY">Guyana</option>
-                                                                        <option value="HT">Haiti</option>
-                                                                        <option value="HM">Heard Island and McDonald
-                                                                            Islands</option>
-                                                                        <option value="VA">Holy See (Vatican City State)
-                                                                        </option>
-                                                                        <option value="HN">Honduras</option>
-                                                                        <option value="HK">Hong Kong</option>
-                                                                        <option value="HU">Hungary</option>
-                                                                        <option value="IS">Iceland</option>
-                                                                        <option value="IN">India</option>
-                                                                        <option value="ID">Indonesia</option>
-                                                                        <option value="IR">Iran, Islamic Republic of
-                                                                        </option>
-                                                                        <option value="IQ">Iraq</option>
-                                                                        <option value="IE">Ireland</option>
-                                                                        <option value="IM">Isle of Man</option>
-                                                                        <option value="IL">Israel</option>
-                                                                        <option value="IT">Italy</option>
-                                                                        <option value="JM">Jamaica</option>
-                                                                        <option value="JP">Japan</option>
-                                                                        <option value="JE">Jersey</option>
-                                                                        <option value="JO">Jordan</option>
-                                                                        <option value="KZ">Kazakhstan</option>
-                                                                        <option value="KE">Kenya</option>
-                                                                        <option value="KI">Kiribati</option>
-                                                                        <option value="KP">Korea, Democratic People's
-                                                                            Republic of</option>
-                                                                        <option value="KR">Korea, Republic of</option>
-                                                                        <option value="XK">Kosovo, Republic of</option>
-                                                                        <option value="KW">Kuwait</option>
-                                                                        <option value="KG">Kyrgyzstan</option>
-                                                                        <option value="LA">Lao People's Democratic
-                                                                            Republic</option>
-                                                                        <option value="LV">Latvia</option>
-                                                                        <option value="LB">Lebanon</option>
-                                                                        <option value="LS">Lesotho</option>
-                                                                        <option value="LR">Liberia</option>
-                                                                        <option value="LY">Libya</option>
-                                                                        <option value="LI">Liechtenstein</option>
-                                                                        <option value="LT">Lithuania</option>
-                                                                        <option value="LU">Luxembourg</option>
-                                                                        <option value="MO">Macao</option>
-                                                                        <option value="MK">Macedonia, the former
-                                                                            Yugoslav Republic of</option>
-                                                                        <option value="MG">Madagascar</option>
-                                                                        <option value="MW">Malawi</option>
-                                                                        <option value="MY">Malaysia</option>
-                                                                        <option value="MV">Maldives</option>
-                                                                        <option value="ML">Mali</option>
-                                                                        <option value="MT">Malta</option>
-                                                                        <option value="MH">Marshall Islands</option>
-                                                                        <option value="MQ">Martinique</option>
-                                                                        <option value="MR">Mauritania</option>
-                                                                        <option value="MU">Mauritius</option>
-                                                                        <option value="YT">Mayotte</option>
-                                                                        <option value="MX">Mexico</option>
-                                                                        <option value="FM">Micronesia, Federated States
-                                                                            of</option>
-                                                                        <option value="MD">Moldova, Republic of</option>
-                                                                        <option value="MC">Monaco</option>
-                                                                        <option value="MN">Mongolia</option>
-                                                                        <option value="ME">Montenegro</option>
-                                                                        <option value="MS">Montserrat</option>
-                                                                        <option value="MA">Morocco</option>
-                                                                        <option value="MZ">Mozambique</option>
-                                                                        <option value="MM">Myanmar</option>
-                                                                        <option value="NA">Namibia</option>
-                                                                        <option value="NR">Nauru</option>
-                                                                        <option value="NP">Nepal</option>
-                                                                        <option value="NL">Netherlands</option>
-                                                                        <option value="NC">New Caledonia</option>
-                                                                        <option value="NZ">New Zealand</option>
-                                                                        <option value="NI">Nicaragua</option>
-                                                                        <option value="NE">Niger</option>
-                                                                        <option value="NG">Nigeria</option>
-                                                                        <option value="NU">Niue</option>
-                                                                        <option value="NF">Norfolk Island</option>
-                                                                        <option value="XI">Northern Ireland</option>
-                                                                        <option value="MP">Northern Mariana Islands
-                                                                        </option>
-                                                                        <option value="NO">Norway</option>
-                                                                        <option value="OM">Oman</option>
-                                                                        <option value="PK">Pakistan</option>
-                                                                        <option value="PW">Palau</option>
-                                                                        <option value="PS">Palestinian Territory,
-                                                                            Occupied</option>
-                                                                        <option value="PA">Panama</option>
-                                                                        <option value="PG">Papua New Guinea</option>
-                                                                        <option value="PY">Paraguay</option>
-                                                                        <option value="PE">Peru</option>
-                                                                        <option value="PH">Philippines</option>
-                                                                        <option value="PN">Pitcairn</option>
-                                                                        <option value="PL">Poland</option>
-                                                                        <option value="PT">Portugal</option>
-                                                                        <option value="PR">Puerto Rico</option>
-                                                                        <option value="QA">Qatar</option>
-                                                                        <option value="RE">Reunion Réunion</option>
-                                                                        <option value="RO">Romania</option>
-                                                                        <option value="RU">Russian Federation</option>
-                                                                        <option value="RW">Rwanda</option>
-                                                                        <option value="BL">Saint Barthélemy</option>
-                                                                        <option value="SH">Saint Helena</option>
-                                                                        <option value="KN">Saint Kitts and Nevis
-                                                                        </option>
-                                                                        <option value="LC">Saint Lucia</option>
-                                                                        <option value="MF">Saint Martin (French part)
-                                                                        </option>
-                                                                        <option value="PM">Saint Pierre and Miquelon
-                                                                        </option>
-                                                                        <option value="VC">Saint Vincent and the
-                                                                            Grenadines</option>
-                                                                        <option value="WS">Samoa</option>
-                                                                        <option value="SM">San Marino</option>
-                                                                        <option value="ST">Sao Tome and Principe
-                                                                        </option>
-                                                                        <option value="SA">Saudi Arabia</option>
-                                                                        <option value="SN">Senegal</option>
-                                                                        <option value="RS">Serbia</option>
-                                                                        <option value="SC">Seychelles</option>
-                                                                        <option value="SL">Sierra Leone</option>
-                                                                        <option value="SG">Singapore</option>
-                                                                        <option value="SX">Sint Maarten</option>
-                                                                        <option value="SK">Slovakia</option>
-                                                                        <option value="SI">Slovenia</option>
-                                                                        <option value="SB">Solomon Islands</option>
-                                                                        <option value="SO">Somalia</option>
-                                                                        <option value="ZA">South Africa</option>
-                                                                        <option value="GS">South Georgia and the South
-                                                                            Sandwich Islands</option>
-                                                                        <option value="SS">South Sudan</option>
-                                                                        <option value="ES">Spain</option>
-                                                                        <option value="LK">Sri Lanka</option>
-                                                                        <option value="SD">Sudan</option>
-                                                                        <option value="SR">Suriname</option>
-                                                                        <option value="SJ">Svalbard and Jan Mayen
-                                                                        </option>
-                                                                        <option value="SW">Swahili</option>
-                                                                        <option value="SZ">Swaziland</option>
-                                                                        <option value="SE">Sweden</option>
-                                                                        <option value="CH">Switzerland</option>
-                                                                        <option value="SY">Syrian Arab Republic</option>
-                                                                        <option value="TW">Taiwan, Republic of China
-                                                                        </option>
-                                                                        <option value="TJ">Tajikistan</option>
-                                                                        <option value="TZ">Tanzania, United Republic of
-                                                                        </option>
-                                                                        <option value="TH">Thailand</option>
-                                                                        <option value="TL">Timor-Leste</option>
-                                                                        <option value="TG">Togo</option>
-                                                                        <option value="TK">Tokelau</option>
-                                                                        <option value="TO">Tonga</option>
-                                                                        <option value="TT">Trinidad and Tobago</option>
-                                                                        <option value="TN">Tunisia</option>
-                                                                        <option value="TR">Turkey</option>
-                                                                        <option value="TM">Turkmenistan</option>
-                                                                        <option value="TC">Turks and Caicos Islands
-                                                                        </option>
-                                                                        <option value="TV">Tuvalu</option>
-                                                                        <option value="UG">Uganda</option>
-                                                                        <option value="UA">Ukraine</option>
-                                                                        <option value="AE">United Arab Emirates</option>
-                                                                        <option value="GB">United Kingdom</option>
-                                                                        <option value="US">United States</option>
-                                                                        <option value="UM">United States Minor Outlying
-                                                                            Islands</option>
-                                                                        <option value="UY">Uruguay</option>
-                                                                        <option value="UZ">Uzbekistan</option>
-                                                                        <option value="VU">Vanuatu</option>
-                                                                        <option value="VE">Venezuela</option>
-                                                                        <option value="VN">Viet Nam</option>
-                                                                        <option value="VG">Virgin Islands, British
-                                                                        </option>
-                                                                        <option value="VI">Virgin Islands, U.S.</option>
-                                                                        <option value="WF">Wallis and Futuna</option>
-                                                                        <option value="EH">Western Sahara</option>
-                                                                        <option value="YE">Yemen</option>
-                                                                        <option value="ZM">Zambia</option>
-                                                                        <option value="ZW">Zimbabwe</option>
                                                                     </b-form-select>
-                                                                    <has-error :form="form"
-                                                                        field="country_code"></has-error>
+                                                                    <has-error :form="form" field="country_code"></has-error>
                                                                 </b-form-group>
                                                             </td>
                                                             <td class="editable-cell">
@@ -3324,6 +2885,7 @@ export default {
                 totals:{
                     total_volume: null,
                     total_amount: 0,
+                    dimention_unit: "MTQ"
                 },
 
                 custom_origin:{
@@ -3398,7 +2960,7 @@ export default {
                 height: '',
                 unit: 'CMT',
                 volume: '',
-                dimention_unit: 'MTQ', //cm3,m3,ft3
+                // dimention_unit: 'MTQ', //cm3,m3,ft3
 
                 uld_type: '',
                 uld_serial: '',
@@ -3459,6 +3021,8 @@ export default {
             isDropdownOpen_shipper: false,
             isDropdownOpen_consignee: false,
             isDropdownOpen_alsoNotify: false,
+            isDropdownOpen_issuing_loc: false,
+            isDropdownOpen_participant: false,
             selectedCode: '',
             manualCode: '',
             validationErrors: [],
@@ -3473,6 +3037,7 @@ export default {
             editIndex: null,
             edit_entry_index: null,
             countries: [],
+            other_charges_code: [],
             existingData: {},
             data_items: [],
             mode: 'add',
@@ -3685,11 +3250,6 @@ export default {
         },
         handleAddConsignment() {
             if (this.isConsignmentAdded) {
-                this.$bvToast.toast('Consignment Information is already added.', {
-                title: 'Information',
-                variant: 'warning',
-                solid: true,
-                });
             } else {
                 this.$refs.modalConsignment.show();
                 this.isConsignmentAdded = true;
@@ -3844,6 +3404,7 @@ export default {
         getAirWayBill(id) { 
             ApiService.get(`/airway-bill/${id}`)
                 .then(response => {
+                    console.log(response);
                     this.existingData = response.data;
                     this.awbDetails = true;
                     this.openForm('update', this.existingData.id);
@@ -3871,13 +3432,13 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
-                    //     ? this.existingData.consignment_data
-                    //     : [this.existingData.consignment_data];
+                    this.form.entries = Array.isArray(this.existingData.consignment_data)
+                        ? this.existingData.consignment_data
+                        : [this.existingData.consignment_data];    //for row you can use this code this is working 
                     
                     console.log("entries", this.form.entries);
                     // this.consignment_list = this.existingData.consignment_data;
-                    // this.form.entries = this.existingData;
+                    // this.form.entries = this.existingData.consignment_data;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
@@ -3914,6 +3475,16 @@ export default {
         getCountry(){
             ApiService.get('/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({
+                    value: key,
+                    text: data[key]
+                }));
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+            });
+        },
+        getOtherChargesCode(){
+            ApiService.get('/other-charges').then(({ data }) => {
+                this.other_charges_code = Object.keys(data).map(key => ({
                     value: key,
                     text: data[key]
                 }));
@@ -4008,9 +3579,30 @@ export default {
         removeCharge(index) {
             this.form.charges.splice(index, 1);
         },
+        handleModalClose() {
+            if (this.form.entries.length === 0) {
+                this.isConsignmentAdded = false;
+            }
+        },
         editEntry(index) {
             this.edit_entry_index = index;
-            this.consignment_list = { ...this.form.entries[index] };
+            let consignment_data=this.form.entries[index];
+            this.consignment_list.pieces = consignment_data.pieces;
+            this.consignment_list.description = consignment_data.description;
+            this.consignment_list.rate_class = consignment_data.rate_class;
+            this.consignment_list.uld_rate_class = consignment_data.uld_rate_class;
+            this.consignment_list.service_code = consignment_data.service_code;
+            this.consignment_list.commodity_item = consignment_data.commodity_item;
+            this.consignment_list.country_origin_goods = consignment_data.country_origin_goods;
+            this.consignment_list.slac = consignment_data.slac;
+            this.consignment_list.hs_code = consignment_data.hs_code;
+            this.consignment_list.gross_weight = consignment_data.gross_weight;
+            this.consignment_list.weight_code = consignment_data.weight_code;
+            this.consignment_list.chargable_weight = consignment_data.chargable_weight;
+            this.consignment_list.rate = consignment_data.rate;
+            this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
+            this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
+            this.consignment_list.uld_info = JSON.parse(consignment_data.uld_info);
             this.$refs.modalConsignment.show();
             this.calculateTotalAmount();
         },
@@ -4083,7 +3675,8 @@ export default {
                         volumeInM3 = volumeInFoot * 0.0283168466; // ft³ to m³
                         volumeInIn3 = volumeInFoot * 1_728; // ft³ to in³
                     }
-                    let selectedUnit = this.form.entries.dimention_unit; 
+                    // let selectedUnit = this.form.entries.dimention_unit; 
+                    let selectedUnit = this.form.totals.dimention_unit; 
                     let finalVolume = 0;
 
                     switch (selectedUnit) {
@@ -4110,22 +3703,25 @@ export default {
             this.form.totals.total_volume = totalVolume.toFixed(2);
         },
         calculateTotalAmount() {
-            const chargeableWeight = this.form.entries.reduce((total, entry) => {
-                let weight = parseFloat(entry.chargable_weight) || 0;
-                return total + weight;
-            }, 0);
+            // const chargeableWeight = this.form.entries.reduce((total, entry) => {
+            //     let weight = parseFloat(entry.chargable_weight) || 0;
+            //     return total + weight;
+            // }, 0);
+            const chargeableWeight = this.consignment_list.chargable_weight;
             const { rate_class } = this.consignment_list;
             let rates = 0;
             this.form.totals.total_amount = 0;
             if (rate_class === "B" || rate_class === "M") {
-                this.form.totals.total_amount = this.consignment_list.rate || 0;
+                // this.form.totals.total_amount = this.consignment_list.rate || 0;
+                this.form.totals.total_amount = parseFloat(this.consignment_list.rate) || 0;
             } else if (rate_class === "P" || rate_class === "X") {
                 this.form.totals.total_amount = 0;
             } else {
-                rates = parseFloat(this.form.entries.reduce((total, entry) => {
-                    return total + (parseFloat(entry.rate) || 0);
-                }, 0)) || 0;
-                this.form.totals.total_amount = chargeableWeight * rates;
+                // rates = parseFloat(this.form.entries.reduce((total, entry) => {
+                //     return total + (parseFloat(entry.rate) || 0);
+                // }, 0)) || 0;
+                // this.form.totals.total_amount = chargeableWeight * rates;
+                this.form.totals.total_amount = chargeableWeight * this.consignment_list.rate;
             }
         },
         addHsCode() {
@@ -4388,6 +3984,51 @@ export default {
                 this.isDropdownOpen_from = false;
             }
         },
+        toggleDropdown_issuing_loc() {
+            this.isDropdownOpen_issuing_loc = !this.isDropdownOpen_issuing_loc;
+        },
+        selectOption_issuing_loc(item) {
+            this.agent_information.agent_issue_loc_code = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.agent_information.agent_issue_loc_code = final_set;
+            this.isDropdownOpen_issuing_loc = false;
+        },
+        closeDropdown_issue_location(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_issue;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_issuing_loc = false;
+            }
+        },
+        toggleDropdown_participant_airport() {
+            this.isDropdownOpen_participant = !this.isDropdownOpen_participant;
+        },
+        selectOption_participant_airport(item) {
+            this.agent_information.participate_airport = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.agent_information.participate_airport = final_set;
+            this.isDropdownOpen_participant = false;
+        },
+        closeDropdown_participant_airport(event) {
+            const dropdownContainer_participant = this.$refs.dropdownContainer_participant;
+            if (!dropdownContainer_participant.contains(event.target)) {
+                this.isDropdownOpen_participant = false;
+            }
+        },
+        validateNumericInput(evt,field, maxLength) {
+            evt = evt || window.event;
+            const charCode = evt.which || evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+
+            if (this.form.first_box[field].length >= maxLength) {
+                evt.preventDefault();
+            }
+        },
         onAWBInput: debounce(function () {
             const { awb_code, awb_no } = this.form.first_box;
             if (awb_code && awb_code.length === 3) {
@@ -4538,6 +4179,8 @@ export default {
         window.addEventListener('click', this.closeDropdown_shipper);
         window.addEventListener('click', this.closeDropdown_consignee);
         window.addEventListener('click', this.closeDropdown_alsoNotify);
+        window.addEventListener('click', this.closeDropdown_issue_location);
+        window.addEventListener('click', this.closeDropdown_participant_airport);
         this.getLocation(); 
         this.fetchShippers();
         this.fetchAlsoNotify();
@@ -4546,6 +4189,7 @@ export default {
         this.fillAlsoNotifyDetails();
         this.fetchConsignee();
         this.getCountry();
+        this.getOtherChargesCode();
         this.location = [];
         const { awb_code, awb_no } = this.$route.query;
         if (awb_code && awb_no) {
@@ -4562,7 +4206,10 @@ export default {
         // 'consignment_list': function () {
         //     this.form.totals.total_amount = this.calculateTotalAmount();
         // },
-        'form.entries.dimention_unit': function() {
+        // 'form.entries.dimention_unit': function() {
+        //     this.calculateTotalVolume();
+        // },
+        'form.totals.dimention_unit': function() {
             this.calculateTotalVolume();
         },
         'form.charges': {
@@ -4768,6 +4415,22 @@ export default {
             const query = this.form.routing_information.departure_airport.toLowerCase().trim();
             if (!query) return this.location;
 
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_issuing() {
+            const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
+            if (!query) return this.location;
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_participant() {
+            const query = this.agent_information.participate_airport.toLowerCase().trim();
+            if (!query) return this.location;
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query) ||
                 item.destination.toLowerCase().includes(query)

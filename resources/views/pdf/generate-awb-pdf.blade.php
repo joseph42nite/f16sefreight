@@ -70,10 +70,10 @@
                                             <tr>
                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
-                                                    $destination_airport =  explode(',', $airWayBill->departure_airport);
-                                                    $destination_airport = $destination_airport[0];
+                                                    $departure_airport =  explode(',', $airWayBill->departure_airport);
+                                                    $departure_airport = $departure_airport[0];
                                                     @endphp
-                                                    {{$airWayBill->awb_code .' '. $destination_airport .' '. $airWayBill->awb_no}}
+                                                    {{$airWayBill->awb_code .' '. $departure_airport .' '. $airWayBill->awb_no}}
                                                 </td>
                                             </tr>
                                         </table>
@@ -2520,196 +2520,239 @@
                 </table>
             </td>
         </tr>
-    </table>
-    <!-- Second Page code --> 
-    <table cellpadding="0" cellspacing="0" width="600px" align="center">
+        @if (isset($page))
         <tr>
-            <td align="center" valign="top" width="600px">
-                <table cellpadding="0" cellspacing="0" width="100%"> 
-                    <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
-                            <img src="" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
-                            NOTICE CONCERNING CARRIER’S LIMITATION OF LIABILITY 
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
-                            If the carriage involves an ultimate destination or stop in a country other than the country of departure, the Montreal Convention or the Warsaw Convention may be applicable to the liability of the Carrier in respect of loss of, damage or delay to cargo. Carrier's limitation of liability in accordance with those Conventions shall be as set forth in subparagraph 4 unless a higher value is declared.
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
-                            CONDITIONS OF CONTRACT
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" valign="middle">
-                            <table cellpadding="0" cellspacing="0" width="600px" align="center">
-                                <tr>
-                                    <td align="center" valign="top">
-                                        <table cellpadding="0" cellspacing="0" width="100%"> 
-                                            <tr>
-                                                <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
-                                                    <b>1.</b> In this contract and the Notices appearing hereon:<br aria-hidden="true" />
-                                                    CARRIER includes the air carrier issuing this air waybill and all carriers that carry or undertake to carry the cargo or perform any other services related to such carriage. SPECIAL DRAWING RIGHT (SDR) is a Special Drawing Right as defined by the International Monetary Fund. WARSAW CONVENTION means whichever of the following instruments is applicable to the contract of carriage: the Convention for the Unification of Certain Rules Relating to International Carriage by Air, signed at Warsaw, 12 October 1929; that Convention as amended at The Hague on 28 September 1955; that Convention as amended at The Hague 1955 and by Montreal Protocol No. 1, 2, or 4 (1975) as the case may be. MONTREAL CONVENTION means the Convention for the Unification of Certain Rules for International Carriage by Air, done at Montreal on 28 May 1999. 
-                                                    <br aria-hidden="true" />
-                                                    <b>2.</b>/<b>2.1</b> Carriage is subject to the rules relating to liability established by the Warsaw Convention or the Montreal Convention unless such carriage is not “international carriage” as defined by the applicable Conventions.
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2</b> To the extent not in conflict with the foregoing, carriage and other
-                                                    related services performed by each Carrier are subject to:
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.1</b> applicable laws and government regulations;
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.2</b> provisions contained in the air waybill, Carrier’s conditions of
-                                                    carriage and related rules, regulations, and timetables (but not the times of
-                                                    departure and arrival stated therein) and applicable tariffs of such Carrier,
-                                                    which are made part hereof, and which may be inspected at any airports
-                                                    or other cargo sales offices from which it operates regular services. When
-                                                    carriage is to/from the USA, the shipper and the consignee are entitled,
-                                                    upon request, to receive a free copy of the Carrier’s conditions of carriage.
-                                                    The Carrier’s conditions of carriage include, but are not limited to:
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.2.1</b> limits on the Carrier’s liability for loss, damage or delay of goods,
-                                                    including fragile or perishable goods;
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.2.2</b> claims restrictions, including time periods within which shippers
-                                                    or consignees must file a claim or bring an action against the Carrier for
-                                                    its acts or omissions, or those of its agents;
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.2.3</b> rights, if any, of the Carrier to change the terms of the contract;
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.2.4</b> rules about Carrier’s right to refuse to carry;
-                                                    <br aria-hidden="true" />
-                                                    <b>2.2.2.5</b> rights of the Carrier and limitations concerning delay or failure to
-                                                    perform service, including schedule changes, substitution of alternate
-                                                    Carrier or aircraft and rerouting.
-                                                    <br aria-hidden="true" />
-                                                    <b>3</b> The agreed stopping places (which may be altered by Carrier in case of
-                                                    necessity) are those places, except the place of departure and place of
-                                                    destination, set forth on the face hereof or shown in Carrier’s timetables
-                                                    as scheduled stopping places for the route. Carriage to be performed
-                                                    hereunder by several successive Carriers is regarded as a single operation.
-                                                    <br aria-hidden="true" />
-                                                    <b>4</b> For carriage to which the Montreal Convention does not apply,
-                                                    Carrier’s liability limitation for cargo lost, damaged or delayed shall be
-                                                    22 SDRs per kilogram unless a greater per kilogram monetary limit is
-                                                    provided in any applicable Convention or in Carrier’s tariffs or general
-                                                    conditions of carriage.        
-                                                    <br aria-hidden="true" />
-                                                    <b>5.</b>/<b>5.1</b> Except when the Carrier has extended credit to the consignee
-                                                    without the written consent of the shipper, the shipper guarantees payment
-                                                    of all charges for the carriage due in accordance with Carrier’s tariff,
-                                                    conditions of carriage and related regulations, applicable laws (including
-                                                    national laws implementing the Warsaw Convention and the Montreal
-                                                    Convention),<br>
-                                                    government regulations, orders and requirements. 
-                                                    <br aria-hidden="true" />
-                                                    <b>5.2</b> When no part of the consignment is delivered, a claim with respect to
-                                                    such consignment will be considered even though transportation charges
-                                                    thereon are unpaid.                                     
-                                                    <br aria-hidden="true" />
-                                                    <b>6.</b>/<b>6.1</b> For cargo accepted for carriage, the Warsaw Convention and the
-                                                    Montreal Convention permit shipper to increase the limitation of liability
-                                                    by declaring a higher value for carriage and paying a supplemental charge
-                                                    if required
-                                                    <br aria-hidden="true" />
-                                                    <b>6.2</b> In carriage to which neither the Warsaw Convention nor the Montreal                               
-                                                </td>
-                                                <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
-                                                    Convention applies Carrier shall, in accordance with the procedures set
-                                                    forth in its general conditions of carriage and applicable tariffs, permit
-                                                    shipper to increase the limitation of liability by declaring a higher value
-                                                    for carriage and paying a supplemental charge if so required. 
-                                                    <br aria-hidden="true" />
-                                                    <b>7.</b>/<b>7.1</b> In cases of loss of, damage or delay to part of the cargo, the weight
-                                                    to be taken into account in determining Carrier’s limit of liability shall
-                                                    be only the weight of the package or packages concerned.
-                                                    <br aria-hidden="true" />
-                                                    <b>7.2</b> Notwithstanding any other provisions, for “foreign air
-                                                    transportation” as defined by the U.S. Transportation Code:                                                             
-                                                    <br aria-hidden="true" />
-                                                    <b>7.2.1</b>  in the case of loss of, damage or delay to a shipment, the weight to
-                                                    be used in determining Carrier’s limit of liability shall be the weight
-                                                    which is used to determine the charge for carriage of such shipment; and
-                                                    <br aria-hidden="true" />
-                                                    <b>7.2.2</b> in the case of loss of, damage or delay to a part of a shipment, the
-                                                    shipment weight in 7.2.1 shall be prorated to the packages covered by
-                                                    the same air waybill whose value is affected by the loss, damage or delay.
-                                                    The weight applicable in the case of loss or damage to one or more
-                                                    articles in a package shall be the weight of the entire package.
-                                                    <br aria-hidden="true" />
-                                                    <b>8</b> Any exclusion or limitation of liability applicable to Carrier shall
-                                                    apply to Carrier’s agents, employees, and representatives and to any
-                                                    person whose aircraft or equipment is used by Carrier for carriage and
-                                                    such person’s agents, employees and representatives.                                                             
-                                                    <br aria-hidden="true" />
-                                                    <b>9</b> Carrier undertakes to complete the carriage with reasonable dispatch.
-                                                    Where permitted by applicable laws, tariffs and government regulations,
-                                                    Carrier may use alternativecarriers, aircraft or modes of transport
-                                                    without notice but with due regard to the interests of the shipper. Carrier
-                                                    is authorized by the shipper to select the routing and all intermediate
-                                                    stopping places that it deems appropriate or to change or deviate from
-                                                    the routing shown on the face hereof.                                                             
-                                                    <br aria-hidden="true" />
-                                                    <b>10</b> Receipt by the person entitled to delivery of the cargo without
-                                                    complaint shall be prima facie evidence that the cargo has been delivered
-                                                    in good condition and in accordance with the contract of carriage.
-                                                    <br aria-hidden="true" />
-                                                    <b>10.1</b> In the case of loss of, damage or delay to cargo a written complaint
-                                                    must be made to Carrier by the person entitled to delivery. Such
-                                                    complaint must be made:
-                                                    <br aria-hidden="true" />
-                                                    <b>10.1.1</b> in the case of damage to the cargo, immediately after discovery
-                                                    of the damage and at the latest within 14 days from the date of receipt of
-                                                    the cargo;                                                             
-                                                    <br aria-hidden="true" />
-                                                    <b>10.1.2</b> in the case of delay, within 21 days from the date on which the
-                                                    cargo was placed at the disposal of the person entitled to delivery. 
-                                                    <br aria-hidden="true" />
-                                                    <b>10.1.3</b>  in the case of non-delivery of the cargo, within 120 days from the
-                                                    date of issue of the air waybill, or if an air waybill has not been issued,
-                                                    within 120 days from the date of receipt of the cargo for transportation
-                                                    by the Carrier.                                                                 
-                                                    <br aria-hidden="true" />
-                                                    <b>10.2</b>  Such complaint may be made to the Carrier whose air waybill was
-                                                    used, or to the first Carrier or to the last Carrier or to the Carrier, which
-                                                    performed the carriage during which the loss, damage or delay took
-                                                    place.                                                             
-                                                    <br aria-hidden="true" />
-                                                    <b>10.3</b>  Unless a written complaint is made within the time limits specified
-                                                    in 10.1 no action may be brought against Carrier.                                                                                                  
-                                                    <br aria-hidden="true" />
-                                                    <b>10.4</b>  Any rights to damages against Carrier shall be extinguished unless
-                                                    an action is brought within two years from the date of arrival at the
-                                                    destination, or from the date on which the aircraft ought to have arrived,
-                                                    or from the date on which the carriage stopped.
-                                                    <br aria-hidden="true" />
-                                                    <b>11</b> Shipper shall comply with all applicable laws and government
-                                                    regulations of any country to or from which the cargo may be carried,
-                                                    including those relating to the packing, carriage or delivery of the cargo,
-                                                    and shall furnish such information and attach such
-                                                    documents to the air waybill as may be necessary to comply with such
-                                                    laws and regulations. Carrier is not liable to shipper and shipper shall
-                                                    indemnify Carrier for loss or expense due to shipper’s failure to comply
-                                                    with this provision.
-                                                    <br aria-hidden="true" />
-                                                    <b>12</b>  No agent, employee or representative of Carrier has authority to alter,
-                                                    modify or waive any provisions of this contract.                            
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
+            <td align="center" valign="top" width="108px" style="width:108px;font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:0px;">
+                @php
+                    if ($page == 'ORIGINAL-1') {
+                        echo "ORIGINAL 1 - (FOR ISSUING CARRIER)";
+                    }
+                    elseif ($page == 'ORIGINAL-2') {
+                        echo "ORIGINAL 2 - (FOR CONSIGNEE)";
+                    }
+                    elseif ($page == 'ORIGINAL-3') {
+                        echo "ORIGINAL 3 (FOR SHIPPER)";
+                    }
+                    elseif ($page == 'COPY-4') {
+                        echo "COPY 4 (DELIVERY RECEIPT)";
+                    }
+                    elseif ($page == 'COPY-5') {
+                        echo "COPY 5 (EXTRA COPY)";
+                    }
+                    elseif ($page == 'COPY-6') {
+                        echo "COPY 6 (EXTRA COPY)";
+                    }
+                    elseif ($page == 'COPY-7') {
+                        echo "COPY 7 (EXTRA COPY)";
+                    }
+                    elseif ($page == 'COPY-8') {
+                        echo "COPY 8 (FOR AGENT)";
+                    }
+                    elseif ($page == 'EXTRA-COPY-1') {
+                        echo "EXTRA COPY";
+                    }
+                    elseif ($page == 'EXTRA-COPY-2') {
+                        echo "EXTRA COPY";
+                    }
+                    elseif ($page == 'EXTRA-COPY-3') {
+                        echo "EXTRA COPY";
+                    }
+                @endphp
             </td>
         </tr>
+    @endif
     </table>
+    <!-- Second Page code --> 
+    @if (isset($showBothPage) && $showBothPage == true)
+        <table cellpadding="0" cellspacing="0" width="600px" align="center">
+            <tr>
+                <td align="center" valign="top" width="600px">
+                    <table cellpadding="0" cellspacing="0" width="100%"> 
+                        <tr>
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
+                                <img src="{{ public_path('media/custome/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
+                                NOTICE CONCERNING CARRIER’S LIMITATION OF LIABILITY 
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
+                                If the carriage involves an ultimate destination or stop in a country other than the country of departure, the Montreal Convention or the Warsaw Convention may be applicable to the liability of the Carrier in respect of loss of, damage or delay to cargo. Carrier's limitation of liability in accordance with those Conventions shall be as set forth in subparagraph 4 unless a higher value is declared.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
+                                CONDITIONS OF CONTRACT
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" valign="middle">
+                                <table cellpadding="0" cellspacing="0" width="600px" align="center">
+                                    <tr>
+                                        <td align="center" valign="top">
+                                            <table cellpadding="0" cellspacing="0" width="100%"> 
+                                                <tr>
+                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                        <b>1.</b> In this contract and the Notices appearing hereon:<br aria-hidden="true" />
+                                                        CARRIER includes the air carrier issuing this air waybill and all carriers that carry or undertake to carry the cargo or perform any other services related to such carriage. SPECIAL DRAWING RIGHT (SDR) is a Special Drawing Right as defined by the International Monetary Fund. WARSAW CONVENTION means whichever of the following instruments is applicable to the contract of carriage: the Convention for the Unification of Certain Rules Relating to International Carriage by Air, signed at Warsaw, 12 October 1929; that Convention as amended at The Hague on 28 September 1955; that Convention as amended at The Hague 1955 and by Montreal Protocol No. 1, 2, or 4 (1975) as the case may be. MONTREAL CONVENTION means the Convention for the Unification of Certain Rules for International Carriage by Air, done at Montreal on 28 May 1999. 
+                                                        <br aria-hidden="true" />
+                                                        <b>2.</b>/<b>2.1</b> Carriage is subject to the rules relating to liability established by the Warsaw Convention or the Montreal Convention unless such carriage is not “international carriage” as defined by the applicable Conventions.
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2</b> To the extent not in conflict with the foregoing, carriage and other
+                                                        related services performed by each Carrier are subject to:
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.1</b> applicable laws and government regulations;
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.2</b> provisions contained in the air waybill, Carrier’s conditions of
+                                                        carriage and related rules, regulations, and timetables (but not the times of
+                                                        departure and arrival stated therein) and applicable tariffs of such Carrier,
+                                                        which are made part hereof, and which may be inspected at any airports
+                                                        or other cargo sales offices from which it operates regular services. When
+                                                        carriage is to/from the USA, the shipper and the consignee are entitled,
+                                                        upon request, to receive a free copy of the Carrier’s conditions of carriage.
+                                                        The Carrier’s conditions of carriage include, but are not limited to:
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.2.1</b> limits on the Carrier’s liability for loss, damage or delay of goods,
+                                                        including fragile or perishable goods;
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.2.2</b> claims restrictions, including time periods within which shippers
+                                                        or consignees must file a claim or bring an action against the Carrier for
+                                                        its acts or omissions, or those of its agents;
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.2.3</b> rights, if any, of the Carrier to change the terms of the contract;
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.2.4</b> rules about Carrier’s right to refuse to carry;
+                                                        <br aria-hidden="true" />
+                                                        <b>2.2.2.5</b> rights of the Carrier and limitations concerning delay or failure to
+                                                        perform service, including schedule changes, substitution of alternate
+                                                        Carrier or aircraft and rerouting.
+                                                        <br aria-hidden="true" />
+                                                        <b>3</b> The agreed stopping places (which may be altered by Carrier in case of
+                                                        necessity) are those places, except the place of departure and place of
+                                                        destination, set forth on the face hereof or shown in Carrier’s timetables
+                                                        as scheduled stopping places for the route. Carriage to be performed
+                                                        hereunder by several successive Carriers is regarded as a single operation.
+                                                        <br aria-hidden="true" />
+                                                        <b>4</b> For carriage to which the Montreal Convention does not apply,
+                                                        Carrier’s liability limitation for cargo lost, damaged or delayed shall be
+                                                        22 SDRs per kilogram unless a greater per kilogram monetary limit is
+                                                        provided in any applicable Convention or in Carrier’s tariffs or general
+                                                        conditions of carriage.        
+                                                        <br aria-hidden="true" />
+                                                        <b>5.</b>/<b>5.1</b> Except when the Carrier has extended credit to the consignee
+                                                        without the written consent of the shipper, the shipper guarantees payment
+                                                        of all charges for the carriage due in accordance with Carrier’s tariff,
+                                                        conditions of carriage and related regulations, applicable laws (including
+                                                        national laws implementing the Warsaw Convention and the Montreal
+                                                        Convention),<br>
+                                                        government regulations, orders and requirements. 
+                                                        <br aria-hidden="true" />
+                                                        <b>5.2</b> When no part of the consignment is delivered, a claim with respect to
+                                                        such consignment will be considered even though transportation charges
+                                                        thereon are unpaid.                                     
+                                                        <br aria-hidden="true" />
+                                                        <b>6.</b>/<b>6.1</b> For cargo accepted for carriage, the Warsaw Convention and the
+                                                        Montreal Convention permit shipper to increase the limitation of liability
+                                                        by declaring a higher value for carriage and paying a supplemental charge
+                                                        if required
+                                                        <br aria-hidden="true" />
+                                                        <b>6.2</b> In carriage to which neither the Warsaw Convention nor the Montreal                               
+                                                    </td>
+                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                        Convention applies Carrier shall, in accordance with the procedures set
+                                                        forth in its general conditions of carriage and applicable tariffs, permit
+                                                        shipper to increase the limitation of liability by declaring a higher value
+                                                        for carriage and paying a supplemental charge if so required. 
+                                                        <br aria-hidden="true" />
+                                                        <b>7.</b>/<b>7.1</b> In cases of loss of, damage or delay to part of the cargo, the weight
+                                                        to be taken into account in determining Carrier’s limit of liability shall
+                                                        be only the weight of the package or packages concerned.
+                                                        <br aria-hidden="true" />
+                                                        <b>7.2</b> Notwithstanding any other provisions, for “foreign air
+                                                        transportation” as defined by the U.S. Transportation Code:                                                             
+                                                        <br aria-hidden="true" />
+                                                        <b>7.2.1</b>  in the case of loss of, damage or delay to a shipment, the weight to
+                                                        be used in determining Carrier’s limit of liability shall be the weight
+                                                        which is used to determine the charge for carriage of such shipment; and
+                                                        <br aria-hidden="true" />
+                                                        <b>7.2.2</b> in the case of loss of, damage or delay to a part of a shipment, the
+                                                        shipment weight in 7.2.1 shall be prorated to the packages covered by
+                                                        the same air waybill whose value is affected by the loss, damage or delay.
+                                                        The weight applicable in the case of loss or damage to one or more
+                                                        articles in a package shall be the weight of the entire package.
+                                                        <br aria-hidden="true" />
+                                                        <b>8</b> Any exclusion or limitation of liability applicable to Carrier shall
+                                                        apply to Carrier’s agents, employees, and representatives and to any
+                                                        person whose aircraft or equipment is used by Carrier for carriage and
+                                                        such person’s agents, employees and representatives.                                                             
+                                                        <br aria-hidden="true" />
+                                                        <b>9</b> Carrier undertakes to complete the carriage with reasonable dispatch.
+                                                        Where permitted by applicable laws, tariffs and government regulations,
+                                                        Carrier may use alternativecarriers, aircraft or modes of transport
+                                                        without notice but with due regard to the interests of the shipper. Carrier
+                                                        is authorized by the shipper to select the routing and all intermediate
+                                                        stopping places that it deems appropriate or to change or deviate from
+                                                        the routing shown on the face hereof.                                                             
+                                                        <br aria-hidden="true" />
+                                                        <b>10</b> Receipt by the person entitled to delivery of the cargo without
+                                                        complaint shall be prima facie evidence that the cargo has been delivered
+                                                        in good condition and in accordance with the contract of carriage.
+                                                        <br aria-hidden="true" />
+                                                        <b>10.1</b> In the case of loss of, damage or delay to cargo a written complaint
+                                                        must be made to Carrier by the person entitled to delivery. Such
+                                                        complaint must be made:
+                                                        <br aria-hidden="true" />
+                                                        <b>10.1.1</b> in the case of damage to the cargo, immediately after discovery
+                                                        of the damage and at the latest within 14 days from the date of receipt of
+                                                        the cargo;                                                             
+                                                        <br aria-hidden="true" />
+                                                        <b>10.1.2</b> in the case of delay, within 21 days from the date on which the
+                                                        cargo was placed at the disposal of the person entitled to delivery. 
+                                                        <br aria-hidden="true" />
+                                                        <b>10.1.3</b>  in the case of non-delivery of the cargo, within 120 days from the
+                                                        date of issue of the air waybill, or if an air waybill has not been issued,
+                                                        within 120 days from the date of receipt of the cargo for transportation
+                                                        by the Carrier.                                                                 
+                                                        <br aria-hidden="true" />
+                                                        <b>10.2</b>  Such complaint may be made to the Carrier whose air waybill was
+                                                        used, or to the first Carrier or to the last Carrier or to the Carrier, which
+                                                        performed the carriage during which the loss, damage or delay took
+                                                        place.                                                             
+                                                        <br aria-hidden="true" />
+                                                        <b>10.3</b>  Unless a written complaint is made within the time limits specified
+                                                        in 10.1 no action may be brought against Carrier.                                                                                                  
+                                                        <br aria-hidden="true" />
+                                                        <b>10.4</b>  Any rights to damages against Carrier shall be extinguished unless
+                                                        an action is brought within two years from the date of arrival at the
+                                                        destination, or from the date on which the aircraft ought to have arrived,
+                                                        or from the date on which the carriage stopped.
+                                                        <br aria-hidden="true" />
+                                                        <b>11</b> Shipper shall comply with all applicable laws and government
+                                                        regulations of any country to or from which the cargo may be carried,
+                                                        including those relating to the packing, carriage or delivery of the cargo,
+                                                        and shall furnish such information and attach such
+                                                        documents to the air waybill as may be necessary to comply with such
+                                                        laws and regulations. Carrier is not liable to shipper and shipper shall
+                                                        indemnify Carrier for loss or expense due to shipper’s failure to comply
+                                                        with this provision.
+                                                        <br aria-hidden="true" />
+                                                        <b>12</b>  No agent, employee or representative of Carrier has authority to alter,
+                                                        modify or waive any provisions of this contract.                            
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    @endif
 </body>
 </html>

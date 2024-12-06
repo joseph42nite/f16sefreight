@@ -3086,9 +3086,9 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
-                    //     ? this.existingData.consignment_data
-                    //     : [this.existingData.consignment_data];    //for row you can use this code this is working 
+                    this.form.entries = Array.isArray(this.existingData.consignment_data)
+                        ? this.existingData.consignment_data
+                        : [this.existingData.consignment_data];    //for row you can use this code this is working 
                     
                     console.log("entries", this.form.entries);
                     // this.consignment_list = this.existingData.consignment_data;
@@ -3272,7 +3272,23 @@ export default {
         },
         editEntry(index) {
             this.edit_entry_index = index;
-            this.consignment_list = { ...this.form.entries[index] };
+            let consignment_data=this.form.entries[index];
+            this.consignment_list.pieces = consignment_data.pieces;
+            this.consignment_list.description = consignment_data.description;
+            this.consignment_list.rate_class = consignment_data.rate_class;
+            this.consignment_list.uld_rate_class = consignment_data.uld_rate_class;
+            this.consignment_list.service_code = consignment_data.service_code;
+            this.consignment_list.commodity_item = consignment_data.commodity_item;
+            this.consignment_list.country_origin_goods = consignment_data.country_origin_goods;
+            this.consignment_list.slac = consignment_data.slac;
+            this.consignment_list.hs_code = consignment_data.hs_code;
+            this.consignment_list.gross_weight = consignment_data.gross_weight;
+            this.consignment_list.weight_code = consignment_data.weight_code;
+            this.consignment_list.chargable_weight = consignment_data.chargable_weight;
+            this.consignment_list.rate = consignment_data.rate;
+            this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
+            this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
+            this.consignment_list.uld_info = JSON.parse(consignment_data.uld_info);
             this.$refs.modalConsignment.show();
             this.calculateTotalAmount();
         },

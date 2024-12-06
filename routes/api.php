@@ -134,6 +134,7 @@ Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 Route::post('/get-house-consignment-error', [HousewayBill::class,'getConsignmentError']);
 Route::get('/get-country', [HousewayBill::class,'getCountry']);
 Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
+Route::get('/get-oci-data', [HousewayBill::class, 'getOCIData']);
 
 Route::put('/update-houseway-bill/{id}', [HousewayBill::class,'update']);
 Route::get('/houseway-bill/{id}', [HousewayBill::class,'show']);

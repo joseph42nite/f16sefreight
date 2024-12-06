@@ -71,4 +71,8 @@ class AirwayBills extends Model
     //     'oci_info' => 'array',
     //     'special_handling_info' => 'array'
     // ];
+    // protected $casts = [
+    //     'consolidated_mawb' => 'boolean',
+    //     'awb' => 'boolean',
+    // ];
 }

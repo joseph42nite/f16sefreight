@@ -31,6 +31,16 @@ class HousewayBill extends Controller
         $other_charge_code = config('info_identifier.Other_charge');
         return response()->json($other_charge_code);
     }
+    public function getOCIData()
+    {
+        $identifiers = config('info_identifier.identifires');
+        $ociCustomInfoIdentifier = config('info_identifier.oci_custom_info_identifier');
+
+        return response()->json([
+            'identifiers' => $identifiers,
+            'oci_custom_info_identifier' => $ociCustomInfoIdentifier
+        ]);
+    }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [

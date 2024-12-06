@@ -93,40 +93,42 @@
                         <b-row>
                             <b-col>
                                 <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
-                                    <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0">
-                                                {{ item.id }} 
-                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                            </p>
-                                       </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0 ml-2">Edit House Waybill Data </p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0 ml-2">Create e-AWB from House Waybill Data </p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
-                                        </router-link>
-                                    </a>
-                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                        <a href="#" class="custom-link mb-3" @click.prevent="handleEditNavigation(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0">
+                                                    {{ item.id }} 
+                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                </p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0 ml-2">Edit House Waybill Data </p>
+                                            </router-link>
+                                        </a>
+                                        <!-- <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0 ml-2">Create e-AWB from House Waybill Data </p>
+                                            </router-link>
+                                        </a> -->
+                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
+                                            </router-link>
+                                        </a>
+                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                    </div>
                                 </div>
                             </b-col>
                         </b-row>
@@ -2639,7 +2641,7 @@
                         <hr class="hr" />
                         <div class="py-7">
                             <div class="d-flex justify-content-end">
-                                <b-button class="mr-2" @click="generateHawbPDF">Generate PDF</b-button>
+                                <b-button class="mr-2" v-if="mode === 'update'" @click="generateHawbPDF">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
                                 <!-- <b-button type="submit">Save Draft</b-button> -->
@@ -3057,9 +3059,43 @@ export default {
 
     methods: {
         generateHawbPDF() {
+            if (!this.validateFormFields()) {
+                return;
+            }
             const itemId = this.$route.params.id; // Get the ID from the URL
             const pdfUrl = `/download-hawb-pdf/${itemId}`; // Construct the URL for the PDF
             window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+        },
+        validateFormFields() {
+            const requiredFields = {
+                "HAWB Number is mandatory": this.form.first_box.hawb_no,
+                "AWB prefix is mandatory": this.form.first_box.awb_code, // AWB prefix
+                "AWB number is mandatory": this.form.first_box.awb_no, // AWB number
+                "Shipper address is mandatory": this.form.shipper_address.ship_address, // Shipper address
+                "Shipper city is mandatory": this.form.shipper_address.ship_address, // Shipper city
+                "Consignee address is mandatory": this.form.consignee_address.cons_address, // Consignee address
+                "Consignee city is mandatory": this.form.consignee_address.cons_city, // Consignee city
+                "Routing by (carrier code) on row 1 is mandatory": this.form.routing_information.by // Routing by carrier code
+            };
+            const missingFields = Object.entries(requiredFields)
+            .filter(([field, value]) => !value || (typeof value === 'string' && value.trim() === ''))
+            .map(([field]) => field);
+            if (missingFields.length > 0) {
+                alert(`The following fields are mandatory:\n- ${missingFields.join("\n- ")}`);
+                return false;
+            }
+            return true;
+        },
+        handleEditNavigation(id) {
+            this.$bvModal.hide('modal-s');
+            const targetPath = `/edit-houseway-bill/${id}`;
+            if (this.$route.path !== targetPath) {
+                this.$router.push(targetPath).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
         },
         mouseover: function () {
             this.isOpen = true;
@@ -3073,12 +3109,6 @@ export default {
                     console.log(data);
                 });
         },
-        // showModal() {
-        //     this.$refs["my-modal"].show();
-        // },
-        // hideModal() {
-        //     this.$refs["my-modal"].hide();
-        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -4020,8 +4050,18 @@ export default {
                 this.filteredAlsoNotify = this.alsoNotify;
             }
         },
+        '$route.params.id'(newId) {
+            if (newId) {
+                this.getHouseWayBill(newId);
+            }
+        }
     },
     created() {
+        const id = this.$route.params.id;
+        if (id) {
+            this.isEdit = true;
+            this.getHouseWayBill(id);
+        }
         // this.getAgent();
     },
     computed: {

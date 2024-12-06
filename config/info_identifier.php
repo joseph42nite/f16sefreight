@@ -1,7 +1,5 @@
 <?php
 
-use App\OtherCharge;
-
 return [
     "identifires" => [
         "ABI" => "ABI - AWB Amount Detail Information",

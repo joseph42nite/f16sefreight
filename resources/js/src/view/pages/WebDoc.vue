@@ -87,48 +87,45 @@
 
                 <b-modal id="modal-s" title="Latest Messages" ok-only>
                     <div class="d-block">
-                        <!-- <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
-                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
-                                name="radio-options-slots"></b-form-radio-group>
-                        </b-form-group>
-                        <hr class="hr" /> -->
                         <b-row>
                             <b-col>
                                 <div v-for="item in data_items" :key="item.id">
-                                    <a href="#" class="custom-link" >
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0">
-                                                {{ item.awb_code }}-{{ item.awb_no }} 
-                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                            </p>
-                                       </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0 ml-2">Create House Waybill from e-AWB Data </p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
-                                        </router-link>
-                                    </a>
-                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                        <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0">
+                                                    {{ item.awb_code }}-{{ item.awb_no }} 
+                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                </p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                            </router-link>
+                                        </a>
+                                        <!-- <a href="#" class="custom-link mb-0">
+                                            <router-link v-slot="{ navigate, href }" :to="'/web-doc/'" custom>
+                                                <p @click="navigate" class="mb-0 ml-2">Create House Waybill from e-AWB Data </p>
+                                            </router-link>
+                                        </a> -->
+                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                            </router-link>
+                                        </a>
+                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                    </div>
                                 </div>
                             </b-col>
                         </b-row>
@@ -236,29 +233,25 @@
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                     content-cols-lg="auto" label="" label-for="input-horizontal"
                                     class="form-control-sm col-form-label">
-                                    <b-form-checkbox size="sm" v-model="form.first_box.consolidated_MAWB">Consolidate
+                                    <b-form-checkbox size="sm" v-model="form.first_box.consolidated_mawb" :value="true">Consolidate
                                         MAWB</b-form-checkbox>
                                 </b-form-group>
                             </b-col>
                             <b-col cols="auto ml-7" style="padding-left: 9.3%">
                                 <b-form-group label-for="name-input">
                                     <b-form-radio name="radio-size" size="sm" v-model="form.first_box.awb"
-                                        value="true">AWB</b-form-radio>
+                                        :value="true">AWB</b-form-radio>
                                 </b-form-group>
                             </b-col>
                         </b-row>
                         <b-row class="justify-content-start">
-                            <div v-if="awbDetails && awbId && existingData">
+                            <div v-if="awbId && showAWBSection">
                                 <p>The Air Waybill number has been used (printed at:)</p>
                                 <p>
                                     Load content:
-                                    <span style="cursor: pointer; color: blue;" >
-                                        <router-link
-                                            v-slot="{ navigate, href }"
-                                            :to="'/edit-airway-bill/' + awbId"
-                                            custom
-                                        >
-                                            <p @click="confirmReload">{{ awbId}}</p>
+                                    <span style="cursor: pointer; color: blue;">
+                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + awbId" custom>
+                                            <p @click="confirmReload">{{ awbId }}</p>
                                         </router-link>
                                     </span>
                                 </p>
@@ -1922,7 +1915,7 @@
                                     <b-row>
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="oci_info.country_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
+                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
                                                     <option value="">Select an Other Charge Code</option>
                                                     <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
                                                         {{ charge.text }}
@@ -2270,365 +2263,11 @@
                                                                     <b-form-select class="form-control-sm"
                                                                         v-model="oci_info.info_identifier"
                                                                         :class="{ 'is-invalid': form.errors.has('info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="ABI">ABI - AWB Amount Detail
-                                                                            Information</option>
-                                                                        <option value="ABS">ABS - AWB Supplementary
-                                                                            Information</option>
-                                                                        <option value="ABT">ABT - AWB Total Amount
-                                                                            Information</option>
-                                                                        <option value="ACC">ACC - Accounting Information
-                                                                        </option>
-                                                                        <option value="ACD">ACD - AWB Consignment
-                                                                            Details</option>
-                                                                        <option value="ACK">ACK - Reason for
-                                                                            Acknowledgement</option>
-                                                                        <option value="ACS">ACS - AWB Charge Summary
-                                                                        </option>
-                                                                        <option value="ADR">ADR - Street Address
-                                                                        </option>
-                                                                        <option value="AGT">AGT - Agent</option>
-                                                                        <option value="AID">AID - Arrival Information
-                                                                            Details</option>
-                                                                        <option value="AIR">AIR - Airline Header
-                                                                        </option>
-                                                                        <option value="ALA">ALA - Allotment Availability
-                                                                            Information</option>
-                                                                        <option value="ALI">ALI - Allotment Information
-                                                                        </option>
-                                                                        <option value="ALR">ALR - Allotment Remaining
-                                                                        </option>
-                                                                        <option value="ALT">ALT - Allotment Total
-                                                                        </option>
-                                                                        <option value="AMD">AMD - Amendment
-                                                                            Identification</option>
-                                                                        <option value="API">API - Air Waybill Piece
-                                                                            Information</option>
-                                                                        <option value="ARD">ARD - Agent Reference Data
-                                                                        </option>
-                                                                        <option value="ARI">ARI - AWB Recapitulation
-                                                                            Information</option>
-                                                                        <option value="ATH">ATH - Authorisation</option>
-                                                                        <option value="ATW">ATW - AWB Total Weight
-                                                                            Summary</option>
-                                                                        <option value="AUD">AUD - Allotment Used Details
-                                                                        </option>
-                                                                        <option value="AVS">AVS - Availability
-                                                                            Supplementary Details</option>
-                                                                        <option value="BGD">BGD - Baggage Detail
-                                                                            Information</option>
-                                                                        <option value="BGT">BGT - Baggage Tag
-                                                                            Identification</option>
-                                                                        <option value="BRK">BRK - Broker</option>
-                                                                        <option value="CAI">CAI - CCA/Adjustment
-                                                                            Information</option>
-                                                                        <option value="CAN">CAN - Customs Action
-                                                                            Notification</option>
-                                                                        <option value="CAS">CAS - CCA/Adjustment
-                                                                            Supplementary Information</option>
-                                                                        <option value="CBD">CBD - CASS Billing Details
-                                                                        </option>
-                                                                        <option value="CBI">CBI - CASS Billing
-                                                                            Information</option>
-                                                                        <option value="CBP">CBP - CASS Billing Period
-                                                                        </option>
-                                                                        <option value="CBR">CBR - Courier Baggage
-                                                                            Receiver</option>
-                                                                        <option value="CBS">CBS - Courier Baggage Sender
-                                                                        </option>
-                                                                        <option value="CBV">CBV - Courier Baggage
-                                                                            Voucher Identification</option>
-                                                                        <option value="CCD">CCD - Consignment Control
-                                                                            Details</option>
-                                                                        <option value="CCL">CCL - Cargo Control Location
-                                                                        </option>
-                                                                        <option value="CDC">CDC - CC Charges in
-                                                                            Destination Currency</option>
-                                                                        <option value="CDI">CDI - Charge Declarations
-                                                                        </option>
-                                                                        <option value="CER">CER - AWB Content
-                                                                            Certification</option>
-                                                                        <option value="CID">CID - Correction
-                                                                            Identification</option>
-                                                                        <option value="CIH">CIH - CASS Invoice Header
-                                                                            Details</option>
-                                                                        <option value="CIN">CIN - CASS Identification
-                                                                            Number</option>
-                                                                        <option value="CMI">CMI - Consignment Onward
-                                                                            Movement Information</option>
-                                                                        <option value="CND">CND - Customs Notification
-                                                                            Details</option>
-                                                                        <option value="CNE">CNE - Consignee</option>
-                                                                        <option value="COI">COI - Commission Information
-                                                                        </option>
-                                                                        <option value="COL">COL - Collect Charge Summary
-                                                                        </option>
-                                                                        <option value="COM">COM - Embargoed Commodities
-                                                                        </option>
-                                                                        <option value="COR">COR - Customs Origin
-                                                                        </option>
-                                                                        <option value="CRD">CRD - Carrier Reference Data
-                                                                        </option>
-                                                                        <option value="CRR">CRR - Embargo Carriage
-                                                                            Restrictions</option>
-                                                                        <option value="CTI">CTI - CCA/Adjustment Total
-                                                                            Information</option>
-                                                                        <option value="CTW">CTW - CCA/Adjustment Total
-                                                                            Weight Summary</option>
-                                                                        <option value="CUR">CUR - Currency Details
-                                                                        </option>
-                                                                        <option value="CUS">CUS - Customer
-                                                                            Identification</option>
-                                                                        <option value="CVD">CVD - Charge Declarations
-                                                                        </option>
-                                                                        <option value="CWI">CWI - CASS AWB Information
-                                                                        </option>
-                                                                        <option value="DAI">DAI - DGD Additional
-                                                                            Handling Information</option>
-                                                                        <option value="DAP">DAP - DGD “All Packed in
-                                                                            One” Indication</option>
-                                                                        <option value="DAT">DAT - DGD “All Packed in
-                                                                            One” Total</option>
-                                                                        <option value="DAU">DAU - DGD Item Authorisation
-                                                                        </option>
-                                                                        <option value="DCI">DCI - DGD Emergency Contact
-                                                                            Information</option>
-                                                                        <option value="DCL">DCL - Declarant</option>
-                                                                        <option value="DES">DES - Despatch Information
-                                                                        </option>
-                                                                        <option value="DHD">DHD - DGD Header Details
-                                                                        </option>
-                                                                        <option value="DII">DII - DGD Item Information
-                                                                        </option>
-                                                                        <option value="DIM">DIM - Dimensions Information
-                                                                        </option>
-                                                                        <option value="DNR">DNR - DGD Item Number
-                                                                        </option>
-                                                                        <option value="DOC">DOC - Documentation
-                                                                            Identification</option>
-                                                                        <option value="DOS">DOS - DGD Overpack Summary
-                                                                        </option>
-                                                                        <option value="DPI">DPI - DGD Item Packing Group
-                                                                            and Instructions</option>
-                                                                        <option value="DQP">DQP - DGD Item Quantity and
-                                                                            Type of Packing</option>
-                                                                        <option value="DRA">DRA - DGD Radioactive
-                                                                            Activity Information</option>
-                                                                        <option value="DRC">DRC - DGD Radioactive
-                                                                            Consignment Information</option>
-                                                                        <option value="DRP">DRP - DGD Radioactive
-                                                                            Packing Instructions</option>
-                                                                        <option value="DSN">DSN - DGD Item Shipping Name
-                                                                        </option>
-                                                                        <option value="DSU">DSU - DGD Signatory Details
-                                                                        </option>
-                                                                        <option value="DTN">DTN - Date/Time of
-                                                                            Notification</option>
-                                                                        <option value="EIC">EIC - Empty Equipment in
-                                                                            Compartment Information</option>
-                                                                        <option value="EXP">EXP - Export</option>
-                                                                        <option value="FLT">FLT - Flight Booking
-                                                                        </option>
-                                                                        <option value="FLT">FLT - Flight Information
-                                                                        </option>
-                                                                        <option value="GRI">GRI - Grand AWB
-                                                                            Recapitulation Information</option>
-                                                                        <option value="GTI">GTI - Grand Total
-                                                                            Information</option>
-                                                                        <option value="HAH">HAH - HWB Agent’s Head
-                                                                            Office</option>
-                                                                        <option value="HBS">HBS - House Waybill Summary
-                                                                            Details</option>
-                                                                        <option value="HCD">HCD - HWB Consignment
-                                                                            Details</option>
-                                                                        <option value="HDL">HDL - Handling Details
-                                                                        </option>
-                                                                        <option value="HLC">HLC - HWB Letter of Credit
-                                                                            Details</option>
-                                                                        <option value="HPI">HPI - House Waybill Piece
-                                                                            Information</option>
-                                                                        <option value="HTS">HTS - Harmonised Tariff
-                                                                            Schedule Information</option>
-                                                                        <option value="HWB">HWB - House Waybill</option>
-                                                                        <option value="IMP">IMP - Import</option>
-                                                                        <option value="ISS">ISS - The Regulated Agent
-                                                                            Issuing the Security Status for a
-                                                                            Consignment</option>
-                                                                        <option value="ISU">ISU - AWB Issue Details
-                                                                        </option>
-                                                                        <option value="ITA">ITA - Invoice Total Amount
-                                                                            Information</option>
-                                                                        <option value="ITW">ITW - Invoice Total Weight
-                                                                            Summary</option>
-                                                                        <option value="JST">JST - Embargo Justification
-                                                                        </option>
-                                                                        <option value="LOC">LOC - Location</option>
-                                                                        <option value="MAL">MAL - Mail</option>
-                                                                        <option value="MAT">MAT - Message Advice Type
-                                                                        </option>
-                                                                        <option value="MBI">MBI - Master Waybill
-                                                                            Identification</option>
-                                                                        <option value="MCH">MCH - Mail Consignment
-                                                                            Header</option>
-                                                                        <option value="MCT">MCT - Mail Consignment Total
-                                                                        </option>
-                                                                        <option value="MHU">MHU - Mail Handling Unit
-                                                                        </option>
-                                                                        <option value="MID">MID - Mail Inbound Data
-                                                                        </option>
-                                                                        <option value="MLI">MLI - Mail Label
-                                                                            Identification</option>
-                                                                        <option value="MOD">MOD - Mail Outbound Data
-                                                                        </option>
-                                                                        <option value="MPI">MPI - Movement Priority
-                                                                            Information</option>
-                                                                        <option value="MSD">MSD - Mail Status Details
-                                                                        </option>
-                                                                        <option value="MSU">MSU - Message Sequence and
-                                                                            ULD Origin</option>
-                                                                        <option value="MUD">MUD - Mail ULD Information
-                                                                        </option>
-                                                                        <option value="NAM">NAM - Name</option>
-                                                                        <option value="NBI">NBI - Net Billing
-                                                                            Information</option>
-                                                                        <option value="NEW">NEW - New Information
-                                                                        </option>
-                                                                        <option value="NFY">NFY - Also Notify</option>
-                                                                        <option value="NFY">NFY - Notify Name and
-                                                                            Address</option>
-                                                                        <option value="NNS">NNS - Net/Net Sales</option>
-                                                                        <option value="NOM">NOM - Nominated Handling
-                                                                            Party</option>
-                                                                        <option value="OCI">OCI - Other Customs,
-                                                                            Security and Regulatory Control Information
-                                                                        </option>
-                                                                        <option value="OLD">OLD - Original Information
-                                                                        </option>
-                                                                        <option value="OPI">OPI - Other Participant
-                                                                            Information</option>
-                                                                        <option value="OSI">OSI - Other Service
-                                                                            Information</option>
-                                                                        <option value="OSS">OSS - The Regulated Agent
-                                                                            Accepting the Security Status for a
-                                                                            Consignment Issued by Another RA</option>
-                                                                        <option value="OTH">OTH - Other Charges</option>
-                                                                        <option value="PAS">PAS - Passenger Information
-                                                                        </option>
-                                                                        <option value="PID">PID - Product Information
-                                                                        </option>
-                                                                        <option value="PPD">PPD - Prepaid Charge Summary
-                                                                        </option>
-                                                                        <option value="PRD">PRD - Planning Request
-                                                                            Details</option>
-                                                                        <option value="RCI">RCI - Recapitulation Amount
-                                                                            Information</option>
-                                                                        <option value="REC">REC - Receptacle Information
-                                                                        </option>
-                                                                        <option value="REF">REF - References</option>
-                                                                        <option value="RID">RID - Rate Information
-                                                                            Answer Details</option>
-                                                                        <option value="RIH">RIH - Rate Information
-                                                                            Answer Header</option>
-                                                                        <option value="RIR">RIR - Rate Information
-                                                                            Request Details</option>
-                                                                        <option value="RQD">RQD - Charge Calculation
-                                                                            Answer Details</option>
-                                                                        <option value="RQH">RQH - Charge Calculation
-                                                                            Request Header</option>
-                                                                        <option value="RQT">RQT - Charge Calculation
-                                                                            Answer Totals</option>
-                                                                        <option value="RQU">RQU - Charge Calculation
-                                                                            Request — ULD</option>
-                                                                        <option value="RQV">RQV - Charge Calculation
-                                                                            Request — Volume</option>
-                                                                        <option value="RTD">RTD - Rate Description
-                                                                        </option>
-                                                                        <option value="RTG">RTG - Routing</option>
-                                                                        <option value="RTI">RTI - Recapitulation Total
-                                                                            Information</option>
-                                                                        <option value="RTS">RTS - Embargo Routes/Areas
-                                                                        </option>
-                                                                        <option value="SAA">SAA - Schedule and
-                                                                            Availability Information Answer Details
-                                                                        </option>
-                                                                        <option value="SAR">SAR - Schedule and
-                                                                            Availability Information Request Details
-                                                                        </option>
-                                                                        <option value="SCI">SCI - Special Customs
-                                                                            Information</option>
-                                                                        <option value="SCS">SCS - Surface Charge Summary
-                                                                        </option>
-                                                                        <option value="SDI">SDI - Surface Delivery
-                                                                            Information</option>
-                                                                        <option value="SHP">SHP - Shipper</option>
-                                                                        <option value="SII">SII - Sales Incentive
-                                                                            Information</option>
-                                                                        <option value="SKH">SKH - Schedule Information
-                                                                            Answer Header</option>
-                                                                        <option value="SLC">SLC - Status List Criteria
-                                                                        </option>
-                                                                        <option value="SPH">SPH - Special Handling
-                                                                            Details</option>
-                                                                        <option value="SPI">SPI - Surface Pickup
-                                                                            Information</option>
-                                                                        <option value="SRA">SRA - Supplementary Rate
-                                                                            Information Answer Details</option>
-                                                                        <option value="SRI">SRI - Shipment Reference
-                                                                            Information</option>
-                                                                        <option value="SRR">SRR - Supplementary Rate
-                                                                            Information Request Details</option>
-                                                                        <option value="SSI">SSI - Supplementary Status
-                                                                            Information</option>
-                                                                        <option value="SSR">SSR - Special Service
-                                                                            Request</option>
-                                                                        <option value="STI">STI - Storage Information
-                                                                        </option>
-                                                                        <option value="STS">STS - Status Details
-                                                                        </option>
-                                                                        <option value="SVA">SVA - Surface Vehicle
-                                                                            Arrival Information</option>
-                                                                        <option value="SVD">SVD - Surface Vehicle
-                                                                            Departure Information</option>
-                                                                        <option value="SVL">SVL - Surface Vehicle Delay
-                                                                            Information</option>
-                                                                        <option value="SVN">SVN - Surface Vehicle Next
-                                                                            Information</option>
-                                                                        <option value="TAR">TAR - Total AWB
-                                                                            Recapitulation Information</option>
-                                                                        <option value="TCC">TCC - Total Collect Charges
-                                                                        </option>
-                                                                        <option value="TID">TID - Terminal
-                                                                            Identification</option>
-                                                                        <option value="TOT">TOT - Total Amount</option>
-                                                                        <option value="TRA">TRA - Transit</option>
-                                                                        <option value="TRN">TRN - Transfer/Transit
-                                                                            Information</option>
-                                                                        <option value="TXS">TXS - Tax Summary</option>
-                                                                        <option value="TXT">TXT - Free Text Description
-                                                                        </option>
-                                                                        <option value="UCI">UCI - ULD Connection
-                                                                            Information</option>
-                                                                        <option value="UDI">UDI - ULD Destination
-                                                                            Information</option>
-                                                                        <option value="UII">UII - ULD Inclusion
-                                                                            Information</option>
-                                                                        <option value="ULD">ULD - ULD Description
-                                                                        </option>
-                                                                        <option value="UMI">UMI - ULD Movement
-                                                                            Information</option>
-                                                                        <option value="UPI">UPI - Unique Piece
-                                                                            Information</option>
-                                                                        <option value="VCD">VCD - Void/Cancel Details
-                                                                        </option>
-                                                                        <option value="VOD">VOD - Vehicle Operator
-                                                                            Details</option>
-                                                                        <option value="WBD">WBD - Waybill Details
-                                                                        </option>
-                                                                        <option value="WBH">WBH - Waybill Header Details
-                                                                        </option>
-                                                                        <option value="WBI">WBI - Waybill Information
-                                                                        </option>
-                                                                        <option value="WBL">WBL - Waybill Details
+                                                                        <option value="">Select a code</option>
+                                                                        <option v-for="oci_option in oci_identifiers.identifiers" 
+                                                                                :key="oci_option.value" 
+                                                                                :value="oci_option.value">
+                                                                            {{ oci_option.text }}
                                                                         </option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
@@ -2642,53 +2281,14 @@
                                                                     <b-form-select class="form-control-sm"
                                                                         v-model="oci_info.custom_info_identifier"
                                                                         :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="A">A - Automated Broker Interface
-                                                                            (ABI) Filer Code</option>
-                                                                        <option value="AC">AC - Account Consignor
-                                                                            (consignor for all cargo aircraft)</option>
-                                                                        <option value="C">C - Certificate Number
+                                                                        <option value="">Select a code</option>
+                                                                        <!-- <option v-for="oci_options in oci_data.oci_custom_info_identifier" :key="oci_options.value" :value="oci_options.value">
+                                                                            {{ oci_options.text }}
+                                                                        </option> -->
+                                                                        <option v-for="oci_options in oci_data.oci_custom_info_identifier" 
+                                                                                :key="oci_options.value" :value="oci_options.value">
+                                                                            {{ oci_options.text }}
                                                                         </option>
-                                                                        <option value="CP">CP - Contact Person</option>
-                                                                        <option value="CT">CT- Contact Telephone Number
-                                                                        </option>
-                                                                        <option value="D">D - Dangerous Goods</option>
-                                                                        <option value="DI">DI - Declaration
-                                                                            Identification</option>
-                                                                        <option value="E">E - Authorised Economic
-                                                                            Operator</option>
-                                                                        <option value="ED">ED - Expiry Date</option>
-                                                                        <option value="F">F - Facilities Information and
-                                                                            Resource Management</option>
-                                                                        <option value="I">I - Item Number</option>
-                                                                        <option value="KC">KC - Known Consignor</option>
-                                                                        <option value="L">L - Exemption Legend</option>
-                                                                        <option value="LI">LI - License Identification
-                                                                        </option>
-                                                                        <option value="M">M - Movement Reference Number
-                                                                        </option>
-                                                                        <option value="N">N - Seal Number</option>
-                                                                        <option value="P">P - Packing List Number
-                                                                        </option>
-                                                                        <option value="RA">RA - Regulated Agent</option>
-                                                                        <option value="RC">RC - Regulated Carrier
-                                                                        </option>
-                                                                        <option value="S">S - System Downtime Reference
-                                                                        </option>
-                                                                        <option value="SD">SD - Security Status Date
-                                                                            &amp; Time</option>
-                                                                        <option value="SM">SM - Screening Method
-                                                                        </option>
-                                                                        <option value="SN">SN - Security Status Name of
-                                                                            Issuer</option>
-                                                                        <option value="SS">SS - Security Status</option>
-                                                                        <option value="ST">ST - Security Textual
-                                                                            Statement</option>
-                                                                        <option value="T">T - Trader Identification
-                                                                            Number</option>
-                                                                        <option value="U">U - Unique Consignment
-                                                                            Reference Number</option>
-                                                                        <option value="V">V - Invoice Number</option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
                                                                         field="custom_info_identifier"></has-error>
@@ -2788,7 +2388,7 @@
                         <hr class="hr" />
                         <div class="py-7">
                             <div class="d-flex justify-content-end">
-                                <b-button class="mr-2" @click="generateAwbPDF">Generate PDF</b-button>
+                                <b-button class="mr-2" v-if="mode === 'update'" @click="generateAwbPDF">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
                                 <b-button type="submit">{{submitButtonText}}</b-button>
@@ -2813,7 +2413,7 @@ export default {
                 first_box:{
                     awb_code: '',
                     awb_no: '',
-                    consolidated_MAWB: false,
+                    consolidated_mawb: false,
                     awb: true,
                 },
                 shipper_address: {
@@ -3037,6 +2637,8 @@ export default {
             editIndex: null,
             edit_entry_index: null,
             countries: [],
+            oci_data:{}, ///get-oci-data
+            oci_identifiers:{},
             other_charges_code: [],
             existingData: {},
             data_items: [],
@@ -3049,6 +2651,7 @@ export default {
             filteredConsignees: [],
             filteredAlsoNotify: [],
             awb_prefix_message: '',
+            showAWBSection: false,
             items: [
                 {
                     url: "#webdoc",
@@ -3220,10 +2823,32 @@ export default {
 
     methods: {
         generateAwbPDF() {
-            const itemId = this.$route.params.id; // Get the ID from the URL
-            const pdfUrl = `/download-awb-pdf/${itemId}`; // Construct the URL for the PDF
-            window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+            if (!this.validateFormFields()) {
+                return;
+            }
+            const itemId = this.$route.params.id;
+            const pdfUrl = `/download-awb-pdf/${itemId}`;
+            window.open(pdfUrl, '_blank');
         },
+        validateFormFields() {
+            const requiredFields = {
+                "AWB prefix": this.form.first_box.awb_code, // AWB prefix
+                "AWB number": this.form.first_box.awb_no, // AWB number
+                "Shipper address": this.form.shipper_address.ship_address, // Shipper address
+                "Shipper city": this.form.shipper_address.ship_address, // Shipper city
+                "Consignee address": this.form.consignee_address.cons_address, // Consignee address
+                "Consignee city": this.form.consignee_address.cons_city, // Consignee city
+                "Routing by (carrier code) on row 1 is mandatory": this.form.routing_information.by // Routing by carrier code
+            };
+        const missingFields = Object.entries(requiredFields)
+        .filter(([field, value]) => !value || (typeof value === 'string' && value.trim() === ''))
+        .map(([field]) => field);
+        if (missingFields.length > 0) {
+            alert(`The following fields are mandatory:\n- ${missingFields.join("\n- ")}`);
+            return false;
+        }
+        return true;
+    },
         mouseover: function () {
             this.isOpen = true;
         },
@@ -3303,7 +2928,6 @@ export default {
         fetchAlsoNotify() {
             ApiService.get(`/get-shippers`).then(response => {
                 this.alsoNotify = response.data;
-                console.log("fgweuf", response.data);
                 this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
                 // this.filteredConsignees = this.consignees;
                 // console.log('Shipper', response.data);
@@ -3404,19 +3028,50 @@ export default {
         getAirWayBill(id) { 
             ApiService.get(`/airway-bill/${id}`)
                 .then(response => {
-                    this.existingData = response.data;
-                    this.awbDetails = true;
-                    this.openForm('update', this.existingData.id);
+                    if (response.data && response.data.id == id) {
+                        this.existingData = response.data;
+                        this.showAWBSection = true; // Show message only if data exists
+                        this.awbError = null;
+                        this.openForm('update', this.existingData.id);
+                    } else {
+                        this.showAWBSection = false; // Hide if no data exists
+                        this.awbError = "No data found for this AWB ID.";
+                    }
                 })
                 .catch(error => {
                     this.existingData = null;
+                    this.showAWBSection = false;
                     this.awbError = "No data found for this AWB ID.";
                     this.awbDetails = false;
                     console.error("Failed to fetch data for updating:", error);
                 });
         },
+        getAirWayBillForRealod(id){
+            ApiService.get(`/airway-bill/${id}`).then((response) => {
+                const fetchedId = response.data?.id?.toString();
+                const inputId = id.toString();
+                if (fetchedId === inputId) {
+                    this.existingData = response.data;
+                    this.showAWBSection = true;
+                    this.awbError = null;
+                    // this.openForm('update', this.existingData.id);
+                } else {
+                    this.existingData = null;
+                    this.showAWBSection = false;
+                    this.awbError = "No data found for this AWB ID.";
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching AWB:", error.response || error);
+                this.showAWBSection = false;
+                this.awbError = error.response?.status === 404
+                    ? "Air Waybill not found."
+                    : "Failed to fetch AWB details.";
+            });
+        },
         openForm(mode, id = null) {
             this.mode = mode;
+            this.showAWBSection = false;
             if (mode === 'update' && id) {
                     console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
@@ -3446,13 +3101,24 @@ export default {
                     console.log("Add mode activated");
                 }
         },
-        beforeRouteEnter(to, from) {
-            const awbId = to.params.id;
-            next(vm => {
-                if (awbId) {
-                    vm.getAirWayBill(awbId);
-                }
-            });
+        // beforeRouteEnter(to, from) {
+        //     const awbId = to.params.id;
+        //     next(vm => {
+        //         if (awbId) {
+        //             vm.getAirWayBill(awbId);
+        //         }
+        //     });
+        // },
+        handleEditNavigation(id) {
+            this.$bvModal.hide('modal-s');
+            const targetPath = `/edit-airway-bill/${id}`;
+            if (this.$route.path !== targetPath) {
+                this.$router.push(targetPath).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
         },
         getAgent(){
             ApiService.get(`/agent-info/`)
@@ -3489,6 +3155,27 @@ export default {
                 }));
             }).catch(error => {
                 console.error("Error fetching countries:", error);
+            });
+        },
+        getOCIData(){
+            ApiService.get('/get-oci-data').then(({ data }) => {
+            if (data && data.oci_custom_info_identifier) {
+                this.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(([key, value]) => ({
+                    value: key,
+                    text: value
+                }));
+            } else {
+                this.oci_data.oci_custom_info_identifier = [];
+            }
+            if(data && data.identifiers){
+                this.oci_identifiers.identifiers = Object.entries(data.identifiers).map(([key, value]) => ({
+                    value: key,
+                    text: value
+                }));
+            }
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+                this.oci_data.oci_custom_info_identifier = []; 
             });
         },
         handleRadioChange() {
@@ -4028,15 +3715,16 @@ export default {
                         console.error("Error fetching AWB details:", error);
                         this.awb_prefix_message = "Failed to fetch AWB details.";
                     });
-            } else {
+                }
+             else {
                 this.awb_prefix_message = "";
             }
             if (awb_code && awb_no) {
                 // this.awbError = null;
-                this.awb_prefix_message = "";
+                // this.awb_prefix_message = "";
                 this.awbId = `${awb_code}${awb_no}`;
+                this.getAirWayBillForRealod(this.awbId);
                 this.$router.push({ query: { awb_code, awb_no } });
-                this.getAirWayBill(this.awbId); 
             } else{
                 this.awbId = null;
                 return;
@@ -4048,8 +3736,10 @@ export default {
             );
             if (confirmed) { 
                 this.awbDetails = false;
-                this.reloadPageWithContent();
-                // this.loadAWBData();
+                this.showAWBSection = false;
+                // openForm('update', this.existingData.id)
+                this.$router.go(0);
+                this.getAirWayBill(this.awbId);
             }
         },
         reloadPageWithContent() {
@@ -4064,7 +3754,7 @@ export default {
                     if (this.existingData) {
                         this.awbDetails = false;
                         this.openForm('update', this.existingData.id);
-                        this.$router.push({ path: `/edit-airway-bill/${awbId}`});
+                        // this.$router.push({ path: `/edit-airway-bill/${awbId}`});
                         this.location.reload();
                         // this.$router.push({ path: `/edit-airway-bill/${awbId}` });
                        
@@ -4173,16 +3863,25 @@ export default {
         this.fetchConsignee();
         this.getCountry();
         this.getOtherChargesCode();
+        this.getOCIData();
         this.location = [];
-        const { awb_code, awb_no } = this.$route.query;
-        if (awb_code && awb_no) {
-            this.form.first_box.awb_code = awb_code;
-            this.form.first_box.awb_no = awb_no;
-        }
-        const awbId = this.$route.params.awbId; 
-        // const awbId = this.$route.params;
+        const { awbId, awbError, existingData } = this.$route.query;
         if (awbId) {
-            this.getAirWayBill(awbId);
+            this.awbId = awbId;
+        }
+        if (awbError) {
+            this.awbError = awbError;
+        }
+        if (existingData) {
+            this.existingData = JSON.parse(existingData);
+        }
+        if (!this.awbId) {
+            const { awb_code, awb_no } = this.$route.query;
+            if (awb_code && awb_no) {
+                this.awbId = `${awb_code}${awb_no}`;
+                this.getAirWayBill(this.awbId);
+                this.showAWBSection = false;
+            }
         }
     },
     watch: {

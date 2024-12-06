@@ -28,7 +28,7 @@ class DummyController extends Controller
         $validator = Validator::make($request->all(), [
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|size:8',
-            'consolidated_MAWB' => 'nullable|boolean',
+            'consolidated_mawb' => 'nullable|boolean',
             'awb' => 'nullable|boolean',
             'accounting_information' => 'nullable|string|max:70',
             'special_service_request' => 'nullable|string|max:195',

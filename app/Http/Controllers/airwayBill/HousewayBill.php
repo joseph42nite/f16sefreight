@@ -401,7 +401,7 @@ class HousewayBill extends Controller
             $ConsignmentData->chargable_weight = $entries[$i]['chargable_weight'];
             $ConsignmentData->rate = $entries[$i]['rate'];
             $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
-            $ConsignmentData->uld_info = json_encode($entries[$i]['uld_info']);
+            $ConsignmentData->uld_info = json_encode($entries[$i]['uld_infos']);
             // $ConsignmentData->dimention_unit = $entries[$i]['dimention_unit'];
             $ConsignmentData->save();
             return "Consignment Data saved successfull";

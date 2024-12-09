@@ -1251,7 +1251,7 @@
                                                             <th>Owner:</th>
                                                             <th></th>
                                                         </tr>
-                                                        <tr v-for="(row, index) in consignment_list.uld_info"
+                                                        <tr v-for="(row, index) in consignment_list.uld_infos"
                                                             :key="index">
                                                             <td class="editable-cell">{{ row.uld_type }}</td>
                                                             <td class="editable-cell">{{ row.uld_serial }}</td>
@@ -1324,12 +1324,12 @@
                                                 <td>
                                                     <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
                                                         class="mb-1">
-                                                        {{ hs.hs_code }}
+                                                        {{ hs }}
                                                     </div>
                                                 </td>
                                                 <td>{{ entry.country_origin_goods }}</td>
                                                 <td>
-                                                    <div v-for="(uld, uldIndex) in entry.uld_info" :key="uldIndex"
+                                                    <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
                                                         class="mb-1">
                                                         {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
                                                     </div>
@@ -2568,7 +2568,7 @@ export default {
 
                 itemss: [],
                 hsCodes: [],
-                uld_info: [],
+                uld_infos: [],
             }),
             iata_cass:{
                 iata_agent_code: null,
@@ -3030,9 +3030,12 @@ export default {
                 .then(response => {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
-                        this.showAWBSection = true; // Show message only if data exists
+                        this.showAWBSection = true;
                         this.awbError = null;
                         this.openForm('update', this.existingData.id);
+                        if (this.existingData && this.existingData.consignment_data) {
+                            this.isConsignmentAdded = true;
+                        }
                     } else {
                         this.showAWBSection = false; // Hide if no data exists
                         this.awbError = "No data found for this AWB ID.";
@@ -3066,7 +3069,7 @@ export default {
                 this.showAWBSection = false;
                 this.awbError = error.response?.status === 404
                     ? "Air Waybill not found."
-                    : "Failed to fetch AWB details.";
+                    : "";
             });
         },
         openForm(mode, id = null) {
@@ -3086,13 +3089,20 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    this.form.entries = Array.isArray(this.existingData.consignment_data)
-                        ? this.existingData.consignment_data
-                        : [this.existingData.consignment_data];    //for row you can use this code this is working 
-                    
-                    console.log("entries", this.form.entries);
+                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
+                    //     ? this.existingData.consignment_data
+                    //     : [this.existingData.consignment_data];
+                   const entry = this.existingData.consignment_data;
+                    const parsedEntry = {
+                        ...entry,
+                        hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
+                        itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
+                        uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
+                    };
+                    this.form.entries = [parsedEntry]; 
+                    // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info); 
+                    console.log("Parsed entry:", parsedEntry);
                     // this.consignment_list = this.existingData.consignment_data;
-                    // this.form.entries = this.existingData.consignment_data;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
@@ -3288,7 +3298,7 @@ export default {
             this.consignment_list.rate = consignment_data.rate;
             this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
             this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
-            this.consignment_list.uld_info = JSON.parse(consignment_data.uld_info);
+            this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
             this.$refs.modalConsignment.show();
             this.calculateTotalAmount();
         },
@@ -3302,21 +3312,26 @@ export default {
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
+            console.log("Before request, consignment_list:", this.consignment_list);
             if (!(this.consignment_list instanceof Form)) {
                 this.consignment_list = new Form(this.consignment_list);
             }
             this.consignment_list.post(`/get-consignment-error`)
             .then(response => {
+                console.log("Response from server:", response);
                 if (this.edit_entry_index !== null) {
+                    console.log("Updating entry at index", this.edit_entry_index, "with data:", this.consignment_list);
                     this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
                     // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
                     this.edit_entry_index = null;
                 } else {
+                    console.log("Adding new entry:", this.consignment_list);
                     this.form.entries.push({ ...this.consignment_list });
                 }
                 this.calculateTotalVolume();
                 this.calculateTotalAmount();
                 this.closeModal();
+                console.log("Updated form entries:", this.form.entries);
                 //clear consignment_list data
                 for (let key in this.consignment_list) {
                     if(key !='busy' && key !='successful' && key !='errors' && key !='originalData'){
@@ -3456,12 +3471,12 @@ export default {
                 return;
             }
             // Push validated data to uld_info
-            this.consignment_list.uld_info.push({ uld_type, uld_serial, owner });
+            this.consignment_list.uld_infos.push({ uld_type, uld_serial, owner });
             this.consignment_list.uld_type = this.consignment_list.uld_serial = this.consignment_list.owner = "";
         },
         deleteUldInfo(index) {
-            if (this.consignment_list.uld_info && this.consignment_list.uld_info.length > index) {
-                this.consignment_list.uld_info.splice(index, 1);
+            if (this.consignment_list.uld_infos && this.consignment_list.uld_infos.length > index) {
+                this.consignment_list.uld_infos.splice(index, 1);
             }
         },
         editOciInfo(index) {

@@ -251,7 +251,8 @@
                                     Load content:
                                     <span style="cursor: pointer; color: blue;">
                                         <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + awbId" custom>
-                                            <p @click="confirmReload">{{ awbId }}</p>
+                                            <!-- <p @click="confirmReload">{{ awbId }}</p> -->
+                                            <p @click="confirmReload">{{ formattedAWBId }}</p>
                                         </router-link>
                                     </span>
                                 </p>
@@ -4156,7 +4157,12 @@ export default {
         submitButtonText() {
             return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
         },
-       
+        formattedAWBId() {
+            if (this.awbId && this.awbId.length > 3) {
+                return `${this.awbId.slice(0, 3)}-${this.awbId.slice(3)}`;
+            }
+            return this.awbId;
+        }
     },
     beforeDestroy() {
         // window.removeEventListener('click', this.closeDropdown_to);

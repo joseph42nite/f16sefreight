@@ -93,40 +93,42 @@
                         <b-row>
                             <b-col>
                                 <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
-                                    <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0">
-                                                {{ item.id }} 
-                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                            </p>
-                                       </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0 ml-2">Edit House Waybill Data </p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                            <p @click="navigate" class="mb-0 ml-2">Create e-AWB from House Waybill Data </p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
-                                        </router-link>
-                                    </a>
-                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
-                                        </router-link>
-                                    </a>
-                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                        <a href="#" class="custom-link mb-3" @click.prevent="handleEditNavigation(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0">
+                                                    {{ item.id }} 
+                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                </p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0 ml-2">Edit House Waybill Data </p>
+                                            </router-link>
+                                        </a>
+                                        <!-- <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                <p @click="navigate" class="mb-0 ml-2">Create e-AWB from House Waybill Data </p>
+                                            </router-link>
+                                        </a> -->
+                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
+                                            </router-link>
+                                        </a>
+                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
+                                            </router-link>
+                                        </a>
+                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                    </div>
                                 </div>
                             </b-col>
                         </b-row>
@@ -215,14 +217,14 @@
                             </b-col>
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Master No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)"></b-form-input>
                                     <has-error :form="form" field="awb_code"></has-error>
                                 </b-form-group>
                             </b-col>
                             -
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)"></b-form-input>
                                     <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
                             </b-col>
@@ -252,14 +254,28 @@
                                         content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
+                                            <!-- <div class="flex-grow-1">
                                                 <select class="custom-select form-control-sm" style="width: 320px">
                                                     <option disabled value=""> Select a Shipper</option>
                                                     <option value="ABS">A</option>
                                                     <option value="BDE">B</option>
                                                     <option value="RTY">C</option>  
                                                 </select>
-                                            </div>
+                                            </div> -->
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
+                                                <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
+                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                    @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
+
+                                                    <div v-if="isDropdownOpen_shipper && filteredShippers.length" class="dropdown-options">
+                                                        <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
+                                                            {{ shipper.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="ship_name"></has-error>
+                                            </b-form-group>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
                                                 @click="showShipper = !showShipper"></b-icon>
                                         </div>
@@ -385,14 +401,19 @@
                                         class="form-control-sm col-form-label">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1">
-                                                <select class="custom-select form-control-sm" style="width: 320px"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                    v-model="form.cons_name">
-                                                    <option disabled value=""> Select a Consignee</option>
-                                                    <option value="ABC">A</option>
-                                                    <option value="BDE">B</option>
-                                                    <option value="CAB">C</option>
-                                                </select>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
+                                                    <div class="custom-dropdown" ref="dropdownContainer_consignee" @click="toggleDropdown_consignee">
+                                                        <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control" autocomplete="off"
+                                                        :class="{ 'is-invalid': form.errors.has('cons_name') }"
+                                                        @input="filterConsignee" @focus="toggleDropdown_consignee(true)" @blur="closeDropdown_consignee" />
+
+                                                        <div v-if="isDropdownOpen_consignee && filteredConsignees.length" class="dropdown-options">
+                                                            <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
+                                                                {{ consignee.name }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </b-form-group>
                                                 <has-error :form="form" field="cons_name"></has-error>
                                             </div>
                                             <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
@@ -831,7 +852,7 @@
                             </div>
                             <b-button class="mt-5" v-b-modal.modal-consignment variant="warning" :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
                             <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
-                                size="xl" ok-only hide-footer>
+                                size="xl" ok-only hide-footer @hide="handleModalClose">
                                 <div class="d-block">
                                     <b-row>
                                         <!-- First Column -->
@@ -898,7 +919,7 @@
                                                                     <span class="mr-2">Charge:</span>
                                                                     <input type="text" class="form-control"
                                                                         style="width: 170px;"
-                                                                        :value="calculatedCharge" />
+                                                                        v-model="calculatedCharge" />
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -1185,7 +1206,7 @@
                                                             <th>Owner:</th>
                                                             <th></th>
                                                         </tr>
-                                                        <tr v-for="(row, index) in consignment_list.uld_info"
+                                                        <tr v-for="(row, index) in consignment_list.uld_infos"
                                                             :key="index">
                                                             <td class="editable-cell">{{ row.uld_type }}</td>
                                                             <td class="editable-cell">{{ row.uld_serial }}</td>
@@ -1258,12 +1279,12 @@
                                                 <td>
                                                     <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
                                                         class="mb-1">
-                                                        {{ hs.hs_code }}
+                                                        {{ hs }}
                                                     </div>
                                                 </td>
                                                 <td>{{ entry.country_origin_goods }}</td>
                                                 <td>
-                                                    <div v-for="(uld, uldIndex) in entry.uld_info" :key="uldIndex"
+                                                    <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
                                                         class="mb-1">
                                                         {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
                                                     </div>
@@ -1285,7 +1306,7 @@
                                             <div class="d-flex align-items-center">
                                                 <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
                                                 <b-form-input id="input-horizontal" class="form-control-sm mr-2" v-model="form.totals.total_volume"></b-form-input>
-                                                <b-form-select class="form-control-sm" v-model="form.entries.dimention_unit">
+                                                <b-form-select class="form-control-sm" v-model="form.totals.dimention_unit">
                                                     <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
                                                     <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
                                                     <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
@@ -1552,34 +1573,22 @@
                                                             <tr>
                                                                 <td class="editable-cell">Issuing Location Code:* </td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_issue_loc_code">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value="BLR">BLR, Bangalore (BLR), India
-                                                                        </option>
-                                                                        <option value="AAE">AAE, Annaba (AAE), Algeria
-                                                                        </option>
-                                                                        <option value="AAH">AAH, Aachen (AAH), Germany
-                                                                        </option>
-                                                                        <option value="AAI">AAI, Arraias (AAI), Brazil
-                                                                        </option>
-                                                                        <option value="AAL">AAL, Aalborg (AAL), Denmark
-                                                                        </option>
-                                                                        <option value="AAM">AAM, Mala Mala (AAM), South
-                                                                            Africa</option>
-                                                                        <option value="AAN">AAN, Al Ain (AAN), United
-                                                                            Arab Emirates</option>
-                                                                        <option value="AAP">AAP, Samarinda (AAP),
-                                                                            Indonesia</option>
-                                                                        <option value="AAR">AAR, Aarhus (AAR), Denmark
-                                                                        </option>
-                                                                        <option value="ABA">ABA, Abakan (ABA), Russian
-                                                                            Federation</option>
-                                                                        <option value="ABC">ABC, Albacete (ABC), Spain
-                                                                        </option>
-                                                                    </b-form-select>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-agent_issue_loc_code"
+                                                                        class="form-control-sm col-form-label">
+                                                                            <div class="custom-dropdown" ref="dropdownContainer_issue" @click="toggleDropdown_issuing_loc">
+                                                                                <input type="text" v-model="agent_information.agent_issue_loc_code" placeholder="Search location" id="agent_issue_loc_code" class="form-control" 
+                                                                                    autocomplete="off" :class="{ 'is-invalid': form.errors.has('agent_issue_loc_code') }">
+                                                                                <div v-if="isDropdownOpen_issuing_loc && filteredLocations_issuing.length" class="dropdown-options">
+                                                                                    <div v-for="(item, index) in filteredLocations_issuing" 
+                                                                                        :key="index" 
+                                                                                        @click.stop="selectOption_issuing_loc(item)" 
+                                                                                        class="option">
+                                                                                        {{ item.iata_code }} ({{ item.destination }})
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        <has-error :form="form" field="agent_issue_loc_code"></has-error>
+                                                                    </b-form-group>
                                                                 </td>
                                                                 <td class="editable-cell">
                                                                     <b-form-checkbox size="sm">Save information for
@@ -1618,11 +1627,19 @@
                                     <b-tab title="Also Notify">
                                         <h4 class="h-color font-weight-bolder ml-2 mt-2"> Also Notify </h4>
                                         <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3" label="Name:">
-                                                <b-form-input id="input-horizontal"
-                                                    class="form-control-sm ml-lg-20"></b-form-input>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-notify" class="form-control-sm col-form-label">
+                                                <div class="custom-dropdown" ref="dropdownContainer_alsoNotify" @click="toggleDropdown_alsoNotify">
+                                                    <input type="text" v-model="form.also_notify_address.also_name" placeholder="Search address" id="also_notify" class="form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"
+                                                    @input="filteralsoNotify" @focus="toggleDropdown_alsoNotify(true)" @blur="closeDropdown_alsoNotify" />
+
+                                                    <div v-if="isDropdownOpen_alsoNotify && filteredAlsoNotify.length" class="dropdown-options">
+                                                        <div v-for="(also_notify, index) in filteredAlsoNotify" :key="also_notify.id" @click.stop="selectAlsoNotifyA(also_notify)" class="option">
+                                                            {{ also_notify.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="also_name"></has-error>
                                             </b-form-group>
                                             <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
                                         </div>
@@ -1722,12 +1739,12 @@
                                             v-model="form.is_also_notify_address_save"> Save new address to address
                                             book</b-form-checkbox>
                                     </b-tab>
-                                    <b-tab title="Exta Print Information">
+                                    <!-- <b-tab title="Exta Print Information">
                                         <h5> Extra information printed on House Way Bill (Only printed - not saved or sent to Airlines):</h5>
                                         <b-form-textarea class=""
                                             style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
                                             rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
-                                    </b-tab>
+                                    </b-tab> -->
                                 </b-tabs>
                             </div>
                         </div>
@@ -1876,154 +1893,15 @@
                                         <b-col cols="auto">
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
+                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
+                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
                                                     <option value="">Select an Other Charge Code</option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                    <option value="SC - Security Charge">SC - Security Charge</option>
-                                                    <option value="AC - Animal Container">AC - Animal Container</option>
-                                                    <option value="AS - Assembly Service Fee">AS - Assembly Service Fee</option>
-                                                    <option value="AT - Attendant">AT - Attendant</option>
-                                                    <option value="AW - Air Waybill Fee">AW - Air Waybill Fee</option>
-                                                    <option value="BA - Advances And/or Guarantees">BA - Advances And/or Guarantees</option>
-                                                    <option value="BB - Appraisal Service">BB - Appraisal Service</option>
-                                                    <option value="BC - AWB Copy">BC - AWB Copy</option>
-                                                    <option value="BE - Collection Of Funds">BE - Collection Of Funds</option>
-                                                    <option value="BF - Copies Of Documents">BF - Copies Of Documents</option>
-                                                    <option value="BH - Messenger Service">BH - Messenger Service</option>
-                                                    <option value="BI - Import/export Documents Processing">BI - Import/export Documents Processing</option>
-                                                    <option value="BL - Blacklist Certificate">BL - Blacklist Certificate</option>
-                                                    <option value="BM - Withdrawal Of Shipment After Clearance">BM - Withdrawal Of Shipment After Clearance</option>
-                                                    <option value="BR - Bank Release">BR - Bank Release</option>
-                                                    <option value="CA - Bonding">CA - Bonding</option>
-                                                    <option value="CB - Completion/preparation Of Documents">CB - Completion/preparation Of Documents</option>
-                                                    <option value="CC - Manual Data Entry For Customs Purposes">CC - Manual Data Entry For Customs Purposes</option>
-                                                    <option value="CD - Clearance And Handling">CD - Clearance And Handling</option>
-                                                    <option value="CE - Export/Import Warrant">CE - Export/Import Warrant</option>
-                                                    <option value="CF - Inventory And/or Inspection">CF - Inventory And/or Inspection</option>
-                                                    <option value="CG - Electronic Proc. Or Trans. Of Data For Customs">CG - Electronic Proc. Or Trans. Of Data For Customs</option>
-                                                    <option value="CH - Clearance And Handling">CH - Clearance And Handling</option>
-                                                    <option value="CI - Overtime And Other Customs Imposed Charges">CI - Overtime And Other Customs Imposed Charges</option>
-                                                    <option value="CJ - Removal (carrier Warehouse To Warehouse)">CJ - Removal (carrier Warehouse To Warehouse)</option>
-                                                    <option value="DB - Disbursement Fee">DB - Disbursement Fee</option>
-                                                    <option value="DC - Certificate Of Origin">DC - Certificate Of Origin</option>
-                                                    <option value="DD - Preparation Of Cargo Manifest">DD - Preparation Of Cargo Manifest</option>
-                                                    <option value="DF - Distribution Service Fee">DF - Distribution Service Fee</option>
-                                                    <option value="DG - AWB Cancellation">DG - AWB Cancellation</option>
-                                                    <option value="DH - AWB Charges Correction Advice">DH - AWB Charges Correction Advice</option>
-                                                    <option value="DI - AWB Re-waybilling">DI - AWB Re-waybilling</option>
-                                                    <option value="DJ - Proof Of Delivery (documentation)">DJ - Proof Of Delivery (documentation)</option>
-                                                    <option value="DK - Release Order">DK - Release Order</option>
-                                                    <option value="DV - Veterinary And/or Phytosanitary Purposes">DV - Veterinary And/or Phytosanitary Purposes</option>
-                                                    <option value="EA - Handling (Express)">EA - Handling (Express)</option>
-                                                    <option value="FA - Airport Arrival">FA - Airport Arrival</option>
-                                                    <option value="FB - Domestic Shipments">FB - Domestic Shipments</option>
-                                                    <option value="FC - Charges Collect Fee">FC - Charges Collect Fee</option>
-                                                    <option value="FD - Priority">FD - Priority</option>
-                                                    <option value="FE - General (Handling)">FE - General (Handling)</option>
-                                                    <option value="FF - Loading/unloading">FF - Loading/unloading</option>
-                                                    <option value="FI - Weighing">FI - Weighing</option>
-                                                    <option value="FS - Fuel Surcharge">FS - Fuel Surcharge</option>
-                                                    <option value="GA - Diplomatic Consignment">GA - Diplomatic Consignment</option>
-                                                    <option value="GT - Government Tax">GT - Government Tax</option>
-                                                    <option value="HB - Mortuary">HB - Mortuary</option>
-                                                    <option value="HR - Human Remains">HR - Human Remains</option>
-                                                    <option value="IA - Very Important Cargo (VIC)">IA - Very Important Cargo (VIC)</option>
-                                                    <option value="IN - Insurance Premium">IN - Insurance Premium</option>
-                                                    <option value="IR - War Risk">IR - War Risk</option>
-                                                    <option value="IS - War Risk">IS - War Risk</option>
-                                                    <option value="JA - Clearance OCText=General">JA - Clearance OCText=General</option>
-                                                    <option value="KA - Handling (Heavy/Bulky Cargo)">KA - Handling (Heavy/Bulky Cargo)</option>
-                                                    <option value="KB - Loading/unloading Equipment (forklift Etc.)">KB - Loading/unloading Equipment (forklift Etc.)</option>
-                                                    <option value="LA - Live Animals">LA - Live Animals</option>
-                                                    <option value="LC - Cleaning">LC - Cleaning</option>
-                                                    <option value="LE - Hotel">LE - Hotel</option>
-                                                    <option value="LF - Quarantine">LF - Quarantine</option>
-                                                    <option value="LG - Veterinary Inspection">LG - Veterinary Inspection</option>
-                                                    <option value="LH - Storage (Live Animals)">LH - Storage (Live Animals)</option>
-                                                    <option value="LI - Cleaning Of Stalls/pens">LI - Cleaning Of Stalls/pens</option>
-                                                    <option value="LJ - Rental Of Stalls/pens">LJ - Rental Of Stalls/pens</option>
-                                                    <option value="MA - Miscellaneous A">MA - Miscellaneous A</option>
-                                                    <option value="MB - Miscellaneous B">MB - Miscellaneous B</option>
-                                                    <option value="MC - Miscellaneous C">MC - Miscellaneous C</option>
-                                                    <option value="MD - Miscellaneous D">MD - Miscellaneous D</option>
-                                                    <option value="ME - Miscellaneous E">ME - Miscellaneous E</option>
-                                                    <option value="MF - Miscellaneous F">MF - Miscellaneous F</option>
-                                                    <option value="MG - Miscellaneous G">MG - Miscellaneous G</option>
-                                                    <option value="MH - Miscellaneous H">MH - Miscellaneous H</option>
-                                                    <option value="MI - Miscellaneous I">MI - Miscellaneous I</option>
-                                                    <option value="MJ - Miscellaneous J">MJ - Miscellaneous J</option>
-                                                    <option value="MK - Miscellaneous K">MK - Miscellaneous K</option>
-                                                    <option value="ML - Miscellaneous L">ML - Miscellaneous L</option>
-                                                    <option value="MM - Miscellaneous M">MM - Miscellaneous M</option>
-                                                    <option value="MN - Miscellaneous N">MN - Miscellaneous N</option>
-                                                    <option value="MO - Miscellaneous O">MO - Miscellaneous O</option>
-                                                    <option value="MP - Miscellaneous P">MP - Miscellaneous P</option>
-                                                    <option value="MQ - Miscellaneous Q">MQ - Miscellaneous Q</option>
-                                                    <option value="MR - Airfreight Surcharge">MR - Airfreight Surcharge</option>
-                                                    <option value="MS - Miscellaneous S">MS - Miscellaneous S</option>
-                                                    <option value="MT - Miscellaneous T">MT - Miscellaneous T</option>
-                                                    <option value="MU - Miscellaneous U">MU - Miscellaneous U</option>
-                                                    <option value="MV - Miscellaneous V">MV - Miscellaneous V</option>
-                                                    <option value="MW - Miscellaneous W">MW - Miscellaneous W</option>
-                                                    <option value="MX - Miscellaneous X">MX - Miscellaneous X</option>
-                                                    <option value="MY - Fuel Surcharge">MY - Fuel Surcharge</option>
-                                                    <option value="MZ - Miscellaneous Z">MZ - Miscellaneous Z</option>
-                                                    <option value="NS - Navigation Surcharge">NS - Navigation Surcharge</option>
-                                                    <option value="PA - Handling (Perishables)">PA - Handling (Perishables)</option>
-                                                    <option value="PB - Cool/Cold Room OCText=freezer (Perishables)">PB - Cool/Cold Room OCText=freezer (Perishables)</option>
-                                                    <option value="PK - Packing/Repacking">PK - Packing/Repacking</option>
-                                                    <option value="PU - Pick-Up">PU - Pick-Up</option>
-                                                    <option value="RA - Dangerous Goods Fee">RA - Dangerous Goods Fee</option>
-                                                    <option value="RB - Rejection">RB - Rejection</option>
-                                                    <option value="RC - Referral Of Charge">RC - Referral Of Charge</option>
-                                                    <option value="RD - Radio-active Room">RD - Radio-active Room</option>
-                                                    <option value="RF - Remit Following Collection Fee">RF - Remit Following Collection Fee</option>
-                                                    <option value="SA - Delivery">SA - Delivery</option>
-                                                    <option value="SB - Delivery Notification">SB - Delivery Notification</option>
-                                                    <option value="SC - Security Charge">SC - Security Charge</option>
-                                                    <option value="SD - Surface Charge">SD - Surface Charge</option>
-                                                    <option value="SE - Proof Of Delivery (pickup And Delivery)">SE - Proof Of Delivery (pickup And Delivery)</option>
-                                                    <option value="SF - Delivery Order">SF - Delivery Order</option>
-                                                    <option value="SI - Stop In Transit">SI - Stop In Transit</option>
-                                                    <option value="SO - Storage">SO - Storage</option>
-                                                    <option value="SP - Separate Early Release">SP - Separate Early Release</option>
-                                                    <option value="SR - Storage">SR - Storage</option>
-                                                    <option value="SS - Signature Service">SS - Signature Service</option>
-                                                    <option value="ST - State Sales Tax">ST - State Sales Tax</option>
-                                                    <option value="SU - Surface Charge">SU - Surface Charge</option>
-                                                    <option value="TA - Postal Tax">TA - Postal Tax</option>
-                                                    <option value="TB - Sales Tax">TB - Sales Tax</option>
-                                                    <option value="TC - Stamp Tax">TC - Stamp Tax</option>
-                                                    <option value="TD - State Tax">TD - State Tax</option>
-                                                    <option value="TE - Statistical Tax">TE - Statistical Tax</option>
-                                                    <option value="TH - Terminal Handling">TH - Terminal Handling</option>
-                                                    <option value="TI - Value Added Tax (For Import Only)">TI - Value Added Tax (For Import Only)</option>
-                                                    <option value="TR - Transit">TR - Transit</option>
-                                                    <option value="TV - Value Added Tax (General Or For Export)">TV - Value Added Tax (General Or For Export)</option>
-                                                    <option value="TX - General Taxes">TX - General Taxes</option>
-                                                    <option value="UB - Disassembly">UB - Disassembly</option>
-                                                    <option value="UC - Adjusting Of Improperly Loaded ULD">UC - Adjusting Of Improperly Loaded ULD</option>
-                                                    <option value="UD - Demurrage">UD - Demurrage</option>
-                                                    <option value="UE - Leasing">UE - Leasing</option>
-                                                    <option value="UF - Recontouring">UF - Recontouring</option>
-                                                    <option value="UG - Unloading (Unit Load Device)">UG - Unloading (Unit Load Device)</option>
-                                                    <option value="UH - Handling (Unit Load Device)">UH - Handling (Unit Load Device)</option>
-                                                    <option value="VA - Handling (Valuable Cargo)">VA - Handling (Valuable Cargo)</option>
-                                                    <option value="VB - Security (armed Guard/escort) Handling">VB - Security (armed Guard/escort) Handling</option>
-                                                    <option value="VC - Strongroom">VC - Strongroom</option>
-                                                    <option value="VE - Vetrinarian Charge">VE - Vetrinarian Charge</option>
-                                                    <option value="VS - VARIOUS SURCHARGE">VS - VARIOUS SURCHARGE</option>
-                                                    <option value="WA - Handling (Vulnerable Cargo)">WA - Handling (Vulnerable Cargo)</option>
-                                                    <option value="WR - War Risk">WR - War Risk</option>
-                                                    <option value="XB - Security (Surcharge/premiums)">XB - Security (Surcharge/premiums)</option>
-                                                    <option value="XC - Time">XC - Time</option>
-                                                    <option value="XD - War Risk">XD - War Risk</option>
-                                                    <option value="XE - Weight">XE - Weight</option>
-                                                    <option value="XR - Security Handling">XR - Security Handling</option>
-                                                    <option value="ZA - Re-warehousing">ZA - Re-warehousing</option>
-                                                    <option value="ZB - General (Storage)">ZB - General (Storage)</option>
-                                                    <option value="ZC - Cool/Cold Room Freezer (Storage)">ZC - Cool/Cold Room Freezer (Storage)</option>
+                                                    <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
+                                                        {{ charge.text }}
+                                                    </option>
                                                 </b-form-select>
+                                                <has-error :form="form" field="other_charge_code"></has-error>
+                                            </b-form-group>
                                             </b-form-group>
                                         </b-col>
                                         <b-col cols="auto">
@@ -2614,53 +2492,11 @@
                                                                     <b-form-select class="form-control-sm"
                                                                         v-model="oci_info.custom_info_identifier"
                                                                         :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="A">A - Automated Broker Interface
-                                                                            (ABI) Filer Code</option>
-                                                                        <option value="AC">AC - Account Consignor
-                                                                            (consignor for all cargo aircraft)</option>
-                                                                        <option value="C">C - Certificate Number
+                                                                        <option value="">Select a code</option>
+                                                                        <option v-for="oci_options in oci_data.oci_custom_info_identifier" 
+                                                                                :key="oci_options.value" :value="oci_options.value">
+                                                                            {{ oci_options.text }}
                                                                         </option>
-                                                                        <option value="CP">CP - Contact Person</option>
-                                                                        <option value="CT">CT- Contact Telephone Number
-                                                                        </option>
-                                                                        <option value="D">D - Dangerous Goods</option>
-                                                                        <option value="DI">DI - Declaration
-                                                                            Identification</option>
-                                                                        <option value="E">E - Authorised Economic
-                                                                            Operator</option>
-                                                                        <option value="ED">ED - Expiry Date</option>
-                                                                        <option value="F">F - Facilities Information and
-                                                                            Resource Management</option>
-                                                                        <option value="I">I - Item Number</option>
-                                                                        <option value="KC">KC - Known Consignor</option>
-                                                                        <option value="L">L - Exemption Legend</option>
-                                                                        <option value="LI">LI - License Identification
-                                                                        </option>
-                                                                        <option value="M">M - Movement Reference Number
-                                                                        </option>
-                                                                        <option value="N">N - Seal Number</option>
-                                                                        <option value="P">P - Packing List Number
-                                                                        </option>
-                                                                        <option value="RA">RA - Regulated Agent</option>
-                                                                        <option value="RC">RC - Regulated Carrier
-                                                                        </option>
-                                                                        <option value="S">S - System Downtime Reference
-                                                                        </option>
-                                                                        <option value="SD">SD - Security Status Date
-                                                                            &amp; Time</option>
-                                                                        <option value="SM">SM - Screening Method
-                                                                        </option>
-                                                                        <option value="SN">SN - Security Status Name of
-                                                                            Issuer</option>
-                                                                        <option value="SS">SS - Security Status</option>
-                                                                        <option value="ST">ST - Security Textual
-                                                                            Statement</option>
-                                                                        <option value="T">T - Trader Identification
-                                                                            Number</option>
-                                                                        <option value="U">U - Unique Consignment
-                                                                            Reference Number</option>
-                                                                        <option value="V">V - Invoice Number</option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
                                                                         field="custom_info_identifier"></has-error>
@@ -2763,7 +2599,7 @@
                         <hr class="hr" />
                         <div class="py-7">
                             <div class="d-flex justify-content-end">
-                                <b-button class="mr-2" @click="generateHawbPDF">Generate PDF</b-button>
+                                <b-button class="mr-2" v-if="mode === 'update'" @click="generateHawbPDF">Generate PDF</b-button>
                                 <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                 <b-button class="mr-2">Send & Clear</b-button>
                                 <!-- <b-button type="submit">Save Draft</b-button> -->
@@ -2864,6 +2700,7 @@ export default {
                     total_amount: 0,
                     master_pcs: null,
                     master_weight: null,
+                    dimention_unit: "MTQ"
                 },
 
                 custom_origin:{
@@ -2937,7 +2774,7 @@ export default {
                 height: '',
                 unit: 'CMT',
                 volume: '',
-                dimention_unit: 'MTQ', //cm3,m3,ft3
+                // dimention_unit: 'MTQ', //cm3,m3,ft3
 
                 uld_type: '',
                 uld_serial: '',
@@ -2945,7 +2782,7 @@ export default {
 
                 itemss: [],
                 hsCodes: [],
-                uld_info: [],
+                uld_infos: [],
             }),
             agent_information:{
                 agent_name: '',
@@ -2983,6 +2820,11 @@ export default {
             isDropdownOpen_to2: false,
             isDropdownOpen_to3: false,
             isDropdownOpen_from: false,
+            isDropdownOpen_shipper: false,
+            isDropdownOpen_consignee: false,
+            isDropdownOpen_alsoNotify: false,
+            isDropdownOpen_issuing_loc: false,
+            isDropdownOpen_participant: false,
             selectedCode: '',
             manualCode: '',
             validationErrors: [],
@@ -2997,8 +2839,14 @@ export default {
             edit_entry_index: null,
             existingData: [],
             data_items:[],
+            oci_data:{}, ///get-oci-data
+            oci_identifiers:{},
             countries:[],
+            other_charges_code: [],
             location:[],
+            filteredShippers: [],
+            filteredConsignees: [],
+            filteredAlsoNotify: [],
             isConsignmentAdded: false,
             items: [
                 {
@@ -3171,9 +3019,43 @@ export default {
 
     methods: {
         generateHawbPDF() {
+            if (!this.validateFormFields()) {
+                return;
+            }
             const itemId = this.$route.params.id; // Get the ID from the URL
             const pdfUrl = `/download-hawb-pdf/${itemId}`; // Construct the URL for the PDF
             window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+        },
+        validateFormFields() {
+            const requiredFields = {
+                "HAWB Number is mandatory": this.form.first_box.hawb_no,
+                "AWB prefix is mandatory": this.form.first_box.awb_code, // AWB prefix
+                "AWB number is mandatory": this.form.first_box.awb_no, // AWB number
+                "Shipper address is mandatory": this.form.shipper_address.ship_address, // Shipper address
+                "Shipper city is mandatory": this.form.shipper_address.ship_address, // Shipper city
+                "Consignee address is mandatory": this.form.consignee_address.cons_address, // Consignee address
+                "Consignee city is mandatory": this.form.consignee_address.cons_city, // Consignee city
+                "Routing by (carrier code) on row 1 is mandatory": this.form.routing_information.by // Routing by carrier code
+            };
+            const missingFields = Object.entries(requiredFields)
+            .filter(([field, value]) => !value || (typeof value === 'string' && value.trim() === ''))
+            .map(([field]) => field);
+            if (missingFields.length > 0) {
+                alert(`The following fields are mandatory:\n- ${missingFields.join("\n- ")}`);
+                return false;
+            }
+            return true;
+        },
+        handleEditNavigation(id) {
+            this.$bvModal.hide('modal-s');
+            const targetPath = `/edit-houseway-bill/${id}`;
+            if (this.$route.path !== targetPath) {
+                this.$router.push(targetPath).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
         },
         mouseover: function () {
             this.isOpen = true;
@@ -3187,12 +3069,6 @@ export default {
                     console.log(data);
                 });
         },
-        // showModal() {
-        //     this.$refs["my-modal"].show();
-        // },
-        // hideModal() {
-        //     this.$refs["my-modal"].hide();
-        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3280,6 +3156,9 @@ export default {
                 .then(response => {
                     this.existingData = response.data;
                     this.openForm('update', this.existingData.id);
+                    if (this.existingData && this.existingData.consignment_data) {
+                        this.isConsignmentAdded = true;
+                    }
                 })
                 .catch(error => {
                     console.error("Failed to fetch data for updating:", error);
@@ -3301,14 +3180,26 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    this.form.entries = Array.isArray(this.existingData.consignment_data)
-                        ? this.existingData.consignment_data
-                        : [this.existingData.consignment_data];
-                    console.log("Entries in form:", this.form.entries);
+                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
+                    //     ? this.existingData.consignment_data
+                    //     : [this.existingData.consignment_data];
+                    // console.log("Entries in form:", this.form.entries);
                     
                     // this.consignment_list = this.existingData.consignment_data;
                     // this.form.entries = this.existingData.consignment_data;
                     // console.log("entries", this.form.entries);
+                    const entry = this.existingData.consignment_data;
+                    const parsedEntry = {
+                        ...entry,
+                        hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
+                        itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
+                        uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
+                    };
+                    this.form.entries = [parsedEntry];
+                    if(!this.form.entries){
+                        this.isConsignmentAdded = true;
+                    }
+                    console.log("hs code", parsedEntry);
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
@@ -3332,6 +3223,16 @@ export default {
                 this.location=data;
             });
         },
+        getOtherChargesCode(){
+            ApiService.get('/other-charges').then(({ data }) => {
+                this.other_charges_code = Object.keys(data).map(key => ({
+                    value: key,
+                    text: data[key]
+                }));
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+            });
+        },
         getAgent(){
             ApiService.get(`/agent-info/`)
                 .then(({ data }) => {
@@ -3344,6 +3245,109 @@ export default {
                 .catch(error => {
                     console.error("Error fetching agent information:", error);
                 });
+        },
+        fetchShippers() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.shippers = response.data;
+                this.filteredShippers = this.shippers.filter(shipper => shipper.address_type === 'shipper_address');
+                // this.filteredShippers = this.shippers;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fetchConsignee() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.consignees = response.data;
+                this.filteredConsignees = this.consignees.filter(consignee => consignee.address_type === 'consignee_address');
+                // this.filteredConsignees = this.consignees;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fetchAlsoNotify() {
+            ApiService.get(`/get-shippers`).then(response => {
+                this.alsoNotify = response.data;
+                console.log("fgweuf", response.data);
+                this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
+                // this.filteredConsignees = this.consignees;
+                // console.log('Shipper', response.data);
+            });
+        },
+        fillShipperDetails() {
+            if (this.selectedShipper) {
+                ApiService.get(`/get-shipper-address?id=${this.selectedShipper}`)
+                .then( response => {
+                    this.form.shipper_address = response.data; 
+                    // console.log('Shipper', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching shipper address:', error);
+                });
+            } else {
+                this.form.shipper_address = {
+                ship_name: '',
+                ship_account: '',
+                ship_address: '',
+                ship_city: '',
+                };
+            }
+        },
+        fillConsigneeDetails() {
+            if (this.selectedConsignee) {
+                ApiService.get(`/get-consignee-address?id=${this.selectedConsignee}`)
+                .then( response => {
+                    this.form.consignee_address = response.data; 
+                    console.log('Consignee', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching shipper address:', error);
+                });
+            } else {
+                this.form.consignee_address = {
+                cons_name: '',
+                cons_account: '',
+                cons_address: '',
+                cons_city: '',
+                };
+            }
+        },
+        fillAlsoNotifyDetails() {
+            if (this.selectAlsoNotify) {
+                ApiService.get(`/get-alsonotify-address?id=${this.selectAlsoNotify}`)
+                .then( response => {
+                    this.form.also_notify_address = response.data; 
+                    console.log('Also Notify address', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching Also notify address address:', error);
+                });
+            } else {
+                this.form.also_notify_address = {
+                also_name: '',
+                also_account: '',
+                also_address: '',
+                also_city: '',
+                };
+            }
+        },
+        getOCIData(){
+            ApiService.get('/get-oci-data').then(({ data }) => {
+            if (data && data.oci_custom_info_identifier) {
+                this.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(([key, value]) => ({
+                    value: key,
+                    text: value
+                }));
+            } else {
+                this.oci_data.oci_custom_info_identifier = [];
+            }
+            if(data && data.identifiers){
+                this.oci_identifiers.identifiers = Object.entries(data.identifiers).map(([key, value]) => ({
+                    value: key,
+                    text: value
+                }));
+            }
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+                this.oci_data.oci_custom_info_identifier = []; 
+            });
         },
         handleRadioChange() {
             const selectedCode = this.selectedCode;
@@ -3431,9 +3435,30 @@ export default {
             this.form.charges.splice(index, 1);
         },
         editEntry(index) {
+            // this.edit_entry_index = index;
+            // this.consignment_list = { ...this.form.entries[index] };
+            // this.$refs.modalConsignment.show();
             this.edit_entry_index = index;
-            this.consignment_list = { ...this.form.entries[index] };
+            let consignment_data=this.form.entries[index];
+            this.consignment_list.pieces = consignment_data.pieces;
+            this.consignment_list.description = consignment_data.description;
+            this.consignment_list.rate_class = consignment_data.rate_class;
+            this.consignment_list.uld_rate_class = consignment_data.uld_rate_class;
+            this.consignment_list.service_code = consignment_data.service_code;
+            this.consignment_list.commodity_item = consignment_data.commodity_item;
+            this.consignment_list.country_origin_goods = consignment_data.country_origin_goods;
+            this.consignment_list.slac = consignment_data.slac;
+            this.consignment_list.hs_code = consignment_data.hs_code;
+            this.consignment_list.gross_weight = consignment_data.gross_weight;
+            this.consignment_list.weight_code = consignment_data.weight_code;
+            this.consignment_list.chargable_weight = consignment_data.chargable_weight;
+            this.consignment_list.rate = consignment_data.rate;
+            this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
+            this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
+            this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
+            
             this.$refs.modalConsignment.show();
+            this.isConsignmentAdded = true;
             this.calculateTotalAmount();
         },
         deleteEntry(index) {
@@ -3460,6 +3485,7 @@ export default {
                 }
                 this.calculateTotalVolume();
                 this.calculateTotalAmount();
+                this.isConsignmentAdded = this.form.entries.length > 0;
                 this.closeModal();
                 //clear consignment_list data
                 for (let key in this.consignment_list) {
@@ -3471,6 +3497,7 @@ export default {
                         }
                     }
                 }
+                this.isConsignmentAdded = this.form.entries.length > 0;
             })
             .catch(error => {
                 console.error("There was an error with the consignment request:", error);
@@ -3515,7 +3542,9 @@ export default {
                         volumeInM3 = volumeInFoot * 0.0283168466; // ft³ to m³
                         volumeInIn3 = volumeInFoot * 1_728; // ft³ to in³
                     }
-                    let selectedUnit = this.form.entries.dimention_unit; 
+                    // let selectedUnit = this.form.entries.dimention_unit; 
+                    // let selectedUnit = this.consignment_list.dimention_unit; form.totals.
+                    let selectedUnit = this.form.totals.dimention_unit;
                     let finalVolume = 0;
 
                     switch (selectedUnit) {
@@ -3542,22 +3571,28 @@ export default {
             this.form.totals.total_volume = totalVolume.toFixed(2);
         },
         calculateTotalAmount() {
-            const chargeableWeight = this.form.entries.reduce((total, entry) => {
-                let weight = parseFloat(entry.chargable_weight) || 0;
-                return total + weight;
-            }, 0);
+            // const chargeableWeight = this.form.entries.reduce((total, entry) => {
+            //     let weight = parseFloat(entry.chargable_weight) || 0;
+            //     return total + weight;
+            // }, 0);
+
+            const chargeableWeight = this.consignment_list.chargable_weight;
+            
             const { rate_class } = this.consignment_list;
             let rates = 0;
             this.form.totals.total_amount = 0;
             if (rate_class === "B" || rate_class === "M") {
-                this.form.totals.total_amount = this.consignment_list.rate || 0;
+                this.form.totals.total_amount = parseFloat(this.consignment_list.rate) || 0;
+                // this.form.totals.total_amount = this.consignment_list.rate || 0;
             } else if (rate_class === "P" || rate_class === "X") {
                 this.form.totals.total_amount = 0;
             } else {
-                rates = parseFloat(this.form.entries.reduce((total, entry) => {
-                    return total + (parseFloat(entry.rate) || 0);
-                }, 0)) || 0;
-                this.form.totals.total_amount = chargeableWeight * rates;
+                // rates = parseFloat(this.form.entries.reduce((total, entry) => {
+                //     return total + (parseFloat(entry.rate) || 0);
+                // }, 0)) || 0;
+                // this.form.totals.total_amount = chargeableWeight * rates;
+                // console.log("test", this.form.totals.total_amount);
+                this.form.totals.total_amount = chargeableWeight * this.consignment_list.rate;
             }
         },
         addHsCode() {
@@ -3586,6 +3621,12 @@ export default {
         closeModal() {
             this.$refs.modalConsignment.hide();
         },
+        handleModalClose() {
+            // if (this.form.entries.length === 0) {
+            //     this.isConsignmentAdded = false;
+            // }
+            this.isConsignmentAdded = this.form.entries.length > 0;
+        },
         addUldInfo() {
             this.uld_error = [];
             const { uld_type, uld_serial, owner } = this.consignment_list;
@@ -3606,12 +3647,12 @@ export default {
                 return;
             }
             // Push validated data to uld_info
-            this.consignment_list.uld_info.push({ uld_type, uld_serial, owner });
+            this.consignment_list.uld_infos.push({ uld_type, uld_serial, owner });
             this.consignment_list.uld_type = this.consignment_list.uld_serial = this.consignment_list.owner = "";
         },
         deleteUldInfo(index) {
-            if (this.consignment_list.uld_info && this.consignment_list.uld_info.length > index) {
-                this.consignment_list.uld_info.splice(index, 1);
+            if (this.consignment_list.uld_infos && this.consignment_list.uld_infos.length > index) {
+                this.consignment_list.uld_infos.splice(index, 1);
             }
         },
         editOciInfo(index) {
@@ -3820,6 +3861,103 @@ export default {
                 this.isDropdownOpen_from = false;
             }
         },
+        selectShipper(shipper) {
+            this.selectedShipper = shipper.id;
+            this.form.shipper_address = shipper.name;
+            // this.form.shipper_name = shipper.name;
+            this.fillShipperDetails(shipper.id);
+            this.isDropdownOpen_shipper = false;
+        },
+        toggleDropdown_shipper(event) {
+             this.isDropdownOpen_shipper = event;
+        },
+        closeDropdown_shipper(event) {
+            const dropdownContainer_shipper = this.$refs.dropdownContainer_shipper;
+            if (!dropdownContainer_shipper.contains(event.target)) {
+                this.isDropdownOpen_shipper = false;
+            }
+        },
+        filterShippers() {
+            // const query = this.form.shipper_name.toLowerCase();
+            const query = this.form.shipper_address.ship_name.toLowerCase()
+            if (!query) return this.shippers;
+            return this.filteredShippers = this.shippers.filter(shipper =>
+                shipper.name.toLowerCase().includes(query)
+            );
+        },
+        selectConsignee(consignee) {
+            this.selectedConsignee = consignee.id;
+            this.form.consignee_address = consignee.name;
+            this.fillConsigneeDetails(consignee.id);
+            this.isDropdownOpen_consignee = false;
+        },
+        toggleDropdown_consignee(event) {
+             this.isDropdownOpen_consignee = event;
+        },
+        closeDropdown_consignee(event) {
+            const dropdownContainer_consignee = this.$refs.dropdownContainer_consignee;
+            if (!dropdownContainer_consignee.contains(event.target)) {
+                this.isDropdownOpen_consignee = false;
+            }
+        },
+        filterConsignee() {
+            const query = this.form.consignee_address.cons_name.toLowerCase()
+            if (!query) return this.consignees;
+            return this.filteredConsignees = this.consignees.filter(consignee =>
+            consignee.name.toLowerCase().includes(query)
+            );
+        },
+
+        selectAlsoNotifyA(also_notify) {
+            this.selectAlsoNotify = also_notify.id;
+            this.form.also_notify_address = also_notify.name;
+            // this.form.shipper_name = shipper.name;
+            this.fillAlsoNotifyDetails(also_notify.id);
+            this.isDropdownOpen_alsoNotify = false;
+        },
+        toggleDropdown_alsoNotify(event) {
+             this.isDropdownOpen_alsoNotify = event;
+        },
+        closeDropdown_alsoNotify(event) {
+            const dropdownContainer_alsoNotify = this.$refs.dropdownContainer_alsoNotify;
+            if (!dropdownContainer_alsoNotify.contains(event.target)) {
+                this.isDropdownOpen_alsoNotify = false;
+            }
+        },
+        filteralsoNotify() {
+            const query = this.form.also_notify_address.also_name.toLowerCase()
+            if (!query) return this.alsoNotify;
+                return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
+                also_notify.name.toLowerCase().includes(query)
+            );
+        },
+        toggleDropdown_issuing_loc() {
+            this.isDropdownOpen_issuing_loc = !this.isDropdownOpen_issuing_loc;
+        },
+        selectOption_issuing_loc(item) {
+            this.agent_information.agent_issue_loc_code = item.iata_code;
+            let source_name= item.destination;
+            let final_set = `${item.iata_code}, ${source_name}`;
+            // this.searchQuery_to = final_set;
+            this.agent_information.agent_issue_loc_code = final_set;
+            this.isDropdownOpen_issuing_loc = false;
+        },
+        closeDropdown_issue_location(event) {
+            const dropdownContainer_to = this.$refs.dropdownContainer_issue;
+            if (!dropdownContainer_to.contains(event.target)) {
+                this.isDropdownOpen_issuing_loc = false;
+            }
+        },
+        validateNumericInput(evt,field, maxLength) {
+            evt = evt || window.event;
+            const charCode = evt.which || evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+            if (this.form.first_box[field].length >= maxLength) {
+                evt.preventDefault();
+            }
+        },
     },
     mounted(){
         this.calculateTotalVolume();
@@ -3831,7 +3969,19 @@ export default {
         window.addEventListener('click', this.closeDropdown_from);
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);
+        window.addEventListener('click', this.closeDropdown_shipper);
+        window.addEventListener('click', this.closeDropdown_consignee);
+        window.addEventListener('click', this.closeDropdown_alsoNotify);
+        window.addEventListener('click', this.closeDropdown_issue_location);
         this.getLocation(); 
+        this.fetchShippers();
+        this.fetchAlsoNotify();
+        this.fillShipperDetails();
+        this.fillConsigneeDetails();
+        this.fillAlsoNotifyDetails();
+        this.fetchConsignee();
+        this.getOtherChargesCode();
+        this.getOCIData();
         // const id = this.$route.params.id;
         // if (id) {
         // this.getHouseWayBill(id);
@@ -3841,7 +3991,10 @@ export default {
         // 'consignment_list': function () {
         //     this.form.totals.total_amount = this.calculateTotalAmount();
         // },
-        'form.entries.dimention_unit': function() {
+        // 'consignment_list.dimention_unit': function() {
+        //     this.calculateTotalVolume();
+        // },
+        'form.totals.dimention_unit': function() {
             this.calculateTotalVolume();
         },
         'form.charges': {
@@ -3890,9 +4043,46 @@ export default {
         },
         'agent_information.participate': function(newValue) {
             console.log('Participate value changed to:', newValue);
+        },
+        "form.shipper_address.ship_name"(newVal) {
+            if (!newVal) {
+                this.selectedShipper = null;
+                this.form.shipper_address = {
+                    ship_name: "",
+                };
+                this.filteredShippers = this.shippers;
+            }
+        },
+        "form.consignee_address.cons_name"(newVal) {
+            if (!newVal) {
+                this.selectedConsignee = null;
+                this.form.consignee_address = {
+                    cons_name: "",
+                };
+                this.filteredConsignees = this.consignees;
+            }
+        },
+        "form.also_notify_address.also_name"(newVal) {
+            if (!newVal) {
+                this.selectAlsoNotify = null;
+                this.form.also_notify_address = {
+                    also_name: "",
+                };
+                this.filteredAlsoNotify = this.alsoNotify;
+            }
+        },
+        '$route.params.id'(newId) {
+            if (newId) {
+                this.getHouseWayBill(newId);
+            }
         }
     },
     created() {
+        const id = this.$route.params.id;
+        if (id) {
+            this.isEdit = true;
+            this.getHouseWayBill(id);
+        }
         // this.getAgent();
     },
     computed: {
@@ -3958,6 +4148,7 @@ export default {
             };
         },
         calculatedCharge() {
+            // return this.form.totals.total_amount.toFixed(2);
             return this.form.totals.total_amount;
         },
         submitButtonText() {
@@ -4012,6 +4203,14 @@ export default {
             const query = this.form.routing_information.departure_airport.toLowerCase().trim();
             if (!query) return this.location;
 
+            return this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(query) ||
+                item.destination.toLowerCase().includes(query)
+            );
+        },
+        filteredLocations_issuing() {
+            const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
+            if (!query) return this.location;
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query) ||
                 item.destination.toLowerCase().includes(query)

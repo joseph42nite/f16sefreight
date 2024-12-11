@@ -16,8 +16,8 @@ Route::get('generic-message', [ConversionController::class, 'GenericRequestMessa
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
 Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
 Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
-Route::get('test-route', [HousewayBill::class,'getCountry']);
-
+// Route::get('test-route', [HousewayBill::class,'getOtherCharges']);
+// Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
 Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
 Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf']);
 Route::get('download-multiple-both-page-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleWithBackAwbPdf']);

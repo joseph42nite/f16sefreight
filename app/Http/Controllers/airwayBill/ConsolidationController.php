@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\airwayBill;
 
+use App\AirwayBills;
 use App\ConsignmentData;
 use App\HousewayBills;
 use App\Http\Controllers\Controller;
@@ -125,4 +126,64 @@ class ConsolidationController extends Controller
         }
         return response()->json(['message' => 'Waybill and related data updated successfully', 'data' => $wayBill, 'custom_info' => $customInfoData, 'consignee_data' => $consignmentData]);
     }
+    // public function fetchTableData(Request $request)
+    // {
+    //     $request->validate([
+    //         'search' => 'nullable|string|max:255',
+    //         'awb_code' => 'nullable|regex:/^[0-9]+$/|size:3',
+    //         'awb_no' => 'nullable|regex:/^[0-9]+$/|size:8',
+    //     ]);
+
+    //     // Start the query
+    //     $query = AirwayBills::query();
+
+    //     // Search for specific filters
+    //     if ($request->filled('awb_code')) {
+    //         $query->where('awb_code', $request->awb_code);
+    //     }
+
+    //     if ($request->filled('awb_no')) {
+    //         $query->where('awb_no', $request->awb_no);
+    //     }
+
+    //     // Search with a general keyword
+    //     if ($request->filled('search')) {
+    //         $search = $request->search;
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('awb_code', 'like', "%$search%")
+    //                 ->orWhere('awb_no', 'like', "%$search%")
+    //                 ->orWhere('departure_airport', 'like', "%$search%")
+    //                 ->orWhere('destination_airport', 'like', "%$search%");
+    //         });
+    //     }
+
+    //     // Get the results
+    //     $data = $query->get();
+
+    //     return response()->json($data);
+    // }
+    public function fetchTableData(Request $request)
+    {
+        // Validate inputs
+        $request->validate([
+            'awb_code' => 'nullable|regex:/^[0-9]+$/|size:3',
+            'awb_no' => 'nullable|regex:/^[0-9]+$/|size:8',
+        ]);
+    
+        // Initialize query
+        $query = AirwayBills::query();
+    
+        // Filter by awb_code and awb_no
+        if ($request->filled('awb_code') && $request->filled('awb_no')) {
+            $query->where('awb_code', $request->awb_code)
+                  ->where('awb_no', $request->awb_no);
+        }
+    
+        // Fetch specific fields
+        $data = $query->get(['awb_no as air_waybill_number', 'departure_airport as master_origin', 'destination_airport as master_destination', 'total_volume as air_waybill_quantity']);
+    
+        return response()->json($data);
+    }
+    
+
 }

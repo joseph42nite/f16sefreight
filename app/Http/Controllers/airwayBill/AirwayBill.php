@@ -215,8 +215,10 @@ class AirwayBill extends Controller
         $validator = Validator::make($first_box, [
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
-            'consolidated_MAWB' => 'nullable|boolean',
-            'awb' => 'nullable|boolean',
+            // 'consolidated_mawb' => 'boolean',
+            // 'awb' => 'boolean',
+            'consolidated_mawb' => 'nullable',
+            'awb' => 'nullable',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -228,8 +230,14 @@ class AirwayBill extends Controller
             // $AirwayBills->id = $awb_id;
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
-            $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
-            $AirwayBills->awb = $first_box['awb'];
+            // $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
+            // $AirwayBills->awb = $first_box['awb'];
+            // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] = 1) ? true : false;
+            // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
+            $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
+             $AirwayBills->awb = $first_box['awb'];
+            // dd($first_box);die;
+            $AirwayBills->save();
             return response()->json([
                 'message' => 'First box created successfully',
                 'data' => $AirwayBills
@@ -239,13 +247,15 @@ class AirwayBill extends Controller
             $AirwayBills->id = $awb_id;
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
-            $AirwayBills->consolidated_mawb = $first_box['consolidated_MAWB'];
+            $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
             $AirwayBills->awb = $first_box['awb'];
+            // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] == 1) ? true : false;
+            // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
             $AirwayBills->save();
             return response()->json([
                 'message' => 'First box created successfully',
                 'data' => $AirwayBills
-            ], 201);
+            ], 200);
         }
         // if (!isset($AirwayBills))
           
@@ -257,6 +267,47 @@ class AirwayBill extends Controller
         // $AirwayBills->save();
         return "first box saved successfull";
     }
+    // private function firstBox(Request $request, $first_box, $id = null)
+    // {
+    //     // Convert to proper booleans
+    //     $first_box['consolidated_mawb'] = filter_var($first_box['consolidated_mawb'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    //     $first_box['awb'] = filter_var($first_box['awb'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+    //     // Validate the data
+    //     $validator = Validator::make($first_box, [
+    //         'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+    //         'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
+    //         'consolidated_mawb' => 'nullable|in:true,false,1,0',
+    //         'awb' => 'nullable|in:true,false,1,0',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 422);
+    //     }
+
+    //     $awb_id = $first_box['awb_code'] . $first_box['awb_no'];
+    //     $AirwayBills = AirwayBills::find($awb_id);
+
+    //     if ($AirwayBills) {
+    //         $AirwayBills->awb_code = $first_box['awb_code'];
+    //         $AirwayBills->awb_no = $first_box['awb_no'];
+    //         $AirwayBills->consolidated_mawb = $request->boolean('consolidated_mawb'); // Use boolean casting
+    // $AirwayBills->awb = $request->boolean('awb');
+    //         dd($AirwayBills);die;
+    //         $AirwayBills->save();
+    //     } else {
+    //         $AirwayBills = new AirwayBills();
+    //         $AirwayBills->id = $awb_id;
+    //         $AirwayBills->awb_code = $first_box['awb_code'];
+    //         $AirwayBills->awb_no = $first_box['awb_no'];
+    //         $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
+    //         $AirwayBills->awb = $first_box['awb'];
+    //         $AirwayBills->save();
+    //     }
+
+    //     return response()->json(['success' => true, 'data' => $AirwayBills], 200);
+    // }
+
     private function routingInformation($awb_no, $awb_code, $routing_information)
     {
         $validator = Validator::make($routing_information, [
@@ -326,7 +377,7 @@ class AirwayBill extends Controller
             $ConsignmentData->chargable_weight = $entries[$i]['chargable_weight'];
             $ConsignmentData->rate = $entries[$i]['rate'];
             $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
-            $ConsignmentData->uld_info = json_encode($entries[$i]['uld_info']);
+            $ConsignmentData->uld_info = json_encode($entries[$i]['uld_infos']);
             $ConsignmentData->save();
             return "Consignment Data saved successfull";
         }
@@ -509,6 +560,7 @@ class AirwayBill extends Controller
             'total_volume' => 'required|numeric|min:0|max:999999999',
             //'required|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'required|numeric|min:0.01|max:999999999',
+            'dimention_unit' => 'nullable|string|max:3',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -520,6 +572,7 @@ class AirwayBill extends Controller
 
         $AirwayBills->total_volume = $totals['total_volume'];
         $AirwayBills->total_amount = $totals['total_amount'];
+        $AirwayBills->dimention_unit = $totals['dimention_unit'];
         $AirwayBills->save();
         return "Toatl Amount and Total Volume saved successfull";
     }
@@ -634,7 +687,6 @@ class AirwayBill extends Controller
         return json_encode($main_return_data);
     }
    
-
     public function update(Request $request, $id, $awb_no = null)
     {
         $main_return_data = [];
@@ -725,6 +777,7 @@ class AirwayBill extends Controller
             'otherCharge',
             'otherCustomInformation'
         ])->find($id);
+        // dd($airwayBill);die;
         if (!$airwayBill) {
             return response()->json(['message' => 'Record not found'], 404);
         }
@@ -763,7 +816,7 @@ class AirwayBill extends Controller
             'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
             'weight_code' => 'nullable|string|max:3',
             'volume' => 'nullable|string',
-            'dimention_unit' => 'nullable|string|max:3',
+            // 'dimention_unit' => 'nullable|string|max:3',
             'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
             'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
         ]);

@@ -84,28 +84,8 @@
 
                 <b-modal id="modal-s" title="Latest Messages" ok-only>
                     <div class="d-block">
-                        <!-- <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
-                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
-                                name="radio-options-slots"></b-form-radio-group>
-                        </b-form-group>
-                        <hr class="hr" /> -->
                         <b-row class="mt-5">
                             <b-col>
-                                <!-- <a href="" class="custom-link">Edit e-AWB Data</a>
-                                <a href="" class="custom-link">Copy e-AWB Data</a>
-                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                <a href="" class="custom-link">Create Booking from e-AWB Data</a>
-                                <a href="" class="custom-link">Create Flight Status from e-AWB Data</a>
-                                <a href="" class="custom-link">Edit label</a>
-                            </b-col>
-                            <b-col>
-                                <a href="" class="custom-link">e-AWB Pdf file</a>
-                                <a href="" class="custom-link">Multipage e-AWB Pdf</a>
-                                <a href="" class="custom-link">Multipage e-AWB Pdf with back pages</a>
-                                <a href="" class="custom-link">Without IATA template</a>
-                                <a href="" class="custom-link">1 Page generic e-AWB label</a>
-                                <a href="" class="custom-link">e-AWB label per item (50 pages)</a>
-                                <a href="" class="custom-link">Cargo Pouch label as a PDF</a> -->
                                 <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
                                     <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
                                         <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
@@ -240,7 +220,7 @@
 
                         <div v-if="hasSearchResults">
                             <div class="d-flex flex-column align-items-start pt-2 pb-2">
-                                    <table>
+                                    <table v-if="existingData">
                                         <thead>
                                             <tr class="h_background_color">
                                                 <th class="form-control1 text-white" style="width:60px !important;">Action</th>
@@ -254,9 +234,9 @@
                                                 <th class="form-control1 text-white"></th>
                                             </tr>
                                         </thead>
-                                        <!-- <tbody> -->
                                             <tr>
                                                 <td class="">
+<<<<<<< HEAD
                                                     <!-- <b-button @click="referTOEditAwb" class="" style="background:#A4D3EE;">
                                                         <b-icon icon="pencil" font-scale="1"></b-icon>
                                                     </b-button> -->
@@ -265,21 +245,33 @@
                                                             <b-icon icon="pencil" font-scale="1"></b-icon>
                                                         </b-button>
                                                     </router-link>
+=======
+                                                    <!-- <b-button class="" style="background:#A4D3EE;">
+                                                        <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                    </b-button> -->
+                                                    <a :href="'/edit-airway-bill/' + existingData.id" class="custom-link" @click="getAirWayBill(existingData.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + existingData.id" custom>
+                                                            <b-button class="" style="background:#A4D3EE;">
+                                                                <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                            </b-button>
+                                                        </router-link>
+                                                    </a>
+>>>>>>> 509760135ac5cfec4c9dfe60a33b3adc7398b3fb
                                                 </td>
                                                 <td class="">
-                                                    057-51929872
+                                                    {{ existingData.awb_code }}-{{ existingData.awb_no }}
                                                 </td>
                                                 <td class="">
-                                                    BLR
+                                                    {{ existingData.departure_airport }}
                                                 </td>
                                                 <td class="">
-                                                    LAX
-                                                </td>
+                                                    {{ existingData.destination_airport }}
+                                                </td> 
                                                 <td class="">
-                                                    T/41/K/723/
+                                                    T/{{ existingData.consignment_data ? existingData.consignment_data.pieces : 'N/A' }}/{{ existingData.consignment_data ? existingData.consignment_data.weight_code : 'N/A' }}/{{ existingData.consignment_data ? existingData.consignment_data.gross_weight : 'N/A' }}/
                                                 </td>
                                             </tr>
-                                        <!-- </tbody> -->
+                                        <!-- </tbody>weight_code gross_weight -->
                                     </table>
                             </div>
 
@@ -1211,6 +1203,8 @@ export default {
             edit_entry_index: null,
             hasSearchResults: false,
             data_items: [],
+            tableData: [],
+            existingData: {},
             items: [
                 {
                     url: "#webdoc",
@@ -1453,6 +1447,9 @@ export default {
             .then(response => {
                 if (response.data && response.data.length) {
                     console.log("console data", response.data);
+                    const id = `${this.form.awb_code}${this.form.awb_no}`;
+                    console.log("id", id);
+                    this.getAirWayBill(id);
                     this.consolidation = response.data;
                     this.hasSearchResults = true; 
                 } else {
@@ -1465,6 +1462,20 @@ export default {
                 this.form = [];
                 this.hasSearchResults = true; 
             });
+        },
+        getAirWayBill(id) { 
+            ApiService.get(`/airway-bill/${id}`)
+                .then(response => {
+                    if (response.data && response.data.id == id) {
+                        this.existingData = response.data;
+                    } else {
+                       console.log("something went wrong");
+                    }
+                })
+                .catch(error => {
+                    this.existingData = null;
+                    console.error("Failed to fetch data for updating:", error);
+                });
         },
         updateform(id){
             this.form.put(`/update-consolidation/${this.form.id}`)
@@ -1621,9 +1632,6 @@ export default {
         },
         closeDropdown_departure(event) {
             const dropdownContainer_to = this.$refs.dropdownContainer_departure;
-            // if (!dropdownContainer_to.contains(event.target)) {
-            //     this.isDropdownOpen_departure = false;
-            // }
             if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
                 this.isDropdownOpen_destination = false;
             }
@@ -1633,9 +1641,7 @@ export default {
             if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
-            // if (!dropdownContainer_to.contains(event.target)) {
-            //     this.isDropdownOpen_destination = false;
-        }
+        },
     },
     mounted(){
         this.getLocation(); 
@@ -1647,10 +1653,18 @@ export default {
         window.addEventListener('click', this.closeDropdown_departure);
     },
     watch: {
-
+        '$route.params.id'(newId) {
+            if (newId) {
+                this.getAirWayBill(newId);
+            }
+        }
     },
     created() {
-        // this.getAgent();
+        const id = this.$route.params.id;
+        if (id) {
+            this.isEdit = true;
+            this.getAirWayBill(id);
+        }
     },
     computed: {
         filteredLocations_destination() {

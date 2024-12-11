@@ -27,10 +27,7 @@ class ConversionController extends Controller
         $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
-        // echo "<pre>";
-        // print_r($pieces_info);
-        // echo "</pre>";
-        // die();
+
         $utc_current_date = gmdate("Y-m-d H:i:s");
         $time = time();
 

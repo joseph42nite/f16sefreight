@@ -257,9 +257,14 @@
                                         <!-- <tbody> -->
                                             <tr>
                                                 <td class="">
-                                                    <b-button class="" style="background:#A4D3EE;">
+                                                    <!-- <b-button @click="referTOEditAwb" class="" style="background:#A4D3EE;">
                                                         <b-icon icon="pencil" font-scale="1"></b-icon>
-                                                    </b-button>
+                                                    </b-button> -->
+                                                    <router-link :to="'/edit-airway-bill/' + form.awb_code +''+ form.awb_no">
+                                                        <b-button class="" style="background:#A4D3EE;">
+                                                            <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                        </b-button>
+                                                    </router-link>
                                                 </td>
                                                 <td class="">
                                                     057-51929872
@@ -1383,6 +1388,10 @@ export default {
             const pdfUrl = `/download-consolidation-pdf/${awb_code}/${awb_no}`; // Construct the URL for the PDF
             window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
             
+        },
+        referTOEditAwb() {
+            // Navigating to another route using Vue Router
+            // this.$router.push({ name: 'YourPage' });  // Replace 'YourPage' with the name of your route
         },
         mouseover: function () {
             this.isOpen = true;

@@ -19,7 +19,6 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\ConversionController;
-use App\Http\Controllers\HousewayBill\HousewayBill as HousewayBillHousewayBill;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Router from "vue-router";
 Vue.use(Router);
+
 export default new Router({
   mode: "history",
   routes: [
@@ -8,7 +9,8 @@ export default new Router({
     {
       path: "/",
       redirect: "/focusakash",
-      component: () => import("@/view/layout/Layout"),
+      // component: () => import("@/view/layout/Layout"),
+      component: () => import("@/view/layout/MainLayout"),
       children: [
         {
           path: "focusakash",
@@ -19,8 +21,15 @@ export default new Router({
         {
           name: "Web Doc",
           path: "web-doc",
-          component: () =>import("@/view/pages/WebDoc"),
+          component: () =>import("@/view/pages/WebDocCopy"),
+          meta: { userType: 'user' }
         },
+        // {
+        //   name: "Web Doc-copy",
+        //   path: "web-doc-copy",
+        //   component: () =>import("@/view/pages/WebDocCopy"),
+        //   meta: { userType: 'user' }
+        // },
         {
           path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',

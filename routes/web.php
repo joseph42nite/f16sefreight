@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\airwayBill\AirwayBill;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConversionController;
 

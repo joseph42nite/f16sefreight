@@ -1372,6 +1372,10 @@ export default {
             window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
             
         },
+        referTOEditAwb() {
+            // Navigating to another route using Vue Router
+            // this.$router.push({ name: 'YourPage' });  // Replace 'YourPage' with the name of your route
+        },
         mouseover: function () {
             this.isOpen = true;
         },

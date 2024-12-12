@@ -1622,8 +1622,8 @@ export default {
             }
         },
         closeDropdown_destination(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
-            if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
+            if (dropdownContainer_des && !dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
         },

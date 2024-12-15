@@ -36,7 +36,7 @@ __webpack_require__.r(__webpack_exports__);
       if (this.action == "Add") {
         this.company_form.post("/superadmin/create-company").then(function (_ref) {
           var data = _ref.data;
-          _this.$router.push("/superadmin/all-companys");
+          _this.$router.push("/superadmin/all-company");
         })["catch"](function (err) {});
       } else {
         this.company_form.put("/superadmin/edit-company/".concat(this.company_form.id)).then(function (_ref2) {

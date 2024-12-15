@@ -51,7 +51,7 @@ export default {
                 this.company_form
                     .post(`/superadmin/create-company`)
                     .then(({ data }) => {
-                        this.$router.push("/superadmin/all-companys");
+                        this.$router.push("/superadmin/all-company");
                     })
                     .catch((err) => {
                     });

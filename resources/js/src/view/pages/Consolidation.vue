@@ -1372,6 +1372,10 @@ export default {
             window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
             
         },
+        referTOEditAwb() {
+            // Navigating to another route using Vue Router
+            // this.$router.push({ name: 'YourPage' });  // Replace 'YourPage' with the name of your route
+        },
         mouseover: function () {
             this.isOpen = true;
         },
@@ -1622,8 +1626,8 @@ export default {
             }
         },
         closeDropdown_destination(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
-            if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
+            if (dropdownContainer_des && !dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
         },

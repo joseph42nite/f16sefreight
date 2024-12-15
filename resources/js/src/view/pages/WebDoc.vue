@@ -3657,32 +3657,32 @@ export default {
             }
         },
         closeDropdown_to2(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to2;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_to2 = this.$refs.dropdownContainer_to2;
+            if (!dropdownContainer_to2.contains(event.target)) {
                 this.isDropdownOpen_to2 = false;
             }
         },
         closeDropdown_to3(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to3;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_to3 = this.$refs.dropdownContainer_to3;
+            if (!dropdownContainer_to3.contains(event.target)) {
                 this.isDropdownOpen_to3 = false;
             }
         },
         closeDropdown_departure(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_departure;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_de = this.$refs.dropdownContainer_departure;
+            if (!dropdownContainer_de.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
         },
         closeDropdown_destination(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
+            if (!dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_destination = false;
             }
         },
         closeDropdown_from(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_from;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_from = this.$refs.dropdownContainer_from;
+            if (!dropdownContainer_from.contains(event.target)) {
                 this.isDropdownOpen_from = false;
             }
         },

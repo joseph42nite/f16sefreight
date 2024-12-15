@@ -728,7 +728,10 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       var pdfUrl = "/download-consolidation-pdf/".concat(awb_code, "/").concat(awb_no); // Construct the URL for the PDF
       window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
     },
-
+    referTOEditAwb: function referTOEditAwb() {
+      // Navigating to another route using Vue Router
+      // this.$router.push({ name: 'YourPage' });  // Replace 'YourPage' with the name of your route
+    },
     mouseover: function mouseover() {
       this.isOpen = true;
     },
@@ -981,8 +984,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       }
     },
     closeDropdown_destination: function closeDropdown_destination(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_destination;
-      if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
+      var dropdownContainer_des = this.$refs.dropdownContainer_destination;
+      if (dropdownContainer_des && !dropdownContainer_des.contains(event.target)) {
         this.isDropdownOpen_departure = false;
       }
     }

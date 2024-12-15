@@ -15821,6 +15821,7 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
     component: function component() {
       return __webpack_require__.e(/*! import() */ "resources_js_src_view_layout_Layout_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/layout/Layout */ "./resources/js/src/view/layout/Layout.vue"));
     },
+    // component: () => import("@/view/layout/MainLayout"),
     children: [{
       path: "focusakash",
       name: "user-rate",
@@ -15835,8 +15836,18 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
       path: "web-doc",
       component: function component() {
         return __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_WebDoc_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/WebDoc */ "./resources/js/src/view/pages/WebDoc.vue"));
+      },
+      meta: {
+        userType: 'user'
       }
-    }, {
+    },
+    // {
+    //   name: "Web Doc-copy",
+    //   path: "web-doc-copy",
+    //   component: () =>import("@/view/pages/WebDocCopy"),
+    //   meta: { userType: 'user' }
+    // },
+    {
       path: 'edit-airway-bill/:id?',
       name: 'EditAirwayBill',
       component: function component() {

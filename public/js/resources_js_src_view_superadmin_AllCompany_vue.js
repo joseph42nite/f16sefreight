@@ -14,7 +14,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  name: "superadminalluser",
+  name: "superadminallcompany",
   data: function data() {
     return {
       fields: [{
@@ -23,24 +23,6 @@ __webpack_require__.r(__webpack_exports__);
       }, {
         label: "Name",
         key: "name"
-      }, {
-        label: "Email address",
-        key: "email"
-      }, {
-        label: "Company",
-        key: "company_name"
-      }, {
-        label: "Status",
-        key: "is_active"
-      }, {
-        label: "Today login count",
-        key: "daily_login_count"
-      }, {
-        label: "Plan expiry date",
-        key: "plan_expiry_date"
-      }, {
-        label: "Plan status",
-        key: "plan_status"
       }, {
         label: "Action",
         key: "action"
@@ -58,23 +40,13 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    delete_user: function delete_user(id) {
+    get_company: function get_company() {
       var _this = this;
-      var proceed = confirm("Are you sure you want to proceed?");
-      if (proceed) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/superadmin/user/".concat(id)).then(function (_ref) {
-          var data = _ref.data;
-          _this.get_users();
-        });
-      }
-    },
-    get_users: function get_users() {
-      var _this2 = this;
       this.items = [];
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-user/0").then(function (_ref2) {
-        var data = _ref2.data;
-        _this2.items = data;
-        _this2.totalRows = data.length;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company/0").then(function (_ref) {
+        var data = _ref.data;
+        _this.items = data;
+        _this.totalRows = data.length;
       });
     },
     onFiltered: function onFiltered(filteredItems) {
@@ -83,7 +55,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   mounted: function mounted() {
-    this.get_users();
+    this.get_company();
     this.current_date = new Date().toISOString().slice(0, 10);
   }
 });
@@ -183,18 +155,6 @@ var render = function render() {
         return [_vm._v("\n                    " + _vm._s(data.index + 1) + "\n                ")];
       }
     }, {
-      key: "cell(is_active)",
-      fn: function fn(data) {
-        return [data.item["is_active"] == 1 ? _c("span", [_vm._v("Active")]) : _c("span", [_vm._v("InActive")])];
-      }
-    }, {
-      key: "cell(plan_status)",
-      fn: function fn(data) {
-        return [data.item["plan_expiry_date"] >= _vm.current_date ? _c("span", [_vm._v("Active")]) : _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("Expired")])];
-      }
-    }, {
       key: "cell(action)",
       fn: function fn(data) {
         return [_c("b-button", {
@@ -204,18 +164,9 @@ var render = function render() {
         }, [_c("router-link", {
           staticClass: "text-white",
           attrs: {
-            to: "/superadmin/new-users/" + data.item["id"]
+            to: "/superadmin/new-company/" + data.item["id"]
           }
-        }, [_vm._v("Edit")])], 1), _vm._v(" "), _c("b-button", {
-          attrs: {
-            variant: "danger"
-          },
-          on: {
-            click: function click($event) {
-              return _vm.delete_user(data.item["id"]);
-            }
-          }
-        }, [_vm._v("Delete")])];
+        }, [_vm._v("Edit")])], 1)];
       }
     }])
   }), _vm._v(" "), _c("div", {

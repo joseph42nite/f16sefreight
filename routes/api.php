@@ -120,7 +120,7 @@ Route::get('/load-awb', [AirwayBill::class, 'loadAWB']);
 Route::get('/all-consolidation',[ConsolidationController::class,'index']);
 Route::put('/update-consolidation/{id}', [ConsolidationController::class,'update']);
 Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
-
+Route::get('/fetch-airwaybill-data', [ConsolidationController::class, 'fetchTableData']);
 
 Route::get('/get-location', [LocationController::class,'getLocation']);
 

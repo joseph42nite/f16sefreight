@@ -367,6 +367,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       edit_entry_index: null,
       hasSearchResults: false,
       data_items: [],
+      tableData: [],
+      existingData: {},
       items: [{
         url: "#webdoc",
         name: "WebDoc"
@@ -788,6 +790,9 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       }).then(function (response) {
         if (response.data && response.data.length) {
           console.log("console data", response.data);
+          var id = "".concat(_this3.form.awb_code).concat(_this3.form.awb_no);
+          console.log("id", id);
+          _this3.getAirWayBill(id);
           _this3.consolidation = response.data;
           _this3.hasSearchResults = true;
         } else {
@@ -798,6 +803,19 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         console.error('Error fetching data:', error);
         _this3.form = [];
         _this3.hasSearchResults = true;
+      });
+    },
+    getAirWayBill: function getAirWayBill(id) {
+      var _this4 = this;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/airway-bill/".concat(id)).then(function (response) {
+        if (response.data && response.data.id == id) {
+          _this4.existingData = response.data;
+        } else {
+          console.log("something went wrong");
+        }
+      })["catch"](function (error) {
+        _this4.existingData = null;
+        console.error("Failed to fetch data for updating:", error);
       });
     },
     updateform: function updateform(id) {
@@ -841,10 +859,10 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       this.form.tableCodes.splice(index, 1);
     },
     getCountry: function getCountry() {
-      var _this4 = this;
+      var _this5 = this;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/get-country').then(function (_ref4) {
         var data = _ref4.data;
-        _this4.countries = Object.keys(data).map(function (key) {
+        _this5.countries = Object.keys(data).map(function (key) {
           return {
             value: key,
             text: data[key]
@@ -855,17 +873,17 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       });
     },
     getAgent: function getAgent() {
-      var _this5 = this;
+      var _this6 = this;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/agent-info/").then(function (_ref5) {
         var data = _ref5.data;
         if (Array.isArray(data) && data.length > 0) {
-          _this5.agent_information = data[0];
-          _this5.iata_cass = {
-            iata_agent_code: _this5.agent_information.iata_agent_code || null,
-            iata_agent_cass: _this5.agent_information.iata_agent_cass || null
+          _this6.agent_information = data[0];
+          _this6.iata_cass = {
+            iata_agent_code: _this6.agent_information.iata_agent_code || null,
+            iata_agent_cass: _this6.agent_information.iata_agent_cass || null
           };
         } else {
-          _this5.agent_information = data;
+          _this6.agent_information = data;
         }
       })["catch"](function (error) {
         console.error("Error fetching agent information:", error);
@@ -978,9 +996,19 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     window.addEventListener('click', this.closeDropdown_destination);
     window.addEventListener('click', this.closeDropdown_departure);
   },
-  watch: {},
+  watch: {
+    '$route.params.id': function $routeParamsId(newId) {
+      if (newId) {
+        this.getAirWayBill(newId);
+      }
+    }
+  },
   created: function created() {
-    // this.getAgent();
+    var id = this.$route.params.id;
+    if (id) {
+      this.isEdit = true;
+      this.getAirWayBill(id);
+    }
   },
   computed: {
     filteredLocations_destination: function filteredLocations_destination() {
@@ -1531,16 +1559,39 @@ var render = function render() {
     staticClass: "hr"
   }), _vm._v(" "), _vm.hasSearchResults ? _c("div", [_c("div", {
     staticClass: "d-flex flex-column align-items-start pt-2 pb-2"
-  }, [_c("table", [_vm._m(1), _vm._v(" "), _c("tr", [_c("td", {}, [_c("b-button", {
-    staticStyle: {
-      background: "#A4D3EE"
-    }
-  }, [_c("b-icon", {
+  }, [_vm.existingData ? _c("table", [_vm._m(1), _vm._v(" "), _c("tr", [_c("td", {}, [_c("a", {
+    staticClass: "custom-link",
     attrs: {
-      icon: "pencil",
-      "font-scale": "1"
+      href: "/edit-airway-bill/" + _vm.existingData.id
+    },
+    on: {
+      click: function click($event) {
+        return _vm.getAirWayBill(_vm.existingData.id);
+      }
     }
-  })], 1)], 1), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                057-51929872\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                BLR\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                LAX\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                T/41/K/723/\n                                            ")])])])]), _vm._v(" "), _c("hr", {
+  }, [_c("router-link", {
+    attrs: {
+      to: "/edit-airway-bill/" + _vm.existingData.id,
+      custom: ""
+    },
+    scopedSlots: _vm._u([{
+      key: "default",
+      fn: function fn(_ref6) {
+        var navigate = _ref6.navigate,
+          href = _ref6.href;
+        return [_c("b-button", {
+          staticStyle: {
+            background: "#A4D3EE"
+          }
+        }, [_c("b-icon", {
+          attrs: {
+            icon: "pencil",
+            "font-scale": "1"
+          }
+        })], 1)];
+      }
+    }], null, false, 1069267099)
+  })], 1)]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.awb_code) + "-" + _vm._s(_vm.existingData.awb_no) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.departure_airport) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.destination_airport) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                T/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.pieces : "N/A") + "/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.weight_code : "N/A") + "/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.gross_weight : "N/A") + "/\n                                            ")])])]) : _vm._e()]), _vm._v(" "), _c("hr", {
     staticClass: "hr"
   }), _vm._v(" "), _c("div", [_c("div", {
     staticClass: "py-md-4"

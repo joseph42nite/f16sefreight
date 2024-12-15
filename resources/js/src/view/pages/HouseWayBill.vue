@@ -1206,7 +1206,7 @@
                                                             <th>Owner:</th>
                                                             <th></th>
                                                         </tr>
-                                                        <tr v-for="(row, index) in consignment_list.uld_info"
+                                                        <tr v-for="(row, index) in consignment_list.uld_infos"
                                                             :key="index">
                                                             <td class="editable-cell">{{ row.uld_type }}</td>
                                                             <td class="editable-cell">{{ row.uld_serial }}</td>
@@ -1279,12 +1279,12 @@
                                                 <td>
                                                     <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
                                                         class="mb-1">
-                                                        {{ hs.hs_code }}
+                                                        {{ hs }}
                                                     </div>
                                                 </td>
                                                 <td>{{ entry.country_origin_goods }}</td>
                                                 <td>
-                                                    <div v-for="(uld, uldIndex) in entry.uld_info" :key="uldIndex"
+                                                    <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
                                                         class="mb-1">
                                                         {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
                                                     </div>
@@ -1894,7 +1894,7 @@
                                             <b-form-group id="fieldset-horizontal"
                                                 class="form-control-sm col-form-label mt-2">
                                                 <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="oci_info.country_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
+                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
                                                     <option value="">Select an Other Charge Code</option>
                                                     <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
                                                         {{ charge.text }}
@@ -2492,53 +2492,11 @@
                                                                     <b-form-select class="form-control-sm"
                                                                         v-model="oci_info.custom_info_identifier"
                                                                         :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="A">A - Automated Broker Interface
-                                                                            (ABI) Filer Code</option>
-                                                                        <option value="AC">AC - Account Consignor
-                                                                            (consignor for all cargo aircraft)</option>
-                                                                        <option value="C">C - Certificate Number
+                                                                        <option value="">Select a code</option>
+                                                                        <option v-for="oci_options in oci_data.oci_custom_info_identifier" 
+                                                                                :key="oci_options.value" :value="oci_options.value">
+                                                                            {{ oci_options.text }}
                                                                         </option>
-                                                                        <option value="CP">CP - Contact Person</option>
-                                                                        <option value="CT">CT- Contact Telephone Number
-                                                                        </option>
-                                                                        <option value="D">D - Dangerous Goods</option>
-                                                                        <option value="DI">DI - Declaration
-                                                                            Identification</option>
-                                                                        <option value="E">E - Authorised Economic
-                                                                            Operator</option>
-                                                                        <option value="ED">ED - Expiry Date</option>
-                                                                        <option value="F">F - Facilities Information and
-                                                                            Resource Management</option>
-                                                                        <option value="I">I - Item Number</option>
-                                                                        <option value="KC">KC - Known Consignor</option>
-                                                                        <option value="L">L - Exemption Legend</option>
-                                                                        <option value="LI">LI - License Identification
-                                                                        </option>
-                                                                        <option value="M">M - Movement Reference Number
-                                                                        </option>
-                                                                        <option value="N">N - Seal Number</option>
-                                                                        <option value="P">P - Packing List Number
-                                                                        </option>
-                                                                        <option value="RA">RA - Regulated Agent</option>
-                                                                        <option value="RC">RC - Regulated Carrier
-                                                                        </option>
-                                                                        <option value="S">S - System Downtime Reference
-                                                                        </option>
-                                                                        <option value="SD">SD - Security Status Date
-                                                                            &amp; Time</option>
-                                                                        <option value="SM">SM - Screening Method
-                                                                        </option>
-                                                                        <option value="SN">SN - Security Status Name of
-                                                                            Issuer</option>
-                                                                        <option value="SS">SS - Security Status</option>
-                                                                        <option value="ST">ST - Security Textual
-                                                                            Statement</option>
-                                                                        <option value="T">T - Trader Identification
-                                                                            Number</option>
-                                                                        <option value="U">U - Unique Consignment
-                                                                            Reference Number</option>
-                                                                        <option value="V">V - Invoice Number</option>
                                                                     </b-form-select>
                                                                     <has-error :form="form"
                                                                         field="custom_info_identifier"></has-error>
@@ -2824,7 +2782,7 @@ export default {
 
                 itemss: [],
                 hsCodes: [],
-                uld_info: [],
+                uld_infos: [],
             }),
             agent_information:{
                 agent_name: '',
@@ -2881,6 +2839,8 @@ export default {
             edit_entry_index: null,
             existingData: [],
             data_items:[],
+            oci_data:{}, ///get-oci-data
+            oci_identifiers:{},
             countries:[],
             other_charges_code: [],
             location:[],
@@ -3196,6 +3156,9 @@ export default {
                 .then(response => {
                     this.existingData = response.data;
                     this.openForm('update', this.existingData.id);
+                    if (this.existingData && this.existingData.consignment_data) {
+                        this.isConsignmentAdded = true;
+                    }
                 })
                 .catch(error => {
                     console.error("Failed to fetch data for updating:", error);
@@ -3225,6 +3188,18 @@ export default {
                     // this.consignment_list = this.existingData.consignment_data;
                     // this.form.entries = this.existingData.consignment_data;
                     // console.log("entries", this.form.entries);
+                    const entry = this.existingData.consignment_data;
+                    const parsedEntry = {
+                        ...entry,
+                        hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
+                        itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
+                        uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
+                    };
+                    this.form.entries = [parsedEntry];
+                    if(!this.form.entries){
+                        this.isConsignmentAdded = true;
+                    }
+                    console.log("hs code", parsedEntry);
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
@@ -3353,6 +3328,27 @@ export default {
                 };
             }
         },
+        getOCIData(){
+            ApiService.get('/get-oci-data').then(({ data }) => {
+            if (data && data.oci_custom_info_identifier) {
+                this.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(([key, value]) => ({
+                    value: key,
+                    text: value
+                }));
+            } else {
+                this.oci_data.oci_custom_info_identifier = [];
+            }
+            if(data && data.identifiers){
+                this.oci_identifiers.identifiers = Object.entries(data.identifiers).map(([key, value]) => ({
+                    value: key,
+                    text: value
+                }));
+            }
+            }).catch(error => {
+                console.error("Error fetching countries:", error);
+                this.oci_data.oci_custom_info_identifier = []; 
+            });
+        },
         handleRadioChange() {
             const selectedCode = this.selectedCode;
             this.form.tableCodes = [];
@@ -3439,9 +3435,30 @@ export default {
             this.form.charges.splice(index, 1);
         },
         editEntry(index) {
+            // this.edit_entry_index = index;
+            // this.consignment_list = { ...this.form.entries[index] };
+            // this.$refs.modalConsignment.show();
             this.edit_entry_index = index;
-            this.consignment_list = { ...this.form.entries[index] };
+            let consignment_data=this.form.entries[index];
+            this.consignment_list.pieces = consignment_data.pieces;
+            this.consignment_list.description = consignment_data.description;
+            this.consignment_list.rate_class = consignment_data.rate_class;
+            this.consignment_list.uld_rate_class = consignment_data.uld_rate_class;
+            this.consignment_list.service_code = consignment_data.service_code;
+            this.consignment_list.commodity_item = consignment_data.commodity_item;
+            this.consignment_list.country_origin_goods = consignment_data.country_origin_goods;
+            this.consignment_list.slac = consignment_data.slac;
+            this.consignment_list.hs_code = consignment_data.hs_code;
+            this.consignment_list.gross_weight = consignment_data.gross_weight;
+            this.consignment_list.weight_code = consignment_data.weight_code;
+            this.consignment_list.chargable_weight = consignment_data.chargable_weight;
+            this.consignment_list.rate = consignment_data.rate;
+            this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
+            this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
+            this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
+            
             this.$refs.modalConsignment.show();
+            this.isConsignmentAdded = true;
             this.calculateTotalAmount();
         },
         deleteEntry(index) {
@@ -3468,6 +3485,7 @@ export default {
                 }
                 this.calculateTotalVolume();
                 this.calculateTotalAmount();
+                this.isConsignmentAdded = this.form.entries.length > 0;
                 this.closeModal();
                 //clear consignment_list data
                 for (let key in this.consignment_list) {
@@ -3479,6 +3497,7 @@ export default {
                         }
                     }
                 }
+                this.isConsignmentAdded = this.form.entries.length > 0;
             })
             .catch(error => {
                 console.error("There was an error with the consignment request:", error);
@@ -3603,9 +3622,10 @@ export default {
             this.$refs.modalConsignment.hide();
         },
         handleModalClose() {
-            if (this.form.entries.length === 0) {
-                this.isConsignmentAdded = false;
-            }
+            // if (this.form.entries.length === 0) {
+            //     this.isConsignmentAdded = false;
+            // }
+            this.isConsignmentAdded = this.form.entries.length > 0;
         },
         addUldInfo() {
             this.uld_error = [];
@@ -3627,12 +3647,12 @@ export default {
                 return;
             }
             // Push validated data to uld_info
-            this.consignment_list.uld_info.push({ uld_type, uld_serial, owner });
+            this.consignment_list.uld_infos.push({ uld_type, uld_serial, owner });
             this.consignment_list.uld_type = this.consignment_list.uld_serial = this.consignment_list.owner = "";
         },
         deleteUldInfo(index) {
-            if (this.consignment_list.uld_info && this.consignment_list.uld_info.length > index) {
-                this.consignment_list.uld_info.splice(index, 1);
+            if (this.consignment_list.uld_infos && this.consignment_list.uld_infos.length > index) {
+                this.consignment_list.uld_infos.splice(index, 1);
             }
         },
         editOciInfo(index) {
@@ -3961,6 +3981,7 @@ export default {
         this.fillAlsoNotifyDetails();
         this.fetchConsignee();
         this.getOtherChargesCode();
+        this.getOCIData();
         // const id = this.$route.params.id;
         // if (id) {
         // this.getHouseWayBill(id);

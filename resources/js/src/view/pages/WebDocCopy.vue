@@ -42,35 +42,37 @@
                                         <b-row>
                                             <b-col>
                                                 <div v-for="item in data_items" :key="item.id">
-                                                    <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                            <p @click="navigate" class="mb-0">
-                                                                {{ item.awb_code }}-{{ item.awb_no }} 
-                                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                                            </p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                            <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                                        <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                <p @click="navigate" class="mb-0">
+                                                                    {{ item.awb_code }}-{{ item.awb_no }} 
+                                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                                </p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                    <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                                            </router-link>
+                                                        </a>
+                                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                    </div>
                                                 </div>
                                             </b-col>
                                         </b-row>

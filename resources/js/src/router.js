@@ -136,6 +136,12 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "new-company/:id?",
+          name: "superadmin-newcompany",
+          component: () => import("@/view/superadmin/NewCompany.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "account",
           name: "superadmin-account",
           component: () => import("@/view/superadmin/Account.vue"),

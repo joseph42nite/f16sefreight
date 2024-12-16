@@ -136,11 +136,16 @@
                                         <tbody>
                                             <tr>
                                                 <td class="">
-                                                    <router-link :to="'/edit-airway-bill/' + form.awb_code +''+ form.awb_no">
-                                                        <b-button class="" style="background: none;border: 0px;stroke: #355594;">
-                                                            <b-icon icon="pencil" font-scale="1"></b-icon>
-                                                        </b-button>
-                                                    </router-link>
+                                                    <!-- <b-button class="" style="background:#A4D3EE;">
+                                                        <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                    </b-button> -->
+                                                    <a :href="'/edit-airway-bill/' + existingData.id" class="custom-link" @click="getAirWayBill(existingData.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + existingData.id" custom>
+                                                            <b-button class="" style="background:#A4D3EE;">
+                                                                <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                            </b-button>
+                                                        </router-link>
+                                                    </a>
                                                 </td>
                                                 <td class="">
                                                     {{ existingData.awb_code }}-{{ existingData.awb_no }}
@@ -1076,6 +1081,7 @@ export default {
             isDropdownOpen_departure: false,
             isDropdownOpen_destination: false,
             selectedCode: '',
+            custom_special_handling_code: '',
             manualCode: '',
             validationErrors: [],
             hs_code_error: [],
@@ -1438,20 +1444,36 @@ export default {
             this.form.tableCodes = [];
             this.form.tableCodes.push(selectedCode);
         },
+        // addManualCode() {
+        //     const code = this.selectedCode || this.manualCode.trim();
+        //     if (code) {
+        //         if (!this.form.tableCodes.includes(code)) {
+        //             this.form.tableCodes.push(code);
+        //             console.log("Table code ", this.form.tableCodes);
+        //         } else {
+        //             alert('This code is already added.');
+        //         }
+        //     } else {
+        //         alert('Please select or enter a code.');
+        //     }
+        //     this.selectedCode = '';
+        //     this.manualCode = '';
+        // },
         addManualCode() {
-            const code = this.selectedCode || this.manualCode.trim();
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+            const code = this.selectedCode || this.custom_special_handling_code.trim();
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table code ", this.form.tableCodes);
+                    console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
-            } else {
-                alert('Please select or enter a code.');
             }
             this.selectedCode = '';
-            this.manualCode = '';
+            this.custom_special_handling_code = '';
         },
         deleteSplCode(index) {
             this.form.tableCodes.splice(index, 1);
@@ -1526,8 +1548,8 @@ export default {
             }
         },
         closeDropdown_destination(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
-            if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
+            if (dropdownContainer_des && !dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
         },

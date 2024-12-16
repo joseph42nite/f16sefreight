@@ -21,6 +21,7 @@ export default new Router({
         {
           name: "Web Doc",
           path: "web-doc",
+          //component: () =>import("@/view/pages/WebDoc"),
           component: () =>import("@/view/pages/WebDocCopy"),
           meta: { userType: 'user' }
         },
@@ -33,7 +34,8 @@ export default new Router({
         {
           path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',
-          component: () => import("@/view/pages/WebDoc"),
+          component: () =>import("@/view/pages/WebDocCopy"),
+          // component: () => import("@/view/pages/WebDoc"),
         },
         {
           name: "House Way Bill",
@@ -131,6 +133,12 @@ export default new Router({
           path: "new-users/:id?",
           name: "superadmin-newusers",
           component: () => import("@/view/superadmin/NewUsers.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "new-company/:id?",
+          name: "superadmin-newcompany",
+          component: () => import("@/view/superadmin/NewCompany.vue"),
           meta: { userType: 'superadmin' }
         },
         {

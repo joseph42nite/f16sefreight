@@ -48,28 +48,13 @@
                     <template #cell(index)="data">
                         {{ data.index + 1 }}
                     </template>
-                    <template #cell(is_active)="data">
-                        <span v-if="data.item['is_active'] == 1">Active</span
-                        ><span v-else>InActive</span>
-                    </template>
-                    <template #cell(plan_status)="data">
-                        <span
-                            v-if="data.item['plan_expiry_date'] >= current_date"
-                            >Active</span
-                        ><span v-else class="text-danger">Expired</span>
-                    </template>
                     <template #cell(action)="data">
                         <b-button variant="success"
                             ><router-link
-                                :to="'/superadmin/new-users/' + data.item['id']"
+                                :to="'/superadmin/new-company/' + data.item['id']"
                                 class="text-white"
                                 >Edit</router-link
                             ></b-button
-                        >
-                        <b-button
-                            variant="danger"
-                            v-on:click="delete_user(data.item['id'])"
-                            >Delete</b-button
                         >
                     </template>
                 </b-table>
@@ -93,18 +78,12 @@
 <script>
 import ApiService from "@/core/services/api.service";
 export default {
-    name: "superadminalluser",
+    name: "superadminallcompany",
     data() {
         return {
             fields: [
                 { label: "Sl", key: "index" },
                 { label: "Name", key: "name" },
-                { label: "Email address", key: "email" },
-                { label: "Company", key: "company_name" },
-                { label: "Status", key: "is_active" },
-                { label: "Today login count", key: "daily_login_count" },
-                { label: "Plan expiry date", key: "plan_expiry_date" },
-                { label: "Plan status", key: "plan_status" },
                 { label: "Action", key: "action" },
             ],
             items: [],
@@ -117,17 +96,9 @@ export default {
         };
     },
     methods: {
-        delete_user(id) {
-            var proceed = confirm("Are you sure you want to proceed?");
-            if (proceed) {
-                ApiService.delete(`/superadmin/user/${id}`).then(({ data }) => {
-                    this.get_users();
-                });
-            }
-        },
-        get_users() {
+        get_company() {
             this.items = [];
-            ApiService.get(`/superadmin/all-user/0`).then(({ data }) => {
+            ApiService.get(`/superadmin/all-company/0`).then(({ data }) => {
                 this.items = data;
                 this.totalRows = data.length;
             });
@@ -138,7 +109,7 @@ export default {
         },
     },
     mounted() {
-        this.get_users();
+        this.get_company();
         this.current_date = new Date().toISOString().slice(0, 10);
     },
 };

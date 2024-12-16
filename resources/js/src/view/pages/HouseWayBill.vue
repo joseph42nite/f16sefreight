@@ -3325,6 +3325,7 @@
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
+import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 import SideBar from "../layout/SideBar.vue";
 export default {
@@ -3559,6 +3560,7 @@ export default {
             filteredConsignees: [],
             filteredAlsoNotify: [],
             isConsignmentAdded: false,
+            awb_prefix_message: '',
             items: [
                 {
                     url: "#webdoc",
@@ -4071,12 +4073,30 @@ export default {
             this.form.tableCodes = [];
             this.form.tableCodes.push(selectedCode);
         },
+        // addManualCode() {
+        //     const code = this.selectedCode || this.manualCode.trim();
+        //     if (code) {
+        //         if (!this.form.tableCodes.includes(code)) {
+        //             this.form.tableCodes.push(code);
+        //             console.log("Table code ", this.form.tableCodes);
+        //         } else {
+        //             alert('This code is already added.');
+        //         }
+        //     } else {
+        //         alert('Please select or enter a code.');
+        //     }
+        //     this.selectedCode = '';
+        //     this.manualCode = '';
+        // },
         addManualCode() {
-            const code = this.selectedCode || this.manualCode.trim();
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+            const code = this.selectedCode || this.custom_special_handling_code.trim();
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table code ", this.form.tableCodes);
+                    console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -4084,7 +4104,7 @@ export default {
                 alert('Please select or enter a code.');
             }
             this.selectedCode = '';
-            this.manualCode = '';
+            this.custom_special_handling_code = '';
         },
         deleteSplCode(index) {
             this.form.tableCodes.splice(index, 1);
@@ -4377,7 +4397,7 @@ export default {
             this.oci_info = { ...this.form.oci_entries[index] };
         },
         addOtherCustomInfo() {
-            if (!this.oci_info.country_code || !this.oci_info.info_identifier || !this.oci_info.supplementary_info || !this.oci_info.custom_info_identifier) {
+            if (!this.oci_info.info_identifier || !this.oci_info.supplementary_info) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -4391,6 +4411,39 @@ export default {
             for (let key in this.oci_info) {
                 if (this.oci_info.hasOwnProperty(key)) {
                     this.oci_info[key] = '';
+                }
+            }
+        },
+        addCharge() {
+            const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
+            const finalOtherChargeCode = other_code || other_charge_code;
+            const finalOtherCode = other_code || null;
+            if (!this.other_charges.other_charge_code) {
+                alert("Other charge code is mandatory.");
+                return;
+            }
+            const parsedAmount = parseFloat(amount);
+            if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                alert("Amount is mandatory and must be a valid number greater than 0.");
+                return;
+            }
+            const chargeData = {
+                other_charge_code: finalOtherChargeCode, 
+                amount: parsedAmount,
+                due: this.other_charges.due,
+                payment_type: this.other_charges.payment_type,
+            };
+
+            if (this.editIndex !== null) {
+                this.$set(this.form.charges, this.editIndex, chargeData);
+                this.editIndex = null;
+            } else {
+                this.form.charges.push(chargeData);
+                console.log('Added new charge:', chargeData);
+            }
+            for (let key in this.other_charges) {
+                if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
+                    this.other_charges[key] = '';
                 }
             }
         },
@@ -4549,32 +4602,32 @@ export default {
             }
         },
         closeDropdown_to2(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to2;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_to2 = this.$refs.dropdownContainer_to2;
+            if (!dropdownContainer_to2.contains(event.target)) {
                 this.isDropdownOpen_to2 = false;
             }
         },
         closeDropdown_to3(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to3;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_to3 = this.$refs.dropdownContainer_to3;
+            if (!dropdownContainer_to3.contains(event.target)) {
                 this.isDropdownOpen_to3 = false;
             }
         },
         closeDropdown_departure(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_departure;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_de = this.$refs.dropdownContainer_departure;
+            if (!dropdownContainer_de.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
         },
         closeDropdown_destination(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
+            if (!dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_destination = false;
             }
         },
         closeDropdown_from(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_from;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_from = this.$refs.dropdownContainer_from;
+            if (!dropdownContainer_from.contains(event.target)) {
                 this.isDropdownOpen_from = false;
             }
         },
@@ -4675,6 +4728,28 @@ export default {
                 evt.preventDefault();
             }
         },
+        onAWBInput: debounce(function () {
+            const { awb_code } = this.form.first_box;
+            const { awb_no } = this.form.first_box;
+            if (awb_code && awb_code.length === 3) {
+                ApiService.get(`/get-awbcode-prefix/${awb_code}`)
+                    .then((response) => {
+                        if (response.data) {
+                            const { name, code} = response.data;
+                            this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
+                        } else {
+                            this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching AWB details:", error);
+                        this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
+                    });
+                }
+            else {
+                this.awb_prefix_message = "";
+            }
+        }, 500),
     },
     mounted(){
         this.calculateTotalVolume();
@@ -4800,6 +4875,7 @@ export default {
             this.isEdit = true;
             this.getHouseWayBill(id);
         }
+        this.getOCIData();
         // this.getAgent();
     },
     computed: {

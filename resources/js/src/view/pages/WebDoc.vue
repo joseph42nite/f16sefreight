@@ -225,7 +225,7 @@
                                     class="form-control-sm col-form-label">
                                     <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px"
                                         v-model="form.first_box.awb_no"
-                                        :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)"></b-form-input>
+                                        :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" required></b-form-input>
                                     <has-error :form="form" field="awb_no"></has-error>
                                 </b-form-group>
                             </b-col>
@@ -2196,7 +2196,7 @@
                                                 <b-form-group id="fieldset-horizontal"
                                                     class="form-control-sm col-form-label mt-2">
                                                     <b-form-input id="input-horizontal"
-                                                        class="form-control-sm">or:</b-form-input>
+                                                        class="form-control-sm" v-model="custom_special_handling_code">or:</b-form-input>
                                                 </b-form-group>
                                             </b-col>
                                             <b-col cols="auto">
@@ -2626,6 +2626,7 @@ export default {
             isDropdownOpen_participant: false,
             selectedCode: '',
             manualCode: '',
+            custom_special_handling_code: '',
             validationErrors: [],
             hs_code_error: [],
             uld_error: [],
@@ -3196,20 +3197,36 @@ export default {
             
             this.form.first_box.awb = false;
         },
+        // addManualCode() {
+        //     const code = this.selectedCode || this.manualCode.trim();
+        //     if (code) {
+        //         if (!this.form.tableCodes.includes(code)) {
+        //             this.form.tableCodes.push(code);
+        //             console.log("Table code ", this.form.tableCodes);
+        //         } else {
+        //             alert('This code is already added.');
+        //         }
+        //     } else {
+        //         alert('Please select or enter a code.');
+        //     }
+        //     this.selectedCode = '';
+        //     this.manualCode = '';
+        // },
         addManualCode() {
-            const code = this.selectedCode || this.manualCode.trim();
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+            const code = this.selectedCode || this.custom_special_handling_code.trim();
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table code ", this.form.tableCodes);
+                    console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
-            } else {
-                alert('Please select or enter a code.');
             }
             this.selectedCode = '';
-            this.manualCode = '';
+            this.custom_special_handling_code = '';
         },
         deleteSplCode(index) {
             this.form.tableCodes.splice(index, 1);
@@ -3237,20 +3254,30 @@ export default {
             }
         },
         addCharge() {
+            const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
+            const finalOtherChargeCode = other_code || other_charge_code;
+            const finalOtherCode = other_code || null;
             if (!this.other_charges.other_charge_code) {
                 alert("Other charge code is mandatory.");
                 return;
             }
-            const amount = parseFloat(this.other_charges.amount);
-            if (isNaN(amount) || amount <= 0) {
+            const parsedAmount = parseFloat(amount);
+            if (isNaN(parsedAmount) || parsedAmount <= 0) {
                 alert("Amount is mandatory and must be a valid number greater than 0.");
                 return;
             }
+            // const amount = parseFloat(this.other_charges.amount);
+            // if (isNaN(amount) || amount <= 0) {
+            //     alert("Amount is mandatory and must be a valid number greater than 0.");
+            //     return;
+            // }
 
             const chargeData = {
-                other_charge_code: this.other_charges.other_charge_code,
-                other_code: this.other_charges.other_code,
-                amount: parseFloat(this.other_charges.amount) || 0,
+                // other_charge_code: this.other_charges.other_charge_code,
+                // other_code: this.other_charges.other_code,
+                // amount: parseFloat(this.other_charges.amount) || 0,
+                other_charge_code: finalOtherChargeCode, 
+                amount: parsedAmount,
                 due: this.other_charges.due,
                 payment_type: this.other_charges.payment_type,
             };
@@ -3485,7 +3512,7 @@ export default {
             this.oci_info = { ...this.form.oci_entries[index] };
         },
         addOtherCustomInfo() {
-            if (!this.oci_info.country_code || !this.oci_info.info_identifier || !this.oci_info.supplementary_info || !this.oci_info.custom_info_identifier) {
+            if (!this.oci_info.info_identifier || !this.oci_info.supplementary_info) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -3657,32 +3684,32 @@ export default {
             }
         },
         closeDropdown_to2(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to2;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_to2 = this.$refs.dropdownContainer_to2;
+            if (!dropdownContainer_to2.contains(event.target)) {
                 this.isDropdownOpen_to2 = false;
             }
         },
         closeDropdown_to3(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to3;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_to3 = this.$refs.dropdownContainer_to3;
+            if (!dropdownContainer_to3.contains(event.target)) {
                 this.isDropdownOpen_to3 = false;
             }
         },
         closeDropdown_departure(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_departure;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_de = this.$refs.dropdownContainer_departure;
+            if (!dropdownContainer_de.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
             }
         },
         closeDropdown_destination(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_destination;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
+            if (!dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_destination = false;
             }
         },
         closeDropdown_from(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_from;
-            if (!dropdownContainer_to.contains(event.target)) {
+            const dropdownContainer_from = this.$refs.dropdownContainer_from;
+            if (!dropdownContainer_from.contains(event.target)) {
                 this.isDropdownOpen_from = false;
             }
         },
@@ -3732,7 +3759,8 @@ export default {
             }
         },
         onAWBInput: debounce(function () {
-            const { awb_code, awb_no } = this.form.first_box;
+            const { awb_code } = this.form.first_box;
+            const { awb_no } = this.form.first_box;
             if (awb_code && awb_code.length === 3) {
                 ApiService.get(`/get-awbcode-prefix/${awb_code}`)
                     .then((response) => {
@@ -3740,15 +3768,15 @@ export default {
                             const { name, code} = response.data;
                             this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
                         } else {
-                            this.awb_prefix_message = "No details found for this AWB code.";
+                            this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                         }
                     })
                     .catch((error) => {
                         console.error("Error fetching AWB details:", error);
-                        this.awb_prefix_message = "Failed to fetch AWB details.";
+                        this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                     });
                 }
-             else {
+            else {
                 this.awb_prefix_message = "";
             }
             if (awb_code && awb_no) {
@@ -4013,6 +4041,7 @@ export default {
             this.getAirWayBill(id);
         }
         this.allAirwayBill();
+        this.getOCIData();
         // this.getAgent();
     },
     computed: {

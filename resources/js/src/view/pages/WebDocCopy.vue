@@ -2031,10 +2031,10 @@
                                                                         {{ charge.payment_type }}
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <b-button size="sm" @click="editCharge(index)">
+                                                                        <b-button size="sm" @click="editCharge(index)" style="background: none !important;border: 0px !important; border-radius: 0px !important; padding: 0px !important;">
                                                                             <b-icon icon="pencil" font-scale="1"></b-icon>
                                                                         </b-button>
-                                                                        <b-button size="sm" @click="removeCharge(index)">
+                                                                        <b-button size="sm" @click="removeCharge(index)" style="background: none !important;border: 0px !important; border-radius: 0px !important; padding: 0px !important;">
                                                                             <b-icon icon="trash"></b-icon>
                                                                         </b-button>
                                                                     </td>
@@ -3275,11 +3275,9 @@ export default {
         },
         addCharge() {
             const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
-
-    // If both are filled, prioritize `other_code` and assign it to `other_charge_code`.
-    const finalOtherChargeCode = other_code || other_charge_code;
+            const finalOtherChargeCode = other_code || other_charge_code;
             const finalOtherCode = other_code || null;
-            if (!this.other_charges.other_charge_code) {
+            if (!finalOtherChargeCode) {
                 alert("Other charge code is mandatory.");
                 return;
             }

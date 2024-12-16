@@ -1,760 +1,887 @@
 <template>
-    <div class="bg-white" style="height: auto !important">
-        <template>
-            <header>
-                <nav id="nav">
-                    <ul style="z-index: 1098">
-                        <li v-for="item in items">
-                            <a :href="item.url" v-if="!item.children">
-                                {{ item.name }}
-                            </a>
-                            <span v-else v-on:mouseover="mouseover" v-on:mouseleave="mouseleave">
-                                {{ item.name }}
-
-                                <ul class="dropdown" :class="{ isOpen }">
-                                    <li v-for="child in item.children">
-                                        <a :href="child.url">
-                                            {{ child.name }}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </span>
-                        </li>
-                    </ul>
-                </nav>
-            </header>
-        </template>
-        <template>
-            <div class="d-flex justify-content-center align-items-center mt-5 bg-white">
-                <b-button id="show-btn" v-b-modal.modal-ss class="mx-2 custom-btn">Activity</b-button>
-                <b-button id="toggle-btn" class="mx-2 custom-btn" v-b-modal.modal-prevent-closing>Search</b-button>
-                <b-button id="show-btn" v-b-modal.modal-s class="mx-2 custom-btn">10 Latest</b-button>
-                <b-button id="toggle-btn" v-b-modal.modal-templates class="mx-2 custom-btn">Templates</b-button>
-                <b-button id="show-btn" v-b-modal.modal-draft class="mx-2 custom-btn">Draft</b-button>
-                <b-button id="toggle-btn" @click="toggleModal" class="mx-2 custom-btn">Related</b-button>
-                <b-modal id="modal-ss" title="Activity" ok-only>
-                    <div class="d-block">
-                        <h3>Updated:04:49</h3>
-                    </div>
-                </b-modal>
-                <b-modal id="modal-draft" title="Activity" ok-only>
-                    <div class="d-block">
-                        <b-row class="mt-5">
-                            <b-col cols="auto">
-                                <a href="" class="custom-link">none</a>
-                                <h6>( - )</h6>
-                            </b-col>
-                            <b-col cols="auto">
-                                <a href="" class="custom-link">Edit e-AWB Data</a>
-                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
-                            </b-col>
-                        </b-row>
-                    </div>
-                </b-modal>
-
-                <b-modal id="modal-prevent-closing" ref="modal" title="Submit Your Name" @ok="handleOk">
-                    <form ref="form">
-                        <b-form-group label="Cereated By:" label-for="name-input" v-slot="{ ariaDescribedby }">
-                            <!-- <b-form-input id="name-input"></b-form-input> -->
-                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
-                                name="radio-options-slots"></b-form-radio-group>
-                        </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="4"
-                            label="Id:" label-for="input-horizontal" class="form-control-sm">
-                            <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
-                        </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Destination:" label-for="input-horizontal" class="form-control-sm col-form-label">
-                            <b-form-input id="input-horizontal" class="form-control-sm"></b-form-input>
-                        </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Issued:" label-for="input-horizontal" class="form-control-sm">
-                            <b-form-checkbox size="sm"></b-form-checkbox>
-                        </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Draft:" label-for="input-horizontal" class="form-control-sm">
-                            <b-form-checkbox size="sm"></b-form-checkbox>
-                        </b-form-group>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="4" content-cols-sm content-cols-lg="2"
-                            label="Not Issue:" label-for="input-horizontal" class="form-control-sm">
-                            <b-form-checkbox size="sm"></b-form-checkbox>
-                        </b-form-group>
-                    </form>
-                </b-modal>
-
-                <b-modal id="modal-s" title="Latest Messages" ok-only>
-                    <div class="d-block">
-                        <!-- <b-form-group label-for="name-input" label="Created By:" v-slot="{ ariaDescribedby }">
-                            <b-form-radio-group id="radio-slots" :options="options" :aria-describedby="ariaDescribedby"
-                                name="radio-options-slots"></b-form-radio-group>
-                        </b-form-group>
-                        <hr class="hr" /> -->
+    <div class="bg-white">
+        <div class="container-fluid">
+            <div class="d-flex">
+                <SideBar></SideBar>
+                <div class="container" style="box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
+                    <div class="mt-14 mb-8 px-10">
                         <b-row>
-                            <b-col>
-                                <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
-                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
-                                        <a href="#" class="custom-link mb-3" @click.prevent="handleEditNavigation(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p @click="navigate" class="mb-0">
-                                                    {{ item.id }} 
-                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                                </p>
-                                            </router-link>
-                                        </a>
-                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p @click="navigate" class="mb-0 ml-2">Edit House Waybill Data </p>
-                                            </router-link>
-                                        </a>
-                                        <!-- <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                <p @click="navigate" class="mb-0 ml-2">Create e-AWB from House Waybill Data </p>
-                                            </router-link>
-                                        </a> -->
-                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                    <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
-                                            </router-link>
-                                        </a>
-                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
-                                            </router-link>
-                                        </a>
-                                        <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
-                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
-                                            </router-link>
-                                        </a>
-                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
-                                    </div>
+                            <b-col cols="6">
+                                <h6 style="color:#355594;font-size:22px !important;line-height:30px !important;font-weight:600 !important;">Documentation</h6>
+                                <b-form-group id="fieldset-horizontal" class="d-flex align-items-center ">
+                                    <b-form-select 
+                                        style="width: 140px;border: 0px !important;color: #355594;font-weight: 600;"
+                                        class="form-control-sm"
+                                        v-model="selectedViewPageOption"
+                                        @change="onSelect">
+                                        <option value="/web-doc">Master Airway Bill</option>
+                                        <option value="/house-way-bill">Houseway Bill</option>
+                                        <option value="/consolidation">Consolidation</option>
+                                    </b-form-select>
+                                </b-form-group>
+                            </b-col>
+                            <b-col cols="6">
+                                <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
+                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
+                                    id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
+                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
+                                    id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
                                 </div>
                             </b-col>
+                            <!-- Draft model code Start here -->
+                            <b-modal id="modal-draft" title="Activity" ok-only>
+                                <div class="d-block">
+                                    <b-row class="mt-5">
+                                        <b-col cols="auto">
+                                            <a href="" class="custom-link">none</a>
+                                            <h6>( - )</h6>
+                                        </b-col>
+                                        <b-col cols="auto">
+                                            <a href="" class="custom-link">Edit e-AWB Data</a>
+                                            <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
+                                            <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
+                                        </b-col>
+                                    </b-row>
+                                </div>
+                            </b-modal>
+                            <!-- Draft model code Ends here -->
+                            <!-- 10 Latest model code start here -->
+                            <b-modal id="modal-s" title="Latest Messages" ok-only>
+                                <div class="d-block">
+                                    <b-row>
+                                        <b-col>
+                                            <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
+                                                <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                                    <a href="#" class="custom-link mb-3" @click.prevent="handleEditNavigation(item.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                            <p @click="navigate" class="mb-0">
+                                                                {{ item.id }} 
+                                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                            </p>
+                                                        </router-link>
+                                                    </a>
+                                                    <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                            <p @click="navigate" class="mb-0 ml-2">Edit House Waybill Data </p>
+                                                        </router-link>
+                                                    </a>
+                                                    <!-- <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                            <p @click="navigate" class="mb-0 ml-2">Create e-AWB from House Waybill Data </p>
+                                                        </router-link>
+                                                    </a> -->
+                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                                <p class="mb-0 ml-2"><a :href="'/download-hawb-pdf/' + item.id" target="_blank" class="custom-link">House Waybill Pdf file</a></p>
+                                                        </router-link>
+                                                    </a>
+                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf</a></p>
+                                                        </router-link>
+                                                    </a>
+                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
+                                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-hawb-pdf/' + item.id" target="_blank" class="custom-link">Multipage House Waybill Pdf with back pages</a></p>
+                                                        </router-link>
+                                                    </a>
+                                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                </div>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
+                                </div>
+                            </b-modal>
+                            <!-- 10 Latest model code Ends here -->
                         </b-row>
                     </div>
-                </b-modal>
-                <b-modal id="modal-templates" title="Templates" ok-only>
-                    <div class="d-block">
-                        <b-form-group v-slot="{ ariaDescribedby }">
-                            <b-row>
-                                <b-col cols="auto">
-                                    <h6>Created by:</h6>
-                                </b-col>
-                                <b-col cols="auto">
-                                    <b-form-radio :aria-describedby="ariaDescribedby" name="some-radios"
-                                        value="A">Me</b-form-radio>
-                                </b-col>
-                                <b-col cols="auto">
-                                    <b-form-radio :aria-describedby="ariaDescribedby" name="some-radios"
-                                        value="B">Participant group</b-form-radio>
-                                </b-col>
-                            </b-row>
-                        </b-form-group>
-                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label">
-                            <b-row align-v="center">
-                                <label>Template</label>
-                                <b-col cols="auto">
-                                    <b-form-select class="form-control-sm" style="width: 220px">
-                                        <option disabled value="">
-                                            Please choose a Custom Origin
-                                        </option>
-                                        <option>A</option>
-                                        <option>B</option>
-                                        <option>C</option>
-                                    </b-form-select>
-                                </b-col>
-                            </b-row>
-                        </b-form-group>
 
-                        <hr class="hr" />
-                        <h4 class="h-color">Save</h4>
-                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-lg="auto" label="Name:"
-                            label-for="input-horizontal" class="form-control-sm col-form-label">
-                            <b-row>
-                                <b-col cols="auto">
-                                    <b-form-input id="input-horizontal" class="form-control-sm"
-                                        style="width: 200px"></b-form-input>
-                                </b-col>
-                                <b-col>
-                                    <b-button>+Save</b-button>
-                                </b-col>
-                            </b-row>
-                        </b-form-group>
-                        <h3 class="h-color font-weight-bolder mt-lg-10">
-                            Modify your templates
-                        </h3>
-                        <h5 style="font-size: smaller">
-                            Showing all templates in participant group
-                        </h5>
-                        <h5 class="text-danger ml-5">No Templates found</h5>
-                        <hr class="hr mt-lg-12" />
-                        <h5 style="font-size: smaller">
-                            The e-AWB can be saved as 'draft' and a list with
-                            draft e-AWB created during the day will be presented
-                            below. The last 10 e-AWB will be visible.
-                        </h5>
-                    </div>
-                </b-modal>
-            </div>
-        </template>
-        <div class="container mt-lg-15 border-2 bg-light p-2"
-            style="margin-bottom: 20px; border-bottom: 1px solid black">
-            <div class="container h_background_color text-white pt-2 pb-2">
-                <h4>Create Electronic House Waybill (FHL)
-                    <span class="float-right">New</span>
-                </h4>
-            </div>
-            <template>
-                <b-form @submit.prevent="onSubmit">
-                    <div class="container">
-                        <b-row class="mt-5">
-                            <b-col cols="auto">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="HAWB No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" v-model="form.first_box.hawb_no" :class="{ 'is-invalid': form.errors.has('hawb_no') }"></b-form-input>
-                                    <has-error :form="form" field="hawb_no"></has-error>
-                                </b-form-group>
-                            </b-col>
-                            <b-col cols="auto">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Master No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)"  @input="onAWBInput"></b-form-input>
-                                    <has-error :form="form" field="awb_code"></has-error>
-                                </b-form-group>
-                                <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p>
-                            </b-col>
-                            -
-                            <b-col cols="auto">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)"></b-form-input>
-                                    <has-error :form="form" field="awb_no"></has-error>
-                                </b-form-group>
-                            </b-col>
-                        </b-row>
-                        <b-row class="mt-5">
-                            <b-col cols="auto">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Agent Account: " label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm"  v-model="form.first_box.agent_account" :class="{ 'is-invalid': form.errors.has('agent_account') }"></b-form-input>
-                                    <has-error :form="form" field="agent_account"></has-error>
-                                </b-form-group>
-                            </b-col>
-                            <b-col class="ml-auto" cols="auto">
-                                <b-form-group label-for="name-input">
-                                    <b-form-radio name="radio-size" size="sm">e-CSD Status</b-form-radio>
-                                </b-form-group>
-                            </b-col>
-                        </b-row>
-                        <hr class="hr" />
+                    <hr class="hr" />
 
-                        <b-row class="justify-content-center mt-5">
-                            <b-col>
-                                <b-col cols="auto">
-                                    <h4 class="h-color font-weight-bolder ml-2">
-                                        Shipper
-                                    </h4>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label">
-                                        <div class="d-flex align-items-center">
-                                            <!-- <div class="flex-grow-1">
-                                                <select class="custom-select form-control-sm" style="width: 320px">
-                                                    <option disabled value=""> Select a Shipper</option>
-                                                    <option value="ABS">A</option>
-                                                    <option value="BDE">B</option>
-                                                    <option value="RTY">C</option>  
-                                                </select>
-                                            </div> -->
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
-                                                <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
-                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control" autocomplete="off"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"
-                                                    @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
+                    <template>
+                        <b-form @submit.prevent="onSubmit">
+                            <div class="">
+                                <b-row>
+                                    <b-col cols="12">
+                                        <div class="my-5">
+                                            <h6 class="pl-4">Create Electronic House Waybill (FHL)</h6>
+                                        </div>
+                                    </b-col>
+                                    <b-col cols="12">
+                                        <div class="pl-4">
+                                            <b-row>
+                                                <b-col cols="8">
+                                                    <b-row>
+                                                        <b-col cols="12">
+                                                            <div class="d-flex align-items-center">
+                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
+                                                                    label-for="hawbNo-input"
+                                                                    class="">
+                                                                    <template #label>
+                                                                        <div class="d-flex justify-content-end" style="width: 100px;">
+                                                                            <span>HAWB No:</span>
+                                                                            <span class="text-danger"> &nbsp;*</span>
+                                                                        </div>
+                                                                    </template>
+                                                                    <b-form-input id="hawbNo-input" class="form-control" v-model="form.first_box.hawb_no"
+                                                                        style="width:210px;"
+                                                                        :class="{ 'is-invalid': form.errors.has('hawb_no') }"></b-form-input>
+                                                                    <has-error :form="form" field="hawb_no"></has-error>
+                                                                </b-form-group>
+                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
+                                                                    label-for="masterno-input" class="">
+                                                                    <template #label>
+                                                                        <div class="d-flex justify-content-end" style="width: 100px;">
+                                                                            <span>Master No:</span>
+                                                                            <span class="text-danger">&nbsp;*</span>
+                                                                        </div>
+                                                                    </template>
+                                                                    <b-form-input id="masterno-input" class="form-control" style="width: 60px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" @input="onAWBInput"></b-form-input>
+                                                                    <has-error :form="form" field="awb_code"></has-error>
+                                                                    <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p>
+                                                                </b-form-group>
 
-                                                    <div v-if="isDropdownOpen_shipper && filteredShippers.length" class="dropdown-options">
-                                                        <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
-                                                            {{ shipper.name }}
+                                                                <div class="d-flex align-items-center pl-2"><p class="">-</p></div>
+
+                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
+                                                                    label-for="masterno-awb-input" class="px-0">
+                                                                    <b-form-input id="masterno-awb-input" class="form-control" style="width: 150px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" @input="onAWBInput"></b-form-input>
+                                                                    <has-error :form="form" field="awb_no"></has-error>
+                                                                </b-form-group>
+                                                            </div>
+                                                        </b-col>
+                                                    </b-row>
+                                                </b-col>
+                                                <b-col cols="4">
+                                                    <div class="d-flex justify-content-end mr-34">
+                                                        <b-form-group>
+                                                            <b-form-radio name="radio-size" size="sm">e-CSD Status</b-form-radio>
+                                                        </b-form-group>
+                                                    </div>
+                                                </b-col>
+                                            </b-row>
+                                            <b-row>
+                                                <b-col cols="12">
+                                                    <div class="d-flex text-align-center">
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
+                                                            label-for="agent-account-input" class="">
+                                                            <template #label>
+                                                                <div class="d-flex justify-content-end" style="width: 100px;">
+                                                                    <span>Agent Account:</span>
+                                                                    <span class="text-danger">&nbsp;*</span>
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="agent-account-input" class="form-control"  v-model="form.first_box.agent_account"
+                                                                style="width:210px;"
+                                                                :class="{ 'is-invalid': form.errors.has('agent_account') }"></b-form-input>
+                                                            <has-error :form="form" field="agent_account"></has-error>
+                                                        </b-form-group>
+                                                    </div>
+                                                </b-col>
+                                            </b-row>
+                                        </div>
+                                    </b-col>
+                                </b-row>
+                                <hr class="hr" />
+                                <!-- SHIPPER AND CONSIGNEE ADDRESS ROW START HERE -->
+                                <b-row>
+                                    <b-col cols="6">
+                                        <div class="mt-2 mb-4">
+                                            <h6 class="pl-6">Shipper</h6>
+                                        </div>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                            content-cols-lg="auto"
+                                            label-for="shipper"
+                                            style="margin-bottom: 4px !important;"
+                                            class="">
+                                            <template #label>
+                                                <div class="d-flex justify-content-end" style="width: 100px;">
+                                                    <span>Name:</span>
+                                                    <span class="text-danger"> &nbsp;*</span>
+                                                </div>
+                                            </template>
+                                            <div class="d-flex align-items-center">
+                                                <!-- <div class="flex-grow-1">
+                                                    <select class="custom-select form-control-sm" style="width: 320px">
+                                                        <option disabled value=""> Select a Shipper</option>
+                                                        <option value="ABS">A</option>
+                                                        <option value="BDE">B</option>
+                                                        <option value="RTY">C</option>  
+                                                    </select>
+                                                </div> -->
+                                                <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label"> -->
+                                                    <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
+                                                        <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control" autocomplete="off"
+                                                        :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                        style="width:300px;"
+                                                        @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
+
+                                                        <div v-if="isDropdownOpen_shipper && filteredShippers.length" class="dropdown-options">
+                                                            <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
+                                                                {{ shipper.name }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <has-error :form="form" field="ship_name"></has-error>
+                                                <!-- </b-form-group> -->
+                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2"
+                                                    style="stroke: #355594"
+                                                    @click="showShipper = !showShipper"></b-icon>
+                                            </div>
+                                        </b-form-group>
+                                        <div v-if="showShipper">
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                    content-cols-lg="auto" label-for="shipper-name-input"
+                                                    style="margin-bottom: 4px !important;"
+                                                    class="">
+                                                    <template #label>
+                                                        <div class="d-flex justify-content-end" style="width: 100px;">
+                                                            <span>&nbsp;</span>
+                                                            <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="shipper-name-input" class="form-control"
+                                                        v-model="form.shipper_address.ship_name"
+                                                        style="width:300px;"
+                                                        :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_name"></has-error>
+                                                </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-account-input"
+                                                style="margin-bottom:4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Account:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-account-input" class="form-control"
+                                                    v-model="form.shipper_address.ship_account"
+                                                    style="width:300px;"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_account') }"></b-form-input>
+                                                <has-error :form="form" field="ship_account"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="ship-address-input"
+                                                style="margin-bottom:4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Address:</span>
+                                                        <span class="text-danger"> &nbsp;*</span>
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="ship-address-input" class="form-control"
+                                                    style="width: 300px" v-model="form.shipper_address.ship_address"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
+                                                <has-error :form="form" field="ship_address"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-address-line-2-input"
+                                                style="margin-bottom:4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>&nbsp;</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-address-line-2-input" class="form-control"
+                                                    style="width: 300px" v-model="form.shipper_address.ship_address_line_2"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
+                                                <has-error :form="form" field="ship_address_line_2"></has-error>
+                                            </b-form-group>
+                                            
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="ship-city-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>City:</span>
+                                                        <span class="text-danger"> &nbsp;*</span>
+                                                    </div>
+                                                </template>
+                                                <div class="d-flex align-items-center">
+                                                    <b-form-input id="ship-city-input" class="form-control mr-2"
+                                                        v-model="form.shipper_address.ship_city"
+                                                        style="width:230px;"
+                                                        :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                                    <b-form-input id="ship-city-input" class="form-control ml-2"
+                                                        style="width: 60px" v-model="form.shipper_address.ship_airport_code"
+                                                        :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                                </div>
+                                                <has-error :form="form" field="ship_city"></has-error>
+                                                <has-error :form="form" field="ship_airport_code"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-postcode-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Post Code:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-postcode-input" class="form-control"
+                                                    v-model="form.shipper_address.ship_post_code"
+                                                    style="width:200px;"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
+                                                <has-error :form="form" field="ship_post_code"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-state-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>State:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-state-input" class="form-control"
+                                                    style="width:200px;"
+                                                    v-model="form.shipper_address.ship_state"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
+                                                <has-error :form="form" field="ship_state"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-country-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Country:</span>
+                                                        <span class="text-danger"> &nbsp;*</span>
+                                                    </div>
+                                                </template>
+                                                <b-form-select id="shipper-country-input" class="form-control" style="width: 300px"
+                                                    v-model="form.shipper_address.ship_country"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_country') }">
+                                                    <option disabled value=""> Please select one</option>
+                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                        {{ country.text }}
+                                                    </option>
+                                                </b-form-select>
+                                                <has-error :form="form" field="ship_country"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-phone-input"
+                                                style="margin-bottom:4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Phone:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-phone-input" class="form-control"
+                                                    v-model="form.shipper_address.ship_phone"
+                                                    style="width:200px;"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
+                                                <has-error :form="form" field="ship_phone"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-fax-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Fax:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-fax-input" class="form-control"
+                                                    v-model="form.shipper_address.ship_fax"
+                                                    style="width:200px;"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
+                                                <has-error :form="form" field="ship_fax"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="shipper-telex-input"
+                                                class=""
+                                                style="margin-bottom: 4px !important;">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Telex:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="shipper-telex-input"
+                                                    style="width:200px;"
+                                                    class="form-control"
+                                                    v-model="form.shipper_address.ship_telex"></b-form-input>
+                                            </b-form-group>
+
+                                            <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_shipper_address_save">Save new address to address book</b-form-checkbox>
+                                        </div>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                            content-cols-lg="auto" label="" label-for="input-horizontal"
+                                            class="form-control-sm col-form-label mt-2">
+                                            <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default house shipper for later logins</b-form-checkbox>
+                                        </b-form-group>
+                                    </b-col>
+                                    <!-- CONSIGNEE SECTION COLUMN -->
+                                    <b-col cols="6">
+                                        <div class="mt-2 mb-4">
+                                            <h6 class="pl-6">Consignee</h6>
+                                        </div>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                            content-cols-lg="auto" label-for="consignee"
+                                            style="margin-bottom: 4px !important;"
+                                            class="">
+                                            <template #label>
+                                                <div class="d-flex justify-content-end" style="width: 100px;">
+                                                    <span>Name:</span>
+                                                    <span class="text-danger"> &nbsp;*</span>
+                                                </div>
+                                            </template>
+                                            <div class="d-flex align-items-center">
+                                                <div class="custom-dropdown" ref="dropdownContainer_consignee" @click="toggleDropdown_consignee">
+                                                    <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control" autocomplete="off"
+                                                    style="width:300px;"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"
+                                                    @input="filterConsignee" @focus="toggleDropdown_consignee(true)" @blur="closeDropdown_consignee" />
+
+                                                    <div v-if="isDropdownOpen_consignee && filteredConsignees.length" class="dropdown-options">
+                                                        <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
+                                                            {{ consignee.name }}
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <has-error :form="form" field="ship_name"></has-error>
-                                            </b-form-group>
-                                            <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
-                                                @click="showShipper = !showShipper"></b-icon>
-                                        </div>
-                                    </b-form-group>
-                                    <b-col v-if="showShipper">
-                                        <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3" label="">
-                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
-                                                    v-model="form.shipper_address.ship_name"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
-                                                <has-error :form="form" field="ship_name"></has-error>
-                                            </b-form-group>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal" label="Account:"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                                v-model="form.shipper_address.ship_account"
-                                                :class="{ 'is-invalid': form.errors.has('ship_account') }"></b-form-input>
-                                            <has-error :form="form" field="ship_account"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address *:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                                style="width: 220px" v-model="form.shipper_address.ship_address"
-                                                :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
-                                            <has-error :form="form" field="ship_address"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"
-                                                style="width: 220px" v-model="form.shipper_address.ship_address_line_2"
-                                                :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
-                                            <has-error :form="form" field="ship_address_line_2"></has-error>
-                                        </b-form-group>
-                                        <div class="d-flex align-items-center mt-1">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label" label="City *:">
-                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                    v-model="form.shipper_address.ship_city"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
-                                                <has-error :form="form" field="ship_city"></has-error>
-                                            </b-form-group>
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                style="width: 50px" v-model="form.shipper_address.ship_airport_code"
-                                                :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                            <has-error :form="form" field="ship_airport_code"></has-error>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"
-                                                v-model="form.shipper_address.ship_post_code"
-                                                :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
-                                            <has-error :form="form" field="ship_post_code"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="State:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"
-                                                v-model="form.shipper_address.ship_state"
-                                                :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
-                                            <has-error :form="form" field="ship_state"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country *:">
-                                            <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
-                                                v-model="form.shipper_address.ship_country"
-                                                :class="{ 'is-invalid': form.errors.has('ship_country') }">
-                                                <option disabled value=""> Please select one</option>
-                                                <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                    {{ country.text }}
-                                                </option>
-                                            </b-form-select>
-                                            <has-error :form="form" field="ship_country"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Phone:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"
-                                                v-model="form.shipper_address.ship_phone"
-                                                :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
-                                            <has-error :form="form" field="ship_phone"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Fax:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                v-model="form.shipper_address.ship_fax"
-                                                :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
-                                            <has-error :form="form" field="ship_fax"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Telex:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"
-                                                v-model="form.shipper_address.ship_telex"></b-form-input>
-                                        </b-form-group>
-
-                                        <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_shipper_address_save"> Save new address to address
-                                            book</b-form-checkbox>
-                                    </b-col>
-                                </b-col>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto" label="" label-for="input-horizontal"
-                                    class="form-control-sm col-form-label mt-2">
-                                    <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default house shipper for later logins</b-form-checkbox>
-                                </b-form-group>
-                            </b-col>
-                            <b-col>
-                                <b-col cols="auto">
-                                    <h4 class="h-color font-weight-bolder ml-2">
-                                        Consignee
-                                    </h4>
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                        content-cols-lg="auto" label="Name:*" label-for="input-horizontal"
-                                        class="form-control-sm col-form-label">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
-                                                    <div class="custom-dropdown" ref="dropdownContainer_consignee" @click="toggleDropdown_consignee">
-                                                        <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control" autocomplete="off"
-                                                        :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                        @input="filterConsignee" @focus="toggleDropdown_consignee(true)" @blur="closeDropdown_consignee" />
-
-                                                        <div v-if="isDropdownOpen_consignee && filteredConsignees.length" class="dropdown-options">
-                                                            <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
-                                                                {{ consignee.name }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </b-form-group>
                                                 <has-error :form="form" field="cons_name"></has-error>
+                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2"
+                                                    style="stroke: #355594"
+                                                    @click="showConsignee = !showConsignee"></b-icon>
                                             </div>
-                                            <b-icon icon="arrows-expand" aria-hidden="true" class="ml-2"
-                                                @click="showConsignee = !showConsignee"></b-icon>
-                                        </div>
-                                    </b-form-group>
-                                    <b-col v-if="showConsignee">
-                                        <div class="d-flex align-items-center mt-5">
+                                        </b-form-group>
+                                        <div v-if="showConsignee">
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3">
-                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16"
+                                                content-cols-lg="auto" label-for="cons-name-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>&nbsp;</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-name-input" class="form-control"
                                                     v-model="form.consignee_address.cons_name"
+                                                    style="width:300px;"
                                                     :class="{ 'is-invalid': form.errors.has('cons_name') }"></b-form-input>
                                                 <has-error :form="form" field="cons_name"></has-error>
                                             </b-form-group>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal" label="Account:"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.consignee_address.cons_account"
-                                                :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
-                                            <has-error :form="form" field="cons_account"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address *:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                style="width: 220px"
-                                                v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }"></b-form-input>
-                                                <has-error :form="form" field="cons_address"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16"
-                                                style="width: 220px" v-model="form.consignee_address.cons_address_line_2"
-                                                :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
-                                            <has-error :form="form" field="cons_address_line_2"></has-error>
-                                        </b-form-group>
-                                        <div class="d-flex align-items-center mt-1">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-account-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Account:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-account-input" class="form-control"
+                                                    v-model="form.consignee_address.cons_account"
+                                                    style="width:300px;"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
+                                                <has-error :form="form" field="cons_account"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-address-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Address:</span>
+                                                        <span class="text-danger"> &nbsp;*</span>
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-address-input" class="form-control"
+                                                    style="width: 300px"
+                                                    v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_address"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-address-line-2-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>&nbsp;</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-address-line-2-input" class="form-control"
+                                                    style="width: 300px" v-model="form.consignee_address.cons_address_line_2"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
+                                                <has-error :form="form" field="cons_address_line_2"></has-error>
+                                            </b-form-group>
+                                            
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label" label="City *:">
-                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8"
-                                                    v-model="form.consignee_address.cons_city"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
-                                                <has-error :form="form" field="cons_city"></has-error>
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>City:</span>
+                                                        <span class="text-danger"> &nbsp;*</span>
+                                                    </div>
+                                                </template>
+                                                <div class="d-flex align-items-center">
+                                                    <b-form-input id="input-horizontal" class="form-control mr-2"
+                                                        v-model="form.consignee_address.cons_city"
+                                                        style="width: 230px"
+                                                        :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control ml-2"
+                                                        style="width: 60px"></b-form-input>
+                                                    <has-error :form="form" field="cons_city"></has-error>
+                                                </div>
                                             </b-form-group>
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                style="width: 50px"></b-form-input>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.consignee_address.cons_post_code"
-                                                :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
-                                            <has-error :form="form" field="cons_post_code"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="State:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-6"
-                                                v-model="form.consignee_address.cons_state"
-                                                :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
-                                            <has-error :form="form" field="cons_state"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country *:">
-                                            <b-form-select class="form-control-sm ml-lg-1" style="width: 220px"
-                                                v-model="form.consignee_address.cons_country"
-                                                :class="{ 'is-invalid': form.errors.has('cons_country') }">
-                                                <option value="Please select one"> Please select one</option>
-                                                <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                    {{ country.text }}
-                                                </option>
-                                            </b-form-select>
-                                            <has-error :form="form" field="cons_country"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Phone:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-3"
-                                                v-model="form.consignee_address.cons_phone"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Fax:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-8"
-                                                v-model="form.consignee_address.cons_fax"></b-form-input>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Telex:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-5"
-                                                v-model="form.consignee_address.cons_telex"></b-form-input>
-                                        </b-form-group>
-
-                                        <b-form-checkbox size="sm" class="ml-lg-21" v-model="form.is_consignee_address_save"> Save new address to address
-                                            book</b-form-checkbox>
-                                    </b-col>
-                                </b-col>
-                            </b-col>
-                        </b-row>
-                        <hr class="hr" />
-                        <div>
-                            <b-tabs content-class="mt-3" class="nav-tabs">
-                                <b-tab title="Routing Information" style="border: 2px solid black !important">
-                                    <b-row class="mt-5">
-                                        <b-col cols="auto">
-                                            <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Departure Airport*" label-for="input-departure-airport"
-                                                class="form-control-sm">
-                                                <b-form-select class="form-control" style="width: 150px"
-                                                    v-model="form.routing_information.departure_airport"
-                                                    :class="{ 'is-invalid': form.errors.has('departure_airport') }">
-                                                    <option disabled value=""> Select a Rate Class</option>
-                                                    <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY),
-                                                        United States</option>
-                                                    <option value="ABZ, Aberdeen (ABZ), United Kingdom">
-                                                        ABZ, Aberdeen (ABZ), United
-                                                        Kingdom
+                                                
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-post-code"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Post Code:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-post-code" class="form-control"
+                                                    style="width:200px;"
+                                                    v-model="form.consignee_address.cons_post_code"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
+                                                <has-error :form="form" field="cons_post_code"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-state-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>State:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-state-input" class="form-control"
+                                                    v-model="form.consignee_address.cons_state"
+                                                    style="width:200px;"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
+                                                <has-error :form="form" field="cons_state"></has-error>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-country-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Country:</span>
+                                                        <span class="text-danger"> &nbsp;*</span>
+                                                    </div>
+                                                </template>
+                                                <b-form-select class="form-control" style="width: 300px"
+                                                    v-model="form.consignee_address.cons_country"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_country') }">
+                                                    <option value="Please select one"> Please select one</option>
+                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                        {{ country.text }}
                                                     </option>
                                                 </b-form-select>
-                                                <has-error :form="form" field="departure_airport"></has-error>
-                                            </b-form-group> -->
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Departure Airport: *" label-for="input-departure-airport"
-                                                class="form-control-sm col-form-label">
-                                                    <div class="custom-dropdown" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
-                                                        <input type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
-                                                            autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
-                                                        <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
-                                                            <div v-for="(item, index) in filteredLocations_departure" 
-                                                                :key="index" 
-                                                                @click.stop="selectOption_departure(item)" 
-                                                                class="option">
-                                                                {{ item.iata_code }} ({{ item.destination }})
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                <has-error :form="form" field="departure_airport"></has-error>
+                                                <has-error :form="form" field="cons_country"></has-error>
                                             </b-form-group>
-                                        </b-col>
-                                        <div class="d-flex flex-column align-items-center" style="margin-left: 8.5%">
-                                            <div class="container">
-                                                <table class="table-bordered mx-auto table-sm">
-                                                    <thead>
-                                                        <tr class="h_background_color">
-                                                            <th class="form-control1">From</th>
-                                                            <th class="form-control1">To</th>
-                                                            <th class="form-control1"
-                                                                style="width: 50px;padding-left: 3%;">By</th>
-                                                            <th class="form-control1"
-                                                                style="width: 50px;padding-left: 3%;">Flight</th>
-                                                            <th class="form-control1"
-                                                                style="width: 50px;padding-left: 3%;">Date</th>
-                                                            <th class="form-control1" style="width: 80px"></th>
-                                                        </tr>
-                                                    </thead>
-                                                </table>
-                                            </div>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-phone-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Phone:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-phone-input" class="form-control"
+                                                    style="width:200px;"
+                                                    v-model="form.consignee_address.cons_phone"></b-form-input>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-fax-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Fax:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="input-horizontal" class="form-control"
+                                                    style="width:200px;"
+                                                    v-model="form.consignee_address.cons_fax"></b-form-input>
+                                            </b-form-group>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                content-cols-lg="auto" label-for="cons-telex-input"
+                                                style="margin-bottom: 4px !important;"
+                                                class="">
+                                                <template #label>
+                                                    <div class="d-flex justify-content-end" style="width: 100px;">
+                                                        <span>Telex:</span>
+                                                        <!-- <span class="text-danger"> &nbsp;*</span> -->
+                                                    </div>
+                                                </template>
+                                                <b-form-input id="cons-telex-input" class="form-control"
+                                                    style="width:200px;"
+                                                    v-model="form.consignee_address.cons_telex"></b-form-input>
+                                            </b-form-group>
+
+                                            <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_consignee_address_save">Save new address to address book</b-form-checkbox>
                                         </div>
-                                    </b-row>
-                                    <b-row class="mt-5">
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Destination Airport: *" label-for="input-destination-airport"
-                                                class="form-control-sm col-form-label">
-                                                    <div class="custom-dropdown" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
-                                                        <input type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
+                                    </b-col>
+                                </b-row>
+                                <hr class="hr" />
+                                <!-- ROUTING INDORMATION AND SEARCH FLIGHTS TABS -->
+                                <div>
+                                    <b-tabs content-class="mt-3" class="nav-tabs">
+                                        <b-tab title="Routing Information">
+                                            <b-row class="mt-5">
+                                                <b-col cols="5">
+                                                    <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                        label="Departure Airport*" label-for="input-departure-airport"
+                                                        class="form-control-sm">
+                                                        <b-form-select class="form-control" style="width: 150px"
+                                                            v-model="form.routing_information.departure_airport"
+                                                            :class="{ 'is-invalid': form.errors.has('departure_airport') }">
+                                                            <option disabled value=""> Select a Rate Class</option>
+                                                            <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY),
+                                                                United States</option>
+                                                            <option value="ABZ, Aberdeen (ABZ), United Kingdom">
+                                                                ABZ, Aberdeen (ABZ), United
+                                                                Kingdom
+                                                            </option>
+                                                        </b-form-select>
+                                                        <has-error :form="form" field="departure_airport"></has-error>
+                                                    </b-form-group> -->
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                        label-for="departure"
+                                                        class="">
+                                                        <template #label>
+                                                            <div class="d-flex justify-content-end" style="width: 122px;">
+                                                                <span>Departure Airport:</span>
+                                                                <span class="text-danger"> &nbsp;*</span>
+                                                            </div>
+                                                        </template>
+                                                            <div class="custom-dropdown" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
+                                                                <input type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
+                                                                    style="width:230px;"
+                                                                    autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
+                                                                <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
+                                                                    <div v-for="(item, index) in filteredLocations_departure" 
+                                                                        :key="index" 
+                                                                        @click.stop="selectOption_departure(item)" 
+                                                                        class="option">
+                                                                        {{ item.iata_code }} ({{ item.destination }})
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        <has-error :form="form" field="departure_airport"></has-error>
+                                                    </b-form-group>
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                        label-for="destination"
+                                                        class="">
+                                                        <template #label>
+                                                            <div class="d-flex justify-content-end" style="width: 122px;">
+                                                                <span>Destination Airport:</span>
+                                                                <span class="text-danger"> &nbsp;*</span>
+                                                            </div>
+                                                        </template>
+                                                        <div class="custom-dropdown" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
+                                                            <input type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
+                                                            style="width:230px;"
                                                             autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
-                                                        <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
-                                                            <div v-for="(item, index) in filteredLocations_destination" 
-                                                                :key="index" 
-                                                                @click.stop="selectOption_destination(item)" 
-                                                                class="option">
-                                                                {{ item.iata_code }} ({{ item.destination }})
+                                                            <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
+                                                                <div v-for="(item, index) in filteredLocations_destination" 
+                                                                    :key="index" 
+                                                                    @click.stop="selectOption_destination(item)" 
+                                                                    class="option">
+                                                                    {{ item.iata_code }} ({{ item.destination }})
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                <has-error :form="form" field="destination_airport"></has-error>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="1">Routing:*</b-col>
-                                        <div class="d-flex flex-column align-items-center">
-                                            <div class="container">
-                                                <table class="mx-auto table-sm">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-form-airport"
-                                                                    class="form-control-sm col-form-label">
-                                                                        <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
-                                                                            <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" class="form-control" 
-                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
-                                                                            <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_from" 
-                                                                                    :key="index" 
-                                                                                    @click.stop="selectOption_from(item)" 
-                                                                                    class="option">
-                                                                                    {{ item.iata_code }} ({{ item.destination }})
+                                                        <has-error :form="form" field="destination_airport"></has-error>
+                                                    </b-form-group>
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                        label-for="input-master-origin"
+                                                        class="">
+                                                        <template #label>
+                                                            <div class="d-flex justify-content-end" style="width: 122px;">
+                                                                <span>Master Origin:</span>
+                                                                <span class="text-danger"> &nbsp;*</span>
+                                                            </div>
+                                                        </template>
+                                                        <b-form-input id="input-master-origin"
+                                                            style="width:230px;"
+                                                            class="form-control" v-model="form.routing_information.master_origin"
+                                                            :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
+                                                        <has-error :form="form" field="master_origin"></has-error>
+                                                    </b-form-group>
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                        label-for="input-master-destination"
+                                                        class="">
+                                                        <template #label>
+                                                            <div class="d-flex justify-content-end" style="width: 122px;">
+                                                                <span>Master Destination:</span>
+                                                                <span class="text-danger"> &nbsp;*</span>
+                                                            </div>
+                                                        </template>
+                                                        <b-form-input id="input-master-destination"
+                                                            style="width:230px;"
+                                                            class="form-control" v-model="form.routing_information.master_destination"
+                                                            :class="{ 'is-invalid': form.errors.has('master_destination') }"></b-form-input>
+                                                        <has-error :form="form" field="master_destination"></has-error>
+                                                    </b-form-group>
+                                                </b-col>
+                                                <b-col cols="7">
+                                                    <div class="container mt-13">
+                                                        <table class="">
+                                                            <thead>
+                                                                <tr class="">
+                                                                    <th class=""style="color:#355594;">&nbsp;</th>
+                                                                    <th class=""style="color:#355594;">From</th>
+                                                                    <th class=""style="color:#355594;">To</th>
+                                                                    <th class=""style="color:#355594;">By</th>
+                                                                    <th class=""style="color:#355594;">Flight</th>
+                                                                    <th class=""style="color:#355594;">Date</th>
+                                                                    <th class="" style="width:100%;"></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Routing:<span class="text-danger">*</span></td>
+                                                                    <td class="editable-cell">
+                                                                        <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="from_id"
+                                                                            class=""> -->
+                                                                                <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                                                                                    <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" class="form-control" 
+                                                                                        autocomplete="off"
+                                                                                        style="width:140px;"
+                                                                                        :class="{ 'is-invalid': form.errors.has('from') }">
+                                                                                    <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
+                                                                                        <div v-for="(item, index) in filteredLocations_from" 
+                                                                                            :key="index" 
+                                                                                            @click.stop="selectOption_from(item)" 
+                                                                                            class="option">
+                                                                                            {{ item.iata_code }} ({{ item.destination }})
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            <has-error :form="form" field="from"></has-error>
+                                                                        <!-- </b-form-group> -->
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="to_id"
+                                                                            class=""> -->
+                                                                                <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                                                                                    <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" class="form-control" 
+                                                                                        autocomplete="off"
+                                                                                        style="width:140px;"
+                                                                                        :class="{ 'is-invalid': form.errors.has('to') }">
+                                                                                    <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
+                                                                                        <div v-for="(item, index) in filteredLocations_to" 
+                                                                                            :key="index" 
+                                                                                            @click.stop="selectOption_to(item)" 
+                                                                                            class="option">
+                                                                                            {{ item.iata_code }} ({{ item.destination }})
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            <has-error :form="form" field="to"></has-error>
+                                                                        <!-- </b-form-group> -->
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control"
+                                                                            style="width: 60px;" v-model="form.routing_information.by"
+                                                                            :class="{ 'is-invalid': form.errors.has('by') }" />
+                                                                        <has-error :form="form" field="by"></has-error>
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control"
+                                                                            style=" width: 90px;" v-model="form.routing_information.flight"
+                                                                            :class="{ 'is-invalid': form.errors.has('flight') }" />
+                                                                        <has-error :form="form" field="flight"></has-error>
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control"
+                                                                            style="width: 70px;" v-model="form.routing_information.date"
+                                                                            :class="{ 'is-invalid': form.errors.has('date') }" />
+                                                                        <has-error :form="form" field="date"></has-error>
+                                                                    </td>
+                                                                    <td class="editable-cell" style="width: 60px">
+                                                                        <date-picker valueType="format"
+                                                                            style="width: 30px !important;" format="DDMMM"
+                                                                            @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="">&nbsp;</td>
+                                                                    <td style="width:140px;">&nbsp;</td>
+                                                                    <td class="editable-cell">
+                                                                        <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="to2_id" class=""> -->
+                                                                            <div class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
+                                                                                <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" style="width:140px;"
+                                                                                class="form-control" autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_2') }">
+                                                                                <div v-if="isDropdownOpen_to2 && filteredLocations_to2.length" class="dropdown-options">
+                                                                                    <div v-for="(item, index) in filteredLocations_to2" 
+                                                                                        :key="index" 
+                                                                                        @click.stop="selectOption_to2(item)" 
+                                                                                        class="option">
+                                                                                        {{ item.iata_code }} ({{ item.destination }})
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
-                                                                        </div>
-                                                                    <has-error :form="form" field="from"></has-error>
-                                                                </b-form-group>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to"
-                                                                    class="form-control-sm col-form-label">
-                                                                        <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
-                                                                            <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" class="form-control" 
-                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
-                                                                            <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_to" 
-                                                                                    :key="index" 
-                                                                                    @click.stop="selectOption_to(item)" 
-                                                                                    class="option">
-                                                                                    {{ item.iata_code }} ({{ item.destination }})
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    <has-error :form="form" field="to"></has-error>
-                                                                </b-form-group>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 40px;" v-model="form.routing_information.by"
-                                                                    :class="{ 'is-invalid': form.errors.has('by') }" />
-                                                                <has-error :form="form" field="by"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style=" width: 50px;" v-model="form.routing_information.flight"
-                                                                    :class="{ 'is-invalid': form.errors.has('flight') }" />
-                                                                <has-error :form="form" field="flight"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 60px;" v-model="form.routing_information.date"
-                                                                    :class="{ 'is-invalid': form.errors.has('date') }" />
-                                                                <has-error :form="form" field="date"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell w-10" style="width: 60px">
-                                                                <date-picker valueType="format"
-                                                                    style="width: 30px !important;" format="DDMMM"
-                                                                    @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </b-row>
-                                    <b-row class="">
-                                        <b-col cols="auto" class="justify-content-lg-start">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Master Origin: *" label-for="input-departure-airport"
-                                                class="form-control-sm col-form-label">
-                                                <b-form-input id="input-departure-airport"
-                                                    class="form-control-sm" v-model="form.routing_information.master_origin"
-                                                    :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
-                                                <has-error :form="form" field="master_origin"></has-error>
-                                            </b-form-group>
-                                        </b-col>
-                                        <div class="d-flex flex-column justify-content-end" style="margin-left: 24%">
-                                            <table class="mx-auto table-sm">
-                                                <tbody>
-                                                    <tr>
-                                                        <td class="editable-cell">
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to2"
-                                                                    class="form-control-sm col-form-label">
-                                                                        <div class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
-                                                                            <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" class="form-control" 
-                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_2') }">
-                                                                            <div v-if="isDropdownOpen_to2 && filteredLocations_to2.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_to2" 
-                                                                                    :key="index" 
-                                                                                    @click.stop="selectOption_to2(item)" 
-                                                                                    class="option">
-                                                                                    {{ item.iata_code }} ({{ item.destination }})
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    <has-error :form="form" field="to_2"></has-error>
-                                                            </b-form-group>
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 40px"
-                                                                v-model="form.routing_information.by_2"
-                                                                :class="{ 'is-invalid': form.errors.has('by_2') }" />
-                                                                <has-error :form="form" field="by_2"></has-error>
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 50px"
-                                                                v-model="form.routing_information.flight_2"
-                                                                :class="{ 'is-invalid': form.errors.has('flight_2') }" />
-                                                                <has-error :form="form" field="flight_2"></has-error>
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 60px"
-                                                                v-model="form.routing_information.date_2"
-                                                                :class="{ 'is-invalid': form.errors.has('date_2') }" />
-                                                            <has-error :form="form" field="date_2"></has-error>
-                                                        </td>
-                                                        <td class="editable-cell w-10" style="width: 60px !important;">
-                                                            <date-picker valueType="format"
-                                                                style=" width: 30px !important;"
-                                                                @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <!-- </div> -->
-                                        </div>
-                                    </b-row>
-                                    <b-row class="">
-                                        <b-col cols="auto" class="justify-content-lg-start">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Master Destination: *" label-for="input-departure-airport"
-                                                class="form-control-sm col-form-label">
-                                                <b-form-input id="input-departure-airport"
-                                                    class="form-control-sm" v-model="form.routing_information.master_destination"
-                                                    :class="{ 'is-invalid': form.errors.has('master_destination') }"></b-form-input>
-                                                <has-error :form="form" field="master_destination"></has-error>
-                                            </b-form-group>
-                                        </b-col>
-                                        <div class="d-flex flex-column justify-content-end" style="margin-left: 22%">
-                                            <table class="mx-auto table-sm">
-                                                <tbody>
-                                                    <tr>
-                                                        <td class="editable-cell">
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to3"
-                                                                    class="form-control-sm col-form-label">
+                                                                            <has-error :form="form" field="to_2"></has-error>
+                                                                        <!-- </b-form-group> -->
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control" style="width: 60px"
+                                                                            v-model="form.routing_information.by_2"
+                                                                            :class="{ 'is-invalid': form.errors.has('by_2') }" />
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control" style="width: 90px"
+                                                                            v-model="form.routing_information.flight_2"
+                                                                            :class="{ 'is-invalid': form.errors.has('flight_2') }" />
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control" style="width: 70px"
+                                                                            v-model="form.routing_information.date_2"
+                                                                            :class="{ 'is-invalid': form.errors.has('date_2') }" />
+                                                                    </td>
+                                                                    <td class="editable-cell w-10" style="width: 60px !important;">
+                                                                        <date-picker valueType="format"
+                                                                            style=" width: 30px !important;"
+                                                                            @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="">&nbsp;</td>
+                                                                    <td style="width:140px;">&nbsp;</td>
+                                                                    <td class="editable-cell">
+                                                                        <!-- <b-form-select class="form-control" style="width: 150px"
+                                                                            v-model="form.routing_information.to_3"
+                                                                            :class="{ 'is-invalid': form.errors.has('to_3') }">
+                                                                            <option disabled value=""> Select 3 a Rate Class
+                                                                            </option>
+                                                                            <option value="ABY, Albany (ABY), United States">ABY,
+                                                                                Albany (ABY), United States</option>
+                                                                            <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ,
+                                                                                Aberdeen (ABZ), United Kingdom</option>
+                                                                        </b-form-select> -->
+                                                                        <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to3" class="form-control-sm col-form-label"> -->
                                                                         <div class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown_to3">
-                                                                            <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" class="form-control" 
+                                                                            <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" style="width:140px;" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_3') }">
                                                                             <div v-if="isDropdownOpen_to3 && filteredLocations_to3.length" class="dropdown-options">
                                                                                 <div v-for="(item, index) in filteredLocations_to3" 
@@ -765,819 +892,855 @@
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    <has-error :form="form" field="to_3"></has-error>
-                                                            </b-form-group>
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 40px"
-                                                                v-model="form.routing_information.by_3"
-                                                                :class="{ 'is-invalid': form.errors.has('by_3') }" />
-                                                                <has-error :form="form" field="by_3"></has-error>
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 50px"
-                                                                v-model="form.routing_information.flight_3"
-                                                                :class="{ 'is-invalid': form.errors.has('flight_3') }" />
-                                                            <has-error :form="form" field="flight_3"></has-error>
-                                                        </td>
-                                                        <td class="editable-cell">
-                                                            <input type="text" class="form-control" style="width: 60px"
-                                                                v-model="form.routing_information.date_3"
-                                                                :class="{ 'is-invalid': form.errors.has('date_3') }" />
-                                                            <has-error :form="form" field="date_3"></has-error>
-                                                        </td>
-                                                        <td class="editable-cell" style="width: 60px !important;">
-                                                            <date-picker valueType="format"
-                                                                style=" width: 30px !important;"
-                                                                @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <!-- </div> -->
-                                        </div>
-                                    </b-row>
-                                </b-tab>
-                                <b-tab title="Search Flights" style="border: 2px solid black !important">
-                                    <div class="d-flex flex-column align-items-start py-5">
-                                        <table class="table-bordered table-sm">
-                                            <thead>
-                                                <tr class="h_background_color">
-                                                    <th class="form-control1">
-                                                        Carrier *
-                                                    </th>
-                                                    <th class="form-control1">
-                                                        Origin *
-                                                    </th>
-                                                    <th class="form-control1">
-                                                        Destination *
-                                                    </th>
-                                                    <th class="form-control1">
-                                                        Flight Date *
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td class="editable-cell">
-                                                        <input type="text" class="form-control" />
-                                                    </td>
-                                                    <td class="editable-cell">
-                                                        <input type="text" class="form-control"
-                                                            :value="getOriginCode(form.routing_information.departure_airport)" />
-                                                    </td>
-                                                    <td class="editable-cell">
-                                                        <input type="text" class="form-control"
-                                                            :value="getDestinationCode(form.routing_information.destination_airport)" />
-                                                    </td>
-                                                    <td class="editable-cell">
-                                                        <input type="text" class="form-control" />
-                                                    </td>
-                                                    <date-picker valueType="format"
-                                                        style=" width: 30px !important;"></date-picker>
-                                                    <!-- <Datepicker format="yyyy-MM-dd" class="small-datepicker mb-2">
-                                                    </Datepicker> -->
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </b-tab>
-                            </b-tabs>
-                        </div>
-                        <hr class="hr" />
-                        <div class="py-5">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="h-color font-weight-bolder ml-2 mb-0">
-                                    Consignment Rate Description
-                                </h4>
-                            </div>
-                            <b-button class="mt-5" v-b-modal.modal-consignment variant="warning" :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
-                            <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
-                                size="xl" ok-only hide-footer @hide="handleModalClose">
-                                <div class="d-block">
+                                                                        <has-error :form="form" field="to_3"></has-error>
+                                                                        <!-- </b-form-group> -->
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control" style="width: 60px"
+                                                                            v-model="form.routing_information.by_3"
+                                                                            :class="{ 'is-invalid': form.errors.has('by_3') }" />
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control" style="width: 90px"
+                                                                            v-model="form.routing_information.flight_3"
+                                                                            :class="{ 'is-invalid': form.errors.has('flight_3') }" />
+                                                                    </td>
+                                                                    <td class="editable-cell">
+                                                                        <input type="text" class="form-control" style="width: 70px"
+                                                                            v-model="form.routing_information.date_3"
+                                                                            :class="{ 'is-invalid': form.errors.has('date_3') }" />
+                                                                    </td>
+                                                                    <td class="editable-cell" style="width: 60px !important;">
+                                                                        <date-picker valueType="format"
+                                                                            style=" width: 30px !important;"
+                                                                            @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </b-col>
+                                            </b-row>
+                                        </b-tab>
+                                        <b-tab title="Search Flights">
+                                            <b-row>
+                                                <b-col cols="12">
+                                                    <div class="container d-flex align-items-center" style="background-color:#F2F9FF;color:#355594 !important;">
+                                                        <div style="width:160px !important;padding:5px">
+                                                            Carrier <span class="text-danger">*</span>
+                                                        </div>
+                                                        <div style="width:240px !important;padding:5px">
+                                                            Origin <span class="text-danger">*</span>
+                                                        </div>
+                                                        <div style="width:150px !important;padding:5px">
+                                                            Destination <span class="text-danger">*</span>
+                                                        </div>
+                                                        <div style="width:100px !important;padding:5px">
+                                                            Flight Date <span class="text-danger">*</span>
+                                                        </div>
+                                                    </div>
+                                                </b-col>
+                                            </b-row>
+                                            <b-row>
+                                                <b-col cols="12">
+                                                    <div class="container d-flex align-items-center mt-6">
+                                                        <div class="editable-cell" style="padding:5px">
+                                                            <input type="text" class="form-control" style="width:150px !important;" />
+                                                        </div>
+                                                        <div class="editable-cell" style="padding:5px">
+                                                            <input type="text" class="form-control" style="width:230px !important;"
+                                                                :value="getOriginCode(form.routing_information.departure_airport)" />
+                                                        </div>
+                                                        <div class="editable-cell" style="padding:5px">
+                                                            <input type="text" class="form-control" style="width:140px !important;"
+                                                                :value="getDestinationCode(form.routing_information.destination_airport)" />
+                                                        </div>
+                                                        <div class="editable-cell" style="padding:5px">
+                                                            <input type="text" class="form-control" style="width:70px !important;" />
+                                                        </div>
+                                                        <date-picker valueType="format"
+                                                            style=" width: 30px !important;"></date-picker>
+                                                    </div>
+                                                </b-col>
+                                            </b-row>
+                                        </b-tab>
+                                    </b-tabs>
+                                </div>
+                                <hr class="hr" />
+
+                                <div class="py-5">
                                     <b-row>
-                                        <!-- First Column -->
-                                        <b-col cols="6">
-                                            <h6>Pieces and Nature and Quantity of Goods</h6>
-                                            <div class="bg-light pl-2">
-                                                <label for="">Pieces</label>
-                                                <b-form-input id="input-departure-airport" class="form-control-sm"
-                                                    v-model="consignment_list.pieces" :class="{ 'is-invalid': consignment_list.errors.has('pieces') }"></b-form-input>
-                                                    <has-error :form="consignment_list" field="pieces"></has-error>
-                                                <label for="">Description</label>
-                                                <b-form-textarea
-                                                    style="grid-column: span 2 !important;width: 100% !important;"
-                                                    id="textarea" rows="3" max-rows="6"
-                                                    v-model="consignment_list.description" :class="{ 'is-invalid': consignment_list.errors.has('description') }"></b-form-textarea>
-                                                    <has-error :form="consignment_list" field="description"></has-error>
-                                                <table class="table table-sm">
-                                                    <tbody>
-                                                        <tr>
-                                                            <th>Rate Class:</th>
-                                                            <th>ULD Rate class:</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style="width: 320px;"
-                                                                    v-model="consignment_list.rate_class" @change="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate_class') }">
-                                                                    <option value="">Select a Rate Class
-                                                                    </option>
-                                                                    <option value="B">CB - Basic rate</option>
-                                                                    <option value="C">CC - Specific commodity rate
-                                                                    </option>
-                                                                    <option value="E">CE - Unit load device additional
-                                                                        rate</option>
-                                                                    <option value="K"> CK - Rate per kilogram</option>
-                                                                    <option value="M">CM - Minimum charge</option>
-                                                                    <option value="N">CN - Normal rate</option>
-                                                                    <option value="P">CP - International priority
-                                                                        service rate</option>
-                                                                    <option value="Q">CQ - Quantity rate</option>
-                                                                    <option value="R">CR - Class rate reduction</option>
-                                                                    <option value="S">CS - Class rate surcharge</option>
-                                                                    <option value="U"> CU - Unit load device basic
-                                                                        charge or rate</option>
-                                                                    <option value="X">CX - Unit load device additional
-                                                                        info</option>
-                                                                    <option value="Y">CY - Unit load device discount
-                                                                    </option>
-                                                                    <option value="Z">CZ - Mutually Defined</option>
-                                                                </b-form-select>
-                                                                <has-error :form="consignment_list" field="rate_class"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 170px;"
-                                                                    v-model="consignment_list.uld_rate_class" :class="{ 'is-invalid': consignment_list.errors.has('uld_rate_class') }"/>
-                                                                    <has-error :form="consignment_list" field="uld_rate_class"></has-error>
-                                                            </td>
-                                                        </tr>
-                                                        <tr v-if="consignment_list.rate_class">
-                                                            <td colspan="4" class="editable-cell">
-                                                                <div
-                                                                    class="d-flex justify-content-end align-items-center">
-                                                                    <span class="mr-2">Charge:</span>
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 170px;"
-                                                                        v-model="calculatedCharge" />
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Service code</th>
-                                                            <th>Commodity Item</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style="width: 320px;"
-                                                                    v-model="consignment_list.service_code" :class="{ 'is-invalid': consignment_list.errors.has('service_code') }">
-                                                                    <option value="">Select a Service Code
-                                                                    </option>
-                                                                    <option value="A">A - Airport to Airport</option>
-                                                                    <option value="B">B - Service Cargo</option>
-                                                                    <option value="C">C - Company Material</option>
-                                                                    <option value="D">D - Door to Door</option>
-                                                                    <option value="E">E - Airport to Door</option>
-                                                                    <option value="F">F - Flight Specific</option>
-                                                                    <option value="G">G - Door to Airport</option>
-                                                                    <option value="H">H - Company Mail</option>
-                                                                    <option value="I">I - Diplomatic Mail</option>
-                                                                    <option value="J">J - Priority Service</option>
-                                                                    <option value="P">P - Small Package Service
-                                                                    </option>
-                                                                    <option value="R">R - Restricted</option>
-                                                                    <option value="S">S - Substitue Truck</option>
-                                                                    <option value="T">T - Charter</option>
-                                                                    <option value="X">X - Express Service</option>
-                                                                </b-form-select>
-                                                                <has-error :form="consignment_list" field="service_code"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 170px;"
-                                                                    v-model="consignment_list.commodity_item" :class="{ 'is-invalid': consignment_list.errors.has('commodity_item') }"/>
-                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>
-                                                                Country Of Origin of Goods
-                                                            </th>
-                                                            <th>Slac:</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style=" width: 320px;"
-                                                                    v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
-                                                                    <option value=""> Select a Country</option>
-                                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                                        {{ country.text }}
-                                                                    </option>
-                                                                </b-form-select>
-                                                                <has-error :form="consignment_list" field="country_origin_goods"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 170px;"
-                                                                    v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
-                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Hs Codes:</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell"
-                                                                style="display: flex;align-items: center;">
-                                                                <b-form-input type="text" class="form-control"
-                                                                    style="width: 170px;margin-right: 10px;"
-                                                                    v-model="consignment_list.hs_code" :class="{ 'is-invalid': hs_code_error.length > 0 }"></b-form-input>
-                                                                <button @click="addHsCode">Add</button>
-                                                            </td>
-                                                            <div v-if="hs_code_error.length" class="text-danger">
-                                                                <ul  style="list-style-type: none; padding-left: 0;font-size: 10px;">
-                                                                    <li>Warning:</li>
-                                                                    <li v-for="(error, index) in hs_code_error" :key="index">{{ error }}</li>
-                                                                </ul>
-                                                            </div>
-                                                        </tr>
-                                                        <tr class="h_background_color">
-                                                            <th>HS Codes</th>
-                                                        </tr>
-                                                        <tr v-for="(code, index) in consignment_list.hsCodes"
-                                                            :key="index">
-                                                            <td class="editable-cell"
-                                                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                                <span> {{ code }} </span>
-                                                                <b-icon icon="trash" font-scale="1"
-                                                                    @click="removeHsCode(index)"
-                                                                    style="cursor: pointer;"></b-icon>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </b-col>
-
-                                        <!-- Second Column -->
-                                        <b-col cols="6">
-                                            <h6>Weight and Dimensions</h6>
-                                            <div class="bg-light pl-2">
-                                                <table class="table table-sm">
-                                                    <tbody>
-                                                        <tr>
-                                                            <th>Gross Weight</th>
-                                                            <th></th>
-                                                            <th> Chargeable Weight</th>
-                                                            <th>Rate</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 70px;"
-                                                                    v-model="consignment_list.gross_weight" :class="{ 'is-invalid': consignment_list.errors.has('gross_weight') }" />
-                                                                    <has-error :form="consignment_list" field="uld_serial"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <b-form-select class="form-control"
-                                                                    style=" width: 70px;"
-                                                                    v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
-                                                                    <option value="KGM">Kgs</option>
-                                                                    <option value="LBR">Lbs</option>
-                                                                </b-form-select>
-                                                                <has-error :form="consignment_list" field="weight_code"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control" style="width: 70px;" v-model="consignment_list.chargable_weight" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
-                                                                <has-error :form="consignment_list" field="chargable_weight"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control" style=" width: 100px;" v-model="consignment_list.rate" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
-                                                                <has-error :form="consignment_list" field="rate"></has-error>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Pcs</th>
-                                                            <th>Wgt</th>
-                                                            <th>Length</th>
-                                                            <th>Width</th>
-                                                            <th>Height</th>
-                                                            <th>Unit</th>
-                                                            <th></th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100%;"
-                                                                    v-model="consignment_list.pcs" />
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100%;"
-                                                                    v-model="consignment_list.wgt" />
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100%;"
-                                                                    v-model="consignment_list.length" />
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100%;"
-                                                                    v-model="consignment_list.width" />
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input class="form-control"
-                                                                    style="width: 100%;"
-                                                                    v-model="consignment_list.height" type="text" />
-                                                            </td>
-                                                            <td class="editable-cell" style="width: 100%;">
-                                                                <b-form-select class="form-control" style="width: 100%;"
-                                                                    v-model="consignment_list.unit">
-                                                                    <option value="CMT">CMT</option>
-                                                                    <option value="INH">INH</option>
-                                                                    <option value="FOT">FOT</option>
-                                                                </b-form-select>
-                                                            </td>
-                                                            <td class="editable-cell"><button
-                                                                    @click="addPcsInfo">Add</button></td>
-                                                        </tr>
-                                                        <tr v-if="validationErrors.length > 0">
-                                                            <td colspan="7">
-                                                                <div class="text-danger">
-                                                                    <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
-                                                                        <li>Warning:</li>
-                                                                        <li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li>
-                                                                    </ul>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr class="h_background_color">
-                                                            <th>Pcs</th>
-                                                            <th>Wgt</th>
-                                                            <th>Length</th>
-                                                            <th>Width</th>
-                                                            <th>Height</th>
-                                                            <th>Unit</th>
-                                                        </tr>
-                                                        <tr v-for="(row, index) in consignment_list.itemss"
-                                                            :key="index">
-                                                            <td class="editable-cell">{{ row.pcs }}</td>
-                                                            <td class="editable-cell">{{ row.wgt }} {{ consignment_list.weight_code }}</td>
-                                                            <td class="editable-cell">{{ row.length }}</td>
-                                                            <td class="editable-cell">{{ row.width }}</td>
-                                                            <td class="editable-cell">{{ row.height }}</td>
-                                                            <td class="editable-cell"
-                                                                style="display: flex;align-items: center;justify-content: space-between;width: 100%;">
-                                                                <span class="mr-3">{{ row.unit }}</span>
-                                                                <b-icon icon="trash" font-scale="1"
-                                                                    @click="deletePcs(index)"></b-icon>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                                <h6>Volume</h6>
-                                                <b-row class="justify-content-end">
-                                                    <b-col cols="auto">
-                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                            content-cols-sm content-cols-lg="auto"
-                                                            label-for="input-horizontal"
-                                                            class="form-control-sm col-form-label">
-                                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                                style="width: 80px"
-                                                                v-model="consignment_list.volume"></b-form-input>
-                                                        </b-form-group>
-                                                    </b-col>
-                                                    <b-col cols="auto">
-                                                        <b-form-select class="form-control"
-                                                            style="width:70px;margin-right: 10px;"
-                                                            v-model="this.form.entries.dimention_unit">
-                                                            <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
-                                                            <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
-                                                            <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
-                                                            <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
-                                                        </b-form-select>
-                                                    </b-col>
-                                                </b-row>
-                                            </div>
-                                            <h5 class="mt-5 mb-2">ULD Information</h5>
-                                            <div class="bg-light">
-                                                <table class="table table-sm">
-                                                    <tbody>
-                                                        <tr>
-                                                            <th>ULD Type:</th>
-                                                            <th>ULD Serial:</th>
-                                                            <th>Owner:</th>
-                                                            <th></th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100px;"
-                                                                    v-model="consignment_list.uld_type" />
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100px;"
-                                                                    v-model="consignment_list.uld_serial" />
-                                                                <!-- <has-error :form="form" field="uld_serial"></has-error> -->
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 100px;"
-                                                                    v-model="consignment_list.owner" />
-                                                            </td>
-                                                            <td class="editable-cell"><button
-                                                                    @click="addUldInfo">Add</button></td>
-                                                        </tr>
-                                                        <tr v-if="uld_error.length" style="color: red;">
-                                                            <td colspan="4">
-                                                                <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
-                                                                    <li>Warning:</li>
-                                                                    <li v-for="(error, index) in uld_error" :key="index">{{ error }}</li>
-                                                                </ul>
-                                                            </td>
-                                                        </tr>
-                                                        <tr class="h_background_color">
-                                                            <th>ULD Type:</th>
-                                                            <th>ULD Serial:</th>
-                                                            <th>Owner:</th>
-                                                            <th></th>
-                                                        </tr>
-                                                        <tr v-for="(row, index) in consignment_list.uld_infos"
-                                                            :key="index">
-                                                            <td class="editable-cell">{{ row.uld_type }}</td>
-                                                            <td class="editable-cell">{{ row.uld_serial }}</td>
-                                                            <td class="editable-cell">{{ row.owner }}</td>
-                                                            <td class="editable-cell"
-                                                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                                <b-icon icon="trash" font-scale="1"
-                                                                    @click="deleteUldInfo(index)"></b-icon>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                        <b-col cols="12">
+                                            <div class="d-flex align-items-center mb-6">
+                                                <div class="mr-4"><h6>Consignment Rate Description</h6></div>
+                                                <div class="ml-4">
+                                                    <b-button class="btn" v-b-modal.modal-consignment :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
+                                                </div>
                                             </div>
                                         </b-col>
                                     </b-row>
-                                    <div class="d-flex justify-content-end">
-                                        <button class="btn btn-secondary" @click="addOrUpdateEntry">
-                                            {{ edit_entry_index !== null ? 'Update' : 'Add' }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </b-modal>
-
-                            <div class="d-flex flex-column align-items-center mb-5 mt-5">
-                                <div class="">
-                                    <table class="table-bordered mx-auto table-sm">
-                                        <thead>
-                                            <tr class="h_background_color" style="font-size: 10px">
-                                                <th class="form-control1">Pcs.</th>
-                                                <th class="form-control1">Description</th>
-                                                <th>Srv. Code</th>
-                                                <th class="form-control1">Com. Itm.</th>
-                                                <th class="form-control1">Gross Wgt.</th>
-                                                <th class="form-control1">Chrg. Wgt.</th>
-                                                <th class="form-control1">Rate</th>
-                                                <th class="form-control1" style="width:100px;">Detailed Pcs. Info</th>
-                                                <th class="form-control1">Vol</th>
-                                                <th class="form-control1">Rate Class</th>
-                                                <th class="form-control1">UID Rate Class</th>
-                                                <th class="form-control1">Charge</th>
-                                                <th class="form-control1">HS Code</th>
-                                                <th class="form-control1">Origin Country</th>
-                                                <th class="form-control1">UID information</th>
-                                                <th class="form-control1">Slac</th>
-                                                <th class="form-control1"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(entry, index) in form.entries" :key="index">
-                                                <!-- Table data -->
-                                                <td>{{ entry.pieces }}</td>
-                                                <td>{{ entry.description }}</td>
-                                                <td>{{ entry.service_code }}</td>
-                                                <td>{{ entry.commodity_item }}</td>
-                                                <td>{{ entry.gross_weight }}, {{ entry.weight_code }}</td>
-                                                <td>{{ entry.chargable_weight }}</td>
-                                                <td>{{ entry.rate }}</td>
-                                                <td>
-                                                    <div v-for="(pcs, pcsIndex) in entry.itemss" :key="pcsIndex"
-                                                        class="mb-1">
-                                                        {{ pcs.pcs }}-{{ pcs.wgt }}-{{ pcs.weight_code }}-{{
-                                                            pcs.length }}x{{ pcs.width }}x{{ pcs.height }}-{{ pcs.unit }}
-                                                    </div>
-                                                </td>
-                                                <!-- <td>{{ entry.pcs }}-{{ entry.gross_weight }}-{{ entry.weight_code }}-{{ entry.length }}x{{ entry.width }}x{{ entry.height }}-{{ entry.unit }}</td> -->
-                                                <td>{{ entry.volume }}</td>
-                                                <td>{{ entry.rate_class }}</td>
-                                                <td>{{ entry.uld_rate_class }}</td>
-                                                <td>{{ form.totals.total_amount }}</td>
-                                                <td>
-                                                    <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
-                                                        class="mb-1">
-                                                        {{ hs }}
-                                                    </div>
-                                                </td>
-                                                <td>{{ entry.country_origin_goods }}</td>
-                                                <td>
-                                                    <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
-                                                        class="mb-1">
-                                                        {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
-                                                    </div>
-                                                </td>
-                                                <td>{{ entry.slac }}</td>
-                                                <td class="d-flex align-items-center">
-                                                    <b-icon icon="pencil" font-scale="1" style="cursor: pointer;"
-                                                        @click="editEntry(index)" class="mr-2"></b-icon>
-                                                    <b-icon icon="trash" font-scale="1"
-                                                        @click="deleteEntry(index)"></b-icon>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="d-flex justify-content-end ml-auto mb-20">
-                                    <div class="d-flex align-items-center">
-                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-" >
-                                            <div class="d-flex align-items-center">
-                                                <label for="input-horizontal" class="mr-2 mb-0">Total Volume:</label>
-                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2" v-model="form.totals.total_volume"></b-form-input>
-                                                <b-form-select class="form-control-sm" v-model="form.totals.dimention_unit">
-                                                    <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
-                                                    <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
-                                                    <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
-                                                    <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
-                                                </b-form-select>
-                                            </div>
-                                            <div class="d-flex align-items-center">
-                                                <label for="input-horizontal" class="mr-2 mb-0" >Total Amount:</label>
-                                                <b-form-input id="input-horizontal" class="form-control-sm mr-2" :value="calculatedCharge"></b-form-input>
-                                            </div>
-                                            <div class="d-flex align-items-center">
-                                                <label for="input-horizontal1" class="mr-2 mb-3" >Master Pcs:*</label>
-                                                <b-form-input id="input-horizontal1" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_pcs"></b-form-input>
-                                            </div>
-                                            <div class="d-flex align-items-center">
-                                                <label for="input-horizontal2" class="mr-2 mb-0" >Master Weight:*</label>
-                                                <b-form-input id="input-horizontal2" class="form-control-sm mr-2 mt-2" v-model="form.totals.master_weight"></b-form-input>
-                                            </div>
-                                        </b-form-group>
-                                    </div>
-                                </div>
-                            </div>
-                            <b-form-checkbox size="sm" class="mt-2 text-bold justify-content-lg-start" id="agreed">As Agreed</b-form-checkbox>
-                        </div>
-                        <hr class="hr" />
-                        <div>
-                            <div class="py-md-9">
-                                <b-tabs content-class="mt-3">
-                                    <b-tab title="OSI" active>
-                                        <h5>Other Service Information:</h5>
-                                        <div class="py-7">
-                                            <b-form-textarea class=""
-                                                style=" grid-column: span 2 !important;width: 60% !important;"
-                                                id="textarea" rows="3" max-rows="6"
-                                                v-model="form.custom_origin.other_service_information"
-                                                :class="{ 'is-invalid': form.errors.has('other_service_information') }"></b-form-textarea>
-                                            <has-error :form="form" field="other_service_information"></has-error>
-                                        </div>
-                                    </b-tab>
-                                    <b-tab title="SSR">
-                                        <h5>Special Service Request:</h5>
-                                        <div class="py-7">
-                                            <b-form-textarea class=""
-                                                style="grid-column: span 2 !important;width: 60% !important;"
-                                                id="textarea" rows="3" max-rows="6"
-                                                v-model="form.custom_origin.special_service_request"
-                                                :class="{ 'is-invalid': form.errors.has('special_service_request') }"></b-form-textarea>
-                                            <has-error :form="form" field="special_service_request"></has-error>
-                                        </div>
-                                    </b-tab>
-                                    <b-tab title="Accounting Information">
-                                        <h5>Accounting Information:</h5>
-                                        <div class="py-7">
-                                            <b-form-textarea class=""
-                                                style="grid-column: span 2 !important;width: 60% !important;"
-                                                id="textarea" rows="3" max-rows="6"
-                                                v-model="form.custom_origin.accounting_information"
-                                                :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
-                                            <has-error :form="form" field="accounting_information"></has-error>
-                                            <!-- <b-form-checkbox size="sm" v-model="form.custom_origin.letter_credit">Letter Of
-                                                Credit</b-form-checkbox> -->
-                                                <label for="input-horizontal" class="mr-2 mt-2 mb-0" style="width: 150px">Letter Of Credit</label>
-                                                <b-form-select class="form-control-sm" v-model="form.custom_origin.letter_credit" style="width: 250px">
-                                                    <option value="CRN">Credit Card Number</option>
-                                                    <option value="CRD">Credit Card Expiry Date</option>
-                                                    <option value="CRI">Credit Card Issuance Name</option>
-                                                    <option value="GEN">General Information</option>
-                                                    <option value="GBL">Government Bill of Lading</option>
-                                                    <option value="STL">Mode of Settlement</option>
-                                                    <option value="RET">Return to Origin</option>
-                                                    <option value="SRN">Shipper’s Reference Number</option>
-                                                </b-form-select>
-                                        </div>
-                                    </b-tab>
-                                    <b-tab title="Shipment Reference Infomation">
-                                        <h4 class="h-color font-weight-bolder ml-2">Shipment Reference Information</h4>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            label="Shipment Reference Number:" class="form-control-sm col-form-label">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-14"
-                                                v-model="form.custom_origin.shipment_ref_no"
-                                                :class="{ 'is-invalid': form.errors.has('shipment_ref_no') }"></b-form-input>
-                                            <has-error :form="form" field="shipment_ref_no"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            label="Supplementary Shipment Information:"
-                                            class="form-control-sm col-form-label">
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                v-model="form.custom_origin.supplementary_shipment_info"
-                                                :class="{ 'is-invalid': form.errors.has('supplementary_shipment_info') }"></b-form-input>
-                                            <has-error :form="form" field="supplementary_shipment_info"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label ml-lg-30">
-                                            <b-form-input id="input-horizontal"
-                                                class="form-control-sm ml-lg-36 ml-sm-16 ml-md-16 ml-auto"
-                                                v-model="form.custom_origin.supplementary_shipment_info"></b-form-input>
-                                        </b-form-group>
-                                    </b-tab>
-                                    <b-tab title="Customs Origin">
-                                        <h5>Customs Origin Code:</h5>
-                                        <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label"
-                                            style="width: 350px">
-                                            <b-form-select class="form-control-sm" v-model="form.custom_origin.customs_origin_code">
-                                                <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
-                                                <option value="T2"> T2 - EC Goods not in free circulation </option>
-                                                <option value="TE"> TE - Goods in trade with Spain subject to duties </option>
-                                                <option value="TP"> TP - Goods in trade with Portugal subject to special duties</option>
-                                                <option value="TD"> TD - Goods already under formal transit procedure </option>
-                                                <option value="TF"> TF - Goods in trade between EC and Canary Islands </option>
-                                                <option value="C"> C - Goods in free circulation </option>
-                                                <option value="X"> X - Goods in free circulation with destination outside the EC
-                                                </option>
-                                            </b-form-select>
-                                        </b-form-group>
-                                    </b-tab>
-                                    <b-tab title="Agent Information">
-                                        <div class="container py-5">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <table class="table-bordered table-sm">
-                                                        <thead>
-                                                            <tr class="h_background_color">
-                                                                <th class="form-control1" style="width: 180px;">HAWB Agents Head Office</th>
-                                                                <th class="form-control1"></th>
-                                                                <th class="form-control1"></th>
-                                                            </tr>
-                                                        </thead>
+                                    <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
+                                        size="xl" ok-only hide-footer @hide="handleModalClose">
+                                        <b-row>
+                                            <!-- First Column -->
+                                            <b-col cols="6">
+                                                <h6 style="margin-bottom:15px;">Pieces and Nature and Quantity of Goods</h6>
+                                                <div class="">
+                                                    <label for="Pieces" style="margin-bottom:0px;">Pieces</label>
+                                                    <b-form-input id="input-departure-airport" class="form-control" style="width:80px !important;margin-bottom:10px;"
+                                                        v-model="consignment_list.pieces" :class="{ 'is-invalid': consignment_list.errors.has('pieces') }"></b-form-input>
+                                                        <has-error :form="consignment_list" field="pieces"></has-error>
+                                                    <label for="Description7"  style="margin-bottom:0px;">Description</label>
+                                                    <b-form-textarea style="height: 70px;width: 400px;margin-bottom:10px;" id="textarea"
+                                                        v-model="consignment_list.description" :class="{ 'is-invalid': consignment_list.errors.has('description') }"></b-form-textarea>
+                                                        <has-error :form="consignment_list" field="description"></has-error>
+                                                    <table class="table table-sm">
                                                         <tbody>
                                                             <tr>
-                                                                <td class="editable-cell">Name:*</td>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">Rate Class:</th>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">ULD Rate class:</th>
+                                                            </tr>
+                                                            <tr>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.ho_name" />
+                                                                    <b-form-select class="form-control" style="width: 250px;margin-bottom:10px;" v-model="consignment_list.rate_class" @change="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate_class') }">
+                                                                        <option value="">Select a Rate Class</option>
+                                                                        <option value="B">CB - Basic rate</option>
+                                                                        <option value="C">CC - Specific commodity rate</option>
+                                                                        <option value="E">CE - Unit load device additional rate</option>
+                                                                        <option value="K">CK - Rate per kilogram</option>
+                                                                        <option value="M">CM - Minimum charge</option>
+                                                                        <option value="N">CN - Normal rate</option>
+                                                                        <option value="P">CP - International priority service rate</option>
+                                                                        <option value="Q">CQ - Quantity rate</option>
+                                                                        <option value="R">CR - Class rate reduction</option>
+                                                                        <option value="S">CS - Class rate surcharge</option>
+                                                                        <option value="U">CU - Unit load device basic charge or rate</option>
+                                                                        <option value="X">CX - Unit load device additional info</option>
+                                                                        <option value="Y">CY - Unit load device discount</option>
+                                                                        <option value="Z">CZ - Mutually Defined</option>
+                                                                    </b-form-select>
+                                                                    <has-error :form="consignment_list" field="rate_class"></has-error>
+                                                                </td>
+                                                                <td class="editable-cell" style="margin-bottom:10px;">
+                                                                    <input type="text" class="form-control" style="width: 140px;" v-model="consignment_list.uld_rate_class" :class="{ 'is-invalid': consignment_list.errors.has('uld_rate_class') }"/>
+                                                                        <has-error :form="consignment_list" field="uld_rate_class"></has-error>
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-if="consignment_list.rate_class">
+                                                                <td colspan="4" class="editable-cell" style="margin-bottom:10px;">
+                                                                    <div
+                                                                        class="d-flex justify-content-end align-items-center">
+                                                                        <span class="mr-2">Charge:</span>
+                                                                        <input type="text" class="form-control" style="width: 140px;" :value="calculatedCharge" />
+                                                                    </div>
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="editable-cell">Address:*</td>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">Service code</th>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">Commodity Item</th>
+                                                            </tr>
+                                                            <tr>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.ho_address" />
+                                                                    <b-form-select class="form-control" style="width: 250px;margin-bottom:10px;" v-model="consignment_list.service_code" :class="{ 'is-invalid': consignment_list.errors.has('service_code') }">
+                                                                        <option value="">Select a Service Code</option>
+                                                                        <option value="A">A - Airport to Airport</option>
+                                                                        <option value="B">B - Service Cargo</option>
+                                                                        <option value="C">C - Company Material</option>
+                                                                        <option value="D">D - Door to Door</option>
+                                                                        <option value="E">E - Airport to Door</option>
+                                                                        <option value="F">F - Flight Specific</option>
+                                                                        <option value="G">G - Door to Airport</option>
+                                                                        <option value="H">H - Company Mail</option>
+                                                                        <option value="I">I - Diplomatic Mail</option>
+                                                                        <option value="J">J - Priority Service</option>
+                                                                        <option value="P">P - Small Package Service</option>
+                                                                        <option value="R">R - Restricted</option>
+                                                                        <option value="S">S - Substitue Truck</option>
+                                                                        <option value="T">T - Charter</option>
+                                                                        <option value="X">X - Express Service</option>
+                                                                    </b-form-select>
+                                                                    <has-error :form="consignment_list" field="service_code"></has-error>
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width: 140px;" v-model="consignment_list.commodity_item" :class="{ 'is-invalid': consignment_list.errors.has('commodity_item') }"/>
+                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="editable-cell">City:*</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 130px"
-                                                                        v-model="agent_information.ho_city" />
-                                                                </td>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">
+                                                                    Country Of Origin of Goods
+                                                                </th>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">Slac:</th>
                                                             </tr>
                                                             <tr>
-                                                                <td class="editable-cell">Post Code:</td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 130px"
-                                                                        v-model="agent_information.ho_pincode" />
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="editable-cell">State:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.ho_state" />
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="editable-cell">Country:* </td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-select class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.ho_country"  :class="{ 'is-invalid': form.errors.has('ho_country') }">
-                                                                        <option value="">Select a country</option>
+                                                                    <b-form-select class="form-control" style=" width: 250px;margin-bottom:10px;" v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
+                                                                        <option value=""> Select a Country</option>
                                                                         <option v-for="country in countries" :key="country.value" :value="country.value">
                                                                             {{ country.text }}
                                                                         </option>
                                                                     </b-form-select>
+                                                                    <has-error :form="consignment_list" field="country_origin_goods"></has-error>
+                                                                </td>
+                                                                <td class="editable-cell" style="margin-bottom:10px;">
+                                                                    <input type="text" class="form-control" style="width: 140px;" v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
+                                                                    <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="editable-cell"></td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-checkbox size="sm">Save Agents Head Office For Later Logins</b-form-checkbox>
-                                                                </td>
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">Hs Codes:</th>
                                                             </tr>
                                                             <tr>
-                                                                <td class="editable-cell">IATA:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.iata_agent_code" />
+                                                                <td class="editable-cell" style="display: flex;align-items: center;">
+                                                                    <b-form-input type="text" class="form-control" style="width: 140px;margin-right: 10px;margin-bottom:10px;" v-model="consignment_list.hs_code" :class="{ 'is-invalid': hs_code_error.length > 0 }"></b-form-input>
+                                                                    <button @click="addHsCode" style="margin-bottom:10px;border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button>
                                                                 </td>
+                                                                <div v-if="hs_code_error.length" class="text-danger">
+                                                                    <ul  style="list-style-type: none; padding-left: 0;font-size: 10px;">
+                                                                        <li>Warning:</li>
+                                                                        <li v-for="(error, index) in hs_code_error" :key="index">{{ error }}</li>
+                                                                    </ul>
+                                                                </div>
                                                             </tr>
-                                                            <tr>
-                                                                <td class="editable-cell">Cass:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.iata_agent_cass" />
-                                                                </td>
+                                                            <tr class="h_background_color">
+                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">HS Codes</th>
                                                             </tr>
-                                                            <tr>
-                                                                <td class="editable-cell"></td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-checkbox size="sm">Save IATA and Cass Information For Later Logins</b-form-checkbox>
+                                                            <tr v-for="(code, index) in consignment_list.hsCodes"
+                                                                :key="index">
+                                                                <td class="editable-cell"
+                                                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                                    <span> {{ code }} </span>
+                                                                    <b-icon icon="trash" font-scale="1"
+                                                                        @click="removeHsCode(index)"
+                                                                        style="cursor: pointer;"></b-icon>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <table class="table-bordered table-sm">
-                                                        <thead>
-                                                            <tr class="h_background_color">
-                                                                <th class="form-control1" style="width: 180px;">Override
-                                                                    Issuing Agent:</th>
-                                                                <th class="form-control1"></th>
-                                                                <th class="form-control1"></th>
-                                                            </tr>
-                                                        </thead>
+                                            </b-col>
+                                            <!-- Second Column -->
+                                            <b-col cols="6">
+                                                <h6 style="margin-bottom:25px;">Weight and Dimensions</h6>
+                                                <div class="">
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Gross Weight</th>
+                                                            <th></th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Chargeable Weight</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Rate</th>
+                                                        </tr>
                                                         <tbody>
                                                             <tr>
-                                                                <td class="editable-cell"> Agent Name: </td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_name" />
+                                                                <td class="editable-cell" style="margin-bottom:10px;">
+                                                                    <input type="text" class="form-control" style="width: 90px;" v-model="consignment_list.gross_weight" :class="{ 'is-invalid': consignment_list.errors.has('gross_weight') }" />
+                                                                    <has-error :form="consignment_list" field="uld_serial"></has-error>
+                                                                </td>
+                                                                <td class="editable-cell" style="margin-bottom:10px;">
+                                                                    <b-form-select class="form-control" style=" width: 65px;" v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
+                                                                        <option value="KGM">Kgs</option>
+                                                                        <option value="LBR">Lbs</option>
+                                                                    </b-form-select>
+                                                                    <has-error :form="consignment_list" field="weight_code"></has-error>
+                                                                </td>
+                                                                <td class="editable-cell" style="margin-bottom:10px;">
+                                                                    <input type="text" class="form-control" style="width: 115px;" v-model="consignment_list.chargable_weight" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
+                                                                    <has-error :form="consignment_list" field="chargable_weight"></has-error>
+                                                                </td>
+                                                                <td class="editable-cell" style="margin-bottom:10px;">
+                                                                    <input type="text" class="form-control" style=" width: 110px;" v-model="consignment_list.rate" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
+                                                                    <has-error :form="consignment_list" field="rate"></has-error>
                                                                 </td>
                                                             </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Pcs</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Wgt</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Length</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Width</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Height</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Unit</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;"></th>
+                                                        </tr>
+                                                        <tbody>
                                                             <tr>
-                                                                <td class="editable-cell"> Agent Address: </td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_address" />
+                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.pcs" />
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.wgt" />
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.length" />
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.width" />
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <input class="form-control" style="width:60px;" v-model="consignment_list.height" type="text" />
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <b-form-select class="form-control" style="width: 65px;background-position-x: right;" v-model="consignment_list.unit">
+                                                                        <option value="CMT">CMT</option>
+                                                                        <option value="INH">INH</option>
+                                                                        <option value="FOT">FOT</option>
+                                                                    </b-form-select>
+                                                                </td>
+                                                                <td class="editable-cell"><button @click="addPcsInfo" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
+                                                            </tr>
+                                                            <tr v-if="validationErrors.length > 0">
+                                                                <td colspan="7">
+                                                                    <div class="text-danger">
+                                                                        <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
+                                                                            <li>Warning:</li>
+                                                                            <li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li>
+                                                                        </ul>
+                                                                    </div>
                                                                 </td>
                                                             </tr>
-                                                            <tr>
-                                                                <td class="editable-cell"></td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 130px"
-                                                                        v-model="agent_information.agent_city" />
-                                                                </td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 130px"
-                                                                        v-model="agent_information.agent_pincode" />
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-sm">
+                                                        <tr style="background-color:#F2F9FF">
+                                                            <th style="color:#000000;font-weight:500;">Pcs</th>
+                                                            <th style="color:#000000;font-weight:500;">Wgt</th>
+                                                            <th style="color:#000000;font-weight:500;">Length</th>
+                                                            <th style="color:#000000;font-weight:500;">Width</th>
+                                                            <th style="color:#000000;font-weight:500;">Height</th>
+                                                            <th style="color:#000000;font-weight:500;">Unit</th>
+                                                        </tr>
+                                                        <tbody>
+                                                            <tr v-for="(row, index) in consignment_list.itemss"
+                                                                :key="index">
+                                                                <td class="editable-cell">{{ row.pcs }}</td>
+                                                                <td class="editable-cell">{{ row.wgt }} {{ consignment_list.weight_code }}</td>
+                                                                <td class="editable-cell">{{ row.length }}</td>
+                                                                <td class="editable-cell">{{ row.width }}</td>
+                                                                <td class="editable-cell">{{ row.height }}</td>
+                                                                <td class="editable-cell"
+                                                                    style="display: flex;align-items: center;justify-content: space-between;width: 100%;">
+                                                                    <span class="mr-3">{{ row.unit }}</span>
+                                                                    <b-icon icon="trash" font-scale="1"
+                                                                        @click="deletePcs(index)"></b-icon>
                                                                 </td>
                                                             </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table-sm">
+                                                        <tr>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Volume</th>
+                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;"></th>
+                                                        </tr>
+                                                        <tbody>
                                                             <tr>
-                                                                <td class="editable-cell">Issuing Signature:* </td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_issue_sign" />
+                                                                    <b-form-input id="input-horizontal" class="form-control" style="width: 80px" v-model="consignment_list.volume"></b-form-input>
+                                                                </td>
+                                                                <td class="editable-cell">
+                                                                    <b-form-select class="form-control" style="width:70px;background-position-x: right;" v-model="this.form.entries.dimention_unit">
+                                                                        <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
+                                                                        <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
+                                                                        <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
+                                                                        <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
+                                                                    </b-form-select>
                                                                 </td>
                                                             </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <h5 class="mt-10 mb-2" style="font-size:13px;font-weight: 500;">ULD Information</h5>
+                                                <div class="">
+                                                    <table class="table table-sm">
+                                                        <tbody>
                                                             <tr>
-                                                                <td class="editable-cell">Issuing Location Code:* </td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-agent_issue_loc_code"
-                                                                        class="form-control-sm col-form-label">
+                                                                <th style="font-size:13px;font-weight: 500;padding-bottom:0px;">ULD Type:</th>
+                                                                <th style="font-size:13px;font-weight: 500;padding-bottom:0px;">ULD Serial:</th>
+                                                                <th style="font-size:13px;font-weight: 500;padding-bottom:0px;">Owner:</th>
+                                                                <th></th>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="editable-cell pr-15">
+                                                                    <input type="text" class="form-control" style="width: 80px;" v-model="consignment_list.uld_type" />
+                                                                </td>
+                                                                <td class="editable-cell pr-15">
+                                                                    <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.uld_serial" />
+                                                                    <!-- <has-error :form="form" field="uld_serial"></has-error> -->
+                                                                </td>
+                                                                <td class="editable-cell pr-8">
+                                                                    <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.owner" />
+                                                                </td>
+                                                                <td class="editable-cell"><button @click="addUldInfo" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
+                                                            </tr>
+                                                            <tr v-if="uld_error.length" style="color: red;">
+                                                                <td colspan="4">
+                                                                    <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
+                                                                        <li>Warning:</li>
+                                                                        <li v-for="(error, index) in uld_error" :key="index">{{ error }}</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-sm">
+                                                        <tbody>
+                                                            <tr style="background-color:#F2F9FF;">
+                                                                <th style="color:000;font-size:13px;font-weight:500;">ULD Type:</th>
+                                                                <th style="color:000;font-size:13px;font-weight:500;">ULD Serial:</th>
+                                                                <th style="color:000;font-size:13px;font-weight:500;">Owner:</th>
+                                                                <th></th>
+                                                            </tr>
+                                                            <tr v-for="(row, index) in consignment_list.uld_info" :key="index">
+                                                                <td class="editable-cell">{{ row.uld_type }}</td>
+                                                                <td class="editable-cell">{{ row.uld_serial }}</td>
+                                                                <td class="editable-cell">{{ row.owner }}</td>
+                                                                <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                                    <b-icon icon="trash" font-scale="1" @click="deleteUldInfo(index)"></b-icon>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </b-col>
+                                        </b-row>
+                                        <div class="d-flex justify-content-end">
+                                            <button class="btn btn-secondary" @click="addOrUpdateEntry">
+                                                {{ edit_entry_index !== null ? 'Update' : 'Add' }}
+                                            </button>
+                                        </div>
+                                    </b-modal>
+                                    <b-row>
+                                        <b-col cols="12">
+                                            <table class="table table-sm" style="max-width:100%">
+                                                <thead>
+                                                    <tr class="" style="background-color: #F2F9FF;">
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Pcs.</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Description</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;">Srv. Code</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Com. Itm.</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Gross Wgt.</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Chrg. Wgt.</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Rate</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Detailed Pcs. Info</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Vol.</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Rate Class</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">UID Rate Class</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Charge</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">HS Code</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Origin Country</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">UID information</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class="">Slac</th>
+                                                        <th style="font-size: 12px;font-weight: 500 !important;" class=""></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="(entry, index) in form.entries" :key="index">
+                                                        <!-- Table data -->
+                                                        <td>{{ entry.pieces }}</td>
+                                                        <td>{{ entry.description }}</td>
+                                                        <td>{{ entry.service_code }}</td>
+                                                        <td>{{ entry.commodity_item }}</td>
+                                                        <td>{{ entry.gross_weight }}, {{ entry.weight_code }}</td>
+                                                        <td>{{ entry.chargable_weight }}</td>
+                                                        <td>{{ entry.rate }}</td>
+                                                        <td>
+                                                            <div v-for="(pcs, pcsIndex) in entry.itemss" :key="pcsIndex"
+                                                                class="mb-1">
+                                                                {{ pcs.pcs }}-{{ pcs.wgt }}-{{ pcs.weight_code }}-{{
+                                                                    pcs.length }}x{{ pcs.width }}x{{ pcs.height }}-{{ pcs.unit }}
+                                                            </div>
+                                                        </td>
+                                                        <!-- <td>{{ entry.pcs }}-{{ entry.gross_weight }}-{{ entry.weight_code }}-{{ entry.length }}x{{ entry.width }}x{{ entry.height }}-{{ entry.unit }}</td> -->
+                                                        <td>{{ entry.volume }}</td>
+                                                        <td>{{ entry.rate_class }}</td>
+                                                        <td>{{ entry.uld_rate_class }}</td>
+                                                        <td>{{ form.totals.total_amount }}</td>
+                                                        <td>
+                                                            <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
+                                                                class="mb-1">
+                                                                {{ hs.hs_code }}
+                                                            </div>
+                                                        </td>
+                                                        <td>{{ entry.country_origin_goods }}</td>
+                                                        <td>
+                                                            <div v-for="(uld, uldIndex) in entry.uld_info" :key="uldIndex"
+                                                                class="mb-1">
+                                                                {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
+                                                            </div>
+                                                        </td>
+                                                        <td>{{ entry.slac }}</td>
+                                                        <td class="d-flex align-items-center">
+                                                            <b-icon icon="pencil" font-scale="1" style="cursor: pointer;"
+                                                                @click="editEntry(index)" class="mr-2"></b-icon>
+                                                            <b-icon icon="trash" font-scale="1"
+                                                                @click="deleteEntry(index)"></b-icon>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </b-col>
+                                    </b-row>
+                                    <b-row>
+                                        <b-col cols="12">
+                                            <div class="d-flex align-items-center justify-content-end mb-5 mt-5">
+                                                <b-row>
+                                                    <b-col cols="12" class="mr-28">
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                            content-cols-lg="auto" label-for="input-total-volumn"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex align-items-center justify-content-end" style="width:92px;">
+                                                                    <span>Total Volume:</span>
+                                                                </div>
+                                                            </template>
+                                                            <div class="d-flex align-items-center">
+                                                                <b-form-input id="input-total-volumn"
+                                                                    style="width:140px;"    
+                                                                    class="form-control" v-model="form.totals.total_volume"></b-form-input>
+                                                                <b-form-select 
+                                                                    style="width:60px;" 
+                                                                    label-cols-lg="auto" content-cols-sm
+                                                                    content-cols-lg="auto"
+                                                                    class="form-control ml-2" v-model="form.totals.dimention_unit">
+                                                                    <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
+                                                                    <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
+                                                                    <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
+                                                                    <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
+                                                                </b-form-select>
+                                                            </div>  
+                                                        </b-form-group>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                            content-cols-lg="auto" label-for="input-total-amount"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex align-items-center justify-content-end" style="width:92px;">
+                                                                    <span>Total Amount:</span>
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="input-total-amount"  style="width:140px;"  
+                                                                class="form-control" :value="calculatedCharge"></b-form-input>
+                                                        </b-form-group>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                            content-cols-lg="auto" label-for="input-master-pcs"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex align-items-center justify-content-end" style="width:92px;">
+                                                                    <span>Master Pcs:</span>
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="input-master-pcs" class="form-control"
+                                                                style="width:140px;"
+                                                                v-model="form.totals.master_pcs"></b-form-input>
+                                                        </b-form-group>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                            content-cols-lg="auto" label-for="input-master-weight"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex align-items-center justify-content-end" style="width:92px;">
+                                                                    <span>Master Weight:</span>
+                                                                    <span class="text-danger">&nbsp;</span>
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="input-master-weight" class="form-control"
+                                                                style="width:140px;"
+                                                                v-model="form.totals.master_weight"></b-form-input>
+                                                        </b-form-group>
+                                                    </b-col>
+                                                </b-row>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
+                                    <b-form-checkbox size="sm" class="mt-2 text-bold justify-content-lg-start" id="agreed">As Agreed</b-form-checkbox>
+                                </div>
+                                <hr class="hr" />
+                                <div>
+                                    <b-row>
+                                        <b-col cols="12">
+                                            <div class="mt-2 mb-10 ml-4 mr-4">
+                                                <h6 class="h-color mb-6">Customs Origin Code:</h6>
+                                                <b-form-group id="fieldset-horizontal" style="width: 450px">
+                                                    <b-form-select class="form-control" v-model="form.custom_origin.customs_origin_code">
+                                                        <option value="">Select another charge code</option>
+                                                        <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
+                                                        <option value="T2">T2 - EC Goods not in free circulation</option>
+                                                        <option value="TE">TE - Goods in trade with Spain subject to duties</option>
+                                                        <option value="TP">TP - Goods in trade with Portugal subject to special duties</option>
+                                                        <option value="TD">TD - Goods already under formal transit procedure</option>
+                                                        <option value="TF">TF - Goods in trade between EC and Canary Islands</option>
+                                                        <option value="C">C - Goods in free circulation</option>
+                                                        <option value="X">X - Goods in free circulation with destination outside the EC</option>
+                                                    </b-form-select>
+                                                </b-form-group>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
+                                    <hr class="hr" />
+                                    <b-row>
+                                        <b-col cols="12">
+                                            <b-tabs content-class="mt-3">
+                                                <b-tab title="OSI">
+                                                    <div class="ml-3 mt-8">
+                                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Service Information:</h6>
+                                                        <div class="py-7">
+                                                            <b-form-textarea class="" style="height:80px !important;width: 60% !important;" id="textarea"
+                                                                v-model="form.custom_origin.other_service_information"
+                                                                :class="{ 'is-invalid': form.errors.has('other_service_information') }"></b-form-textarea>
+                                                            <has-error :form="form" field="other_service_information"></has-error>
+                                                        </div>
+                                                    </div>
+                                                </b-tab>
+                                                <b-tab title="SSR">
+                                                        <div class="ml-3 mt-8">
+                                                            <h6 class="h-color" style="font-size: 15px;font-weight:500">Special Service Request:</h6>
+                                                            <div class="py-7">
+                                                                <b-form-textarea class="" style="height:80px !important;width: 60% !important;" id="textarea"
+                                                                    v-model="form.custom_origin.special_service_request"
+                                                                    :class="{ 'is-invalid': form.errors.has('special_service_request') }"></b-form-textarea>
+                                                                <has-error :form="form" field="special_service_request"></has-error>
+                                                            </div>
+                                                        </div>
+                                                </b-tab>
+                                                <b-tab title="Accounting Information">
+                                                    <div class="ml-3 mt-8">
+                                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Accounting Information:</h6>
+                                                        <div class="py-7">
+                                                            <b-form-textarea class=""
+                                                            style="height:80px !important;width: 60% !important;" id="textarea"
+                                                            v-model="form.custom_origin.accounting_information"
+                                                            :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
+                                                            <has-error :form="form" field="accounting_information"></has-error>
+                                                        </div>
+                                                        <label for="input-horizontal" class="mt-2 mb-0" style="width: 90px">Letter Of Credit</label>
+                                                        <b-form-select class="form-control-sm" v-model="form.custom_origin.letter_credit" style="width: 200px">
+                                                            <option value="CRN">Credit Card Number</option>
+                                                            <option value="CRD">Credit Card Expiry Date</option>
+                                                            <option value="CRI">Credit Card Issuance Name</option>
+                                                            <option value="GEN">General Information</option>
+                                                            <option value="GBL">Government Bill of Lading</option>
+                                                            <option value="STL">Mode of Settlement</option>
+                                                            <option value="RET">Return to Origin</option>
+                                                            <option value="SRN">Shipper’s Reference Number</option>
+                                                        </b-form-select>
+                                                    </div>
+                                                </b-tab>
+                                                <b-tab title="Shipment Reference Infomation">
+                                                    <div class="ml-3 mt-8">
+                                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Shipment Reference Information</h6>
+                                                        <div class="py-7">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <label style="width:230px;justify-content: end;display: flex;padding-right: 2px;">Shipment Reference Number:</label>
+                                                                <b-form-input style="width:300px;" id="input-horizontal" class="form-control"
+                                                                    v-model="form.custom_origin.shipment_ref_no"
+                                                                    :class="{ 'is-invalid': form.errors.has('shipment_ref_no') }"></b-form-input>
+                                                                <has-error :form="form" field="shipment_ref_no"></has-error>
+                                                            </div>
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <label style="width:230px;justify-content: end;display: flex;padding-right: 2px;">Supplementary Shipment Information:</label>
+                                                                <b-form-input style="width:200px;" id="input-horizontal" class="form-control" v-model="form.custom_origin.supplementary_shipment_info"
+                                                                :class="{ 'is-invalid': form.errors.has('supplementary_shipment_info') }"></b-form-input>
+                                                            <has-error :form="form" field="supplementary_shipment_info"></has-error>
+                                                            </div>
+                                                            <div class="d-flex align-items-center">
+                                                                <label style="width:230px;justify-content: end;display: flex;padding-right: 2px;">&nbsp;</label>
+                                                                <b-form-input style="width:200px;" id="input-horizontal" class="form-control" v-model="form.custom_origin.supplementary_shipment_info"></b-form-input>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </b-tab>
+                                                <b-tab title="Agent Information">
+                                                    <div class="ml-3 mt-8">
+                                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Agent information:</h6>
+                                                        <div class="py-7">
+                                                            <b-row>
+                                                                <b-col cols="6" class="align-items-center">
+                                                                    <div style="background-color: #F2F9FF;" class="mb-4">
+                                                                        <h6 class="h-color" style="padding:5px 20px;font-size: 15px;font-weight:500">HAWB Agent head office:</h6>
+                                                                    </div>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-name"
+                                                                        class="" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>Agent Name:</span>
+                                                                                <span class="text-danger">*</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input style="width: 315px;" id="input-name" class="form-control-lg"
+                                                                            v-model="agent_information.ho_name"></b-form-input>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-address"
+                                                                        class="" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>Agent Address:</span>
+                                                                                <span class="text-danger">*</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input style="width: 315px;" id="input-address" class="form-control-lg"
+                                                                            v-model="agent_information.ho_address"></b-form-input>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-city"
+                                                                        class="" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>City</span>
+                                                                                <span class="text-danger">*</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <div class="d-flex">
+                                                                            <b-form-input style="width: 150px;" id="input-city" class="form-control-sm mr-4"
+                                                                            v-model="agent_information.ho_city"></b-form-input>
+                                                                            <b-form-input style="width: 150px;" id="input-pincode" class="form-control-sm"
+                                                                                v-model="agent_information.ho_pincode"></b-form-input>
+                                                                        </div>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-state"
+                                                                        class="" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>State:</span>
+                                                                                <!-- <span class="text-danger">*</span> -->
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input style="width:315px" id="input-state" class="form-control-sm"
+                                                                            v-model="agent_information.ho_state"></b-form-input>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class=""
+                                                                        style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>Country:</span>
+                                                                                <span class="text-danger">*</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-select class="form-control"
+                                                                            style="width: 315px"
+                                                                            v-model="agent_information.ho_country"  :class="{ 'is-invalid': form.errors.has('ho_country') }">
+                                                                            <option value="">Select a country</option>
+                                                                            <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                                {{ country.text }}
+                                                                            </option>
+                                                                        </b-form-select>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class=""
+                                                                        style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>&nbsp;</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-checkbox size="sm">Save Agents Head Office For Later Logins</b-form-checkbox>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-iata-agent-code"
+                                                                        class="" style="margin-bottom: 4px !important;">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>IATA:</span>
+                                                                                <!-- <span class="text-danger">*</span> -->
+                                                                            </div>
+                                                                        </template>
+                                                                        <input type="text" id="input-iata-agent-code" class="form-control"
+                                                                            style="width: 150px"
+                                                                            v-model="agent_information.iata_agent_code" />
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-iata-agent-cass"
+                                                                        class="">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>Cass</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <input type="text" id="input-iata-agent-cass" class="form-control"
+                                                                            style="width: 150px"
+                                                                            v-model="agent_information.iata_agent_cass" />
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                        content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="">
+                                                                        <template #label>
+                                                                            <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                <span>&nbsp;</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-checkbox size="sm">Save IATA and Cass Information For Later Logins</b-form-checkbox>
+                                                                    </b-form-group>
+                                                                </b-col>
+                                                                <b-col cols="6" class="align-items-center">
+                                                                    <div style="background-color: #F2F9FF;" class="mb-4">
+                                                                        <h6 class="h-color" style="padding:5px 20px;font-size: 15px;font-weight:500">Override Issuing Agent:</h6>
+                                                                    </div>
+                                                                    <div class="mb-6">
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="input-agent-name"
+                                                                            class="" style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <span>Agent Name:</span>
+                                                                                    <!-- <span class="text-danger">*</span> -->
+                                                                                </div>
+                                                                            </template>
+                                                                            <b-form-input style="width: 315px;" id="input-agent-name" class="form-control-lg"
+                                                                                v-model="agent_information.agent_name"></b-form-input>
+                                                                        </b-form-group>
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="input-agent-address"
+                                                                            class="" style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <span>Agent Address:</span>
+                                                                                    <!-- <span class="text-danger">*</span> -->
+                                                                                </div>
+                                                                            </template>
+                                                                            <b-form-input style="width: 315px;" id="input-agent-address" class="form-control-lg"
+                                                                                v-model="agent_information.agent_address"></b-form-input>
+                                                                        </b-form-group>
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="input-agent-city"
+                                                                            class="" style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <!-- <span>City</span> -->
+                                                                                    <!-- <span class="text-danger">*</span> -->
+                                                                                </div>
+                                                                            </template>
+                                                                            <div class="d-flex">
+                                                                                <b-form-input style="width: 150px;" id="input-agent-city" class="form-control-sm mr-4"
+                                                                                v-model="agent_information.agent_city"></b-form-input>
+                                                                                <b-form-input style="width: 150px;" id="input-agent-pincode" class="form-control-sm"
+                                                                                    v-model="agent_information.agent_pincode"></b-form-input>
+                                                                            </div>
+                                                                        </b-form-group>
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="input-agent-issuing-signature" class=""
+                                                                            style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <span>Issuing Signature:</span>
+                                                                                    <span class="text-danger">*</span>
+                                                                                </div>
+                                                                            </template>
+                                                                            <input id="input-agent-issuing-signature" type="text" class="form-control"
+                                                                                style="width: 315px"
+                                                                                v-model="agent_information.agent_issue_sign" />
+                                                                        </b-form-group>
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="agent_issue_loc_code" class="">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <span>Issuing Location:</span>
+                                                                                    <span class="text-danger">*</span>
+                                                                                </div>
+                                                                            </template>
                                                                             <div class="custom-dropdown" ref="dropdownContainer_issue" @click="toggleDropdown_issuing_loc">
                                                                                 <input type="text" v-model="agent_information.agent_issue_loc_code" placeholder="Search location" id="agent_issue_loc_code" class="form-control" 
+                                                                                    style="width:315px;"
                                                                                     autocomplete="off" :class="{ 'is-invalid': form.errors.has('agent_issue_loc_code') }">
                                                                                 <div v-if="isDropdownOpen_issuing_loc && filteredLocations_issuing.length" class="dropdown-options">
                                                                                     <div v-for="(item, index) in filteredLocations_issuing" 
@@ -1588,1037 +1751,787 @@
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
-                                                                        <has-error :form="form" field="agent_issue_loc_code"></has-error>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-checkbox size="sm">Save information for
-                                                                        later logins</b-form-checkbox>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="editable-cell">Issuing Date:*</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_issue_date" />
-                                                                </td>
-                                                                <date-picker valueType="format"
-                                                                    style=" width: 30px !important;" @change="handleDateChange($event, 'agent_information.agent_issue_date')"></date-picker>
-                                                            </tr>
-                                                            <!-- <tr>
-                                                                <td class="editable-cell">Agent Account:</td>
-                                                                <td class="editable-cell">
-                                                                    <input type="text" class="form-control"
-                                                                        style="width: 150px"
-                                                                        v-model="agent_information.agent_account" />
-                                                                </td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-checkbox size="sm">Save information for
-                                                                        later logins</b-form-checkbox>
-                                                                </td>
-                                                            </tr> -->
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </b-tab>
-
-                                    <b-tab title="Also Notify">
-                                        <h4 class="h-color font-weight-bolder ml-2 mt-2"> Also Notify </h4>
-                                        <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-notify" class="form-control-sm col-form-label">
-                                                <div class="custom-dropdown" ref="dropdownContainer_alsoNotify" @click="toggleDropdown_alsoNotify">
-                                                    <input type="text" v-model="form.also_notify_address.also_name" placeholder="Search address" id="also_notify" class="form-control" autocomplete="off"
-                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"
-                                                    @input="filteralsoNotify" @focus="toggleDropdown_alsoNotify(true)" @blur="closeDropdown_alsoNotify" />
-
-                                                    <div v-if="isDropdownOpen_alsoNotify && filteredAlsoNotify.length" class="dropdown-options">
-                                                        <div v-for="(also_notify, index) in filteredAlsoNotify" :key="also_notify.id" @click.stop="selectAlsoNotifyA(also_notify)" class="option">
-                                                            {{ also_notify.name }}
+                                                                        </b-form-group>
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class=""
+                                                                            style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <span>&nbsp;</span>
+                                                                                </div>
+                                                                            </template>
+                                                                            <b-form-checkbox size="sm">Save information for later logins</b-form-checkbox>
+                                                                        </b-form-group>
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                                            content-cols-sm content-cols-lg="auto" label-for="input-agent-issuing-date" class=""
+                                                                            style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div style="width:150px;" class="d-flex align-items-center justify-content-end">
+                                                                                    <span>Issuing Date:</span>
+                                                                                    <span class="text-danger">*</span>
+                                                                                </div>
+                                                                            </template>
+                                                                            <div class="d-flex">
+                                                                                <input id="input-agent-issuing-date" type="text" class="form-control mr-2"
+                                                                                    style="width: 150px"
+                                                                                    v-model="agent_information.agent_issue_date" />
+                                                                                <date-picker valueType="format"
+                                                                                    style=" width: 30px !important;" @change="handleDateChange($event, 'agent_information.agent_issue_date')"></date-picker>
+                                                                            </div>
+                                                                        </b-form-group>
+                                                                    </div>
+                                                                </b-col>
+                                                            </b-row>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <has-error :form="form" field="also_name"></has-error>
-                                            </b-form-group>
-                                            <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
-                                        </div>
-                                        <div class="d-flex align-items-center mt-5">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label mr-3" label="">
-                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
-                                                    v-model="form.also_notify_address.also_name"
-                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"></b-form-input>
-                                                <has-error :form="form" field="also_name"></has-error>
-                                            </b-form-group>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Address:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-15"
-                                                style="width: 220px" v-model="form.also_notify_address.also_address"
-                                                :class="{ 'is-invalid': form.errors.has('also_address') }"></b-form-input>
-                                            <has-error :form="form" field="also_address"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-31"
-                                                style="width: 220px" v-model="form.also_notify_address.also_address_line_2"
-                                                :class="{ 'is-invalid': form.errors.has('also_address_line_2') }"></b-form-input>
-                                            <has-error :form="form" field="also_address_line_2"></has-error>
-                                        </b-form-group>
-                                        <div class="d-flex align-items-center mt-1">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                class="form-control-sm col-form-label" label="City:">
-                                                <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                    v-model="form.also_notify_address.also_city"
-                                                    :class="{ 'is-invalid': form.errors.has('also_city') }"></b-form-input>
-                                                <has-error :form="form" field="also_city"></has-error>
-                                            </b-form-group>
-                                            <b-form-input id="input-horizontal" class="form-control-sm"
-                                                style="width: 50px" v-model="form.also_notify_address.also_airport_code"
-                                                :class="{ 'is-invalid': form.errors.has('also_airport_code') }"></b-form-input>
-                                            <has-error :form="form" field="also_airport_code"></has-error>
-                                        </div>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Post Code:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-11"
-                                                v-model="form.also_notify_address.also_post_code"
-                                                :class="{ 'is-invalid': form.errors.has('also_post_code') }"></b-form-input>
-                                            <has-error :form="form" field="also_post_code"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="State:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-20"
-                                                v-model="form.also_notify_address.also_state"
-                                                :class="{ 'is-invalid': form.errors.has('also_state') }"></b-form-input>
-                                            <has-error :form="form" field="also_state"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-s
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3 mb-3" label="Country:">
-                                            <b-form-select class="form-control-sm ml-lg-15" style="width: 220px"
-                                                v-model="form.also_notify_address.also_country"
-                                                :class="{ 'is-invalid': form.errors.has('also_country') }">
-                                                <option disabled value=""> Please select one</option>
-                                                <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                    {{ country.text }}
-                                                </option>
-                                            </b-form-select>
-                                            <has-error :form="form" field="also_country"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Phone:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-17"
-                                                v-model="form.also_notify_address.also_phone"
-                                                :class="{ 'is-invalid': form.errors.has('also_phone') }"></b-form-input>
-                                            <has-error :form="form" field="also_phone"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Fax:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-22"
-                                                v-model="form.also_notify_address.also_fax"
-                                                :class="{ 'is-invalid': form.errors.has('also_fax') }"></b-form-input>
-                                            <has-error :form="form" field="also_fax"></has-error>
-                                        </b-form-group>
-                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                            content-cols-lg="auto" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mr-3" label="Telex:">
-                                            <b-form-input id="input-horizontal" class="form-control-sm ml-lg-19"
-                                                v-model="form.also_notify_address.also_telex"></b-form-input>
-                                        </b-form-group>
+                                                </b-tab>
+                                                <b-tab title="Also Notify">
+                                                    <div class="ml-3 mt-8">
+                                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Also Notify</h6>
+                                                        <div class="py-7">
+                                                            <b-row>
+                                                                <b-col cols="auto">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-notify"
+                                                                            class="align-items-center" style="margin-bottom:4px !important;">
+                                                                            <template #label>
+                                                                                <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                    <span>Name:</span>
+                                                                                </div>
+                                                                            </template>
+                                                                            <div class="align-items-center custom-dropdown mr-4" ref="dropdownContainer_alsoNotify" @click="toggleDropdown_alsoNotify">
+                                                                                <input style="width: 315px" type="text" v-model="form.also_notify_address.also_name" placeholder="Search name" id="also_notify" class="form-control" autocomplete="off"
+                                                                                :class="{ 'is-invalid': form.errors.has('also_name') }"
+                                                                                @input="filteralsoNotify" @focus="toggleDropdown_alsoNotify(true)" @blur="closeDropdown_alsoNotify" />
 
-                                        <b-form-checkbox size="sm" class="ml-lg-35"
-                                            v-model="form.is_also_notify_address_save"> Save new address to address
-                                            book</b-form-checkbox>
-                                    </b-tab>
-                                    <!-- <b-tab title="Exta Print Information">
-                                        <h5> Extra information printed on House Way Bill (Only printed - not saved or sent to Airlines):</h5>
-                                        <b-form-textarea class=""
-                                            style="grid-column: span 2 !important;width: 60% !important;" id="textarea"
-                                            rows="3" max-rows="6" v-model="form.custom_origin.extra_print"></b-form-textarea>
-                                    </b-tab> -->
-                                </b-tabs>
-                            </div>
-                        </div>
-                        <hr class="hr" />
-                        <div class="py-7">
-                            <b-tabs>
-                                <b-tab title="Payment Information" active style="background-color: white !important">
-                                    <div>
-                                        <b-row>
-                                            <b-col cols="7">
-                                                <b-row class="justify-content-center mt-5">
-                                                    <b-col>
-                                                        <b-col cols="auto">
-                                                            <div class="d-flex align-items-center mt-1">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    label-cols-lg="auto" content-cols-sm
-                                                                    content-cols-lg="auto" label-for="input-horizontal"
-                                                                    class="form-control-sm col-form-label mr-3 mb-3"
-                                                                    label="Type Of Payment:*">
-                                                                    <b-form-select class="form-control-sm ml-lg-15"
-                                                                        style="width: 220px;"
-                                                                        v-model="form.payment_info.type_of_payment">
-                                                                        <option disabled value=""> Please select one
-                                                                        </option>
-                                                                        <option value=""> Please select one</option>
-                                                                        <option value="CC">CA - Partial collect credit - partial prepaid cash</option>
-                                                                        <option value="CC">CB - Partial collect credit - partial prepaid credit</option>
-                                                                        <option value="CC">CC - All charges collect</option> <!-- CC -->
-                                                                        <option value="CC">CG - All Charges collect by GBL</option>
-                                                                        <option value="CC">CP - Destination collect cash</option>
-                                                                        <option value="CC">CX - Destination collect credit</option>
-                                                                        <option value="CP">NC - Service rate. No charge</option>
-                                                                        <option value="PP">PC - Partial prepaid cash - partial collect cash</option>
-                                                                        <option value="PP">PD - Partial prepaid credit - partial collect cash</option>
-                                                                        <option value="PP">PG - All charges prepaid by GBL</option>
-                                                                        <option value="PP">PP - All charges prepaid cash</option><!-- PP -->
-                                                                        <option value="PP">PX - All charges prepaid credit</option>
-                                                                        <!-- <option value="C">All Charges Collect CC</option>
-                                                                        <option value="P">All Charges Prepaid Cash PP</option> -->
-                                                                    </b-form-select>
-                                                                </b-form-group>
-                                                                <label class="ml-3 mt-4 mb-5 mr-5">Currency:</label>
-                                                                <b-form-input id="input-horizontal"
-                                                                    class="form-control-sm" style="width: 50px;"
+                                                                                <div v-if="isDropdownOpen_alsoNotify && filteredAlsoNotify.length" class="dropdown-options">
+                                                                                    <div v-for="(also_notify, index) in filteredAlsoNotify" :key="also_notify.id" @click.stop="selectAlsoNotifyA(also_notify)" class="option">
+                                                                                        {{ also_notify.name }}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <has-error :form="form" field="also_name"></has-error>
+                                                                        </b-form-group>
+                                                                        <b-form-checkbox size="sm">Letter Of Credit</b-form-checkbox>
+                                                                    </div>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>&nbsp;</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input style="width: 315px" id="input-horizontal" class="form-control"
+                                                                            v-model="form.also_notify_address.also_name"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_name') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_name"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>Address:</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input id="input-horizontal" class="form-control-sm"
+                                                                            style="width: 315px" v-model="form.also_notify_address.also_address"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_address') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_address"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>&nbsp;</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input id="input-horizontal" class="form-control"
+                                                                            style="width: 315px" v-model="form.also_notify_address.also_address_line_2"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_address_line_2') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_address_line_2"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>City:</span>
+                                                                                <span class="text-danger">*</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <div class="d-flex align-items-center">
+                                                                            <b-form-input id="input-horizontal" class="form-control mr-5" style="width: 250px"
+                                                                                v-model="form.also_notify_address.also_city"
+                                                                                :class="{ 'is-invalid': form.errors.has('also_city') }"></b-form-input>
+                                                                            <b-form-input id="input-horizontal" class="form-control"
+                                                                                style="width: 50px" v-model="form.also_notify_address.also_airport_code"
+                                                                                :class="{ 'is-invalid': form.errors.has('also_airport_code') }"></b-form-input>
+                                                                        </div>
+                                                                        <has-error :form="form" field="also_city"></has-error>
+                                                                        <has-error :form="form" field="also_airport_code"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-also-post"
+                                                                        class="align-items-center" style="margin-bottom: 4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>Post Code:</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input id="input-also-post" class="form-control" style="width: 315px"
+                                                                            v-model="form.also_notify_address.also_post_code"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_post_code') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_post_code"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-also-state"
+                                                                        class="align-items-center" style="margin-bottom: 4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>State:</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input id="input-horizontal" class="form-control" style="width: 315px"
+                                                                            v-model="form.also_notify_address.also_state"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_state') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_state"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom: 4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>Country:</span>
+                                                                                <span class="text-danger">*</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-select class="form-control" style="width: 315px"
+                                                                            v-model="form.also_notify_address.also_country"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_country') }">
+                                                                            <option value="">Please select one</option>
+                                                                            <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                                {{ country.text }}
+                                                                            </option>
+                                                                        </b-form-select>
+                                                                        <has-error :form="form" field="also_country"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom: 4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>Phone:</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input id="input-horizontal" class="form-control" style="width:315px;"
+                                                                            v-model="form.also_notify_address.also_phone"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_phone') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_phone"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>Fax:</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input style="width:315px;" id="input-horizontal" class="form-control"
+                                                                            v-model="form.also_notify_address.also_fax"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_fax') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_fax"></has-error>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center" style="margin-bottom:4px !important;">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>Telex:</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-input style="width:315px;" id="input-horizontal" class="form-control"
+                                                                            v-model="form.also_notify_address.also_telex"></b-form-input>
+                                                                    </b-form-group>
+                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                                                        content-cols-lg="auto" label-for="input-horizontal"
+                                                                        class="align-items-center">
+                                                                        <template #label>
+                                                                            <div class="d-flex justify-content-end align-items-center" style="width:80px;">
+                                                                                <span>&nbsp;</span>
+                                                                            </div>
+                                                                        </template>
+                                                                        <b-form-checkbox size="sm" class="" v-model="form.is_also_notify_address_save"> Save new address to address book</b-form-checkbox>
+                                                                    </b-form-group>
+                                                                </b-col>
+                                                            </b-row>
+                                                        </div>
+                                                    </div>
+                                                </b-tab>
+                                            </b-tabs>
+                                        </b-col>
+                                    </b-row>
+                                </div>
+
+
+                                <hr class="hr" />
+                                
+                                <div class="py-7">
+                                    <b-tabs>
+                                        <b-tab title="Payment Information">
+                                            <div class="ml-3 mt-8">
+                                                <b-row>
+                                                    <b-col cols="6">
+                                                        <div class="d-flex align-items-center" style="justify-content: space-between;">
+                                                            <b-form-group id="fieldset-horizontal"
+                                                                label-cols-lg="auto" content-cols-sm
+                                                                content-cols-lg="auto" label-for="input-horizontal"
+                                                                class="" style="margin-bottom: 4px !important;">
+                                                                <template #label>
+                                                                    <div class="d-flex text-align-center justify-content-end" style="width:105px;">
+                                                                        <span>Type Of Payment:</span>
+                                                                        <!-- <span class="text-danger">*</span> -->
+                                                                    </div>
+                                                                </template>
+                                                                <b-form-select class="form-control"
+                                                                    style="width: 210px;"
+                                                                    v-model="form.payment_info.type_of_payment">
+                                                                    <option disabled value="">Please select one</option>
+                                                                    <option value="">Please select one</option>
+                                                                    <option value="CC">CA - Partial collect credit - partial prepaid cash</option>
+                                                                    <option value="CC">CB - Partial collect credit - partial prepaid credit</option>
+                                                                    <option value="CC">CC - All charges collect</option> <!-- CC -->
+                                                                    <option value="CC">CG - All Charges collect by GBL</option>
+                                                                    <option value="CC">CP - Destination collect cash</option>
+                                                                    <option value="CC">CX - Destination collect credit</option>
+                                                                    <option value="CP">NC - Service rate. No charge</option>
+                                                                    <option value="PP">PC - Partial prepaid cash - partial collect cash</option>
+                                                                    <option value="PP">PD - Partial prepaid credit - partial collect cash</option>
+                                                                    <option value="PP">PG - All charges prepaid by GBL</option>
+                                                                    <option value="PP">PP - All charges prepaid cash</option><!-- PP -->
+                                                                    <option value="PP">PX - All charges prepaid credit</option>
+                                                                    <!-- <option value="C">All Charges Collect CC</option>
+                                                                    <option value="P">All Charges Prepaid Cash PP</option> -->
+                                                                </b-form-select>
+                                                            </b-form-group>
+                                                            <b-form-group id="fieldset-horizontal"
+                                                                label-cols-lg="auto" content-cols-sm
+                                                                content-cols-lg="auto" label-for="input-currency"
+                                                                class="" style="margin-bottom: 4px !important;">
+                                                                <template #label>
+                                                                    <div class="d-flex text-align-center justify-content-end" style="width:105px;">
+                                                                        <span>Currency:</span>
+                                                                        <span class="text-danger">*</span>
+                                                                    </div>
+                                                                </template>
+                                                                <b-form-input id="input-currency"
+                                                                    class="form-control-sm" style="width: 60px;"
                                                                     v-model="form.payment_info.currency"
                                                                     :class="{ 'is-invalid': form.errors.has('currency') }"></b-form-input>
                                                                 <has-error :form="form" field="currency"></has-error>
-                                                            </div>
-                                                            <label class="ml-3 mt-5 mb-5">Declared Values For:</label>
+                                                            </b-form-group>
+                                                        </div>
 
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                                content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-horizontal" label="Carriage :"
-                                                                class="form-control-sm col-form-label mr-3">
-                                                                <b-form-input id="input-horizontal"
-                                                                    class="form-control-sm ml-lg-31 mt-3"
-                                                                    style=" width: 220px;"
-                                                                    v-model="form.payment_info.declear_value_carriage"></b-form-input>
-                                                            </b-form-group>
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                                content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-horizontal"
-                                                                class="form-control-sm col-form-label mr-3"
-                                                                label="Customs :">
-                                                                <b-form-input id="input-horizontal"
-                                                                    class="form-control-sm ml-lg-31 mt-3"
-                                                                    style="width: 220px;"
-                                                                    v-model="form.payment_info.declear_value_customs"></b-form-input>
-                                                            </b-form-group>
-                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                                content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-horizontal" label="Insurance:"
-                                                                class="form-control-sm col-form-label mr-3">
-                                                                <b-form-input id="input-horizontal"
-                                                                    class="form-control-sm ml-lg-30 mt-3"
-                                                                    style="width: 220px;"
-                                                                    v-model="form.payment_info.declear_value_insurance"></b-form-input>
-                                                            </b-form-group>
-                                                        </b-col>
+                                                        <label class="ml-3 mt-3 mb-2">Declared Values For:</label>
+
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                            content-cols-sm content-cols-lg="auto"
+                                                            label-for="input-carriage"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex text-align-center justify-content-end" style="width:105px;">
+                                                                    <span>Carriage:</span>
+                                                                    <!-- <span class="text-danger">*</span> -->
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="input-carriage"
+                                                                class="form-control"
+                                                                style=" width: 210px;"
+                                                                v-model="form.payment_info.declear_value_carriage"></b-form-input>
+                                                        </b-form-group>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                            content-cols-sm content-cols-lg="auto"
+                                                            label-for="input-custom"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex text-align-center justify-content-end" style="width:105px;">
+                                                                    <span>Customs:</span>
+                                                                    <!-- <span class="text-danger">*</span> -->
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="input-custom"
+                                                                class="form-control"
+                                                                style="width: 210px;"
+                                                                v-model="form.payment_info.declear_value_customs"></b-form-input>
+                                                        </b-form-group>
+                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                            content-cols-sm content-cols-lg="auto"
+                                                            label-for="input-insurance"
+                                                            class="">
+                                                            <template #label>
+                                                                <div class="d-flex text-align-center justify-content-end" style="width:105px;">
+                                                                    <span>Insurance:</span>
+                                                                    <!-- <span class="text-danger">*</span> -->
+                                                                </div>
+                                                            </template>
+                                                            <b-form-input id="input-insurance"
+                                                                class="form-control"
+                                                                style="width: 210px;"
+                                                                v-model="form.payment_info.declear_value_insurance"></b-form-input>
+                                                        </b-form-group>
+                                                    </b-col>
+                                                    <b-col cols="6">
+                                                        <div class="d-flex justify-content-end">
+                                                            <table class="table table-sm">
+                                                                <thead>
+                                                                    <tr class="" style="background: #F2F9FF">
+                                                                        <th style="color:#4C4C4C;font-weight:400;font-size:12px;padding: 5px;">Code</th>
+                                                                        <th style="color:#4C4C4C;font-weight:400;font-size:12px;padding: 5px;">Prepaid</th>
+                                                                        <th style="color:#4C4C4C;font-weight:400;font-size:12px;padding: 5px;width:100px;">Collect</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td class="editable-cell">Weight Charge (WT)</td>
+                                                                        <!-- <td class="editable-cell">0.00 INR</td>
+                                                                        <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td> -->
+                                                                        <!-- <td class="editable-cell">{{ isPrepaid ? weightCharge.toFixed(2) : '0.00' }} INR</td>
+                                                                        <td class="editable-cell">{{ isPrepaid ? '0.00' : weightCharge.toFixed(2) }} INR</td> -->
+                                                                        <td class="editable-cell">{{ totalCharges.prepaid }} INR</td>
+                                                                        <td class="editable-cell">{{ totalCharges.collect }} INR</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="editable-cell">Taxes (TX)</td>
+                                                                        <td class="editable-cell">{{ taxes.toFixed(2) }} INR</td>
+                                                                        <td class="editable-cell">0.00 INR</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="editable-cell">Other Charges Due Agent (OA)</td>
+                                                                        <td class="editable-cell">{{ totalDueAgentPrepaid }} INR
+                                                                        </td>
+                                                                        <td class="editable-cell">{{ totalDueAgentCollect }} INR
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="editable-cell">Other Charges Due Carrier (OC)
+                                                                        </td>
+                                                                        <td class="editable-cell">{{ totalDueCarrierPrepaid }} INR
+                                                                        </td>
+                                                                        <td class="editable-cell">{{ totalDueCarrierCollect }} INR
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="editable-cell">Total Charges</td>
+                                                                        <td class="editable-cell">{{ totalChargesPrepaid }} INR</td>
+                                                                        <td class="editable-cell">{{ totalChrage }} INR</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </b-col>
                                                 </b-row>
-                                            </b-col>
-                                            <b-col cols="5">
-                                                <table class="table-bordered ml-auto table-sm m-5">
-                                                    <thead>
-                                                        <tr class="h_background_color">
-                                                            <th>Charges Summary</th>
-                                                            <th>Prepaid</th>
-                                                            <th>Collect</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="editable-cell">Weight Charge (WT)</td>
-                                                            <!-- <td class="editable-cell">0.00 INR</td>
-                                                            <td class="editable-cell">{{ weightCharge.toFixed(2) }} INR</td> -->
-                                                            <!-- <td class="editable-cell">{{ isPrepaid ? weightCharge.toFixed(2) : '0.00' }} INR</td>
-                                                            <td class="editable-cell">{{ isPrepaid ? '0.00' : weightCharge.toFixed(2) }} INR</td> -->
-                                                            <td class="editable-cell">{{ totalCharges.prepaid }} INR</td>
-                                                            <td class="editable-cell">{{ totalCharges.collect }} INR</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">Taxes (TX)</td>
-                                                            <td class="editable-cell">{{ taxes.toFixed(2) }} INR</td>
-                                                            <td class="editable-cell">0.00 INR</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">Other Charges Due Agent (OA)</td>
-                                                            <td class="editable-cell">{{ totalDueAgentPrepaid }} INR
-                                                            </td>
-                                                            <td class="editable-cell">{{ totalDueAgentCollect }} INR
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">Other Charges Due Carrier (OC)
-                                                            </td>
-                                                            <td class="editable-cell">{{ totalDueCarrierPrepaid }} INR
-                                                            </td>
-                                                            <td class="editable-cell">{{ totalDueCarrierCollect }} INR
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="editable-cell">Total Charges</td>
-                                                            <td class="editable-cell">{{ totalChargesPrepaid }} INR</td>
-                                                            <td class="editable-cell">{{ totalChrage }} INR</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </b-col>
-                                        </b-row>
-                                    </div>
-                                </b-tab>
-                                <b-tab title="Other Charges">
-                                    <div class="container h_background_color text-white pt-2 pb-2">
-                                        <div class="row">
-                                            <div class="col text-left">
-                                                <h4>Code</h4>
-                                            </div>
-                                            <div class="col text-left">
-                                                <h4>Amount In INR</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <b-row>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-group id="fieldset-horizontal" class="form-control-sm col-form-label mt-2">
-                                                <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }">
-                                                    <option value="">Select an Other Charge Code</option>
-                                                    <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
-                                                        {{ charge.text }}
-                                                    </option>
-                                                </b-form-select>
-                                                <has-error :form="form" field="other_charge_code"></has-error>
-                                            </b-form-group>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-input class="form-control-sm" v-model="other_charges.other_code"
-                                                    placeholder="or:"></b-form-input>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-input class="form-control-sm"
-                                                    v-model="other_charges.amount"></b-form-input>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="due" size="sm" v-model="other_charges.due" value="A">Due
-                                                    Agent</b-form-radio>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="due" size="sm" v-model="other_charges.due"
-                                                    value="C">Due Carrier</b-form-radio>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
-                                                    value="P">Prepaid</b-form-radio>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
-                                                    value="C">Collect</b-form-radio>
-                                            </b-form-group>
-                                        </b-col>
-                                        <b-col cols="auto">
-                                            <b-form-group id="fieldset-horizontal"
-                                                class="form-control-sm col-form-label mt-2">
-                                                <b-button class="bg-secondary form-control-sm px-5" @click="addCharge">
-                                                    {{ editIndex !== null ? 'Update' : 'Add' }}
-                                                </b-button>
-                                            </b-form-group>
-                                        </b-col>
-                                    </b-row>
-
-                                    <!-- Calculation Table always visible -->
-                                    <div class="d-flex flex-column align-items-start py-5">
-                                        <table class="table-bordered table-sm">
-                                            <thead>
-                                                <tr class="h_background_color">
-                                                    <th class="form-control1"> Calculate Charge </th>
-                                                    <th class="form-control1"></th>
-                                                    <th class="form-control1"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td class="editable-cell"> Chargeable Weight </td>
-                                                    <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 100px"
-                                                            v-model="other_charges.chargable_weight1" />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="editable-cell"> Charge </td>
-                                                    <td class="editable-cell">
-                                                        <input type="text" class="form-control" style="width: 100px"
-                                                            v-model="other_charges.charge" />
-                                                    </td>
-                                                    <td class="editable-cell mb-2">
-                                                        <b-button class="bg-secondary form-control-sm px-5"
-                                                            @click="calculateCharge">Calculate</b-button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- Charges Table -->
-                                    <table class="table-bordered table-sm">
-                                        <thead>
-                                            <tr class="h_background_color">
-                                                <th class="form-control1">Code</th>
-                                                <th class="form-control1">Due</th>
-                                                <th class="form-control1">Amount</th>
-                                                <th class="form-control1">Type Of Payment</th>
-                                                <th class="form-control1">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(charge, index) in form.charges" :key="index">
-                                                <td class="editable-cell">
-                                                    {{ charge.other_charge_code || charge.other_code }}
-                                                </td>
-                                                <td class="editable-cell">
-                                                    {{ charge.due }}
-                                                </td>
-                                                <td class="editable-cell">
-                                                    {{ charge.amount }}.00
-                                                </td>
-                                                <td class="editable-cell">
-                                                    {{ charge.payment_type }}
-                                                </td>
-                                                <td class="editable-cell">
-                                                    <b-button size="sm" @click="editCharge(index)">
-                                                        <b-icon icon="pencil" font-scale="1"></b-icon>
-                                                    </b-button>
-                                                    <b-button size="sm" @click="removeCharge(index)">
-                                                        <b-icon icon="trash"></b-icon>
-                                                    </b-button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    <hr class="hr" />
-
-                                </b-tab>
-                                <b-tab title="Special Handling Codes" style="background-color: white !important">
-                                    <div>
-                                        <b-row>
-                                            <b-col cols="auto">
-                                                <b-form-group id="fieldset-horizontal"
-                                                    class="form-control-sm col-form-label mt-2">
-                                                    <b-form-select class="form-control-sm" v-model="selectedCode"
-                                                        :class="{ 'is-invalid': form.errors.has('special_handling_code') }">
-                                                        <option disabled value="">Select Special Handling Codes</option>
-                                                        <option v-for="code in codes" :key="code.value"
-                                                            :value="code.value">{{ code.text }}</option>
-                                                    </b-form-select>
-                                                    <has-error :form="form" field="special_handling_code"></has-error>
-                                                </b-form-group>
-                                            </b-col>
-                                            or:
-                                            <b-col cols="auto">
-                                                <b-form-group id="fieldset-horizontal"
-                                                    class="form-control-sm col-form-label mt-2">
-                                                    <b-form-input id="input-horizontal"
-                                                        class="form-control-sm" v-model="custom_special_handling_code">or:</b-form-input>
-                                                </b-form-group>
-                                            </b-col>
-                                            <b-col cols="auto">
-                                                <b-form-group id="fieldset-horizontal"
-                                                    class="form-control-sm col-form-label mt-2">
-                                                    <b-button id="input-horizontal" class="form-control-sm"
-                                                        type="button" @click="addManualCode">Add</b-button>
-                                                </b-form-group>
-                                            </b-col>
-                                        </b-row>
-                                    </div>
-                                    <div class="d-flex flex-column align-items-start py-5">
-                                        <table class="table-bordered table-sm" style="width: 31%">
-                                            <thead>
-                                                <tr class="h_background_color">
-                                                        <td class="editable-cell">Code</td>
-                                                        <td class="editable-cell"></td>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="(code, index) in form.tableCodes" :key="index">
-                                                    <td class="editable-cell">{{ code }}</td>
-                                                    <td class="editable-cell"><b-icon icon="trash" font-scale="1"
-                                                        @click="deleteSplCode(index)"></b-icon>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </b-tab>
-                                <b-tab title="Other Customs Information" style="background-color: white !important">
-                                    <b-tabs class="mt-lg-5">
-                                        <b-tab title="Other Customs Information" class="mt-lg-7">
-                                            <div class="d-flex flex-column align-items-start py-5">
-                                                <table class="table-bordered table-sm" style="width: 100%">
-                                                    <thead>
-                                                        <tr class="h_background_color">
-                                                            <th class="form-control1">
-                                                                Country Code:
-                                                            </th>
-                                                            <th class="form-control1"> Information Identifier: </th>
-                                                            <th class="form-control1"> Customs Information Identifier
-                                                            </th>
-                                                            <th class="form-control1"></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label"
-                                                                    style="width: 350px;">
-                                                                    <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.country_code"
-                                                                        :class="{ 'is-invalid': form.errors.has('country_code') }">
-                                                                        <option value="">Select a country</option>
-                                                                        <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                                            {{ country.text }}
-                                                                        </option>
-                                                                    </b-form-select>
-                                                                    <has-error :form="form"
-                                                                        field="country_code"></has-error>
-                                                                </b-form-group>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label"
-                                                                    style="width: 350px;">
-                                                                    <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.info_identifier"
-                                                                        :class="{ 'is-invalid': form.errors.has('info_identifier') }">
-                                                                        <option disabled value="">Select a code</option>
-                                                                        <option value="ABI">ABI - AWB Amount Detail
-                                                                            Information</option>
-                                                                        <option value="ABS">ABS - AWB Supplementary
-                                                                            Information</option>
-                                                                        <option value="ABT">ABT - AWB Total Amount
-                                                                            Information</option>
-                                                                        <option value="ACC">ACC - Accounting Information
-                                                                        </option>
-                                                                        <option value="ACD">ACD - AWB Consignment
-                                                                            Details</option>
-                                                                        <option value="ACK">ACK - Reason for
-                                                                            Acknowledgement</option>
-                                                                        <option value="ACS">ACS - AWB Charge Summary
-                                                                        </option>
-                                                                        <option value="ADR">ADR - Street Address
-                                                                        </option>
-                                                                        <option value="AGT">AGT - Agent</option>
-                                                                        <option value="AID">AID - Arrival Information
-                                                                            Details</option>
-                                                                        <option value="AIR">AIR - Airline Header
-                                                                        </option>
-                                                                        <option value="ALA">ALA - Allotment Availability
-                                                                            Information</option>
-                                                                        <option value="ALI">ALI - Allotment Information
-                                                                        </option>
-                                                                        <option value="ALR">ALR - Allotment Remaining
-                                                                        </option>
-                                                                        <option value="ALT">ALT - Allotment Total
-                                                                        </option>
-                                                                        <option value="AMD">AMD - Amendment
-                                                                            Identification</option>
-                                                                        <option value="API">API - Air Waybill Piece
-                                                                            Information</option>
-                                                                        <option value="ARD">ARD - Agent Reference Data
-                                                                        </option>
-                                                                        <option value="ARI">ARI - AWB Recapitulation
-                                                                            Information</option>
-                                                                        <option value="ATH">ATH - Authorisation</option>
-                                                                        <option value="ATW">ATW - AWB Total Weight
-                                                                            Summary</option>
-                                                                        <option value="AUD">AUD - Allotment Used Details
-                                                                        </option>
-                                                                        <option value="AVS">AVS - Availability
-                                                                            Supplementary Details</option>
-                                                                        <option value="BGD">BGD - Baggage Detail
-                                                                            Information</option>
-                                                                        <option value="BGT">BGT - Baggage Tag
-                                                                            Identification</option>
-                                                                        <option value="BRK">BRK - Broker</option>
-                                                                        <option value="CAI">CAI - CCA/Adjustment
-                                                                            Information</option>
-                                                                        <option value="CAN">CAN - Customs Action
-                                                                            Notification</option>
-                                                                        <option value="CAS">CAS - CCA/Adjustment
-                                                                            Supplementary Information</option>
-                                                                        <option value="CBD">CBD - CASS Billing Details
-                                                                        </option>
-                                                                        <option value="CBI">CBI - CASS Billing
-                                                                            Information</option>
-                                                                        <option value="CBP">CBP - CASS Billing Period
-                                                                        </option>
-                                                                        <option value="CBR">CBR - Courier Baggage
-                                                                            Receiver</option>
-                                                                        <option value="CBS">CBS - Courier Baggage Sender
-                                                                        </option>
-                                                                        <option value="CBV">CBV - Courier Baggage
-                                                                            Voucher Identification</option>
-                                                                        <option value="CCD">CCD - Consignment Control
-                                                                            Details</option>
-                                                                        <option value="CCL">CCL - Cargo Control Location
-                                                                        </option>
-                                                                        <option value="CDC">CDC - CC Charges in
-                                                                            Destination Currency</option>
-                                                                        <option value="CDI">CDI - Charge Declarations
-                                                                        </option>
-                                                                        <option value="CER">CER - AWB Content
-                                                                            Certification</option>
-                                                                        <option value="CID">CID - Correction
-                                                                            Identification</option>
-                                                                        <option value="CIH">CIH - CASS Invoice Header
-                                                                            Details</option>
-                                                                        <option value="CIN">CIN - CASS Identification
-                                                                            Number</option>
-                                                                        <option value="CMI">CMI - Consignment Onward
-                                                                            Movement Information</option>
-                                                                        <option value="CND">CND - Customs Notification
-                                                                            Details</option>
-                                                                        <option value="CNE">CNE - Consignee</option>
-                                                                        <option value="COI">COI - Commission Information
-                                                                        </option>
-                                                                        <option value="COL">COL - Collect Charge Summary
-                                                                        </option>
-                                                                        <option value="COM">COM - Embargoed Commodities
-                                                                        </option>
-                                                                        <option value="COR">COR - Customs Origin
-                                                                        </option>
-                                                                        <option value="CRD">CRD - Carrier Reference Data
-                                                                        </option>
-                                                                        <option value="CRR">CRR - Embargo Carriage
-                                                                            Restrictions</option>
-                                                                        <option value="CTI">CTI - CCA/Adjustment Total
-                                                                            Information</option>
-                                                                        <option value="CTW">CTW - CCA/Adjustment Total
-                                                                            Weight Summary</option>
-                                                                        <option value="CUR">CUR - Currency Details
-                                                                        </option>
-                                                                        <option value="CUS">CUS - Customer
-                                                                            Identification</option>
-                                                                        <option value="CVD">CVD - Charge Declarations
-                                                                        </option>
-                                                                        <option value="CWI">CWI - CASS AWB Information
-                                                                        </option>
-                                                                        <option value="DAI">DAI - DGD Additional
-                                                                            Handling Information</option>
-                                                                        <option value="DAP">DAP - DGD “All Packed in
-                                                                            One” Indication</option>
-                                                                        <option value="DAT">DAT - DGD “All Packed in
-                                                                            One” Total</option>
-                                                                        <option value="DAU">DAU - DGD Item Authorisation
-                                                                        </option>
-                                                                        <option value="DCI">DCI - DGD Emergency Contact
-                                                                            Information</option>
-                                                                        <option value="DCL">DCL - Declarant</option>
-                                                                        <option value="DES">DES - Despatch Information
-                                                                        </option>
-                                                                        <option value="DHD">DHD - DGD Header Details
-                                                                        </option>
-                                                                        <option value="DII">DII - DGD Item Information
-                                                                        </option>
-                                                                        <option value="DIM">DIM - Dimensions Information
-                                                                        </option>
-                                                                        <option value="DNR">DNR - DGD Item Number
-                                                                        </option>
-                                                                        <option value="DOC">DOC - Documentation
-                                                                            Identification</option>
-                                                                        <option value="DOS">DOS - DGD Overpack Summary
-                                                                        </option>
-                                                                        <option value="DPI">DPI - DGD Item Packing Group
-                                                                            and Instructions</option>
-                                                                        <option value="DQP">DQP - DGD Item Quantity and
-                                                                            Type of Packing</option>
-                                                                        <option value="DRA">DRA - DGD Radioactive
-                                                                            Activity Information</option>
-                                                                        <option value="DRC">DRC - DGD Radioactive
-                                                                            Consignment Information</option>
-                                                                        <option value="DRP">DRP - DGD Radioactive
-                                                                            Packing Instructions</option>
-                                                                        <option value="DSN">DSN - DGD Item Shipping Name
-                                                                        </option>
-                                                                        <option value="DSU">DSU - DGD Signatory Details
-                                                                        </option>
-                                                                        <option value="DTN">DTN - Date/Time of
-                                                                            Notification</option>
-                                                                        <option value="EIC">EIC - Empty Equipment in
-                                                                            Compartment Information</option>
-                                                                        <option value="EXP">EXP - Export</option>
-                                                                        <option value="FLT">FLT - Flight Booking
-                                                                        </option>
-                                                                        <option value="FLT">FLT - Flight Information
-                                                                        </option>
-                                                                        <option value="GRI">GRI - Grand AWB
-                                                                            Recapitulation Information</option>
-                                                                        <option value="GTI">GTI - Grand Total
-                                                                            Information</option>
-                                                                        <option value="HAH">HAH - HWB Agent’s Head
-                                                                            Office</option>
-                                                                        <option value="HBS">HBS - House Waybill Summary
-                                                                            Details</option>
-                                                                        <option value="HCD">HCD - HWB Consignment
-                                                                            Details</option>
-                                                                        <option value="HDL">HDL - Handling Details
-                                                                        </option>
-                                                                        <option value="HLC">HLC - HWB Letter of Credit
-                                                                            Details</option>
-                                                                        <option value="HPI">HPI - House Waybill Piece
-                                                                            Information</option>
-                                                                        <option value="HTS">HTS - Harmonised Tariff
-                                                                            Schedule Information</option>
-                                                                        <option value="HWB">HWB - House Waybill</option>
-                                                                        <option value="IMP">IMP - Import</option>
-                                                                        <option value="ISS">ISS - The Regulated Agent
-                                                                            Issuing the Security Status for a
-                                                                            Consignment</option>
-                                                                        <option value="ISU">ISU - AWB Issue Details
-                                                                        </option>
-                                                                        <option value="ITA">ITA - Invoice Total Amount
-                                                                            Information</option>
-                                                                        <option value="ITW">ITW - Invoice Total Weight
-                                                                            Summary</option>
-                                                                        <option value="JST">JST - Embargo Justification
-                                                                        </option>
-                                                                        <option value="LOC">LOC - Location</option>
-                                                                        <option value="MAL">MAL - Mail</option>
-                                                                        <option value="MAT">MAT - Message Advice Type
-                                                                        </option>
-                                                                        <option value="MBI">MBI - Master Waybill
-                                                                            Identification</option>
-                                                                        <option value="MCH">MCH - Mail Consignment
-                                                                            Header</option>
-                                                                        <option value="MCT">MCT - Mail Consignment Total
-                                                                        </option>
-                                                                        <option value="MHU">MHU - Mail Handling Unit
-                                                                        </option>
-                                                                        <option value="MID">MID - Mail Inbound Data
-                                                                        </option>
-                                                                        <option value="MLI">MLI - Mail Label
-                                                                            Identification</option>
-                                                                        <option value="MOD">MOD - Mail Outbound Data
-                                                                        </option>
-                                                                        <option value="MPI">MPI - Movement Priority
-                                                                            Information</option>
-                                                                        <option value="MSD">MSD - Mail Status Details
-                                                                        </option>
-                                                                        <option value="MSU">MSU - Message Sequence and
-                                                                            ULD Origin</option>
-                                                                        <option value="MUD">MUD - Mail ULD Information
-                                                                        </option>
-                                                                        <option value="NAM">NAM - Name</option>
-                                                                        <option value="NBI">NBI - Net Billing
-                                                                            Information</option>
-                                                                        <option value="NEW">NEW - New Information
-                                                                        </option>
-                                                                        <option value="NFY">NFY - Also Notify</option>
-                                                                        <option value="NFY">NFY - Notify Name and
-                                                                            Address</option>
-                                                                        <option value="NNS">NNS - Net/Net Sales</option>
-                                                                        <option value="NOM">NOM - Nominated Handling
-                                                                            Party</option>
-                                                                        <option value="OCI">OCI - Other Customs,
-                                                                            Security and Regulatory Control Information
-                                                                        </option>
-                                                                        <option value="OLD">OLD - Original Information
-                                                                        </option>
-                                                                        <option value="OPI">OPI - Other Participant
-                                                                            Information</option>
-                                                                        <option value="OSI">OSI - Other Service
-                                                                            Information</option>
-                                                                        <option value="OSS">OSS - The Regulated Agent
-                                                                            Accepting the Security Status for a
-                                                                            Consignment Issued by Another RA</option>
-                                                                        <option value="OTH">OTH - Other Charges</option>
-                                                                        <option value="PAS">PAS - Passenger Information
-                                                                        </option>
-                                                                        <option value="PID">PID - Product Information
-                                                                        </option>
-                                                                        <option value="PPD">PPD - Prepaid Charge Summary
-                                                                        </option>
-                                                                        <option value="PRD">PRD - Planning Request
-                                                                            Details</option>
-                                                                        <option value="RCI">RCI - Recapitulation Amount
-                                                                            Information</option>
-                                                                        <option value="REC">REC - Receptacle Information
-                                                                        </option>
-                                                                        <option value="REF">REF - References</option>
-                                                                        <option value="RID">RID - Rate Information
-                                                                            Answer Details</option>
-                                                                        <option value="RIH">RIH - Rate Information
-                                                                            Answer Header</option>
-                                                                        <option value="RIR">RIR - Rate Information
-                                                                            Request Details</option>
-                                                                        <option value="RQD">RQD - Charge Calculation
-                                                                            Answer Details</option>
-                                                                        <option value="RQH">RQH - Charge Calculation
-                                                                            Request Header</option>
-                                                                        <option value="RQT">RQT - Charge Calculation
-                                                                            Answer Totals</option>
-                                                                        <option value="RQU">RQU - Charge Calculation
-                                                                            Request — ULD</option>
-                                                                        <option value="RQV">RQV - Charge Calculation
-                                                                            Request — Volume</option>
-                                                                        <option value="RTD">RTD - Rate Description
-                                                                        </option>
-                                                                        <option value="RTG">RTG - Routing</option>
-                                                                        <option value="RTI">RTI - Recapitulation Total
-                                                                            Information</option>
-                                                                        <option value="RTS">RTS - Embargo Routes/Areas
-                                                                        </option>
-                                                                        <option value="SAA">SAA - Schedule and
-                                                                            Availability Information Answer Details
-                                                                        </option>
-                                                                        <option value="SAR">SAR - Schedule and
-                                                                            Availability Information Request Details
-                                                                        </option>
-                                                                        <option value="SCI">SCI - Special Customs
-                                                                            Information</option>
-                                                                        <option value="SCS">SCS - Surface Charge Summary
-                                                                        </option>
-                                                                        <option value="SDI">SDI - Surface Delivery
-                                                                            Information</option>
-                                                                        <option value="SHP">SHP - Shipper</option>
-                                                                        <option value="SII">SII - Sales Incentive
-                                                                            Information</option>
-                                                                        <option value="SKH">SKH - Schedule Information
-                                                                            Answer Header</option>
-                                                                        <option value="SLC">SLC - Status List Criteria
-                                                                        </option>
-                                                                        <option value="SPH">SPH - Special Handling
-                                                                            Details</option>
-                                                                        <option value="SPI">SPI - Surface Pickup
-                                                                            Information</option>
-                                                                        <option value="SRA">SRA - Supplementary Rate
-                                                                            Information Answer Details</option>
-                                                                        <option value="SRI">SRI - Shipment Reference
-                                                                            Information</option>
-                                                                        <option value="SRR">SRR - Supplementary Rate
-                                                                            Information Request Details</option>
-                                                                        <option value="SSI">SSI - Supplementary Status
-                                                                            Information</option>
-                                                                        <option value="SSR">SSR - Special Service
-                                                                            Request</option>
-                                                                        <option value="STI">STI - Storage Information
-                                                                        </option>
-                                                                        <option value="STS">STS - Status Details
-                                                                        </option>
-                                                                        <option value="SVA">SVA - Surface Vehicle
-                                                                            Arrival Information</option>
-                                                                        <option value="SVD">SVD - Surface Vehicle
-                                                                            Departure Information</option>
-                                                                        <option value="SVL">SVL - Surface Vehicle Delay
-                                                                            Information</option>
-                                                                        <option value="SVN">SVN - Surface Vehicle Next
-                                                                            Information</option>
-                                                                        <option value="TAR">TAR - Total AWB
-                                                                            Recapitulation Information</option>
-                                                                        <option value="TCC">TCC - Total Collect Charges
-                                                                        </option>
-                                                                        <option value="TID">TID - Terminal
-                                                                            Identification</option>
-                                                                        <option value="TOT">TOT - Total Amount</option>
-                                                                        <option value="TRA">TRA - Transit</option>
-                                                                        <option value="TRN">TRN - Transfer/Transit
-                                                                            Information</option>
-                                                                        <option value="TXS">TXS - Tax Summary</option>
-                                                                        <option value="TXT">TXT - Free Text Description
-                                                                        </option>
-                                                                        <option value="UCI">UCI - ULD Connection
-                                                                            Information</option>
-                                                                        <option value="UDI">UDI - ULD Destination
-                                                                            Information</option>
-                                                                        <option value="UII">UII - ULD Inclusion
-                                                                            Information</option>
-                                                                        <option value="ULD">ULD - ULD Description
-                                                                        </option>
-                                                                        <option value="UMI">UMI - ULD Movement
-                                                                            Information</option>
-                                                                        <option value="UPI">UPI - Unique Piece
-                                                                            Information</option>
-                                                                        <option value="VCD">VCD - Void/Cancel Details
-                                                                        </option>
-                                                                        <option value="VOD">VOD - Vehicle Operator
-                                                                            Details</option>
-                                                                        <option value="WBD">WBD - Waybill Details
-                                                                        </option>
-                                                                        <option value="WBH">WBH - Waybill Header Details
-                                                                        </option>
-                                                                        <option value="WBI">WBI - Waybill Information
-                                                                        </option>
-                                                                        <option value="WBL">WBL - Waybill Details
-                                                                        </option>
-                                                                    </b-form-select>
-                                                                    <has-error :form="form"
-                                                                        field="info_identifier"></has-error>
-                                                        </b-form-group>
-                                                            </td>
-                                                            <td class="editable-cell">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label"
-                                                                    style="width: 350px;">
-                                                                    <b-form-select class="form-control-sm"
-                                                                        v-model="oci_info.custom_info_identifier"
-                                                                        :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
-                                                                        <option value="">Select a code</option>
-                                                                        <option v-for="oci_options in oci_data.oci_custom_info_identifier" 
-                                                                                :key="oci_options.value" :value="oci_options.value">
-                                                                            {{ oci_options.text }}
-                                                                        </option>
-                                                                    </b-form-select>
-                                                                    <has-error :form="form"
-                                                                        field="custom_info_identifier"></has-error>
-                                                                </b-form-group>
-                                                            </td>
-                                                        </tr>
-                                                        
-                                                        <tr>
-                                                            <td class="editable-cell px-5">Supplementary Information:
-                                                            </td>
-                                                            <td class="editable-cell px-4">
-                                                                <input type="text" class="form-control"
-                                                                    style="width: 330px;"
-                                                                    v-model="oci_info.supplementary_info"
-                                                                    :class="{ 'is-invalid': form.errors.has('supplementary_info') }" />
-                                                                <has-error :form="form"
-                                                                    field="supplementary_info"></has-error>
-                                                            </td>
-                                                            <td class="editable-cell"></td>
-                                                            <td class="editable-cell mb-2">
-                                                                <b-form-group id="fieldset-horizontal"
-                                                                    class="form-control-sm col-form-label mt-2">
-                                                                    <b-button class="bg-secondary form-control-sm px-5" @click="addOtherCustomInfo">
-                                                                        {{ editIndex !== null ? 'Update' : 'Add' }}
-                                                                    </b-button>
-                                                                </b-form-group>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                                <!-- </div> -->
-                                                <div class="mt-5 mb-5 pt-1 pb-1 px-4">
-
-                                                    <table class="table table-sm" style="width:100%;">
-                                                        <tbody>
-                                                            <tr>
-                                                                <th class="h_background_color"
-                                                                    style="width:100%;max-width: 100%">Other Customs
-                                                                    Information</th>
-                                                                <th></th>
-                                                                <th></th>
-                                                                <th></th>
-                                                                <th></th>
-                                                                <th></th>
-                                                            </tr>
-                                                            <tr v-for="(row, index) in form.oci_entries" :key="index">
-                                                                <td class="editable-cell">{{ row.country_code }}
-                                                                </td>
-                                                                <td class="editable-cell">{{ row.info_identifier }}
-                                                                </td>
-                                                                <td class="editable-cell">{{
-                                                                    row.custom_info_identifier }}</td>
-                                                                <td class="editable-cell">{{ row.supplementary_info
-                                                                    }}</td>
-                                                                <td class="editable-cell"
-                                                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                                    <b-icon icon="pencil" font-scale="1" class="mr-2" style="cursor: pointer;" @click="editOciInfo(index)"></b-icon>
-                                                                    <b-icon icon="trash" font-scale="1"
-                                                                        @click="deleteOciInfo(index)">
-                                                                    </b-icon>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
                                             </div>
                                         </b-tab>
-
-                                        <b-tab title="Other Customs Information Segment"
-                                            style="background-color: white !important;">
-                                            <div class="h_background_color mt-5 mb-5 pt-1 pb-1 px-4">
-                                                <h5 class="">Other Customs Information Segment</h5>
+                                        <b-tab title="Other Charges">
+                                            <div class="py-7">
+                                                <b-row>
+                                                    <b-col cols="12">
+                                                        <table class="table table-sm" style="max-width:100%;">
+                                                            <thead>
+                                                                <tr class="" style="background-color: #F2F9FF;">
+                                                                    <th class="mb-4" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 0px 0px 8px !important;">Code</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">&nbsp;</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">Amount In INR</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">&nbsp;</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">&nbsp;</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">&nbsp;</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">&nbsp;</th>
+                                                                    <th class=""style="font-size:12px;line-height:22px;font-weight:400;padding:0px !important;">&nbsp;</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td class="pt-5 editable-cell align-items-center" style="width:300px;">
+                                                                        <b-form-group id="fieldset-horizontal" class="d-flex align-items-center">
+                                                                            <b-form-select class="form-control" v-model="other_charges.other_charge_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }"> 
+                                                                                <option value="">Select an Other Charge Code</option>
+                                                                                <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
+                                                                                    {{ charge.text }}
+                                                                                </option>
+                                                                            </b-form-select>
+                                                                            <has-error :form="form" field="other_charge_code"></has-error>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell">
+                                                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-or" class="align-items-center">
+                                                                            <template #label>
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <span>Or:</span>
+                                                                                </div>
+                                                                            </template>
+                                                                            <b-form-input id="input-or" style="width:40px;" class="form-control" v-model="other_charges.other_code"></b-form-input>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell">
+                                                                        <b-form-group id="fieldset-horizontal" label-for="input-other-charge-amount"
+                                                                            class="align-items-center">
+                                                                            <b-form-input id="input-other-charge-amount" style="width:80px;" class="form-control"
+                                                                                v-model="other_charges.amount"></b-form-input>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell">
+                                                                        <b-form-group id="fieldset-horizontal"
+                                                                            class="align-items-center">
+                                                                            <b-form-radio name="due" size="sm" v-model="other_charges.due" value="A">Due Agent</b-form-radio>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell">
+                                                                        <b-form-group id="fieldset-horizontal"
+                                                                            class="align-items-center">
+                                                                            <b-form-radio name="due" size="sm" v-model="other_charges.due"
+                                                                                value="C">Due Carrier</b-form-radio>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell">
+                                                                        <b-form-group id="fieldset-horizontal"
+                                                                            class="align-items-center">
+                                                                            <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
+                                                                                value="P">Prepaid</b-form-radio>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell">
+                                                                        <b-form-group id="fieldset-horizontal"
+                                                                            class="align-items-center">
+                                                                            <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
+                                                                                value="C">Collect</b-form-radio>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                    <td class="pt-5 editable-cell align-items-center">
+                                                                        <b-form-group id="fieldset-horizontal"
+                                                                            class="align-items-center">
+                                                                            <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;"
+                                                                                class="form-control-sm px-5" @click="addCharge">
+                                                                                {{ editIndex !== null ? 'Update' : 'Add' }}
+                                                                            </b-button>
+                                                                        </b-form-group>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </b-col>
+                                                    <b-col cols="12">
+                                                        <!-- Calculation Table always visible -->
+                                                        <div class="d-flex align-items-start py-2">
+                                                            <table class="table table-sm">
+                                                                <thead>
+                                                                    <tr style="background-color: #F2F9FF;">
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 0px 0px 8px;">Calculated Charges</th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px;"></th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px;"></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td class="pt-5 editable-cell">Chargeable Weight</td>
+                                                                        <td class="pt-5 editable-cell">
+                                                                            <input type="text" class="form-control" style="width: 100px"
+                                                                                v-model="other_charges.chargable_weight1" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="editable-cell">Charge</td>
+                                                                        <td class="editable-cell">
+                                                                            <input type="text" class="form-control" style="width: 100px"
+                                                                                v-model="other_charges.charge" />
+                                                                        </td>
+                                                                        <td class="editable-cell mb-2">
+                                                                            <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="form-control-sm px-5"
+                                                                                @click="calculateCharge">Calculate</b-button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </b-col>
+                                                    <b-col cols="12">
+                                                        <div class="d-flex align-items-start py-8">
+                                                            <table class="">
+                                                                <thead>
+                                                                    <tr style="background-color: #F2F9FF;">
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;">Code</th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;">Due</th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;">Amount</th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;">Type Of Payment</th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;">Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr v-for="(charge, index) in form.charges" :key="index">
+                                                                        <td class="editable-cell" style="padding:0px 8px;">
+                                                                            {{ charge.other_charge_code || charge.other_code }}
+                                                                        </td>
+                                                                        <td class="editable-cell" style="padding:0px 8px;">
+                                                                            {{ charge.due }}
+                                                                        </td>
+                                                                        <td class="editable-cell" style="padding:0px 8px;">
+                                                                            {{ charge.amount }}.00
+                                                                        </td>
+                                                                        <td class="editable-cell" style="padding:0px 8px;">
+                                                                            {{ charge.payment_type }}
+                                                                        </td>
+                                                                        <td class="editable-cell">
+                                                                            <b-button size="sm" @click="editCharge(index)" style="background: none !important;border: 0px !important; border-radius: 0px !important; padding: 0px !important;">
+                                                                                <b-icon icon="pencil" font-scale="1"></b-icon>
+                                                                            </b-button>
+                                                                            <b-button size="sm" @click="removeCharge(index)" style="background: none !important;border: 0px !important; border-radius: 0px !important; padding: 0px !important;">
+                                                                                <b-icon icon="trash"></b-icon>
+                                                                            </b-button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </b-col>
+                                                </b-row>
                                             </div>
-                                            <div class="py-7 px-3 d-flex align-items-end">
-                                                <b-form-textarea style="width: 70% !important" id="textarea" rows="3"
-                                                    max-rows="6"></b-form-textarea>
-                                                <b-button class="ml-2">Upload</b-button>
+                                        </b-tab>
+                                        <b-tab title="Special Handling Codes" style="background-color: white !important">
+                                            <div class="py-7">
+                                                <b-row>
+                                                    <b-col cols="12">
+                                                        <div class="d-flex align-items-center pt-2 ml-3">
+                                                            <b-form-group id="fieldset-horizontal"
+                                                                class="">
+                                                                <b-form-select class="form-control" v-model="selectedCode"
+                                                                    style="width:420px;"
+                                                                    :class="{ 'is-invalid': form.errors.has('special_handling_code') }">
+                                                                    <option disabled value="">Select Special Handling Codes</option>
+                                                                    <option v-for="code in codes" :key="code.value"
+                                                                        :value="code.value">{{ code.text }}</option>
+                                                                </b-form-select>
+                                                                <has-error :form="form" field="special_handling_code"></has-error>
+                                                            </b-form-group>
+                                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
+                                                                label-for="input-shc-or"
+                                                                class="ml-2">
+                                                                <template #label>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <span>Or</span>
+                                                                    </div>
+                                                                </template>
+                                                                <b-form-input id="shc-or" style="width:60px;"
+                                                                    class="form-control" v-model="custom_special_handling_code"></b-form-input>
+                                                            </b-form-group>
+                                                            <b-form-group id="fieldset-horizontal"
+                                                                class="ml-6">
+                                                                <b-button id="input-horizontal" class="form-control-sm"
+                                                                    type="button" @click="addManualCode">Add</b-button>
+                                                            </b-form-group>
+                                                        </div>
+                                                    </b-col>
+                                                    <b-col cols="12">
+                                                        <div class="ml-3 mt-4">
+                                                            <table class="table" style="width:100%">
+                                                                <thead>
+                                                                    <tr style="background-color: #F2F9FF;">
+                                                                        <th class="editable-cell" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;">Code</th>
+                                                                        <th class="" style="font-size:12px;line-height:22px;font-weight:400;padding:0px 8px;width:20px;"></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr v-for="(code, index) in form.tableCodes" :key="index">
+                                                                        <td class="editable-cell">{{ code }}</td>
+                                                                        <td class="editable-cell"><b-icon icon="trash" font-scale="1"
+                                                                            @click="deleteSplCode(index)"></b-icon>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </b-col>
+                                                </b-row>
                                             </div>
+                                        </b-tab>
+                                        <b-tab title="Other Customs Information">
+                                            <b-row>
+                                                <b-col cols="12">
+                                                    <div class="ml-3 mt-2">
+                                                        <!-- <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Customs Information:</h6> -->
+                                                        <div class="d-flex align-items-start py-5">
+                                                            <table class="table table-sm" style="max-width: 100%">
+                                                                <thead>
+                                                                    <tr class="" style="background:#F2F9FF">
+                                                                        <th style="padding:4px 12px;font-size:12px;font-weight:400;" class="form-control1">Country Code:</th>
+                                                                        <th style="padding:4px 12px;font-size:12px;font-weight:400;" class="form-control1">Information Identifier:</th>
+                                                                        <th style="padding:4px 12px;font-size:12px;font-weight:400;" class="form-control1">Customs Information Identifier</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td class="editable-cell py-4">
+                                                                            <b-form-group id="fieldset-horizontal"
+                                                                                class="form-control-sm col-form-label"
+                                                                                style="width: 240px;">
+                                                                                <b-form-select class="form-control-sm"
+                                                                                    v-model="oci_info.country_code"
+                                                                                    :class="{ 'is-invalid': form.errors.has('country_code') }">
+                                                                                    <option value="">Select a country</option>
+                                                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                                        {{ country.text }}
+                                                                                    </option>
+                                                                                </b-form-select>
+                                                                                <has-error :form="form"
+                                                                                    field="country_code"></has-error>
+                                                                            </b-form-group>
+                                                                        </td>
+                                                                        <td class="editable-cell py-4">
+                                                                            <b-form-group id="fieldset-horizontal"
+                                                                                class="form-control-sm col-form-label"
+                                                                                style="width: 240px;">
+                                                                                <b-form-select class="form-control-sm"
+                                                                                    v-model="oci_info.info_identifier"
+                                                                                    :class="{ 'is-invalid': form.errors.has('info_identifier') }">
+                                                                                    <option value="">Select a code</option>
+                                                                                    <option v-for="oci_option in oci_identifiers.identifiers" 
+                                                                                            :key="oci_option.value" 
+                                                                                            :value="oci_option.value">
+                                                                                        {{ oci_option.text }}
+                                                                                    </option>
+                                                                                    <has-error :form="form" field="info_identifier"></has-error>
+                                                                                </b-form-select>
+                                                                            </b-form-group>
+                                                                        </td>
+                                                                        <td class="editable-cell py-4">
+                                                                            <b-form-group id="fieldset-horizontal"
+                                                                                class="form-control-sm col-form-label"
+                                                                                style="width: 240px;">
+                                                                                <b-form-select class="form-control-sm"
+                                                                                    v-model="oci_info.custom_info_identifier"
+                                                                                    :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
+                                                                                    <option value="">Select a code</option>
+                                                                                    <option v-for="oci_options in oci_data.oci_custom_info_identifier" 
+                                                                                            :key="oci_options.value" :value="oci_options.value">
+                                                                                        {{ oci_options.text }}
+                                                                                    </option>
+                                                                                </b-form-select>
+                                                                                <has-error :form="form"
+                                                                                    field="custom_info_identifier"></has-error>
+                                                                            </b-form-group>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="editable-cell px-5">Supplementary Information:</td>
+                                                                        <td class="editable-cell px-4">
+                                                                            <input type="text" class="form-control"
+                                                                                style="width: 300px;"
+                                                                                v-model="oci_info.supplementary_info"
+                                                                                :class="{ 'is-invalid': form.errors.has('supplementary_info') }" />
+                                                                            <has-error :form="form" field="supplementary_info"></has-error>
+                                                                        </td>
+                                                                        <td class="editable-cell">
+                                                                            <b-form-group style="display: flex;width: 240px;" id="fieldset-horizontal"
+                                                                                class="form-control-sm col-form-label align-items-end justify-content-end">
+                                                                                <b-button style="border-radius: 30px;color: #355594;background: #ffffff !important;border: 1px solid #355594;padding: 6px 30px;" class="form-control-sm px-5" @click="addOtherCustomInfo">
+                                                                                    {{ editIndex !== null ? 'Update' : 'Add' }}
+                                                                                </b-button>
+                                                                            </b-form-group>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </b-col>
+                                                <b-col cols="12">
+                                                    <div class="ml-3 mt-4">
+                                                        <h6 class="mb-4 h-color" style="font-size: 15px;font-weight:500">Upload Other Customs Information:</h6>
+                                                        <b-form-textarea style="width: 1000px !important;height: 80px!important;" id="textarea"></b-form-textarea>
+                                                    </div>
+                                                </b-col>
+                                                <b-col cols="12">
+                                                    <div class="ml-3 mt-3 d-flex justify-content-end" style="max-width:1000px;">
+                                                        <b-button class="" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Upload</b-button>
+                                                    </div>
+                                                </b-col>
+                                                <b-col cols="12">
+                                                    <div class="ml-3 mt-6">
+                                                        <table class="table table-sm" style="max-width:40%;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="" style="background:#F2F9FF;font-size:13px;font-weight:400;padding:4px 12px;">Other Customs Information</th>
+                                                                    <th class="" style="background:#F2F9FF;font-size:13px;font-weight:400;padding:4px 12px;"></th>
+                                                                    <th class="" style="background:#F2F9FF;font-size:13px;font-weight:400;padding:4px 12px;"></th>
+                                                                    <th class="" style="background:#F2F9FF;font-size:13px;font-weight:400;padding:4px 12px;"></th>
+                                                                    <th class="" style="background:#F2F9FF;font-size:13px;font-weight:400;padding:4px 12px;"></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr v-for="(row, index) in form.oci_entries" :key="index">
+                                                                    <td class="editable-cell">{{ row.country_code }}</td>
+                                                                    <td class="editable-cell">{{ row.info_identifier }}</td>
+                                                                    <td class="editable-cell">{{ row.custom_info_identifier }}</td>
+                                                                    <td class="editable-cell">{{ row.supplementary_info }}</td>
+                                                                    <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                                        <b-icon icon="pencil" font-scale="1" class="mr-2" style="cursor: pointer;" 
+                                                                        @click="editOciInfo(index)"></b-icon>
+                                                                        <b-icon icon="trash" font-scale="1"
+                                                                            @click="deleteOciInfo(index)">
+                                                                        </b-icon>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </b-col>
+                                            </b-row>
                                         </b-tab>
                                     </b-tabs>
-                                </b-tab>
-                            </b-tabs>
-                        </div>
-                        <hr class="hr" />
-                        <div class="py-7">
-                            <b-row class="justify-content-end">
-                                <b-col cols="auto" class="text-right">
-                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                        label-for="input-horizontal" label="Email PDF copy To:"
-                                        class="form-control-sm col-form-label">
-                                        <b-form-input id="input-horizontal" class="form-control-sm"
-                                            style="width: 320px"> </b-form-input>
-                                    </b-form-group>
-                                    <b-form-checkbox size="sm" class="text-left ml-4">Including Cargo
-                                        Label</b-form-checkbox>
-                                    <p>(separate addresses with a semicolon ';')</p>
-                                </b-col>
-                            </b-row>
-                        </div>
-                        <hr class="hr" />
-                        <div class="py-7">
-                            <div class="d-flex justify-content-end">
-                                <b-button class="mr-2" v-if="mode === 'update'" @click="generateHawbPDF">Generate PDF</b-button>
-                                <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
-                                <b-button class="mr-2">Send & Clear</b-button>
-                                <!-- <b-button type="submit">Save Draft</b-button> -->
-                                <b-button type="submit">{{submitButtonText}}</b-button>
+                                </div>
+                                <hr class="hr" />
+                                <div class="py-7">
+                                    <b-row class="justify-content-end">
+                                        <b-col cols="auto" class="text-right">
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
+                                                label-for="input-pdf-copy-to" label="Email PDF copy To:"
+                                                class="form-control-sm col-form-label">
+                                                <b-form-input id="input-pdf-copy-to" class="form-control-sm"
+                                                    style="width: 300px"></b-form-input>
+                                            </b-form-group>
+                                            <div class="d-flex text-left ml-4 mt-4">
+                                                <b-form-checkbox size="sm" class="">Including Cargo Label</b-form-checkbox>
+                                                <p class="pl-18">(separate addresses with a semicolon ';')</p>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
+                                </div>
+                                
+                                <div class="pt-7 pb-28">
+                                    <div class="d-flex justify-content-end">
+                                        <b-button class="mr-2" v-if="mode === 'update'" @click="generateHawbPDF">Generate PDF</b-button>
+                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
+                                        <b-button class="mr-2">Send & Clear</b-button>
+                                        <!-- <b-button type="submit">Save Draft</b-button> -->
+                                        <b-button type="submit">{{submitButtonText}}</b-button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </b-form>
-            </template>
+                        </b-form>
+                    </template>
+                    
+                </div>
+            </div>
         </div>
-    </div>
-</template>
+    </div> 
+</template> 
 <script>
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
 import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
+import SideBar from "../layout/SideBar.vue";
 export default {
     data() {
         return {
@@ -2815,6 +2728,7 @@ export default {
                 charge: '',
                 chargable_weight1: '',
             },
+            selectedViewPageOption: '/house-way-bill',
             searchQuery_to: '',
             isDropdownOpen_to: false,
             isDropdownOpen_departure: false,
@@ -2828,6 +2742,7 @@ export default {
             isDropdownOpen_issuing_loc: false,
             isDropdownOpen_participant: false,
             selectedCode: '',
+            custom_special_handling_code: '',
             manualCode: '',
             validationErrors: [],
             hs_code_error: [],
@@ -3021,6 +2936,12 @@ export default {
     },
 
     methods: {
+        onSelect(value) {
+            // Redirect to the selected page
+            if (value) {
+                window.location.href = value;  // This will navigate to the selected page
+            }
+        },
         generateHawbPDF() {
             if (!this.validateFormFields()) {
                 return;
@@ -3415,38 +3336,6 @@ export default {
                 alert('Please enter valid numeric values for chargeable weight and charge rate.');
             }
         },
-        addCharge() {
-            if (!this.other_charges.other_charge_code) {
-                alert("Other charge code is mandatory.");
-                return;
-            }
-            const amount = parseFloat(this.other_charges.amount);
-            if (isNaN(amount) || amount <= 0) {
-                alert("Amount is mandatory and must be a valid number greater than 0.");
-                return;
-            }
-
-            const chargeData = {
-                other_charge_code: this.other_charges.other_charge_code,
-                other_code: this.other_charges.other_code,
-                amount: parseFloat(this.other_charges.amount) || 0,
-                due: this.other_charges.due,
-                payment_type: this.other_charges.payment_type,
-            };
-
-            if (this.editIndex !== null) {
-                this.$set(this.form.charges, this.editIndex, chargeData);
-                this.editIndex = null;
-            } else {
-                this.form.charges.push(chargeData);
-                console.log('Added new charge:', chargeData);
-            }
-            for (let key in this.other_charges) {
-                if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
-                    this.other_charges[key] = '';
-                }
-            }
-        },
         editCharge(index) {
             this.editIndex = index;
             this.other_charges = { ...this.form.charges[index] };
@@ -3702,7 +3591,7 @@ export default {
             const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
             const finalOtherChargeCode = other_code || other_charge_code;
             const finalOtherCode = other_code || null;
-            if (!this.other_charges.other_charge_code) {
+            if (!finalOtherChargeCode) {
                 alert("Other charge code is mandatory.");
                 return;
             }
@@ -3711,7 +3600,16 @@ export default {
                 alert("Amount is mandatory and must be a valid number greater than 0.");
                 return;
             }
+            // const amount = parseFloat(this.other_charges.amount);
+            // if (isNaN(amount) || amount <= 0) {
+            //     alert("Amount is mandatory and must be a valid number greater than 0.");
+            //     return;
+            // }
+
             const chargeData = {
+                // other_charge_code: this.other_charges.other_charge_code,
+                // other_code: this.other_charges.other_code,
+                // amount: parseFloat(this.other_charges.amount) || 0,
                 other_charge_code: finalOtherChargeCode, 
                 amount: parsedAmount,
                 due: this.other_charges.due,
@@ -4302,11 +4200,18 @@ export default {
     components: {
         Datepicker,
         DatePicker,
+        SideBar
     },
 };
 </script>
 
 <style scoped>
+h6 {
+    font-size: 15px !important;
+    line-height: 22px;
+    font-weight: 600 !important;
+    color: #355594 !important;
+}
 header {
     width: 100%;
     background-color: #2637a8;
@@ -4418,7 +4323,7 @@ li {
 }
 
 .form-control-sm {
-    height: calc(1.5em + 0.5rem + 2px) !important;
+    /* height: calc(1.5em + 0.5rem + 2px) !important; */
 }
 
 .col-form-label {
@@ -4434,7 +4339,7 @@ li {
 }
 
 .hr {
-    border-top: 2px solid #007db9;
+    border-top: 2px solid #CDCDCD;
 }
 
 .aselect {
@@ -4451,12 +4356,11 @@ li {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"><path fill="black" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"><path fill="black" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 0px center;
     background-color: white;
     border: 1px solid #ccc;
-    /* padding: 10px 40px 10px 10px; */
     font-size: 14px;
-    padding: 2px;
+    padding: 2px 26px 2px 8px;
     cursor: pointer;
     width: 100%;
 }
@@ -4492,9 +4396,9 @@ th {
 }
 
 .form-control {
-    border: 1px solid gray;
-    width: 150px;
-    height: 25px;
+    border: 1px solid #A6A6A6 !important;
+    border-radius: 7px !important;
+    height: 38px !important;
 }
 
 .form-control1 {
@@ -4528,24 +4432,76 @@ th {
 }
 
 .dropdown-options {
-  /* position: absolute; */
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-top: none;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 1;
+    position: absolute;
+    border: 1px solid #E4E6EF;
+    border-radius: 5px; 
+    box-shadow: 0px 3px 15px 0px #00000013;
+    background-color: #fff;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 9;
+    width: 100%;
 }
 
 .option {
-  padding: 5px 10px;
-  cursor: pointer;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 0px !important;
+    padding: 0px 4px !important;
+    border: 0px !important;
 }
 
 .option:hover {
   background-color: #f0f0f0;
 }
+.btn {
+    color: #355594 !important;
+    border-radius: 30px;
+    border: 1px solid #355594 !important;
+    padding: 6px 20px !important;
+    background: #fff !important;
+}
+
+</style>
+<style>
+    .nav-tabs {
+        border-bottom: 0px !important;
+    }
+    .nav-link {
+        color: #355594 !important;
+        font-weight: 400 !important;
+        font-size: 12px !important;
+        border: none !important;
+        padding: 0px !important;
+        margin: 0px 10px !important;
+    }
+    .nav-link:hover, .nav-link.active {
+        border-bottom: 2px solid #355594 !important;
+    }
+    .mx-input {
+        display: inline-block;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        width: 100%;
+        /* height: 34px; */
+        padding: 0px !important;
+        color:  #355594 !important;
+        border: 0px !important;
+        -webkit-box-shadow: inset 0 1px 1px #fff;
+        box-shadow: inset 0 1px 1px #fff;
+    }
+    .mx-icon-calendar, .mx-icon-clear {
+        position: absolute;
+        top: 50%;
+        right: 0px !important;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%);
+        font-size: 20px;
+        line-height: 1;
+        color: #355594 !important;
+        stroke: #355594 !important;
+        vertical-align: middle;
+    }
 </style>

@@ -1078,7 +1078,7 @@
                                                                 <th style="color:000;font-size:13px;font-weight:500;">Owner:</th>
                                                                 <th></th>
                                                             </tr>
-                                                            <tr v-for="(row, index) in consignment_list.uld_info" :key="index">
+                                                            <tr v-for="(row, index) in consignment_list.uld_infos" :key="index">
                                                                 <td class="editable-cell">{{ row.uld_type }}</td>
                                                                 <td class="editable-cell">{{ row.uld_serial }}</td>
                                                                 <td class="editable-cell">{{ row.owner }}</td>
@@ -1152,7 +1152,7 @@
                                                         </td>
                                                         <td>{{ entry.country_origin_goods }}</td>
                                                         <td>
-                                                            <div v-for="(uld, uldIndex) in entry.uld_info" :key="uldIndex"
+                                                            <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
                                                                 class="mb-1">
                                                                 {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
                                                             </div>

@@ -440,7 +440,7 @@
                                                 <b-col cols="auto" style="padding-left: 0px;padding-right: 0px;">
                                                     <!-- or label / input -->
                                                     <b-form-group id="fieldset-origin" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="or:" label-for="input-origin" class="form-control-sm">
-                                                    <b-form-input id="input-origin" class="form-control-sm"></b-form-input>
+                                                    <b-form-input id="input-origin" class="form-control-sm" v-model="custom_special_handling_code"></b-form-input>
                                                     </b-form-group>
                                                 </b-col>
                                                 <b-col cols="auto" style="padding-left: 0px;">
@@ -1182,6 +1182,7 @@ export default {
             isDropdownOpen_departure: false,
             isDropdownOpen_destination: false,
             selectedCode: '',
+            custom_special_handling_code: '',
             manualCode: '',
             validationErrors: [],
             hs_code_error: [],
@@ -1538,20 +1539,36 @@ export default {
             this.form.tableCodes = [];
             this.form.tableCodes.push(selectedCode);
         },
+        // addManualCode() {
+        //     const code = this.selectedCode || this.manualCode.trim();
+        //     if (code) {
+        //         if (!this.form.tableCodes.includes(code)) {
+        //             this.form.tableCodes.push(code);
+        //             console.log("Table code ", this.form.tableCodes);
+        //         } else {
+        //             alert('This code is already added.');
+        //         }
+        //     } else {
+        //         alert('Please select or enter a code.');
+        //     }
+        //     this.selectedCode = '';
+        //     this.manualCode = '';
+        // },
         addManualCode() {
-            const code = this.selectedCode || this.manualCode.trim();
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+            const code = this.selectedCode || this.custom_special_handling_code.trim();
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table code ", this.form.tableCodes);
+                    console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
-            } else {
-                alert('Please select or enter a code.');
             }
             this.selectedCode = '';
-            this.manualCode = '';
+            this.custom_special_handling_code = '';
         },
         deleteSplCode(index) {
             this.form.tableCodes.splice(index, 1);

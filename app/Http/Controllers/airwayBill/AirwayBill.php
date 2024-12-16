@@ -230,10 +230,6 @@ class AirwayBill extends Controller
             // $AirwayBills->id = $awb_id;
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
-            // $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
-            // $AirwayBills->awb = $first_box['awb'];
-            // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] = 1) ? true : false;
-            // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
              $AirwayBills->awb = $first_box['awb'];
             // dd($first_box);die;
@@ -413,14 +409,51 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Custom Origin Code and other tab information save successfully";
     }
+    // private function otherCharges($awb_no, $awb_code, $charges)
+    // {
+    //     $awb_id = $awb_code . $awb_no;
+    //     for ($i = 0; $i < sizeof($charges); $i++) {
+    //         $validator = Validator::make($charges[$i], [
+    //             'payment_type' => 'nullable|string',
+    //             'other_code' => 'nullable|string',
+    //             'other_charge_code' => 'nullable|string',
+    //             'amount' => 'nullable|numeric|min:0.01|max:999999999',
+    //             'due' => 'nullable|string',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json(['errors' => $validator->errors()], 422);
+    //         }
+
+    //         $other_charge_code = $charges[$i]['other_charge_code'];
+    //         $otherChargesData = OtherCharge::where([['awb_id', $awb_id], ['other_charge_code', $other_charge_code]])->first();
+
+    //         if (!isset($otherChargesData)) {
+    //             $otherChargesData = new OtherCharge();
+    //         }
+    //         $otherChargesData->awb_id = $awb_id;
+    //         $otherChargesData->other_charge_code = $other_charge_code;
+    //         $otherChargesData->other_code = $charges[$i]['other_code'];
+    //         $otherChargesData->payment_type = $charges[$i]['payment_type'];
+    //         $otherChargesData->due = $charges[$i]['due'];
+    //         $otherChargesData->amount = $charges[$i]['amount'];
+    //         $otherChargesData->save();
+    //     }
+    //     return "Other Charges Data saved successfully";
+    // }
     private function otherCharges($awb_no, $awb_code, $charges)
     {
         $awb_id = $awb_code . $awb_no;
+
         for ($i = 0; $i < sizeof($charges); $i++) {
-            $validator = Validator::make($charges[$i], [
+            $finalOtherChargeCode = isset($charges[$i]['other_code']) && !empty($charges[$i]['other_code'])
+                ? $charges[$i]['other_code']
+                : (isset($charges[$i]['other_charge_code']) ? $charges[$i]['other_charge_code'] : null);
+
+            // Validate the data
+            $validator = Validator::make(array_merge($charges[$i], ['final_other_charge_code' => $finalOtherChargeCode]), [
                 'payment_type' => 'nullable|string',
-                'other_code' => 'nullable|string',
-                'other_charge_code' => 'nullable|string',
+                'final_other_charge_code' => 'required|string',
                 'amount' => 'nullable|numeric|min:0.01|max:999999999',
                 'due' => 'nullable|string',
             ]);
@@ -428,23 +461,24 @@ class AirwayBill extends Controller
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-
-            $other_charge_code = $charges[$i]['other_charge_code'];
-            $otherChargesData = OtherCharge::where([['awb_id', $awb_id], ['other_charge_code', $other_charge_code]])->first();
+            $otherChargesData = OtherCharge::where([
+                ['awb_id', $awb_id],
+                ['other_charge_code', $finalOtherChargeCode],
+            ])->first();
 
             if (!isset($otherChargesData)) {
                 $otherChargesData = new OtherCharge();
             }
             $otherChargesData->awb_id = $awb_id;
-            $otherChargesData->other_charge_code = $other_charge_code;
-            $otherChargesData->other_code = $charges[$i]['other_code'];
-            $otherChargesData->payment_type = $charges[$i]['payment_type'];
-            $otherChargesData->due = $charges[$i]['due'];
-            $otherChargesData->amount = $charges[$i]['amount'];
+            $otherChargesData->other_charge_code = $finalOtherChargeCode;
+            $otherChargesData->payment_type = $charges[$i]['payment_type'] ?? null;
+            $otherChargesData->due = $charges[$i]['due'] ?? null;
+            $otherChargesData->amount = $charges[$i]['amount'] ?? null;
             $otherChargesData->save();
         }
         return "Other Charges Data saved successfully";
     }
+
     private function paymentInformation($awb_no,$awb_code, $payment_info)
     {
         $validator = Validator::make($payment_info, [

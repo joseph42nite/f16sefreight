@@ -217,9 +217,10 @@
                             </b-col>
                             <b-col cols="auto">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label="Master No:*" label-for="input-horizontal" class="form-control-sm col-form-label">
-                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)"></b-form-input>
+                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)"  @input="onAWBInput"></b-form-input>
                                     <has-error :form="form" field="awb_code"></has-error>
                                 </b-form-group>
+                                <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p>
                             </b-col>
                             -
                             <b-col cols="auto">
@@ -2048,7 +2049,7 @@
                                                 <b-form-group id="fieldset-horizontal"
                                                     class="form-control-sm col-form-label mt-2">
                                                     <b-form-input id="input-horizontal"
-                                                        class="form-control-sm">or:</b-form-input>
+                                                        class="form-control-sm" v-model="custom_special_handling_code">or:</b-form-input>
                                                 </b-form-group>
                                             </b-col>
                                             <b-col cols="auto">
@@ -2616,6 +2617,7 @@
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
+import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 export default {
     data() {
@@ -2848,6 +2850,7 @@ export default {
             filteredConsignees: [],
             filteredAlsoNotify: [],
             isConsignmentAdded: false,
+            awb_prefix_message: '',
             items: [
                 {
                     url: "#webdoc",
@@ -3354,12 +3357,30 @@ export default {
             this.form.tableCodes = [];
             this.form.tableCodes.push(selectedCode);
         },
+        // addManualCode() {
+        //     const code = this.selectedCode || this.manualCode.trim();
+        //     if (code) {
+        //         if (!this.form.tableCodes.includes(code)) {
+        //             this.form.tableCodes.push(code);
+        //             console.log("Table code ", this.form.tableCodes);
+        //         } else {
+        //             alert('This code is already added.');
+        //         }
+        //     } else {
+        //         alert('Please select or enter a code.');
+        //     }
+        //     this.selectedCode = '';
+        //     this.manualCode = '';
+        // },
         addManualCode() {
-            const code = this.selectedCode || this.manualCode.trim();
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+            const code = this.selectedCode || this.custom_special_handling_code.trim();
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table code ", this.form.tableCodes);
+                    console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3367,7 +3388,7 @@ export default {
                 alert('Please select or enter a code.');
             }
             this.selectedCode = '';
-            this.manualCode = '';
+            this.custom_special_handling_code = '';
         },
         deleteSplCode(index) {
             this.form.tableCodes.splice(index, 1);
@@ -3660,7 +3681,7 @@ export default {
             this.oci_info = { ...this.form.oci_entries[index] };
         },
         addOtherCustomInfo() {
-            if (!this.oci_info.country_code || !this.oci_info.info_identifier || !this.oci_info.supplementary_info || !this.oci_info.custom_info_identifier) {
+            if (!this.oci_info.info_identifier || !this.oci_info.supplementary_info) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -3674,6 +3695,39 @@ export default {
             for (let key in this.oci_info) {
                 if (this.oci_info.hasOwnProperty(key)) {
                     this.oci_info[key] = '';
+                }
+            }
+        },
+        addCharge() {
+            const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
+            const finalOtherChargeCode = other_code || other_charge_code;
+            const finalOtherCode = other_code || null;
+            if (!this.other_charges.other_charge_code) {
+                alert("Other charge code is mandatory.");
+                return;
+            }
+            const parsedAmount = parseFloat(amount);
+            if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                alert("Amount is mandatory and must be a valid number greater than 0.");
+                return;
+            }
+            const chargeData = {
+                other_charge_code: finalOtherChargeCode, 
+                amount: parsedAmount,
+                due: this.other_charges.due,
+                payment_type: this.other_charges.payment_type,
+            };
+
+            if (this.editIndex !== null) {
+                this.$set(this.form.charges, this.editIndex, chargeData);
+                this.editIndex = null;
+            } else {
+                this.form.charges.push(chargeData);
+                console.log('Added new charge:', chargeData);
+            }
+            for (let key in this.other_charges) {
+                if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
+                    this.other_charges[key] = '';
                 }
             }
         },
@@ -3958,6 +4012,28 @@ export default {
                 evt.preventDefault();
             }
         },
+        onAWBInput: debounce(function () {
+            const { awb_code } = this.form.first_box;
+            const { awb_no } = this.form.first_box;
+            if (awb_code && awb_code.length === 3) {
+                ApiService.get(`/get-awbcode-prefix/${awb_code}`)
+                    .then((response) => {
+                        if (response.data) {
+                            const { name, code} = response.data;
+                            this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
+                        } else {
+                            this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching AWB details:", error);
+                        this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
+                    });
+                }
+            else {
+                this.awb_prefix_message = "";
+            }
+        }, 500),
     },
     mounted(){
         this.calculateTotalVolume();
@@ -4083,6 +4159,7 @@ export default {
             this.isEdit = true;
             this.getHouseWayBill(id);
         }
+        this.getOCIData();
         // this.getAgent();
     },
     computed: {

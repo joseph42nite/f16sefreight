@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\BranchController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -96,6 +97,12 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-company/{id}', [CompanyController::class, 'update']);
     Route::get('/all-company/{id?}', [CompanyController::class, 'index']);
     Route::delete('/company/{id?}', [CompanyController::class, 'delete']);
+
+    //branch related work by admin
+    Route::post('/create-branch', [BranchController::class, 'register']);
+    Route::put('/edit-branch/{id}', [BranchController::class, 'update']);
+    Route::get('/all-branch/{id?}', [BranchController::class, 'index']);
+    Route::delete('/branch/{id?}', [BranchController::class, 'delete']);
 });
 
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);

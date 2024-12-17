@@ -142,6 +142,12 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "new-branch/:id?",
+          name: "superadmin-newbranch",
+          component: () => import("@/view/superadmin/NewBranch.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "account",
           name: "superadmin-account",
           component: () => import("@/view/superadmin/Account.vue"),

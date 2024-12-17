@@ -3787,12 +3787,12 @@ export default {
                             const { name, code} = response.data;
                             this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
                         } else {
-                            this.awb_prefix_message = "No details found for this AWB code.";
+                            this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                         }
                     })
                     .catch((error) => {
                         console.error("Error fetching AWB details:", error);
-                        this.awb_prefix_message = "Failed to fetch AWB details.";
+                        this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                     });
                 }
              else {

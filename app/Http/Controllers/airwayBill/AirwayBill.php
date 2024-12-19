@@ -246,7 +246,7 @@ class AirwayBill extends Controller
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
              $AirwayBills->awb = $first_box['awb'];
-            // dd($first_box);die;
+            // dd($first_box);
             $AirwayBills->save();
             return response()->json([
                 'message' => 'First box created successfully',
@@ -259,6 +259,7 @@ class AirwayBill extends Controller
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
             $AirwayBills->awb = $first_box['awb'];
+            // dd($first_box);
             // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] == 1) ? true : false;
             // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
             $AirwayBills->save();

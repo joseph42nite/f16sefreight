@@ -25,12 +25,12 @@ export default new Router({
           component: () =>import("@/view/pages/WebDocCopy"),
           meta: { userType: 'user' }
         },
-        // {
-        //   name: "Web Doc-copy",
-        //   path: "web-doc-copy",
-        //   component: () =>import("@/view/pages/WebDocCopy"),
-        //   meta: { userType: 'user' }
-        // },
+        {
+          name: "Home",
+          path: "/home",
+          component: () =>import("@/view/pages/Home"),
+          // meta: { userType: 'user' }
+        },
         {
           path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',

@@ -74,7 +74,10 @@ export default {
         return {
             fields: [
                 { label: "Sl", key: "index" },
-                { label: "Name", key: "name" },
+                { label: "Company", key: "company_name.name" },
+                { label: "Agent Name", key: "agent_name" },
+                { label: "Agent code", key: "iata_agent_code" },
+                { label: "Agent Cass", key: "iata_agent_cass" },
                 { label: "Action", key: "action" },
             ],
             items: [],
@@ -90,6 +93,7 @@ export default {
         get_branch() {
             this.items = [];
             ApiService.get(`/superadmin/all-branch/0`).then(({ data }) => {
+                console.log(data);
                 this.items = data;
                 this.totalRows = data.length;
             });

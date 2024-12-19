@@ -23,7 +23,7 @@ class ConversionController extends Controller
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
@@ -568,7 +568,7 @@ class ConversionController extends Controller
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
         $house_address = WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $hawb_no)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $hawb_no)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
@@ -1139,7 +1139,7 @@ class ConversionController extends Controller
         $request_code = 703;
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
-        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $message_format = config("xml_message_format.$request_code");
         $utc_current_date = gmdate("Y-m-d H:i:s");
         if ($request_code == 703)
@@ -1386,7 +1386,7 @@ class ConversionController extends Controller
         $house_data = HousewayBills::where([['awb_code', $waybill_data['awb_code']], ['awb_no', $waybill_data['awb_no']]])->get()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
@@ -1550,7 +1550,7 @@ class ConversionController extends Controller
 
     public function CreatePartner()
     {
-        $agent_details = Agent::where('user_id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
         $time = time();
 

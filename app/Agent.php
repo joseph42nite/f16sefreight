@@ -13,6 +13,9 @@ class Agent extends Model
     {
         return $this->hasOne(AirWayBill::class, 'agent_id', 'id');
     }
+    public function companyName(){
+        return $this->hasOne(Company::class, 'id', 'company_id');
+    }
     
     protected $fillable = [
         'agent_name',

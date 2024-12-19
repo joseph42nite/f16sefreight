@@ -118,7 +118,7 @@
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                     label-for="input-horizontal"
                                                     class="form-control-sm align-items-center">
-                                                        <b-form-checkbox size="sm" v-model="form.first_box.consolidated_MAWB">Consolidate
+                                                        <b-form-checkbox size="sm" v-model="form.first_box.consolidated_mawb">Consolidate
                                                             MAWB</b-form-checkbox>
                                                     </b-form-group>
                                                 </div>

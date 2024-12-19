@@ -87,7 +87,7 @@ export default {
   padding: 12px 41px 12px 41px;
   gap: 40px;
   border-radius: 39px;
-  opacity: 0px;
+  /* opacity: 0px; */
   background-color: #9499B212; /* For browsers that do not support gradients */
   background-image: linear-gradient(#9499B212, #22328A12);
 }

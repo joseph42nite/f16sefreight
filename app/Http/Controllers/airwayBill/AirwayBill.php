@@ -212,13 +212,29 @@ class AirwayBill extends Controller
     }
     private function firstBox($first_box, $id = null)
     {
+        if($first_box['consolidated_mawb'] == true){
+            $first_box['consolidated_mawb'] = "true";
+        }
+        else
+        {
+            $first_box['consolidated_mawb'] = "false";
+        }
+        if($first_box['awb'] == true){
+            $first_box['awb'] = "true";
+        }
+        else
+        {
+            $first_box['awb'] = "false";
+        }
         $validator = Validator::make($first_box, [
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
             // 'consolidated_mawb' => 'boolean',
             // 'awb' => 'boolean',
-            'consolidated_mawb' => 'nullable',
-            'awb' => 'nullable',
+            // 'consolidated_mawb' => 'nullable',
+            // 'awb' => 'nullable',
+            'consolidated_mawb' => 'string',
+            'awb' => 'string',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -232,7 +248,7 @@ class AirwayBill extends Controller
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
              $AirwayBills->awb = $first_box['awb'];
-            // dd($first_box);die;
+            // dd($first_box);
             $AirwayBills->save();
             return response()->json([
                 'message' => 'First box created successfully',
@@ -245,6 +261,7 @@ class AirwayBill extends Controller
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
             $AirwayBills->awb = $first_box['awb'];
+            // dd($first_box);
             // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] == 1) ? true : false;
             // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
             $AirwayBills->save();

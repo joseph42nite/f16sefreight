@@ -308,7 +308,7 @@ class HousewayBill extends Controller
         $validator = Validator::make($routing_information, [
             'departure_airport' => 'required|string',
             'destination_airport' => 'required|string',
-            'from' => 'nullable|string',
+            'from' => 'required|string',
             'to' => 'required|string',
             'by' => 'required|string|size:2',
             'flight' => 'required|regex:/^[a-zA-Z0-9]+$/|max:5',

@@ -231,8 +231,6 @@ class AirwayBill extends Controller
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
             // 'consolidated_mawb' => 'boolean',
             // 'awb' => 'boolean',
-            // 'consolidated_mawb' => 'nullable',
-            // 'awb' => 'nullable',
             'consolidated_mawb' => 'string',
             'awb' => 'string',
         ]);
@@ -280,47 +278,6 @@ class AirwayBill extends Controller
         // $AirwayBills->save();
         return "first box saved successfull";
     }
-    // private function firstBox(Request $request, $first_box, $id = null)
-    // {
-    //     // Convert to proper booleans
-    //     $first_box['consolidated_mawb'] = filter_var($first_box['consolidated_mawb'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-    //     $first_box['awb'] = filter_var($first_box['awb'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-
-    //     // Validate the data
-    //     $validator = Validator::make($first_box, [
-    //         'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
-    //         'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
-    //         'consolidated_mawb' => 'nullable|in:true,false,1,0',
-    //         'awb' => 'nullable|in:true,false,1,0',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json(['errors' => $validator->errors()], 422);
-    //     }
-
-    //     $awb_id = $first_box['awb_code'] . $first_box['awb_no'];
-    //     $AirwayBills = AirwayBills::find($awb_id);
-
-    //     if ($AirwayBills) {
-    //         $AirwayBills->awb_code = $first_box['awb_code'];
-    //         $AirwayBills->awb_no = $first_box['awb_no'];
-    //         $AirwayBills->consolidated_mawb = $request->boolean('consolidated_mawb'); // Use boolean casting
-    // $AirwayBills->awb = $request->boolean('awb');
-    //         dd($AirwayBills);die;
-    //         $AirwayBills->save();
-    //     } else {
-    //         $AirwayBills = new AirwayBills();
-    //         $AirwayBills->id = $awb_id;
-    //         $AirwayBills->awb_code = $first_box['awb_code'];
-    //         $AirwayBills->awb_no = $first_box['awb_no'];
-    //         $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
-    //         $AirwayBills->awb = $first_box['awb'];
-    //         $AirwayBills->save();
-    //     }
-
-    //     return response()->json(['success' => true, 'data' => $AirwayBills], 200);
-    // }
-
     private function routingInformation($awb_no, $awb_code, $routing_information)
     {
         $validator = Validator::make($routing_information, [

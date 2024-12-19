@@ -42,35 +42,37 @@
                                         <b-row>
                                             <b-col>
                                                 <div v-for="item in data_items" :key="item.id">
-                                                    <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                            <p @click="navigate" class="mb-0">
-                                                                {{ item.awb_code }}-{{ item.awb_no }} 
-                                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                                            </p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                            <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                                        <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                <p @click="navigate" class="mb-0">
+                                                                    {{ item.awb_code }}-{{ item.awb_no }} 
+                                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                                </p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                    <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                                            </router-link>
+                                                        </a>
+                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                                            </router-link>
+                                                        </a>
+                                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                    </div>
                                                 </div>
                                             </b-col>
                                         </b-row>
@@ -1076,7 +1078,7 @@
                                                                 <th style="color:000;font-size:13px;font-weight:500;">Owner:</th>
                                                                 <th></th>
                                                             </tr>
-                                                            <tr v-for="(row, index) in consignment_list.uld_info" :key="index">
+                                                            <tr v-for="(row, index) in consignment_list.uld_infos" :key="index">
                                                                 <td class="editable-cell">{{ row.uld_type }}</td>
                                                                 <td class="editable-cell">{{ row.uld_serial }}</td>
                                                                 <td class="editable-cell">{{ row.owner }}</td>
@@ -1150,7 +1152,7 @@
                                                         </td>
                                                         <td>{{ entry.country_origin_goods }}</td>
                                                         <td>
-                                                            <div v-for="(uld, uldIndex) in entry.uld_info" :key="uldIndex"
+                                                            <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
                                                                 class="mb-1">
                                                                 {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
                                                             </div>
@@ -2029,10 +2031,10 @@
                                                                         {{ charge.payment_type }}
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <b-button size="sm" @click="editCharge(index)">
+                                                                        <b-button size="sm" @click="editCharge(index)" style="background: none !important;border: 0px !important; border-radius: 0px !important; padding: 0px !important;">
                                                                             <b-icon icon="pencil" font-scale="1"></b-icon>
                                                                         </b-button>
-                                                                        <b-button size="sm" @click="removeCharge(index)">
+                                                                        <b-button size="sm" @click="removeCharge(index)" style="background: none !important;border: 0px !important; border-radius: 0px !important; padding: 0px !important;">
                                                                             <b-icon icon="trash"></b-icon>
                                                                         </b-button>
                                                                     </td>
@@ -3273,11 +3275,9 @@ export default {
         },
         addCharge() {
             const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
-
-    // If both are filled, prioritize `other_code` and assign it to `other_charge_code`.
-    const finalOtherChargeCode = other_code || other_charge_code;
+            const finalOtherChargeCode = other_code || other_charge_code;
             const finalOtherCode = other_code || null;
-            if (!this.other_charges.other_charge_code) {
+            if (!finalOtherChargeCode) {
                 alert("Other charge code is mandatory.");
                 return;
             }
@@ -3787,12 +3787,12 @@ export default {
                             const { name, code} = response.data;
                             this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
                         } else {
-                            this.awb_prefix_message = "No details found for this AWB code.";
+                            this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                         }
                     })
                     .catch((error) => {
                         console.error("Error fetching AWB details:", error);
-                        this.awb_prefix_message = "Failed to fetch AWB details.";
+                        this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                     });
                 }
              else {

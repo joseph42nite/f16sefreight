@@ -17,7 +17,7 @@ use DOMDocument;
 
 class ConversionController extends Controller
 {
-    public function WayBillConversion($awb_id = "0571070525")
+    public function WayBillConversion($awb_id = "12312345678")
     {
         // Fetch data from the database (this is just sample data for now)
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
@@ -32,7 +32,7 @@ class ConversionController extends Controller
         $time = time();
 
         //update refrance id
-        AirwayBills::where([['id', $awb_id]])->update(['reference_id', $time]);
+        // AirwayBills::where([['id', $awb_id]])->update(['reference_id', $time]);
 
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');

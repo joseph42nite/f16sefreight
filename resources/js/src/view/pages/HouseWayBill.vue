@@ -17,6 +17,7 @@
                                         <option value="/web-doc">Master Airway Bill</option>
                                         <option value="/house-way-bill">Houseway Bill</option>
                                         <option value="/consolidation">Consolidation</option>
+                                        <option value="/message-log">Message Log</option>
                                     </b-form-select>
                                 </b-form-group>
                             </b-col>
@@ -2509,7 +2510,7 @@
                                 
                                 <div class="pt-7 pb-28">
                                     <div class="d-flex justify-content-end">
-                                        <b-button class="mr-2" v-if="mode === 'update'" @click="generateHawbPDF">Generate PDF</b-button>
+                                        <b-button class="mr-2" @click="handleSaveAndGeneratePDF">Generate PDF</b-button>
                                         <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                         <b-button class="mr-2">Send & Clear</b-button>
                                         <!-- <b-button type="submit">Save Draft</b-button> -->
@@ -2741,6 +2742,7 @@ export default {
             isDropdownOpen_alsoNotify: false,
             isDropdownOpen_issuing_loc: false,
             isDropdownOpen_participant: false,
+            generatePDFAfterSave: false,
             selectedCode: '',
             custom_special_handling_code: '',
             manualCode: '',
@@ -2766,66 +2768,6 @@ export default {
             filteredAlsoNotify: [],
             isConsignmentAdded: false,
             awb_prefix_message: '',
-            items: [
-                {
-                    url: "#webdoc",
-                    name: "WebDoc",
-                },
-                {
-                    url: "#booking",
-                    name: "Booking(FFR)",
-                },
-                {
-                    url: "#webdoc",
-                    name: "WebDoc",
-                    children: [
-                        {
-                            url: "#booking",
-                            name: "Booking(FFR)",
-                        },
-                        {
-                            url: "/web-doc",
-                            name: "Air Waybill(FWB)",
-                        },
-                        {
-                            url: "/house-way-bill",
-                            name: "House Waybill(FHL)",
-                        },
-                        {
-                            url: "#consolidation",
-                            name: "Consolidation(FHL)",
-                        },
-                        {
-                            url: "#import_mail_data",
-                            name: "Import Mail Data",
-                        },
-                        {
-                            url: "#create_label",
-                            name: "Create Label",
-                        },
-                        {
-                            url: "message-log",
-                            name: "Message Log",
-                        },
-                        {
-                            url: "#maintain_contracts",
-                            name: "Maintain Contracts",
-                        },
-                        {
-                            url: "#web_doc_printer_setup",
-                            name: "WebDoc Printer Setup",
-                        },
-                        {
-                            url: "#help",
-                            name: "Help",
-                        },
-                    ],
-                },
-                {
-                    url: "#contact",
-                    name: "Contact",
-                },
-            ],
             codes: [
                 { value: 'ACT', text: 'ACT - Active Temperature Controlled System' },
                 { value: 'AOG', text: 'AOG - Aircraft on ground' },
@@ -2942,13 +2884,36 @@ export default {
                 window.location.href = value;  // This will navigate to the selected page
             }
         },
+        handleSaveAndGeneratePDF() {
+            this.generatePDFAfterSave = true;
+            const result = this.onSubmit() || Promise.resolve({});
+            result.then(response => {
+                console.log('Save response:', response);
+                console.log('Response Data:', response.data);
+                if (response.data && response.data.data && response.data.data.id) {
+                    this.generateHawbPDF();
+                } else {
+                    console.error('ID is missing in the response data');
+                }
+            }).catch(error => {
+                console.error('Error while saving data:', error);
+            });
+        },
+        // generateHawbPDF() {
+        //     if (!this.validateFormFields()) {
+        //         return;
+        //     }
+        //     const itemId = this.$route.params.id; // Get the ID from the URL
+        //     const pdfUrl = `/download-hawb-pdf/${itemId}`; // Construct the URL for the PDF
+        //     window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+        // },
         generateHawbPDF() {
-            if (!this.validateFormFields()) {
+            if (!this.existingData || !this.existingData.id) {
+                console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
             }
-            const itemId = this.$route.params.id; // Get the ID from the URL
-            const pdfUrl = `/download-hawb-pdf/${itemId}`; // Construct the URL for the PDF
-            window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+            const pdfUrl = `/download-hawb-pdf/${this.existingData.id}`;
+            window.open(pdfUrl, '_blank');
         },
         validateFormFields() {
             const requiredFields = {
@@ -3046,18 +3011,62 @@ export default {
         //         console.log(response);
         //     })
         // },
+        // onSubmit() {
+        //     if (this.mode === 'add') {
+        //         this.form.post('/create-houseway-bill')
+        //         .then(response => {
+        //             console.log('Add Successful:', response);
+        //         })
+        //         .catch(error => {
+        //             console.error('Add Failed:', error);
+        //         });
+        //     } else if (this.mode === 'update') {
+        //         this.form.put(`/update-houseway-bill/${this.existingData.id}`)
+        //         .then(response => {
+        //             console.log('Update Successful:', response);
+        //             // this.$router.push({ path: '/house-way-bill' });
+        //         })
+        //         .catch(error => {
+        //             console.error('Update Failed:', error);
+        //         });
+        //     }
+        // },
+
         onSubmit() {
+            console.log('Current mode:', this.mode);
             if (this.mode === 'add') {
                 this.form.post('/create-houseway-bill')
                 .then(response => {
                     console.log('Add Successful:', response);
+                    if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
+                        this.existingData = response.data.data.first_box.original.data;
+                        console.log('Existing data set:', this.existingData);
+                        if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
+                            this.generateHawbPDF();
+                        }
+                    } else {
+                        console.error('ID is missing in response data');
+                    }
                 })
                 .catch(error => {
                     console.error('Add Failed:', error);
                 });
             } else if (this.mode === 'update') {
+                if (!this.existingData || !this.existingData.id) {
+                    console.error('Update Failed: existingData is missing or invalid');
+                    return;
+                }
                 this.form.put(`/update-houseway-bill/${this.existingData.id}`)
                 .then(response => {
+                    if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
+                        this.existingData = response.data.data.first_box.original.data;
+                        console.log('Existing data set:', this.existingData);
+                        if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
+                            this.generateHawbPDF();
+                        }
+                    } else {
+                        console.error('ID is missing in response data');
+                    }
                     console.log('Update Successful:', response);
                     // this.$router.push({ path: '/house-way-bill' });
                 })
@@ -4049,6 +4058,14 @@ export default {
             if (newId) {
                 this.getHouseWayBill(newId);
             }
+        },
+        existingData(newData) {
+            console.log("New data:", newData);
+            if (newData && newData.id) {
+                // this.generateAwbPDF();
+            } else {
+                console.error('ID is missing in new data, cannot generate PDF.');
+            }
         }
     },
     created() {
@@ -4058,6 +4075,7 @@ export default {
             this.getHouseWayBill(id);
         }
         this.getOCIData();
+        this.onSubmit = this.onSubmit.bind(this);
         // this.getAgent();
     },
     computed: {

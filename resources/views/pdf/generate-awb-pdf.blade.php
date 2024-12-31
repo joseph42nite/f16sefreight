@@ -71,9 +71,9 @@
                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
                                                     $departure_airport =  explode(',', $airWayBill->departure_airport);
-                                                    $departure_airport = $departure_airport[0];
+                                                    $departure_airport = $departure_airport[0] ?? '';
                                                     @endphp
-                                                    {{$airWayBill->awb_code .' '. $departure_airport .' '. $airWayBill->awb_no}}
+                                                    {{$airWayBill->awb_code .' '. $departure_airport .' '. $airWayBill->awb_no ?? ''}}
                                                 </td>
                                             </tr>
                                         </table>
@@ -87,7 +87,7 @@
                                                     &nbsp;
                                                     </td>
                                                 <td align="center" valign="top" width="140px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                    {{$airWayBill->awb_code . ' - '. $airWayBill->awb_no}}
+                                                    {{$airWayBill->awb_code . ' - '. $airWayBill->awb_no ?? ''}}
                                                 </td>
                                             </tr>
                                         </table>
@@ -124,8 +124,8 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
-                                                                                        {{ $airWayBill->wayBillAddress->ship_name }} <br/>
-                                                                                        {{ $airWayBill->wayBillAddress->ship_address }}
+                                                                                        {{ $airWayBill->wayBillAddress->ship_name ?? ''}} <br/>
+                                                                                        {{ $airWayBill->wayBillAddress->ship_address ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -144,7 +144,7 @@
                                                                                             </tr>
                                                                                             <tr>
                                                                                                 <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->wayBillAddress->ship_account }}
+                                                                                                    {{ $airWayBill->wayBillAddress->ship_account ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -230,8 +230,8 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
-                                                                            {{ $airWayBill->wayBillAddress->cons_name }}<br/>
-                                                                            {{ $airWayBill->wayBillAddress->cons_address }}
+                                                                            {{ $airWayBill->wayBillAddress->cons_name ?? ''}}<br/>
+                                                                            {{ $airWayBill->wayBillAddress->cons_address ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -250,7 +250,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                       {{ $airWayBill->wayBillAddress->cons_account }}
+                                                                                       {{ $airWayBill->wayBillAddress->cons_account ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -304,9 +304,9 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 10px 20px;">
-                                                                            {{ $airWayBill->agentsInfo->agent_name }}
+                                                                            {{ $airWayBill->agentsInfo->agent_name ?? '' }}
                                                                             <br>
-                                                                            {{ $airWayBill->agentsInfo->agent_address }}
+                                                                            {{ $airWayBill->agentsInfo->agent_address ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -335,7 +335,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
-                                                                                                                {{ $airWayBill->agentsInfo->iata_agent_code }}  
+                                                                                                                {{ $airWayBill->agentsInfo->iata_agent_code ?? ''}}  
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -346,7 +346,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                            {{ $airWayBill->agentsInfo->iata_agent_cass }}   
+                                                                                                            {{ $airWayBill->agentsInfo->iata_agent_cass ?? ''}}   
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -373,7 +373,7 @@
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
                                                                                                 <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:19px;">
-                                                                                                    {{ $airWayBill->agentsInfo->agent_account }}  
+                                                                                                    {{ $airWayBill->agentsInfo->agent_account ?? ''}}  
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -439,7 +439,7 @@
                                                                 // $departureAirport = $departureAirport[0] . ' - ' . $departureAirport[2];  
                                                                 @endphp
                                                                 {{-- {{ $departureAirport }} --}}
-                                                                {{ $airWayBill->departure_airport }}
+                                                                {{ $airWayBill->departure_airport ?? ''}}
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -542,7 +542,7 @@
                                                                                     $to1 = explode(',', $airWayBill->to);
                                                                                     $to1 = $to1[0];
                                                                                 @endphp
-                                                                                {{ $to1 }}
+                                                                                {{ $to1 ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -558,7 +558,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
-                                                                                {{ $airWayBill->by }}
+                                                                                {{ $airWayBill->by ?? ''}}
                                                                             </td>
                                                                     </tr>
                                                                     </table>
@@ -589,7 +589,7 @@
                                                                                     $to2 = explode(',', $airWayBill->to_2);
                                                                                     $to2 = $to2[0];
                                                                                 @endphp
-                                                                                {{ $to2 }}
+                                                                                {{ $to2 ?? ''}}
                                                                             </td>
                                                                             </tr>
                                                                     </table>
@@ -605,7 +605,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->by_2 }}
+                                                                                {{ $airWayBill->by_2 ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -625,7 +625,7 @@
                                                                                     $to3 = explode(',', $airWayBill->to_3);
                                                                                     $to3 = $to3[0];
                                                                                 @endphp
-                                                                                {{ $to3 }}
+                                                                                {{ $to3 ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -641,7 +641,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->by_3 }}
+                                                                                {{ $airWayBill->by_3 ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -665,7 +665,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
-                                                                                {{ $airWayBill->paymentInfo->currency }} 
+                                                                                {{ $airWayBill->paymentInfo->currency ?? ''}} 
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -681,7 +681,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->paymentInfo->type_of_payment }}
+                                                                                {{ $airWayBill->paymentInfo->type_of_payment ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -807,7 +807,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->paymentInfo->declear_value_carriage }}
+                                                                                {{ $airWayBill->paymentInfo->declear_value_carriage ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -823,7 +823,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
-                                                                                {{ $airWayBill->paymentInfo->declear_value_customs }}
+                                                                                {{ $airWayBill->paymentInfo->declear_value_customs ?? ''}}
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -861,7 +861,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
-                                                                                        {{ $airWayBill->destination_airport }}
+                                                                                        {{ $airWayBill->destination_airport ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -890,7 +890,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date }}
+                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>           
@@ -901,7 +901,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date }}
+                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>           
@@ -938,7 +938,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                        {{ $airWayBill->paymentInfo->declear_value_insurance }}
+                                                                                        {{ $airWayBill->paymentInfo->declear_value_insurance ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1121,7 +1121,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="39px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->pieces }} 
+                                                                                                    {{ $airWayBill->consignmentData->pieces ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1132,7 +1132,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->gross_weight }}
+                                                                                                    {{ $airWayBill->consignmentData->gross_weight ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1162,7 +1162,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->pieces }}
+                                                                                                    {{ $airWayBill->consignmentData->pieces ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1173,7 +1173,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->gross_weight }}
+                                                                                                    {{ $airWayBill->consignmentData->gross_weight ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1208,7 +1208,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
-                                                                                                   {{ $airWayBill->consignmentData->service_code }} 
+                                                                                                   {{ $airWayBill->consignmentData->service_code ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1251,7 +1251,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
-                                                                                                    {{ $airWayBill->consignmentData->rate_class }}
+                                                                                                    {{ $airWayBill->consignmentData->rate_class ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1323,7 +1323,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->chargable_weight }}
+                                                                                                    {{ $airWayBill->consignmentData->chargable_weight ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1400,7 +1400,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="75px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->consignmentData->rate }} 
+                                                                                                    {{ $airWayBill->consignmentData->rate ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1464,7 +1464,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->total_amount }}  
+                                                                                                    {{ $airWayBill->total_amount ?? ''}}  
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1484,7 +1484,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->total_amount }} 
+                                                                                                    {{ $airWayBill->total_amount ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1546,9 +1546,10 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="left" valign="top" width="160px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
-                                                                                                    {{ $airWayBill->consignmentData->description }}<br>
+                                                                                                    {{ $airWayBill->consignmentData->description ?? ''}}<br>
 
                                                                                                         @php
+                                                                                                        if (isset($airWayBill->consignmentData) && isset($airWayBill->consignmentData->pieces_info)) {
                                                                                                             $decodedInfo = json_decode($airWayBill->consignmentData->pieces_info, true);
                                                                                                             foreach ($decodedInfo as $key => $value) 
                                                                                                             {
@@ -1556,11 +1557,14 @@
 
                                                                                                             }
                                                                                                             // Getting Hs code
-                                                                                                            $hsCode = str_replace('"', '', $hsCode);
-                                                                                                            $hsCode = explode(' ', $hsCode);
-                                                                                                            foreach ($hsCode as $value) {
-                                                                                                                echo "Hs Code: ".$value."<br>";
+                                                                                                            if (!empty($hsCode)) {
+                                                                                                                $hsCode = str_replace('"', '', $hsCode);
+                                                                                                                $hsCode = explode(' ', $hsCode);
+                                                                                                                foreach ($hsCode as $value) {
+                                                                                                                    echo "Hs Code: ".$value."<br>";
+                                                                                                                }
                                                                                                             }
+                                                                                                        }
                                                                                                         @endphp
                                                                                                 </td>
                                                                                             </tr>
@@ -1684,7 +1688,7 @@
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment ?? '';
                                                                                                         if ($prepaidTaxType == "PP") {
                                                                                                             echo $airWayBill->paymentInfo->total_charges_prepaid;
                                                                                                         }
@@ -1692,7 +1696,7 @@
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment ?? '';
                                                                                                         if ($prepaidTaxType == "CC") {
                                                                                                             echo $airWayBill->paymentInfo->total_charges_collect;
                                                                                                         }
@@ -1868,7 +1872,7 @@
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment ?? '';
                                                                                                         if ($prepaidTaxType == "PP") {
                                                                                                             echo $airWayBill->paymentInfo->taxes;
                                                                                                         }
@@ -1876,7 +1880,7 @@
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
-                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment;
+                                                                                                        $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment ?? '';
                                                                                                         if ($prepaidTaxType == "CC") {
                                                                                                             echo $airWayBill->paymentInfo->taxes;
                                                                                                         }
@@ -1964,10 +1968,10 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_prepaid }}
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_prepaid ?? ''}}
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_collect }}
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_agent_collect ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -2046,10 +2050,10 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_prepaid }}
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_prepaid ?? ''}}
                                                                                                 </td>
                                                                                                 <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_collect }}
+                                                                                                    {{ $airWayBill->paymentInfo->other_charges_due_carrier_collect ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -2125,7 +2129,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $airWayBill->paymentInfo->total_charges_prepaid }}
+                                                                                                                {{ $airWayBill->paymentInfo->total_charges_prepaid ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2134,7 +2138,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $airWayBill->paymentInfo->total_charges_collect }}
+                                                                                                                {{ $airWayBill->paymentInfo->total_charges_collect ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2297,7 +2301,7 @@
                                                                                 <tr>
                                                                                     <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
                                                                                         @foreach ($airWayBill->otherCharge as $charge)
-                                                                                            {{ $charge->other_charge_code }} {{ $charge->due }} {{ $charge->amount }}<br> 
+                                                                                            {{ $charge->other_charge_code ?? ''}} {{ $charge->due ?? ''}} {{ $charge->amount ?? ''}}<br> 
                                                                                         @endforeach
                                                                                     </td>
                                                                                 </tr>
@@ -2327,7 +2331,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
-                                                                                                                {{ $airWayBill->agentsInfo->agent_name }}
+                                                                                                                {{ $airWayBill->agentsInfo->agent_name ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>
@@ -2365,7 +2369,10 @@
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="bottom" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         @php
-                                                                                                                            echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
+                                                                                                                            echo $agentIssueDate = !empty($airWayBill->agentsInfo) && !empty($airWayBill->agentsInfo->agent_issue_date) 
+                                                                                                                            ? date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date)) 
+                                                                                                                            : '';
+                                                                                                                           // echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
                                                                                                                         @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2376,8 +2383,14 @@
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         @php
-                                                                                                                            $locationCode = explode(',', $airWayBill->agentsInfo->agent_issue_loc_code);
-                                                                                                                            echo $locationCode = $locationCode[0];
+                                                                                                                            //$locationCode = explode(',', $airWayBill->agentsInfo->agent_issue_loc_code);
+                                                                                                                            //echo $locationCode = $locationCode[0] ?? '';
+                                                                                                                            $locationCode = '';
+                                                                                                                                if (!empty($airWayBill->agentsInfo) && !empty($airWayBill->agentsInfo->agent_issue_loc_code)) {
+                                                                                                                                    $locationCodeArray = explode(',', $airWayBill->agentsInfo->agent_issue_loc_code);
+                                                                                                                                    $locationCode = $locationCodeArray[0] ?? '';
+                                                                                                                                }
+                                                                                                                                echo $locationCode;
                                                                                                                         @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2387,7 +2400,7 @@
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="top" width="160px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
-                                                                                                                        {{ $airWayBill->agentsInfo->agent_issue_sign }}
+                                                                                                                        {{ $airWayBill->agentsInfo->agent_issue_sign ?? ''}}
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                             </table>
@@ -2457,7 +2470,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
-                                                                                                                {{$airWayBill->awb_code . ' '. $airWayBill->awb_no}}
+                                                                                                                {{$airWayBill->awb_code . ' '. $airWayBill->awb_no ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>

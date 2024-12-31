@@ -39,8 +39,7 @@
                             <div>
                                 <div class="py-5">
                                     <div class="ml-3 mt-8">
-                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Charges:</h6>
-                                        <div class="py-7">
+                                        <div class="">
                                             <b-row>
                                                 <b-col cols="12">
                                                     <table class="table table-sm" style="max-width:100%;">

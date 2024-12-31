@@ -20,7 +20,7 @@ class AirwayBill extends Controller
 {
     public function get_agent()
     {
-        $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
+        $data = Agent::where('id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         return json_encode($data);
     }
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
@@ -71,7 +71,7 @@ class AirwayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $awb_id;
-            $SavedAddress->user_id = '123456';
+            $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
             $SavedAddress->account = $shipper_address['ship_account'];
@@ -134,7 +134,7 @@ class AirwayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $awb_id;
-            $SavedAddress->user_id = '123456';
+            $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
             $SavedAddress->account = $consignee_address['cons_account'];
@@ -193,7 +193,7 @@ class AirwayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $awb_id;
-            $SavedAddress->user_id = '123456';
+            $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
             $SavedAddress->address = $also_notify_address['also_address'];
@@ -531,7 +531,7 @@ class AirwayBill extends Controller
             $validator = Validator::make($oci_entry, [
                 'country_code' => 'required|string|max:2',
                 'info_identifier' => 'required|string|max:3',
-                'custom_info_identifier' => 'required|string|max:2',
+                'custom_info_identifier' => 'nullable|string|max:2',
                 'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
             ],[
                 'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
@@ -609,8 +609,16 @@ class AirwayBill extends Controller
     {
         $main_return_data = [];
         $error_data = '';
+        //for awb code and awb number 
+        if (!empty($request->first_box['awb_code'])) {
+            $error_data = $this->firstBox($request->first_box);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['first_box'] = $error_data;
+        }
         //for storing shipper address
-        if (!empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+        if (!empty($request->shipper_address['ship_name'])) {
             $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -618,7 +626,7 @@ class AirwayBill extends Controller
                 $main_return_data['shipper_address'] = $error_data;
         }
         // for storing consignee address
-        if (!empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
+        if (!empty($request->consignee_address['cons_name'])) {
             $error_data = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->consignee_address, $request->is_consignee_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -626,22 +634,16 @@ class AirwayBill extends Controller
                 $main_return_data['consignee_address'] = $error_data;
         }
         //for storing also notify address
-        if (!empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+        if (!empty($request->also_notify_address['also_name'])) {
             $error_data = $this->saveAlsoNotify($request->first_box['awb_no'], $request->first_box['awb_code'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($request->first_box['awb_code']) && !empty($request->first_box['awb_no'])) {
-            $error_data = $this->firstBox($request->first_box);
-            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
-            else
-                $main_return_data['first_box'] = $error_data;
-        }
+       
         // && !empty($request->routing_information['from'])
-        if (!empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+        if (!empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -665,7 +667,7 @@ class AirwayBill extends Controller
             $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'],$request->first_box['awb_code'], $request->charges);
         }
         //For payment information
-        if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+        if (!empty($request->payment_info['currency'])) {
             $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -681,7 +683,7 @@ class AirwayBill extends Controller
                 $main_return_data['oci_entries'] = $error_data;
         }
         //for Total Consignee Amount and Total Volume
-        if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+        if (!empty($request->totals['total_volume'])) {
             $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->first_box['awb_code'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -691,7 +693,8 @@ class AirwayBill extends Controller
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'],$request->first_box['awb_code'], $request->tableCodes);
         }
-        return json_encode($main_return_data);
+        return response()->json(['data' => $main_return_data]);
+        // return json_encode($main_return_data);
     }
    
     public function update(Request $request, $id, $awb_no = null)
@@ -706,14 +709,14 @@ class AirwayBill extends Controller
                 $main_return_data['first_box'] = $error_data;
             }
         }
-        if (!empty($id) && !empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+        if (!empty($id) && !empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['routing_information'] = $error_data;
         }
-        if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+        if (!empty($id) && !empty($request->totals['total_volume'])) {
             $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->first_box['awb_code'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -734,7 +737,7 @@ class AirwayBill extends Controller
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
-        if (!empty($id) && !empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+        if (!empty($id)) {
             $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'],$request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -742,7 +745,7 @@ class AirwayBill extends Controller
                 $main_return_data['shipper_address'] = $error_data;
         }
         // for storing consignee address
-        if (!empty($id) && !empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
+        if (!empty($id)) {
             $error_data = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->consignee_address, $request->is_consignee_address_save, $awb_no = null);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -750,29 +753,30 @@ class AirwayBill extends Controller
                 $main_return_data['consignee_address'] = $error_data;
         }
         //for storing also notify address
-        if (!empty($id) && !empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+        if (!empty($id)) {
             $error_data = $this->saveAlsoNotify($request->first_box['awb_no'], $request->first_box['awb_code'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($id) && !empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+        if (!empty($id)) {
             $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['payment_info'] = $error_data;
         }
-        if (!empty($id) && !empty($request->charges)) {
+        if (!empty($id)) {
             $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'], $request->first_box['awb_code'], $request->charges);
         }
-        if (!empty($id) && !empty($request->entries)) {
+        if (!empty($id)) {
             $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->entries);
         }
-        if (!empty($id) && !empty($request->tableCodes) && is_array($request->tableCodes)) {
+        if (!empty($id)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->first_box['awb_code'], $request->tableCodes);
         }
+        return response()->json(['data' => $main_return_data]);
     }
 
     public function show($id){
@@ -836,7 +840,7 @@ class AirwayBill extends Controller
     public function getShippers(Request $request)
     {
         // $shippers = SavedAddress::all();
-        $shippers = SavedAddress::where('user_id', 123456)->get();
+        $shippers = SavedAddress::where('id', 123456)->get();
         // dd($shippers);
         return response()->json($shippers);
     }
@@ -848,9 +852,9 @@ class AirwayBill extends Controller
         if (!$agenData) {
             return response()->json(['error' => 'Address not found'], 404);
         }
-        $userId = $agenData->user_id;
+        $userId = $agenData->id;
     
-        $query = SavedAddress::where('user_id', $userId);
+        $query = SavedAddress::where('id', $userId);
         if ($addressId) {
             $query->where('id', $addressId);
         } else {

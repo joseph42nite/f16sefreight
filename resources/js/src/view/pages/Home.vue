@@ -1,162 +1,612 @@
+
 <template>
-    <div>
-        <b-navbar toggleable="lg" type="dark" variant="info">
-            <b-navbar-brand href="#">NavBar</b-navbar-brand>
+    <b-container fluid class="home-banner" id="home">
+        <b-container>
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12">
+                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 80%;margin: 6% 10%;">
+                        <!-- Primary Banner Text Image -->
+                        <b-col cols="12" class="">
+                            <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="img-fluid" style="width: 100%;" />
+                        </b-col>
+                        <!-- Left Description Column -->
+                        <b-col cols="11" md="4" lg="4" class="banner-description-container">
+                            <h4 class="text-left banner-description mt-8 mb-8">
+                                Whether you need fast and reliable data flow for airlines or simplified document handling for sea and road transport, we’ve got you covered.
+                            </h4>
+                            <b-button class="d-flex align-items-center mb-8 exp-btn">
+                                <span>Explore Now</span>
+                                <b-icon icon="arrow-right" class="btn-icon ms-2"></b-icon>
+                            </b-button>
+                        </b-col>
+                        <!-- Right Banner Image Column -->
+                        <b-col cols="11" md="8" lg="8" class="banner-image-container">
+                            <div class="banner">
+                                <img :src="banner" alt="Banner-image" id="Banner-image" class="img-fluid banner-image" style="margin-left: 10%;" />
+                            </div>
+                        </b-col>
+                    </b-row>
+                </b-col>
+            </b-row>
+            <b-row align-h="center" align-v="center">
+                <!-- What F16s can do for you -->
+                <b-col cols="12" class="mt-20 mb-26">
+                    <h2 class="section-title">Learn what F16s can do for you</h2>
+                </b-col>
+                <b-col
+                    v-for="(serviceCard, index) in serviceCards"
+                    :key="index"
+                    cols="12" sm="6" md="3" lg="3" xl="3" xxl="3"
+                    class="mb-16 service-card"
+                    >
+                    <b-card
+                        :img-src="serviceCard.imgSrc"
+                        :img-alt="serviceCard.imgAlt"
+                        class="mb-2 text-center"
+                    >
+                        <div class="service-card-title">
+                            <p v-html="serviceCard.title"></p>
+                        </div>
+                        <div class="service-card-btn-container">
+                            <b-button class="service-card-arrow-btn">
+                                <b-icon icon="arrow-right" font-scale="2" class="service-card-btn-icon ms-2"></b-icon>
+                            </b-button>
+                        </div>
+                    </b-card>
+                </b-col>
+            </b-row>
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12" class="mt-22">
+                    <div>
+                        <h2 class="section-title mb-10">Connecting global freight networks with smart data solutions</h2>
+                    </div>
+                </b-col>
+                <b-col cols="8" class="">
+                    <div class="d-flex flex-row justify-content-center text-center">
+                        <h6 class="section-sub-title mb-8">F16s E-Freight Solutions provides seamless data transmission and documentation for air, sea, and road freight.</h6>
+                    </div>
+                </b-col>
+                <b-col cols="8" class="mb-26">
+                    <div class="d-flex flex-row justify-content-center">
+                        <b-button class="learnMore-btn">Learn More</b-button>
+                    </div>
+                </b-col>
+            </b-row>
+            <!-- Business count section start here -->
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12" class="mt-18">
+                    <div>
+                        <h2 class="section-title mb-4">Making Best, Even Better.</h2>
+                        <h6 class="section-sub-title mb-16">Your partner for smarter, faster operations and freight solutions.</h6>
+                    </div>
+                </b-col>
+                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count">
+                    <h1 class="text-center">{{ count1 }}+</h1>
+                    <p class="text-center">Data transmitted</p>
+                </b-col>
+                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count">
+                    <h1 class="text-center">{{ count2 }}+</h1>
+                    <p class="text-center">Cities</p>
+                </b-col>
+                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count">
+                    <h1 class="text-center">{{ count3 }}+</h1>
+                    <p class="text-center">Airline affiliations</p>
+                </b-col>
+            </b-row>
+            <!-- Latest News section start here -->
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12" class="mt-18 mb-7">
+                    <div>
+                        <h2 class="section-title text-center my-12">Latest Logistics News</h2>
+                    </div>
+                </b-col>
 
-            <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+                <b-col
+                    v-for="(newsItem, index) in newsItems"
+                    :key="index"
+                    cols="12" sm="4" md="4" lg="4" xl="4" xxl="4"
+                    class="mb-16"
+                >
+                    <b-card class="text-center latest-news-card">
+                        <template v-slot:default>
+                            <div class="latest-news-card-img">
+                                <b-img :src="newsItem.imgSrc" :alt="newsItem.imgAlt" class="img-fluid d-block" style="width: 100%;" />
+                            </div>
+                            <div class="latest-news-card-title">
+                                {{ newsItem.title }}
+                            </div>
+                        </template>
+                    </b-card>
+                </b-col>
+                <b-col cols="12" class="mb-8">
+                    <div class="d-flex flex-row justify-content-center">
+                        <b-button class="expMore-btn">Explore More</b-button>
+                    </div>
+                </b-col>
+            </b-row>
+            <!-- FAQs Accordion section start here -->
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12" class="mt-30">
+                    <div>
+                        <h2 class="section-title mb-10">FAQs</h2>
+                    </div>
+                </b-col>
+                <b-col cols="12" class="mb-20">
+                    <div class="mb-6 accordion-box"
+                        v-for="(accordion, index) in accordions" :key="index"
+                        :style="{ background: accordion.isOpen ? '#355594' : '#F1F9FF8A'}"
+                        @click="toggleAccordion(index)">
+                        <div class="d-flex flex-row justify-content-between align-items-center cursor-pointer text-left">
+                            <h5 class="faq-accordion-title" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C' }">
+                                {{ accordion.title }}
+                            </h5>
+                            <!-- Show chevron-down if closed -->
+                            <b-icon v-if="!accordion.isOpen" icon="chevron-compact-down" scale="2" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C', }"></b-icon>
+                        </div>
+                        <b-collapse v-model="accordion.isOpen" class="mt-2">
+                            <b-card class="accordion-card">
+                                <div class="d-flex flex-row justify-content-between cursor-pointer">
+                                    <p class="" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C' }">
+                                        {{ accordion.content }}
+                                    </p>
+                                    <!-- Show chevron-up if open -->
+                                    <b-icon v-if="accordion.isOpen" icon="chevron-compact-up" scale="2" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C', }"></b-icon>
+                                </div>
+                            </b-card>
+                        </b-collapse>
+                    </div>
+                </b-col>
+            </b-row>
+        </b-container>
+    </b-container>
+</template>
 
-            <b-collapse id="nav-collapse" is-nav>
-            <b-navbar-nav>
-                <b-nav-item href="#">Link</b-nav-item>
-                <b-nav-item href="#" disabled>Disabled</b-nav-item>
-            </b-navbar-nav>
+<script>
+    export default {
+        name: "Home",
+        data(){
+        return{
+            banner: "/media/custome/banner-plane.png",
+            banner_primary_text: "/media/custome/banner-primary-text.svg",
+            count1: 0,
+            count2: 0,
+            count3: 0,
+            targetCounts: {
+                count1: 100,
+                count2: 10,
+                count3: 100,
+            },
+            // Array of Services section
+            serviceCards: [
+                {
+                    imgSrc: "/media/custome/business.svg",
+                    imgAlt: "business",
+                    title: "Small<br />Business",
+                },
+                {
+                    imgSrc: "/media/custome/cloud-storage.svg",
+                    imgAlt: "cloud storage",
+                    title: "Cloud<br />Storage",
+                },
+                {
+                    imgSrc: "/media/custome/privacy.svg",
+                    imgAlt: "privacy",
+                    title: "Privacy",
+                },
+                {
+                    imgSrc: "/media/custome/end-to-end-service.svg",
+                    imgAlt: "end to end service",
+                    title: "End to End<br />Service",
+                }
+            ],
+            // Array of Latest news items
+            newsItems: [
+                {
+                    imgSrc: "/media/custome/gallary/img-1.png",
+                    imgAlt: 'latest news image-1',
+                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                },
+                {
+                    imgSrc: "/media/custome/gallary/img-2.png",
+                    imgAlt: 'latest news image-2',
+                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                },
+                {
+                    imgSrc: "/media/custome/gallary/img-3.png",
+                    imgAlt: 'latest news image-3',
+                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                },
+                {
+                    imgSrc: "/media/custome/gallary/img-4.png",
+                    imgAlt: 'latest news image-4',
+                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                },
+                {
+                    imgSrc: "/media/custome/gallary/img-5.png",
+                    imgAlt: 'latest news image-5',
+                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                },
+                {
+                    imgSrc: "/media/custome/gallary/img-6.png",
+                    imgAlt: 'latest news image-6',
+                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                },
+            ],
+            // Array of Faqs Accordion section
+            accordions: [
+                {
+                    title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
+                    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius.",
+                    isOpen: false,
+                },
+                {
+                    title: "Phasellus ultricies quam in elit tristique scelerisque?",
+                    content: "Phasellus ultricies quam in elit tristique scelerisque. Mauris vestibulum nisl eu felis congue, ac tempor nulla scelerisque.",
+                    isOpen: false,
+                },
+                {
+                    title: "Donec quis magna nec sapien congue varius non sit amet urna?",
+                    content: "Donec quis magna nec sapien congue varius non sit amet urna. Vivamus dignissim metus id dolor ultricies, vitae malesuada neque auctor.",
+                    isOpen: false,
+                },
+            ],
+        }
+        },
+        methods: {
+            animateCount(target, key) {
+                const duration = 10000; // Animation duration in milliseconds
+                const increment = Math.ceil(target / (duration / 16)); // Calculate increment per frame (16ms per frame)
 
-            <!-- Right aligned nav items -->
-            <b-navbar-nav class="ml-auto">
-                <b-nav-form>
-                <b-form-input size="sm" class="mr-sm-2" placeholder="Search"></b-form-input>
-                <b-button size="sm" class="my-2 my-sm-0" type="submit">Search</b-button>
-                </b-nav-form>
+                const interval = setInterval(() => {
+                    if (this[key] < target) {
+                    this[key] = Math.min(this[key] + increment, target); // Increment count, cap at target
+                    } else {
+                    clearInterval(interval);
+                    }
+                }, 16);
+            },
+            toggleAccordion(index) {
+                // Check if the index is valid
+                if (index >= 0 && index < this.accordions.length) {
+                    this.accordions[index].isOpen = !this.accordions[index].isOpen;
+                } else {
+                    console.error("Accordion index is invalid:", index);
+                }
+            }
+        },
+        mounted() {
+            this.animateCount(this.targetCounts.count1, "count1");
+            this.animateCount(this.targetCounts.count2, "count2");
+            this.animateCount(this.targetCounts.count3, "count3");
+            
+        },
 
-                <b-nav-item-dropdown text="Lang" right>
-                <b-dropdown-item href="#">EN</b-dropdown-item>
-                <b-dropdown-item href="#">ES</b-dropdown-item>
-                <b-dropdown-item href="#">RU</b-dropdown-item>
-                <b-dropdown-item href="#">FA</b-dropdown-item>
-                </b-nav-item-dropdown>
+    };
+</script>
 
-                <b-nav-item-dropdown right>
-                <!-- Using 'button-content' slot -->
-                <template #button-content>
-                    <em>User</em>
-                </template>
-                <b-dropdown-item href="#">Profile</b-dropdown-item>
-                <b-dropdown-item href="#">Sign Out</b-dropdown-item>
-                </b-nav-item-dropdown>
-            </b-navbar-nav>
-            </b-collapse>
-        </b-navbar>
-    </div>
-  </template>
-  
-  <script>
-//   import { mapGetters } from "vuex";
-//   import { LOGOUT } from "@/core/services/store/auth.module";
-  export default {
-    name: "Home",
-    data(){
-      return{
-    //   logoSrc: "/media/custome/logo-1.png",
-    //   blackLogoSrc: "/media/custome/logo-2.png",
-    //   avatarLogoSrc: "/media/custome/user-avatar.png",
-      isHovered: false,
-      }
-    },
-    methods: {
-    //   toggleLogo(isHovered) {
-    //     this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/logo-1.png";
-    //   },
-    //   hasActiveChildren(match) {
-    //     return this.$route["path"].indexOf(match) !== -1;
-    //   },
-    //   logout() {
-    //     this.$store.dispatch(LOGOUT).then(() => window.location.href='/' );
-    //   },
-    },
-    // computed: {
-    //   ...mapGetters(["currentUser"]),
-    // }
-  };
-  </script>
-  <style scoped>
-  .navbar {
-    /* height: auto;
-    background-color: #D0E6F8;
-    background-image: linear-gradient(#D0E6F8, #fff); */
-  }
-  .nav-menu {
-    /* padding: 12px 41px 12px 41px;
-    gap: 40px;
-    border-radius: 39px; */
-    /* opacity: 0px; */
-    /* background-color: #9499B212; */
-    /* background-image: linear-gradient(#9499B212, #22328A12); */
-  }
-  /* .nav-link {
-    padding: 0px !important;
+<style scoped>
+@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
+
+/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */
+html, body, html * {
+  font-family: 'Roboto', sans-serif !important;
+}
+.home-banner {
+    position: relative;
+    padding: 0;
+    background: linear-gradient(180deg, #D0E6F8 10%, #FFFFFF 36%);
+}
+.banner-description {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 25px;
+    color: #4A5568;
+}
+.banner-image-container {
+    margin-top: -2%;
+}
+.section-title {
+    font-size: 36px !important;
+    font-weight: 600;
+    line-height: 40px !important;
+    text-align: center;
+    color: #355594;
+
+}
+.section-sub-title {
+    font-size: 24px !important;
+    line-height: 30px !important;
+    text-align: center;
+    color: #6D7A8C;
+    font-weight: 400;
+}
+.exp-btn {
+    background: linear-gradient(360deg, rgba(119, 128, 177, 0.21) 0%, rgba(34, 50, 138, 0.21) 53.5%);
+    border-radius: 30px;
+    border: 0px;
+    gap: 22px;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 5px;
+}
+.exp-btn:hover {
+    background: #fff !important;
+}
+.exp-btn span {
+    color: #355594;
+    padding: 0px 10px;
+    font-weight: 600;
+}
+.exp-btn .btn-icon {
+    background: #fff;
+    border-radius: 30px;
+    font-size: 36px !important;
+    font-weight: 600;
+    padding: 4px;
+    color: #355594;
+}
+.service-card {
+    position: relative;
+}
+.service-card .card {
+    border-radius: 18px;
+    border: double 1.5px transparent;
+    /* background-image: linear-gradient(white, white), linear-gradient(152.6deg, #ABC0FF 58.02%, rgba(255, 255, 255, 0) 91.63%); */
+    background-image: linear-gradient(white, white), linear-gradient(151.6deg, #ABC0FF 20%, rgba(255, 255, 255, 0) 100%);
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+    height: 400px !important;
+}
+.service-card .card-body {
+    padding: 0;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+.service-card .card-img {
+    padding: 30px 20px 10px !important;
+}
+.service-card-title p {
+    color: #3b3c7c;
+    font-size: 24px !important;
+    line-height: 30px !important;
+    font-weight: 300;
+    padding: 10px 0px;
+    margin: 0;
+}
+.service-card-btn-container {
+    position: absolute;
+    right: -3%;
+    top: 86%;
+}
+.service-card-arrow-btn {
+    background: #e3edff00 !important;
+    border:0px;
+    border-radius: 0px;
+    padding: 0px;
+}
+.service-card-btn-icon {
+    background: #E3EDFF42;
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    font-size: 56px !important;
+    padding: 14px;
+    color: #355594;
+    box-shadow: 1px 1px 10px 1px #00000040;
+}
+.service-card-btn-icon:hover {
+    background: #355594;
+    color: #fff;
+}
+.learnMore-btn {
+    background: #00000000;
+    border: 1px solid #355594;
+    color: #355594;
+    border-radius: 30px;
+    padding: 8px 20px;
+}
+.learnMore-btn:hover {
+    background: #00000000 !important;
+    border: 1px solid #355594 !important;
     color: #355594 !important;
-  }
-  .content-gap {
-    gap:30px;
-  } */
-  .navbar-header {
-    /* margin-left: 55px;
-    margin-top: 10px; */
-  }
-  /* .nav-link-custom:hover {
-    color: red !important;
-  }
-  .nav-link-custom{
-    font-size: 14px;
-    line-height: 20px; 
-  }*/
+    box-shadow: 1px 0px 10px 0px #00000040;
+}
+.business-count h1{
+    color:#355594;
+    font-size: 64px;
+    font-weight: 700;
+}
+.business-count p{
+    color:#6D7A8C;
+    font-size: 24px;
+    line-height: 20px;
+}
+.latest-news-card {
+    background: linear-gradient(180deg, #D9EFFF 0%, #F1F9FF 71%);
+    border-radius: 25px;
+}
+.latest-news-card .card-body {
+    width:100%;
+    padding: 0px !important;
+    position: relative;
+    z-index: 100;
+}
+.latest-news-card-img {
+    padding: 10px;
+}
+.latest-news-card-title {
+    font-size: 20px;
+    color: #355594;
+    padding: 20px 12px;
+    font-weight: 600;
+    line-height: 26px;
+}
+.expMore-btn {
+    background: #00000000;
+    border: 0px;
+    font-size: 16px !important;
+    color: #3A3B7B;
+    border-radius: 0px;
+    padding: 0px;
+    text-decoration: underline;
+}
+.expMore-btn:hover {
+    background: #00000000 !important;
+    border: 0px !important;
+    font-size: 16px !important;
+    color: #3A3B7B !important;
+    border-radius: 0px !important;
+    padding: 0px !important;
+    text-decoration: underline;
+}
+.accordion-box {
+    padding: 25px 40px;
+    border-radius: 10px;
+}
+.accordion-box h5 {
+    padding-right: 100px;
+    margin: 0;
+}
+.accordion-card {
+    background: #ffffff00 !important;
+}
+.accordion-box .card-body {
+    padding: 0;
+}
+.accordion-box p {
+    padding-right: 100px;
+    margin: 0;
+}
 
-  /* .wrap:hover {
-    background-color: #923B33;
-  }
-  .wrap:hover.menu-text{
-    color:#923B33;
-  }
-  .wrap:hover .btn.logout {
-    background-color: white !important;
-    color: #923B33 !important;
-  }
-  .wrap:hover .btn.logout .menu-text{
-    color: #923B33 !important;
-  } */
-  /* .logout:hover {
-    background-color: white !important;
-    color: #923B33 !important;
-  } */
+/* For Smaller Screens (xs - <576px) */
+@media (max-width: 576px) {
+    .banner-description {
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 18px;
+    }
+    .service-card .card {
+        height: 610px !important;
+    }
+    .service-card-btn-container {
+        position: absolute;
+        right: -1%;
+        top: 91%;
+    }
+}
 
-  
-  /* a.menu-link{
-  text-decoration: none !important;
-  color: black;
-  }
-  .menu-text{
-  color: White;
-  }
-  #main-logo{
-    width: 130px;
-  }
-  #avatar-logo{
-    width: 35px;
-    height: auto;
-  }
-  .m_mob{
-    display:none;
-  }
-  @media (max-width: 768px) {
-    .m_mob{
-        display:block;
+/* For Small Screens (sm - ≥576px) */
+@media (min-width: 576px) and (max-width: 767px) {
+    .banner-description {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 20px;
     }
-    .m_desk{
-        display:none;
+    .banner-image-container {
+        margin-top: 0%;
     }
-        .container {
-        margin-top: 5%;
-        margin-bottom: 5%;
-        }
-        #main-logo{
-        width: 110px;
-        }
-        .navbar-header {
-        margin-left: 10px;
-        margin-top: 20px;
+    .banner-image {
+        margin-left: 0% !important;
     }
-    .nav-link-custom{
-        margin-left: 5px;
+    .section-title {
+        font-size: 28px !important;
+        line-height: 34px !important;
     }
-  } */
-  </style>
+    .section-sub-title {
+        font-size: 20px !important;
+        line-height: 24px !important;
+    }
+    .service-card .card {
+        height: 430px !important;
+    }
+    .service-card-btn-container {
+        position: absolute;
+        right: -3%;
+        top: 87%;
+    }
+    .business-count h1{
+        color:#355594;
+        font-size: 52px;
+        font-weight: 700;
+    }
+    .business-count p{
+        color:#6D7A8C;
+        font-size: 20px;
+        line-height: 24px;
+    }
+    .latest-news-card-img {
+        padding: 10px;
+    }
+    .latest-news-card-title {
+        font-size: 14px;
+        padding: 12px 10px;
+        font-weight: 600;
+        line-height: 18px;
+    }
+}
+
+/* For Medium Screens (md - ≥768px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .section-title {
+        font-size: 32px !important;
+        line-height: 36px !important;
+
+    }
+    .section-sub-title {
+        font-size: 22px !important;
+        line-height: 26px !important;
+    }
+    .service-card .card {
+        height: 330px !important;
+    }
+    .business-count h1{
+        color:#355594;
+        font-size: 56px;
+        font-weight: 700;
+    }
+    .business-count p{
+        color:#6D7A8C;
+        font-size: 22px;
+        line-height: 26px;
+    }
+    .latest-news-card-img {
+        padding: 10px;
+    }
+    .latest-news-card-title {
+        font-size: 18px;
+        padding: 14px 12px;
+        line-height: 24px;
+    }
+}
+
+/* For Large Screens (lg - ≥992px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .banner-image-container {
+        margin-top: -15%;
+    }
+    .service-card .card {
+        height: 320px !important;
+    }
+    .service-card-btn-container {
+        position: absolute;
+        right: -3%;
+        top: 83%;
+    }
+    .latest-news-card-img {
+        padding: 10px;
+    }
+    .latest-news-card-title {
+        font-size: 18px;
+        padding: 14px 12px;
+        line-height: 24px;
+    }
+}
+
+/* For Extra Large Screens (xl - ≥1200px) */
+@media (min-width: 1200px) {
+    
+}
+
+/* Custome css media quer */
+</style>

@@ -2,12 +2,20 @@
   <div v-if="isAuthenticated">
     <!-- Include Header -->
     <Header></Header>
-
     <!-- Content of the page that changes based on routes -->
     <transition name="fade-in-up">
       <router-view />
     </transition>
-    
+    <!-- Include FOOTER -->
+    <Footer></Footer>
+  </div>
+  <div v-else>
+    <!-- Include Header -->
+    <Header></Header>
+    <!-- Content of the page that changes based on routes -->
+    <transition name="fade-in-up">
+      <router-view />
+    </transition>
     <!-- Include FOOTER -->
     <Footer></Footer>
   </div>

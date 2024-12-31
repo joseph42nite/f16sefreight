@@ -644,7 +644,7 @@
                                 <hr class="hr" />
                                 <!-- ROUTING INDORMATION AND SEARCH FLIGHTS TABS -->
                                 <div>
-                                    <b-tabs content-class="mt-3" class="nav-tabs">
+                                    <b-tabs content-class="mt-3" class="custom-nav">
                                         <b-tab title="Routing Information">
                                             <b-row class="mt-5">
                                                 <b-col cols="5">
@@ -1478,7 +1478,7 @@
                                     <hr class="hr" />
                                     <b-row>
                                         <b-col cols="12">
-                                            <b-tabs content-class="mt-3">
+                                            <b-tabs content-class="mt-3" class="custom-nav">
                                                 <b-tab title="OSI">
                                                     <div class="ml-3 mt-8">
                                                         <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Service Information:</h6>
@@ -1979,7 +1979,7 @@
                                 <hr class="hr" />
                                 
                                 <div class="py-7">
-                                    <b-tabs>
+                                    <b-tabs class="custom-nav">
                                         <b-tab title="Payment Information">
                                             <div class="ml-3 mt-8">
                                                 <b-row>
@@ -4466,10 +4466,10 @@ th {
 
 </style>
 <style>
-    .nav-tabs {
+    .custom-nav .nav-tabs {
         border-bottom: 0px !important;
     }
-    .nav-link {
+    .custom-nav .nav-link {
         color: #355594 !important;
         font-weight: 400 !important;
         font-size: 12px !important;
@@ -4477,7 +4477,8 @@ th {
         padding: 0px !important;
         margin: 0px 10px !important;
     }
-    .nav-link:hover, .nav-link.active {
+    .custom-nav .nav-link:hover,
+    .custom-nav .nav-link.active {
         border-bottom: 2px solid #355594 !important;
     }
     .mx-input {

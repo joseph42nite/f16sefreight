@@ -477,7 +477,7 @@
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION END -->
                                 <hr class="hr" />
                                 <!-- ROUTING INFORMATION TAB SECTION START -->
-                                <b-tabs content-class="mt-3">
+                                <b-tabs content-class="mt-3" class="custom-nav">
                                     <b-tab title="Routing Information" style="border-bottom:0px !important;">
                                         <b-row class="mt-5">
                                             <b-col cols="5">
@@ -1219,7 +1219,7 @@
                                     <b-row>
                                         <b-col cols="12">
                                             <div class="pt-4 pb-9">
-                                                <b-tabs content-class="mt-3">
+                                                <b-tabs content-class="mt-3" class="custom-nav">
                                                     <b-tab title="OSI" active>
                                                         <div class="ml-3 mt-8">
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Service Information:</h6>
@@ -2049,7 +2049,7 @@
                                 </div>
                                 <hr class="hr" />
                                 <div class="py-7">
-                                    <b-tabs>
+                                    <b-tabs class="custom-nav">
                                         <b-tab title="Payment Information">
                                             <b-row>
                                                 <b-col cols="6">
@@ -4499,10 +4499,10 @@ th {
 }
 </style>
 <style>
-    .nav-tabs {
+    .custom-nav .nav-tabs {
         border-bottom: 0px !important;
     }
-    .nav-link {
+    .custom-nav .nav-link {
         color: #355594 !important;
         font-weight: 400 !important;
         font-size: 12px !important;
@@ -4510,7 +4510,8 @@ th {
         padding: 0px !important;
         margin: 0px 10px !important;
     }
-    .nav-link:hover, .nav-link.active {
+    .custom-nav .nav-link:hover,
+    .custom-nav .nav-link.active {
         border-bottom: 2px solid #355594 !important;
     }
 </style>

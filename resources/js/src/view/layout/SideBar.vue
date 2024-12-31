@@ -58,7 +58,7 @@ ul {
     background-color: #F2F9FF;
     padding: 20px 15px;
     border: 1px solid #F2F9FF;
-    border-radius: 40px;
+    border-radius: 24px;
     box-shadow: 3px 3px 10px #d0d0d0;
     z-index: 1;
     margin: 0% 2% 0% 0%;

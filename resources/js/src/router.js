@@ -26,12 +26,6 @@ export default new Router({
           meta: { userType: 'user' }
         },
         {
-          name: "Home",
-          path: "/home",
-          component: () =>import("@/view/pages/Home"),
-          // meta: { userType: 'user' }
-        },
-        {
           path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',
           component: () =>import("@/view/pages/WebDocCopy"),
@@ -61,6 +55,11 @@ export default new Router({
           name: "Test",
           path: "/test-view",
           component: () =>import("@/view/pages/Test"),
+        },
+        {
+          name: "Home",
+          path: "/home",
+          component: () =>import("@/view/pages/Home"),
         },
       ]
     },
@@ -139,12 +138,6 @@ export default new Router({
           path: "new-company/:id?",
           name: "superadmin-newcompany",
           component: () => import("@/view/superadmin/NewCompany.vue"),
-          meta: { userType: 'superadmin' }
-        },
-        {
-          path: "new-branch/:id?",
-          name: "superadmin-newbranch",
-          component: () => import("@/view/superadmin/NewBranch.vue"),
           meta: { userType: 'superadmin' }
         },
         {

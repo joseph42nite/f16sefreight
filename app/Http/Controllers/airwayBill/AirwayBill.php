@@ -231,8 +231,8 @@ class AirwayBill extends Controller
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8',
             // 'consolidated_mawb' => 'boolean',
             // 'awb' => 'boolean',
-            'consolidated_mawb' => 'string',
-            'awb' => 'string',
+            'consolidated_mawb' => 'nullable',
+            'awb' => 'nullable',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -611,7 +611,7 @@ class AirwayBill extends Controller
         $main_return_data = [];
         $error_data = '';
         //for storing shipper address
-        if (!empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+        if (!empty($request->shipper_address['ship_name']) || !empty($request->shipper_address['ship_country']) || !empty($request->shipper_address['ship_city'])) {
             $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;

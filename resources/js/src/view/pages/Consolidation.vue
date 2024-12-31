@@ -177,7 +177,7 @@
                         <b-row>
                             <b-col cols="12">
                                 <div class="py-5">
-                                    <b-tabs content-class="mt-3">
+                                    <b-tabs content-class="mt-3" class="custom-nav">
                                         <b-tab title="House Waybill Details">
                                             <div class="ml-3 mt-8">
                                                 <div class="py-7">
@@ -1446,10 +1446,10 @@ th {
 } 
 </style>
 <style>
-    .nav-tabs {
+    .custom-nav .nav-tabs {
         border-bottom: 0px !important;
     }
-    .nav-link {
+    .custom-nav .nav-link {
         color: #355594 !important;
         font-weight: 400 !important;
         font-size: 12px !important;
@@ -1457,7 +1457,8 @@ th {
         padding: 0px !important;
         margin: 0px 10px !important;
     }
-    .nav-link:hover, .nav-link.active {
+    .custom-nav .nav-link:hover,
+    .custom-nav .nav-link.active {
         border-bottom: 2px solid #355594 !important;
     }
 </style>

@@ -17,7 +17,8 @@ class GenerateHawbPdfController extends Controller
 {
     // This Function will work when user click on generate PDF file
     public function downloadHawbPdf($hawb_id) {
-        // $houseWayBill = HouseWayBills::where('id', $hawb_id)->first();
+        // $houseWayBill1 = HouseWayBills::where('id', $hawb_id)->first();
+        // dd($houseWayBill1);die();
         $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
             ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
             ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')

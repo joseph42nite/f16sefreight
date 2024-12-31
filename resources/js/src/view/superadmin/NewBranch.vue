@@ -15,7 +15,7 @@
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.agent_pincode" type="text" required placeholder="Agent Pincode" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_pincode'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.agent_pincode" type="number" required placeholder="Agent Pincode" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_pincode'),}"></b-form-input>
                         <has-error :form="branch_form" field="agent_pincode"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
@@ -25,8 +25,8 @@
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.agent_country" type="text" required placeholder="Agent Country" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_country'),}"></b-form-input>
-                        <has-error :form="branch_form" field="agent_country"></has-error>
+                        <b-form-select v-model="branch_form.company_id" :options="all_company"></b-form-select>
+                        <has-error :form="branch_form" field="company"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
                         <b-form-input id="input-1" v-model="branch_form.agent_issue_sign" type="text" required placeholder="Agent issue Sign" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_sign'),}"></b-form-input>
@@ -39,7 +39,7 @@
                         <has-error :form="branch_form" field="agent_issue_loc_code"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.agent_issue_date" type="text" required placeholder="Agent Issue Date" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_date'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.agent_issue_date" type="date" required placeholder="Agent Issue Date" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_date'),}"></b-form-input>
                         <has-error :form="branch_form" field="agent_issue_date"></has-error>
                     </b-form-group>
                 </div>
@@ -113,7 +113,7 @@
                         <has-error :form="branch_form" field="ho_city"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_pincode" type="text" required placeholder="Ho Pincode" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_pincode'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_pincode" type="number" required placeholder="Ho Pincode" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_pincode'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_pincode"></has-error>
                     </b-form-group>
                 </div>
@@ -150,7 +150,7 @@ export default {
                 agent_address:"",
                 agent_pincode: "",
                 agent_city:"",
-                agent_country: "",
+                company_id: null,
                 agent_issue_sign:"",
                 agent_issue_loc_code: "",
                 agent_issue_date:"",
@@ -177,7 +177,7 @@ export default {
                 ho_country:"",
             }),
             action: "Add",
-            location: [],
+            all_company:[{ value: null, text: 'Select Company' }],
             searchQuery: "",
             isDropdownOpen: false,
             showpass: true,
@@ -187,8 +187,7 @@ export default {
         onSubmit(evt) {
             evt.preventDefault();
             if (this.action == "Add") {
-                this.branch_form
-                    .post(`/superadmin/create-branch`)
+                this.branch_form.post(`/superadmin/create-branch`)
                     .then(({ data }) => {
                         this.$router.push("/superadmin/all-branch");
                     })
@@ -208,9 +207,16 @@ export default {
                 this.branch_form.fill(data[0]);
             });
         },
+        getCompany() {
+            ApiService.get(`/superadmin/all-company`).then(({ data }) => {
+                for(let i=0;i<data.length;i++){
+                    this.all_company.push({"value":data[0].id,"text":data[0].name})
+                }
+            });
+        },
     },
     mounted() {
-        console.log(this.get_item)
+        this.getCompany();
         if (this.get_item) {
             this.getData(this.get_item);
             this.action = "Edit";

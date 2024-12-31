@@ -16,6 +16,7 @@
                                     <option value="/web-doc">Master Airway Bill</option>
                                     <option value="/house-way-bill">Houseway Bill</option>
                                     <option value="/consolidation">Consolidation</option>
+                                    <option value="/message-log">Message Log</option>
                                 </b-form-select>
                             </b-form-group>
                         </b-col>
@@ -92,7 +93,7 @@
                                             <span class="text-danger">*</span>
                                         </template>
                                         <b-form-input id="input-horizontal" class="form-control" style="width: 60px;"
-                                            v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }">
+                                            v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)">
                                         </b-form-input>
                                         <!-- <has-error :form="form" field="awb_code"></has-error> -->
                                     </b-form-group>
@@ -104,7 +105,7 @@
                                         label-for="input-horizontal"
                                         class="align-items-center">
                                         <b-form-input id="input-horizontal" class="form-control" style="width: 150px"
-                                            v-model="form.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }">
+                                            v-model="form.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)">
                                         </b-form-input>
                                         <!-- <has-error :form="form" field="awb_no"></has-error> -->
                                     </b-form-group>
@@ -717,66 +718,6 @@ export default {
             oci_identifiers:{},
             tableData: [],
             existingData: {},
-            items: [
-                {
-                    url: "#webdoc",
-                    name: "WebDoc",
-                },
-                {
-                    url: "#booking",
-                    name: "Booking(FFR)",
-                },
-                {
-                    url: "#webdoc",
-                    name: "WebDoc",
-                    children: [
-                        {
-                            url: "#booking",
-                            name: "Booking(FFR)",
-                        },
-                        {
-                            url: "#air_waybill",
-                            name: "Air Waybill(FWB)",
-                        },
-                        {
-                            url: "/house-way-bill",
-                            name: "House Waybill(FHL)",
-                        },
-                        {
-                            url: "/consolidation",
-                            name: "Consolidation(FHL)",
-                        },
-                        {
-                            url: "#import_mail_data",
-                            name: "Import Mail Data",
-                        },
-                        {
-                            url: "#create_label",
-                            name: "Create Label",
-                        },
-                        {
-                            url: "message-log",
-                            name: "Message Log",
-                        },
-                        {
-                            url: "#maintain_contracts",
-                            name: "Maintain Contracts",
-                        },
-                        {
-                            url: "#web_doc_printer_setup",
-                            name: "WebDoc Printer Setup",
-                        },
-                        {
-                            url: "#help",
-                            name: "Help",
-                        },
-                    ],
-                },
-                {
-                    url: "#contact",
-                    name: "Contact",
-                },
-            ],
             options: [
                 { text: "Me", value: "1" },
                 { text: "Participant Group", value: "1" },
@@ -863,21 +804,23 @@ export default {
             })
             .then(response => {
                 if (response.data && response.data.length) {
-                    console.log("console data", response.data);
+                    // console.log("console data", response.data);
                     const id = `${this.form.awb_code}${this.form.awb_no}`;
                     console.log("id", id);
                     this.getAirWayBill(id);
                     this.consolidation = response.data;
                     this.hasSearchResults = true; 
                 } else {
-                    this.form = [];
-                    this.hasSearchResults = true; 
+                    this.consolidation = [];
+                    // this.form = [];
+                    this.hasSearchResults = false; 
                 }
             })
             .catch(error => {
                 console.error('Error fetching data:', error);
-                this.form = [];
-                this.hasSearchResults = true; 
+                this.consolidation = [];
+                // this.form = [];
+                this.hasSearchResults = false; 
             });
         },
         getAirWayBill(id) { 
@@ -1094,6 +1037,17 @@ export default {
             const dropdownContainer_des = this.$refs.dropdownContainer_destination;
             if (dropdownContainer_des && !dropdownContainer_des.contains(event.target)) {
                 this.isDropdownOpen_departure = false;
+            }
+        },
+        validateNumericInput(evt,field, maxLength) {
+            evt = evt || window.event;
+            const charCode = evt.which || evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+
+            if (this.form[field].length >= maxLength) {
+                evt.preventDefault();
             }
         },
     },

@@ -676,7 +676,7 @@ class HousewayBill extends Controller
         $main_return_data = [];
         $error_data = '';
         //for storing shipper address
-        if (!empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+        if (!empty($request->shipper_address['ship_name'])) {
             $error_data = $this->saveShipperAddress($request->first_box['hawb_no'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -684,7 +684,7 @@ class HousewayBill extends Controller
                 $main_return_data['shipper_address'] = $error_data;
         }
         // for storing consignee address
-        if (!empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
+        if (!empty($request->consignee_address['cons_name'])) {
             $error_data = $this->saveConsigneeAddress($request->first_box['hawb_no'], $request->consignee_address, $request->is_consignee_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -692,14 +692,14 @@ class HousewayBill extends Controller
                 $main_return_data['consignee_address'] = $error_data;
         }
         //for storing also notify address
-        if (!empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+        if (!empty($request->also_notify_address['also_name'])) {
             $error_data = $this->saveAlsoNotify($request->first_box['hawb_no'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($request->first_box['hawb_no']) && !empty($request->first_box['awb_code']) && !empty($request->first_box['awb_no'])) {
+        if (!empty($request->first_box['hawb_no'])) {
             $error_data = $this->firstBox($request->first_box);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -707,7 +707,7 @@ class HousewayBill extends Controller
                 $main_return_data['first_box'] = $error_data;
         }
         // && !empty($request->routing_information['from'])
-        if (!empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+        if (!empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($request->first_box['hawb_no'], $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -731,7 +731,7 @@ class HousewayBill extends Controller
             $main_return_data['charges'] = $this->otherCharges($request->first_box['hawb_no'], $request->charges);
         }
         //For payment information
-        if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+        if (!empty($request->payment_info['currency'])) {
             $error_data = $this->paymentInformation($request->first_box['hawb_no'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -747,7 +747,7 @@ class HousewayBill extends Controller
                 $main_return_data['oci_entries'] = $error_data;
         }
         //for Total Consignee Amount and Total Volume
-        if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+        if (!empty($request->totals['total_volume'])) {
             $error_data = $this->totalAmountValume($request->first_box['hawb_no'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -757,7 +757,8 @@ class HousewayBill extends Controller
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['hawb_no'], $request->tableCodes);
         }
-        return json_encode($main_return_data);
+        return response()->json(['data' => $main_return_data]);
+        // return json_encode($main_return_data);
     }
     public function getConsignmentError(Request $request)
     {
@@ -797,14 +798,14 @@ class HousewayBill extends Controller
                 $main_return_data['first_box'] = $error_data;
             }
         }
-        if (!empty($id) && !empty($request->routing_information['departure_airport']) && !empty($request->routing_information['destination_airport']) && !empty($request->routing_information['to']) && !empty($request->routing_information['date'])) {
+        if (!empty($id) && !empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($id, $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['routing_information'] = $error_data;
         }
-        if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+        if (!empty($id) && !empty($request->totals['total_volume'])) {
             $error_data = $this->totalAmountValume($id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -825,7 +826,7 @@ class HousewayBill extends Controller
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
-        if (!empty($id) && !empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+        if (!empty($id) && !empty($request->shipper_address['ship_name'])) {
             $error_data = $this->saveShipperAddress($id, $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -833,7 +834,7 @@ class HousewayBill extends Controller
                 $main_return_data['shipper_address'] = $error_data;
         }
         // for storing consignee address
-        if (!empty($id) && !empty($request->consignee_address['cons_name']) && !empty($request->consignee_address['cons_country']) && !empty($request->consignee_address['cons_city'])) {
+        if (!empty($id) && !empty($request->consignee_address['cons_name'])) {
             $error_data = $this->saveConsigneeAddress($id, $request->consignee_address, $request->is_consignee_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -841,14 +842,14 @@ class HousewayBill extends Controller
                 $main_return_data['consignee_address'] = $error_data;
         }
         //for storing also notify address
-        if (!empty($id) && !empty($request->also_notify_address['also_name']) && !empty($request->also_notify_address['also_country']) && !empty($request->also_notify_address['also_city'])) {
+        if (!empty($id) && !empty($request->also_notify_address['also_name'])) {
             $error_data = $this->saveAlsoNotify($id, $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($id) && !empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['weight_charge'])) {
+        if (!empty($id) && !empty($request->payment_info['currency'])) {
             $error_data = $this->paymentInformation($id, $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -864,6 +865,7 @@ class HousewayBill extends Controller
         if (!empty($id) && !empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($id, $request->tableCodes);
         }
+        return response()->json(['data' => $main_return_data]);
     }
 
     public function show($id){

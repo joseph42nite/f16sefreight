@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConversionController;
+use App\Http\Controllers\IMPConversionController;
 
 use App\Http\Controllers\GenerateAwbPdfController;
 use App\Http\Controllers\GenerateConsolidationPdfController;
@@ -10,7 +11,8 @@ use App\Http\Controllers\GenerateHawbPdfController;
 use App\Http\Controllers\airwayBill\HousewayBill;
 
 // Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
-Route::get('test-route1', [ConversionController::class, 'HouseWayBillConversion']);
+Route::get('air-waybill', [ConversionController::class, 'WayBillConversion']);
+Route::get('test-route1', [IMPConversionController::class, 'WayBillConversion']);
 Route::get('message-response', [ConversionController::class, 'ResponseMessage']);
 Route::get('generic-message', [ConversionController::class, 'GenericRequestMessage']);
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);

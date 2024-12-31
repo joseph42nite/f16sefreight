@@ -15,7 +15,7 @@ class CreateAgentsInfoTable extends Migration
     {
         Schema::create('agents_info', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id')->nullable();
+            $table->integer('company_id');
             $table->string('agent_name')->nullable();
             $table->string('agent_address')->nullable();
             $table->string('agent_pincode')->nullable();

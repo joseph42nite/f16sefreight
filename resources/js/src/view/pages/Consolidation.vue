@@ -95,7 +95,7 @@
                                         <b-form-input id="input-horizontal" class="form-control" style="width: 60px;"
                                             v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)">
                                         </b-form-input>
-                                        <has-error :form="form" field="awb_code"></has-error>
+                                        <!-- <has-error :form="form" field="awb_code"></has-error> -->
                                     </b-form-group>
                                 </div>
                                 <div class="d-flex"><span class="d-flex align-items-center pl-3">-</span></div>
@@ -107,11 +107,19 @@
                                         <b-form-input id="input-horizontal" class="form-control" style="width: 150px"
                                             v-model="form.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)">
                                         </b-form-input>
-                                        <has-error :form="form" field="awb_no"></has-error>
+                                        <!-- <has-error :form="form" field="awb_no"></has-error> -->
                                     </b-form-group>
                                 </div>
                                 <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
                                     class="ml-4" @click="searchWayBills">Search</b-button>
+                            </div>
+                        </b-col>
+                        <b-col>
+                            <div v-if="form.errors.has('awb_code')" :style="{ display: 'block' }" class="d-block invalid-feedback">
+                                {{ form.errors.get('awb_code') }}
+                            </div>
+                            <div v-if="form.errors.has('awb_no')" class="d-block invalid-feedback">
+                                {{ form.errors.get('awb_no') }}
                             </div>
                         </b-col>
                     </b-row>

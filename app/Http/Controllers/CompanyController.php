@@ -12,9 +12,9 @@ class CompanyController extends Controller
     public function index($id = 0)
     {
         if ($id)
-            $data = Company::where([['id', $id]])->limit(1)->get()->toArray();
+            $data = Company::where([['id', $id]])->limit(1)->get(['id','name'])->toArray();
         else
-            $data = Company::all()->toArray();
+            $data = Company::all(['id','name'])->toArray();
 
         return json_encode($data);
     }

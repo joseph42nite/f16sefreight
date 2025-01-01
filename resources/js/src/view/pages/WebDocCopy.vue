@@ -101,10 +101,9 @@
                                                         <span>AWB No:</span>
                                                         <span style="color: red;">*</span>
                                                     </template>
-                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px"
+                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 80px"
                                                             v-model="form.first_box.awb_code"
                                                             :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" required></b-form-input>
-                                                        <has-error :form="form" field="awb_code"></has-error>
                                                     </b-form-group>
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                     label-for="input-horizontal"
@@ -112,10 +111,9 @@
                                                     <template #label>
                                                         <span>-</span>
                                                     </template>
-                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 90px"
+                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 100px"
                                                             v-model="form.first_box.awb_no"
                                                             :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" required></b-form-input>
-                                                        <has-error :form="form" field="awb_no"></has-error>
                                                     </b-form-group>
 
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
@@ -126,6 +124,8 @@
                                                     </b-form-group>
                                                 </div>
                                                 <div>
+                                                    <has-error :form="form" field="awb_code" :class="{ 'd-block': form.errors.has('awb_code') }"></has-error>
+                                                    <has-error :form="form" field="awb_no" :class="{ 'd-block': form.errors.has('awb_no') }"></has-error>
                                                     <p style="font-weight:400;font-size:12px;line-height:18px;" v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p>
                                                     <div v-if="awbId && showAWBSection">
                                                         <p>The Air Waybill number has been used (printed at:)</p>
@@ -243,7 +243,7 @@
                                                     <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
                                                     <has-error :form="form" field="ship_address_line_2"></has-error>
                                                 </b-form-group>
-                                                <div class="d-flex align-items-center pb-2">
+                                                
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
                                                         <template #label>
                                                             <div class="shipper-toggle-label">
@@ -251,12 +251,15 @@
                                                                 <span style="color: red;">*</span>
                                                             </div>
                                                         </template>
-                                                        <b-form-input id="input-horizontal" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
-                                                        <has-error :form="form" field="ship_city"></has-error>
+                                                        <div class="d-flex align-items-center pb-2">
+                                                            <b-form-input id="input-horizontal" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                                            <b-form-input id="input-horizontal" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                                        </div>
+                                                        <div>
+                                                            <has-error :form="form" field="ship_city" :class="{ 'd-block': form.errors.has('ship_city') }"></has-error>
+                                                            <has-error :form="form" field="ship_airport_code" :class="{ 'd-block': form.errors.has('ship_airport_code') }"></has-error>
+                                                        </div>
                                                     </b-form-group>
-                                                    <b-form-input id="input-horizontal" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                                    <has-error :form="form" field="ship_airport_code"></has-error>
-                                                </div>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
@@ -397,7 +400,6 @@
                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
                                                     <has-error :form="form" field="cons_address_line_2"></has-error>
                                                 </b-form-group>
-                                                <div class="d-flex align-items-center pb-2">
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
                                                         <template #label>
                                                             <div class="shipper-toggle-label">
@@ -405,12 +407,15 @@
                                                                 <span style="color: red;">*</span>
                                                             </div>
                                                         </template>
-                                                        <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
-                                                        <has-error :form="form" field="cons_city"></has-error>
+                                                        <div class="d-flex align-items-center pb-2">
+                                                            <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                                            <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                                        </div>
+                                                        <div>
+                                                            <has-error :form="form" field="cons_city" :class="{ 'd-block': form.errors.has('cons_city') }"></has-error>
+                                                            <has-error :form="form" field="cons_airport_code" :class="{ 'd-block': form.errors.has('cons_airport_code') }"></has-error>
+                                                        </div>
                                                     </b-form-group>
-                                                    <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                                    <has-error :form="form" field="ship_airport_code"></has-error>
-                                                </div>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
@@ -503,7 +508,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <has-error :form="form" field="departure_airport"></has-error>
+                                                    <has-error :form="form" field="departure_airport" :class="{ 'd-block': form.errors.has('departure_airport') }"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                     label-for="input-destination-airport"
@@ -526,7 +531,7 @@
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    <has-error :form="form" field="routing_information.destination_airport"></has-error>
+                                                    <has-error :form="form" field="destination_airport" :class="{ 'd-block': form.errors.has('destination_airport') }"></has-error>
                                                 </b-form-group>
                                             </b-col>
                                             <b-col cols="7">
@@ -548,63 +553,72 @@
                                                                 <tr>
                                                                     <td>Routing:<span style="color: red;">*</span></td>
                                                                     <td class="editable-cell">
-                                                                        <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-form-airport" class="align-items-center"> -->
-                                                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown_from">
-                                                                                    <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="width:170px !important;" class="form-control" 
-                                                                                        autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
-                                                                                    <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
-                                                                                        <div v-for="(item, index) in filteredLocations_from" 
-                                                                                            :key="index" 
-                                                                                            @click.stop="selectOption_from(item)" 
-                                                                                            class="option">
-                                                                                            {{ item.iata_code }} ({{ item.destination }})
-                                                                                        </div>
-                                                                                    </div>
+                                                                        <div class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                                                                            <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="width:170px !important;" class="form-control" 
+                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
+                                                                            <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in filteredLocations_from" 
+                                                                                    :key="index" 
+                                                                                    @click.stop="selectOption_from(item)" 
+                                                                                    class="option">
+                                                                                    {{ item.iata_code }} ({{ item.destination }})
                                                                                 </div>
-                                                                            
-                                                                        <!-- </b-form-group> -->
+                                                                            </div>
+                                                                        </div>
                                                                     </td>
-                                                                    <has-error :form="form" field="from"></has-error>
                                                                     <td class="editable-cell">
-                                                                        <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to" class="align-items-center"> -->
-                                                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown_to">
-                                                                                    <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="width:170px !important;" class="form-control" 
-                                                                                        autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
-                                                                                    <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
-                                                                                        <div v-for="(item, index) in filteredLocations_to" 
-                                                                                            :key="index" 
-                                                                                            @click.stop="selectOption_to(item)" 
-                                                                                            class="option">
-                                                                                            {{ item.iata_code }} ({{ item.destination }})
-                                                                                        </div>
-                                                                                    </div>
+                                                                        <div class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                                                                            <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="width:170px !important;" class="form-control" 
+                                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
+                                                                            <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in filteredLocations_to" 
+                                                                                    :key="index" 
+                                                                                    @click.stop="selectOption_to(item)" 
+                                                                                    class="option">
+                                                                                    {{ item.iata_code }} ({{ item.destination }})
                                                                                 </div>
-                                                                            <has-error :form="form" field="to"></has-error>
-                                                                        <!-- </b-form-group> -->
+                                                                            </div>
+                                                                        </div>
                                                                     </td>
                                                                     <td class="editable-cell">
                                                                         <input type="text" class="form-control"
-                                                                            style="width: 60px;" v-model="form.routing_information.by"
+                                                                            style="width: 80px;" v-model="form.routing_information.by"
                                                                             :class="{ 'is-invalid': form.errors.has('by') }" />
-                                                                        <has-error :form="form" field="by"></has-error>
                                                                     </td>
                                                                     <td class="editable-cell">
                                                                         <input type="text" class="form-control"
-                                                                            style=" width: 60px;" v-model="form.routing_information.flight"
+                                                                            style=" width: 90px;" v-model="form.routing_information.flight"
                                                                             :class="{ 'is-invalid': form.errors.has('flight') }" />
-                                                                        <has-error :form="form" field="flight"></has-error>
                                                                     </td>
                                                                     <td class="editable-cell">
                                                                         <input type="text" class="form-control"
-                                                                            style="width: 70px;" v-model="form.routing_information.date"
+                                                                            style="width: 90px;" v-model="form.routing_information.date"
                                                                             :class="{ 'is-invalid': form.errors.has('date') }" />
-                                                                        <has-error :form="form" field="date"></has-error>
                                                                     </td>
                                                                     <td class="editable-cell w-10" style="width: 60px">
                                                                         <date-picker valueType="format"
                                                                             style="width: 30px !important;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
                                                                     </td>
+                                                                </tr>
+                                                                <tr v-if="form.errors.has('from') || form.errors.has('to') || form.errors.has('by') || form.errors.has('flight') || form.errors.has('date')">
+                                                                    <td>&nbsp;</td>
+                                                                    <td valign="top" class="text-danger" style="width:170px;">
+                                                                        <has-error :form="form" field="from" :class="{ 'd-block': form.errors.has('from') }"></has-error>
+                                                                    </td>
+                                                                    <td valign="top" class="text-danger" style="width:170px;">
+                                                                        <has-error :form="form" field="to" :class="{ 'd-block': form.errors.has('to') }"></has-error>
+                                                                    </td>
+                                                                    <td valign="top" class="text-danger" style="width:80px;">
+                                                                        <has-error :form="form" field="by" :class="{ 'd-block': form.errors.has('by') }"></has-error>
+                                                                    </td>
+                                                                    <td valign="top" class="text-danger" style="width:90px;">
+                                                                        <has-error :form="form" field="flight" :class="{ 'd-block': form.errors.has('flight') }"></has-error>
+                                                                    </td>
+                                                                    <td valign="top" class="text-danger" style="width:90px;">
+                                                                        <has-error :form="form" field="date" :class="{ 'd-block': form.errors.has('date') }"></has-error>
+                                                                    </td>
+                                                                    <td>&nbsp;</td>
                                                                 </tr>
                                                                 <tr>
                                                                     <td style="">&nbsp;</td>
@@ -627,17 +641,17 @@
                                                                         <!-- </b-form-group> -->
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 60px"
+                                                                        <input type="text" class="form-control" style="width: 80px"
                                                                             v-model="form.routing_information.by_2"
                                                                             :class="{ 'is-invalid': form.errors.has('by_2') }" />
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 60px"
+                                                                        <input type="text" class="form-control" style="width: 90px"
                                                                             v-model="form.routing_information.flight_2"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_2') }" />
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 70px"
+                                                                        <input type="text" class="form-control" style="width: 90px"
                                                                             v-model="form.routing_information.date_2"
                                                                             :class="{ 'is-invalid': form.errors.has('date_2') }" />
                                                                     </td>
@@ -678,17 +692,17 @@
                                                                         <!-- </b-form-group> -->
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 60px"
+                                                                        <input type="text" class="form-control" style="width: 80px"
                                                                             v-model="form.routing_information.by_3"
                                                                             :class="{ 'is-invalid': form.errors.has('by_3') }" />
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 60px"
+                                                                        <input type="text" class="form-control" style="width: 90px"
                                                                             v-model="form.routing_information.flight_3"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                                     </td>
                                                                     <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 70px"
+                                                                        <input type="text" class="form-control" style="width: 90px"
                                                                             v-model="form.routing_information.date_3"
                                                                             :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                                     </td>
@@ -890,7 +904,7 @@
                                                                     </ul>
                                                                 </div>
                                                             </tr>
-                                                            <tr class="h_background_color">
+                                                            <tr style="background-color:#F2F9FF;">
                                                                 <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">HS Codes</th>
                                                             </tr>
                                                             <tr v-for="(code, index) in consignment_list.hsCodes"
@@ -922,7 +936,7 @@
                                                             <tr>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
                                                                     <input type="text" class="form-control" style="width: 90px;" v-model="consignment_list.gross_weight" :class="{ 'is-invalid': consignment_list.errors.has('gross_weight') }" />
-                                                                    <has-error :form="consignment_list" field="uld_serial"></has-error>
+                                                                    <has-error :form="consignment_list" field="gross_weight"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
                                                                     <b-form-select class="form-control" style=" width: 65px;" v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
@@ -979,7 +993,7 @@
                                                                 <td class="editable-cell"><button @click="addPcsInfo" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
                                                             </tr>
                                                             <tr v-if="validationErrors.length > 0">
-                                                                <td colspan="7">
+                                                                <td colspan="7" style="border:0px;">
                                                                     <div class="text-danger">
                                                                         <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
                                                                             <li>Warning:</li>
@@ -1056,13 +1070,13 @@
                                                                     <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.uld_serial" />
                                                                     <!-- <has-error :form="form" field="uld_serial"></has-error> -->
                                                                 </td>
-                                                                <td class="editable-cell pr-8">
+                                                                <td class="editable-cell pr-2">
                                                                     <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.owner" />
                                                                 </td>
                                                                 <td class="editable-cell"><button @click="addUldInfo" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
                                                             </tr>
                                                             <tr v-if="uld_error.length" style="color: red;">
-                                                                <td colspan="4">
+                                                                <td colspan="4" style="border:0px;">
                                                                     <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
                                                                         <li>Warning:</li>
                                                                         <li v-for="(error, index) in uld_error" :key="index">{{ error }}</li>
@@ -1093,7 +1107,7 @@
                                             </b-col>
                                         </b-row>
                                         <div class="d-flex justify-content-end">
-                                            <button class="btn btn-secondary" @click="addOrUpdateEntry">
+                                            <button @click="addOrUpdateEntry" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">
                                                 {{ edit_entry_index !== null ? 'Update' : 'Add' }}
                                             </button>
                                         </div>
@@ -4540,5 +4554,29 @@ th {
     .custom-nav .nav-link:hover,
     .custom-nav .nav-link.active {
         border-bottom: 2px solid #355594 !important;
+    }
+    .mx-input {
+        display: inline-block;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        width: 100%;
+        /* height: 34px; */
+        padding: 0px !important;
+        color:  #355594 !important;
+        border: 0px !important;
+        -webkit-box-shadow: inset 0 1px 1px #fff;
+        box-shadow: inset 0 1px 1px #fff;
+    }
+    .mx-icon-calendar, .mx-icon-clear {
+        position: absolute;
+        top: 50%;
+        right: 0px !important;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%);
+        font-size: 20px;
+        line-height: 1;
+        color: #355594 !important;
+        stroke: #355594 !important;
+        vertical-align: middle;
     }
 </style>

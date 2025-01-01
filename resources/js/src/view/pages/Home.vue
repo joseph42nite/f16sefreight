@@ -470,7 +470,9 @@ html, body, html * {
 }
 .accordion-card {
     background: #ffffff00 !important;
+    border: 0px !important;
 }
+
 .accordion-box .card-body {
     padding: 0;
 }

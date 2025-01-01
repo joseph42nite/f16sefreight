@@ -652,9 +652,9 @@ class AirwayBill extends Controller
                 $main_return_data['routing_information'] = $error_data;
         }
         //for storing Consignment Information
-        if (!empty($request->entries)) {
+        // if (!empty($request->entries)) {
             $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->entries);
-        }
+        // }
         //for custom origin code and OSI, SSR, Accounting and shipment reference information
         if (!empty($request->custom_origin)) {
             $error_data = $this->customOriginAndOsiInfo($request->first_box['awb_no'], $request->first_box['awb_code'], $request->custom_origin);

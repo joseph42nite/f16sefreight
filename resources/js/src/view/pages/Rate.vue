@@ -1,5 +1,7 @@
 <template>
-    <div class="main-page w-100">
+    <div class="body-color w-100">
+        <!-- Include Header -->
+        <Header></Header>
         <div class="search-area" style="margin-top: 2%;background-color: rgba(213, 179, 176, 0.2);">
             <div class="text-center">
                 <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="350" height="50" class="img-fluid mb-5"/>
@@ -165,6 +167,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
+import Header from "@/view/layout/Header.vue";
 import { mapGetters } from "vuex";
 export default {
     name: "Rate",
@@ -232,6 +235,9 @@ export default {
             allin_amount:1.00,
             selected_currency:'INR',
         };
+    },
+    components: {
+        Header
     },
     methods: {
         get_allin_amount(){
@@ -949,6 +955,9 @@ export default {
 };
 </script>
 <style>
+    .body-color {
+        background: linear-gradient(180deg, #D0E6F8 2%, #FFFFFF 30%);
+    }
     .rate-area{
         height: 320px;
         overflow-y: auto;

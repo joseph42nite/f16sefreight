@@ -1,6 +1,8 @@
 
 <template>
     <b-container fluid class="main-container">
+        <!-- Include Header -->
+        <Header></Header>
         <b-container>
             <b-row align-h="center" align-v="center">
                 <b-col cols="12">
@@ -411,6 +413,7 @@
     </b-container>
 </template>
 <script>
+    import Header from "@/view/layout/Header.vue";
     import ApiService from "@/core/services/api.service";
     export default {
         data() {
@@ -423,6 +426,9 @@
                 selectedProductTypeOptions: [],
                 selectedQueryTypeOptions: []
             };
+        },
+        components: {
+            Header
         },
     };
 </script>

@@ -1,6 +1,8 @@
 
 <template>
-    <b-container fluid class="home-banner" id="home">
+    <b-container fluid class="main-container">
+        <!-- Include Header -->
+        <Header></Header>
         <b-container>
             <b-row align-h="center" align-v="center">
                 <b-col cols="12">
@@ -162,95 +164,99 @@
 </template>
 
 <script>
+    import Header from "@/view/layout/Header.vue";
     export default {
         name: "Home",
         data(){
-        return{
-            banner: "/media/custome/banner-plane.png",
-            banner_primary_text: "/media/custome/banner-primary-text.svg",
-            count1: 0,
-            count2: 0,
-            count3: 0,
-            targetCounts: {
-                count1: 100,
-                count2: 10,
-                count3: 100,
-            },
-            // Array of Services section
-            serviceCards: [
-                {
-                    imgSrc: "/media/custome/business.svg",
-                    imgAlt: "business",
-                    title: "Small<br />Business",
+            return{
+                banner: "/media/custome/banner-plane.png",
+                banner_primary_text: "/media/custome/banner-primary-text.svg",
+                count1: 0,
+                count2: 0,
+                count3: 0,
+                targetCounts: {
+                    count1: 100,
+                    count2: 10,
+                    count3: 100,
                 },
-                {
-                    imgSrc: "/media/custome/cloud-storage.svg",
-                    imgAlt: "cloud storage",
-                    title: "Cloud<br />Storage",
-                },
-                {
-                    imgSrc: "/media/custome/privacy.svg",
-                    imgAlt: "privacy",
-                    title: "Privacy",
-                },
-                {
-                    imgSrc: "/media/custome/end-to-end-service.svg",
-                    imgAlt: "end to end service",
-                    title: "End to End<br />Service",
-                }
-            ],
-            // Array of Latest news items
-            newsItems: [
-                {
-                    imgSrc: "/media/custome/gallary/img-1.png",
-                    imgAlt: 'latest news image-1',
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-2.png",
-                    imgAlt: 'latest news image-2',
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-3.png",
-                    imgAlt: 'latest news image-3',
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-4.png",
-                    imgAlt: 'latest news image-4',
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-5.png",
-                    imgAlt: 'latest news image-5',
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-6.png",
-                    imgAlt: 'latest news image-6',
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
-                },
-            ],
-            // Array of Faqs Accordion section
-            accordions: [
-                {
-                    title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-                    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius.",
-                    isOpen: false,
-                },
-                {
-                    title: "Phasellus ultricies quam in elit tristique scelerisque?",
-                    content: "Phasellus ultricies quam in elit tristique scelerisque. Mauris vestibulum nisl eu felis congue, ac tempor nulla scelerisque.",
-                    isOpen: false,
-                },
-                {
-                    title: "Donec quis magna nec sapien congue varius non sit amet urna?",
-                    content: "Donec quis magna nec sapien congue varius non sit amet urna. Vivamus dignissim metus id dolor ultricies, vitae malesuada neque auctor.",
-                    isOpen: false,
-                },
-            ],
-        }
+                // Array of Services section
+                serviceCards: [
+                    {
+                        imgSrc: "/media/custome/business.svg",
+                        imgAlt: "business",
+                        title: "Small<br />Business",
+                    },
+                    {
+                        imgSrc: "/media/custome/cloud-storage.svg",
+                        imgAlt: "cloud storage",
+                        title: "Cloud<br />Storage",
+                    },
+                    {
+                        imgSrc: "/media/custome/privacy.svg",
+                        imgAlt: "privacy",
+                        title: "Privacy",
+                    },
+                    {
+                        imgSrc: "/media/custome/end-to-end-service.svg",
+                        imgAlt: "end to end service",
+                        title: "End to End<br />Service",
+                    }
+                ],
+                // Array of Latest news items
+                newsItems: [
+                    {
+                        imgSrc: "/media/custome/gallary/img-1.png",
+                        imgAlt: 'latest news image-1',
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-2.png",
+                        imgAlt: 'latest news image-2',
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-3.png",
+                        imgAlt: 'latest news image-3',
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-4.png",
+                        imgAlt: 'latest news image-4',
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-5.png",
+                        imgAlt: 'latest news image-5',
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-6.png",
+                        imgAlt: 'latest news image-6',
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                    },
+                ],
+                // Array of Faqs Accordion section
+                accordions: [
+                    {
+                        title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
+                        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius.",
+                        isOpen: false,
+                    },
+                    {
+                        title: "Phasellus ultricies quam in elit tristique scelerisque?",
+                        content: "Phasellus ultricies quam in elit tristique scelerisque. Mauris vestibulum nisl eu felis congue, ac tempor nulla scelerisque.",
+                        isOpen: false,
+                    },
+                    {
+                        title: "Donec quis magna nec sapien congue varius non sit amet urna?",
+                        content: "Donec quis magna nec sapien congue varius non sit amet urna. Vivamus dignissim metus id dolor ultricies, vitae malesuada neque auctor.",
+                        isOpen: false,
+                    },
+                ],
+            }
+        },
+        components: {
+            Header
         },
         methods: {
             animateCount(target, key) {
@@ -291,9 +297,7 @@
 html, body, html * {
   font-family: 'Roboto', sans-serif !important;
 }
-.home-banner {
-    position: relative;
-    padding: 0;
+.main-container {
     background: linear-gradient(180deg, #D0E6F8 10%, #FFFFFF 36%);
 }
 .banner-description {
@@ -404,7 +408,7 @@ html, body, html * {
     border: 1px solid #355594;
     color: #355594;
     border-radius: 30px;
-    padding: 8px 20px;
+    padding: 12px 24px;
 }
 .learnMore-btn:hover {
     background: #00000000 !important;

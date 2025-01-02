@@ -1,8 +1,14 @@
 <template>
   <div v-if="isAuthenticated">
-    <!-- Include Header -->
-    <Header></Header>
-
+    <!-- Content of the page that changes based on routes -->
+    <transition name="fade-in-up">
+      <router-view />
+    </transition>
+    
+    <!-- Include FOOTER -->
+    <Footer></Footer>
+  </div>
+  <div v-else>
     <!-- Content of the page that changes based on routes -->
     <transition name="fade-in-up">
       <router-view />
@@ -22,7 +28,7 @@ import Footer from "@/view/layout/Footer.vue";
 export default {
   name: "MainLayout",
   components: {
-    Header,
+    // Header,
     Footer
   },
   mounted() {

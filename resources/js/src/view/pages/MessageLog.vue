@@ -1,9 +1,11 @@
 <template>
-    <div class="bg-white">
+    <div class="body-color">
         <div class="container-fluid">
+            <!-- Include Header -->
+            <Header></Header>
             <div class="d-flex">
                 <SideBar></SideBar>
-                <div style="box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
+                <div style="background-color: #fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
                     <div class="container">
                         <b-card-title class="title_color mt-9"> Search </b-card-title>
                         <hr class="hr" />
@@ -253,17 +255,22 @@
     </div>
 </template>
 <script>
+import Header from "../layout/Header.vue";
 import SideBar from "../layout/SideBar.vue";
 export default {
     data() {
         return {}
     },
     components: {
+        Header,
         SideBar 
     }
 }
 </script>
 <style scoped>
+.body-color {
+    background: linear-gradient(180deg, #D0E6F8 8%, #FFFFFF 20%);
+}
 .border_rounded {
     border-radius: 30px !important;
 }

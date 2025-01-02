@@ -1,6 +1,6 @@
 <template>
   <div class="wrap">
-    <b-navbar toggleable="md" type="dark" variant="info">
+    <b-navbar toggleable="md">
       <div class="container-fluid">
         <div class="navbar-header">
           <b-navbar-brand href="https://f16sefs.in/">
@@ -40,7 +40,7 @@
 
           <!-- Profile Avatar and User Info for Larger Devices -->
           <!-- If loged-in user -->
-          <b-navbar-nav v-if="currentUser != '' " class="ml-auto align-items-center content-gap d-none d-md-flex">
+          <b-navbar-nav v-if="isAuthenticated" class="ml-auto align-items-center content-gap d-none d-md-flex">
             <b-nav-item class="nav-link-custom text-uppercase" style="font-size: 18px;">
               {{currentUser.origin_airport_code}}
             </b-nav-item>
@@ -57,9 +57,9 @@
             </b-nav-item-dropdown>
           </b-navbar-nav>
           <!-- If not loged-in user -->
-          <b-navbar-nav v-else="currentUser == '' " class="ml-auto align-items-center content-gap d-none d-md-flex">
+          <b-navbar-nav v-else class="ml-auto align-items-center content-gap d-none d-md-flex">
             <b-nav-item class="nav-link-custom">
-              <button class="sign-in-btn" @click="firstPopUp('login_signin','login_signup')" >Sign in</button>
+              <button class="sign-in-btn" @click="firstPopUp('login_signin')" >Sign in</button>
             </b-nav-item>
             <b-nav-item class="nav-link-custom">
               <span class="whats-new-btn">What's Free?</span>
@@ -112,40 +112,7 @@
                 </div>
               </form>
             </div>
-            <!--end::Signin-->
-            <!--begin::Forgot-->
-            <!-- <div class="login-forgot" v-if="check_show.login_forgot">
-              <form class="form" novalidate="novalidate" id="kt_login_forgot_form" ref="kt_login_forgot_form"
-                @submit.prevent="requestResetPassword">
-                <div class="pb-5 pt-lg-0 pt-5">
-                  <h4 class="font-weight-bolder text-dark font-size-h4 font-size-h1-lg">
-                    Forgotten Password ?
-                  </h4>
-                  <p class="text-muted font-weight-bold font-size-h5">
-                    Enter your email to reset your password
-                  </p>
-                </div>
-                <div class="text-success mt-2 ml-2 h5" v-if="email_send">Password reset link has been sent to your email.
-                </div>
-                <div class="text-danger mt-2 ml-2" v-if="check_email">Invalid email.</div>
-                <div class="form-group">
-                  <input class="form-control form-control-solid h-auto py-3 px-2 rounded-lg font-size-h6" type="email"
-                    placeholder="Email address" name="email" autocomplete="off" id="forget_email" />
-                </div>
-                <div class="form-group d-flex flex-wrap pb-lg-0">
-                  <button type="submit" id="kt_login_forgot_submit"
-                    class="btn font-weight-bolder font-size-h6 px-12 btn-color text-white py-3 my-3 mr-4">
-                    Send Password Reset Link
-                  </button>
-                  <button type="button" id="kt_login_forgot_cancel"
-                    class="btn font-weight-bolder font-size-h6 px-12 btn-color text-white py-3 my-3"
-                    @click="showForm('login_signin','login_forgot','login_signup')">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div> -->
-            <!--end::Forgot-->
+            <!--END::Signin-->
           </div>
         </b-modal>
       </div>
@@ -160,57 +127,28 @@ export default {
   name: "Header",
   data(){
     return{
-      forget_email:'',
       show_modal:false,
-      email_send: false,
-      check_email: false,
       user_form:{
         email: "",
         password: "",
       },
       check_show:{
         login_signin:false,
-        login_forgot:false,
       },
       showPass:true,
-      logoSrc: "/media/custome/new-logo.svg",
-      blackLogoSrc: "/media/custome/logo-2.png",
       avatarLogoSrc: "/media/custome/user-avatar.png",
-      isHovered: false,
     }
   },
   methods: {
-    toggleLogo(isHovered) {
-      this.logoSrc = isHovered ? this.blackLogoSrc : "/media/custome/new-logo.svg";
-    },
     hasActiveChildren(match) {
       return this.$route["path"].indexOf(match) !== -1;
     },
-    showForm(show_form,hide_form1,hide_form2) {
-       this.check_show[show_form]=true;
-       this.check_show[hide_form1]=false;
-       this.check_show[hide_form2]=false;
-    },
-    firstPopUp(show_form,hide_form){
+    
+    firstPopUp(show_form){
       this.show_modal=true;
-      // console.log(this.location.length);
-      if(show_form=='login_signup' && !this.location.length){
-        this.getLocation();
-      }
       this.check_show[show_form]=true;
-      this.check_show[hide_form]=false;
     },
-    requestResetPassword() {
-      const forget_email=$('#forget_email').val();
-      axios.post("/Forgotpassword", { email: forget_email }).then(result => {
-        this.email_send = true;
-        this.check_email = false;
-      })
-        .catch(err => {
-          this.check_email = true;
-          this.email_send = false;
-        })
-    },
+
     login(){
       const email=$('#login_email').val();
       const password=$('#login_password').val();
@@ -224,15 +162,30 @@ export default {
     ...mapState({
       errors: state => state.auth.errors
     }),
-    ...mapGetters(["currentUser"]),
+    ...mapGetters(["isAuthenticated","currentUser"]),
+
+    logoSrc() {
+      const routeLogo = this.$route.meta.logo;
+      
+      // Set the logo based on the meta value
+      if (routeLogo === 'blue') {
+        return "/media/custome/blue-logo.svg";
+      } else if (routeLogo === 'white') {
+        return "/media/custome/white-logo.svg";
+      } else {
+        // Default logo (if needed)
+        return "/media/custome/white-logo.svg";
+      }
+    },
+
   }
 };
 </script>
 <style scoped>
 .navbar {
   height: auto;
-  background-color: #D0E6F8; /* For browsers that do not support gradients */
-  background-image: linear-gradient(#D0E6F8, #D0E6F8);
+  /* background-color: #D0E6F8; /* For browsers that do not support gradients */
+  /* background-image: linear-gradient(#D0E6F8, #D0E6F8); */
   padding: 54px 0px !important;
 }
 .nav-menu {
@@ -287,7 +240,7 @@ color: White;
   font-size: 12px;
   border: 1px solid #355594;
   border-radius: 30px;
-  padding: 14px 30px;
+  padding: 10px 30px;
   background: #ffffff00 !important;
 }
 .sign-in-btn:hover {
@@ -361,11 +314,7 @@ color: White;
     padding: 20px 0px 50px !important;
   }
 }
-/* @media (max-width: 480px) {
-  .show_pass {
-    left: 88%;
-  }
-} */
+
 </style>
 
 <style>
@@ -376,5 +325,9 @@ color: White;
   position: absolute !important;
     left: -85px !important;
     border-radius: 15px !important;
+}
+.navbar-light .navbar-toggler {
+    color: #355594;
+    border-color: #0000;
 }
 </style>

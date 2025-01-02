@@ -9,7 +9,6 @@ export default new Router({
     {
       path: "/",
       redirect: "/focusakash",
-      // component: () => import("@/view/layout/Layout"),
       component: () => import("@/view/layout/MainLayout"),
       children: [
         {
@@ -55,11 +54,6 @@ export default new Router({
           name: "Test",
           path: "/test-view",
           component: () =>import("@/view/pages/Test"),
-        },
-        {
-          name: "Home",
-          path: "/home",
-          component: () =>import("@/view/pages/Home"),
         },
       ]
     },
@@ -157,12 +151,25 @@ export default new Router({
     //-----------for user login-------------------
     {
       path: "/",
-      component: () => import("@/view/pages/auth/login_pages/Login-1"),
+      component: () => import("@/view/layout/MainLayout"),
       children: [
         {
           name: "userlogin",
           path: "/",
-          component: () => import("@/view/pages/auth/login_pages/Login-1"),
+          component: () => import("@/view/pages/Home"),
+          meta: { logo: 'white' }
+        },
+        {
+          name: "About Us",
+          path: "/about-us",
+          component: () => import("@/view/pages/AboutUs"),
+          meta: { logo: 'blue' }
+        },
+        {
+          name: "Contact Us",
+          path: "/contact-us",
+          component: () => import("@/view/pages/ContactUs"),
+          meta: { logo: 'blue' }
         },
       ]
     },
@@ -172,20 +179,11 @@ export default new Router({
       component: () => import("@/view/PasswordForgotForm"),
     },
     {
-      name: "About Us",
-      path: "/about-us",
-      component: () =>import("@/view/pages/AboutUs"),
-    },
-    {
       name: "Terms&Condition",
       path: "/terms-conditions",
       component: () =>import("@/view/pages/Terms-Condition"),
     },
-    {
-      name: "Contact Us",
-      path: "/contact-us",
-      component: () =>import("@/view/pages/ContactUs"),
-    },
+    
     // {
     //   name: "Web Doc",
     //   path: "/web-doc",

@@ -1,9 +1,11 @@
 <template>
-    <div class="bg-white">
+    <div class="body-color">
         <div class="container-fluid">
+            <!-- Include Header -->
+            <Header></Header>
             <div class="d-flex">
                 <SideBar></SideBar>
-                <div class="container" style="box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
+                <div class="container" style="background-color:#fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
                     <div class="mt-14 mb-8 px-10">
                         <b-row>
                             <b-col cols="6">
@@ -2562,6 +2564,7 @@ import ApiService from "@/core/services/api.service";
 import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 import SideBar from "../layout/SideBar.vue";
+import Header from "../layout/Header.vue";
 export default {
     data() {
         return {
@@ -4247,12 +4250,16 @@ export default {
     components: {
         Datepicker,
         DatePicker,
+        Header,
         SideBar
     },
 };
 </script>
 
 <style scoped>
+.body-color {
+    background: linear-gradient(180deg, #D0E6F8 2%, #FFFFFF 9%);
+}
 h6 {
     font-size: 15px !important;
     line-height: 22px;

@@ -93,10 +93,22 @@ class IMPConversionController extends Controller
             $main_data .= "ACC/" . $waybill_data['letter_credit'] . "/" . substr($waybill_data['accounting_information'], 0, 32) . "<br>";
         }
         //21
-        $main_data.="CVD/".$payment_details['currency']."/".$payment_details['type_of_payment']."/".$payment_details['declear_value_carriage']."/".$payment_details['declear_value_customs']."/".$payment_details['declear_value_insurance']."<br>";
+        $main_data .= "CVD/" . $payment_details['currency'] . "/" . $payment_details['type_of_payment'] . "/" . $payment_details['declear_value_carriage'] . "/" . $payment_details['declear_value_customs'] . "/" . $payment_details['declear_value_insurance'] . "<br>";
         //22
-        $main_data.="RTD/1/P".$consignment_data['pieces']."/K".$consignment_data['gross_weight']."/".$consignment_data['rate_class']."/W".$consignment_data['chargable_weight']."/R".$consignment_data['rate']."/T".$waybill_data['total_amount']."NC/".$consignment_data['description']."<br>";
-        $main_data.="/2/ND//".
+        $main_data .= "RTD/1/P" . $consignment_data['pieces'] . "/K" . $consignment_data['gross_weight'] . "/" . $consignment_data['rate_class'] . "/W" . $consignment_data['chargable_weight'] . "/R" . $consignment_data['rate'] . "/T" . $waybill_data['total_amount'] . "NC/" . $consignment_data['description'] . "<br>";
+        //pieces information(dimsion)
+        $pieces_info = json_decode($consignment_data['pieces_info'], true);
+        $main_data .= "/2/ND//" . ($pieces_info[0]['gross_weight'] ? 'K' . $pieces_info[0]['gross_weight'] . "/" : '') . $pieces_info[0]['unit'] . $pieces_info[0]['length'] . "-" . $pieces_info[0]['width'] . "-" . $pieces_info[0]['height'] . "/" . $pieces_info[0]['pcs'] . "<br>";
+
+        if ($consignment_data['hs_code']) {
+            $hs_code = json_decode($consignment_data['hs_code'], true);
+            $main_data .= "/3/NH/" . $hs_code[0] . "<br>";
+        }
+        $main_data .= "/4/NO/" . $consignment_data['country_origin_goods'] . '/' . $consignment_data['service_code'] . "<br>";
+
+        for ($i = 1; $i < sizeof($pieces_info); $i++) {
+            $main_data .= "/" . (4 + $i) . "/ND//" . ($pieces_info[$i]['gross_weight'] ? 'K' . $pieces_info[$i]['gross_weight'] . "/" : '') . $pieces_info[$i]['unit'] . $pieces_info[$i]['length'] . "-" . $pieces_info[$i]['width'] . "-" . $pieces_info[$i]['height'] . "/" . $pieces_info[$i]['pcs'] . "<br>";
+        }
 
         echo $main_data;
     }

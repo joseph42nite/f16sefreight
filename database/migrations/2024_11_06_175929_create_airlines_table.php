@@ -13,14 +13,16 @@ class CreateAirlinesTable extends Migration
      */
     public function up()
     {
-        Schema::create('airlines', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 100)->nullable();
-            $table->string('code', 5)->nullable();
-            $table->string('prefix', 5)->nullable();
-            $table->string('country', 100)->nullable();
-            $table->boolean('is_active')->default(1);
-        });
+        if (!Schema::hasTable('airlines')) {
+            Schema::create('airlines', function (Blueprint $table) {
+                $table->id();
+                $table->string('name', 100)->nullable();
+                $table->string('code', 5)->nullable();
+                $table->string('prefix', 5)->nullable();
+                $table->string('country', 100)->nullable();
+                $table->boolean('is_active')->default(1);
+            });
+        }
     }
 
     /**

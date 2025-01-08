@@ -7,8 +7,9 @@
             <img :src="logoSrc" alt="f16s logo" id="main-logo">
           </b-navbar-brand>
         </div>
-        <!-- Profile Avatar for Small Devices, Visible Before Toggle -->
-        <b-navbar-nav class="d-flex flex-row align-items-center content-gap d-md-none ml-auto">
+        <!-- Profile Avatar for Small Devices < (767px), Visible Before Toggle -->
+        <!-- If loged-in user -->
+        <b-navbar-nav v-if="isAuthenticated" class="d-flex flex-row align-items-center content-gap d-md-none ml-auto">
           <b-nav-item class="nav-link-custom text-uppercase" style="font-size: 18px;">
             {{currentUser.origin_airport_code}}
           </b-nav-item>
@@ -29,13 +30,21 @@
 
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="ml-auto nav-menu text-center">
-            <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item>
+            <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
             <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
-            <!-- <b-nav-item to="/contact-us" class="nav-link-custom text-white">User Guide</b-nav-item>
-            <b-nav-item to="/contact-us" class="nav-link-custom text-white">FAQs</b-nav-item>
-            <b-nav-item to="/contact-us" class="nav-link-custom text-white">Tutorial</b-nav-item> -->
+            <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item>
+            <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item>
+            <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item>
             <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
-            <b-nav-item to="/web-doc" class="nav-link-custom text-white">Web Doc</b-nav-item>
+            <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item>
+            <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
+            <!-- If not loged-in user -->
+            <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
+              <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
+            </b-nav-item>
+            <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
+              <button class="whats-new-btn">What's Free?</button>
+            </b-nav-item>
           </b-navbar-nav>
 
           <!-- Profile Avatar and User Info for Larger Devices -->
@@ -59,10 +68,10 @@
           <!-- If not loged-in user -->
           <b-navbar-nav v-else class="ml-auto align-items-center content-gap d-none d-md-flex">
             <b-nav-item class="nav-link-custom">
-              <button class="sign-in-btn" @click="firstPopUp('login_signin')" >Sign in</button>
+              <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
             </b-nav-item>
             <b-nav-item class="nav-link-custom">
-              <span class="whats-new-btn">What's Free?</span>
+              <button class="whats-new-btn">What's Free?</button>
             </b-nav-item>
           </b-navbar-nav>
         </b-collapse>
@@ -83,7 +92,7 @@
                 label-for="input-horizontal"
                 class="align-items-center">
                 <template #label>
-                    <div class="d-flex justify-content-end" style="width:60px;">
+                    <div class="d-flex justify-content-end custom-label" style="width:60px;">
                       <span>User ID:</span>
                       <span style="color: red;">*</span>
                     </div>
@@ -95,7 +104,7 @@
                   label-for="input-horizontal"
                   class="align-items-center">
                   <template #label>
-                    <div class="d-flex justify-content-end" style="width:60px;">
+                    <div class="d-flex justify-content-end custom-label" style="width:60px;">
                       <span>Password:</span>
                       <span style="color: red;">*</span>
                     </div>
@@ -184,17 +193,14 @@ export default {
 <style scoped>
 .navbar {
   height: auto;
-  /* background-color: #D0E6F8; /* For browsers that do not support gradients */
-  /* background-image: linear-gradient(#D0E6F8, #D0E6F8); */
   padding: 54px 0px !important;
 }
 .nav-menu {
   padding: 12px 41px 12px 41px;
-  gap: 40px;
+  gap: 50px;
   border-radius: 39px;
-  /* opacity: 0px; */
-  background-color: #9499B212; /* For browsers that do not support gradients */
-  background-image: linear-gradient(#9499B212, #22328A12);
+  background: linear-gradient(360deg, rgba(148, 153, 178, 0.07) 0%, rgba(34, 50, 138, 0.07) 100%);
+  backdrop-filter: blur(90px);
 }
 .nav-link {
   padding: 0px !important;
@@ -203,16 +209,14 @@ export default {
 .content-gap {
   gap:18px;
 }
-.navbar-header {
-  /* margin-left: 55px;
-  margin-top: 10px; */
-}
+
 .nav-link-custom:hover {
   color: red !important;
 }
 .nav-link-custom{
   font-size: 14px;
-  line-height: 20px;
+  line-height: 25px;
+  font-weight: 400;
 }
 
 a.menu-link{
@@ -233,15 +237,13 @@ color: White;
   position: absolute;
   left: 87%;
 }
-.m_mob{
-  display:none;
-}
 .sign-in-btn {
   font-size: 12px;
+  line-height: 16px;
   border: 1px solid #355594;
   border-radius: 30px;
-  padding: 10px 30px;
-  background: #ffffff00 !important;
+  padding: 12px 30px;
+  background: transparent !important;
 }
 .sign-in-btn:hover {
   color:#fff !important;
@@ -250,12 +252,12 @@ color: White;
 }
 .whats-new-btn {
   font-size: 12px;
+  line-height: 16px;
   color:#fff;
   border: 1px solid #355594;
-  background-color: #355594;
   background:#355594;
   border-radius: 30px;
-  padding: 14px 16px;
+  padding: 12px 16px;
 }
 .whats-new-btn:hover {
   color:#355594 !important;
@@ -269,11 +271,11 @@ color: White;
   background: #923B33;
 }
 @media (max-width: 992px) {
-  .nav-menu[data-v-5ab8085e] {
-    gap: 25px;
+  .nav-menu {
+    gap: 18px;
   }
   .sign-in-btn {
-    padding: 12px 20px;
+    padding: 12px 24px;
   }
   .whats-new-btn {
     padding: 12px 16px;
@@ -282,36 +284,43 @@ color: White;
     left: 88%;
   }
 }
+@media (max-width: 920px) {
+  .nav-menu {
+    gap: 12px;
+  }
+  .sign-in-btn {
+    font-size: 11px;
+    padding: 12px 20px;
+  }
+  .whats-new-btn {
+    font-size: 11px;
+    padding: 12px 14px;
+  }
+  .nav-link-custom {
+    font-size: 13px;
+    line-height: 23px;
+  }
+}
 @media (max-width: 768px) {
-    .m_mob{
-    display:block;
-  }
-  .m_desk{
-    display:none;
-  }
-  .container {
-    margin-top: 5%;
-    margin-bottom: 5%;
-  }
   #main-logo{
     width: 110px;
     padding-left: 15px;
-  }
-  .navbar-header {
-  /* margin-left: 10px;
-    margin-top: 20px; */
   }
   .nav-menu {
     gap: 15px;
   }
   .content-gap {
-    gap:15px;
+    gap:20px;
   }
   .navbar-collapse {
     padding: 0px 15px;
   }
   .navbar {
     padding: 20px 0px 50px !important;
+  }
+  .custom-label {
+    justify-content: start !important;
+    width: auto !important;
   }
 }
 

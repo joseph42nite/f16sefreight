@@ -21,7 +21,7 @@
 
 <script>
 import { mapGetters } from "vuex";
-import Header from "@/view/layout/Header.vue";
+// import Header from "@/view/layout/Header.vue";
 import Footer from "@/view/layout/Footer.vue";
 
 

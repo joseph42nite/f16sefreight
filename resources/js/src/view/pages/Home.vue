@@ -30,16 +30,32 @@
                     </b-row>
                 </b-col>
             </b-row>
+            <!-- Affiliations section start here -->
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
+                    <b-row align-h="center" align-v="center">
+                        <b-col cols="4" sm="3" md="3" lg="3" xl="2" class="">
+                           <p class="affiliation m-0">Affiliations:</p> 
+                        </b-col>
+                        <b-col cols="8" sm="9" md="9" lg="9" xl="10" class="parent-scroll-container">
+                            <!-- Child divs that will be displayed horizontally and scrollable -->
+                            <div class="child-scroll-container">
+                                <div class="child-div" v-for="(affiliate, index) in affiliates" ><b-img :src="affiliate.imgSrc" :alt="affiliate.imgAlt" class="img-fluid d-block" style="width: 100%;" /></div>
+                            </div>
+                        </b-col>
+                    </b-row>
+                </b-col>
+            </b-row>
             <b-row align-h="center" align-v="center">
                 <!-- What F16s can do for you -->
-                <b-col cols="12" class="mt-20 mb-26">
+                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
                     <h2 class="section-title">Learn what F16s can do for you</h2>
                 </b-col>
                 <b-col
                     v-for="(serviceCard, index) in serviceCards"
                     :key="index"
                     cols="12" sm="6" md="3" lg="3" xl="3" xxl="3"
-                    class="mb-16 service-card"
+                    class="mb-15 mb-md-20 service-card"
                     >
                     <b-card
                         :img-src="serviceCard.imgSrc"
@@ -63,7 +79,7 @@
                         <h2 class="section-title mb-10">Connecting global freight networks with smart data solutions</h2>
                     </div>
                 </b-col>
-                <b-col cols="8" class="">
+                <b-col cols="10" md="8" class="">
                     <div class="d-flex flex-row justify-content-center text-center">
                         <h6 class="section-sub-title mb-8">F16s E-Freight Solutions provides seamless data transmission and documentation for air, sea, and road freight.</h6>
                     </div>
@@ -82,15 +98,15 @@
                         <h6 class="section-sub-title mb-16">Your partner for smarter, faster operations and freight solutions.</h6>
                     </div>
                 </b-col>
-                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count">
+                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count" ref="countSection1">
                     <h1 class="text-center">{{ count1 }}+</h1>
                     <p class="text-center">Data transmitted</p>
                 </b-col>
-                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count">
+                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count" ref="countSection2">
                     <h1 class="text-center">{{ count2 }}+</h1>
                     <p class="text-center">Cities</p>
                 </b-col>
-                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count">
+                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count" ref="countSection3">
                     <h1 class="text-center">{{ count3 }}+</h1>
                     <p class="text-center">Airline affiliations</p>
                 </b-col>
@@ -109,15 +125,25 @@
                     cols="12" sm="4" md="4" lg="4" xl="4" xxl="4"
                     class="mb-16"
                 >
-                    <b-card class="text-center latest-news-card">
+                    <b-card class="text-center latest-news-card toggle-btn" @click="toggleSlide">
                         <template v-slot:default>
-                            <div class="latest-news-card-img">
-                                <b-img :src="newsItem.imgSrc" :alt="newsItem.imgAlt" class="img-fluid d-block" style="width: 100%;" />
-                            </div>
-                            <div class="latest-news-card-title">
-                                {{ newsItem.title }}
+                            <div class="front">
+                                <div class="latest-news-card-img">
+                                    <b-img :src="newsItem.imgSrc" :alt="newsItem.imgAlt" class="img-fluid d-block" style="width: 100%;" />
+                                </div>
+                                <div class="latest-news-card-title">
+                                    {{ newsItem.title }}
+                                </div>
+                                <div class="toggle-content"
+                                    :class="{ 'slide-up': !isVisible }"
+                                    v-show="isVisible">
+                                    <h2>{{ newsItem.innerTitle }}</h2>
+                                    <p>{{ newsItem.innerDescription }}</p>
+                                    <hr/>
+                                </div>
                             </div>
                         </template>
+
                     </b-card>
                 </b-col>
                 <b-col cols="12" class="mb-8">
@@ -179,25 +205,76 @@
                     count2: 10,
                     count3: 100,
                 },
+                hasAnimated: {
+                    count1: false,
+                    count2: false,
+                    count3: false,
+                },
+                affiliates: [
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/air-france.svg",
+                        imgAlt: "air france"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/emirates.svg",
+                        imgAlt: "emirates"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/lufthansa.svg",
+                        imgAlt: "lufthansa"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/qatar.svg",
+                        imgAlt: "qatar"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/turkish-airlines.svg",
+                        imgAlt: "turkish-airlines"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/air-france.svg",
+                        imgAlt: "air france"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/emirates.svg",
+                        imgAlt: "emirates"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/lufthansa.svg",
+                        imgAlt: "lufthansa"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/air-france.svg",
+                        imgAlt: "air france"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/emirates.svg",
+                        imgAlt: "emirates"
+                    },
+                    {
+                        imgSrc: "/media/custome/affiliation-tags/lufthansa.svg",
+                        imgAlt: "lufthansa"
+                    },
+                ],
                 // Array of Services section
                 serviceCards: [
                     {
-                        imgSrc: "/media/custome/business.svg",
+                        imgSrc: "/media/custome/small-business.png",
                         imgAlt: "business",
                         title: "Small<br />Business",
                     },
                     {
-                        imgSrc: "/media/custome/cloud-storage.svg",
+                        imgSrc: "/media/custome/cloud-storage.png",
                         imgAlt: "cloud storage",
                         title: "Cloud<br />Storage",
                     },
                     {
-                        imgSrc: "/media/custome/privacy.svg",
+                        imgSrc: "/media/custome/privacy.png",
                         imgAlt: "privacy",
                         title: "Privacy",
                     },
                     {
-                        imgSrc: "/media/custome/end-to-end-service.svg",
+                        imgSrc: "/media/custome/end-to-end-service.png",
                         imgAlt: "end to end service",
                         title: "End to End<br />Service",
                     }
@@ -207,34 +284,47 @@
                     {
                         imgSrc: "/media/custome/gallary/img-1.png",
                         imgAlt: 'latest news image-1',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
                     },
                     {
                         imgSrc: "/media/custome/gallary/img-2.png",
                         imgAlt: 'latest news image-2',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
                     },
                     {
                         imgSrc: "/media/custome/gallary/img-3.png",
                         imgAlt: 'latest news image-3',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
                     },
                     {
                         imgSrc: "/media/custome/gallary/img-4.png",
                         imgAlt: 'latest news image-4',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
                     },
                     {
                         imgSrc: "/media/custome/gallary/img-5.png",
                         imgAlt: 'latest news image-5',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
                     },
                     {
                         imgSrc: "/media/custome/gallary/img-6.png",
                         imgAlt: 'latest news image-6',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda"
+                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
+                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
                     },
                 ],
+                isVisible: true,
                 // Array of Faqs Accordion section
                 accordions: [
                     {
@@ -259,6 +349,9 @@
             Header
         },
         methods: {
+            toggleSlide() {
+                this.isVisible = !this.isVisible; // Toggle visibility on button click
+            },
             animateCount(target, key) {
                 const duration = 10000; // Animation duration in milliseconds
                 const increment = Math.ceil(target / (duration / 16)); // Calculate increment per frame (16ms per frame)
@@ -271,6 +364,7 @@
                     }
                 }, 16);
             },
+
             toggleAccordion(index) {
                 // Check if the index is valid
                 if (index >= 0 && index < this.accordions.length) {
@@ -278,13 +372,38 @@
                 } else {
                     console.error("Accordion index is invalid:", index);
                 }
-            }
+            },
+
+            // Check if the element is in the viewport
+            isElementInViewport(element) {
+                const rect = element.getBoundingClientRect();
+                return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+            },
+
+            // Method to check visibility periodically
+            checkVisibility() {
+                if (!this.hasAnimated.count1 && this.isElementInViewport(this.$refs.countSection1)) {
+                    this.animateCount(this.targetCounts.count1, "count1");
+                    this.hasAnimated.count1 = true;
+                }
+                if (!this.hasAnimated.count2 && this.isElementInViewport(this.$refs.countSection2)) {
+                    this.animateCount(this.targetCounts.count2, "count2");
+                    this.hasAnimated.count2 = true;
+                }
+                if (!this.hasAnimated.count3 && this.isElementInViewport(this.$refs.countSection3)) {
+                    this.animateCount(this.targetCounts.count3, "count3");
+                    this.hasAnimated.count3 = true;
+                }
+
+                // If any section has not yet animated, keep checking
+                if (!this.hasAnimated.count1 || !this.hasAnimated.count2 || !this.hasAnimated.count3) {
+                    requestAnimationFrame(this.checkVisibility);
+                }
+            },
         },
         mounted() {
-            this.animateCount(this.targetCounts.count1, "count1");
-            this.animateCount(this.targetCounts.count2, "count2");
-            this.animateCount(this.targetCounts.count3, "count3");
-            
+            // Start checking visibility when the component is mounted
+            requestAnimationFrame(this.checkVisibility);
         },
 
     };
@@ -293,9 +412,57 @@
 <style scoped>
 @import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
 
+
 /* /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 html, body, html * {
   font-family: 'Roboto', sans-serif !important;
+}
+.front {
+    position: relative;
+}
+.toggle-content {
+    overflow: hidden; /* Ensure content is hidden when collapsed */
+    position: absolute;
+    top: 0px;
+    background: #000;
+    width: 100%;
+    border-radius: 25px;
+    color: #FFFFFF;
+    background-color:#355594;
+}
+.toggle-content.slide-up {
+    max-height: 1000px; /* Allow content to expand when visible */
+    padding: 15px;
+}
+hr {
+    width: 72%;
+    margin-right: 5rem;
+    margin-left: 4rem;
+    background-color: #fff;
+    border: 2px solid;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+.toggle-content h2 {
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 25px;
+    text-align: left;
+    width: 72%;
+    margin: 4rem;
+}
+.toggle-content p {
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 15px;
+    text-align: left;
+    width: 72%;
+    margin-right: 5rem;
+    margin-left: 4rem;
+    margin-bottom: 3rem;
+
 }
 .main-container {
     background: linear-gradient(180deg, #D0E6F8 10%, #FFFFFF 36%);
@@ -310,7 +477,7 @@ html, body, html * {
     margin-top: -2%;
 }
 .section-title {
-    font-size: 36px !important;
+    font-size: 32px !important;
     font-weight: 600;
     line-height: 40px !important;
     text-align: center;
@@ -349,6 +516,32 @@ html, body, html * {
     padding: 4px;
     color: #355594;
 }
+.affiliation {
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 71px;
+    color: #355594;
+    text-align: center;
+}
+.parent-scroll-container {
+    width: 100%;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    white-space: nowrap; /* Prevent content from wrapping */
+    scrollbar-width: none;  /* Firefox */
+    max-width: 100%; /* Ensure the parent div doesn't overflow the screen */
+}
+/* For Webkit browsers like Chrome, Safari */
+.parent-scroll-container::-webkit-scrollbar {
+  display: none;  /* Hide the scrollbar */
+}
+.child-scroll-container {
+    display: flex; /* Make child divs align in a row */
+    gap:40px;
+}
+.child-div {
+    min-width: 120px;
+    margin: auto;
+}
 .service-card {
     position: relative;
 }
@@ -359,7 +552,7 @@ html, body, html * {
     background-image: linear-gradient(white, white), linear-gradient(151.6deg, #ABC0FF 20%, rgba(255, 255, 255, 0) 100%);
     background-origin: border-box;
     background-clip: content-box, border-box;
-    height: 400px !important;
+    /* height: 400px !important; */
 }
 .service-card .card-body {
     padding: 0;
@@ -369,7 +562,10 @@ html, body, html * {
     justify-content: center;
 }
 .service-card .card-img {
-    padding: 30px 20px 10px !important;
+    padding: 40px 10px !important;
+    width: 170px;
+    height:auto;
+    margin: auto;
 }
 .service-card-title p {
     color: #3b3c7c;
@@ -492,8 +688,28 @@ html, body, html * {
         font-weight: 400;
         line-height: 18px;
     }
+    .section-title {
+        font-size: 24px !important;
+        line-height: 32px !important;
+
+    }
+    .section-sub-title {
+        font-size: 18px !important;
+        line-height: 28px !important;
+    }
+    .affiliation {
+        font-size: 20px;
+        line-height: 32px;
+    }
+    .child-scroll-container {
+        gap:15px;
+    }
+    .child-div {
+        min-width: 80px;
+        margin: auto;
+    }
     .service-card .card {
-        height: 610px !important;
+        /* height: 610px !important; */
     }
     .service-card-btn-container {
         position: absolute;
@@ -503,7 +719,7 @@ html, body, html * {
 }
 
 /* For Small Screens (sm - ≥576px) */
-@media (min-width: 576px) and (max-width: 767px) {
+@media (min-width: 576px) and (max-width: 768px) {
     .banner-description {
         font-size: 14px;
         font-weight: 400;
@@ -523,8 +739,19 @@ html, body, html * {
         font-size: 20px !important;
         line-height: 24px !important;
     }
+    .affiliation {
+        font-size: 22px;
+        line-height: 54px;
+    }
+    .child-scroll-container {
+        gap:24px;
+    }
+    .child-div {
+        min-width: 100px;
+        margin: auto;
+    }
     .service-card .card {
-        height: 430px !important;
+        /* height: 430px !important; */
     }
     .service-card-btn-container {
         position: absolute;
@@ -563,8 +790,19 @@ html, body, html * {
         font-size: 22px !important;
         line-height: 26px !important;
     }
+    .affiliation {
+        font-size: 24px;
+        line-height: 54px;
+    }
+    .child-scroll-container {
+        gap:30px;
+    }
+    .child-div {
+        min-width: 110px;
+        margin: auto;
+    }
     .service-card .card {
-        height: 330px !important;
+        /* height: 330px !important; */
     }
     .business-count h1{
         color:#355594;
@@ -592,7 +830,7 @@ html, body, html * {
         margin-top: -15%;
     }
     .service-card .card {
-        height: 320px !important;
+        /* height: 320px !important; */
     }
     .service-card-btn-container {
         position: absolute;

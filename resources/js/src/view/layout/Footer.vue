@@ -21,9 +21,9 @@
                                 <ul class="list-unstyled">
                                     <li class="mb-sm-6 mb-3"><b-link href="/about-us">About</b-link></li>
                                     <li class="mb-sm-6 mb-3"><b-link href="/faq">FAQ</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="/license">License</b-link></li>
+                                    <!-- <li class="mb-sm-6 mb-3"><b-link href="/license">License</b-link></li>
                                     <li class="mb-sm-6 mb-3"><b-link href="term-and-condition">Terms & Conditions</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="privacy-policy">Privacy Policy</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link href="privacy-policy">Privacy Policy</b-link></li> -->
                                 </ul>
                             </div>
                         </b-col>
@@ -33,10 +33,10 @@
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Resources</h5>
                                 <ul class="list-unstyled">
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Blogs</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Press</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Contact</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">FAQs</b-link></li>
+                                    <!-- <li class="mb-sm-6 mb-3"><b-link href="#">Blogs</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link href="#">Press</b-link></li> -->
+                                    <li class="mb-sm-6 mb-3"><b-link href="#">Contact Us</b-link></li>
+                                    <!-- <li class="mb-sm-6 mb-3"><b-link href="#">FAQs</b-link></li> -->
                                 </ul>
                             </div>
                         </b-col>

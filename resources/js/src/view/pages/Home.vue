@@ -133,7 +133,6 @@
                         <h2 class="section-title text-center my-12">Latest Logistics News</h2>
                     </div>
                 </b-col>
-
                 <b-col
                     v-for="(newsItem, index) in newsItems"
                     :key="index"
@@ -158,7 +157,6 @@
                                 </div>
                             </div>
                         </template>
-
                     </b-card>
                 </b-col>
                 <b-col cols="12" class="mb-8">

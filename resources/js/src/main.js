@@ -7,6 +7,7 @@ import store from "@/core/services/store";
 import ApiService from "@/core/services/api.service";
 import { VERIFY_AUTH } from "@/core/services/store/auth.module";
 import { RESET_LAYOUT_CONFIG } from "@/core/services/store/config.module";
+import VueFlip from 'vue-flip';
 
 Vue.config.productionTip = false;
 Vue.use(VueExcelXlsx);
@@ -15,6 +16,7 @@ import { Form, HasError, AlertError } from "vform";
 window.Form = Form;
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
+Vue.component('VueFlip', VueFlip);
 //moment for time formate
 import moment from 'moment';
 Vue.prototype.moment = moment;

@@ -64,7 +64,7 @@
   }
   </style> -->
   <template>
-    <carousel-3d :controls-visible="true" :clickable="true">
+    <carousel-3d :controls-visible="false" :clickable="true">
       <slide v-for="(slide, i) in slides" :key="i" :index="i">
         <vue-flip :active-hover="true" width="100%" height="100%">
           <!-- Front Side -->

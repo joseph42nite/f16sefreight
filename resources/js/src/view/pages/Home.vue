@@ -90,6 +90,16 @@
                     </div>
                 </b-col>
             </b-row>
+            <!-- slider -->
+            <b-row align-h="center" align-v="center">
+                <b-col cols="12">
+                    <div>
+                        <h2 class="section-title mb-10">Our Services</h2>
+                    </div>
+                    <HomeCarousel></HomeCarousel>
+                </b-col>
+            </b-row>
+            <!-- end Slider -->
             <!-- Business count section start here -->
             <b-row align-h="center" align-v="center">
                 <b-col cols="12" class="mt-18">
@@ -111,14 +121,18 @@
                     <p class="text-center">Airline affiliations</p>
                 </b-col>
             </b-row>
+
+            <!-- Latest News section with flip  -->
+                    <LatestNewsCardFliped></LatestNewsCardFliped>
+             <!-- end New section with flip  -->
+
             <!-- Latest News section start here -->
-            <b-row align-h="center" align-v="center">
+            <!-- <b-row align-h="center" align-v="center">
                 <b-col cols="12" class="mt-18 mb-7">
                     <div>
                         <h2 class="section-title text-center my-12">Latest Logistics News</h2>
                     </div>
                 </b-col>
-
                 <b-col
                     v-for="(newsItem, index) in newsItems"
                     :key="index"
@@ -143,7 +157,6 @@
                                 </div>
                             </div>
                         </template>
-
                     </b-card>
                 </b-col>
                 <b-col cols="12" class="mb-8">
@@ -151,7 +164,12 @@
                         <b-button class="expMore-btn">Explore More</b-button>
                     </div>
                 </b-col>
-            </b-row>
+            </b-row> -->
+            <b-col cols="12" class="mb-8">
+                <div class="d-flex flex-row justify-content-center">
+                    <b-button class="expMore-btn">Explore More</b-button>
+                </div>
+            </b-col>
             <!-- FAQs Accordion section start here -->
             <b-row align-h="center" align-v="center">
                 <b-col cols="12" class="mt-30">
@@ -191,6 +209,8 @@
 
 <script>
     import Header from "@/view/layout/Header.vue";
+    import HomeCarousel from "../components/HomeCarousel.vue";
+    import LatestNewsCardFliped from "../components/LatestNewsCardFliped.vue";
     export default {
         name: "Home",
         data(){
@@ -346,7 +366,9 @@
             }
         },
         components: {
-            Header
+            Header,
+            HomeCarousel,
+            LatestNewsCardFliped
         },
         methods: {
             toggleSlide() {

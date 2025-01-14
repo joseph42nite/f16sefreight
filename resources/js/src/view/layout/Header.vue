@@ -30,11 +30,11 @@
 
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="ml-auto nav-menu text-center">
-            <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
+            <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item>
             <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
-            <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item>
-            <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item>
-            <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item>
+            <!-- <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item> -->
+            <!-- <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item> -->
+            <!-- <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item> -->
             <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
             <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item>
             <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
@@ -75,14 +75,14 @@
             </b-nav-item>
           </b-navbar-nav>
         </b-collapse>
-
-        <b-modal id="login-modal" v-model="show_modal" :hide-header="true" :hide-footer="true">
+        <!-- Sign In Modal box -->
+        <b-modal id="login-modal" v-model="show_login_modal" :hide-header="true" :hide-footer="true">
           <div class="d-flex flex-column-fluid flex-center">
             <!--begin::Signin-->
-            <div class="login-form login-signin w-100" v-if="check_show.login_signin">
+            <div class="login-form login-signin w-100">
               <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="login()">
                 <div class="pb-5 pt-lg-0 pt-5 text-center">
-                  <h1 style="color: #355594;">Sign In to F16s</h1>
+                  <h1 class="title-text my-6 my-md-12">Sign In to F16s</h1>
                 </div>
                 <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or password</span></div>
                 <div class="p-3 text-center" v-else-if="errors == 'Blocked'"><span class="text-danger h6">Your account is blocked. Contact admin</span></div>
@@ -115,9 +115,47 @@
                   </div>
                 </b-form-group>
 
-                <div>
-                  <button class="btn font-weight-bolder font-size-h6 py-3 w-100 mt-7 text-white btn-color" type="submit">Login
-                  </button>
+                <div class="d-flex justify-content-center">
+                  <button class="my-2 my-md-6 btn-color" type="submit">Sign in</button>
+                </div>
+                <div class="d-flex justify-content-center mb-4 mb-md-8 mt-3 mt-md-6">
+                  <p class="bottom-text">Can’t recall your User ID or Password?<br /> 
+                    <span class="contact-support"><a href="#" style="color: #355594;">Contact Support</a></span></p>
+                </div>
+              </form>
+            </div>
+            <!--END::Signin-->
+          </div>
+        </b-modal>
+        <!-- Otp verification Modal box -->
+        <b-modal id="login-modal" v-model="otp_verification_modal" :hide-header="true" :hide-footer="true">
+          <div class="d-flex flex-column-fluid flex-center">
+            <!--begin::Signin-->
+            <div class="login-form login-signin w-100">
+              <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="login()">
+                <div class="text-center my-6 my-md-12">
+                  <h1 class="title-text">One Time Password</h1>
+                  <p class="">You will receive a verification code on your email at l******@f16s.in</p>
+                </div>
+                <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or password</span></div>
+                <b-form-group id="fieldset-horizontal" label-cols-md="auto"
+                label-for="input-horizontal"
+                class="align-items-center">
+                <template #label>
+                    <div class="d-flex justify-content-end custom-label" style="width:60px;">
+                      <span>OTP:</span>
+                      <span style="color: red;">*</span>
+                    </div>
+                  </template>
+                  <b-form-input id="otp" class="form-control form-control-solid h-auto py-4 px-2" type="text" name="otp" ref="otp" placeholder="E.g: 801801"></b-form-input>
+                </b-form-group>
+
+                <div class="d-flex justify-content-center">
+                  <button class="my-2 my-md-6 btn-color" type="submit">Sign In</button>
+                </div>
+                <div class="d-flex justify-content-center my-3 my-md-6">
+                  <p class="bottom-text">Problem receiving OTP? 
+                    <span class="contact-support"><a href="#" style="color: #355594;">Resend Email</a></span></p>
                 </div>
               </form>
             </div>
@@ -136,13 +174,12 @@ export default {
   name: "Header",
   data(){
     return{
-      show_modal:false,
+      show_login_modal:false,
+      otp_verification_modal: false,
       user_form:{
         email: "",
         password: "",
-      },
-      check_show:{
-        login_signin:false,
+        otp: '',
       },
       showPass:true,
       avatarLogoSrc: "/media/custome/user-avatar.png",
@@ -154,15 +191,17 @@ export default {
     },
     
     firstPopUp(show_form){
-      this.show_modal=true;
-      this.check_show[show_form]=true;
+      this.show_login_modal=true;
     },
 
     login(){
       const email=$('#login_email').val();
       const password=$('#login_password').val();
       this.$store.dispatch(LOGIN, {email, password})
+      // this.show_login_modal = false;
+      // this.otp_verification_modal = true;
     },
+
     logout() {
       this.$store.dispatch(LOGOUT).then(() => window.location.href='/' );
     },
@@ -268,8 +307,51 @@ color: White;
   background-color: #f3f6f900 !important;
 }
 .btn-color {
-  background: #923B33;
+    background: #0000;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 25px;
+    text-align: center;
+    color: #A6A6A6;
+    border: 1px solid #A6A6A6;
+    backdrop-filter: blur(90px);
+    border-radius: 30px;
+    padding: 10px 40px;
 }
+.bottom-text {
+  color: #4C4C4C;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  text-align: center;
+
+}
+.contact-support {
+  color: #355594;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+  text-align: center;
+  text-decoration-line: underline;
+  cursor: pointer;
+
+}
+/* Login Model box css */
+.title-text {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 22px;
+  text-align: center;
+  color:#355594;
+}
+.form-control, .form-control-solid {
+    background: transparent !important;
+    border: 1px solid #A6A6A6 !important;
+}
+.form-control-solid:active {
+    background-color: #f3f6f9 !important;
+}
+
 @media (max-width: 992px) {
   .nav-menu {
     gap: 18px;
@@ -338,5 +420,15 @@ color: White;
 .navbar-light .navbar-toggler {
     color: #355594;
     border-color: #0000;
+}
+.modal-content {
+    background-color: #F3F6F9 !important;
+    backdrop-filter: blur(130px) !important;
+    box-shadow: 5px 4px 25px 0px #0000001F !important;
+    border-radius: 40px !important;
+    padding: 2.5rem;
+}
+.modal-body {
+    padding: 0px !important;
 }
 </style>

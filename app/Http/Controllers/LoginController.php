@@ -42,6 +42,26 @@ class LoginController extends Controller
 
         return json_encode(['token'=>$token,'user'=>$user_data,'role'=>$role]);
     }
+
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email', // Validate email
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        
+        // Generate OTP
+        $otp = rand(100000, 999999);
+        $user->otp = $otp;
+        $user->otp_expiration = now()->addMinutes(10); // Set expiration time
+        $user->save();
+
+        // Send OTP to the user's email
+        Mail::to($user->email)->send(new OtpMail($otp)); // Assuming you have the OtpMail mailable
+
+        return response()->json(['message' => 'OTP sent successfully']);
+    }
     public function login_superadmin()
     {
         $credentials = request(['email', 'password']);

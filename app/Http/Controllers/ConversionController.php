@@ -402,13 +402,15 @@ class ConversionController extends Controller
             $includedAccountingNote->appendChild($xml->createElement('Content', $waybill_data['accounting_information']));
             $masterConsignment->appendChild($includedAccountingNote);
         }
-        for ($i = 0; $i < sizeof($custom_info); $i++) {
-            $IncludedCustomsNote = $xml->createElement('IncludedCustomsNote');
-            $IncludedCustomsNote->appendChild($xml->createElement('ContentCode', $custom_info[$i]['custom_info_identifier']));
-            $IncludedCustomsNote->appendChild($xml->createElement('Content', $custom_info[$i]['supplementary_info']));
-            $IncludedCustomsNote->appendChild($xml->createElement('SubjectCode', $custom_info[$i]['info_identifier']));
-            $IncludedCustomsNote->appendChild($xml->createElement('CountryID', $custom_info[$i]['country_code']));
-            $masterConsignment->appendChild($IncludedCustomsNote);
+        if ($custom_info) {
+            for ($i = 0; $i < sizeof($custom_info); $i++) {
+                $IncludedCustomsNote = $xml->createElement('IncludedCustomsNote');
+                $IncludedCustomsNote->appendChild($xml->createElement('ContentCode', $custom_info[$i]['custom_info_identifier']));
+                $IncludedCustomsNote->appendChild($xml->createElement('Content', $custom_info[$i]['supplementary_info']));
+                $IncludedCustomsNote->appendChild($xml->createElement('SubjectCode', $custom_info[$i]['info_identifier']));
+                $IncludedCustomsNote->appendChild($xml->createElement('CountryID', $custom_info[$i]['country_code']));
+                $masterConsignment->appendChild($IncludedCustomsNote);
+            }
         }
         if ($waybill_data['customs_origin_code']) {
             $AssociatedConsignmentCustomsProcedure = $xml->createElement('AssociatedConsignmentCustomsProcedure');

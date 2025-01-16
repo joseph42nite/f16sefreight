@@ -162,4 +162,18 @@ class IMPConversionController extends Controller
         }
         echo $main_data;
     }
+    public function HouseWayBillConversion($hawb_no = '57HOUSE10')
+    {
+        // Fetch data from the database (this is just sample data for now)
+        $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
+        $house_address = WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
+        $consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
+        $payment_details = PaymentInfo::where('awb_id', $hawb_no)->limit(1)->first()->toArray();
+        $other_charges = OtherCharge::where('awb_id', $hawb_no)->get()->toArray();
+        $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
+
+        $utc_current_date = gmdate("Y-m-d H:i:s");
+        $time = time();
+    }
 }

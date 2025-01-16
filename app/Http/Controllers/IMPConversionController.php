@@ -109,7 +109,32 @@ class IMPConversionController extends Controller
         for ($i = 1; $i < sizeof($pieces_info); $i++) {
             $main_data .= "/" . (4 + $i) . "/ND//" . ($pieces_info[$i]['gross_weight'] ? 'K' . $pieces_info[$i]['gross_weight'] . "/" : '') . $pieces_info[$i]['unit'] . $pieces_info[$i]['length'] . "-" . $pieces_info[$i]['width'] . "-" . $pieces_info[$i]['height'] . "/" . $pieces_info[$i]['pcs'] . "<br>";
         }
-
+        //other charges
+        $main_data .= "OTH/" . $other_charges[0]['payment_type'] . "/";
+        for ($i = 0; $i < sizeof($other_charges); $i++) {
+            $main_data .= substr($other_charges[$i]['other_charge_code'], 0, 2) . $other_charges[$i]['due'] . $other_charges[$i]['amount'] . ".00";
+        }
+        $main_data .= "<br>";
+        //14 total amount
+        if ($payment_details['type_of_payment'] == 'P') {
+            $prepaid_collect_text = "prepaid";
+            $main_data .= "PPD";
+        } else {
+            $prepaid_collect_text = "collect";
+            $main_data .= "COL";
+        }
+        $main_data .= "/" . "WT" . $payment_details['weight_charge'] . "/OC" . $payment_details['other_charges_due_carrier_' . $prepaid_collect_text];
+        if ($payment_details['other_charges_due_agent_' . $prepaid_collect_text])
+            $main_data .= "/OA" . $payment_details['other_charges_due_agent_' . $prepaid_collect_text];
+        if ($payment_details['taxes'])
+            $main_data .= "/TX" . $payment_details['taxes'];
+        $main_data .= "/CT" . $payment_details['total_charges_' . $prepaid_collect_text];
+        $main_data .= "<br>";
+        //16
+        $main_data .= "CER/" . substr($agent_details['agent_name'], 0, 20) . "<br>";
+        //17
+        $main_data .= "ISU/" . date("jMy") . "/" . substr($agent_details['agent_issue_loc_code'], 0, 3) . "/" . $agent_details['agent_issue_sign']."<br>";
+        
         echo $main_data;
     }
 }

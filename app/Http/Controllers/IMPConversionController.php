@@ -162,7 +162,7 @@ class IMPConversionController extends Controller
         }
         echo $main_data;
     }
-    public function HouseWayBillConversion($hawb_no = '57HOUSE10')
+    public function HouseWayBillConversion($hawb_no = '12345678')
     {
         // Fetch data from the database (this is just sample data for now)
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();

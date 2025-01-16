@@ -272,32 +272,30 @@ On hover, flip the card
         <b-col v-for="(newsItem, index) in newsItems" :key="index" cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-16">
             <b-card class="text-center latest-news-card toggle-btn">
                 <!-- Apply vue-flip to the flip-card container -->
-                <div class="front flip">
-                    <vue-flip :active-hover="true" class="flip-card" height="100%" width="100%">
-                        <!-- Front Section: Image and Title -->
-                        <template v-slot:front class="front">
-                            <div class="latest-news-card-img">
-                                <b-img
-                                    :src="newsItem.imgSrc"
-                                    :alt="newsItem.imgAlt"
-                                    class="img-fluid d-block flip-image"
-                                    style="width: 100%"
-                                />
-                            </div>
-                        </template>
-                        <!-- Back Section: Content (Text) -->
-                        <template v-slot:back>
-                            <div class="toggle-content">
-                                <h2>{{ newsItem.innerTitle }}</h2>
-                                <p>{{ newsItem.innerDescription }}</p>
-                                <hr />
-                            </div>
-                        </template>
-                    </vue-flip>
-                    <div class="latest-news-card-title">
-                        {{ newsItem.title }}
-                    </div>
-                </div>
+                <vue-flip :active-click="true" class="flip-card" height="100%" width="100%">
+                    <!-- Front Section: Image and Title -->
+                    <template v-slot:front class="front">
+                        <div class="latest-news-card-img">
+                            <b-img
+                                :src="newsItem.imgSrc"
+                                :alt="newsItem.imgAlt"
+                                class=""
+                                style="width: 100%"
+                            />
+                        </div>
+                        <div class="latest-news-card-title">
+                            {{ newsItem.title }}
+                        </div>
+                    </template>
+                    <!-- Back Section: Content (Text) -->
+                    <template v-slot:back class="back">
+                        <div class="toggle-content p-20">
+                            <h2 class="text-left mb-4">{{ newsItem.innerTitle }}</h2>
+                            <p class="text-left mb-4">{{ newsItem.innerDescription }}</p>
+                            <hr />
+                        </div>
+                    </template>
+                </vue-flip>
             </b-card>
         </b-col>
     </b-row>
@@ -377,13 +375,24 @@ export default {
 <style scoped>
 @import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
 
+hr {
+    border: 2px solid #355594;
+    width: 100%;
+    border-radius: 50px;
+}
 .latest-news-card {
     background: linear-gradient(180deg, #d9efff 0%, #f1f9ff 71%);
     border-radius: 25px;
+    position: relative; /* Important to make the flip card's position relative to this container */
+    overflow: hidden; /* Prevent overflow when flipping */
+    width: 100%; /* Ensure it takes full width of its column */
+    height: 100%; /* Ensures it takes full height of its column */
 }
 
 .latest-news-card-img {
     padding: 10px;
+    width: 100%; /* Ensures the image takes the full width of the card */
+    height: auto; /* Ensures the image takes the full height of the card */
 }
 
 .latest-news-card-title {
@@ -395,19 +404,16 @@ export default {
 }
 
 .toggle-content {
-    position: absolute;
+    position: relative;
     top: 0;
-    background: #355594;
     width: 100%;
     border-radius: 25px;
-    color: white;
-    padding: 15px;
-    /* height: 100%; */
+    color: #355594;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    
+    justify-content: left;
+    z-index: 2;
 }
 
 .flip-card {
@@ -416,6 +422,7 @@ export default {
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
+    display: flex; /* Ensures the card's front and back are aligned properly */
 }
 
 .flip-card .front,
@@ -442,9 +449,6 @@ export default {
     visibility: hidden;
 }
 
-.flip-image {
-    transition: transform 0.6s ease-in-out;
-}
 .card-body {
     flex: 1 1 auto;
     min-height: 1px;
@@ -456,18 +460,29 @@ export default {
   visibility: visible;
 }
 
-.flip-card:hover .front .latest-news-card-img>img {
-    visibility: hidden;
-}
-
-
 </style>
 
 <style>
 .front {
     position: relative !important;
 }
-.back {
+/* .back {
     position: relative !important;
+} */
+
+@media (min-width: 768px) and (max-width: 896px) {
+    
+}
+@media (min-width: 897px) and (max-width: 921px) {
+    
+}
+@media (min-width: 922px) and (max-width: 991px) {
+    
+}
+@media (min-width: 992px) and (max-width: 1199px) {
+    
+}
+@media (min-width: 1200px) and (max-width: 1400px) {
+    
 }
 </style>

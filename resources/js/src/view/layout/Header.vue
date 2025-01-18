@@ -283,6 +283,7 @@ color: White;
   border-radius: 30px;
   padding: 12px 30px;
   background: transparent !important;
+  color: #355594;
 }
 .sign-in-btn:hover {
   color:#fff !important;

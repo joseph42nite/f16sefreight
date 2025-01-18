@@ -12,15 +12,15 @@
     
             <!-- Footer Links Rows -->
             <b-row align-h="center" align-v="center" class="border-top-bottom">
-                <b-col cols="10">
+                <b-col cols="11" md="10">
                     <b-row>
                         <!-- Column 1 (Company) -->
-                        <b-col xs="12" sm="3" md="3">
+                        <b-col cols="6" sm="3" md="3">
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Company</h5>
                                 <ul class="list-unstyled">
-                                    <li class="mb-sm-6 mb-3"><b-link href="/about-us">About</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="/faq">FAQ</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link to="/about-us">About</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link href="#faq-section">FAQ</b-link></li>
                                     <!-- <li class="mb-sm-6 mb-3"><b-link href="/license">License</b-link></li>
                                     <li class="mb-sm-6 mb-3"><b-link href="term-and-condition">Terms & Conditions</b-link></li>
                                     <li class="mb-sm-6 mb-3"><b-link href="privacy-policy">Privacy Policy</b-link></li> -->
@@ -29,20 +29,20 @@
                         </b-col>
                 
                         <!-- Column 2 (Resources) -->
-                        <b-col xs="12" sm="3" md="3">
+                        <b-col cols="6" sm="3" md="3">
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Resources</h5>
                                 <ul class="list-unstyled">
                                     <!-- <li class="mb-sm-6 mb-3"><b-link href="#">Blogs</b-link></li>
                                     <li class="mb-sm-6 mb-3"><b-link href="#">Press</b-link></li> -->
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Contact Us</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link to="/contact-us">Contact Us</b-link></li>
                                     <!-- <li class="mb-sm-6 mb-3"><b-link href="#">FAQs</b-link></li> -->
                                 </ul>
                             </div>
                         </b-col>
                 
                         <!-- Column 3 (Services) -->
-                        <b-col xs="12" sm="3" md="3">
+                        <b-col cols="6" sm="3" md="3">
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Services</h5>
                                 <ul class="list-unstyled">
@@ -54,7 +54,7 @@
                         </b-col>
                 
                         <!-- Column 4 (Contact Info) -->
-                        <b-col xs="12" sm="3" md="3">
+                        <b-col cols="6" sm="3" md="3">
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Contact Info</h5>
                                 <ul class="list-unstyled">
@@ -76,13 +76,13 @@
                 <!-- Column 2 (Social Media Links) -->
                 <b-col xs="6" class="d-flex justify-content-end">
                     <router-link to="#" class="mx-2">
-                    <img :src="YouTubeLogoSrc" alt="YouTube Logo" id="social-icon" class="img-fluid" style="width: 30px;">
+                    <img :src="YouTubeLogoSrc" alt="YouTube Logo" id="social-icon" class="" style="margin-top: 18%;">
                     </router-link>
                     <router-link to="#" class="mx-2">
-                    <img :src="LinkedInLogoSrc" alt="LinkedIn Logo" id="social-icon" class="img-fluid" style="width: 30px;">
+                    <img :src="LinkedInLogoSrc" alt="LinkedIn Logo" id="social-icon" class="">
                     </router-link>
                     <router-link to="#" class="mx-2">
-                    <img :src="FaceBookLogoSrc" alt="Facebook Logo" id="social-icon" class="img-fluid" style="width: 30px;">
+                    <img :src="FaceBookLogoSrc" alt="Facebook Logo" id="social-icon" class="">
                     </router-link>
                 </b-col>
             </b-row>
@@ -144,7 +144,9 @@
         text-decoration: underline !important;
     }
     #social-icon {
-        width: 25px;
+        width: 80%;
+        margin: auto;
+        display: flex;
     }
     .linkedin-icon {
         margin: 0px 25px;

@@ -668,7 +668,7 @@ class AirwayBill extends Controller
             $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'],$request->first_box['awb_code'], $request->charges);
         }
         //For payment information
-        if (!empty($request->payment_info['currency'])) {
+        if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment'])) {
             $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -684,7 +684,7 @@ class AirwayBill extends Controller
                 $main_return_data['oci_entries'] = $error_data;
         }
         //for Total Consignee Amount and Total Volume
-        if (!empty($request->totals['total_volume'])) {
+        if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
             $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->first_box['awb_code'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -717,7 +717,7 @@ class AirwayBill extends Controller
             else
                 $main_return_data['routing_information'] = $error_data;
         }
-        if (!empty($id) && !empty($request->totals['total_volume'])) {
+        if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
             $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->first_box['awb_code'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -754,14 +754,14 @@ class AirwayBill extends Controller
                 $main_return_data['consignee_address'] = $error_data;
         }
         //for storing also notify address
-        if (!empty($id)) {
+        if (!empty($id) && !empty($request->also_notify_address['also_name'])) {
             $error_data = $this->saveAlsoNotify($request->first_box['awb_no'], $request->first_box['awb_code'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($id)) {
+        if (!empty($id) && !empty($request->payment_info['type_of_payment'])) {
             $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;

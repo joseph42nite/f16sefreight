@@ -2540,6 +2540,12 @@
                                 </div>
                                 
                                 <div class="pt-7 pb-28">
+                                    <div v-if="successMessage" class="" style="font-weight: bold; display: flex; justify-content: flex-end; text-align: right;">
+                                        <span>
+                                            {{ successMessage.split('-Pass')[0] }}
+                                            <span style="color: green;">-Pass</span>
+                                        </span>
+                                    </div>
                                     <div class="d-flex justify-content-end">
                                         <b-button class="mr-2" @click="handleSaveAndGeneratePDF">Generate PDF</b-button>
                                         <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
@@ -2799,6 +2805,7 @@ export default {
             filteredConsignees: [],
             filteredAlsoNotify: [],
             isConsignmentAdded: false,
+            successMessage: '',
             awb_prefix_message: '',
             codes: [
                 { value: 'ACT', text: 'ACT - Active Temperature Controlled System' },
@@ -3076,6 +3083,7 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
+                        this.successMessage = '-e-HSWB Saved in database -Pass';
                     } else {
                         console.error('ID is missing in response data');
                     }
@@ -3096,6 +3104,7 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
+                        this.successMessage = '-e-HSWB Saved in database -Pass';
                     } else {
                         console.error('ID is missing in response data');
                     }
@@ -3404,10 +3413,13 @@ export default {
             this.consignment_list.weight_code = consignment_data.weight_code;
             this.consignment_list.chargable_weight = consignment_data.chargable_weight;
             this.consignment_list.rate = consignment_data.rate;
-            this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
-            this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
-            this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
-            
+            // this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
+            // this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
+            // this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
+            this.consignment_list.itemss = consignment_data.pieces_info ? JSON.parse(consignment_data.pieces_info) : [];
+            this.consignment_list.hsCodes = consignment_data.hs_code ? JSON.parse(consignment_data.hs_code) : [];
+            this.consignment_list.uld_infos = consignment_data.uld_info ? JSON.parse(consignment_data.uld_info) : [];
+
             this.$refs.modalConsignment.show();
             this.isConsignmentAdded = true;
             this.calculateTotalAmount();

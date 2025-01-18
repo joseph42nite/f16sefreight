@@ -29,7 +29,7 @@ class CreateAgentsInfoTable extends Migration
             $table->integer('iata_agent_cass')->nullable(); //4
             $table->string('agent_contact_person_phone', 20)->nullable();
             $table->string('agent_contact_person_email', 50)->nullable();
-            $table->string('agent_contact_person_email', 50)->nullable();
+            // $table->string('agent_contact_person_email', 50)->nullable();
             $table->string('agent_airlines', 50)->nullable();
             $table->string('office_airport')->nullable();
             $table->string('office_function_designator')->nullable();

@@ -784,7 +784,7 @@
                                     <!-- CONSIGNMENT MODEL CODE START HERE -->
                                     <b-button class="mt-5 mb-5 add-cons-btn" v-b-modal.modal-consignment @click="handleAddConsignment" :disabled="isConsignmentAdded">Add Consignment Information</b-button>
                                     <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
-                                        size="xl" ok-only hide-footer>
+                                        size="xl" ok-only hide-footer @hide="handleModalClose">
                                         <b-row>
                                             <!-- First Column -->
                                             <b-col cols="6">
@@ -2419,6 +2419,12 @@
                                     </b-row>
                                 </div>
                                 <div class="py-10">
+                                    <div v-if="successMessage" class="" style="font-weight: bold; display: flex; justify-content: flex-end; text-align: right;">
+                                        <span>
+                                            {{ successMessage.split('-Pass')[0] }}
+                                            <span style="color: green;">-Pass</span>
+                                        </span>
+                                    </div>
                                     <div class="d-flex justify-content-end">
                                         <!-- <b-button class="mr-2" @click="generateAwbPDF" -->
                                         <b-button class="mr-2" @click="() => handleSaveAndGeneratePDF()"
@@ -2696,6 +2702,7 @@ export default {
             filteredAlsoNotify: [],
             awb_prefix_message: '',
             showAWBSection: false,
+            successMessage: '',
             codes: [
                 { value: 'ACT', text: 'ACT - Active Temperature Controlled System' },
                 { value: 'AOG', text: 'AOG - Aircraft on ground' },
@@ -2882,12 +2889,12 @@ export default {
                     console.log(data);
                 });
         },
-        showModal() {
-            this.$refs["my-modal"].show();
-        },
-        hideModal() {
-            this.$refs["my-modal"].hide();
-        },
+        // showModal() {
+        //     this.$refs["my-modal"].show();
+        // },
+        // hideModal() {
+        //     this.$refs["my-modal"].hide();
+        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -2896,6 +2903,11 @@ export default {
         },
         handleAddConsignment() {
             if (this.isConsignmentAdded) {
+                this.$bvToast.toast('Consignment Information is already added.', {
+                title: 'Information',
+                variant: 'warning',
+                solid: true,
+                });
             } else {
                 this.$refs.modalConsignment.show();
                 this.isConsignmentAdded = true;
@@ -3029,6 +3041,7 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF();
                         }
+                        this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {
                         console.error('ID is missing in response data');
                     }
@@ -3049,6 +3062,7 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF();
                         }
+                        this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {
                         console.error('ID is missing in response data');
                     }
@@ -3160,19 +3174,34 @@ export default {
                     //     ? this.existingData.consignment_data
                     //     : [this.existingData.consignment_data];
                    const entry = this.existingData.consignment_data;
-                    const parsedEntry = {
-                        ...entry,
-                        hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
-                        itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
-                        uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
-                        // hsCodes: entry.hs_code && entry.hs_code !== '' ? JSON.parse(entry.hs_code) : [],
-                        // itemss: entry.pieces_info && entry.pieces_info !== '' ? JSON.parse(entry.pieces_info) : [],
-                        // uld_infos: entry.uld_info && entry.uld_info !== '' ? JSON.parse(entry.uld_info) : []
+                    // const parsedEntry = {
+                    //     ...entry,
+                    //     hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
+                    //     itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
+                    //     uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
+                    //     // hsCodes: entry.hs_code && entry.hs_code !== '' ? JSON.parse(entry.hs_code) : [],
+                    //     // itemss: entry.pieces_info && entry.pieces_info !== '' ? JSON.parse(entry.pieces_info) : [],
+                    //     // uld_infos: entry.uld_info && entry.uld_info !== '' ? JSON.parse(entry.uld_info) : []
 
-                    };
-                    this.form.entries = [parsedEntry]; 
-                    // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info); 
-                    console.log("Parsed entry:", parsedEntry);
+                    // };
+                    // this.form.entries = [parsedEntry]; 
+                    if (entry) {
+                        const parsedEntry = {
+                            ...entry,
+                            hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
+                            itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
+                            uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
+                        };
+                        this.form.entries = [parsedEntry];
+                        console.log("Parsed entry:", parsedEntry);
+                    } else {
+                        console.warn("No consignment data available. Entry is null or undefined.");
+                        this.form.entries = []; // Default to an empty array if no data exists
+                    }
+                    if(!this.form.entries){
+                        this.isConsignmentAdded = true;
+                    }
+                    // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info);
                     // this.consignment_list = this.existingData.consignment_data;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
@@ -3357,11 +3386,6 @@ export default {
         removeCharge(index) {
             this.form.charges.splice(index, 1);
         },
-        handleModalClose() {
-            if (this.form.entries.length === 0) {
-                this.isConsignmentAdded = false;
-            }
-        },
         editEntry(index) {
             this.edit_entry_index = index;
             let consignment_data=this.form.entries[index];
@@ -3378,10 +3402,12 @@ export default {
             this.consignment_list.weight_code = consignment_data.weight_code;
             this.consignment_list.chargable_weight = consignment_data.chargable_weight;
             this.consignment_list.rate = consignment_data.rate;
-            this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
-            this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
-            this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
+            // this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
+            this.consignment_list.itemss = consignment_data.pieces_info ? JSON.parse(consignment_data.pieces_info) : [];
+            this.consignment_list.hsCodes = consignment_data.hs_code ? JSON.parse(consignment_data.hs_code) : [];
+            this.consignment_list.uld_infos = consignment_data.uld_info ? JSON.parse(consignment_data.uld_info) : [];
             this.$refs.modalConsignment.show();
+            this.isConsignmentAdded = true;
             this.calculateTotalAmount();
         },
         deleteEntry(index) {
@@ -3412,6 +3438,7 @@ export default {
                 }
                 this.calculateTotalVolume();
                 this.calculateTotalAmount();
+                 this.isConsignmentAdded = this.form.entries.length > 0;
                 this.closeModal();
                 console.log("Updated form entries:", this.form.entries);
                 //clear consignment_list data
@@ -3424,6 +3451,7 @@ export default {
                         }
                     }
                 }
+                this.isConsignmentAdded = this.form.entries.length > 0;
             })
             .catch(error => {
                 console.error("There was an error with the consignment request:", error);
@@ -3532,6 +3560,12 @@ export default {
         },
         closeModal() {
             this.$refs.modalConsignment.hide();
+        },
+        handleModalClose() {
+            // if (this.form.entries.length === 0) {
+            //     this.isConsignmentAdded = false;
+            // }
+            this.isConsignmentAdded = this.form.entries.length > 0;
         },
         addUldInfo() {
             this.uld_error = [];

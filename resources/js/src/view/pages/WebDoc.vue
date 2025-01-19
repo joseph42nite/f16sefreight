@@ -573,22 +573,6 @@
                                 <b-tab title="Routing Information" style="border: 2px solid black !important">
                                     <b-row class="mt-5">
                                         <b-col cols="auto">
-                                            <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label="Departure Airport*" label-for="input-departure-airport"
-                                                class="form-control-sm">
-                                                <b-form-select class="form-control" style="width: 150px"
-                                                    v-model="form.routing_information.departure_airport"
-                                                    :class="{ 'is-invalid': form.errors.has('departure_airport') }">
-                                                    <option disabled value=""> Select a Rate Class</option>
-                                                    <option value="ABY, Albany (ABY), United States"> ABY, Albany (ABY),
-                                                        United States</option>
-                                                    <option value="ABZ, Aberdeen (ABZ), United Kingdom">
-                                                        ABZ, Aberdeen (ABZ), United
-                                                        Kingdom
-                                                    </option>
-                                                </b-form-select>
-                                                <has-error :form="form" field="departure_airport"></has-error>
-                                            </b-form-group> -->
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                 label="Departure Airport: *" label-for="input-departure-airport"
                                                 class="form-control-sm col-form-label">
@@ -724,16 +708,6 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <!-- <b-form-select class="form-control" style="width: 150px"
-                                                                v-model="form.routing_information.to_2"
-                                                                :class="{ 'is-invalid': form.errors.has('to_2') }">
-                                                                <option disabled value=""> Select 2 a Rate Class
-                                                                </option>
-                                                                <option value="ABY, Albany (ABY), United States">ABY,
-                                                                    Albany (ABY), United States</option>
-                                                                <option value="ABZ, Aberdeen (ABZ), United Kingdom">
-                                                                    ABZ, Aberdeen (ABZ), United Kingdom</option>
-                                                            </b-form-select> -->
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to2"
                                                                     class="form-control-sm col-form-label">
                                                                         <div class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
@@ -783,16 +757,6 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="editable-cell">
-                                                            <!-- <b-form-select class="form-control" style="width: 150px"
-                                                                v-model="form.routing_information.to_3"
-                                                                :class="{ 'is-invalid': form.errors.has('to_3') }">
-                                                                <option disabled value=""> Select 3 a Rate Class
-                                                                </option>
-                                                                <option value="ABY, Albany (ABY), United States">ABY,
-                                                                    Albany (ABY), United States</option>
-                                                                <option value="ABZ, Aberdeen (ABZ), United Kingdom">ABZ,
-                                                                    Aberdeen (ABZ), United Kingdom</option>
-                                                            </b-form-select> -->
                                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to3"
                                                                     class="form-control-sm col-form-label">
                                                                         <div class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown_to3">

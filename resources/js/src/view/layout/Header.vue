@@ -30,11 +30,11 @@
 
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="ml-auto nav-menu text-center">
-            <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
+            <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item>
             <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
-            <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item>
-            <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item>
-            <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item>
+            <!-- <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item> -->
+            <!-- <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item> -->
+            <!-- <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item> -->
             <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
             <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item>
             <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->

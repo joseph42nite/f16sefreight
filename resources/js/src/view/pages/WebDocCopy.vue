@@ -98,22 +98,22 @@
                                                 <div class="d-flex">
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                     label-for="input-horizontal"
-                                                    class="form-control-sm align-items-center">
+                                                    class="align-items-center pr-3">
                                                     <template #label>
                                                         <span>AWB No:</span>
                                                         <span style="color: red;">*</span>
                                                     </template>
-                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 80px"
+                                                        <b-form-input id="input-horizontal" class="" style="width: 62px"
                                                             v-model="form.first_box.awb_code"
                                                             :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" required></b-form-input>
                                                     </b-form-group>
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                     label-for="input-horizontal"
-                                                    class="form-control-sm align-items-center">
+                                                    class="align-items-center">
                                                     <template #label>
                                                         <span>-</span>
                                                     </template>
-                                                        <b-form-input id="input-horizontal" class="form-control-sm" style="width: 100px"
+                                                        <b-form-input id="input-horizontal" class="" style="width: 100px"
                                                             v-model="form.first_box.awb_no"
                                                             :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" required></b-form-input>
                                                     </b-form-group>

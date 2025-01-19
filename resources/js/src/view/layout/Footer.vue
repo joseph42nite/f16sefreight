@@ -4,7 +4,7 @@
             <!-- Footer Logo Row -->
             <b-row>
                 <b-col md="12" class="p-0 mb-6">
-                    <router-link to="https://f16sefs.in/">
+                    <router-link to="/">
                         <img :src="FooterLogoSrc" alt="f16s Footer Logo" id="main-footer-logo" class="img-fluid">
                     </router-link>
                 </b-col>
@@ -95,7 +95,7 @@
     name: "Footer",
     data(){
         return{
-            FooterLogoSrc: "/media/custome/blue-logo.svg",
+            FooterLogoSrc: "/media/custome/blue-logo.png",
             YouTubeLogoSrc: "/media/custome/social-icon/youtube.svg",
             LinkedInLogoSrc: "/media/custome/social-icon/linkedIn.svg",
             FaceBookLogoSrc: "/media/custome/social-icon/facebook.svg",

@@ -4,34 +4,37 @@
         <!-- Include Header -->
         <Header></Header>
         <b-container>
+            <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
+            <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
+            <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
+            <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
+            <!-- <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div> -->
+            <!-- Banner Top section start here -->
             <b-row align-h="center" align-v="center" style="position: relative">
-                <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
-                <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
-                <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
-                <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
-                <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div>
                 <b-col cols="12">
-                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 90%;margin: 6% 5% 0%;">
+                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 84%;margin: auto; margin-top: 12%;">
                         <!-- Primary Banner Text Image -->
-                        <b-col cols="12" class="">
-                            <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="" style="width: 92%;display:block;margin:auto" />
+                        <b-col cols="12" class="px-md-0">
+                            <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="" style="width: 100%;display:block;margin:auto" />
                         </b-col>
                         <!-- Left Description Column -->
-                        <b-col cols="12" md="4" lg="4" class="banner-description-container">
-                            <h4 class="text-left banner-description mb-8">
-                                Whether you need fast and reliable data flow for airlines or simplified document handling for sea and road transport, we’ve got you covered.
-                            </h4>
+                        <b-col cols="12" md="4" lg="3" class="px-md-0">
+                            <div class="banner-description-container">
+                                <h4 class="text-left banner-description mb-8">
+                                    Whether you need fast and reliable data flow for airlines or simplified document handling for sea and road transport, we’ve got you covered.
+                                </h4>
+                            </div>
                             <b-button to="/about-us" class="d-flex align-items-center mb-8 exp-btn">
                                 <span>Explore Now</span>
                                 <b-icon icon="arrow-right" class="btn-icon ms-2"></b-icon>
                             </b-button>
                         </b-col>
                         <!-- Right Banner Image Column -->
-                        <b-col cols="12" md="8" lg="8" class="banner-image-container">
+                        <b-col cols="12" md="8" lg="9" class="px-md-0 banner-image-container">
                             <div class="banner">
                                 <img :src="banner" alt="Banner-image" id="Banner-image" class="banner-image" />
                                 <!-- Gray Shadow Div Below the Image -->
-                                <div class="gray-shadow"></div>
+                                <!-- <div class="gray-shadow"></div> -->
                             </div>
                         </b-col>
                     </b-row>
@@ -64,7 +67,7 @@
                         <b-col
                             v-for="(serviceCard, index) in serviceCards"
                             :key="index"
-                            cols="12" sm="6" md="3" lg="3" xl="3" xxl="3"
+                            cols="12" sm="6" md="6" lg="3" xl="3" xxl="3"
                             class="mb-6 mb-md-20 service-card"
                             >
                             <b-card class="mb-2 text-center">
@@ -111,7 +114,7 @@
             <b-row align-h="center" align-v="center">
                 <b-col cols="12">
                     <div>
-                        <h2 class="section-title mb-10">Our Services</h2>
+                        <h2 class="section-title my-14">Our Services</h2>
                     </div>
                     <HomeCarousel></HomeCarousel>
                 </b-col>
@@ -145,50 +148,19 @@
                     </b-row>
                 </b-col>
             </b-row>
-
             <!-- Latest News section with flip  -->
-                    <LatestNewsCardFliped></LatestNewsCardFliped>
-             <!-- end New section with flip  -->
-
-            <!-- Latest News section start here -->
-            <!-- <b-row align-h="center" align-v="center">
-                <b-col cols="12" class="mt-18 mb-7">
+            <b-row align-h="center" align-v="center" style="position: relative;">
+                <div class="ellipse-14"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-14" /></div>
+                <div class="ellipse-15"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-15" /></div>
+                <div class="ellipse-16"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-16" /></div>
+                <b-col cols="12">
                     <div>
-                        <h2 class="section-title text-center my-12">Latest Logistics News</h2>
+                        <h2 class="section-title mb-20">Latest Logistics News</h2>
                     </div>
                 </b-col>
-                <b-col
-                    v-for="(newsItem, index) in newsItems"
-                    :key="index"
-                    cols="12" sm="4" md="4" lg="4" xl="4" xxl="4"
-                    class="mb-16"
-                >
-                    <b-card class="text-center latest-news-card toggle-btn" @click="toggleSlide">
-                        <template v-slot:default>
-                            <div class="front">
-                                <div class="latest-news-card-img">
-                                    <b-img :src="newsItem.imgSrc" :alt="newsItem.imgAlt" class="img-fluid d-block" style="width: 100%;" />
-                                </div>
-                                <div class="latest-news-card-title">
-                                    {{ newsItem.title }}
-                                </div>
-                                <div class="toggle-content"
-                                    :class="{ 'slide-up': !isVisible }"
-                                    v-show="isVisible">
-                                    <h2>{{ newsItem.innerTitle }}</h2>
-                                    <p>{{ newsItem.innerDescription }}</p>
-                                    <hr/>
-                                </div>
-                            </div>
-                        </template>
-                    </b-card>
-                </b-col>
-                <b-col cols="12" class="mb-8">
-                    <div class="d-flex flex-row justify-content-center">
-                        <b-button class="expMore-btn">Explore More</b-button>
-                    </div>
-                </b-col>
-            </b-row> -->
+                <LatestNewsCardFliped></LatestNewsCardFliped>
+            </b-row>
+             <!-- end New section with flip  -->
             <b-col cols="12" class="mb-8">
                 <div class="d-flex flex-row justify-content-center">
                     <b-button class="expMore-btn">Explore More</b-button>
@@ -243,8 +215,8 @@
         name: "Home",
         data(){
             return{
-                banner: "/media/custome/banner-plane.svg",
-                banner_primary_text: "/media/custome/banner-primary-text.svg",
+                banner: "/media/custome/banner-plane.png",
+                banner_primary_text: "/media/custome/banner-primary-text.png",
                 count1: 0,
                 count2: 0,
                 count3: 0,
@@ -260,47 +232,47 @@
                 },
                 affiliates: [
                     {
-                        imgSrc: "/media/custome/affiliation-tags/air-france.svg",
+                        imgSrc: "/media/custome/affiliation-tags/air-france.png",
                         imgAlt: "air france"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/emirates.svg",
+                        imgSrc: "/media/custome/affiliation-tags/emirates.png",
                         imgAlt: "emirates"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/lufthansa.svg",
+                        imgSrc: "/media/custome/affiliation-tags/lufthansa.png",
                         imgAlt: "lufthansa"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/qatar.svg",
+                        imgSrc: "/media/custome/affiliation-tags/qatar.png",
                         imgAlt: "qatar"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/turkish-airlines.svg",
+                        imgSrc: "/media/custome/affiliation-tags/turkish-airlines.png",
                         imgAlt: "turkish-airlines"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/air-france.svg",
+                        imgSrc: "/media/custome/affiliation-tags/air-france.png",
                         imgAlt: "air france"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/emirates.svg",
+                        imgSrc: "/media/custome/affiliation-tags/emirates.png",
                         imgAlt: "emirates"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/lufthansa.svg",
+                        imgSrc: "/media/custome/affiliation-tags/lufthansa.png",
                         imgAlt: "lufthansa"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/air-france.svg",
+                        imgSrc: "/media/custome/affiliation-tags/air-france.png",
                         imgAlt: "air france"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/emirates.svg",
+                        imgSrc: "/media/custome/affiliation-tags/emirates.png",
                         imgAlt: "emirates"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/lufthansa.svg",
+                        imgSrc: "/media/custome/affiliation-tags/lufthansa.png",
                         imgAlt: "lufthansa"
                     },
                 ],
@@ -464,9 +436,11 @@
 
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////////////// */
+html {
+  scroll-behavior: smooth !important;
+}
 html, body * {
   font-family: 'Roboto', sans-serif !important;
-  scroll-behavior: smooth !important;
 }
 hr {
     width: 72%;
@@ -478,115 +452,154 @@ hr {
     margin-bottom: 2rem;
 }
 .main-container {
-    background: linear-gradient(180deg, #D0E6F8 20%, #FFFFFF 58%);
+    background: linear-gradient(180deg, #D0E6F8 20%, #FFFFFF 40%);
+    position: relative;
 }
 .ellipse-1 {
     position: absolute;
-    left: 93%;
+    left: 90%;
     top: 5%;
+}
+.circle-image-1 {
+    width: 60px;
+    height: auto;
 }
 .ellipse-2 {
     position: absolute;
-    left: 99%;
-    top: 7%;
+    left: 96%;
+    top: 5.4%;
+}
+.circle-image-2 {
+    width: 10px;
+    height: auto;
 }
 .ellipse-3 {
     position: absolute;
-    left: 98%;
-    top: 16%;
+    left: 95%;
+    top: 7%;
+}
+.circle-image-3 {
+    width: 25px;
+    height: auto;
 }
 .ellipse-4 {
     position: absolute;
-    left: 0%;
-    top: 68%;
+    left: 4%;
+    top: 13.8%;
+}
+.circle-image-4 {
+    width: 27px;
+    height: auto;
 }
 .ellipse-5 {
     position: absolute;
     left: 96%;
     top: 100%;
+} 
+.circle-image-5 {
+    width: 90%;
 }
 .ellipse-6 {
     position: absolute;
     left: -1%;
     top: 39%;
 }
+.circle-image-6 {
+    width: 17px;
+    height: auto;
+}
 .ellipse-7 {
     position: absolute;
     left: 16%;
     top: -42%;
+}
+.circle-image-7 {
+    width: 40px;
+    height: auto;
 }
 .ellipse-8 {
     position: absolute;
     left: 14%;
     top: -20%;
 }
+.circle-image-8 {
+    width: 10px;
+    height: auto;
+}
 .ellipse-9 {
     position: absolute;
     left: 80%;
     top: 18%;
+}
+.circle-image-9 {
+    width: 10px;
+    height: auto;
 }
 .ellipse-10 {
     position: absolute;
     left: 78%;
     top: 48%;
 }
+.circle-image-10 {
+    width: 27px;
+    height: auto;
+}
 .ellipse-11 {
     position: absolute;
     left: 0%;
     top: -31%;
+}
+.circle-image-11 {
+    width: 40px;
+    height: auto;
 }
 .ellipse-12 {
     position: absolute;
     left: 5%;
     top: -29%;
 }
+.circle-image-12 {
+    width: 10px;
+    height: auto;
+}
 .ellipse-13 {
     position: absolute;
     left: 98%;
-    top: 12%;
-}
-.circle-image-1 {
-    width: 80%;
-}
-.circle-image-2 {
-    width: 80%;
-}
-.circle-image-3 {
-    width: 90%;
-}
-.circle-image-4 {
-    width: 80%;
-}
-.circle-image-5 {
-    width: 90%;
-}
-.circle-image-6 {
-    width: 80%;
-}
-.circle-image-7 {
-    width: 80%;
-}
-.circle-image-8 {
-    width: 90%;
-}
-.circle-image-9 {
-    width: 80%;
-}
-.circle-image-10 {
-    width: 90%;
-}
-.circle-image-11 {
-    width: 90%;
-}
-.circle-image-12 {
-    width: 90%;
+    top: 10%;
 }
 .circle-image-13 {
-    width: 80%;
+    width: 27px;
+    height: auto;
+}
+.ellipse-14 {
+    position: absolute;
+    left: 100%;
+    top: 6%;
+}
+.circle-image-14 {
+    width: 45px;
+    height: auto;
+}
+.ellipse-15 {
+    position: absolute;
+    left: -2%;
+    top: 8%;
+}
+.circle-image-15 {
+    width: 10px;
+    height: auto;
+}
+.ellipse-16 {
+    position: absolute;
+    left: 15%;
+    top: 100%;
+}
+.circle-image-16 {
+    width: 13px;
+    height: auto;
 }
 .banner-description {
-    margin-left: 10%;
-    margin-top: -16%;
+    margin-top: -32%;
     font-size: 16px;
     font-weight: 400;
     line-height: 25px;
@@ -594,22 +607,12 @@ hr {
     font-family: 'Inter', sans-serif !important;
 }
 .banner-image {
-    width: 112%;
+    width: 120%;
     margin-top: -6%;
     position: relative;
     z-index: 99;
 }
-.gray-shadow {
-    width: 30%;
-    height: 20px;
-    box-shadow: 0px 0px 20px 20px #7575752e;
-    position: absolute;
-    top: 59%;
-    border-radius: 50%;
-    left: 40%;
-    background: #7575752e;
-    backdrop-filter: blur(3px);
-}
+
 .banner-image-container {
     margin-top: -2%;
 }
@@ -632,10 +635,9 @@ hr {
     background: linear-gradient(360deg, rgba(119, 128, 177, 0.21) 0%, rgba(34, 50, 138, 0.21) 53.5%);
     border-radius: 30px;
     border: 0px;
-    gap: 25px;
+    gap: 45px;
     padding: 8px 5px;
     max-width: fit-content;
-    margin-left: 10%;
 }
 .exp-btn:hover {
     background: #fff !important;
@@ -645,42 +647,51 @@ hr {
     font-size: 16px;
     line-height: 22px;
     padding-left: 15px;
-    font-weight: 600;
+    font-weight: 500;
 }
 .exp-btn .btn-icon {
     background: #fff;
     border-radius: 30px;
     font-size: 36px !important;
-    font-weight: 600;
-    padding: 4px;
+    padding: 0 8px;
     color: #355594;
+    stroke: #355594;
 }
 .affiliation {
-    font-size: 32px;
+    font-size: 2rem;
     font-weight: 500;
     line-height: 71px;
     color: #355594;
     text-align: center;
 }
 .parent-scroll-container {
+    overflow: hidden;
     width: 100%;
-    overflow-x: auto; /* Enable horizontal scrolling */
-    white-space: nowrap; /* Prevent content from wrapping */
-    scrollbar-width: none;  /* Firefox */
-    max-width: 100%; /* Ensure the parent div doesn't overflow the screen */
 }
-/* For Webkit browsers like Chrome, Safari */
-.parent-scroll-container::-webkit-scrollbar {
-  display: none;  /* Hide the scrollbar */
-}
+
+/* Apply scroll with animation */
 .child-scroll-container {
-    display: flex; /* Make child divs align in a row */
-    gap:60px;
+    display: flex;
+    gap: 45px;
+    animation: scrollLeft 5s linear infinite;
+}
+
+/* Scroll animation */
+@keyframes scrollLeft {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-20%);
+    }
 }
 .child-div {
-    min-width: 120px;
+    flex: 0 0 auto;
+    margin-right: 15px; /* Space between images */
+    width: 10%;
     margin: auto;
 }
+
 .service-card {
     position: relative;
 }
@@ -700,17 +711,16 @@ hr {
     padding: 40px 0px 0px !important;
     width: 80%;
     margin: auto;
-    object-fit: cover;
+    object-fit: contain;
 }
 .service-card .card-img-img {
     width:100%;
     margin:auto;
-    aspect-ratio: 13 / 12;
 }
 .service-card-title p {
     color: #3b3c7c;
     font-size: 24px !important;
-    line-height: 30px !important;
+    line-height: 24px !important;
     font-weight: 300;
     padding: 10px 0px;
     margin: 0;
@@ -718,7 +728,7 @@ hr {
 .service-card-btn-container {
     position: absolute;
     right: -3%;
-    top: 86%;
+    top: 85%;
 }
 .service-card-arrow-btn {
     background: #e3edff00 !important;
@@ -729,15 +739,18 @@ hr {
 .service-card-btn-icon {
     background: #E3EDFF42;
     backdrop-filter: blur(20px);
-    border-radius: 30px;
-    font-size: 56px !important;
-    padding: 18px;
+    border-radius: 50px;
+    font-size: 65px !important;
+    padding: 20px;
     color: #355594;
-    box-shadow: 1px 1px 10px 1px #00000040;
+    stroke: #355594;
+    stroke-width: 0.6;
+    box-shadow: 3px 1px 10px 3px #00000040;
 }
 .service-card-btn-icon:hover {
     background: #355594;
     color: #fff;
+    stroke: #fff;
 }
 .learnMore-btn {
     background: #00000000;
@@ -824,23 +837,35 @@ hr {
 @media (max-width: 576px) {
     .ellipse-1 {
         position: absolute;
-        left: 89%;
-        top: 2%;
+        left: 86%;
+        top: 1.5%;
+    }
+    .circle-image-1 {
+        width: 30px;
+        height: auto;
     }
     .ellipse-2 {
         position: absolute;
-        left: 98%;
-        top: 2%;
+        left: 95%;
+        top: 1.6%;
     }
     .ellipse-3 {
         position: absolute;
-        left: 96%;
-        top: 12%;
+        left: 91%;
+        top: 2.2%;
+    }
+    .circle-image-3 {
+        width: 20px;
+        height: auto;
     }
     .ellipse-4 {
         position: absolute;
-        left: 0%;
-        top: 39%;
+        left: 5%;
+        top: 3.8%;
+    }
+    .circle-image-4 {
+        width: 17px;
+        height: auto;
     }
     .ellipse-5 {
         position: absolute;
@@ -882,60 +907,32 @@ hr {
         left: 94%;
         top: 4%;
     }
-    .circle-image-1 {
-        width: 55%;
-
+    .ellipse-14 {
+        position: absolute;
+        left: 96%;
+        top: 1.3%;
     }
-    .circle-image-2 {
-        width: 80%;
-
+    .circle-image-14 {
+        width: 24px;
+        height: auto;
     }
-    .circle-image-3 {
-        width: 70%;
-
+    .ellipse-15 {
+        position: absolute;
+        left: -1%;
+        top: 2%;
     }
-    .circle-image-7 {
-        width: 70%;
-
-    }
-    .circle-image-8 {
-        width: 70%;
-
-    }
-    .circle-image-10 {
-        width: 70%;
-
-    }
-    .circle-image-11 {
-        width: 70%;
-
-    }
-    .circle-image-12 {
-        width: 70%;
-
-    }
-    .circle-image-13 {
-        width: 70%;
-
+    .circle-image-15 {
+        width: 10px;
+        height: auto;
     }
     .banner-description {
         font-size: 12px;
         font-weight: 400;
         line-height: 18px;
-        margin-left: 4%;
-        margin-right: 4%;
         margin-top: 4%;
     }
     .banner-image {
         width: 100%;
-    }
-    .gray-shadow[data-v-1ae9e65b] {
-        box-shadow: 0px 0px 20px 20px #7575751c;
-        background: #7575751c;
-    }
-    .exp-btn {
-        margin-left: 4%;
-        gap: 18px;
     }
     .exp-btn span {
         font-size: 14px;
@@ -954,7 +951,7 @@ hr {
         height: auto;
     }
     .affiliation {
-        font-size: 20px;
+        font-size: 18px;
         line-height: 32px;
     }
     .child-scroll-container {
@@ -965,8 +962,8 @@ hr {
         margin: auto;
     }
     .service-card-btn-container {
-        right: -1%;
-        top: 90%;
+        right: -2%;
+        top: 89%;
     }
     .accordion-box h5 {
         padding-right: 40px;
@@ -980,23 +977,35 @@ hr {
 @media (min-width: 576px) and (max-width: 768px) {
     .ellipse-1 {
         position: absolute;
-        left: 90%;
-        top: 2%;
+        left: 88%;
+        top: 3%;
+    }
+    .circle-image-1 {
+        width: 30px;
+        height: auto;
     }
     .ellipse-2 {
         position: absolute;
-        left: 98%;
-        top: 2%;
+        left: 96%;
+        top: 3.1%;
     }
     .ellipse-3 {
         position: absolute;
-        left: 96%;
-        top: 10%;
+        left: 94%;
+        top: 4.4%;
+    }
+    .circle-image-3 {
+        width: 20px;
+        height: auto;
     }
     .ellipse-4 {
         position: absolute;
-        left: 0%;
-        top: 37%;
+        left: 4%;
+        top: 7.5%;
+    }
+    .circle-image-4 {
+        width: 17px;
+        height: auto;
     }
     .ellipse-7 {
         position: absolute;
@@ -1033,38 +1042,35 @@ hr {
         left: 95%;
         top: 8%;
     }
-    .circle-image-1 {
-        width: 50%;
-
+    .ellipse-14 {
+        position: absolute;
+        left: 97%;
+        top: 4.3%;
     }
-    .circle-image-2 {
-        width: 70%;
-
+    .circle-image-14 {
+        width: 24px;
+        height: auto;
     }
-    .circle-image-3 {
-        width: 70%;
-
+    .ellipse-15 {
+        position: absolute;
+        left: 0%;
+        top: 5%;
+    }
+    .circle-image-15 {
+        width: 10px;
+        height: auto;
     }
     .banner-description {
         font-size: 14px;
         font-weight: 400;
         line-height: 20px;
-        margin-left: 4%;
         margin-top: 4%;
-        margin-right: 4%;
     }
     .banner-image-container {
         margin-top: 0%;
     }
     .banner-image {
         width:100%;
-    }
-    .gray-shadow {
-        box-shadow: 0px 0px 20px 20px #7575751c;
-        background: #7575751c;
-    }
-    .exp-btn {
-        margin-left: 4%;
     }
     .section-title {
         font-size: 26px !important;
@@ -1086,7 +1092,7 @@ hr {
         margin: auto;
     }
     .service-card-btn-container {
-        top: 87%;
+        top: 86%;
     }
     .business-count h1{
         color:#355594;
@@ -1111,35 +1117,44 @@ hr {
 /* For Medium Screens (md - ≥768px) */
 @media (min-width: 768px) and (max-width: 991px) {
     .banner-description {
-        margin-top: 12%;
-        font-size: 14px;
-        line-height: 22px;
+        margin-top: 0%;
     }
     .ellipse-1 {
         position: absolute;
-        left: 92%;
-        top: 2%;
-        width: 5%;
+        left: 90%;
+        top: 4%;
+    }
+    .circle-image-1 {
+        width: 42px;
+        height: auto;
     }
     .ellipse-2 {
         position: absolute;
-        left: 99%;
-        top: 2%;
+        left: 97%;
+        top: 4.2%;
     }
     .ellipse-3 {
         position: absolute;
-        left: 98%;
-        top: 17%;
+        left: 94%;
+        top: 5.7%;
+    }
+    .circle-image-3 {
+        width: 20px;
+        height: auto;
     }
     .ellipse-4 {
         position: absolute;
-        left: 0%;
-        top: 79%;
+        left: 3%;
+        top: 11%;
+    }
+    .circle-image-4 {
+        width: 20px;
+        height: auto;
     }
     .ellipse-7 {
         position: absolute;
         left: 4%;
-        top: -25%;
+        top: -36%;
     }
     .ellipse-8 {
         position: absolute;
@@ -1149,12 +1164,12 @@ hr {
     .ellipse-9 {
         position: absolute;
         left: 92%;
-        top: 16%;
+        top: 20%;
     }
     .ellipse-10 {
         position: absolute;
-        left: 91%;
-        top: 46%;
+        left: 88%;
+        top: 48%;
     }
     .ellipse-11 {
         position: absolute;
@@ -1171,17 +1186,29 @@ hr {
         left: 96%;
         top: 10%;
     }
+    .ellipse-14 {
+        position: absolute;
+        left: 97%;
+        top: 6.3%;
+    }
+    .circle-image-14 {
+        width: 32px;
+        height: auto;
+    }
+    .ellipse-15 {
+        position: absolute;
+        left: 0%;
+        top: 8%;
+    }
+    .circle-image-15 {
+        width: 10px;
+        height: auto;
+    }
     .banner-image {
-        width: 112%;
         margin-top: -6%;
     }
     .exp-btn {
-        gap: 20px;
-        padding: 8px 5px;
-    }
-    .exp-btn span {
-        font-size: 15px;
-        padding-left: 12px;
+        gap: 37px;
     }
     .section-title {
         font-size: 30px !important;
@@ -1204,10 +1231,7 @@ hr {
         margin: auto;
     }
     .service-card-btn-container {
-        top: 83%;
-    }
-    .service-card .card-img-img {
-        aspect-ratio: 14 / 13;
+        top: 88%;
     }
     .business-count h1{
         color:#355594;
@@ -1233,23 +1257,23 @@ hr {
 @media (min-width: 992px) and (max-width: 1199px) {
     .ellipse-1 {
         position: absolute;
-        left: 91%;
+        left: 86%;
         top: 4%;
     }
     .ellipse-2 {
         position: absolute;
-        left: 99%;
-        top: 6%;
+        left: 96%;
+        top: 4.5%;
     }
     .ellipse-3 {
         position: absolute;
-        left: 98%;
-        top: 17%;
+        left: 94%;
+        top: 6%;
     }
     .ellipse-4 {
         position: absolute;
-        left: 0%;
-        top: 82%;
+        left: 4%;
+        top: 13%;
     }
     .ellipse-7 {
         position: absolute;
@@ -1286,22 +1310,34 @@ hr {
         left: 97%;
         top: 11%;
     }
+    .ellipse-14 {
+        position: absolute;
+        left: 97%;
+        top: 6.3%;
+    }
+    .ellipse-15 {
+        position: absolute;
+        left: 0%;
+        top: 8%;
+    }
     .banner-description {
         margin-top: 18%;
     }
     .banner-image {
-        width: 112%;
         margin-top: 10%;
     }
-    .gray-shadow[data-v-1ae9e65b] {
-        top: 67%;
-        left: 43%;
+    .exp-btn {
+        gap: 38px;
     }
     .banner-image-container {
         margin-top: -15%;
     }
     .service-card-btn-container {
         top: 83%;
+    }
+    .service-card-btn-icon {
+        font-size: 57px !important;
+        padding: 17px;
     }
     .latest-news-card-img {
         padding: 10px;
@@ -1332,8 +1368,8 @@ hr {
     }
     .ellipse-10 {
         position: absolute;
-        left: 90%;
-        top: 46%;
+        left: 85%;
+        top: 48%;
     }
     .ellipse-11 {
         position: absolute;
@@ -1352,32 +1388,4 @@ hr {
     }
 }
 
-/* Custom media query for extra command over design */
-@media (min-width: 880px) and (max-width: 922px) {
-    .banner-description {
-        margin-top: 12%;
-    }
-    .banner-image {
-        width: 112%;
-        margin-top: -6%;
-    }
-}
-@media (min-width: 800px) and (max-width: 868px) {
-    .banner-description {
-        margin-top: 12%;
-    }
-    .banner-image {
-        width: 112%;
-        margin-top: -9%;
-    }
-}
-@media (min-width: 768px) and (max-width: 800px) {
-    .banner-description {
-        margin-top: 12%;
-    }
-    .banner-image {
-        width: 112%;
-        margin-top: -14%;
-    }
-}
 </style>

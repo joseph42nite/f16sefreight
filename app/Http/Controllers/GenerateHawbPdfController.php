@@ -19,11 +19,11 @@ class GenerateHawbPdfController extends Controller
     public function downloadHawbPdf($hawb_id) {
         // $houseWayBill1 = HouseWayBills::where('id', $hawb_id)->first();
         // dd($houseWayBill1);die();
-        $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
-            ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
-            ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->join('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
-            ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
+        $houseWayBill = HouseWayBills::leftJoin('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
+            ->leftJoin('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
+            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+            ->leftJoin('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
             ->where('house_way_bills.id', $hawb_id)
             ->select(
                 // house_way_bills column declare here 

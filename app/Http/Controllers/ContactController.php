@@ -66,7 +66,7 @@ class ContactController extends Controller
         $query->save();
 
         // Send an email to the admin
-        Mail::to('admin@example.com')->send(new QuerySubmitted($query));
+        // Mail::to('admin@example.com')->send(new QuerySubmitted($query));
 
         return response()->json(['message' => 'Query submitted successfully'], 200);
     }

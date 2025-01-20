@@ -27,7 +27,7 @@ class AirwayBill extends Controller
     {
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'string|max:70', //required
-            'ship_account' => 'required|regex:/^[a-zA-Z0-9]+$/|max:14',
+            'ship_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
             'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
             'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
@@ -51,7 +51,7 @@ class AirwayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $awb_id;
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
-        $WayBillAddress->ship_account = $shipper_address['ship_account'];
+        $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
         $WayBillAddress->ship_address = $shipper_address['ship_address'];
         $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
         $WayBillAddress->ship_city = $shipper_address['ship_city'];
@@ -74,7 +74,7 @@ class AirwayBill extends Controller
             $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
-            $SavedAddress->account = $shipper_address['ship_account'];
+            $SavedAddress->account = $shipper_address['ship_account'] ?? null;
             $SavedAddress->address = $shipper_address['ship_address'];
             $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
             $SavedAddress->city = $shipper_address['ship_city'];
@@ -94,7 +94,7 @@ class AirwayBill extends Controller
     {
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
-            'cons_account' => 'required|regex:/^[a-zA-Z0-9]+$/|max:14',
+            'cons_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
             'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
@@ -115,7 +115,7 @@ class AirwayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $awb_id;
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
-        $WayBillAddress->cons_account = $consignee_address['cons_account'];
+        $WayBillAddress->cons_account = $consignee_address['cons_account'] ?? null;
         $WayBillAddress->cons_address = $consignee_address['cons_address'];
         $WayBillAddress->cons_address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
         $WayBillAddress->cons_city = $consignee_address['cons_city'];
@@ -137,7 +137,7 @@ class AirwayBill extends Controller
             $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
-            $SavedAddress->account = $consignee_address['cons_account'];
+            $SavedAddress->account = $consignee_address['cons_account'] ?? null;
             $SavedAddress->address = $consignee_address['cons_address'];
             $SavedAddress->address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
             $SavedAddress->city = $consignee_address['cons_city'];

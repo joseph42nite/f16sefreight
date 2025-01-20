@@ -1461,7 +1461,8 @@
                                                             </template>
                                                             <b-form-input id="input-master-pcs" class="form-control"
                                                                 style="width:140px;"
-                                                                v-model="form.totals.master_pcs"></b-form-input>
+                                                                v-model="form.totals.master_pcs" :class="{ 'is-invalid': form.errors.has('master_pcs') }"></b-form-input>
+                                                                <has-error :form="form" field="master_pcs"></has-error>
                                                         </b-form-group>
                                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                             content-cols-lg="auto" label-for="input-master-weight"
@@ -1474,7 +1475,8 @@
                                                             </template>
                                                             <b-form-input id="input-master-weight" class="form-control"
                                                                 style="width:140px;"
-                                                                v-model="form.totals.master_weight"></b-form-input>
+                                                                v-model="form.totals.master_weight" :class="{ 'is-invalid': form.errors.has('master_weight') }"></b-form-input>
+                                                                <has-error :form="form" field="master_weight"></has-error>
                                                         </b-form-group>
                                                     </b-col>
                                                 </b-row>

@@ -126,6 +126,9 @@
                                                                                     <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
                                                                                         {{ $airWayBill->wayBillAddress->ship_name ?? ''}} <br/>
                                                                                         {{ $airWayBill->wayBillAddress->ship_address ?? ''}}
+                                                                                        {{ $airWayBill->wayBillAddress->ship_city ?? ''}}
+                                                                                        {{ $airWayBill->wayBillAddress->ship_post_code ?? ''}}
+                                                                                        {{ $airWayBill->wayBillAddress->ship_state ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -232,6 +235,9 @@
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
                                                                             {{ $airWayBill->wayBillAddress->cons_name ?? ''}}<br/>
                                                                             {{ $airWayBill->wayBillAddress->cons_address ?? ''}}
+                                                                            {{ $airWayBill->wayBillAddress->cons_city ?? ''}}
+                                                                            {{ $airWayBill->wayBillAddress->cons_post_code ?? ''}}
+                                                                            {{ $airWayBill->wayBillAddress->cons_state ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>

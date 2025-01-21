@@ -6,19 +6,23 @@
         <b-container>
             <b-row align-h="center" align-v="center">
                 <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
+                    <b-row align-h="center" align-v="center" class="my-md-20 my-sm-12" style="position: relative;">
                         <b-col cols="10">
-                            <div class="mt-30 mb-15">
+                            <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
+                            <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
+                            <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
+                            <div class="my-md-12 my-sm-8">
                                 <h2 class="section-title">Contact Us</h2>
                                 <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-8">
+                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-6 mt-md-8">
                                         <p class="section-text">We’re always here to assist you. Select the appropriate option below and let us help you with your inquiry.</p>
                                     </b-col>
                                 </b-row>
                             </div>
                         </b-col>
+
                         <b-col cols="10">
-                            <div class="query-section my-15" v-b-modal.show-query-modal>
+                            <div class="query-section my-8 my-sm-12 my-md-15" v-b-modal.show-query-modal>
                                 <h2>Have a Dispute or Query? We’re Here to Help!</h2>
                                 <b-row align-h="center" align-v="center">
                                     <b-col cols="12" sm="10" md="10" lg="10" xl="10" xxl="10" class="">
@@ -143,8 +147,9 @@
                             </b-modal>
                             <!-- QUERY Modal end -->
                         </b-col>
+
                         <b-col cols="10" class="quote-col">
-                            <div class="quote-section my-15" v-b-modal.show-quote-modal>
+                            <div class="quote-section my-8 my-sm-12 my-md-15" v-b-modal.show-quote-modal>
                                 <h2>Get a Customized Quote Based on Your Needs</h2>
                                 <b-row align-h="center" align-v="center">
                                     <b-col cols="12" sm="10" md="10" lg="10" xl="10" xxl="10" class="">
@@ -295,8 +300,9 @@
                             </b-modal>
                             <!-- QUOTE Modal end -->
                         </b-col>
+
                         <b-col cols="10" class="feedback-col">
-                            <div class="feedback-section my-15" v-b-modal.show-feedback-modal>
+                            <div class="feedback-section my-8 my-sm-12 my-md-15" v-b-modal.show-feedback-modal>
                                 <h2>Feedback or Job Opportunities? Let’s Connect!</h2>
                                 <b-row align-h="center" align-v="center">
                                     <b-col cols="12" sm="10" md="10" lg="10" xl="10" xxl="10" class="">
@@ -406,6 +412,7 @@
                             </b-modal>
                             <!-- FEEDBACK Modal end -->
                         </b-col>
+
                     </b-row>
                 </b-col>
             </b-row>
@@ -456,6 +463,33 @@ html, body, html * {
     line-height: 20px;
     text-align: center;
     color:#4C4C4C;
+}
+.ellipse-1 {
+    position: absolute;
+    left: 93%;
+    top: -20%;
+}
+.circle-image-1 {
+    width: 60px;
+    height: auto;
+}
+.ellipse-2 {
+    position: absolute;
+    left: 5%;
+    top: 57%;
+}
+.circle-image-2 {
+    width: 10px;
+    height: auto;
+}
+.ellipse-3 {
+    position: absolute;
+    left: -3%;
+    top: 100%;
+}
+.circle-image-3 {
+    width: 25px;
+    height: auto;
 }
 .query-section,
 .quote-section,
@@ -521,6 +555,10 @@ html, body, html * {
 }
 /* For Extra Small Screens (xs - <576px) */
 @media (max-width: 575px) {
+    .section-title {
+        font-size: 36px !important;
+        line-height: 40px !important;
+    }
     .query-section,
     .quote-section,
     .feedback-section {
@@ -545,9 +583,42 @@ html, body, html * {
         justify-content: start !important;
     }
 }
-
+@media (max-width: 575px) {
+    .section-title {
+        font-size: 40px !important;
+        line-height: 46px !important;
+    }
+    .section-text {
+        font-size: 12px;
+        line-height: 18px;
+    }
+    .circle-image-1 {
+        width: 30px;
+        height: auto;
+    }
+    .ellipse-2 {
+        top: 56%;
+        left: 4%;
+    }
+    .ellipse-3 {
+        top: 95%;
+        left: -5%;
+    }
+}
 /* For Small Screens (sm - ≥576px) */
 @media (min-width: 576px) and (max-width: 767px) {
+    .section-title {
+        font-size: 44px !important;
+        line-height: 50px !important;
+    }
+    .section-text {
+        font-size: 12px;
+        line-height: 18px;
+    }
+    .circle-image-1 {
+        width: 45px;
+        height: auto;
+    }
     .query-section,
     .quote-section,
     .feedback-section {

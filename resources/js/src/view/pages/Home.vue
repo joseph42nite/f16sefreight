@@ -10,9 +10,9 @@
             <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
             <!-- <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div> -->
             <!-- Banner Top section start here -->
-            <b-row align-h="center" align-v="center" style="position: relative">
+            <b-row align-h="center" align-v="center">
                 <b-col cols="12">
-                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 84%;margin: auto; margin-top: 12%;">
+                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 84%;margin: auto; margin-top: 11%;">
                         <!-- Primary Banner Text Image -->
                         <b-col cols="12" class="px-md-0">
                             <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="" style="width: 100%;display:block;margin:auto" />
@@ -48,7 +48,7 @@
                            <p class="affiliation m-0">Affiliations:</p> 
                         </b-col>
                         <b-col cols="8" sm="9" md="9" lg="9" xl="10" class="parent-scroll-container">
-                            <!-- Child divs that will be displayed horizontally and scrollable -->
+                            <!-- Child divs that will be displayed horizontally and auto scrollable -->
                             <div class="child-scroll-container">
                                 <div class="child-div" v-for="(affiliate, index) in affiliates" ><b-img :src="affiliate.imgSrc" :alt="affiliate.imgAlt" class="img-fluid d-block" style="width: 100%;" /></div>
                             </div>
@@ -59,7 +59,7 @@
             <!-- What F16s can do for you -->
             <b-row align-h="center" align-v="center">
                 <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center" style="position:relative;">
+                    <b-row align-h="center" align-v="center">
                         <div class="ellipse-6"><img src="/media/custome/circle/ellipse-6.png" alt="circle-image" id="" class="circle-image-6" /></div>
                         <b-col cols="12" class="mb-15 mb-md-20 mb-lg-25">
                             <h2 class="section-title">Learn what F16s can do for you</h2>
@@ -68,9 +68,9 @@
                             v-for="(serviceCard, index) in serviceCards"
                             :key="index"
                             cols="12" sm="6" md="6" lg="3" xl="3" xxl="3"
-                            class="mb-6 mb-md-20 service-card"
+                            class="mb-8 mb-sm-8 mb-md-8 mb-lg-0 service-card"
                             >
-                            <b-card class="mb-2 text-center">
+                            <b-card class="text-center">
                                 <div class="card-img">
                                     <b-img :src="serviceCard.imgSrc" :alt="serviceCard.imgAlt" class="card-img-img d-block" />
                                 </div>
@@ -87,9 +87,10 @@
                     </b-row>
                 </b-col>
             </b-row>
+            <!-- CONNECTING GLOBAL FREIGHT -->
             <b-row align-h="center" align-v="center">
                 <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center" style="position: relative;">
+                    <b-row align-h="center" align-v="center">
                         <div class="ellipse-7"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-7" /></div>
                         <div class="ellipse-8"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-8" /></div>
                         <div class="ellipse-9"><img src="/media/custome/circle/ellipse-9.png" alt="circle-image" id="" class="circle-image-9" /></div>
@@ -110,20 +111,20 @@
                     </b-row>
                 </b-col>
             </b-row>
-            <!-- slider -->
+            <!-- Carousel -->
             <b-row align-h="center" align-v="center">
-                <b-col cols="12">
-                    <div>
-                        <h2 class="section-title my-14">Our Services</h2>
+                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
+                    <div class="mb-10">
+                        <h2 class="section-title">Our Services</h2>
                     </div>
                     <HomeCarousel></HomeCarousel>
                 </b-col>
             </b-row>
-            <!-- end Slider -->
+            <!-- end Carousel -->
             <!-- Business count section start here -->
             <b-row align-h="center" align-v="center">
                 <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center" style="position: relative;">
+                    <b-row align-h="center" align-v="center">
                         <div class="ellipse-11"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-11" /></div>
                         <div class="ellipse-12"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-12" /></div>
                         <div class="ellipse-13"><img src="/media/custome/circle/ellipse-10.png" alt="circle-image" id="" class="circle-image-13" /></div>
@@ -264,16 +265,12 @@
                         imgAlt: "lufthansa"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/air-france.png",
-                        imgAlt: "air france"
+                        imgSrc: "/media/custome/affiliation-tags/qatar.png",
+                        imgAlt: "qatar"
                     },
                     {
-                        imgSrc: "/media/custome/affiliation-tags/emirates.png",
-                        imgAlt: "emirates"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/lufthansa.png",
-                        imgAlt: "lufthansa"
+                        imgSrc: "/media/custome/affiliation-tags/turkish-airlines.png",
+                        imgAlt: "turkish-airlines"
                     },
                 ],
                 // Array of Services section
@@ -458,7 +455,7 @@ hr {
 .ellipse-1 {
     position: absolute;
     left: 90%;
-    top: 5%;
+    top: 4%;
 }
 .circle-image-1 {
     width: 60px;
@@ -467,7 +464,7 @@ hr {
 .ellipse-2 {
     position: absolute;
     left: 96%;
-    top: 5.4%;
+    top: 4.3%;
 }
 .circle-image-2 {
     width: 10px;
@@ -476,7 +473,7 @@ hr {
 .ellipse-3 {
     position: absolute;
     left: 95%;
-    top: 7%;
+    top: 6%;
 }
 .circle-image-3 {
     width: 25px;
@@ -502,7 +499,7 @@ hr {
 .ellipse-6 {
     position: absolute;
     left: -1%;
-    top: 39%;
+    top: 46%;
 }
 .circle-image-6 {
     width: 17px;
@@ -673,22 +670,22 @@ hr {
 .child-scroll-container {
     display: flex;
     gap: 45px;
-    animation: scrollLeft 5s linear infinite;
+    animation: scrollLeft 15s linear infinite;
+    will-change: transform;
 }
-
 /* Scroll animation */
 @keyframes scrollLeft {
     0% {
         transform: translateX(0);
     }
     100% {
-        transform: translateX(-20%);
+        transform: translateX(-55%);
     }
 }
 .child-div {
     flex: 0 0 auto;
     margin-right: 15px; /* Space between images */
-    width: 10%;
+    max-width: 120px;
     margin: auto;
 }
 
@@ -833,150 +830,277 @@ hr {
     padding: 0;
 }
 
-/* For Smaller Screens (xs - <576px) */
-@media (max-width: 576px) {
+/* For Extra Large Screens (xl - ≥1200px) */
+@media (min-width: 1200px) and (max-width: 1400px) {
+    .ellipse-7 {
+        left: 10%;
+        top: -42%;
+    }
+    .ellipse-8 {
+        left: 8%;
+        top: -18%;
+    }
+    .ellipse-9 {
+        left: 88%;
+        top: 18%;
+    }
+    .ellipse-10 {
+        left: 85%;
+        top: 48%;
+    }
+    .ellipse-11 {
+        left: 0%;
+        top: -31%;
+    }
+    .ellipse-12 {
+        left: 5%;
+        top: -29%;
+    }
+    .ellipse-13 {
+        left: 97%;
+        top: 10%;
+    }
+}
+
+/* For Large Screens (lg - ≥992px) */
+@media (min-width: 992px) and (max-width: 1199px) {
     .ellipse-1 {
-        position: absolute;
         left: 86%;
-        top: 1.5%;
+        top: 4%;
+    }
+    .ellipse-2 {
+        left: 96%;
+        top: 4.5%;
+    }
+    .ellipse-3 {
+        left: 94%;
+        top: 6%;
+    }
+    .ellipse-4 {
+        left: 4%;
+        top: 13%;
+    }
+    .ellipse-7 {
+        left: 3%;
+        top: -44%;
+    }
+    .ellipse-8 {
+        left: 1%;
+        top: -18%;
+    }
+    .ellipse-9 {
+        left: 94%;
+        top: 18%;
+    }
+    .ellipse-10 {
+        left: 91%;
+        top: 46%;
+    }
+    .ellipse-11 {
+        left: 0%;
+        top: -25%;
+    }
+    .ellipse-12 {
+        left: 7%;
+        top: -23%;
+    }
+    .ellipse-13 {
+        left: 97%;
+        top: 11%;
+    }
+    .ellipse-14 {
+        left: 97%;
+        top: 6.3%;
+    }
+    .ellipse-15 {
+        left: 0%;
+        top: 8%;
+    }
+    .banner-description {
+        margin-top: 18%;
+    }
+    .banner-image {
+        margin-top: 10%;
+    }
+    .exp-btn {
+        gap: 38px;
+    }
+    .banner-image-container {
+        margin-top: -15%;
+    }
+    .child-scroll-container {
+        animation: scrollLeft 25s linear infinite;
+    }
+    /* Scroll animation */
+    @keyframes scrollLeft {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-140%);
+        }
+    }
+    .service-card-btn-container {
+        top: 83%;
+    }
+    .service-card-btn-icon {
+        font-size: 57px !important;
+        padding: 17px;
+    }
+    .latest-news-card-img {
+        padding: 10px;
+    }
+    .latest-news-card-title {
+        font-size: 18px;
+        padding: 14px 12px;
+        line-height: 24px;
+    }
+}
+
+/* For Medium Screens (md - ≥768px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .banner-description {
+        margin-top: 0%;
+    }
+    .ellipse-1 {
+        left: 90%;
+        top: 4%;
     }
     .circle-image-1 {
-        width: 30px;
+        width: 42px;
         height: auto;
     }
     .ellipse-2 {
-        position: absolute;
-        left: 95%;
-        top: 1.6%;
+        left: 97%;
+        top: 4.2%;
     }
     .ellipse-3 {
-        position: absolute;
-        left: 91%;
-        top: 2.2%;
+        left: 94%;
+        top: 5.7%;
     }
     .circle-image-3 {
         width: 20px;
         height: auto;
     }
     .ellipse-4 {
-        position: absolute;
-        left: 5%;
-        top: 3.8%;
+        left: 3%;
+        top: 11%;
     }
     .circle-image-4 {
-        width: 17px;
+        width: 20px;
         height: auto;
     }
-    .ellipse-5 {
-        position: absolute;
-        left: 96%;
-        top: 100%;
+    .ellipse-6 {
+        left: -1%;
+        top: 21%;
     }
     .ellipse-7 {
-        position: absolute;
-        left: 7%;
-        top: -25%;
+        left: 4%;
+        top: -36%;
     }
     .ellipse-8 {
-        position: absolute;
-        left: 2%;
-        top: -13%;
+        left: 1%;
+        top: -9%;
     }
     .ellipse-9 {
-        position: absolute;
-        left: 89%;
-        top: 9%;
+        left: 92%;
+        top: 20%;
     }
     .ellipse-10 {
-        position: absolute;
-        left: 86%;
-        top: 28%;
+        left: 88%;
+        top: 48%;
     }
     .ellipse-11 {
-        position: absolute;
         left: 0%;
-        top: -7%;
+        top: -18%;
     }
     .ellipse-12 {
-        position: absolute;
-        left: 10%;
-        top: -6%;
+        left: 8%;
+        top: -15%;
     }
     .ellipse-13 {
-        position: absolute;
-        left: 94%;
-        top: 4%;
+        left: 96%;
+        top: 10%;
     }
     .ellipse-14 {
-        position: absolute;
-        left: 96%;
-        top: 1.3%;
+        left: 97%;
+        top: 6.3%;
     }
     .circle-image-14 {
-        width: 24px;
+        width: 32px;
         height: auto;
     }
     .ellipse-15 {
-        position: absolute;
-        left: -1%;
-        top: 2%;
+        left: 0%;
+        top: 8%;
     }
     .circle-image-15 {
         width: 10px;
         height: auto;
     }
-    .banner-description {
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 18px;
-        margin-top: 4%;
-    }
     .banner-image {
-        width: 100%;
+        margin-top: -6%;
     }
-    .exp-btn span {
-        font-size: 14px;
-        line-height: 20px;
+    .exp-btn {
+        gap: 37px;
     }
     .section-title {
-        font-size: 22px !important;
-        line-height: 26px !important;
+        font-size: 30px !important;
+        line-height: 36px !important;
 
     }
     .section-sub-title {
-        font-size: 18px !important;
+        font-size: 22px !important;
         line-height: 24px !important;
     }
-    .service-card .card-img {
-        height: auto;
-    }
     .affiliation {
-        font-size: 18px;
-        line-height: 32px;
-    }
-    .child-scroll-container {
-        gap:20px;
+        font-size: 24px;
+        line-height: 54px;
     }
     .child-div {
-        min-width: 80px;
+        max-width: 110px;
         margin: auto;
     }
+    /* Apply scroll with animation */
+    .child-scroll-container {
+        gap: 40px;
+        animation: scrollLeft 20s linear infinite;
+    }
+    /* Scroll animation */
+    @keyframes scrollLeft {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-140%);
+        }
+    }
     .service-card-btn-container {
-        right: -2%;
-        top: 89%;
+        top: 88%;
     }
-    .accordion-box h5 {
-        padding-right: 40px;
+    .business-count h1{
+        color:#355594;
+        font-size: 56px;
+        font-weight: 700;
     }
-    .accordion-box p {
-        padding-right: 40px;
+    .business-count p{
+        color:#6D7A8C;
+        font-size: 22px;
+        line-height: 26px;
+    }
+    .latest-news-card-img {
+        padding: 10px;
+    }
+    .latest-news-card-title {
+        font-size: 18px;
+        padding: 14px 12px;
+        line-height: 24px;
     }
 }
 
 /* For Small Screens (sm - ≥576px) */
 @media (min-width: 576px) and (max-width: 768px) {
     .ellipse-1 {
-        position: absolute;
         left: 88%;
         top: 3%;
     }
@@ -985,12 +1109,10 @@ hr {
         height: auto;
     }
     .ellipse-2 {
-        position: absolute;
         left: 96%;
         top: 3.1%;
     }
     .ellipse-3 {
-        position: absolute;
         left: 94%;
         top: 4.4%;
     }
@@ -999,7 +1121,6 @@ hr {
         height: auto;
     }
     .ellipse-4 {
-        position: absolute;
         left: 4%;
         top: 7.5%;
     }
@@ -1007,43 +1128,39 @@ hr {
         width: 17px;
         height: auto;
     }
+    .ellipse-6 {
+        left: -1%;
+        top: 21%;
+    }
     .ellipse-7 {
-        position: absolute;
         left: 4%;
         top: -20%;
     }
     .ellipse-8 {
-        position: absolute;
         left: 2%;
         top: 1%;
     }
     .ellipse-9 {
-        position: absolute;
         left: 89%;
         top: 12%;
     }
     .ellipse-10 {
-        position: absolute;
         left: 86%;
         top: 28%;
     }
     .ellipse-11 {
-        position: absolute;
         left: 0%;
         top: -16%;
     }
     .ellipse-12 {
-        position: absolute;
         left: 10%;
         top: -12%;
     }
     .ellipse-13 {
-        position: absolute;
         left: 95%;
         top: 8%;
     }
     .ellipse-14 {
-        position: absolute;
         left: 97%;
         top: 4.3%;
     }
@@ -1052,7 +1169,6 @@ hr {
         height: auto;
     }
     .ellipse-15 {
-        position: absolute;
         left: 0%;
         top: 5%;
     }
@@ -1064,13 +1180,25 @@ hr {
         font-size: 14px;
         font-weight: 400;
         line-height: 20px;
-        margin-top: 4%;
+        margin-top: 6%;
     }
     .banner-image-container {
         margin-top: 0%;
     }
     .banner-image {
         width:100%;
+    }
+    .child-scroll-container {
+        animation: scrollLeft 20s linear infinite;
+    }
+    /* Scroll animation */
+    @keyframes scrollLeft {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-170%);
+        }
     }
     .section-title {
         font-size: 26px !important;
@@ -1114,278 +1242,154 @@ hr {
         line-height: 18px;
     }
 }
-/* For Medium Screens (md - ≥768px) */
-@media (min-width: 768px) and (max-width: 991px) {
-    .banner-description {
-        margin-top: 0%;
-    }
+
+/* For Smaller Screens (xs - <576px) */
+@media (max-width: 576px) {
     .ellipse-1 {
-        position: absolute;
-        left: 90%;
-        top: 4%;
+        left: 86%;
+        top: 1.5%;
     }
     .circle-image-1 {
-        width: 42px;
+        width: 30px;
         height: auto;
     }
     .ellipse-2 {
-        position: absolute;
-        left: 97%;
-        top: 4.2%;
+        left: 95%;
+        top: 1.6%;
     }
     .ellipse-3 {
-        position: absolute;
-        left: 94%;
-        top: 5.7%;
+        left: 91%;
+        top: 2.2%;
     }
     .circle-image-3 {
         width: 20px;
         height: auto;
     }
     .ellipse-4 {
-        position: absolute;
-        left: 3%;
-        top: 11%;
+        left: 5%;
+        top: 3.8%;
     }
     .circle-image-4 {
-        width: 20px;
+        width: 17px;
         height: auto;
     }
+    .ellipse-5 {
+        left: 96%;
+        top: 100%;
+    }
+    .ellipse-6 {
+        left: -2%;
+        top: 11%;
+    }
     .ellipse-7 {
-        position: absolute;
-        left: 4%;
-        top: -36%;
+        left: 7%;
+        top: -25%;
     }
     .ellipse-8 {
-        position: absolute;
-        left: 1%;
-        top: -9%;
+        left: 2%;
+        top: -13%;
     }
     .ellipse-9 {
-        position: absolute;
-        left: 92%;
-        top: 20%;
+        left: 89%;
+        top: 9%;
     }
     .ellipse-10 {
-        position: absolute;
-        left: 88%;
-        top: 48%;
+        left: 86%;
+        top: 28%;
     }
     .ellipse-11 {
-        position: absolute;
         left: 0%;
-        top: -18%;
+        top: -7%;
     }
     .ellipse-12 {
-        position: absolute;
-        left: 8%;
-        top: -15%;
+        left: 14%;
+        top: -6%;
     }
     .ellipse-13 {
-        position: absolute;
-        left: 96%;
-        top: 10%;
+        left: 94%;
+        top: 4%;
     }
     .ellipse-14 {
-        position: absolute;
-        left: 97%;
-        top: 6.3%;
+        left: 96%;
+        top: 1.3%;
     }
     .circle-image-14 {
-        width: 32px;
+        width: 24px;
         height: auto;
     }
     .ellipse-15 {
-        position: absolute;
-        left: 0%;
-        top: 8%;
+        left: -1%;
+        top: 2%;
     }
     .circle-image-15 {
         width: 10px;
         height: auto;
     }
-    .banner-image {
-        margin-top: -6%;
+    .banner-description {
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 18px;
+        margin-top: 6%;
     }
-    .exp-btn {
-        gap: 37px;
+    .banner-image {
+        width: 100%;
+    }
+    .exp-btn span {
+        font-size: 14px;
+        line-height: 20px;
+    }
+    .child-scroll-container {
+        animation: scrollLeft 25s linear infinite;
+    }
+    /* Scroll animation */
+    @keyframes scrollLeft {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-340%);
+        }
     }
     .section-title {
-        font-size: 30px !important;
-        line-height: 36px !important;
+        font-size: 22px !important;
+        line-height: 26px !important;
 
     }
     .section-sub-title {
-        font-size: 22px !important;
+        font-size: 18px !important;
         line-height: 24px !important;
     }
+    .service-card .card-img {
+        height: auto;
+    }
     .affiliation {
-        font-size: 24px;
-        line-height: 54px;
+        font-size: 18px;
+        line-height: 32px;
     }
     .child-scroll-container {
-        gap:40px;
+        gap:20px;
     }
     .child-div {
-        min-width: 110px;
+        max-width: 70px;
         margin: auto;
     }
     .service-card-btn-container {
-        top: 88%;
+        right: -2%;
+        top: 89%;
     }
-    .business-count h1{
-        color:#355594;
-        font-size: 56px;
-        font-weight: 700;
+    .accordion-box h5 {
+        padding-right: 40px;
     }
-    .business-count p{
-        color:#6D7A8C;
-        font-size: 22px;
-        line-height: 26px;
-    }
-    .latest-news-card-img {
-        padding: 10px;
-    }
-    .latest-news-card-title {
-        font-size: 18px;
-        padding: 14px 12px;
-        line-height: 24px;
+    .accordion-box p {
+        padding-right: 40px;
     }
 }
 
-/* For Large Screens (lg - ≥992px) */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .ellipse-1 {
-        position: absolute;
-        left: 86%;
-        top: 4%;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 96%;
-        top: 4.5%;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 94%;
-        top: 6%;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 4%;
-        top: 13%;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 3%;
-        top: -44%;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 1%;
-        top: -18%;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 94%;
-        top: 18%;
-    }
-    .ellipse-10 {
-        position: absolute;
-        left: 91%;
-        top: 46%;
-    }
-    .ellipse-11 {
-        position: absolute;
-        left: 0%;
-        top: -25%;
-    }
-    .ellipse-12 {
-        position: absolute;
-        left: 7%;
-        top: -23%;
-    }
-    .ellipse-13 {
-        position: absolute;
-        left: 97%;
-        top: 11%;
-    }
-    .ellipse-14 {
-        position: absolute;
-        left: 97%;
-        top: 6.3%;
-    }
-    .ellipse-15 {
-        position: absolute;
-        left: 0%;
-        top: 8%;
-    }
-    .banner-description {
-        margin-top: 18%;
-    }
-    .banner-image {
-        margin-top: 10%;
-    }
-    .exp-btn {
-        gap: 38px;
-    }
-    .banner-image-container {
-        margin-top: -15%;
-    }
-    .service-card-btn-container {
-        top: 83%;
-    }
-    .service-card-btn-icon {
-        font-size: 57px !important;
-        padding: 17px;
-    }
-    .latest-news-card-img {
-        padding: 10px;
-    }
-    .latest-news-card-title {
-        font-size: 18px;
-        padding: 14px 12px;
-        line-height: 24px;
-    }
-}
 
-/* For Extra Large Screens (xl - ≥1200px) */
-@media (min-width: 1200px) and (max-width: 1400px) {
-    .ellipse-7 {
-        position: absolute;
-        left: 10%;
-        top: -42%;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 8%;
-        top: -18%;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 88%;
-        top: 18%;
-    }
-    .ellipse-10 {
-        position: absolute;
-        left: 85%;
-        top: 48%;
-    }
-    .ellipse-11 {
-        position: absolute;
-        left: 0%;
-        top: -31%;
-    }
-    .ellipse-12 {
-        position: absolute;
-        left: 5%;
-        top: -29%;
-    }
-    .ellipse-13 {
-        position: absolute;
-        left: 97%;
-        top: 10%;
-    }
-}
+
+
+
+
+
 
 </style>

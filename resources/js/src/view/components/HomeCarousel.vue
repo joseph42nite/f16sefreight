@@ -160,7 +160,7 @@ export default {
   .carousel-3d-slider {
     margin-top: 40px !important;
     width: 350px !important;
-    height: 80% !important;
+    height: 82% !important;
   }
   .carousel-3d-slide {
     width: 100% !important;
@@ -168,12 +168,12 @@ export default {
   }
   .left-1{
     width: 280px !important;
-    height: 410px !important;
+    height: 420px !important;
     transform: translateX(-330px) translateZ(-150px) rotateY(32deg) !important;
   }
   .right-1{
     width: 280px !important;
-    height: 410px !important;
+    height: 420px !important;
     transform: translateX(330px) translateZ(-150px) rotateY(-32deg) !important;
   }
 }
@@ -185,7 +185,7 @@ export default {
   .carousel-3d-slider {
     margin-top: 40px !important;
     width: 310px !important;
-    height: 70% !important;
+    height: 80% !important;
   }
   .carousel-3d-slide {
     width: 100% !important;
@@ -193,12 +193,12 @@ export default {
   }
   .left-1{
     width: 250px !important;
-    height: 360px !important;
+    height: 400px !important;
     transform: translateX(-298px) translateZ(-140px) rotateY(25deg) !important;
   }
   .right-1{
     width: 250px !important;
-    height: 360px !important;
+    height: 400px !important;
     transform: translateX(298px) translateZ(-140px) rotateY(-25deg) !important;
   }
 }

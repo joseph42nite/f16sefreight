@@ -4,11 +4,14 @@
         <!-- Include Header -->
         <Header></Header>
         <b-container>
-            <b-row align-h="center" align-v="center">
+            <b-row align-h="center" align-v="center" class="mt-md-30 mt-sm-25 mt-20">
                 <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
+                    <b-row align-h="center" align-v="center" style="position: relative;">
+                        <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
+                        <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
+                        <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
                         <b-col cols="12">
-                            <div class="my-30">
+                            <div class="mb-md-30 mb-sm-20 mb-10">
                                 <h2 class="section-title">About Us</h2>
                                 <b-row align-h="center" align-v="center">
                                     <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
@@ -21,8 +24,11 @@
                 </b-col>
                 <b-col cols="12">
                     <b-row align-h="center" align-v="center">
-                        <b-col cols="12">
-                            <div class="my-30">
+                        <b-col cols="12" style="position: relative;">
+                            <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
+                            <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div>
+                            <div class="ellipse-6"><img src="/media/custome/circle/ellipse-6.png" alt="circle-image" id="" class="circle-image-6" /></div>
+                            <div class="my-md-30 my-sm-20 my-10">
                                 <h2 class="section-title">Our Vision</h2>
                                 <b-row align-h="center" align-v="center">
                                     <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
@@ -34,16 +40,16 @@
                     </b-row>
                 </b-col>
                 <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
+                    <b-row align-h="center" align-v="center" class="my-md-30 my-sm-20 my-10">
                         <b-col cols="12">
-                            <div class="my-30">
+                            <div class="mb-12">
                                 <h2 class="section-title">What We Offer</h2>
                             </div>
                         </b-col>
                         <b-col
                             v-for="(we_offer_section_card, index) in we_offer_section_cards"
                             :key="index"
-                            cols="12" sm="4" md="4" lg="4" xl="4" xxl="4"
+                            cols="12" sm="12" md="4" lg="4" xl="4" xxl="4"
                             class="mb-6"
                         >
                             <b-card
@@ -74,26 +80,29 @@
                 </b-col>
                 <b-col cols="12">
                     <b-row align-h="center" align-v="center">
-                        <div class="my-30">
+                        <div class="ellipse-7"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-7" /></div>
+                        <div class="ellipse-8"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-8" /></div>
+                        <div class="ellipse-9"><img src="/media/custome/circle/ellipse-9.png" alt="circle-image" id="" class="circle-image-9" /></div>
+                        <div class="my-md-30 my-sm-20 my-10">
                             <b-row align-h="center" align-v="center">
                                 <b-col cols="12" class="text-center mb-14">
                                     <h2 class="section-title">Why Choose Us?</h2>
                                 </b-col>
-                                <b-col ccols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
+                                <b-col ccols="12" sm="12" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
                                     <div class="choose-us-item text-center">
                                         <b-img src="/media/custome/about/choose-us-1.svg" alt="Image 1" class="img-fluid mb-3" />
                                         <h5>Innovative Technology for Small Businesses</h5>
                                         <p>Our technology solutions are built with the needs of small enterprises in mind. From database solutions to a basic ERP system, F16s equips you with the tools to track your growth month on month, helping you identify areas for improvement and operational enhancements.</p>
                                     </div>
                                 </b-col>
-                                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
+                                <b-col cols="12" sm="12" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
                                     <div class="choose-us-item text-center">
                                         <b-img src="/media/custome/about/choose-us-2.svg" alt="Image 2" class="img-fluid mb-3" />
                                         <h5>Affordable and Scalable</h5>
                                         <p>We understand the unique challenges small businesses face in logistics. Our pricing options are crafted to be budget-friendly, providing essential tools in our Basic plan like database management and printable documentation, while our Pro plan connects businesses to multiple AWBs and adds advanced features to support growing needs.</p>
                                     </div>
                                 </b-col>
-                                <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
+                                <b-col cols="12" sm="12" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
                                     <div class="choose-us-item text-center">
                                         <b-img src="/media/custome/about/choose-us-3.svg" alt="Image 3" class="img-fluid mb-3" />
                                         <h5>Commitment to Customer Support</h5>
@@ -106,9 +115,9 @@
                 </b-col>
                 <b-col cols="12">
                     <b-row align-h="center" align-v="center">
-                        <div class="my-30">
+                        <div class="my-md-30 my-sm-20 my-2">
                             <b-row align-h="center" align-v="center">
-                                <b-col cols="12" class="text-center mb-14">
+                                <b-col cols="12" class="text-center mb-20">
                                     <b-card
                                         overlay
                                         img-src="/media/custome/about/bottom-img.png"
@@ -271,7 +280,6 @@ html, body, html * {
     background: radial-gradient(50% 50% at 50% 50%, #FFFFFF 50%, rgba(255, 255, 255, 0) 100%);
 
 }
-
 .choose-us-item {
     padding: 1rem;
 }
@@ -283,9 +291,112 @@ html, body, html * {
     padding: 1rem 2rem;
 
 }
-
+.ellipse-1 {
+    position: absolute;
+    left: 95%;
+    top: -22%;
+}
+.circle-image-1 {
+    width: 60px;
+    height: auto;
+}
+.ellipse-2 {
+    position: absolute;
+    left: 10%;
+    top: 35%;
+}
+.circle-image-2 {
+    width: 10px;
+    height: auto;
+}
+.ellipse-3 {
+    position: absolute;
+    left: 5%;
+    top: 54%;
+}
+.circle-image-3 {
+    width: 25px;
+    height: auto;
+}
+.ellipse-4 {
+    position: absolute;
+    left: 90%;
+    top: 48%;
+}
+.circle-image-4 {
+    width: 27px;
+    height: auto;
+}
+.ellipse-5 {
+    position: absolute;
+    left: 12%;
+    top: 42%;
+} 
+.circle-image-5 {
+    width: 45px;
+    height: auto;
+}
+.ellipse-6 {
+    position: absolute;
+    left: 7%;
+    top: 60%;
+}
+.circle-image-6 {
+    width: 10px;
+    height: auto;
+}
+.ellipse-7 {
+    position: absolute;
+    left: 5%;
+    top: 12%;
+}
+.circle-image-7 {
+    width: 60px;
+    height: auto;
+}
+.ellipse-8 {
+    position: absolute;
+    left: 16%;
+    top: 17%;
+}
+.circle-image-8 {
+    width: 10px;
+    height: auto;
+}
+.ellipse-9 {
+    position: absolute;
+    left: 93%;
+    top: 19%;
+}
+.circle-image-9 {
+    width: 18px;
+    height: auto;
+}
+/*  Custom css  */
+@media (max-width: 480px) {
+    .custom-card .card-title {
+        margin: 2% 0% !important;
+        font-size: 24px !important;
+    }
+    .custom-card-text {
+        margin: 0% 1% !important;
+        font-size: 10px !important;
+        line-height: 14px !important;
+    }
+    .card-img-overlay {
+        padding: 0.7rem !important;
+    }
+}
 /* For Extra Small Screens (xs - <576px) */
 @media (max-width: 575px) {
+    .section-title {
+        font-size: 32px !important;
+        font-weight: 500;
+        line-height: 36px !important;
+        text-align: center;
+        color: #355594;
+
+    }
     .choose-us-item {
         padding: 1rem;
     }
@@ -308,10 +419,99 @@ html, body, html * {
 
 
     }
+    .ellipse-1 {
+        position: absolute;
+        left: 86%;
+        top: -8%;
+    }
+    .circle-image-1 {
+        width: 35px;
+        height: auto;
+    }
+    .ellipse-2 {
+        position: absolute;
+        left: 10%;
+        top: 10%;
+    }
+    .circle-image-2 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-3 {
+        position: absolute;
+        left: 5%;
+        top: 26%;
+    }
+    .circle-image-3 {
+        width: 20px;
+        height: auto;
+    }
+    .ellipse-4 {
+        position: absolute;
+        left: 93%;
+        top: 27%;
+    }
+    .circle-image-4 {
+        width: 20px;
+        height: auto;
+    }
+    .ellipse-5 {
+        position: absolute;
+        left: 4%;
+        top: 25%;
+    } 
+    .circle-image-5 {
+        width: 25px;
+        height: auto;
+    }
+    .ellipse-6 {
+        position: absolute;
+        left: 4%;
+        top: 37%;
+    }
+    .circle-image-6 {
+        width: 8px;
+        height: auto;
+    }
+    .ellipse-7 {
+        position: absolute;
+        left: 3%;
+        top: 2%;
+    }
+    .circle-image-7 {
+        width: 32px;
+        height: auto;
+    }
+    .ellipse-8 {
+        position: absolute;
+        left: 17%;
+        top: 5%;
+    }
+    .circle-image-8 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-9 {
+        position: absolute;
+        left: 93%;
+        top: 3%;
+    }
+    .circle-image-9 {
+        width: 18px;
+        height: auto;
+    }
 }
 
 /* For Small Screens (sm - ≥576px) */
 @media (min-width: 576px) and (max-width: 767px) {
+    .section-title {
+        font-size: 36px !important;
+        font-weight: 500;
+        line-height: 40px !important;
+        text-align: center;
+        color: #355594;
+
+    }
     .choose-us-item {
         padding: 1rem;
     }
@@ -324,7 +524,7 @@ html, body, html * {
 
     }
     .custom-card .card-title {
-        margin: 8% 0%;
+        margin: 5% 0%;
         font-size: 40px;
     }
     .custom-card-text {
@@ -333,10 +533,99 @@ html, body, html * {
         line-height: 22px;
 
     }
+    .ellipse-1 {
+        position: absolute;
+        left: 78%;
+        top: -13%;
+    }
+    .circle-image-1 {
+        width: 35px;
+        height: auto;
+    }
+    .ellipse-2 {
+        position: absolute;
+        left: 10%;
+        top: 10%;
+    }
+    .circle-image-2 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-3 {
+        position: absolute;
+        left: 5%;
+        top: 25%;
+    }
+    .circle-image-3 {
+        width: 20px;
+        height: auto;
+    }
+    .ellipse-4 {
+        position: absolute;
+        left: 90%;
+        top: 36%;
+    }
+    .circle-image-4 {
+        width: 20px;
+        height: auto;
+    }
+    .ellipse-5 {
+        position: absolute;
+        left: 11%;
+        top: 33%;
+    } 
+    .circle-image-5 {
+        width: 25px;
+        height: auto;
+    }
+    .ellipse-6 {
+        position: absolute;
+        left: 8%;
+        top: 45%;
+    }
+    .circle-image-6 {
+        width: 8px;
+        height: auto;
+    }
+    .ellipse-7 {
+        position: absolute;
+        left: 7%;
+        top: 4%;
+    }
+    .circle-image-7 {
+        width: 40px;
+        height: auto;
+    }
+    .ellipse-8 {
+        position: absolute;
+        left: 22%;
+        top: 6%;
+    }
+    .circle-image-8 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-9 {
+        position: absolute;
+        left: 93%;
+        top:7%;
+    }
+    .circle-image-9 {
+        width: 18px;
+        height: auto;
+    }
 }
 
 /* For Medium Screens (md - ≥768px) */
 @media (min-width: 768px) and (max-width: 991px) {
+    .section-title {
+        font-size: 40px !important;
+        font-weight: 500;
+        line-height: 44px !important;
+        text-align: center;
+        color: #355594;
+
+    }
     .choose-us-item {
         padding: 1rem;
     }
@@ -349,17 +638,105 @@ html, body, html * {
 
     }
     .custom-card .card-title {
-        margin: 10% 0%;
+        margin: 5% 0%;
         font-size: 44px;
     }
     .custom-card-text {
         margin: 0% 15%;
-
+    }
+    .ellipse-1 {
+        position: absolute;
+        left: 88%;
+        top: -19%;
+    }
+    .circle-image-1 {
+        width: 48px;
+        height: auto;
+    }
+    .ellipse-2 {
+        position: absolute;
+        left: 10%;
+        top: 12%;
+    }
+    .circle-image-2 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-3 {
+        position: absolute;
+        left: 5%;
+        top: 31%;
+    }
+    .circle-image-3 {
+        width: 25px;
+        height: auto;
+    }
+    .ellipse-4 {
+        position: absolute;
+        left: 92%;
+        top: 43%;
+    }
+    .circle-image-4 {
+        width: 27px;
+        height: auto;
+    }
+    .ellipse-5 {
+        position: absolute;
+        left: 10%;
+        top: 42%;
+    } 
+    .circle-image-5 {
+        width: 40px;
+        height: auto;
+    }
+    .ellipse-6 {
+        position: absolute;
+        left: 7%;
+        top: 58%;
+    }
+    .circle-image-6 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-7 {
+        position: absolute;
+        left: 5%;
+        top: 10%;
+    }
+    .circle-image-7 {
+        width: 45px;
+        height: auto;
+    }
+    .ellipse-8 {
+        position: absolute;
+        left: 18%;
+        top: 14%;
+    }
+    .circle-image-8 {
+        width: 10px;
+        height: auto;
+    }
+    .ellipse-9 {
+        position: absolute;
+        left: 93%;
+        top: 15%;
+    }
+    .circle-image-9 {
+        width: 18px;
+        height: auto;
     }
 }
 
 /* For Large Screens (lg - ≥992px) */
 @media (min-width: 992px) and (max-width: 1199px) {
+    .section-title {
+        font-size: 44px !important;
+        font-weight: 500;
+        line-height: 48px !important;
+        text-align: center;
+        color: #355594;
+
+    }
     .choose-us-item {
         padding: 1rem;
     }

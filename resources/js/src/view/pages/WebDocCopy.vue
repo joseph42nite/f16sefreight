@@ -20,7 +20,7 @@
                                             <option value="/web-doc">Master Airway Bill</option>
                                             <option value="/house-way-bill">Houseway Bill</option>
                                             <option value="/consolidation">Consolidation</option>
-                                            <option value="/message-log">Message Log</option>
+                                            <!-- <option value="/message-log">Message Log</option> -->
                                         </b-form-select>
                                     </b-form-group>
                                 </b-col>
@@ -33,14 +33,24 @@
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
-                                <b-modal id="modal-ss" title="Activity" ok-only>
+                                <b-modal id="modal-draft" title="Activity" :hide-footer="true" ok-only>
                                     <div class="d-block">
-                                        <h3>Updated:04:49</h3>
+                                        <b-row class="mt-5">
+                                            <b-col cols="auto">
+                                                <a href="" class="custom-link">none</a>
+                                                <h6>( - )</h6>
+                                            </b-col>
+                                            <b-col cols="auto">
+                                                <a href="" class="custom-link">Edit e-AWB Data</a>
+                                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
+                                                <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
+                                            </b-col>
+                                        </b-row>
                                     </div>
                                 </b-modal>
                                 <!-- Draft model code Ends here -->
                                 <!-- 10 Latest model code start here -->
-                                <b-modal id="modal-s" title="Latest Messages" ok-only>
+                                <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" ok-only>
                                     <div class="d-block">
                                         <b-row>
                                             <b-col>
@@ -268,7 +278,7 @@
                                                             <span>Pin code:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
                                                     <has-error :form="form" field="ship_post_code"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -277,7 +287,7 @@
                                                             <span>State:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
                                                     <has-error :form="form" field="ship_state"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -301,7 +311,7 @@
                                                             <span>Phone:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_phone" :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_phone" :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
                                                     <has-error :form="form" field="ship_phone"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -310,7 +320,7 @@
                                                             <span>Fax:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_fax" :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_fax" :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
                                                     <has-error :form="form" field="ship_fax"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -319,7 +329,7 @@
                                                             <span>Telex:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_telex"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_telex"></b-form-input>
                                                 </b-form-group>
                                                 <b-form-checkbox size="sm" class="" style="margin-left: 70px;" v-model="form.is_shipper_address_save"> Save new address to address
                                                     book</b-form-checkbox>
@@ -424,7 +434,7 @@
                                                             <span>Pin code:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
                                                     <has-error :form="form" field="cons_post_code"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -433,7 +443,7 @@
                                                             <span>State:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
                                                     <has-error :form="form" field="cons_state"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -457,7 +467,7 @@
                                                             <span>Phone:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_phone" :class="{ 'is-invalid': form.errors.has('cons_phone') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_phone" :class="{ 'is-invalid': form.errors.has('cons_phone') }"></b-form-input>
                                                     <has-error :form="form" field="cons_phone"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -466,7 +476,7 @@
                                                             <span>Fax:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_fax" :class="{ 'is-invalid': form.errors.has('cons_fax') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_fax" :class="{ 'is-invalid': form.errors.has('cons_fax') }"></b-form-input>
                                                     <has-error :form="form" field="cons_fax"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -475,7 +485,7 @@
                                                             <span>Telex:</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_telex"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_telex"></b-form-input>
                                                 </b-form-group>
                                                 <b-form-checkbox size="sm" class="" style="margin-left: 70px;" v-model="form.is_consignee_address_save"> Save new address to address book</b-form-checkbox>
                                             </div>

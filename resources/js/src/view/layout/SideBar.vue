@@ -1,28 +1,33 @@
 <template>
     <ul class="list-unstyled">
-        <router-link to="/dashboard">
-            <li>
-                <img :src="one" alt="one">
+        <!-- Redirect to dashboard -->
+        <router-link to="/dashboard" :class="{ active: isActive('/dashboard') }">
+            <li :style="{ padding: isActive('/dashboard') ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive('/dashboard') ? '/media/custome/side-menu/1-active.png' : '/media/custome/side-menu/1.png'" alt="one">
             </li>
         </router-link>
-        <router-link to="/dashboard">
-            <li>
-                <img :src="two" alt="two">
+        <!-- Redirect to stock management -->
+        <router-link to="/stock" :class="{ active: isActive('/stock') }">
+            <li :style="{ padding: isActive('/stock') ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive('/stock') ? '/media/custome/side-menu/2-active.png' : '/media/custome/side-menu/2.png'" alt="two">
             </li>
         </router-link>
-        <router-link to="/dashboard">
-            <li>
-                <img :src="three" alt="three">
+        <!-- Redirect to Documentation /web-doc/houseway bill/consolidation -->
+        <router-link to="/web-doc" :class="{ active: isActive(['/web-doc', '/house-way-bill', '/consolidation']) }">
+            <li :style="{ padding: isActive(['/web-doc', '/house-way-bill', '/consolidation']) ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive(['/web-doc', '/house-way-bill', '/consolidation']) ? '/media/custome/side-menu/3-active.png' : '/media/custome/side-menu/3.png'" alt="three">
             </li>
         </router-link>
-        <router-link to="/dashboard">
-            <li>
-                <img :src="four" alt="four">
+        <!-- Redirect to search -->
+        <router-link to="/message-log" :class="{ active: isActive('/message-log') }">
+            <li :style="{ padding: isActive('/message-log') ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive('/message-log') ? '/media/custome/side-menu/4-active.png' : '/media/custome/side-menu/4.png'" alt="four">
             </li>
         </router-link>
-        <router-link to="/dashboard">
-            <li>
-                <img :src="five" alt="five">
+        <!-- Redirect to rating -->
+        <router-link to="/rate" :class="{ active: isActive('/rate') }">
+            <li :style="{ padding: isActive('/rate') ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive('/rate') ? '/media/custome/side-menu/5-active.png' : '/media/custome/side-menu/5.png'" alt="five">
             </li>
         </router-link>
         <router-link to="/dashboard">
@@ -38,25 +43,28 @@
     name: "SideBar",
     data(){
         return{
-            one: "/media/custome/side-menu/1.svg",
-            two: "/media/custome/side-menu/2.svg",
-            three: "/media/custome/side-menu/3.svg",
-            four: "/media/custome/side-menu/4.svg",
-            five: "/media/custome/side-menu/5.svg",
             primaryText: "/media/custome/side-menu/H1-primary-text.svg",
         }
     },
+    methods: {
+        // Method to check if the current route matches the link
+        isActive(path) {
+            // return this.$route.path === path;
+            return path.includes(this.$route.path);
+        }
+    },
+
   };
   </script>
 <style scoped>
 img {
-    width:35px;
-    padding: 15px 0px;
+    width: 100%;
 }
 ul {
+    width:4.5%;
     height: 80vh;
     background-color: #F2F9FF;
-    padding: 20px 15px;
+    padding: 20px 0px;
     border: 1px solid #F2F9FF;
     border-radius: 24px;
     box-shadow: 3px 3px 10px #d0d0d0;

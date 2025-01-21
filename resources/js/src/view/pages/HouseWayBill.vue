@@ -19,7 +19,7 @@
                                         <option value="/web-doc">Master Airway Bill</option>
                                         <option value="/house-way-bill">Houseway Bill</option>
                                         <option value="/consolidation">Consolidation</option>
-                                        <option value="/message-log">Message Log</option>
+                                        <!-- <option value="/message-log">Message Log</option> -->
                                     </b-form-select>
                                 </b-form-group>
                             </b-col>
@@ -32,7 +32,7 @@
                                 </div>
                             </b-col>
                             <!-- Draft model code Start here -->
-                            <b-modal id="modal-draft" title="Activity" ok-only>
+                            <b-modal id="modal-draft" title="Activity" :hide-footer="true" ok-only>
                                 <div class="d-block">
                                     <b-row class="mt-5">
                                         <b-col cols="auto">
@@ -49,7 +49,7 @@
                             </b-modal>
                             <!-- Draft model code Ends here -->
                             <!-- 10 Latest model code start here -->
-                            <b-modal id="modal-s" title="Latest Messages" ok-only>
+                            <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" ok-only>
                                 <div class="d-block">
                                     <b-row>
                                         <b-col>

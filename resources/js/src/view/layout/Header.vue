@@ -30,11 +30,11 @@
 
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="ml-auto nav-menu text-center">
-            <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item>
+            <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
             <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
-            <!-- <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item> -->
-            <!-- <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item> -->
-            <!-- <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item> -->
+            <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item>
+            <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item>
+            <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item>
             <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
             <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item>
             <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
@@ -259,7 +259,7 @@ export default {
 }
 .nav-link-custom{
   font-size: 14px;
-  line-height: 25px;
+  line-height: 30px;
   font-weight: 400;
 }
 
@@ -363,7 +363,7 @@ color: White;
     width: 14%;
   }
   .nav-menu {
-    gap: 30px;
+    gap: 40px;
   }
   .sign-in-btn {
     padding: 8px 28px; 
@@ -381,7 +381,7 @@ color: White;
   }
   .nav-link-custom {
     font-size: 13px;
-    line-height: 23px;
+    line-height: 25px;
   }
 }
 @media (max-width: 768px) {
@@ -393,7 +393,8 @@ color: White;
     padding-left: 15px;
   }
   .nav-menu {
-    gap: 15px;
+    gap: 25px;
+    width: 100%;
   }
   .head-btn {
     display: flex;
@@ -404,8 +405,22 @@ color: White;
   .content-gap {
     gap:20px;
   }
+  .nav-link-custom {
+    font-size: 22px !important;
+    line-height: 28px !important;
+  }
   .navbar-collapse {
     padding: 0px 15px;
+    justify-content: center;
+    z-index: 999;
+    max-width: 100%;
+    width: 100%;
+    position: absolute;
+    left: 0%;
+    right: 0%;
+    top: 54%;
+    display: flex;
+    transition: opacity -20s ease, max-height -20s ease;
   }
   .navbar {
     padding: 20px 0px 50px !important;

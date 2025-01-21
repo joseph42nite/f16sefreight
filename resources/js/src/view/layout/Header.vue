@@ -420,8 +420,11 @@ color: White;
     right: 0%;
     top: 54%;
     display: flex;
-    transition: opacity -20s ease, max-height -20s ease;
+    transition: opacity -20s ease,  0.5s ease-in-out;
   }
+  /* .navbar-collapse.show {
+    max-height: 100% !important;
+  } */
   .navbar {
     padding: 20px 0px 50px !important;
   }

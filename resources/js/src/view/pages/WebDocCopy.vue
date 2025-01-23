@@ -958,11 +958,11 @@
                                                                     <has-error :form="consignment_list" field="weight_code"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style="width: 115px;" v-model="consignment_list.chargable_weight" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
+                                                                    <input type="text" class="form-control" style="width: 115px;" v-model="consignment_list.chargable_weight" @input="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
                                                                     <has-error :form="consignment_list" field="chargable_weight"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style=" width: 110px;" v-model="consignment_list.rate" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
+                                                                    <input type="text" class="form-control" style=" width: 110px;" v-model="consignment_list.rate" @input="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
                                                                     <has-error :form="consignment_list" field="rate"></has-error>
                                                                 </td>
                                                             </tr>

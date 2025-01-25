@@ -483,6 +483,9 @@ color: White;
   .nav-header-menu {
     margin-right:0%;
   }
+  .sign-in-btn[data-v-5ab8085e] {
+    padding: 8px 22px;
+  }
 }
 </style>
 

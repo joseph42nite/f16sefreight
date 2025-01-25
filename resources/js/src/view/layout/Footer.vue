@@ -169,11 +169,18 @@
     .contactInfo-phone,
     .contactInfo-email,
     .contactInfo-address {
-
+        font-size: 12px;
     }
     @media (max-width: 576px) {
         .list-group {
             text-align: center;
         }
+    }
+    @media (max-width: 767px) {
+        .contactInfo-phone,
+        .contactInfo-email,
+        .contactInfo-address {
+            font-size: 12px;
+        }   
     }
   </style>

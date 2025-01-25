@@ -13,6 +13,12 @@
             <b-row align-h="center" align-v="center">
                 <b-col cols="12">
                     <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 80%;margin: auto; margin-top: 8%;">
+                        <!-- Show in tabs and desktop device only -->
+                        <b-col cols="12" md="8" lg="9" class="px-md-0 d-block d-md-none banner-image-container">
+                            <div class="banner">
+                                <img :src="banner" alt="Banner-image" id="Banner-image" class="banner-image" />
+                            </div>
+                        </b-col>
                         <!-- Primary Banner Text Image -->
                         <b-col cols="12" class="px-md-0">
                             <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="" style="width: 100%;display:block;margin:auto" />
@@ -30,11 +36,10 @@
                             </b-button>
                         </b-col>
                         <!-- Right Banner Image Column -->
-                        <b-col cols="12" md="8" lg="9" class="px-md-0 banner-image-container">
+                        <!-- Show in tabs and desktop device only -->
+                        <b-col cols="12" md="8" lg="9" class="px-md-0 d-none d-md-block banner-image-container">
                             <div class="banner">
                                 <img :src="banner" alt="Banner-image" id="Banner-image" class="banner-image" />
-                                <!-- Gray Shadow Div Below the Image -->
-                                <!-- <div class="gray-shadow"></div> -->
                             </div>
                         </b-col>
                     </b-row>
@@ -1204,6 +1209,7 @@ hr {
     }
     .banner-image-container {
         margin-top: 0%;
+        margin-bottom: -65px;
     }
     .banner-image {
         width:100%;
@@ -1345,6 +1351,10 @@ hr {
         width: 10px;
         height: auto;
     }
+    .banner-image-container {
+        margin-top: 0%;
+        margin-bottom: -50px;
+    }
     .banner-description {
         font-size: 12px;
         font-weight: 400;
@@ -1404,7 +1414,12 @@ hr {
         padding-right: 40px;
     }
 }
-
+@media (max-width: 576px) {
+    .banner-image-container {
+        margin-top: 0%;
+        margin-bottom: -30px;
+    }
+}
 
 
 

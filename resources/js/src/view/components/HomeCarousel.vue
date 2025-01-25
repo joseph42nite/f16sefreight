@@ -256,12 +256,12 @@ export default {
     line-height: 18px;
   }
   .carousel-3d-container {
-    height: 370px !important;
+    height: 360px !important;
   }
   .carousel-3d-slider {
-    margin-top: 50px !important;
-    width: 190px !important;
-    height: 75% !important;
+    margin-top: 20px !important;
+    width: 210px !important;
+    height: 85% !important;
   }
   .carousel-3d-slide {
     width: 100% !important;
@@ -269,14 +269,14 @@ export default {
     
   }
   .left-1{
-    width: 165px !important;
-    height: 280px !important;
+    width: 170px !important;
+    height: 285px !important;
     transform: translateX(187px) translateZ(-130px) rotateY(-20deg) !important;
     box-shadow: 0px 10px 20px 0px #00000040 !important;
   }
   .right-1{
-    width: 165px !important;
-    height: 280px !important;
+    width: 170px !important;
+    height: 285px !important;
     transform: translateX(-187px) translateZ(-130px) rotateY(20deg) !important;
     box-shadow: 0px 10px 20px 0px #00000040 !important;
   }

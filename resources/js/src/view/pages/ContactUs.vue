@@ -169,7 +169,7 @@
                                                 label-for="quote-quoteName"
                                                 class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Name:</span>
                                                     </div>
                                                 </template>
@@ -185,7 +185,7 @@
                                                 label-for="quote-companyEmailId"
                                                 class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Company Email ID:</span>
                                                     </div>
                                                 </template>
@@ -201,7 +201,7 @@
                                                 label-for="quote-phoneNumber"
                                                 class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Phone Number:</span>
                                                     </div>
                                                 </template>
@@ -217,7 +217,7 @@
                                                 label-for="quote-designation"
                                                 class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Designation:</span>
                                                     </div>
                                                 </template>
@@ -232,7 +232,7 @@
                                             <!-- Select Box with Multiple Checkboxes -->
                                             <b-form-group id="fieldset-checkbox" label-cols-md="auto" label-for="quote-productOption" class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Product Chosen:</span>
                                                     </div>
                                                 </template>
@@ -259,7 +259,7 @@
                                                 label-for="quote-empNumber"
                                                 class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Number of Employees:</span>
                                                     </div>
                                                 </template>
@@ -275,7 +275,7 @@
                                                 label-for="quote-companyName"
                                                 class="align-items-center">
                                                 <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 132px;">
+                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
                                                         <span>Company Name:</span>
                                                     </div>
                                                 </template>

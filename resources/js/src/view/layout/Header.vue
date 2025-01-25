@@ -2,7 +2,7 @@
   <div class="wrap">
     <b-navbar toggleable="md">
       <div class="container-fluid">
-        <div class="navbar-header">
+        <div class="navbar-header-logo">
           <b-navbar-brand href="/" style="">
             <img :src="logoSrc" alt="f16s logo" id="main-logo">
           </b-navbar-brand>
@@ -29,54 +29,61 @@
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
         <b-collapse id="nav-collapse" is-nav>
-          <b-navbar-nav class="ml-auto nav-menu text-center">
-            <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
-            <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
-            <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item>
-            <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item>
-            <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item>
-            <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
-            <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item>
-            <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
-            <!-- If not loged-in user -->
-            <div  class="head-btn d-md-none">
-              <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
-                <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
-              </b-nav-item>
-              <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
-                <button class="whats-new-btn">What's Free?</button>
-              </b-nav-item>
-            </div>
-          </b-navbar-nav>
-
+          <div class="nav-header-menu" style="">
+            <b-navbar-nav class="ml-auto nav-menu text-center">
+              <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
+              <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
+              <b-nav-item to="/user-guid" class="nav-link-custom text-white">Services</b-nav-item>
+              <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item>
+              <b-nav-item to="/tutorial" class="nav-link-custom text-white">Solutions</b-nav-item>
+              <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
+              <!-- <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
+              <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
+              <!-- If not loged-in user -->
+              <div  class="head-btn d-md-none">
+                <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
+                  <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
+                </b-nav-item>
+                <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
+                  <button class="whats-new-btn">What's Free?</button>
+                </b-nav-item>
+              </div>
+            </b-navbar-nav>
+          </div>
           <!-- Profile Avatar and User Info for Larger Devices -->
           <!-- If loged-in user -->
-          <b-navbar-nav v-if="isAuthenticated" class="ml-auto align-items-center content-gap d-none d-md-flex">
-            <b-nav-item class="nav-link-custom text-uppercase" style="font-size: 18px;">
-              {{currentUser.origin_airport_code}}
-            </b-nav-item>
-            <b-nav-item-dropdown>
-              <template #button-content>
-                <span><img :src="avatarLogoSrc" alt="avatar logo" id="avatar-logo"></span>
-              </template>
-              <b-dropdown-item>
-                <span class="text-capitalize" style="font-size: 12px;">{{currentUser.name}}</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="logout()">
-                <span style="font-size: 12px;">Sign out</span>
-              </b-dropdown-item>
-            </b-nav-item-dropdown>
-          </b-navbar-nav>
+          <div v-if="isAuthenticated" class="nav-header-right" style="">
+            <b-navbar-nav class="ml-auto align-items-center content-gap d-none d-md-flex">
+              <b-nav-item class="nav-link-custom text-uppercase" style="font-size: 18px;">
+                {{currentUser.origin_airport_code}}
+              </b-nav-item>
+              <b-nav-item-dropdown>
+                <template #button-content>
+                  <span><img :src="avatarLogoSrc" alt="avatar logo" id="avatar-logo"></span>
+                </template>
+                <b-dropdown-item>
+                  <span class="text-capitalize" style="font-size: 12px;">{{currentUser.name}}</span>
+                </b-dropdown-item>
+                <b-dropdown-item @click="logout()">
+                  <span style="font-size: 12px;">Sign out</span>
+                </b-dropdown-item>
+              </b-nav-item-dropdown>
+            </b-navbar-nav>
+          </div>
           <!-- If not loged-in user -->
-          <b-navbar-nav v-else class="ml-auto align-items-center content-gap d-none d-md-flex">
-            <b-nav-item class="nav-link-custom">
-              <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
-            </b-nav-item>
-            <b-nav-item class="nav-link-custom">
-              <button class="whats-new-btn">What's Free?</button>
-            </b-nav-item>
-          </b-navbar-nav>
+          <div v-else class="nav-header-right" style="">
+            <b-navbar-nav class="ml-auto align-items-center content-gap d-none d-md-flex">
+              <b-nav-item class="nav-link-custom">
+                <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
+              </b-nav-item>
+              <b-nav-item class="nav-link-custom">
+                <button class="whats-new-btn">What's Free?</button>
+              </b-nav-item>
+            </b-navbar-nav>
+          </div>
         </b-collapse>
+          
+
         <!-- Sign In Modal box -->
         <b-modal id="login-modal" v-model="show_login_modal" :hide-header="true" :hide-footer="true">
           <div class="d-flex flex-column-fluid flex-center">
@@ -232,8 +239,18 @@ export default {
 };
 </script>
 <style scoped>
-.navbar-header {
+@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
+html, body * {
+  font-family: 'Roboto', sans-serif !important;
+}
+.navbar-header-logo {
   width: 10%;
+}
+.nav-header-menu {
+  width: 70%;justify-content: flex-end;display: flex;margin-right:6%;
+}
+.nav-header-right {
+  width: 30%;justify-content: flex-end;display: flex;
 }
 .navbar {
   height: auto;
@@ -358,9 +375,21 @@ color: White;
     background-color: #f3f6f9 !important;
 }
 
+@media (max-width: 1199px) {
+.nav-header-menu {
+    margin-right:0%;
+  }
+}
+
 @media (max-width: 992px) {
-  .navbar-header {
-    width: 14%;
+  .navbar-header-logo {
+    width: 12%;
+  }
+  .navbar-collapse, .collapse {
+    width:88%;
+  }
+  .nav-header-menu {
+    margin-right:0%;
   }
   .nav-menu {
     gap: 40px;
@@ -376,8 +405,14 @@ color: White;
   }
 }
 @media (max-width: 920px) {
+  .nav-header-menu {
+    width:63%;
+  }
+  .nav-header-right {
+    width:37%;
+  }
   .nav-menu {
-    gap: 12px;
+    gap: 15px;
   }
   .nav-link-custom {
     font-size: 13px;
@@ -385,8 +420,12 @@ color: White;
   }
 }
 @media (max-width: 768px) {
-  .navbar-header {
+  .navbar-header-logo {
     width: 18%;
+  }
+  .nav-header-menu {
+    margin-right:0%;
+    width: 100%;
   }
   #main-logo{
     width: 100%;
@@ -411,7 +450,6 @@ color: White;
   }
   .navbar-collapse {
     padding: 0px 15px;
-    justify-content: center;
     z-index: 999;
     max-width: 100%;
     width: 100%;
@@ -419,12 +457,8 @@ color: White;
     left: 0%;
     right: 0%;
     top: 54%;
-    display: flex;
     transition: opacity -20s ease,  0.5s ease-in-out;
   }
-  /* .navbar-collapse.show {
-    max-height: 100% !important;
-  } */
   .navbar {
     padding: 20px 0px 50px !important;
   }
@@ -434,18 +468,28 @@ color: White;
   }
 }
 @media (max-width: 576px) {
-  .navbar-header {
+  .navbar-header-logo {
     width: 24%;
   }
+  .nav-header-menu {
+    margin-right:0%;
+  }
 }
+
 @media (max-width: 480px) {
-  .navbar-header {
+  .navbar-header-logo {
     width: 28%;
+  }
+  .nav-header-menu {
+    margin-right:0%;
   }
 }
 </style>
 
 <style>
+.navbar-collapse, .collapse {
+  width:90%;
+}
 .nav-link:after {
   content: none !important;
 }

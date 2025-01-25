@@ -68,7 +68,7 @@
                                     <td align="left" valign="top" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
+                                                <td align="left" valign="top" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
                                                     $departure_airport =  explode(',', $airWayBill->departure_airport);
                                                     $departure_airport = $departure_airport[0] ?? '';
@@ -83,7 +83,7 @@
                                     <td align="center" valign="top" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="center" valign="top" width="60px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="top" width="60px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                     &nbsp;
                                                     </td>
                                                 <td align="center" valign="top" width="140px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
@@ -2472,10 +2472,10 @@
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
                                                                                                                 {{$airWayBill->awb_code . ' '. $airWayBill->awb_no ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>  

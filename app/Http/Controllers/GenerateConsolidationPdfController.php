@@ -20,7 +20,7 @@ class GenerateConsolidationPdfController extends Controller
         $airWayBill = AirWayBills::where('awb_code', $awb_code)
             ->where('awb_no', $awb_no)
             ->first();
-
+        
             if($airWayBill)
             {
                 $awb_code = $airWayBill->awb_code;

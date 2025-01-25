@@ -32,7 +32,7 @@
                                 </div>
                             </b-col>
                             <!-- Draft model code Start here -->
-                            <b-modal id="modal-draft" title="Activity" :hide-footer="true" ok-only>
+                            <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
                                 <div class="d-block">
                                     <b-row class="mt-5">
                                         <b-col cols="auto">
@@ -4377,10 +4377,6 @@ li {
     transition: background-color 0.3s;
 }
 
-/* #show-btn:hover {
-  background-color: #007bff;
-} */
-
 .custom-btn:hover {
     background-color: #007bff !important;
     color: white !important;
@@ -4389,11 +4385,6 @@ li {
 .form-group {
     margin-bottom: 10px !important;
 }
-
-.form-control-sm {
-    /* height: calc(1.5em + 0.5rem + 2px) !important; */
-}
-
 .col-form-label {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
@@ -4441,11 +4432,6 @@ li {
 .nav-tabs .nav-links {
     border: 2px solid black;
 }
-
-.mh-100vh {
-    /* min-height: 100vh; */
-}
-
 .table {
     max-width: 400px;
     border: 0;
@@ -4534,6 +4520,19 @@ th {
 
 </style>
 <style>
+    .modal-content {
+        border-radius: 20px !important;
+    }
+    .modal-header {
+        padding: 1.5rem 0rem !important;
+        border-bottom: 1px solid #CDCDCD !important;
+    }
+    .modal .modal-header .modal-title {
+        color: #355594 !important;
+    }
+    .modal-header > .close {
+        font-size: 3rem !important;
+    }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;
     }

@@ -30,11 +30,6 @@ export default {
     return {
       slides: [
         {
-          textImage: "/media/custome/about/focus-sea.png",
-          mainImage: "/media/custome/about/boat.png",
-          caption: "Seamless freight docs with one-click printing for faster sea logistics.",
-        },
-        {
           textImage: "/media/custome/about/focus-air.png",
           mainImage: "/media/custome/about/plane.png",
           caption: "Fast EDI data transmission and real-time tariff updates for efficient air freight logistics.",
@@ -43,6 +38,11 @@ export default {
           textImage: "/media/custome/about/focus-road.png",
           mainImage: "/media/custome/about/truck.png",
           caption: "FREE login, powerful docs, and printable options for road freight.",
+        },
+        {
+          textImage: "/media/custome/about/focus-sea.png",
+          mainImage: "/media/custome/about/boat.png",
+          caption: "Seamless freight docs with one-click printing for faster sea logistics.",
         },
       ],
     };

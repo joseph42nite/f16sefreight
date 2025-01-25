@@ -59,9 +59,13 @@
                                     borderRadius: '18px'
                                 }"
                             >
-                                <div class="my-10">
-                                    <b-img :src="we_offer_section_card.titleImgSrc" :alt="we_offer_section_card.imgAlt" fluid class="d-block mx-auto my-2" />
-                                    <b-img :src="we_offer_section_card.imgSrc" :alt="we_offer_section_card.imgAlt" fluid class="d-block mx-auto my-2" />
+                                <div class="my-5 my-sm-8 my-md-10">
+                                    <div style="padding-bottom: 16%; position: relative">
+                                        <b-img :src="we_offer_section_card.titleImgSrc" :alt="we_offer_section_card.imgAlt" class="mx-auto" style="position: absolute; left: 10%; right: 10%; height: 0; width: 80%; height: 100%" />
+                                    </div>
+                                    <div style="padding-bottom: 42%; position: relative">
+                                        <b-img :src="we_offer_section_card.imgSrc" :alt="we_offer_section_card.imgAlt" class="mx-auto" style="position: absolute; left: 0; height: 0; width: 100%; height: 100%" />
+                                    </div>
                                 </div>
                                 <b-card-text class="text-center offer-section-text">
                                     {{ we_offer_section_card.text }}
@@ -374,6 +378,9 @@ html, body, html * {
 }
 /*  Custom css  */
 @media (max-width: 480px) {
+    .card-body {
+        padding: 1rem !important;
+    }
     .custom-card .card-title {
         margin: 2% 0% !important;
         font-size: 24px !important;
@@ -389,6 +396,9 @@ html, body, html * {
 }
 /* For Extra Small Screens (xs - <576px) */
 @media (max-width: 575px) {
+    .card-body {
+        padding: 1rem !important;
+    }
     .section-title {
         font-size: 32px !important;
         font-weight: 500;
@@ -504,6 +514,9 @@ html, body, html * {
 
 /* For Small Screens (sm - ≥576px) */
 @media (min-width: 576px) and (max-width: 767px) {
+    .card-body {
+        padding: 2rem !important;
+    }
     .section-title {
         font-size: 36px !important;
         font-weight: 500;
@@ -618,6 +631,9 @@ html, body, html * {
 
 /* For Medium Screens (md - ≥768px) */
 @media (min-width: 768px) and (max-width: 991px) {
+    .card-body {
+        padding: 1rem !important;
+    }
     .section-title {
         font-size: 40px !important;
         font-weight: 500;

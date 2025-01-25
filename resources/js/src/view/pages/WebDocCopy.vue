@@ -1,6 +1,7 @@
 <template>
-    <div class="body-color">
-        <div class="container-fluid">
+    <!-- <div class="">
+        <div class="container-fluid"> -->
+        <b-container fluid class="body-color">
             <!-- Include Header -->
             <Header></Header>
             <div class="d-flex">
@@ -33,7 +34,7 @@
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
-                                <b-modal id="modal-draft" title="Activity" :hide-footer="true" ok-only>
+                                <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
                                     <div class="d-block">
                                         <b-row class="mt-5">
                                             <b-col cols="auto">
@@ -2452,8 +2453,9 @@
                     </template>
                 </div>
             </div>
-        </div>
-    </div>
+        </b-container>
+        <!-- </div>
+    </div> -->
 </template>
 <script>
 import Datepicker from "vuejs-datepicker";
@@ -4534,15 +4536,6 @@ th {
     color: #355594 !important;
     background: #fff !important;
 }
-.modal-content {
-    border-radius: 20px !important;
-}
-.modal-header {
-    border-bottom: 0px !important;
-}
-.modal-header > .close {
-    font-size: 2.5rem !important;
-}
 .custom-link {
     display: block;
     margin-bottom: 0.5rem;
@@ -4591,6 +4584,19 @@ th {
 }
 </style>
 <style>
+    .modal-content {
+        border-radius: 20px !important;
+    }
+    .modal-header {
+        padding: 1.5rem 0rem !important;
+        border-bottom: 1px solid #CDCDCD !important;
+    }
+    .modal .modal-header .modal-title {
+        color: #355594 !important;
+    }
+    .modal-header > .close {
+        font-size: 3rem !important;
+    }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;
     }

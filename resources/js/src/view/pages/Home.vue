@@ -12,7 +12,7 @@
             <!-- Banner Top section start here -->
             <b-row align-h="center" align-v="center">
                 <b-col cols="12">
-                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 84%;margin: auto; margin-top: 11%;">
+                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 80%;margin: auto; margin-top: 8%;">
                         <!-- Primary Banner Text Image -->
                         <b-col cols="12" class="px-md-0">
                             <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="" style="width: 100%;display:block;margin:auto" />
@@ -129,7 +129,7 @@
                         <div class="ellipse-12"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-12" /></div>
                         <div class="ellipse-13"><img src="/media/custome/circle/ellipse-10.png" alt="circle-image" id="" class="circle-image-13" /></div>
                         <b-col cols="12" class="">
-                        `    <div>
+                            <div>
                                 <h2 class="section-title mb-4">Making Best, Even Better.</h2>
                                 <h6 class="section-sub-title mb-16">Your partner for smarter, faster operations and freight solutions.</h6>
                             </div>
@@ -222,9 +222,9 @@
                 count2: 0,
                 count3: 0,
                 targetCounts: {
-                    count1: 100,
+                    count1: 1000,
                     count2: 10,
-                    count3: 100,
+                    count3: 1000,
                 },
                 hasAnimated: {
                     count1: false,
@@ -377,9 +377,11 @@
 
                 const interval = setInterval(() => {
                     if (this[key] < target) {
-                    this[key] = Math.min(this[key] + increment, target); // Increment count, cap at target
-                    } else {
-                    clearInterval(interval);
+                        this[key] = Math.min(this[key] + increment, target); // Increment count, cap at target
+                    } 
+                    else
+                    {
+                        clearInterval(interval);
                     }
                 }, 16);
             },
@@ -402,6 +404,7 @@
             // Method to check visibility periodically
             checkVisibility() {
                 if (!this.hasAnimated.count1 && this.isElementInViewport(this.$refs.countSection1)) {
+                    console.log(Intl.NumberFormat('en-US').format(this.targetCounts.count1));
                     this.animateCount(this.targetCounts.count1, "count1");
                     this.hasAnimated.count1 = true;
                 }
@@ -599,6 +602,7 @@ hr {
     margin-top: -32%;
     font-size: 16px;
     font-weight: 400;
+    font-style: italic;
     line-height: 25px;
     color: #4A5568;
     font-family: 'Inter', sans-serif !important;
@@ -655,8 +659,8 @@ hr {
     stroke: #355594;
 }
 .affiliation {
-    font-size: 2rem;
-    font-weight: 500;
+    font-size: 32px;
+    font-weight: 600;
     line-height: 71px;
     color: #355594;
     text-align: center;
@@ -920,10 +924,10 @@ hr {
         margin-top: 18%;
     }
     .banner-image {
-        margin-top: 10%;
+        margin-top: 11%;
     }
     .exp-btn {
-        gap: 38px;
+        gap: 27px;
     }
     .banner-image-container {
         margin-top: -15%;
@@ -960,7 +964,7 @@ hr {
 /* For Medium Screens (md - ≥768px) */
 @media (min-width: 768px) and (max-width: 991px) {
     .banner-description {
-        margin-top: 0%;
+        margin-top: 10%;
     }
     .ellipse-1 {
         left: 90%;
@@ -1095,6 +1099,22 @@ hr {
         font-size: 18px;
         padding: 14px 12px;
         line-height: 24px;
+    }
+}
+
+@media (min-width: 880px) and (max-width: 922px) {
+.banner-image {
+        margin-top: -10%;
+    }
+}
+@media (min-width: 840px) and (max-width: 880px) {
+.banner-image {
+        margin-top: -13%;
+    }
+}
+@media (min-width: 768px) and (max-width: 840px) {
+.banner-image {
+        margin-top: -16%;
     }
 }
 

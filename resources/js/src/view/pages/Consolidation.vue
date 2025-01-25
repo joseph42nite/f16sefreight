@@ -31,7 +31,7 @@
                             </div>
                         </b-col>
                         <!-- Draft model code Start here -->
-                        <b-modal id="modal-draft" title="Activity" :hide-footer="true" ok-only>
+                        <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
                             <div class="d-block">
                                 <b-row class="mt-5">
                                     <b-col cols="auto">
@@ -1396,6 +1396,19 @@ th {
 } 
 </style>
 <style>
+    .modal-content {
+        border-radius: 20px !important;
+    }
+    .modal-header {
+        padding: 1.5rem 0rem !important;
+        border-bottom: 1px solid #CDCDCD !important;
+    }
+    .modal .modal-header .modal-title {
+        color: #355594 !important;
+    }
+    .modal-header > .close {
+        font-size: 3rem !important;
+    }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;
     }

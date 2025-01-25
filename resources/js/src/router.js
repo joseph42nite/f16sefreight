@@ -28,27 +28,32 @@ export default new Router({
           path: 'edit-airway-bill/:id?',
           name: 'EditAirwayBill',
           component: () =>import("@/view/pages/WebDocCopy"),
+          meta: { userType: 'user' }
           // component: () => import("@/view/pages/WebDoc"),
         },
         {
           name: "House Way Bill",
           path: "house-way-bill",
           component: () =>import("@/view/pages/HouseWayBill"),
+          meta: { userType: 'user' }
         },
         {
           name: "Consolidation",
           path: "/consolidation",
           component: () =>import("@/view/pages/Consolidation"),
+          meta: { userType: 'user' }
         },
         {
           path: '/edit-houseway-bill/:id?',
           name: 'EditHousewayBill',
           component: () => import("@/view/pages/HouseWayBill"),
+          meta: { userType: 'user' }
         },
         {
           name: "Message Log",
           path: "/message-log",
           component: () =>import("@/view/pages/MessageLog"),
+          meta: { userType: 'user' }
         },
         {
           name: "Test",

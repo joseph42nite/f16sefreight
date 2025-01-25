@@ -4321,7 +4321,7 @@ export default {
 
 <style scoped>
 .body-color {
-    background: linear-gradient(180deg, #D0E6F8 2%, #FFFFFF 9%);
+    background: linear-gradient(180deg, #D0E6F8 3%, #FFFFFF 9%);
 }
 header {
     width: 100%;

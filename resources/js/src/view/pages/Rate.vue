@@ -1,193 +1,199 @@
 <template>
     <b-container fluid class="main-container">
         <Header></Header>
-        <b-container>
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12">
+        <div class="d-flex">
+            <SideBar></SideBar>
+            <div style="background-color:#fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
+                <b-container fluid>
                     <b-row align-h="center" align-v="center">
-                        <!-- FOCUS AKASH LOGO SECTION -->
-                        <b-col cols="12">
-                            <div class="text-center my-8 my-md-16">
-                                <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="350" height="50" class="img-fluid"/>
-                                <!-- <a href="javascript:void(0)" @click="report_popup=true">Report here</a> -->
-                            </div>
-                        </b-col>
-                        <!-- FORM INPUTS SECTION START HERE -->
                         <b-col cols="12">
                             <b-row align-h="center" align-v="center">
-                                <b-col cols="12" sm="6" md="3">
-                                    <div class="my-4">
-                                        <label for="dist_form">Origin</label>
-                                        <input type="text" v-model="search_form.from" placeholder="Search source" class="form-control" readonly />
-                                        <!-- <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
-                                            <input type="text" v-model="searchQuery_from" placeholder="Search source" id="from_id" class="form-control">
-                                            <div v-if="isDropdownOpen_from" class="dropdown-options">
-                                                <div v-for="(item, index) in filteredLocations_from" :key="index" @click="selectOption_from(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                                <!-- FOCUS AKASH LOGO SECTION -->
+                                <b-col cols="12">
+                                    <div class="text-center my-8 my-md-16">
+                                        <img src="/media/custome/FocusAkash.png" alt="aakash logo" width="350" height="50" class="img-fluid"/>
+                                        <!-- <a href="javascript:void(0)" @click="report_popup=true">Report here</a> -->
+                                    </div>
+                                </b-col>
+                                <!-- FORM INPUTS SECTION START HERE -->
+                                <b-col cols="12">
+                                    <b-row align-h="center" align-v="center">
+                                        <b-col cols="12" sm="6" md="3">
+                                            <div class="my-4">
+                                                <label for="dist_form">Origin</label>
+                                                <input type="text" v-model="search_form.from" placeholder="Search source" class="form-control" readonly />
+                                                <!-- <div class="custom-dropdown" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                                                    <input type="text" v-model="searchQuery_from" placeholder="Search source" id="from_id" class="form-control">
+                                                    <div v-if="isDropdownOpen_from" class="dropdown-options">
+                                                        <div v-for="(item, index) in filteredLocations_from" :key="index" @click="selectOption_from(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                                                    </div>
+                                                </div> -->
                                             </div>
-                                        </div> -->
-                                    </div>
-                                </b-col>
-                                <b-col cols="12" sm="6" md="3">
-                                    <div class="my-4">
-                                        <label for="dist_form">Destination</label>
-                                        <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
-                                            <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control" autocomplete="off">
-                                            <div v-if="isDropdownOpen_to" class="dropdown-options">
-                                                <div v-for="(item, index) in filteredLocations_to" :key="index" @click="selectOption_to(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                                        </b-col>
+                                        <b-col cols="12" sm="6" md="3">
+                                            <div class="my-4">
+                                                <label for="dist_form">Destination</label>
+                                                <div class="custom-dropdown" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                                                    <input type="text" v-model="searchQuery_to" placeholder="Search destination" id="from_id" class="form-control" autocomplete="off">
+                                                    <div v-if="isDropdownOpen_to" class="dropdown-options">
+                                                        <div v-for="(item, index) in filteredLocations_to" :key="index" @click="selectOption_to(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </b-col>
+                                        <b-col cols="12" sm="6" md="3">
+                                            <div class="my-4">
+                                                <label for="dist_form">Weight in Kgs</label>
+                                                <input type="text" @keyup="isNumber()" class="form-control" placeholder="Enter quantity"
+                                                    v-model="search_form.quantity" :readonly="search_form.selected_quantity != 'custom'" />
+                                                <span class="err_cls" id="quantity_msg"></span>
+                                            </div>
+                                        </b-col>
+                                        <b-col cols="12" sm="6" md="3">
+                                            <div class="my-4">
+                                                <label for="dist_form">Slab</label>
+                                                <select name="" id="selected_quantity_1" class="form-control" v-model="search_form.selected_quantity"
+                                                    @change="check_rate_type()">
+                                                    <option value="custom">Custom</option>
+                                                    <option value="Minimum">Minimum</option>
+                                                    <option value="Normal">Normal</option>
+                                                    <option value="all">All Rate</option>
+                                                </select>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
                                 </b-col>
-                                <b-col cols="12" sm="6" md="3">
-                                    <div class="my-4">
-                                        <label for="dist_form">Weight in Kgs</label>
-                                        <input type="text" @keyup="isNumber()" class="form-control" placeholder="Enter quantity"
-                                            v-model="search_form.quantity" :readonly="search_form.selected_quantity != 'custom'" />
-                                        <span class="err_cls" id="quantity_msg"></span>
-                                    </div>
-                                </b-col>
-                                <b-col cols="12" sm="6" md="3">
-                                    <div class="my-4">
-                                        <label for="dist_form">Slab</label>
-                                        <select name="" id="selected_quantity_1" class="form-control" v-model="search_form.selected_quantity"
-                                            @change="check_rate_type()">
-                                            <option value="custom">Custom</option>
-                                            <option value="Minimum">Minimum</option>
-                                            <option value="Normal">Normal</option>
-                                            <option value="all">All Rate</option>
-                                        </select>
+                                <!-- RATE BUTTON SECTION -->
+                                <b-col cols="12">
+                                    <div class="my-8 text-center d-flex justify-contents-start rate-btn-container">
+                                        <button class="btn rate-btn" @click="get_rate()" id="rate_id">Rates</button>
                                     </div>
                                 </b-col>
                             </b-row>
-                        </b-col>
-                        <!-- RATE BUTTON SECTION -->
-                        <b-col cols="12">
-                            <div class="my-8 text-center d-flex justify-contents-start rate-btn-container">
-                                <button class="btn rate-btn" @click="get_rate()" id="rate_id">Rates</button>
-                            </div>
-                        </b-col>
-                    </b-row>
-                    <b-row align-h="center" align-v="center">
-                        <b-col cols="12">
-                            <div class="my-10 d-flex justify-content-start align-items-center all-in-section" v-if="!is_all_rate">
-                                <div class="d-flex align-items-center">
-                                    <input type="checkbox" size="sm" class="mr-4" style="width: 20px;" v-model="is_allin_check"/><label class="mb-0 mr-4">Overseas/ALLIN</label>
-                                </div>
-                                <input type="number" class="mx-4 all-in-amount" style="width: 140px;" v-model="allin_amount" :readonly="!is_allin_check"/>
-                                <select name="profit_type" id="profit_type" class="mx-4 all-in-currency" style="height: 38px;" v-model="selected_currency" @change="get_allin_amount()">
-                                    <option v-for="(item, index) in currency_rate" :key="index" :value="item.currency">{{item.currency}} (<span>{{item.rate}}</span>)</option>
-                                </select>
-                            </div>
-                        </b-col>
-                        <b-col cols="12" md="8">
-                            <div class="rate-area p-10">
-                                <div class="sticky-div px-6 py-2">
-                                    <div style="justify-content: space-between; display: flex; white-space: nowrap;">
-                                        <div class="d-flex">
-                                            <input type="number" v-model="extra_comission" placeholder="Enter profit in INR" style="width: 40%;" v-if="!is_all_rate" />
-                                            <select name="profit_type" id="profit_type" class="mx-3" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
-                                                <option value="total">Total</option>
-                                                <option value="per_kg">Per kg</option>
-                                            </select>
-                                            <span @click="extraComission()" class="custom-btn" v-if="!is_all_rate" style="background: #355594; padding: 5px 5px;">Add profit</span>
+                            <b-row align-h="center" align-v="center">
+                                <b-col cols="12">
+                                    <div class="my-10 d-flex justify-content-start align-items-center all-in-section" v-if="!is_all_rate">
+                                        <div class="d-flex align-items-center">
+                                            <input type="checkbox" size="sm" class="mr-4" style="width: 20px;" v-model="is_allin_check"/><label class="mb-0 mr-4">Overseas/ALLIN</label>
                                         </div>
-                                        <span @click="copyToClipboard()" class="export-btn custom-btn" v-if="!is_all_rate">Export</span>
+                                        <input type="number" class="mx-4 all-in-amount" style="width: 140px;" v-model="allin_amount" :readonly="!is_allin_check"/>
+                                        <select name="profit_type" id="profit_type" class="mx-4 all-in-currency" style="height: 38px;" v-model="selected_currency" @change="get_allin_amount()">
+                                            <option v-for="(item, index) in currency_rate" :key="index" :value="item.currency">{{item.currency}} (<span>{{item.rate}}</span>)</option>
+                                        </select>
                                     </div>
-                                    <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
-                                        :sheet-name="'rate'" v-if="is_all_rate">
-                                        <span class="font-weight-bold text-dark" style="padding: 5px; ">Export Rate</span>
-                                    </vue-excel-xlsx>
-                                </div>
-                                <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
-                                    primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
-                                    @filtered="onFiltered" v-if="is_all_rate">
-                                </b-table>
-                                <table class="table mt-2" v-else>
-                                    <thead>
-                                        <tr style="white-space: nowrap;">
-                                            <th>#</th>
-                                            <th>Airline</th>
-                                            <th>Product Type</th>
-                                            <th>Slab</th>
-                                            <th>Price</th>
-                                            <th>Added Profit</th>
-                                            <th>Offline/Online</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }" v-if="rate.my_rate[Object.keys(rate.my_rate)[0]]">
-                                            <td>
-                                                <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
-                                            </td>
-                                            <td> {{ rate.carrier_code +"(" + rate.carrier_prefix +")"}}</td>
-                                            <td>{{ rate.product_name }}</td>
-                                            <td>
-                                                {{ Object.keys(rate.my_rate)[0] }}
-                                            </td>
-                                            <td>
-                                                {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
-                                            </td>
-                                            <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
-                                                {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
-                                            </td>
-                                            <td>{{rate.online_offline}}</td>
-                                        </tr>
-                                        <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                </b-col>
+                                <b-col cols="12" md="8">
+                                    <div class="rate-area p-10">
+                                        <div class="sticky-div px-6 py-2">
+                                            <div style="justify-content: space-between; display: flex; white-space: nowrap;">
+                                                <div class="d-flex">
+                                                    <input type="number" v-model="extra_comission" placeholder="Enter profit in INR" style="width: 40%;" v-if="!is_all_rate" />
+                                                    <select name="profit_type" id="profit_type" class="mx-3" v-model="profit_type" @change="extra_comission = 0; last_extra_comission = 0; final_extra_comission = 0; get_rate();" v-if="!is_all_rate">
+                                                        <option value="total">Total</option>
+                                                        <option value="per_kg">Per kg</option>
+                                                    </select>
+                                                    <span @click="extraComission()" class="custom-btn" v-if="!is_all_rate" style="background: #355594; padding: 5px 5px;">Add profit</span>
+                                                </div>
+                                                <span @click="copyToClipboard()" class="export-btn custom-btn" v-if="!is_all_rate">Export</span>
+                                            </div>
+                                            <vue-excel-xlsx :data="items" :columns="fields" :file-name="'rate'" :file-type="'xlsx'"
+                                                :sheet-name="'rate'" v-if="is_all_rate">
+                                                <span class="font-weight-bold text-dark" style="padding: 5px; ">Export Rate</span>
+                                            </vue-excel-xlsx>
+                                        </div>
+                                        <b-table :bordered="true" responsive :items="items" :fields="fields" style="white-space: nowrap"
+                                            primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage"
+                                            @filtered="onFiltered" v-if="is_all_rate">
+                                        </b-table>
+                                        <table class="table mt-2" v-else>
+                                            <thead>
+                                                <tr style="white-space: nowrap;">
+                                                    <th>#</th>
+                                                    <th>Airline</th>
+                                                    <th>Product Type</th>
+                                                    <th>Slab</th>
+                                                    <th>Price</th>
+                                                    <th>Added Profit</th>
+                                                    <th>Offline/Online</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(rate, index) in rate_data" :key="index" :class="{ 'selected-row': selectedRows.includes(index) }" v-if="rate.my_rate[Object.keys(rate.my_rate)[0]]">
+                                                    <td>
+                                                        <input type="checkbox" @change="selcted_column(index,rate.carrier_code)" :id="'selected_' + index" />
+                                                    </td>
+                                                    <td> {{ rate.carrier_code +"(" + rate.carrier_prefix +")"}}</td>
+                                                    <td>{{ rate.product_name }}</td>
+                                                    <td>
+                                                        {{ Object.keys(rate.my_rate)[0] }}
+                                                    </td>
+                                                    <td>
+                                                        {{ rate.my_rate[Object.keys(rate.my_rate)[0]] }}
+                                                    </td>
+                                                    <td :style="{ color: selectedRows.includes(index) ? 'black' : '#ee5253', fontWeight: selectedRows.includes(index) ? '700' : 'normal' }">
+                                                        {{ rate.my_rate_2[Object.keys(rate.my_rate_2)[0]] }}
+                                                    </td>
+                                                    <td>{{rate.online_offline}}</td>
+                                                </tr>
+                                                <tr v-if="is_rate_available" style="text-align: center;"><td colspan="6">No data available</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </b-col>
+                                <b-col cols="12" md="4" class="my-10">
+                                    <div class="rate-area p-8">
+                                        <div>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FSC :</span> {{ ams_arr.fsc }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">SCC :</span> {{ ams_arr.scc }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">XRAY :</span> {{ ams_arr.xray }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MISC :</span> {{ ams_arr.misc }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">CTG :</span> {{ ams_arr.ctg }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">AWB FEE :</span> {{ ams_arr.awb_fee }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FE :</span> {{ ams_arr.fe }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MAWB :</span> {{ ams_arr.mawb }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">HAWB :</span> {{ ams_arr.hawb }}</span>
+                                            <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">DG FEE :</span> {{ ams_arr.dg_fee }}</span>
+                                        </div>
+                                        <hr>
+                                        <div v-if="user_notice">
+                                            <h3 class="mr-3 text-center" style="color: #cf5244ff;">Notification</h3>
+                                            <h5 v-html="user_notice"></h5>
+                                        </div>
+                                    </div>
+                                </b-col>
+                                <b-modal id="login-modal" v-model="report_popup" :hide-footer="true">
+                                    <div class="w-100">
+                                        <div class="form-group">
+                                            <label for="report_title">Report title</label>
+                                            <input type="text" id="report_title" v-model="report_arr.title" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="report_description">Report description</label>
+                                            <textarea name="report_description" id="report_description" cols="30" rows="3" v-model="report_arr.description" class="form-control"></textarea>
+                                        </div>
+                                        <div class="text-center">
+                                            <button class="btn font-weight-bolder py-3 btn1" @click="submit_report()">Submit</button>
+                                        </div>
+                                    </div>
+                                </b-modal>
+                            </b-row>
                         </b-col>
-                        <b-col cols="12" md="4" class="my-10">
-                            <div class="rate-area p-8">
-                                <div>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FSC :</span> {{ ams_arr.fsc }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">SCC :</span> {{ ams_arr.scc }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">XRAY :</span> {{ ams_arr.xray }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MISC :</span> {{ ams_arr.misc }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">CTG :</span> {{ ams_arr.ctg }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">AWB FEE :</span> {{ ams_arr.awb_fee }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">FE :</span> {{ ams_arr.fe }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">MAWB :</span> {{ ams_arr.mawb }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">HAWB :</span> {{ ams_arr.hawb }}</span>
-                                    <span class="d-flex"><span class="d-block" style="width:80px; font-weight: 700;">DG FEE :</span> {{ ams_arr.dg_fee }}</span>
-                                </div>
-                                <hr>
-                                <div v-if="user_notice">
-                                    <h3 class="mr-3 text-center" style="color: #cf5244ff;">Notification</h3>
-                                    <h5 v-html="user_notice"></h5>
-                                </div>
-                            </div>
-                        </b-col>
-                        <b-modal id="login-modal" v-model="report_popup" :hide-footer="true">
-                            <div class="w-100">
-                                <div class="form-group">
-                                    <label for="report_title">Report title</label>
-                                    <input type="text" id="report_title" v-model="report_arr.title" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="report_description">Report description</label>
-                                    <textarea name="report_description" id="report_description" cols="30" rows="3" v-model="report_arr.description" class="form-control"></textarea>
-                                </div>
-                                <div class="text-center">
-                                    <button class="btn font-weight-bolder py-3 btn1" @click="submit_report()">Submit</button>
-                                </div>
-                            </div>
-                        </b-modal>
                     </b-row>
-                </b-col>
-            </b-row>
-            <!-- <div id="whatsapp-float">
-                <a :href="'//api.whatsapp.com/send?phone=918660320019&text=Name: ' + current_user.name + '%0AEmail: ' + current_user.email + '%0AType your message:%0A'" target="_blank" rel="noopener noreferrer">
-                    <img src="media/custome/w4.png" alt="WhatsApp">
-                </a>
-            </div>   -->
-        </b-container>
+                </b-container>
+            </div>
+        </div>
+        <!-- <div id="whatsapp-float">
+            <a :href="'//api.whatsapp.com/send?phone=918660320019&text=Name: ' + current_user.name + '%0AEmail: ' + current_user.email + '%0AType your message:%0A'" target="_blank" rel="noopener noreferrer">
+                <img src="media/custome/w4.png" alt="WhatsApp">
+            </a>
+        </div>   -->
     </b-container>
 </template>
 <script>
 import ApiService from "@/core/services/api.service";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import Header from "@/view/layout/Header.vue";
+import SideBar from "../layout/SideBar.vue";
 import { mapGetters } from "vuex";
 export default {
     name: "Rate",
@@ -257,7 +263,8 @@ export default {
         };
     },
     components: {
-        Header
+        Header,
+        SideBar
     },
     methods: {
         get_allin_amount(){
@@ -976,7 +983,7 @@ export default {
 </script>
 <style>
     .main-container {
-        background: linear-gradient(180deg, #D0E6F8 0%, #FFFFFF 60%);
+        background: linear-gradient(180deg, #D0E6F8 10%, #FFFFFF 25%);
         position: relative;
     }
     label {

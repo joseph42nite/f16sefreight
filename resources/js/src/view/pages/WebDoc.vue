@@ -304,7 +304,7 @@
                                             </div> -->
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-shipper" class="form-control-sm col-form-label">
                                                 <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
-                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control" autocomplete="off"
+                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper1" id="shipper" class="form-control" autocomplete="off"
                                                     :class="{ 'is-invalid': form.errors.has('ship_name') }"
                                                     @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
 
@@ -326,9 +326,9 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3" label="">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
-                                                    v-model="form.shipper_address.ship_name"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
-                                                <has-error :form="form" field="ship_name"></has-error>
+                                                    v-model="form.shipper_address.ship_name_2"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_name_2') }"></b-form-input>
+                                                <has-error :form="form" field="ship_name_2"></has-error>
                                             </b-form-group>
                                         </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -472,9 +472,9 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-16"
-                                                    v-model="form.consignee_address.cons_name"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"></b-form-input>
-                                                <has-error :form="form" field="cons_name"></has-error>
+                                                    v-model="form.consignee_address.cons_name_2"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_name_2') }"></b-form-input>
+                                                <has-error :form="form" field="cons_name_2"></has-error>
                                             </b-form-group>
                                         </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -1710,9 +1710,9 @@
                                                 content-cols-lg="auto" label-for="input-horizontal"
                                                 class="form-control-sm col-form-label mr-3" label="">
                                                 <b-form-input id="input-horizontal" class="form-control-sm ml-lg-30"
-                                                    v-model="form.also_notify_address.also_name"
-                                                    :class="{ 'is-invalid': form.errors.has('also_name') }"></b-form-input>
-                                                <has-error :form="form" field="also_name"></has-error>
+                                                    v-model="form.also_notify_address.also_name_2"
+                                                    :class="{ 'is-invalid': form.errors.has('also_name_2') }"></b-form-input>
+                                                <has-error :form="form" field="also_name_2"></has-error>
                                             </b-form-group>
                                         </div>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -2383,6 +2383,7 @@ export default {
                 },
                 shipper_address: {
                     ship_name: '',
+                    ship_name_2: '',
                     ship_account: '',
                     ship_address: '',
                     ship_address_line_2: '',
@@ -2398,6 +2399,7 @@ export default {
                 },
                 consignee_address: {
                     cons_name: '',
+                    cons_name_2: '',
                     cons_account: '',
                     cons_address: '',
                     cons_address_line_2: '',
@@ -2413,6 +2415,7 @@ export default {
                 },
                 also_notify_address: {
                     also_name: '',
+                    also_name_2: '',
                     also_address: '',
                     also_address_line_2: '',
                     also_city: '',
@@ -2464,13 +2467,13 @@ export default {
                     extra_print: null,
                 },
 
-                carr_namr: '',
-                carr_prefix: '',
-                carr_address: '',
-                carr_city: '',
-                carr_post_code: '',
-                carr_state: '',
-                carr_country: '',
+                // carr_namr: '',
+                // carr_prefix: '',
+                // carr_address: '',
+                // carr_city: '',
+                // carr_post_code: '',
+                // carr_state: '',
+                // carr_country: '',
 
                 payment_info:{
                     type_of_payment: '',
@@ -2912,6 +2915,7 @@ export default {
             } else {
                 this.form.shipper_address = {
                 ship_name: '',
+                ship_name_2: '',
                 ship_account: '',
                 ship_address: '',
                 ship_city: '',
@@ -2931,6 +2935,7 @@ export default {
             } else {
                 this.form.consignee_address = {
                 cons_name: '',
+                cons_name_2: '',
                 cons_account: '',
                 cons_address: '',
                 cons_city: '',
@@ -2950,6 +2955,7 @@ export default {
             } else {
                 this.form.also_notify_address = {
                 also_name: '',
+                also_name_2: '',
                 also_account: '',
                 also_address: '',
                 also_city: '',
@@ -3067,14 +3073,12 @@ export default {
                     };
                     this.form.entries = [parsedEntry]; 
                     // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info); 
-                    console.log("Parsed entry:", parsedEntry);
                     // this.consignment_list = this.existingData.consignment_data;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
                 } else {
                     // console.error('existingData is not an array:', this.existingData);
-                    console.log("Add mode activated");
                 }
         },
         // beforeRouteEnter(to, from) {

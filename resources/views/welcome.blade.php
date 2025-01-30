@@ -7,7 +7,7 @@
     <meta name="description" content="F16s E Freight Solutions (F16s EFS) revolutionizes freight forwarding with instant access to air freight export rates. Our platform also offers FWB/FHL empowering forwarders with digital efficiency.">
     <!-- <meta name="description" content="F16s E Freight Solutions (F16s EFS) revolutionizes freight forwarding with instant access to online cargo export rates. Our platform offers streamlined e-airway bill updation services, empowering forwarders with digital efficiency. Explore our solutions for enhanced logistics performance today!"> -->
     <title>F16s E-Freight Solutions</title>
-    <link rel="icon" href="/media/custome/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
     <link rel="stylesheet" href="{{ asset('/css/app.css') }}">
 </head>
 <!-- Google tag (gtag.js) -->

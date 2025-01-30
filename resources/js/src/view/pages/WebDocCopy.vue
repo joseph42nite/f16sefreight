@@ -225,8 +225,8 @@
                                                             <span>&nbsp;</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_name" :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
-                                                    <has-error :form="form" field="ship_name"></has-error>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_name_2"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
                                                     <template #label>
@@ -382,8 +382,8 @@
                                                             <span>&nbsp;</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name" :class="{ 'is-invalid': form.errors.has('cons_name') }"></b-form-input>
-                                                    <has-error :form="form" field="cons_name"></has-error>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_name_2"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
                                                     <template #label>
@@ -1649,9 +1649,9 @@
                                                                                 </div>
                                                                             </template>
                                                                             <b-form-input style="width: 315px" id="input-horizontal" class="form-control-sm"
-                                                                                v-model="form.also_notify_address.also_name"
-                                                                                :class="{ 'is-invalid': form.errors.has('also_name') }"></b-form-input>
-                                                                            <has-error :form="form" field="also_name"></has-error>
+                                                                                v-model="form.also_notify_address.also_name_2"
+                                                                                :class="{ 'is-invalid': form.errors.has('also_name_2') }"></b-form-input>
+                                                                            <has-error :form="form" field="also_name_2"></has-error>
                                                                         </b-form-group>
                                                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                                             content-cols-lg="auto" label-for="input-horizontal"
@@ -2436,11 +2436,27 @@
                                             <span style="color: green;">-Pass</span>
                                         </span>
                                     </div>
+                                    <div class="d-flex justify-content-between">
+                                        <div v-if="is_generate_pdf">
+                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-awb-pdf')">
+                                                <p class="mb-0 ml-2">e-AWB Pdf file</p>
+                                            </a>
+                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-awb-pdf')">
+                                                <p class="mb-0 ml-2">Multipage e-AWB Pdf</p>
+                                            </a>
+                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-awb-pdf')">
+                                                <p class="mb-0 ml-2">Multipage e-AWB Pdf with back pages</p>
+                                            </a>
+                                        </div>
+                                        <div v-if="main_error_msg" class="text-danger text-right mb-3">
+                                            <div v-html="main_error_msg"></div>
+                                        </div>
+                                    </div>
                                     <div class="d-flex justify-content-end">
                                         <!-- <b-button class="mr-2" @click="generateAwbPDF" -->
-                                        <b-button class="mr-2" @click="() => handleSaveAndGeneratePDF()"
+                                        <b-button class="mr-2" @click="is_generate_pdf=1"
                                         style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
-                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no)"
+                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no);"
                                         style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
                                         <b-button class="mr-2"
                                         style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
@@ -2477,6 +2493,7 @@ export default {
                 },
                 shipper_address: {
                     ship_name: '',
+                    ship_name_2: '',
                     ship_account: '',
                     ship_address: '',
                     ship_address_line_2: '',
@@ -2492,6 +2509,7 @@ export default {
                 },
                 consignee_address: {
                     cons_name: '',
+                    cons_name_2: '',
                     cons_account: '',
                     cons_address: '',
                     cons_address_line_2: '',
@@ -2507,6 +2525,7 @@ export default {
                 },
                 also_notify_address: {
                     also_name: '',
+                    also_name_2: '',
                     also_address: '',
                     also_address_line_2: '',
                     also_city: '',
@@ -2695,7 +2714,7 @@ export default {
             showShipper: false,
             showConsignee: false,
             showCalculationTable: false,
-            generatePDFAfterSave: false,
+            generatePDFAfterSave: '',
             editIndex: null,
             edit_entry_index: null,
             countries: [],
@@ -2821,6 +2840,8 @@ export default {
                 { text: "Participant Group", value: "1" },
             ],
             logoSrc: "/media/custome/logo-1.png",
+            main_error_msg: "",
+            is_generate_pdf:0,
         };
     },
     
@@ -2847,22 +2868,20 @@ export default {
         //     console.log("skfnjfer",pdfUrl);
         //     window.open(pdfUrl, '_blank');
         // },
-        generateAwbPDF() {
+        generateAwbPDF(pdf_generate_type) {
             if (!this.existingData || !this.existingData.id) {
                 console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
             }
-            const pdfUrl = `/download-awb-pdf/${this.existingData.id}`;
+            const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
             window.open(pdfUrl, '_blank');
         },
-        handleSaveAndGeneratePDF() {
-            this.generatePDFAfterSave = true;
+        handleSaveAndGeneratePDF(pdf_generate_type) {
+            this.generatePDFAfterSave = pdf_generate_type;
             const result = this.onSubmit() || Promise.resolve({});
             result.then(response => {
-                console.log('Save response:', response);
-                console.log('Response Data:', response.data);
                 if (response.data && response.data.data && response.data.data.id) {
-                    this.generateAwbPDF();
+                    // this.generateAwbPDF(pdf_generate_type);
                 } else {
                     console.error('ID is missing in the response data');
                 }
@@ -2991,6 +3010,7 @@ export default {
             } else {
                 this.form.shipper_address = {
                 ship_name: '',
+                ship_name_2: '',
                 ship_account: '',
                 ship_address: '',
                 ship_city: '',
@@ -3010,6 +3030,7 @@ export default {
             } else {
                 this.form.consignee_address = {
                 cons_name: '',
+                cons_name_2: '',
                 cons_account: '',
                 cons_address: '',
                 cons_city: '',
@@ -3029,6 +3050,7 @@ export default {
             } else {
                 this.form.also_notify_address = {
                 also_name: '',
+                also_name_2: '',
                 also_account: '',
                 also_address: '',
                 also_city: '',
@@ -3043,6 +3065,8 @@ export default {
         // },
         onSubmit() {
             console.log('Current mode:', this.mode);
+            this.main_error_msg='';
+            // this.is_generate_pdf=0;
             if (this.mode === 'add') {
                 this.form.post('/create-webdoc')
                 .then(response => {
@@ -3051,7 +3075,7 @@ export default {
                         this.existingData = response.data.data.first_box.original.data;
                         console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
-                            this.generateAwbPDF();
+                            this.generateAwbPDF(this.generatePDFAfterSave);
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {
@@ -3059,7 +3083,16 @@ export default {
                     }
                 })
                 .catch(error => {
-                    console.error('Add Failed:', error);
+                    var main_error_msg='';
+                    if (error.response) {
+                        if (error.response.status === 422) {
+                            const errors=error.response.data.errors
+                            for (const field in errors) {
+                                main_error_msg+=`${errors[field][0]}<br>`;
+                            }
+                        }
+                    }
+                    this.main_error_msg=main_error_msg;
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
@@ -3072,7 +3105,7 @@ export default {
                         this.existingData = response.data.data.first_box.original.data;
                         console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
-                            this.generateAwbPDF();
+                            this.generateAwbPDF(this.generatePDFAfterSave);
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {
@@ -3082,7 +3115,16 @@ export default {
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
-                    console.error('Update Failed:', error);
+                    var main_error_msg='';
+                    if (error.response) {
+                        if (error.response.status === 422) {
+                            const errors=error.response.data.errors
+                            for (const field in errors) {
+                                main_error_msg+=`${errors[field][0]}<br>`;
+                            }
+                        }
+                    }
+                    this.main_error_msg=main_error_msg;
                 });
             }
         },

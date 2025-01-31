@@ -189,7 +189,6 @@ export default new Router({
       path: "/terms-conditions",
       component: () =>import("@/view/pages/Terms-Condition"),
     },
-    
     // {
     //   name: "Web Doc",
     //   path: "/web-doc",
@@ -229,5 +228,5 @@ export default new Router({
       name: "404",
       component: () => import("@/view/pages/error/Error-1.vue")
     }
-  ]
+  ],
 });

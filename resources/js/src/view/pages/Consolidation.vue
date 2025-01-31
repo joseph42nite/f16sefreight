@@ -1,6 +1,8 @@
 <template>
     <div class="body-color">
         <div class="container-fluid">
+            <!-- Include Page Loader -->
+            <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
             <Header></Header>
             <div class="d-flex">
@@ -53,25 +55,27 @@
                                 <b-row class="mt-5">
                                     <b-col>
                                         <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
-                                            <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
-                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                    <p @click="navigate" class="mb-0">
-                                                        {{ item.awb_code }}-{{ item.awb_no }} 
-                                                        ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
-                                                    </p>
-                                            </router-link>
-                                            </a>
-                                            <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                        <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + item.awb_code+'/' + item.awb_no" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
+                                            <div class="py-2">
+                                                <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
+                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                        <p @click="navigate" class="mb-0">
+                                                            {{ item.awb_code }}-{{ item.awb_no }} 
+                                                            ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                        </p>
                                                 </router-link>
-                                            </a>
-                                            <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                        <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + item.id" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
-                                                </router-link>
-                                            </a>
-                                            <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                </a>
+                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                            <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + item.awb_code+'/' + item.awb_no" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
+                                                    </router-link>
+                                                </a>
+                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
+                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + item.id" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
+                                                    </router-link>
+                                                </a>
+                                                <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                            </div>
                                         </div>
                                     </b-col>
                                 </b-row>
@@ -559,6 +563,7 @@ import SideBar from "../layout/SideBar.vue";
 import Header from "../layout/Header.vue";
 import ApiService from "@/core/services/api.service";
 import "vue2-datepicker/index.css";
+// import PageLoader from "../components/PageLoader.vue";
 export default {
     data() {
         return {
@@ -1092,7 +1097,8 @@ export default {
         Datepicker,
         DatePicker,
         Header,
-        SideBar
+        SideBar,
+        // PageLoader
     },
 };
 </script>
@@ -1300,14 +1306,14 @@ th {
 .custom-link {
     display: block;
     margin-bottom: 0.5rem;
-    color: red;
+    color: #4C4C4C;
     text-decoration: none;
 }
 
 .custom-link:hover {
-    color: #2637a8;
-    text-decoration: underline #2637a8 !important;
-    text-decoration-color: #2637a8;
+    /* color: #2637a8; */
+    text-decoration: underline #4C4C4C !important;
+    text-decoration-color: #4C4C4C;
 }
 
 .column_b {
@@ -1398,16 +1404,20 @@ th {
 <style>
     .modal-content {
         border-radius: 20px !important;
+        padding: 0rem 2rem 2rem !important;
     }
     .modal-header {
-        padding: 1.5rem 0rem !important;
+        padding: 1rem 0rem !important;
         border-bottom: 1px solid #CDCDCD !important;
     }
     .modal .modal-header .modal-title {
         color: #355594 !important;
     }
     .modal-header > .close {
-        font-size: 3rem !important;
+        font-size: 2rem !important;
+    }
+    .modal .modal-header .close:hover {
+        color: #355594 !important;
     }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;

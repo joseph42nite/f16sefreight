@@ -1,5 +1,7 @@
 <template>
     <b-container fluid class="main-container">
+        <!-- Include PageLoader -->
+         <!-- <PageLoader></PageLoader> -->
         <Header></Header>
         <div class="d-flex">
             <SideBar></SideBar>
@@ -194,6 +196,7 @@ import ApiService from "@/core/services/api.service";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import Header from "@/view/layout/Header.vue";
 import SideBar from "../layout/SideBar.vue";
+// import PageLoader from '../components/PageLoader.vue';
 import { mapGetters } from "vuex";
 export default {
     name: "Rate",
@@ -264,7 +267,8 @@ export default {
     },
     components: {
         Header,
-        SideBar
+        SideBar,
+        // PageLoader
     },
     methods: {
         get_allin_amount(){

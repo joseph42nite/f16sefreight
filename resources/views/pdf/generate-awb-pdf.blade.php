@@ -86,7 +86,7 @@
                                                 <td align="center" valign="top" width="60px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                     &nbsp;
                                                     </td>
-                                                <td align="center" valign="top" width="140px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="top" width="140px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                     {{$airWayBill->awb_code . ' - '. $airWayBill->awb_no ?? ''}}
                                                 </td>
                                             </tr>
@@ -1085,7 +1085,7 @@
                                                                                     <td align="center" valign="top" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="39px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     No. of Pieces RCP 
                                                                                                 </td>
                                                                                             </tr>

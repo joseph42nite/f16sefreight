@@ -2,6 +2,8 @@
     <!-- <div class="">
         <div class="container-fluid"> -->
         <b-container fluid class="body-color">
+            <!-- Include PageLoader -->
+            <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
             <Header></Header>
             <div class="d-flex">
@@ -56,7 +58,7 @@
                                         <b-row>
                                             <b-col>
                                                 <div v-for="item in data_items" :key="item.id">
-                                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
+                                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport" class="py-2">
                                                         <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
                                                             <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
                                                                 <p @click="navigate" class="mb-0">
@@ -65,26 +67,32 @@
                                                                 </p>
                                                             </router-link>
                                                         </a>
-                                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
-                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
-                                                            </router-link>
-                                                        </a>
-                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                    <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
-                                                            </router-link>
-                                                        </a>
-                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
-                                                            </router-link>
-                                                        </a>
-                                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
-                                                            </router-link>
-                                                        </a>
+                                                        <div class="d-flex flex-row justify-content-start">
+                                                            <div class="px-2">
+                                                                <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                        <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                                                    </router-link>
+                                                                </a>
+                                                            </div>
+                                                            <div class="px-2">
+                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                            <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                                                    </router-link>
+                                                                </a>
+                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                                                    </router-link>
+                                                                </a>
+                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                                                    </router-link>
+                                                                </a>
+                                                            </div>
+                                                        </div>
                                                         <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                                     </div>
                                                 </div>
@@ -2465,6 +2473,7 @@ import "vue2-datepicker/index.css";
 import debounce from 'lodash.debounce';
 import Header from "@/view/layout/Header.vue";
 import SideBar from "../layout/SideBar.vue";
+// import PageLoader from "../components/PageLoader.vue";
 export default {
     data() {
         return {
@@ -4314,7 +4323,8 @@ export default {
         Datepicker,
         DatePicker,
         Header,
-        SideBar
+        SideBar,
+        // PageLoader
     },
 };
 </script>
@@ -4539,14 +4549,14 @@ th {
 .custom-link {
     display: block;
     margin-bottom: 0.5rem;
-    color: red;
+    color: #4C4C4C;
     text-decoration: none;
 }
 
 .custom-link:hover {
-    color: #2637a8;
-    text-decoration: underline #2637a8 !important;
-    text-decoration-color: #2637a8;
+    /* color: #2637a8; */
+    text-decoration: underline #4C4C4C !important;
+    text-decoration-color: #4C4C4C;
 }
 
 .column_b {
@@ -4586,16 +4596,20 @@ th {
 <style>
     .modal-content {
         border-radius: 20px !important;
+        padding: 0rem 2rem 2rem !important;
     }
     .modal-header {
-        padding: 1.5rem 0rem !important;
+        padding: 1rem 0rem !important;
         border-bottom: 1px solid #CDCDCD !important;
     }
     .modal .modal-header .modal-title {
         color: #355594 !important;
     }
     .modal-header > .close {
-        font-size: 3rem !important;
+        font-size: 2rem !important;
+    }
+    .modal .modal-header .close:hover {
+        color: #355594 !important;
     }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;

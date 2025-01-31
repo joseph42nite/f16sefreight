@@ -1,6 +1,8 @@
 
 <template>
     <b-container fluid class="main-container">
+        <!-- Include PageLoader -->
+        <!-- <PageLoader></PageLoader> -->
         <!-- Include Header -->
         <Header></Header>
         <b-container>
@@ -146,6 +148,7 @@
 </template>
 <script>
     import Header from "@/view/layout/Header.vue";
+    // import PageLoader from '../components/PageLoader.vue';
     export default {
         data() {
             return {
@@ -172,7 +175,8 @@
             };
         },
         components: {
-            Header
+            Header,
+            // PageLoader
         },
     };
 </script>

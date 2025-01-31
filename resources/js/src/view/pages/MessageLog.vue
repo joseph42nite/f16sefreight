@@ -1,6 +1,8 @@
 <template>
     <div class="body-color">
         <div class="container-fluid">
+            <!-- Include Page Loader -->
+             <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
             <Header></Header>
             <div class="d-flex">
@@ -257,13 +259,15 @@
 <script>
 import Header from "../layout/Header.vue";
 import SideBar from "../layout/SideBar.vue";
+// import PageLoader from '../components/PageLoader.vue';
 export default {
     data() {
         return {}
     },
     components: {
         Header,
-        SideBar 
+        SideBar,
+        // PageLoader
     }
 }
 </script>

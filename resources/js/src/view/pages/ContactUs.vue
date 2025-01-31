@@ -1,6 +1,8 @@
 
 <template>
     <b-container fluid class="main-container">
+        <!-- Include PageLoader -->
+        <!-- <PageLoader></PageLoader> -->
         <!-- Include Header -->
         <Header></Header>
         <b-container>
@@ -422,6 +424,7 @@
 <script>
     import Header from "@/view/layout/Header.vue";
     import ApiService from "@/core/services/api.service";
+    // import PageLoader from '../components/PageLoader.vue';
     export default {
         data() {
             return {
@@ -435,7 +438,8 @@
             };
         },
         components: {
-            Header
+            Header,
+            // PageLoader
         },
     };
 </script>

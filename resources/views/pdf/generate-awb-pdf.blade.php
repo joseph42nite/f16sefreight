@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>F16s E-Freight Solutions</title>
+    <link rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
     <style>
         .routing-and-destination {
         border-bottom: 1px solid #000;

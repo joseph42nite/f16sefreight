@@ -26,16 +26,17 @@ class AirwayBill extends Controller
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $validator = Validator::make($shipper_address, [
-            'ship_name' => 'string|max:70', //required
+            'ship_name' => 'required|string|max:70',
+            'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
             'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
             'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
-            'ship_post_code' => 'nullable|regex:/^[0-9]+$/|max:35',
+            'ship_post_code' => 'nullable|max:15',
             'ship_state' => 'nullable|string|max:35',
             'ship_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
-            'ship_phone' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'ship_phone' => 'nullable|max:20',
             'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
             'ship_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
@@ -94,15 +95,16 @@ class AirwayBill extends Controller
     {
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
+            'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
             'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
-            'cons_post_code' => 'nullable|regex:/^[0-9]+$/|max:35',
+            'cons_post_code' => 'nullable|max:15',
             'cons_state' => 'nullable|string|max:35',
             'cons_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
-            'cons_phone' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'cons_phone' => 'nullable|max:20',
             'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
             'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
@@ -156,14 +158,15 @@ class AirwayBill extends Controller
     {
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
+            'also_name_2' => 'nullable|string|max:70',
             'also_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
             'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
-            'also_post_code' => 'nullable|regex:/^[0-9]+$/|max:35',
+            'also_post_code' => 'nullable|max:15',
             'also_state' => 'nullable|string|max:35',
             'also_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
-            'also_phone' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'also_phone' => 'nullable|max:20',
             'also_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
             'also_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
@@ -212,18 +215,14 @@ class AirwayBill extends Controller
     }
     private function firstBox($first_box, $id = null)
     {
-        if($first_box['consolidated_mawb'] == true){
+        if ($first_box['consolidated_mawb'] == true) {
             $first_box['consolidated_mawb'] = "true";
-        }
-        else
-        {
+        } else {
             $first_box['consolidated_mawb'] = "false";
         }
-        if($first_box['awb'] == true){
+        if ($first_box['awb'] == true) {
             $first_box['awb'] = "true";
-        }
-        else
-        {
+        } else {
             $first_box['awb'] = "false";
         }
         $validator = Validator::make($first_box, [
@@ -240,12 +239,12 @@ class AirwayBill extends Controller
         $awb_id = $first_box['awb_code'] . $first_box['awb_no'];
         // $AirwayBills = AirwayBills::find($first_box['awb_no']);
         $AirwayBills = AirwayBills::find($awb_id);
-        if($AirwayBills){
+        if ($AirwayBills) {
             // $AirwayBills->id = $awb_id;
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
-             $AirwayBills->awb = $first_box['awb'];
+            $AirwayBills->awb = $first_box['awb'];
             // dd($first_box);
             $AirwayBills->save();
             return response()->json([
@@ -269,7 +268,7 @@ class AirwayBill extends Controller
             ], 200);
         }
         // if (!isset($AirwayBills))
-          
+
         // $AirwayBills->id = $awb_id;
         // $AirwayBills->awb_no = $first_box['awb_no'];
         // $AirwayBills->awb_code = $first_box['awb_code'];
@@ -453,7 +452,7 @@ class AirwayBill extends Controller
         return "Other Charges Data saved successfully";
     }
 
-    private function paymentInformation($awb_no,$awb_code, $payment_info)
+    private function paymentInformation($awb_no, $awb_code, $payment_info)
     {
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
@@ -461,32 +460,32 @@ class AirwayBill extends Controller
             'currency' => 'nullable|string|size:3',
             // 'declear_value_carriage' => 'required|min:0.000|max:999999999999',// Either 'NVD' or a number or decimal
             'declear_value_carriage' => [
-                'required', 
+                'required',
                 function ($attribute, $value, $fail) {
                     if (!is_numeric($value) && $value !== 'NVD') {
-                        $fail($attribute.' must be a number or "NVD".');
+                        $fail($attribute . ' must be a number or "NVD".');
                     } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
-                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                        $fail($attribute . ' must be a number between 0.000 and 999999999999.');
                     }
                 }
             ],
             'declear_value_customs' => [
-                'required', 
+                'required',
                 function ($attribute, $value, $fail) {
                     if (!is_numeric($value) && $value !== 'NCV') {
-                        $fail($attribute.' must be a number or "NCV".');
+                        $fail($attribute . ' must be a number or "NCV".');
                     } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
-                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                        $fail($attribute . ' must be a number between 0.000 and 999999999999.');
                     }
                 }
             ],
             'declear_value_insurance' => [
-                'required', 
+                'required',
                 function ($attribute, $value, $fail) {
                     if (!is_numeric($value) && $value !== 'XXX') {
-                        $fail($attribute.' must be a number or "XXX".');
+                        $fail($attribute . ' must be a number or "XXX".');
                     } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
-                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                        $fail($attribute . ' must be a number between 0.000 and 999999999999.');
                     }
                 }
             ],
@@ -510,9 +509,9 @@ class AirwayBill extends Controller
         $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
         // $AirwayBills->total_charges = $payment_info['total_charges'];
         $AirwayBills->currency = $payment_info['currency'];
-        $AirwayBills->declear_value_carriage =  $payment_info['declear_value_carriage'];
-        $AirwayBills->declear_value_customs =  $payment_info['declear_value_customs'];
-        $AirwayBills->declear_value_insurance =  $payment_info['declear_value_insurance'];
+        $AirwayBills->declear_value_carriage = $payment_info['declear_value_carriage'];
+        $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'];
+        $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'];
         $AirwayBills->weight_charge = $payment_info['weight_charge'];
         $AirwayBills->taxes = $payment_info['taxes'];
         $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
@@ -524,20 +523,23 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Payment Information save successfully";
     }
-   
+
     private function otherCustomInformation($awb_no, $awb_code, $oci_entries)
     {
         $awb_id = $awb_code . $awb_no;
         foreach ($oci_entries as $oci_entry) {
-            $validator = Validator::make($oci_entry, [
-                'country_code' => 'required|string|max:2',
-                'info_identifier' => 'required|string|max:3',
-                'custom_info_identifier' => 'nullable|string|max:2',
-                'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
-            ],[
-                'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
-            ]
-        );
+            $validator = Validator::make(
+                $oci_entry,
+                [
+                    'country_code' => 'required|string|max:2',
+                    'info_identifier' => 'required|string|max:3',
+                    'custom_info_identifier' => 'nullable|string|max:2',
+                    'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
+                ],
+                [
+                    'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
+                ]
+            );
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
@@ -642,7 +644,7 @@ class AirwayBill extends Controller
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-       
+
         // && !empty($request->routing_information['from'])
         if (!empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->routing_information);
@@ -665,7 +667,7 @@ class AirwayBill extends Controller
         }
         // for other charges 
         if (!empty($request->charges)) {
-            $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'],$request->first_box['awb_code'], $request->charges);
+            $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'], $request->first_box['awb_code'], $request->charges);
         }
         //For payment information
         if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment'])) {
@@ -692,12 +694,12 @@ class AirwayBill extends Controller
                 $main_return_data['totals'] = $error_data;
         }
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
-            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'],$request->first_box['awb_code'], $request->tableCodes);
+            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->first_box['awb_code'], $request->tableCodes);
         }
         return response()->json(['data' => $main_return_data]);
         // return json_encode($main_return_data);
     }
-   
+
     public function update(Request $request, $id, $awb_no = null)
     {
         $main_return_data = [];
@@ -739,7 +741,7 @@ class AirwayBill extends Controller
                 $main_return_data['oci_entries'] = $error_data;
         }
         if (!empty($id)) {
-            $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'],$request->shipper_address, $request->is_shipper_address_save);
+            $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -780,7 +782,8 @@ class AirwayBill extends Controller
         return response()->json(['data' => $main_return_data]);
     }
 
-    public function show($id){
+    public function show($id)
+    {
         $airwayBill = AirwayBills::with([
             'paymentInfo',
             'wayBillAddress',
@@ -796,7 +799,8 @@ class AirwayBill extends Controller
         return response()->json($airwayBill, 200);
     }
 
-    public function getAllawb(){
+    public function getAllawb()
+    {
         $airwayBill = AirwayBills::with([
             'paymentInfo',
             'wayBillAddress',
@@ -805,13 +809,13 @@ class AirwayBill extends Controller
             'otherCharge',
             'otherCustomInformation'
         ])->orderBy('created_at', 'desc')
-        ->limit(10)
-        ->get();
+            ->limit(10)
+            ->get();
         if ($airwayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }
         return response()->json($airwayBill, 200);
-    }  
+    }
     public function getConsignmentError(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -854,7 +858,7 @@ class AirwayBill extends Controller
             return response()->json(['error' => 'Address not found'], 404);
         }
         $userId = $agenData->id;
-    
+
         $query = SavedAddress::where('id', $userId);
         if ($addressId) {
             $query->where('id', $addressId);
@@ -862,7 +866,7 @@ class AirwayBill extends Controller
             $query->where('address_type', $addressType);
         }
         $address = $query->first();
-    
+
         if ($address) {
             return response()->json([
                 'ship_name' => $address->name,
@@ -930,7 +934,8 @@ class AirwayBill extends Controller
     public function loadAWB(Request $request)
     {
         $validated = $request->validate([
-            'awb_code' => 'required|regex:/^[0-9]+$/|size:3', // AWB Code: 3 numeric characters
+            'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+            // AWB Code: 3 numeric characters
             'awb_no' => 'required',
         ]);
         $awb_code = $request->input('awb_code');
@@ -951,17 +956,17 @@ class AirwayBill extends Controller
         }
     }
 
-    public function getAwbPrefixData($code){
+    public function getAwbPrefixData($code)
+    {
         $awbDetails = Airline::where('prefix', $code)->first();
-       
+
         if (!empty($awbDetails)) {
             return response()->json([
                 'name' => $awbDetails->name,
                 'code' => $awbDetails->code,
                 'prefix' => $awbDetails->prefix,
             ]);
-        }
-        else{
+        } else {
             return response()->json(null, 404);
         }
     }

@@ -54,9 +54,9 @@
                             <div class="d-block">
                                 <b-row class="mt-5">
                                     <b-col>
-                                        <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
+                                        <div v-for="item in data_items" :key="item.id">
                                             <div class="py-2">
-                                                <a href="#" class="custom-link mb-3" @click="getHouseWayBill(item.id)">
+                                                <a href="#" class="custom-link-custom mb-3" @click="getHouseWayBill(item.id)">
                                                     <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
                                                         <p @click="navigate" class="mb-0">
                                                             {{ item.awb_code }}-{{ item.awb_no }} 
@@ -74,7 +74,7 @@
                                                             <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + item.id" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
                                                     </router-link>
                                                 </a>
-                                                <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                <p class="mt-5 mb-0" style="border-bottom: 1px solid #cdcdcd;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                             </div>
                                         </div>
                                     </b-col>
@@ -1315,7 +1315,17 @@ th {
     text-decoration: underline #4C4C4C !important;
     text-decoration-color: #4C4C4C;
 }
-
+.custom-link-custom {
+    display: block;
+    margin-bottom: 0.5rem;
+    color:#355594;
+    text-decoration: none;
+}
+.custom-link-custom:hover {
+    /* color: #2637a8; */
+    text-decoration: underline #355594 !important;
+    text-decoration-color: #355594;
+}
 .column_b {
     border: 1px solid #b1b1b1;
 }

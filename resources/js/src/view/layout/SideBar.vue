@@ -13,9 +13,9 @@
             </li>
         </router-link>
         <!-- Redirect to Documentation /web-doc/houseway bill/consolidation -->
-        <router-link to="/web-doc" :class="{ active: isActive(['/web-doc', '/house-way-bill', '/consolidation']) }">
-            <li :style="{ padding: isActive(['/web-doc', '/house-way-bill', '/consolidation']) ? '10px 0px' : '10px 15px' }">
-                <img :src="isActive(['/web-doc', '/house-way-bill', '/consolidation']) ? '/media/custome/side-menu/3-active.png' : '/media/custome/side-menu/3.png'" alt="three">
+        <router-link to="/web-doc" :class="{ active: isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) }">
+            <li :style="{ padding: isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '/media/custome/side-menu/3-active.png' : '/media/custome/side-menu/3.png'" alt="three">
             </li>
         </router-link>
         <!-- Redirect to search -->
@@ -48,9 +48,21 @@
     },
     methods: {
         // Method to check if the current route matches the link
-        isActive(path) {
-            // return this.$route.path === path;
-            return path.includes(this.$route.path);
+        // isActive(path) {
+        //     return path.includes(this.$route.path);
+        // }
+        isActive(paths) {
+            // Ensure paths is an array, even if it's a single string
+            if (typeof paths === 'string') {
+                paths = [paths];
+            }
+            console.log(paths);
+            // Check if the current route matches any of the paths
+            return paths.some(path => {
+                // Handle dynamic segments in the path
+                const regex = new RegExp(`^${path.replace(/:[^\s/]+/g, '[^/]+')}`);
+                return regex.test(this.$route.path);
+            });
         }
     },
 
@@ -75,7 +87,7 @@ ul {
     text-align: center;
 }
 .primary-text {
-    width:12px;
-    margin-top: 90px;
+    width: 15px;
+    margin-top: 130px;
 }
 </style>

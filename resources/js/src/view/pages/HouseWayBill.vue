@@ -55,9 +55,9 @@
                                 <div class="d-block">
                                     <b-row>
                                         <b-col>
-                                            <div v-for="item in data_items" :key="item.id" style="border-bottom: 1px solid #bcbcbc;">
+                                            <div v-for="item in data_items" :key="item.id">
                                                 <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport" class="py-2">
-                                                    <a href="#" class="custom-link mb-3" @click.prevent="handleEditNavigation(item.id)">
+                                                    <a href="#" class="custom-link-custom mb-3" @click.prevent="handleEditNavigation(item.id)">
                                                         <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
                                                             <p @click="navigate" class="mb-0">
                                                                 {{ item.id }} 
@@ -96,7 +96,7 @@
                                                             </a>
                                                         </div>
                                                     </div>
-                                                    <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                    <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                                 </div>
                                             </div>
                                         </b-col>
@@ -147,7 +147,7 @@
                                                                             <span class="text-danger">&nbsp;*</span>
                                                                         </div>
                                                                     </template>
-                                                                    <b-form-input id="masterno-input" class="form-control" style="width: 80px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" @input="onAWBInput"></b-form-input>
+                                                                    <b-form-input id="masterno-input" class="form-control" style="width: 62px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" @input="onAWBInput"></b-form-input>
                                                                     <!-- <has-error :form="form" field="awb_code"></has-error> -->
                                                                     <!-- <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p> -->
                                                                 </b-form-group>
@@ -4483,7 +4483,17 @@ th {
     text-decoration: underline #4C4C4C !important;
     text-decoration-color: #4C4C4C;
 }
-
+.custom-link-custom {
+    display: block;
+    margin-bottom: 0.5rem;
+    color:#355594;
+    text-decoration: none;
+}
+.custom-link-custom:hover {
+    /* color: #2637a8; */
+    text-decoration: underline #355594 !important;
+    text-decoration-color: #355594;
+}
 .column_b {
     border: 1px solid #b1b1b1;
 }

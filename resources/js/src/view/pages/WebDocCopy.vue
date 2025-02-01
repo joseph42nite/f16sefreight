@@ -59,7 +59,7 @@
                                             <b-col>
                                                 <div v-for="item in data_items" :key="item.id">
                                                     <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport" class="py-2">
-                                                        <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
+                                                        <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(item.id)">
                                                             <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
                                                                 <p @click="navigate" class="mb-0">
                                                                     {{ item.awb_code }}-{{ item.awb_no }} 
@@ -93,7 +93,7 @@
                                                                 </a>
                                                             </div>
                                                         </div>
-                                                        <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                        <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
                                                     </div>
                                                 </div>
                                             </b-col>
@@ -1997,7 +1997,7 @@
                                                                 <td class="editable-cell align-items-center">
                                                                     <b-form-group id="fieldset-horizontal"
                                                                         class="align-items-center">
-                                                                        <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="form-control-sm px-5" @click="addCharge">
+                                                                        <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="px-5" @click="addCharge">
                                                                             {{ editIndex !== null ? 'Update' : 'Add' }}
                                                                         </b-button>
                                                                     </b-form-group>
@@ -2032,7 +2032,7 @@
                                                                             v-model="other_charges.charge" />
                                                                     </td>
                                                                     <td class="editable-cell mb-2">
-                                                                        <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="form-control-sm px-5"
+                                                                        <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="px-5"
                                                                             @click="calculateCharge">Calculate</b-button>
                                                                     </td>
                                                                 </tr>
@@ -2258,7 +2258,7 @@
                                                     <b-col cols="auto">
                                                         <b-form-group id="fieldset-horizontal"
                                                             class="">
-                                                            <b-button style="padding:6px 30px;border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" id="input-horizontal" class="form-control-sm"
+                                                            <b-button style="padding:6px 30px;border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" id="input-horizontal" class=""
                                                                 type="button" @click="addManualCode">Add</b-button>
                                                         </b-form-group>
                                                     </b-col>
@@ -4600,6 +4600,17 @@ th {
     text-decoration: underline #4C4C4C !important;
     text-decoration-color: #4C4C4C;
 }
+.custom-link-custom {
+    display: block;
+    margin-bottom: 0.5rem;
+    color:#355594;
+    text-decoration: none;
+}
+.custom-link-custom:hover {
+    /* color: #2637a8; */
+    text-decoration: underline #355594 !important;
+    text-decoration-color: #355594;
+}
 
 .column_b {
     border: 1px solid #b1b1b1;
@@ -4691,5 +4702,8 @@ th {
         color: #355594 !important;
         stroke: #355594 !important;
         vertical-align: middle;
+    }
+    .btn {
+        /* padding: 0px !important; */
     }
 </style>

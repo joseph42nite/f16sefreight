@@ -1273,7 +1273,12 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;border-bottom: 1px solid #000000;">
-                                                                                                    Commodity Item No. 
+                                                                                                    Commodity<br/>Item No. 
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    &nbsp; 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1315,7 +1320,12 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    Chargable Weight
+                                                                                                    Chargable<br/>Weight
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top" width="70px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    &nbsp;
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1374,29 +1384,39 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="24px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    Rate 
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 8px;">
+                                                                                                    Rate / Charge
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
-                                                                                    <td align="center" valign="top">
+                                                                                    {{-- <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="2px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    / 
+                                                                                                    
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
-                                                                                    </td>
-                                                                                    <td align="center" valign="top">
+                                                                                    </td> --}}
+                                                                                    {{-- <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="24px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    Charge 
+                                                                                                      
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
+                                                                                    </td> --}}
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="center" valign="top"  style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                        &nbsp; 
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="center" valign="top"  style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                        &nbsp; 
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1455,6 +1475,16 @@
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Total
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    &nbsp;
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    &nbsp;
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1537,6 +1567,11 @@
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Nature and Quantity of Goods (incl. Dimensions or Volume)
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    &nbsp;
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>

@@ -58,24 +58,24 @@
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Contact Info</h5>
                                 <ul class="list-unstyled">
-                                    <li class=""><b-link>Call</b-link></li>
-                                    <li class="mb-sm-6 mb-3 contactInfo-phone">
+                                    <li class="mb-sm-6 mb-3"><b-link href="tel:+918660320019">Call</b-link></li>
+                                    <!-- <li class="mb-sm-6 mb-3 contactInfo-phone">
                                         <a href="tel:+918660320019" style="text-decoration: none; color: inherit;">
                                             +91 8660320019
                                         </a>
-                                    </li>
-                                    <li class=""><b-link>Email</b-link></li>
-                                    <li class="mb-sm-6 mb-3 contactInfo-email">
+                                    </li> -->
+                                    <li class="mb-sm-6 mb-3"><b-link href="mailto:joseph@f16sefreight.com">Email</b-link></li>
+                                    <!-- <li class="mb-sm-6 mb-3 contactInfo-email">
                                         <a href="mailto:joseph@f16sefreight.com" style="text-decoration: none; color: inherit;">
                                             joseph@f16sefreight.com
                                         </a>
-                                    </li>
-                                    <li class=""><b-link>Address</b-link></li>
-                                    <li class="mb-sm-6 mb-3 contactInfo-address">
+                                    </li> -->
+                                    <li class="mb-sm-6 mb-3"><b-link>Address</b-link></li>
+                                    <!-- <li class="mb-sm-6 mb-3 contactInfo-address">
                                         <a href="#" style="text-decoration: none; color: inherit;">
                                             www.f16sefreight.com
                                         </a>
-                                    </li>
+                                    </li> -->
                                 </ul>
                             </div>
                         </b-col>

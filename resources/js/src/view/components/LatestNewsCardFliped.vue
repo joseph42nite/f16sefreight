@@ -20,10 +20,12 @@
                     </template>
                     <!-- Back Section: Content (Text) -->
                     <template v-slot:back class="back">
-                        <div class="toggle-content p-xl-20 p-lg-10 p-md-10 p-sm-10 p-10">
-                            <h2 class="text-left mb-4">{{ newsItem.innerTitle }}</h2>
-                            <p class="text-left mb-4">{{ newsItem.innerDescription }}</p>
-                            <hr />
+                        <div class="toggle-content">
+                            <div class="p-xl-18 p-lg-10 p-md-10 p-sm-10 p-10" style="overflow-x: hidden;">
+                                <h2 class="text-left mb-4">{{ newsItem.innerTitle }}</h2>
+                                <p class="text-left mb-4">{{ newsItem.innerDescription }}</p>
+                                <hr />
+                            </div>
                         </div>
                     </template>
                 </vue-flip>
@@ -108,7 +110,7 @@ export default {
 
 hr {
     border: 2px solid #355594;
-    width: 100%;
+    /* width: 100%; */
     border-radius: 50px;
 }
 .latest-news-card {
@@ -146,6 +148,7 @@ hr {
     flex-direction: column;
     justify-content: left;
     z-index: 2;
+    /* overflow-x: hidden; */
 }
 
 .flip-card {

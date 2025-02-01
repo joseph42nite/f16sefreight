@@ -753,8 +753,8 @@ hr {
 }
 .affiliation {
     font-size: 32px;
-    font-weight: 600;
-    line-height: 71px;
+    font-weight: 500;
+    line-height: 60px;
     color: #355594;
     text-align: center;
 }

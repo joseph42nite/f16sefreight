@@ -45,15 +45,16 @@ class HousewayBill extends Controller
     {
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
+            'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|string|max:14',
             'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
             'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'ship_post_code' => 'nullable|regex:/^[0-9]+$/|max:9',
+            'ship_post_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:15',
             'ship_state' => 'nullable|string|max:9',
             'ship_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
-            'ship_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
+            'ship_phone' => 'nullable|max:20',
             'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
             'ship_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
         ]);
@@ -65,6 +66,7 @@ class HousewayBill extends Controller
         if(!empty($WayBillAddress)){
             $WayBillAddress->awb_id = $hawb_no;
             $WayBillAddress->ship_name = $shipper_address['ship_name'];
+            $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
             $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
             $WayBillAddress->ship_address = $shipper_address['ship_address'];
             $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
@@ -87,6 +89,7 @@ class HousewayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
+        $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
         $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
         $WayBillAddress->ship_address = $shipper_address['ship_address'];
         $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
@@ -108,6 +111,7 @@ class HousewayBill extends Controller
                 $SavedAddress->user_id = '123456';
                 $SavedAddress->address_type = 'shipper_address';
                 $SavedAddress->name = $shipper_address['ship_name'];
+                $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
                 $SavedAddress->account = $shipper_address['ship_account'] ?? null;
                 $SavedAddress->address = $shipper_address['ship_address'];
                 $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
@@ -131,6 +135,7 @@ class HousewayBill extends Controller
             $SavedAddress->user_id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
+            $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
             $SavedAddress->account = $shipper_address['ship_account'] ?? null;
             $SavedAddress->address = $shipper_address['ship_address'];
             $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
@@ -150,15 +155,16 @@ class HousewayBill extends Controller
     {
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
+            'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|string|max:14',
             'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'cons_post_code' => 'nullable|regex:/^[0-9]+$/|max:9',
+            'cons_post_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:15',
             'cons_state' => 'nullable|string|max:9',
             'cons_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
-            'cons_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
+            'cons_phone' => 'nullable|max:20',
             'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
             'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
         ]);
@@ -171,6 +177,7 @@ class HousewayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
+        $WayBillAddress->cons_name_2 = $consignee_address['cons_name_2'] ?? null;
         $WayBillAddress->cons_account = $consignee_address['cons_account'] ?? null;
         $WayBillAddress->cons_address = $consignee_address['cons_address'];
         $WayBillAddress->cons_address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
@@ -193,6 +200,7 @@ class HousewayBill extends Controller
             $SavedAddress->user_id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
+            $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
             $SavedAddress->account = $consignee_address['cons_account'] ?? null;
             $SavedAddress->address = $consignee_address['cons_address'];
             $SavedAddress->address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
@@ -216,7 +224,7 @@ class HousewayBill extends Controller
             'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'also_post_code' => 'nullable|regex:/^[0-9]+$/|max:9',
+            'also_post_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:15',
             'also_state' => 'nullable|string|max:9',
             'also_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'also_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',

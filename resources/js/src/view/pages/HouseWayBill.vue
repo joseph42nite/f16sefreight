@@ -275,10 +275,10 @@
                                                         </div>
                                                     </template>
                                                     <b-form-input id="shipper-name-input" class="form-control"
-                                                        v-model="form.shipper_address.ship_name"
+                                                        v-model="form.shipper_address.ship_name_2"
                                                         style="width:300px;"
-                                                        :class="{ 'is-invalid': form.errors.has('ship_name') }"></b-form-input>
-                                                    <has-error :form="form" field="ship_name"></has-error>
+                                                        :class="{ 'is-invalid': form.errors.has('ship_name_2') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_name_2"></has-error>
                                                 </b-form-group>
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="shipper-account-input"
@@ -503,10 +503,10 @@
                                                     </div>
                                                 </template>
                                                 <b-form-input id="cons-name-input" class="form-control"
-                                                    v-model="form.consignee_address.cons_name"
+                                                    v-model="form.consignee_address.cons_name_2"
                                                     style="width:300px;"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"></b-form-input>
-                                                <has-error :form="form" field="cons_name"></has-error>
+                                                    :class="{ 'is-invalid': form.errors.has('cons_name_2') }"></b-form-input>
+                                                <has-error :form="form" field="cons_name_2"></has-error>
                                             </b-form-group>
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                 content-cols-lg="auto" label-for="cons-account-input"
@@ -2556,8 +2556,24 @@
                                             <span style="color: green;">-Pass</span>
                                         </span>
                                     </div>
+                                    <div class="d-flex justify-content-between">
+                                        <div v-if="is_generate_pdf">
+                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-hawb-pdf')">
+                                                <p class="mb-0 ml-2">House Waybill Pdf file</p>
+                                            </a>
+                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
+                                                <p class="mb-0 ml-2">Multipage House Waybill Pdf</p>
+                                            </a>
+                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
+                                                <p class="mb-0 ml-2">Multipage House Waybill Pdf with back pages</p>
+                                            </a>
+                                        </div>
+                                        <div v-if="main_error_msg" class="text-danger text-right mb-3">
+                                            <div v-html="main_error_msg"></div>
+                                        </div>
+                                    </div>
                                     <div class="d-flex justify-content-end">
-                                        <b-button class="mr-2" @click="handleSaveAndGeneratePDF">Generate PDF</b-button>
+                                        <b-button class="mr-2" @click="is_generate_pdf=1">Generate PDF</b-button>
                                         <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                         <b-button class="mr-2">Send & Clear</b-button>
                                         <!-- <b-button type="submit">Save Draft</b-button> -->
@@ -2594,6 +2610,7 @@ export default {
                 },
                 shipper_address: {
                     ship_name: '',
+                    ship_name_2: '',
                     ship_account: '',
                     ship_address: '',
                     ship_address_line_2: '',
@@ -2609,6 +2626,7 @@ export default {
                 },
                 consignee_address: {
                     cons_name: '',
+                    cons_name_2: '',
                     cons_account: '',
                     cons_address: '',
                     cons_address_line_2: '',
@@ -2924,6 +2942,8 @@ export default {
                 { text: "Participant Group", value: "1" },
             ],
             logoSrc: "/media/custome/logo-1.png",
+            main_error_msg: "",
+            is_generate_pdf:0,
         };
     },
 
@@ -3084,6 +3104,7 @@ export default {
 
         onSubmit() {
             console.log('Current mode:', this.mode);
+            this.main_error_msg='';
             if (this.mode === 'add') {
                 this.form.post('/create-houseway-bill')
                 .then(response => {
@@ -3100,6 +3121,16 @@ export default {
                     }
                 })
                 .catch(error => {
+                    var main_error_msg='';
+                    if (error.response) {
+                        if (error.response.status === 422) {
+                            const errors=error.response.data.errors
+                            for (const field in errors) {
+                                main_error_msg+=`${errors[field][0]}<br>`;
+                            }
+                        }
+                    }
+                    this.main_error_msg=main_error_msg;
                     console.error('Add Failed:', error);
                 });
             } else if (this.mode === 'update') {
@@ -3123,6 +3154,16 @@ export default {
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
+                    var main_error_msg='';
+                    if (error.response) {
+                        if (error.response.status === 422) {
+                            const errors=error.response.data.errors
+                            for (const field in errors) {
+                                main_error_msg+=`${errors[field][0]}<br>`;
+                            }
+                        }
+                    }
+                    this.main_error_msg=main_error_msg;
                     console.error('Update Failed:', error);
                 });
             }

@@ -19,6 +19,7 @@ class CreateSavedAddressesTable extends Migration
             $table->integer('user_id')->nullable();
             $table->string('address_type',100)->nullable();
             $table->string('name',100)->nullable();
+            $table->string('name_2', 150)->nullable();
             $table->string('account',100)->nullable();
             $table->string('address',200)->nullable();
             $table->string('address_line_2',200)->nullable();

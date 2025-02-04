@@ -52,6 +52,7 @@ class AirwayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $awb_id;
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
+        $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
         $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
         $WayBillAddress->ship_address = $shipper_address['ship_address'];
         $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
@@ -75,6 +76,7 @@ class AirwayBill extends Controller
             $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
+            $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
             $SavedAddress->account = $shipper_address['ship_account'] ?? null;
             $SavedAddress->address = $shipper_address['ship_address'];
             $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
@@ -117,6 +119,7 @@ class AirwayBill extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $awb_id;
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
+        $WayBillAddress->cons_name_2 = $consignee_address['cons_name_2'] ?? null;
         $WayBillAddress->cons_account = $consignee_address['cons_account'] ?? null;
         $WayBillAddress->cons_address = $consignee_address['cons_address'];
         $WayBillAddress->cons_address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
@@ -139,6 +142,7 @@ class AirwayBill extends Controller
             $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
+            $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
             $SavedAddress->account = $consignee_address['cons_account'] ?? null;
             $SavedAddress->address = $consignee_address['cons_address'];
             $SavedAddress->address_line_2 = $consignee_address['cons_address_line_2'] ?? null;

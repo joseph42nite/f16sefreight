@@ -231,8 +231,8 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
-                                                                            {{ $houseWayBill->cons_name ?? ''}}<br/>
-                                                                            {{ $houseWayBill->cons_address ?? ''}}
+                                                                            {{ $houseWayBill->cons_name ?? ''}} {{ $houseWayBill->cons_name_2 ?? ''}}<br/>
+                                                                            {{ $houseWayBill->cons_address ?? ''}} {{ $houseWayBill->cons_address_line_2 ?? ''}}
                                                                             {{ $houseWayBill->cons_city ?? ''}}
                                                                             {{ $houseWayBill->cons_post_code ?? ''}}
                                                                             {{ $houseWayBill->cons_state ?? ''}}

@@ -65,6 +65,7 @@ class GenerateHawbPdfController extends Controller
                 'way_bill_addresses.ship_name_2 as ship_name_2',
                 'way_bill_addresses.ship_address as ship_address',
                 'way_bill_addresses.ship_address_line_2 as ship_address_line_2',
+                'way_bill_addresses.ship_account as ship_account',
                 'way_bill_addresses.ship_post_code as ship_post_code',
                 'way_bill_addresses.ship_state as ship_state',
                 'way_bill_addresses.ship_city as ship_city',

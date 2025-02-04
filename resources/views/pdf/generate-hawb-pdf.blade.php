@@ -124,9 +124,9 @@
                                                                                     <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
                                                                                         {{ $houseWayBill->ship_name ?? ''}} <br/>
                                                                                         {{ $houseWayBill->ship_address ?? ''}}
-                                                                                        {{ $airWayBill->ship_city ?? ''}}
-                                                                                        {{ $airWayBill->ship_post_code ?? ''}}
-                                                                                        {{ $airWayBill->ship_state ?? ''}}
+                                                                                        {{ $houseWayBill->ship_city ?? ''}}
+                                                                                        {{ $houseWayBill->ship_post_code ?? ''}}
+                                                                                        {{ $houseWayBill->ship_state ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -233,9 +233,9 @@
                                                                         <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
                                                                             {{ $houseWayBill->cons_name ?? ''}}<br/>
                                                                             {{ $houseWayBill->cons_address ?? ''}}
-                                                                            {{ $airWayBill->cons_city ?? ''}}
-                                                                            {{ $airWayBill->cons_post_code ?? ''}}
-                                                                            {{ $airWayBill->cons_state ?? ''}}
+                                                                            {{ $houseWayBill->cons_city ?? ''}}
+                                                                            {{ $houseWayBill->cons_post_code ?? ''}}
+                                                                            {{ $houseWayBill->cons_state ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -1593,7 +1593,7 @@
                                                                                                     {{ $houseWayBill->description }}<br>
 
                                                                                                         @php
-                                                                                                        if (isset($airWayBill->consignmentData) && isset($airWayBill->consignmentData->pieces_info)) {
+                                                                                                        if (isset($houseWayBill->consignmentData) && isset($houseWayBill->consignmentData->pieces_info)) {
                                                                                                             $piecesInfo = json_decode($houseWayBill->pieces_info, true);
                                                                                                             foreach ($piecesInfo as $key => $value) 
                                                                                                             {

@@ -62,11 +62,20 @@ class GenerateHawbPdfController extends Controller
                 // waybill address column declare here
                 'way_bill_addresses.id as way_bill_addresses_id',
                 'way_bill_addresses.ship_name as ship_name',
+                'way_bill_addresses.ship_name_2 as ship_name_2',
                 'way_bill_addresses.ship_address as ship_address',
-                'way_bill_addresses.ship_account as ship_account',
+                'way_bill_addresses.ship_address_line_2 as ship_address_line_2',
+                'way_bill_addresses.ship_post_code as ship_post_code',
+                'way_bill_addresses.ship_state as ship_state',
+                'way_bill_addresses.ship_city as ship_city',
                 'way_bill_addresses.cons_name as cons_name',
+                'way_bill_addresses.cons_name_2 as cons_name_2',
                 'way_bill_addresses.cons_address as cons_address',
+                'way_bill_addresses.cons_address_line_2 as cons_address_line_2',
                 'way_bill_addresses.cons_account as cons_account',
+                'way_bill_addresses.cons_post_code as cons_post_code',
+                'way_bill_addresses.cons_state as cons_state',
+                'way_bill_addresses.cons_city as cons_city',
 
                 //way_bill_consignment_data column declare here
                 'way_bill_consignment_data.pieces as pieces',

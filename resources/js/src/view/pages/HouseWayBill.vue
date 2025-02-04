@@ -2954,14 +2954,27 @@ export default {
                 window.location.href = value;  // This will navigate to the selected page
             }
         },
-        handleSaveAndGeneratePDF() {
-            this.generatePDFAfterSave = true;
+        // handleSaveAndGeneratePDF() {
+        //     this.generatePDFAfterSave = true;
+        //     const result = this.onSubmit() || Promise.resolve({});
+        //     result.then(response => {
+        //         console.log('Save response:', response);
+        //         console.log('Response Data:', response.data);
+        //         if (response.data && response.data.data && response.data.data.id) {
+        //             this.generateHawbPDF();
+        //         } else {
+        //             console.error('ID is missing in the response data');
+        //         }
+        //     }).catch(error => {
+        //         console.error('Error while saving data:', error);
+        //     });
+        // },
+        handleSaveAndGeneratePDF(pdf_generate_type) {
+            this.generatePDFAfterSave = pdf_generate_type;
             const result = this.onSubmit() || Promise.resolve({});
             result.then(response => {
-                console.log('Save response:', response);
-                console.log('Response Data:', response.data);
                 if (response.data && response.data.data && response.data.data.id) {
-                    this.generateHawbPDF();
+                    // this.generateAwbPDF(pdf_generate_type);
                 } else {
                     console.error('ID is missing in the response data');
                 }

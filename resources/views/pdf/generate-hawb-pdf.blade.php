@@ -122,11 +122,11 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
-                                                                                        {{ $houseWayBill->ship_name ?? ''}} <br/>
-                                                                                        {{ $houseWayBill->ship_address ?? ''}}
+                                                                                        {{ $houseWayBill->ship_name ?? ''}} {{ $houseWayBill->ship_name_2 ?? ''}} <br/>
+                                                                                        {{-- {{ $houseWayBill->ship_address ?? ''}} {{ $houseWayBill->ship_address_line_2 ?? ''}}
                                                                                         {{ $houseWayBill->ship_city ?? ''}}
                                                                                         {{ $houseWayBill->ship_post_code ?? ''}}
-                                                                                        {{ $houseWayBill->ship_state ?? ''}}
+                                                                                        {{ $houseWayBill->ship_state ?? ''}} --}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

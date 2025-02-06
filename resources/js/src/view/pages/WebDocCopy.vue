@@ -1183,7 +1183,7 @@
                                                         <td>
                                                             <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
                                                                 class="mb-1">
-                                                                {{ hs.hs_code }}
+                                                                {{ hs }}
                                                             </div>
                                                         </td>
                                                         <td>{{ entry.country_origin_goods }}</td>
@@ -3460,7 +3460,7 @@ export default {
             this.consignment_list.commodity_item = consignment_data.commodity_item;
             this.consignment_list.country_origin_goods = consignment_data.country_origin_goods;
             this.consignment_list.slac = consignment_data.slac;
-            this.consignment_list.hs_code = consignment_data.hs_code;
+            // this.consignment_list.hs_code = consignment_data.hs_code;
             this.consignment_list.gross_weight = consignment_data.gross_weight;
             this.consignment_list.weight_code = consignment_data.weight_code;
             this.consignment_list.chargable_weight = consignment_data.chargable_weight;
@@ -3490,14 +3490,24 @@ export default {
             this.consignment_list.post(`/get-consignment-error`)
             .then(response => {
                 console.log("Response from server:", response);
+                const updatedEntry = { 
+                    ...this.consignment_list,
+                    uld_info: JSON.stringify(this.consignment_list.uld_infos),
+                    pieces_info: JSON.stringify(this.consignment_list.itemss),
+                    hs_code: JSON.stringify(this.consignment_list.hsCodes)
+                };
                 if (this.edit_entry_index !== null) {
-                    console.log("Updating entry at index", this.edit_entry_index, "with data:", this.consignment_list);
-                    this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
+                    console.log("Updating entry at index", this.edit_entry_index, "with data:", updatedEntry);
+                    this.form.entries[this.edit_entry_index] = updatedEntry;
+                    // console.log("Updating entry at index", this.edit_entry_index, "with data:", this.consignment_list);
+                    // this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
                     // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
                     this.edit_entry_index = null;
                 } else {
-                    console.log("Adding new entry:", this.consignment_list);
-                    this.form.entries.push({ ...this.consignment_list });
+                    console.log("Adding new entry:", updatedEntry);
+                    this.form.entries.push(updatedEntry);
+                    // console.log("Adding new entry:", this.consignment_list);
+                    // this.form.entries.push({ ...this.consignment_list });
                 }
                 this.calculateTotalVolume();
                 this.calculateTotalAmount();

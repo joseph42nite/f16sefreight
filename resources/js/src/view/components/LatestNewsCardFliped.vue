@@ -23,7 +23,7 @@
                         <div class="toggle-content">
                             <div class="p-xl-18 p-lg-10 p-md-10 p-sm-10 p-10" style="overflow-x: hidden;">
                                 <h2 class="text-left mb-4">{{ newsItem.innerTitle }}</h2>
-                                <p class="text-left mb-4">{{ newsItem.innerDescription }}</p>
+                                <p class="text-left mb-4" v-html="newsItem.innerDescription"></p>
                                 <hr />
                             </div>
                         </div>
@@ -44,62 +44,51 @@ export default {
     },
     data() {
         return {
+            // Array of Latest news items
             newsItems: [
-            {
-                    imgSrc: "/media/custome/gallary/img-1.png",
-                    imgAlt: "latest news image-1",
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerTitle:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerDescription:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......",
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-2.png",
-                    imgAlt: "latest news image-2",
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerTitle:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerDescription:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......",
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-3.png",
-                    imgAlt: "latest news image-3",
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerTitle:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerDescription:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......",
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-4.png",
-                    imgAlt: "latest news image-4",
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerTitle:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerDescription:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......",
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-5.png",
-                    imgAlt: "latest news image-5",
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerTitle:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerDescription:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......",
-                },
-                {
-                    imgSrc: "/media/custome/gallary/img-6.png",
-                    imgAlt: "latest news image-6",
-                    title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerTitle:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                    innerDescription:
-                        "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......",
-                },
-            ]
+                    {
+                        imgSrc: "/media/custome/gallary/img-1.png",
+                        imgAlt: 'latest news image',
+                        title: "Andrea Gruber Joins MSC Air Cargo as Head of Service Excellence",
+                        innerTitle: "Andrea Gruber Joins MSC Air Cargo as Head of Service Excellence",
+                        innerDescription: "Andrea Gruber has been appointed as the Head of Service Excellence at MSC Air Cargo's headquarters in Geneva. With over two decades of experience in the air cargo sector, her addition is expected to enhance MSC's service quality and operational efficiency. (<a href='https://www.stattimes.com/' target='_blank'>STATTIMES.COM</a>)"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-2.png",
+                        imgAlt: 'latest news image',
+                        title: "India's Major Ports See 3.2% Cargo Volume Increase in December",
+                        innerTitle: "India's Major Ports See 3.2% Cargo Volume Increase in December",
+                        innerDescription: "In December, India's 12 major ports handled 72.2 million tonnes of cargo, marking a 3.22% growth. This rise is attributed to increased container volumes, despite a decline in iron ore shipments. (<a href='https://www.business-standard.com/' target='_blank'>BUSINESS-STANDARD.COM</a>)"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-3.png",
+                        imgAlt: 'latest news image',
+                        title: "Record Surge in North American Cargo Thefts in 2024",
+                        innerTitle: "Record Surge in North American Cargo Thefts in 2024",
+                        innerDescription: "According to Verisk's CargoNet, cargo theft incidents in North America increased by 27% in 2024, reaching a record 3,625 cases. The average value per theft also rose by 7.7%, with high-value items like electronics and consumables being primary targets. (<a href='https://www.ttnews.com/' target='_blank'>ttnews.com</a>)"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-4.png",
+                        imgAlt: 'latest news image',
+                        title: "Air Cargo Industry Outlook Survey Launched",
+                        innerTitle: "Air Cargo Industry Outlook Survey Launched",
+                        innerDescription: "Air Cargo News has initiated its annual survey, inviting airfreight professionals to share their perspectives on the industry's development in the coming year. The survey aims to gather insights on anticipated trends and challenges. (<a href='https://www.aircargonews.net/' target='_blank'>aircargonews.net</a>)"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-5.png",
+                        imgAlt: 'latest news image',
+                        title: "Crippling Cargo Fees Impact Australian Grain Exports",
+                        innerTitle: "Crippling Cargo Fees Impact Australian Grain Exports",
+                        innerDescription: "Australian farmers and exporters are facing significant challenges due to a 25% increase in landside fees by stevedoring companies over the past two years. These rising costs are affecting the competitiveness of grain exports, prompting calls for regulatory reforms. (<a href='https://www.theaustralian.com.au/' target='_blank'>theaustralian.com.au</a>)"
+                    },
+                    {
+                        imgSrc: "/media/custome/gallary/img-6.png",
+                        imgAlt: 'latest news image',
+                        title: "Global Air Cargo Demand Surges Despite Economic Uncertainty",
+                        innerTitle: "Global Air Cargo Demand Surges Despite Economic Uncertainty",
+                        innerDescription: "The International Air Transport Association (IATA) reports that global air cargo demand has surged in early 2024, driven by increased e-commerce and supply chain resilience measures. Despite ongoing economic challenges, air freight capacity continues to expand to meet rising demands."
+                    },
+                ],
         };
     },
 };

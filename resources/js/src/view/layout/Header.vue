@@ -17,9 +17,9 @@
             <template #button-content>
               <span><img :src="avatarLogoSrc" alt="avatar logo" id="avatar-logo"></span>
             </template>
-            <b-dropdown-item>
+            <!-- <b-dropdown-item>
               <span class="text-capitalize" style="font-size: 12px;">{{currentUser.name}}</span>
-            </b-dropdown-item>
+            </b-dropdown-item> -->
             <b-dropdown-item @click="logout()">
               <span style="font-size: 12px;">Sign out</span>
             </b-dropdown-item>
@@ -61,9 +61,9 @@
                 <template #button-content>
                   <span><img :src="avatarLogoSrc" alt="avatar logo" id="avatar-logo"></span>
                 </template>
-                <b-dropdown-item>
+                <!-- <b-dropdown-item>
                   <span class="text-capitalize" style="font-size: 12px;">{{currentUser.name}}</span>
-                </b-dropdown-item>
+                </b-dropdown-item> -->
                 <b-dropdown-item @click="logout()">
                   <span style="font-size: 12px;">Sign out</span>
                 </b-dropdown-item>

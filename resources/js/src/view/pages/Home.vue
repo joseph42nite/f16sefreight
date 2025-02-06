@@ -180,12 +180,12 @@
                 </b-col>
                 <LatestNewsCardFliped></LatestNewsCardFliped>
             </b-row>
-             <!-- end New section with flip  -->
-            <b-col cols="12" class="mb-8">
+             <!-- end News section with flip  -->
+            <!-- <b-col cols="12" class="mb-8">
                 <div class="d-flex flex-row justify-content-center">
                     <b-button class="expMore-btn">Explore More</b-button>
                 </div>
-            </b-col>
+            </b-col> -->
             <!-- FAQs Accordion section start here -->
             <b-row align-h="center" align-v="center" id="faq-section">
                 <b-col cols="12" class="my-12 my-md-16 my-lg-20">
@@ -317,67 +317,27 @@
                         title: "End to End<br />Service",
                     }
                 ],
-                // Array of Latest news items
-                newsItems: [
-                    {
-                        imgSrc: "/media/custome/gallary/img-1.png",
-                        imgAlt: 'latest news image-1',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
-                    },
-                    {
-                        imgSrc: "/media/custome/gallary/img-2.png",
-                        imgAlt: 'latest news image-2',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
-                    },
-                    {
-                        imgSrc: "/media/custome/gallary/img-3.png",
-                        imgAlt: 'latest news image-3',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
-                    },
-                    {
-                        imgSrc: "/media/custome/gallary/img-4.png",
-                        imgAlt: 'latest news image-4',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
-                    },
-                    {
-                        imgSrc: "/media/custome/gallary/img-5.png",
-                        imgAlt: 'latest news image-5',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
-                    },
-                    {
-                        imgSrc: "/media/custome/gallary/img-6.png",
-                        imgAlt: 'latest news image-6',
-                        title: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerTitle: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda",
-                        innerDescription: "Lorem ipsum dolor uhyw iqmnq iwmn uwkajs opla orkda. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius. Nulla facilisi. Nam hendrerit libero non magna vestibulum laoreet. Nam hendrerit libero non magna vestibulum laoreet. Nulla vehicula ligula at nulla bibendum ultricies......"
-                    },
-                ],
                 isVisible: true,
                 // Array of Faqs Accordion section
                 accordions: [
                     {
-                        title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-                        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur pretium sapien et dolor convallis, nec dapibus lacus varius.",
+                        title: "Does F16s support multiple AWB connections?",
+                        content: "Yes, our Pro plan allows users to connect multiple AWBs for seamless data transfer across airlines and logistics partners.",
                         isOpen: false,
                     },
                     {
-                        title: "Phasellus ultricies quam in elit tristique scelerisque?",
-                        content: "Phasellus ultricies quam in elit tristique scelerisque. Mauris vestibulum nisl eu felis congue, ac tempor nulla scelerisque.",
+                        title: "Can I print my freight documents from F16s?",
+                        content: "Yes, our platform includes a document printing option for MAWB, HAWB and consolidation.",
                         isOpen: false,
                     },
                     {
-                        title: "Donec quis magna nec sapien congue varius non sit amet urna?",
-                        content: "Donec quis magna nec sapien congue varius non sit amet urna. Vivamus dignissim metus id dolor ultricies, vitae malesuada neque auctor.",
+                        title: "Can I search for past AWBs?",
+                        content: "Yes, you can view the last 10, 20, 50, or 100 executed AWBs, check their history, and access shipment tracking, HAWB details, and message logs.",
+                        isOpen: false,
+                    },
+                    {
+                        title: "What are the pricing options for F16s?",
+                        content: "We offer a Basic plan for database management and printable documentation, while the Pro plan includes multiple AWB connections and additional feature.",
                         isOpen: false,
                     },
                 ],

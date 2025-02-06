@@ -25,10 +25,10 @@ class CreateSavedAddressesTable extends Migration
             $table->string('address_line_2',200)->nullable();
             $table->string('city',100)->nullable();
             $table->string('airport_code',100)->nullable();
-            $table->integer('post_code')->nullable();
+            $table->string('post_code', 20)->nullable();
             $table->string('state',100)->nullable();
             $table->string('country',100)->nullable();
-            $table->integer('phone')->nullable();
+            $table->string('phone',20)->nullable();
             $table->integer('fax')->nullable();
             $table->integer('telex')->nullable();
             $table->timestamps();

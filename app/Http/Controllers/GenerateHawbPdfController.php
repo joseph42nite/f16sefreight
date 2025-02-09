@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\HousewayBills; // Import the model
 use App\PaymentInfo; // Import the model
 use App\ConsignmentData; // Import the model
+use App\OtherCustomInformation; // Import the model
 use App\Agent; // Import the model
 use App\OtherCharge; // Import the model
 use App\WayBillAddress; // Import the model
@@ -19,11 +20,10 @@ class GenerateHawbPdfController extends Controller
     public function downloadHawbPdf($hawb_id) {
         // $houseWayBill1 = HouseWayBills::where('id', $hawb_id)->first();
         // dd($houseWayBill1);die();
-        $houseWayBill = HouseWayBills::leftJoin('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
-            ->leftJoin('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
-            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
-            ->leftJoin('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
+        $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
+            ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
+            ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+            ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
             ->where('house_way_bills.id', $hawb_id)
             ->select(
                 // house_way_bills column declare here 
@@ -42,6 +42,14 @@ class GenerateHawbPdfController extends Controller
                 'house_way_bills.date as date',
                 'house_way_bills.special_handling_info as special_handling_info',
                 'house_way_bills.total_amount as total_amount',
+                'house_way_bills.other_service_information as other_service_information',
+                'house_way_bills.special_service_request as special_service_request',
+                'house_way_bills.extra_print as extra_print',
+                'house_way_bills.shipment_ref_no as shipment_ref_no',
+                'house_way_bills.supplementary_shipment_info as supplementary_shipment_info',
+                'house_way_bills.accounting_information as accounting_information',
+                'house_way_bills.total_volume as total_volume',
+                'house_way_bills.dimention_unit as dimention_unit',
 
                 // payment_info column declare here
                 'payment_info.id as payment_info_id',
@@ -65,18 +73,24 @@ class GenerateHawbPdfController extends Controller
                 'way_bill_addresses.ship_name_2 as ship_name_2',
                 'way_bill_addresses.ship_address as ship_address',
                 'way_bill_addresses.ship_address_line_2 as ship_address_line_2',
-                'way_bill_addresses.ship_account as ship_account',
-                'way_bill_addresses.ship_post_code as ship_post_code',
-                'way_bill_addresses.ship_state as ship_state',
                 'way_bill_addresses.ship_city as ship_city',
+                'way_bill_addresses.ship_state as ship_state',
+                'way_bill_addresses.ship_post_code as ship_post_code',
+                'way_bill_addresses.ship_phone as ship_phone',
+                'way_bill_addresses.ship_fax as ship_fax',
+                'way_bill_addresses.ship_telex as ship_telex',
+                'way_bill_addresses.ship_account as ship_account',
                 'way_bill_addresses.cons_name as cons_name',
                 'way_bill_addresses.cons_name_2 as cons_name_2',
                 'way_bill_addresses.cons_address as cons_address',
                 'way_bill_addresses.cons_address_line_2 as cons_address_line_2',
                 'way_bill_addresses.cons_account as cons_account',
-                'way_bill_addresses.cons_post_code as cons_post_code',
-                'way_bill_addresses.cons_state as cons_state',
                 'way_bill_addresses.cons_city as cons_city',
+                'way_bill_addresses.cons_state as cons_state',
+                'way_bill_addresses.cons_post_code as cons_post_code',
+                'way_bill_addresses.cons_phone as cons_phone',
+                'way_bill_addresses.cons_fax as cons_fax',
+                'way_bill_addresses.cons_telex as cons_telex',
 
                 //way_bill_consignment_data column declare here
                 'way_bill_consignment_data.pieces as pieces',
@@ -89,12 +103,11 @@ class GenerateHawbPdfController extends Controller
                 'way_bill_consignment_data.rate as rate',
                 'way_bill_consignment_data.pieces_info as pieces_info',
 
-                // way_bill_custom_info column declare here
-                // 'way_bill_custom_info.id as way_bill_custom_info_id',
-
                 // agents_info column declare here
                 'agents_info.id as agents_info_id',
                 'agents_info.agent_name as agent_name',
+                'agents_info.agent_city as agent_city',
+                'agents_info.agent_pincode as agent_pincode',
                 'agents_info.agent_address as agent_address',
                 'agents_info.agent_account as agent_account',
                 'agents_info.iata_agent_code as iata_agent_code',
@@ -104,7 +117,6 @@ class GenerateHawbPdfController extends Controller
                 'agents_info.agent_issue_loc_code as agent_issue_loc_code'
             )
             ->first();
-        // dd($houseWayBill);
         if ($houseWayBill) {
             // Now, fetch the other_charges_code rows separately
             $otherChargesRow = OtherCharge::where('awb_id', $hawb_id)
@@ -114,6 +126,19 @@ class GenerateHawbPdfController extends Controller
                 'due'
             )
             ->get();
+            // 
+            $otherCustomInformation = OtherCustomInformation::where('awb_id', $hawb_id)
+            ->select(
+                // way_bill_custom_info column declare here
+                'country_code',
+                'info_identifier',
+                'custom_info_identifier',
+                'supplementary_info',
+            )
+            ->get();
+            $houseWayBill->otherCustomInformation = $otherCustomInformation;
+            // echo "<pre>";
+            // print_r($otherCustomInformation);
             // Attach this data to the houseWayBill result (if needed)
             $houseWayBill->other_charges = $otherChargesRow;
             // Create a variable with true value to show or hide back page.
@@ -132,7 +157,6 @@ class GenerateHawbPdfController extends Controller
         $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
             ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
             ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->join('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
             ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
             ->where('house_way_bills.id', $hawb_id)
             ->select(
@@ -152,6 +176,14 @@ class GenerateHawbPdfController extends Controller
                 'house_way_bills.date as date',
                 'house_way_bills.special_handling_info as special_handling_info',
                 'house_way_bills.total_amount as total_amount',
+                'house_way_bills.other_service_information as other_service_information',
+                'house_way_bills.special_service_request as special_service_request',
+                'house_way_bills.extra_print as extra_print',
+                'house_way_bills.shipment_ref_no as shipment_ref_no',
+                'house_way_bills.supplementary_shipment_info as supplementary_shipment_info',
+                'house_way_bills.accounting_information as accounting_information',
+                'house_way_bills.total_volume as total_volume',
+                'house_way_bills.dimention_unit as dimention_unit',
 
                 // payment_info column declare here
                 'payment_info.id as payment_info_id',
@@ -172,11 +204,27 @@ class GenerateHawbPdfController extends Controller
                 // waybill address column declare here
                 'way_bill_addresses.id as way_bill_addresses_id',
                 'way_bill_addresses.ship_name as ship_name',
+                'way_bill_addresses.ship_name_2 as ship_name_2',
                 'way_bill_addresses.ship_address as ship_address',
+                'way_bill_addresses.ship_address_line_2 as ship_address_line_2',
+                'way_bill_addresses.ship_city as ship_city',
+                'way_bill_addresses.ship_state as ship_state',
+                'way_bill_addresses.ship_post_code as ship_post_code',
+                'way_bill_addresses.ship_phone as ship_phone',
+                'way_bill_addresses.ship_fax as ship_fax',
+                'way_bill_addresses.ship_telex as ship_telex',
                 'way_bill_addresses.ship_account as ship_account',
                 'way_bill_addresses.cons_name as cons_name',
+                'way_bill_addresses.cons_name_2 as cons_name_2',
                 'way_bill_addresses.cons_address as cons_address',
+                'way_bill_addresses.cons_address_line_2 as cons_address_line_2',
                 'way_bill_addresses.cons_account as cons_account',
+                'way_bill_addresses.cons_city as cons_city',
+                'way_bill_addresses.cons_state as cons_state',
+                'way_bill_addresses.cons_post_code as cons_post_code',
+                'way_bill_addresses.cons_phone as cons_phone',
+                'way_bill_addresses.cons_fax as cons_fax',
+                'way_bill_addresses.cons_telex as cons_telex',
 
                 //way_bill_consignment_data column declare here
                 'way_bill_consignment_data.pieces as pieces',
@@ -189,12 +237,11 @@ class GenerateHawbPdfController extends Controller
                 'way_bill_consignment_data.rate as rate',
                 'way_bill_consignment_data.pieces_info as pieces_info',
 
-                // way_bill_custom_info column declare here
-                // 'way_bill_custom_info.id as way_bill_custom_info_id',
-
                 // agents_info column declare here
                 'agents_info.id as agents_info_id',
                 'agents_info.agent_name as agent_name',
+                'agents_info.agent_city as agent_city',
+                'agents_info.agent_pincode as agent_pincode',
                 'agents_info.agent_address as agent_address',
                 'agents_info.agent_account as agent_account',
                 'agents_info.iata_agent_code as iata_agent_code',
@@ -213,6 +260,17 @@ class GenerateHawbPdfController extends Controller
                 'due'
             )
             ->get();
+
+            $otherCustomInformation = OtherCustomInformation::where('awb_id', $hawb_id)
+            ->select(
+                // way_bill_custom_info column declare here
+                'country_code',
+                'info_identifier',
+                'custom_info_identifier',
+                'supplementary_info',
+            )
+            ->get();
+            $houseWayBill->otherCustomInformation = $otherCustomInformation;
             // Attach this data to the houseWayBill result (if needed)
             $houseWayBill->other_charges = $otherChargesRow;
 
@@ -244,7 +302,6 @@ class GenerateHawbPdfController extends Controller
         $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
             ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
             ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->join('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
             ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
             ->where('house_way_bills.id', $hawb_id)
             ->select(
@@ -264,6 +321,14 @@ class GenerateHawbPdfController extends Controller
                 'house_way_bills.date as date',
                 'house_way_bills.special_handling_info as special_handling_info',
                 'house_way_bills.total_amount as total_amount',
+                'house_way_bills.other_service_information as other_service_information',
+                'house_way_bills.special_service_request as special_service_request',
+                'house_way_bills.extra_print as extra_print',
+                'house_way_bills.shipment_ref_no as shipment_ref_no',
+                'house_way_bills.supplementary_shipment_info as supplementary_shipment_info',
+                'house_way_bills.accounting_information as accounting_information',
+                'house_way_bills.total_volume as total_volume',
+                'house_way_bills.dimention_unit as dimention_unit',
 
                 // payment_info column declare here
                 'payment_info.id as payment_info_id',
@@ -284,11 +349,27 @@ class GenerateHawbPdfController extends Controller
                 // waybill address column declare here
                 'way_bill_addresses.id as way_bill_addresses_id',
                 'way_bill_addresses.ship_name as ship_name',
+                'way_bill_addresses.ship_name_2 as ship_name_2',
                 'way_bill_addresses.ship_address as ship_address',
+                'way_bill_addresses.ship_address_line_2 as ship_address_line_2',
+                'way_bill_addresses.ship_city as ship_city',
+                'way_bill_addresses.ship_state as ship_state',
+                'way_bill_addresses.ship_post_code as ship_post_code',
+                'way_bill_addresses.ship_phone as ship_phone',
+                'way_bill_addresses.ship_fax as ship_fax',
+                'way_bill_addresses.ship_telex as ship_telex',
                 'way_bill_addresses.ship_account as ship_account',
                 'way_bill_addresses.cons_name as cons_name',
+                'way_bill_addresses.cons_name_2 as cons_name_2',
                 'way_bill_addresses.cons_address as cons_address',
+                'way_bill_addresses.cons_address_line_2 as cons_address_line_2',
                 'way_bill_addresses.cons_account as cons_account',
+                'way_bill_addresses.cons_city as cons_city',
+                'way_bill_addresses.cons_state as cons_state',
+                'way_bill_addresses.cons_post_code as cons_post_code',
+                'way_bill_addresses.cons_phone as cons_phone',
+                'way_bill_addresses.cons_fax as cons_fax',
+                'way_bill_addresses.cons_telex as cons_telex',
 
                 //way_bill_consignment_data column declare here
                 'way_bill_consignment_data.pieces as pieces',
@@ -301,12 +382,11 @@ class GenerateHawbPdfController extends Controller
                 'way_bill_consignment_data.rate as rate',
                 'way_bill_consignment_data.pieces_info as pieces_info',
 
-                // way_bill_custom_info column declare here
-                // 'way_bill_custom_info.id as way_bill_custom_info_id',
-
                 // agents_info column declare here
                 'agents_info.id as agents_info_id',
                 'agents_info.agent_name as agent_name',
+                'agents_info.agent_city as agent_city',
+                'agents_info.agent_pincode as agent_pincode',
                 'agents_info.agent_address as agent_address',
                 'agents_info.agent_account as agent_account',
                 'agents_info.iata_agent_code as iata_agent_code',
@@ -325,6 +405,17 @@ class GenerateHawbPdfController extends Controller
                 'due'
             )
             ->get();
+
+            $otherCustomInformation = OtherCustomInformation::where('awb_id', $hawb_id)
+            ->select(
+                // way_bill_custom_info column declare here
+                'country_code',
+                'info_identifier',
+                'custom_info_identifier',
+                'supplementary_info',
+            )
+            ->get();
+            $houseWayBill->otherCustomInformation = $otherCustomInformation;
             // Attach this data to the houseWayBill result (if needed)
             $houseWayBill->other_charges = $otherChargesRow;
 

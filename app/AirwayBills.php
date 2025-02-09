@@ -29,10 +29,10 @@ class AirwayBills extends Model
         return $this->hasOne(ConsignmentData::class, 'awb_id', 'id');
     }
 
-    public function customInfo()
-    {
-        return $this->hasOne(OtherCustomInformation::class, 'awb_id', 'id');
-    }
+    // public function customInfo()
+    // {
+    //     return $this->hasOne(OtherCustomInformation::class, 'awb_id', 'id');
+    // }
 
     public function otherCharge()
     {

@@ -18,12 +18,10 @@ class GenerateAwbPdfController extends Controller
     public function downloadPdf($id) {
 
         // Fetch the AirWayBill along with related data
-       $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'customInfo' => function ($query) {
-        $query->select('awb_id'); // Specify limited columns
-        }, 'agentsInfo', 'otherCharge'])
+       $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
             ->where('id', $id)
             ->first();
-            
+            // print_r($airWayBill);
         $specialHandlingInfo = '';
         if ($airWayBill && !empty($airWayBill->special_handling_info)) {
             $decodedInfo = json_decode($airWayBill->special_handling_info, true);
@@ -51,9 +49,7 @@ class GenerateAwbPdfController extends Controller
     public function downloadMultipleAwbPdf($id) {
 
         // Fetch the AirWayBill along with related data
-        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'customInfo' => function ($query) {
-        $query->select('awb_id'); // Specify limited columns
-        }, 'agentsInfo', 'otherCharge'])
+        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
             ->where('id', $id)
             ->first();
             
@@ -97,9 +93,7 @@ class GenerateAwbPdfController extends Controller
     public function downloadMultipleWithBackAwbPdf($id) {
 
         // Fetch the AirWayBill along with related data
-        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'customInfo' => function ($query) {
-        $query->select('awb_id'); // Specify limited columns
-        }, 'agentsInfo', 'otherCharge'])
+        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
             ->where('id', $id)
             ->first();
             

@@ -56,14 +56,14 @@
                                     <b-col>
                                         <div v-for="item in data_items" :key="item.id">
                                             <div class="py-2">
-                                                <a href="#" class="custom-link-custom mb-3" @click="getHouseWayBill(item.id)">
-                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                        <p @click="navigate" class="mb-0">
+                                                <!-- <a href="#" class="custom-link-custom mb-3" @click="getHouseWayBill(item.id)">
+                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom> -->
+                                                        <p @click="navigate" class="awbcodetitle mb-3">
                                                             {{ item.awb_code }}-{{ item.awb_no }} 
                                                             ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
                                                         </p>
-                                                </router-link>
-                                                </a>
+                                                <!-- </router-link>
+                                                </a> -->
                                                 <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
                                                     <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
                                                             <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + item.awb_code+'/' + item.awb_no" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
@@ -97,7 +97,7 @@
                                         <span class="">Master no:</span>
                                         <span class="text-danger">*</span>
                                     </template>
-                                    <b-form-input id="input-horizontal" class="form-control" style="width: 80px;"
+                                    <b-form-input id="input-horizontal" class="form-control" style="width: 62px;"
                                         v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)">
                                     </b-form-input>
                                 </b-form-group>
@@ -1410,6 +1410,9 @@ th {
 .option:hover {
   background-color: #f0f0f0;
 } 
+.awbcodetitle {
+    color: #355594;
+}
 </style>
 <style>
     .modal-content {

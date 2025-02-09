@@ -327,33 +327,65 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Routing Information saved successfull";
     }
+    // private function consignmentInformation($awb_no, $awb_code, $entries)
+    // {
+    //     $awb_id = $awb_code . $awb_no;
+    //     for ($i = 0; $i < sizeof($entries); $i++) {
+    //         $pieces = $entries[$i]['pieces'];
+    //         $ConsignmentData = ConsignmentData::where(['awb_id', $awb_id])->first();
+    //         if (!isset($ConsignmentData))
+    //             $ConsignmentData = new ConsignmentData();
+    //         $ConsignmentData->awb_id = $awb_id;
+    //         $ConsignmentData->pieces = $pieces;
+    //         $ConsignmentData->description = $entries[$i]['description'];
+    //         $ConsignmentData->rate_class = $entries[$i]['rate_class'];
+    //         $ConsignmentData->uld_rate_class = $entries[$i]['uld_rate_class'];
+    //         $ConsignmentData->service_code = $entries[$i]['service_code'];
+    //         $ConsignmentData->commodity_item = $entries[$i]['commodity_item'];
+    //         $ConsignmentData->country_origin_goods = $entries[$i]['country_origin_goods'];
+    //         $ConsignmentData->slac = $entries[$i]['slac'];
+    //         $ConsignmentData->hs_code = json_encode($entries[$i]['hsCodes']);
+    //         $ConsignmentData->gross_weight = $entries[$i]['gross_weight'];
+    //         $ConsignmentData->weight_code = $entries[$i]['weight_code'];
+    //         $ConsignmentData->chargable_weight = $entries[$i]['chargable_weight'];
+    //         $ConsignmentData->rate = $entries[$i]['rate'];
+    //         $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
+    //         $ConsignmentData->uld_info = json_encode($entries[$i]['uld_infos']);
+    //         $ConsignmentData->save();
+    //         return "Consignment Data saved successfull";
+    //     }
+    // }
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
         $awb_id = $awb_code . $awb_no;
-        for ($i = 0; $i < sizeof($entries); $i++) {
-            $pieces = $entries[$i]['pieces'];
-            $ConsignmentData = ConsignmentData::where([['awb_id', $awb_id], ['pieces', $pieces]])->first();
+
+        foreach ($entries as $entry) {
+            $ConsignmentData = ConsignmentData::where('awb_id', $awb_id)->first();
             if (!isset($ConsignmentData))
-                $ConsignmentData = new ConsignmentData();
+                        $ConsignmentData = new ConsignmentData();
+            // Update the fields
             $ConsignmentData->awb_id = $awb_id;
-            $ConsignmentData->pieces = $pieces;
-            $ConsignmentData->description = $entries[$i]['description'];
-            $ConsignmentData->rate_class = $entries[$i]['rate_class'];
-            $ConsignmentData->uld_rate_class = $entries[$i]['uld_rate_class'];
-            $ConsignmentData->service_code = $entries[$i]['service_code'];
-            $ConsignmentData->commodity_item = $entries[$i]['commodity_item'];
-            $ConsignmentData->country_origin_goods = $entries[$i]['country_origin_goods'];
-            $ConsignmentData->slac = $entries[$i]['slac'];
-            $ConsignmentData->hs_code = json_encode($entries[$i]['hsCodes']);
-            $ConsignmentData->gross_weight = $entries[$i]['gross_weight'];
-            $ConsignmentData->weight_code = $entries[$i]['weight_code'];
-            $ConsignmentData->chargable_weight = $entries[$i]['chargable_weight'];
-            $ConsignmentData->rate = $entries[$i]['rate'];
-            $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
-            $ConsignmentData->uld_info = json_encode($entries[$i]['uld_infos']);
+            $ConsignmentData->pieces = $entry['pieces'];
+            $ConsignmentData->description = $entry['description'];
+            $ConsignmentData->rate_class = $entry['rate_class'];
+            $ConsignmentData->uld_rate_class = $entry['uld_rate_class'];
+            $ConsignmentData->service_code = $entry['service_code'];
+            $ConsignmentData->commodity_item = $entry['commodity_item'];
+            $ConsignmentData->country_origin_goods = $entry['country_origin_goods'];
+            $ConsignmentData->slac = $entry['slac'];
+            $ConsignmentData->hs_code = json_encode($entry['hsCodes']);
+            $ConsignmentData->gross_weight = $entry['gross_weight'];
+            $ConsignmentData->weight_code = $entry['weight_code'];
+            $ConsignmentData->chargable_weight = $entry['chargable_weight'];
+            $ConsignmentData->rate = $entry['rate'];
+            $ConsignmentData->pieces_info = json_encode($entry['itemss']);
+            $ConsignmentData->uld_info = json_encode($entry['uld_infos']);
+
+            // Save the updated or new record
             $ConsignmentData->save();
-            return "Consignment Data saved successfull";
         }
+
+        return "Consignment Data saved successfully";
     }
     private function customOriginAndOsiInfo($awb_no, $awb_code, $custom_origin)
     {

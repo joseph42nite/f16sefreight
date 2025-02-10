@@ -544,10 +544,10 @@ class AirwayBill extends Controller
         $AirwayBills->awb_id = $awb_id;
         $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
         // $AirwayBills->total_charges = $payment_info['total_charges'];
-        $AirwayBills->currency = $payment_info['currency'];
-        $AirwayBills->declear_value_carriage = $payment_info['declear_value_carriage'];
-        $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'];
-        $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'];
+        $AirwayBills->currency = $payment_info['currency'] ?? 'INR';
+        $AirwayBills->declear_value_carriage = $payment_info['declear_value_carriage'] ?? 'NVD';
+        $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? 'NCV';
+        $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? 'XXX';
         $AirwayBills->weight_charge = $payment_info['weight_charge'];
         $AirwayBills->taxes = $payment_info['taxes'];
         $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];

@@ -66,7 +66,7 @@
                                     <td align="left" valign="top" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="left" valign="top" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
+                                                <td align="left" valign="top" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
                                                     $departure_airport =  explode(',', $houseWayBill->departure_airport);
                                                     $departure_airport = $departure_airport[0] ?? '';
@@ -81,10 +81,10 @@
                                     <td align="center" valign="top" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="center" valign="top" width="60px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="top" width="60px" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                     &nbsp;
                                                 </td>
-                                                <td align="center" valign="top" width="140px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="top" width="140px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                     {{$houseWayBill->house_way_bills_id ?? ''}}
                                                 </td>
                                             </tr>
@@ -116,17 +116,19 @@
                                                                         <td align="left" valign="top" width="140px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Shipper's Name and Address
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Times , Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 10px 10px 5px;">
-                                                                                        {{ $houseWayBill->ship_name ?? ''}} {{ $houseWayBill->ship_name_2 ?? ''}} <br/>
-                                                                                        {{ $houseWayBill->ship_address ?? ''}} {{ $houseWayBill->ship_address_line_2 ?? ''}}
-                                                                                        {{ $houseWayBill->ship_city ?? ''}}
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Curiour New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px;">
+                                                                                        {{ $houseWayBill->ship_name ?? ''}}<br/>
+                                                                                        {{ $houseWayBill->ship_name_2 ?? ''}} <br/>
+                                                                                        {{ $houseWayBill->ship_address ?? ''}}<br/>
+                                                                                        {{ $houseWayBill->ship_address_line_2 ?? ''}}<br/>
+                                                                                        {{ $houseWayBill->ship_city ?? ''}}&nbsp;&nbsp;
+                                                                                        {{ $houseWayBill->ship_state ?? ''}}&nbsp;&nbsp;
                                                                                         {{ $houseWayBill->ship_post_code ?? ''}}
-                                                                                        {{ $houseWayBill->ship_state ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -139,16 +141,29 @@
                                                                                     <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Shipper's Account Number
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="left" valign="bottom" style="font-size: 9px;line-height: 12px;font-family:Curiour New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->ship_account ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                                        @if ($houseWayBill->ship_phone)
+                                                                                            Phone : {{ $houseWayBill->ship_phone ?? ''}} <br/>
+                                                                                        @endif
+                                                                                        @if ($houseWayBill->ship_fax)
+                                                                                            Fax :{{ $houseWayBill->ship_fax ?? ''}} <br/>
+                                                                                        @endif
+                                                                                        @if ($houseWayBill->ship_telex)
+                                                                                            Telex : {{ $houseWayBill->ship_telex ?? ''}}
+                                                                                        @endif
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -172,12 +187,12 @@
                                                                         <td align="left" valign="top" width="60px" style="padding-left: 5px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Not Negotiable
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
                                                                                         Issued by
                                                                                     </td>
                                                                                 </tr>
@@ -188,12 +203,12 @@
                                                                         <td align="left" valign="top" width="220px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;">
+                                                                                    <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;">
                                                                                         House Waybill
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France
                                                                                     </td>
                                                                                 </tr>
@@ -225,17 +240,17 @@
                                                             <td align="left" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                             Consignee's Name and Address
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px;">
-                                                                            {{ $houseWayBill->cons_name ?? ''}} {{ $houseWayBill->cons_name_2 ?? ''}}<br/>
-                                                                            {{ $houseWayBill->cons_address ?? ''}} {{ $houseWayBill->cons_address_line_2 ?? ''}}
-                                                                            {{ $houseWayBill->cons_city ?? ''}}
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Curiour New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px;">
+                                                                            {{ $houseWayBill->cons_name ?? ''}}<br/>{{ $houseWayBill->cons_name_2 ?? ''}}<br/>
+                                                                            {{ $houseWayBill->cons_address ?? ''}}<br/>{{ $houseWayBill->cons_address_line_2 ?? ''}}<br />
+                                                                            {{ $houseWayBill->cons_city ?? ''}}&nbsp;&nbsp;
+                                                                            {{ $houseWayBill->cons_state ?? ''}}&nbsp;&nbsp;
                                                                             {{ $houseWayBill->cons_post_code ?? ''}}
-                                                                            {{ $houseWayBill->cons_state ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -248,16 +263,29 @@
                                                                         <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Consignee's Account Number
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                        {{ $houseWayBill->cons_account ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                            @if ($houseWayBill->cons_phone)
+                                                                                Phone : {{ $houseWayBill->cons_phone ?? ''}} <br/>
+                                                                            @endif
+                                                                            @if ($houseWayBill->cons_fax)
+                                                                                Fax :{{ $houseWayBill->cons_fax ?? ''}} <br/>
+                                                                            @endif
+                                                                            @if ($houseWayBill->cons_telex)
+                                                                                Telex : {{ $houseWayBill->cons_telex ?? ''}}
+                                                                            @endif
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -274,7 +302,7 @@
                                                             <td align="center" valign="top" >
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 10px;">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 0px;">
                                                                             It is agreed that the goods described herein are accepted in apparent good order and condition (except as noted) for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. ALL GOODS MAY BE CARRIED BY ANY OTHER MEANS INCLUDING ROAD OR ANY OTHER CARRIER UNLESS SPECIFIC CONTRARY INSTRUCTIONS ARE GIVEN HEREON BY THE SHIPPER, AND SHIPPER AGREES THAT THE SHIPMENT MAY BE CARRIED VIA INTERMEDIATE STOPPING PLACES WHICH THE CARRIER DEEMS APPROPRIATE. THE SHIPPER'S ATTENTION IS DRAWN TO THE NOTICE CONCERNING CARRIER'S LIMITATION OF LIABILITY. Shipper may increase such limitation of liability by declaring a higher value for carriage and paying a supplemental charge if required.
                                                                         </td>
                                                                     </tr>
@@ -302,15 +330,17 @@
                                                             <td align="left" valign="top" style="border-bottom: 1px solid #000000;">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px">
                                                                             Issuing Carrier's Agent Name and City
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 10px 20px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 10px 10px;">
                                                                             {{ $houseWayBill->agent_name ?? ''}}
                                                                             <br>
                                                                             {{ $houseWayBill->agent_address ?? ''}}
+                                                                            <br/>
+                                                                            {{ $houseWayBill->agent_pincode ?? ''}}  {{ $houseWayBill->agent_city ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -326,7 +356,7 @@
                                                                         <td align="left" valign="top" width="150px" style="border-right: 1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 20px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 10px;">
                                                                                         Agent's IATA Code
                                                                                     </td>
                                                                                 </tr>
@@ -338,7 +368,7 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
                                                                                                                 {{ $houseWayBill->iata_agent_code ?? ''}}  
                                                                                                             </td>
                                                                                                         </tr>
@@ -349,7 +379,7 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="right" valign="top" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                             {{ $houseWayBill->iata_agent_cass ?? ''}}   
                                                                                                             </td>
                                                                                                         </tr>
@@ -364,10 +394,10 @@
                                                                         </td>
                                                                         <!-- first column code -->
                                                                         <!-- second column code-->
-                                                                        <td align="center" valign="top" width="width:150px">
+                                                                        <td align="center" valign="top" width="149px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                         Agent's Account no.
                                                                                     </td>
                                                                                 </tr>
@@ -376,7 +406,7 @@
                                                                                     <td align="center" valign="bottom">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:19px;">
+                                                                                                <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:10px;">
                                                                                                     {{ $houseWayBill->agent_account ?? ''}}  
                                                                                                 </td>
                                                                                             </tr>
@@ -405,8 +435,13 @@
                                                                         <td align="center" valign="top">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px;">
                                                                                         Accounting Information
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px; padding-top:5px;">
+                                                                                        {{ $houseWayBill->accounting_information ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -432,12 +467,12 @@
                                                 <td align="center" valign="top" width="300px" style="border-right:1px solid #000;">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top" width="292px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                            <td align="left" valign="top" width="292px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                 Airport of Departure (Addr. of First Carrier and Requested Routing)
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td align="left" valign="top" width="292px" style="font-size: 11px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
+                                                            <td align="left" valign="top" width="292px" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
                                                                 @php
                                                                 $departureAirport = explode(',', $houseWayBill->departure_airport);
                                                                 $departureAirport = $departureAirport[0];  
@@ -458,7 +493,7 @@
                                                                         <td align="left" valign="top" width="125px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                         Reference Number
                                                                                     </td>
                                                                                 </tr>
@@ -467,7 +502,7 @@
                                                                         <td align="center" valign="top" width="175px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="140px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" width="140px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Optional Shipping Information
                                                                                     </td>
                                                                                 </tr>
@@ -478,32 +513,32 @@
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td align="left" valign="top" width="300px">
+                                                            <td align="left" valign="bottom" width="300px">
                                                                 <table cellpadding="0" cellspacing="0">
                                                                     <tr> 
-                                                                        <td align="left" valign="top" width="148px" height="23px">
+                                                                        <td align="left" valign="bottom" width="148px" height="23px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                        &nbsp;
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                        {{ $houseWayBill->shipment_ref_no }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="left" valign="top" width="88px" style="border-left:1px solid #000;border-right:1px solid #000;">
+                                                                        <td align="left" valign="bottom" width="88px" style="border-left:1px solid #000;border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                        &nbsp;
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                        {{ $houseWayBill->supplementary_shipment_info }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="center" valign="top" width="64px">
+                                                                        <td align="center" valign="bottom" width="64px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                       &nbsp;
+                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                        {{ $houseWayBill->supplementary_shipment_info }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -535,12 +570,12 @@
                                                                 <td align="center" valign="top" width="35px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
                                                                                 @php
                                                                                     $to1 = explode(',', $houseWayBill->to);
                                                                                     $to1 = $to1[0];
@@ -555,12 +590,12 @@
                                                                 <td align="left" valign="top" width="66px">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            <td align="left" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                 By First Carrier
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
+                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
                                                                                 {{ $houseWayBill->by ?? ''}}
                                                                             </td>
                                                                     </tr>
@@ -571,7 +606,7 @@
                                                                 <td align="center" valign="top" width="80px" style="border-right: 1px solid #000000;padding-right:6px;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" class="routing-and-destination" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px;">
+                                                                            <td align="center" valign="top" class="routing-and-destination" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px;">
                                                                                 Routing and Destination
                                                                             </td>
                                                                         </tr>
@@ -582,12 +617,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
                                                                                     $to2 = explode(',', $houseWayBill->to_2);
                                                                                     $to2 = $to2[0];
@@ -602,12 +637,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 by
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $houseWayBill->by_2 ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -618,12 +653,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
                                                                                     $to3 = explode(',', $houseWayBill->to_3);
                                                                                     $to3 = $to3[0];
@@ -638,12 +673,12 @@
                                                                 <td align="center" valign="top" width="30px">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                 by
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $houseWayBill->by_3 ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -662,12 +697,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Currency
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
                                                                                 {{ $houseWayBill->currency ?? ''}} 
                                                                             </td>
                                                                         </tr>
@@ -678,12 +713,12 @@
                                                                 <td align="center" valign="top" width="25px" bgcolor="bee3fe" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 CHGS
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $houseWayBill->type_of_payment ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -694,7 +729,7 @@
                                                                 <td align="center" valign="top" width="40px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
                                                                                 WT/VAL
                                                                             </td>
                                                                         </tr>
@@ -705,12 +740,12 @@
                                                                                         <td align="center" valign="top" width="20px" style="border-right: 1px solid #000000;">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         PPD
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'PP') {
                                                                                                                 echo "X";
@@ -723,12 +758,12 @@
                                                                                         <td align="center" valign="top" width="20px">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         COLL
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                         if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'CC') {
                                                                                                             echo "X";
@@ -749,7 +784,7 @@
                                                                 <td align="center" valign="top" width="40px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
                                                                                 Other
                                                                             </td>
                                                                         </tr>
@@ -760,12 +795,12 @@
                                                                                         <td align="center" valign="top" width="20px" style="border-right: 1px solid #000000;">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         PPD
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'PP') {
                                                                                                                 echo "X";
@@ -778,12 +813,12 @@
                                                                                         <td align="center" valign="top" width="20px">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         COLL
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'CC') {
                                                                                                                 echo "X";
@@ -804,12 +839,12 @@
                                                                 <td align="center" valign="top" width="84px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Declared Value for Carriage
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:10px;">
                                                                                 {{ $houseWayBill->declear_value_carriage ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -820,12 +855,12 @@
                                                                 <td align="center" valign="top" width="84px">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Declared Value for Customs
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:10px;">
                                                                                 {{ $houseWayBill->declear_value_customs ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -855,15 +890,15 @@
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        <td align="center" valign="top" width="width:120px" style="border:2px solid #000000;">
+                                                                        <td align="center" valign="top" width="120px" style="border:2px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
                                                                                         Airport of Destination
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
                                                                                         {{ $houseWayBill->destination_airport ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -877,7 +912,7 @@
                                                                                     <td align="center" valign="top" style="padding-left:20px;padding-right:40px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px ;padding-right: 2px;">
+                                                                                                <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px ;padding-right: 2px;">
                                                                                                     Requested Flight/Date 
                                                                                                 </td>
                                                                                             </tr>
@@ -892,7 +927,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px" style="border-right:1px solid #000000;">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                                 {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -903,7 +938,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="34px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                                 {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -935,12 +970,12 @@
                                                                         <td align="left" valign="top" width="100px" style="padding-left: 5px;border-right:1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="height:36px;width:100px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="width:100px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Amount of Insurance
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         {{ $houseWayBill->declear_value_insurance ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -951,7 +986,7 @@
                                                                         <td align="left" valign="top" width="180px" style="padding-left: 5px;padding-right: 5px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         INSURANCE: If Carrier offers insurance, and such insurance is requested in accordance with the conditions thereof, indicate amount to be insured in figures in box marked 'Amount of Insurance'
                                                                                     </td>
                                                                                 </tr>
@@ -987,8 +1022,16 @@
                                                                         <td align="left" valign="top" width="140px" style="width:140px;text-align:left;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:1px;">
-                                                                                        Handling Information
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:1px;">
+                                                                                        Handling Information:
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:1px;">
+                                                                                        {{ $houseWayBill->other_service_information ?? '' }}<br />
+                                                                                        <!-- SSR and Exta Print Information value of the form shows here -->
+                                                                                        {{ $houseWayBill->special_service_request ?? '' }}<br />
+                                                                                        {{ $houseWayBill->extra_print ?? '' }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1001,7 +1044,6 @@
                                                     </table>
                                                 </td>
                                                 <!-- first column section -->
-
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="190px;" style="width:190px;text-align:center;">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
@@ -1010,19 +1052,19 @@
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        
                                                                         <td align="left" valign="top" width="95px" style="width:95px;text-align:left;">
                                                                             <table cellpadding="0" cellspacing="0" >
                                                                                 <tr>
                                                                                     <td align="left" valign="top" >
+
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     Special Handling Codes:
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     @php
                                                                                                     $splHandlingInfo = !empty($houseWayBill->special_handling_info) ? json_decode($houseWayBill->special_handling_info, true) : '';
                                                                                                         //$splHandlingInfo = json_decode($houseWayBill->special_handling_info, true);
@@ -1043,18 +1085,77 @@
                                                                         </td>
                                                                         <!-- first column code-->
                                                                         <!-- second column code-->
-                                                                        <td align="left" valign="bottom" width="95px" style="width:95px;text-align:left;padding-top: 40px;">
+                                                                        @if(count($houseWayBill->otherCustomInformation) > 0) 
+                                                                            <td align="left" valign="top" width="95px" >
+                                                                                <table cellpadding="0" cellspacing="0">
+                                                                                    <tr>
+                                                                                        <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                            Other Customs Information:
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                            @foreach ($houseWayBill->otherCustomInformation as $otherCustomInformation)
+                                                                                                {{ $otherCustomInformation->country_code }}/{{ $otherCustomInformation->info_identifier }}/{{ $otherCustomInformation->custom_info_identifier }}/{{ $otherCustomInformation->supplementary_info }}
+                                                                                                <br/>
+                                                                                            @endforeach
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </table>
+                                                                            </td>
+                                                                        @endif
+                                                                        <!-- second column code-->
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <!-- second column code-->
+                                            <tr>
+                                                <!-- first column section -->
+                                                <td align="center" valign="top" width="430px" style="">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td align="center" valign="top" width="430px" style="width:430px;">
+                                                                &nbsp;
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                                <!-- first column section -->
+                                                <!-- second column section -->
+                                                <td align="right" valign="bottom" width="170px;" style="">
+                                                    <table cellpadding="0" cellspacing="0" style="text-align:right;">
+                                                        <tr>
+                                                            <td align="right" valign="bottom" width="170px;" style="text-align:right;">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
+                                                                    <tr>
+                                                                        <!-- first column code-->
+                                                                        <td align="right" valign="bottom" width="100px" style="text-align:right;">
+                                                                            <table cellpadding="0" cellspacing="0" >
+                                                                                <tr>
+                                                                                    <td align="right" valign="bottom">
+                                                                                        <table cellpadding="0" cellspacing="0">
+                                                                                            <tr>
+                                                                                                <td align="right" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    &nbsp;
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                        <!-- first column code-->
+                                                                        <!-- second column code-->
+                                                                        <td align="right" valign="bottom" width="120px" style="text-align:right;border-top: 1px solid #000000;border-left: 1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom"  style="border-top: 1px solid #000000;border-left: 1px solid #000000;">
-                                                                                    <table cellpadding="0" cellspacing="0" >
-                                                                                        <tr>
-                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
-                                                                                                SCI
-                                                                                            </td>
-                                                                                        </tr>
-                                                                                    </table>
-                                                                                </td> 
+                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 0px 10px;">
+                                                                                        SCI
+                                                                                    </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
@@ -1090,7 +1191,7 @@
                                                                                     <td align="center" valign="top" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     No. of Pieces RCP 
                                                                                                 </td>
                                                                                             </tr>
@@ -1101,7 +1202,7 @@
                                                                                     <td align="center" valign="top" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Gross Weight 
                                                                                                 </td>
                                                                                             </tr>
@@ -1112,7 +1213,7 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     kg lb 
                                                                                                 </td>
                                                                                             </tr>
@@ -1131,7 +1232,7 @@
                                                                                     <td align="right" valign="top" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="40px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->pieces }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1142,7 +1243,7 @@
                                                                                     <td align="right" valign="top" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="40px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1153,8 +1254,12 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom: 130px;">
-                                                                                                    K 
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom: 130px;">
+                                                                                                    @if ($houseWayBill->weight_code == "KGM")
+                                                                                                        K
+                                                                                                    @else
+                                                                                                        L
+                                                                                                    @endif
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1172,7 +1277,7 @@
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->pieces }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1183,7 +1288,7 @@
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1194,7 +1299,7 @@
                                                                                     <td align="right" valign="bottom">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="20px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="bottom" width="20px" style="font-size: 10px;line-height: 14px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp; 
                                                                                                 </td>
                                                                                             </tr>
@@ -1218,7 +1323,7 @@
                                                                                     <td align="center" valign="top" width="8px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
+                                                                                                <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
                                                                                                    {{ $houseWayBill->service_code }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1242,7 +1347,7 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Rate Class
                                                                                                 </td>
                                                                                             </tr>
@@ -1261,7 +1366,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
                                                                                                     {{ $houseWayBill->rate_class }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1272,12 +1377,12 @@
                                                                                     <td align="center" valign="top"  width="80px" style="border-left:1px solid #000000;border-top: 1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;border-bottom: 1px solid #000000;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family: Arial,sans-serif;color: #000000;font-weight: 400;border-bottom: 1px solid #000000;">
                                                                                                     Commodity<br/>Item No. 
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp; 
                                                                                                 </td>
                                                                                             </tr>
@@ -1319,12 +1424,12 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Chargable<br/>Weight
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -1343,7 +1448,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->chargable_weight }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1358,13 +1463,13 @@
                                                             </td>
                                                             <!-- Five -->
                                                             <!-- Six -->
-                                                            <td align="center" valign="top" width="width:8px" bgcolor="bee3fe" >
+                                                            <td align="center" valign="top" width="8px" bgcolor="bee3fe" >
                                                                 <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
@@ -1384,38 +1489,20 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 8px;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 8px;">
                                                                                                     Rate / Charge
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
                                                                                     </td>
-                                                                                    {{-- <td align="center" valign="top">
-                                                                                        <table cellpadding="0" cellspacing="0">
-                                                                                            <tr>
-                                                                                                <td align="center" valign="top" width="2px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td> --}}
-                                                                                    {{-- <td align="center" valign="top">
-                                                                                        <table cellpadding="0" cellspacing="0">
-                                                                                            <tr>
-                                                                                                <td align="center" valign="top" width="24px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                      
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td> --}}
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="top"  style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top"  style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="top"  style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top"  style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
@@ -1430,7 +1517,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="75px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="75px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->rate }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1445,13 +1532,13 @@
                                                             </td>
                                                             <!-- Seven -->
                                                             <!-- Eight -->
-                                                            <td align="center" valign="top" width="width:8px" bgcolor="bee3fe" >
+                                                            <td align="center" valign="top" width="8px" bgcolor="bee3fe">
                                                                 <table cellpadding="0" cellspacing="0">
                                                                     <tr>
                                                                         <td align="center" valign="top">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
@@ -1473,17 +1560,17 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Total
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -1502,7 +1589,7 @@
                                                                                     <td align="right" valign="top" style="border-bottom: 1px solid #000;padding-bottom: 130px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->total_amount }}  
                                                                                                 </td>
                                                                                             </tr>
@@ -1522,7 +1609,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->total_amount }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1565,12 +1652,12 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     Nature and Quantity of Goods (incl. Dimensions or Volume)
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -1589,11 +1676,11 @@
                                                                                     <td align="left" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
                                                                                                     {{ $houseWayBill->description }}<br>
 
                                                                                                         @php
-                                                                                                        if (isset($houseWayBill->consignmentData) && isset($houseWayBill->consignmentData->pieces_info)) {
+                                                                                                        if (isset($houseWayBill->pieces_info)) {
                                                                                                             $piecesInfo = json_decode($houseWayBill->pieces_info, true);
                                                                                                             foreach ($piecesInfo as $key => $value) 
                                                                                                             {
@@ -1601,7 +1688,7 @@
 
                                                                                                             }
                                                                                                             // Getting Hs code
-                                                                                                            if (!empty($hsCode)) {
+                                                                                                            if (!empty($houseWayBill->hs_code)) {
                                                                                                                 $hsCode = json_decode($houseWayBill->hs_code, true);
                                                                                                                 foreach ($hsCode as $key => $value) 
                                                                                                                 {
@@ -1628,8 +1715,8 @@
                                                                                     <td align="left" valign="bottom" style="text-align:center;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" style="font-size: 10px;line-height: 14px;padding-left:5px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    Total Volume: 6MC 
+                                                                                                <td align="left" valign="bottom" style="font-size: 10px;line-height: 14px;padding-left:5px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    Total volume: {{ $houseWayBill->total_volume ?? ''}} {{ $houseWayBill->dimention_unit ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1674,7 +1761,7 @@
                                                                                                 <td align="center" valign="top" width="40px" style="padding:0px 0px 0px 10px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                                 Prepaid   
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1692,7 +1779,7 @@
                                                                                                 <td align="center" valign="top" width="100px">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
                                                                                                                 Weight Charge   
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1710,7 +1797,7 @@
                                                                                                 <td align="center" valign="top"width="40px" style="padding-left:20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                             Collect   
                                                                                                             </td>
                                                                                                         </tr>  
@@ -1731,7 +1818,7 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
@@ -1739,7 +1826,7 @@
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
@@ -1770,7 +1857,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1787,7 +1874,7 @@
                                                                                                             <td align="center" valign="top" style="padding-left:10px; padding-right:20px;">
                                                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             Valuation Charge   
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1804,7 +1891,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;  
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1828,10 +1915,10 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     &nbsp;
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -1857,7 +1944,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1874,7 +1961,7 @@
                                                                                                             <td align="center" valign="top" style="padding-left:5px; padding-right:20px;">
                                                                                                                 <table cellpadding="0" cellspacing="0"  width="100%">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="40px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             Tax   
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1891,7 +1978,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="100px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;  
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1915,7 +2002,7 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
@@ -1923,7 +2010,7 @@
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
@@ -1954,7 +2041,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1971,7 +2058,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="180px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                                        <td align="center" valign="top" width="180px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
                                                                                                                             Total Other Charges Due Agent   
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -1988,7 +2075,7 @@
                                                                                                             <td align="center" valign="top">
                                                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                                                     <tr>
-                                                                                                                        <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                        <td align="center" valign="top" width="40px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                             &nbsp;  
                                                                                                                         </td>
                                                                                                                     </tr>  
@@ -2012,10 +2099,10 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_agent_prepaid }}
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_agent_collect }}
                                                                                                 </td>
                                                                                             </tr>
@@ -2038,7 +2125,7 @@
                                                                                                 <td align="center" valign="top" width="40px">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                                 &nbsp;  
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2055,7 +2142,7 @@
                                                                                                 <td align="center" valign="top">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="180px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
+                                                                                                            <td align="center" valign="top" width="180px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;">
                                                                                                                 Total Other Charges Due Carrier
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2073,7 +2160,7 @@
                                                                                                 <td align="center" valign="top" width="40px">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
+                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2094,10 +2181,10 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_carrier_prepaid }}
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_carrier_collect }}
                                                                                                 </td>
                                                                                             </tr>
@@ -2116,10 +2203,10 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" height="30px" width="132px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" height="30px" width="132px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     &nbsp;
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" height="30px" width="148px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" height="30px" width="148px" style="border-bottom:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -2138,19 +2225,19 @@
                                                                                     <td align="center" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="92px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
+                                                                                                <td align="center" valign="top" width="92px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="90px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Total Prepaid
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Total Collect
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2170,19 +2257,19 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="132px" style="border-right:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="bottom" width="132px" style="border-right:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                            <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                                 {{ $houseWayBill->total_charges_prepaid }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="148px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="148px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                            <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                                 {{ $houseWayBill->total_charges_collect }}
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2204,19 +2291,19 @@
                                                                                     <td align="center" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                <td align="center" valign="top" width="112px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Currency Conversion Rates
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="128px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                <td align="center" valign="top" width="128px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="128px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="128px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 CC Charges in Dest. Currency
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2236,19 +2323,19 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="top" width="132px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                            <td align="right" valign="top" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="148px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="148px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-right:2px;">
+                                                                                                            <td align="center" valign="top" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-right:2px;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2270,19 +2357,19 @@
                                                                                     <td align="center" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                <td align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 For Carrier's use only at Destinations
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="108px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Charges at Destination
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2302,19 +2389,19 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2339,19 +2426,19 @@
                                                                         <td align="left" valign="top" width="370px" style="border-bottom:1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
                                                                                         Other Charges
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
+                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 9px;line-height: 11px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
                                                                                         @foreach ($houseWayBill->other_charges as $otherChargesRow)
                                                                                             {{ $otherChargesRow->other_charge_code }} {{ $otherChargesRow->due }} {{ $otherChargesRow->amount }}<br> 
                                                                                         @endforeach
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                        &nbsp;
                                                                                     </td>
                                                                                 </tr>
@@ -2364,7 +2451,7 @@
                                                                         <td align="left" valign="top"  style="border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="68px" width="370px" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                    <td align="left" valign="top" height="66px" width="370px" style="font-size: 8px;line-height: 11px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                         Shipper certifies that the particulars on the face hereof are correct and that insofar as any part of the consignment contains dangerous goods, such part is properly described by name and is in proper condition for carriage by air according to the applicable Dangerous Goods Regulations
                                                                                     </td>
                                                                                 </tr>
@@ -2375,7 +2462,7 @@
                                                                                                 <td align="center" valign="bottom">
                                                                                                     <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
+                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
                                                                                                                 {{ $houseWayBill->agent_name }}
                                                                                                             </td>
                                                                                                         </tr>
@@ -2386,7 +2473,7 @@
                                                                                                 <td align="center" valign="middle">
                                                                                                     <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px;text-align:center;" >
+                                                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px;text-align:center;" >
                                                                                                                 Signature of Shipper or his Agent
                                                                                                             </td>
                                                                                                         </tr>
@@ -2412,7 +2499,7 @@
                                                                                                         <td align="center" valign="bottom" width="70px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         @php
                                                                                                                             echo date('d-M-y', strtotime($houseWayBill->agent_issue_date));
                                                                                                                         @endphp
@@ -2423,7 +2510,7 @@
                                                                                                         <td align="center" valign="top" width="70px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         @php
                                                                                                                             $locationCode = explode(',', $houseWayBill->agent_issue_loc_code);
                                                                                                                             echo $locationCode[0];
@@ -2435,7 +2522,7 @@
                                                                                                         <td align="center" valign="top" width="160px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         {{ $houseWayBill->agent_issue_sign }}
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2455,7 +2542,7 @@
                                                                                             <td align="center" valign="top" width="70px" style="width:70px">
                                                                                                 <table cellpadding="0" cellspacing="0"> 
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                                             Executed on (Date)
                                                                                                         </td>
                                                                                                     </tr>
@@ -2464,7 +2551,7 @@
                                                                                             <td align="center" valign="top" width="70px" style="width:70px">
                                                                                                 <table cellpadding="0" cellspacing="0"> 
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                                        <td align="center" valign="top" style="width:70px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                                             at (Place)
                                                                                                         </td>
                                                                                                     </tr>
@@ -2473,7 +2560,7 @@
                                                                                             <td align="center" valign="top" width="160px" style="width:160px">
                                                                                                 <table cellpadding="0" cellspacing="0"> 
                                                                                                     <tr>
-                                                                                                        <td align="center" valign="top" style="width:160px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                                        <td align="center" valign="top" style="width:160px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                                             Signature of Issuing Carrier or his Agent
                                                                                                         </td>
                                                                                                     </tr>
@@ -2493,19 +2580,19 @@
                                                                                     <td align="center" valign="top" width="370px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Total Collect Charges
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
                                                                                                                 {{$houseWayBill->awb_code . ' '. $houseWayBill->awb_no}}
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2525,19 +2612,19 @@
                                                                                     <td align="center" valign="top" width="370px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="width: 112px;border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="width: 112px;border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" style="height:23px;width:112px;font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 10px;line-height: 14px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="width:108px;font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="108px" style="width:108px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2571,7 +2658,7 @@
         </tr>
         @if (isset($page))
             <tr>
-                <td align="center" valign="top" width="108px" style="width:108px;font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:0px;">
+                <td align="center" valign="top" width="108px" style="width:108px;font-size: 12px;line-height: 16px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding-top:0px;">
                     
                     @php
                         if ($page == 'ORIGINAL-1') {
@@ -2619,22 +2706,22 @@
                 <td align="center" valign="top" width="600px">
                     <table cellpadding="0" cellspacing="0" width="100%"> 
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
                                 <img src="{{ public_path('media/custome/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
                                 NOTICE CONCERNING CARRIER’S LIMITATION OF LIABILITY 
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
                                 If the carriage involves an ultimate destination or stop in a country other than the country of departure, the Montreal Convention or the Warsaw Convention may be applicable to the liability of the Carrier in respect of loss of, damage or delay to cargo. Carrier's limitation of liability in accordance with those Conventions shall be as set forth in subparagraph 4 unless a higher value is declared.
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
+                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
                                 CONDITIONS OF CONTRACT
                             </td>
                         </tr>
@@ -2645,7 +2732,7 @@
                                         <td align="center" valign="top">
                                             <table cellpadding="0" cellspacing="0" width="100%"> 
                                                 <tr>
-                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                         <b>1.</b> In this contract and the Notices appearing hereon:<br aria-hidden="true" />
                                                         CARRIER includes the air carrier issuing this air waybill and all carriers that carry or undertake to carry the cargo or perform any other services related to such carriage. SPECIAL DRAWING RIGHT (SDR) is a Special Drawing Right as defined by the International Monetary Fund. WARSAW CONVENTION means whichever of the following instruments is applicable to the contract of carriage: the Convention for the Unification of Certain Rules Relating to International Carriage by Air, signed at Warsaw, 12 October 1929; that Convention as amended at The Hague on 28 September 1955; that Convention as amended at The Hague 1955 and by Montreal Protocol No. 1, 2, or 4 (1975) as the case may be. MONTREAL CONVENTION means the Convention for the Unification of Certain Rules for International Carriage by Air, done at Montreal on 28 May 1999. 
                                                         <br aria-hidden="true" />
@@ -2711,7 +2798,7 @@
                                                         <br aria-hidden="true" />
                                                         <b>6.2</b> In carriage to which neither the Warsaw Convention nor the Montreal                               
                                                     </td>
-                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                         Convention applies Carrier shall, in accordance with the procedures set
                                                         forth in its general conditions of carriage and applicable tariffs, permit
                                                         shipper to increase the limitation of liability by declaring a higher value

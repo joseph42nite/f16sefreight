@@ -1131,7 +1131,7 @@
                                                             <tr>
                                                                 <td class="editable-cell" style="display: flex;align-items: center;">
                                                                     <b-form-input type="text" class="form-control" style="width: 140px;margin-right: 10px;margin-bottom:10px;" v-model="consignment_list.hs_code" :class="{ 'is-invalid': hs_code_error.length > 0 }"></b-form-input>
-                                                                    <button @click="addHsCode" style="margin-bottom:10px;border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button>
+                                                                    <button @click="addHsCode" style="margin-bottom:10px;border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">Add</button>
                                                                 </td>
                                                                 <div v-if="hs_code_error.length" class="text-danger">
                                                                     <ul  style="list-style-type: none; padding-left: 0;font-size: 10px;">
@@ -1226,7 +1226,7 @@
                                                                         <option value="FOT">FOT</option>
                                                                     </b-form-select>
                                                                 </td>
-                                                                <td class="editable-cell"><button @click="addPcsInfo" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
+                                                                <td class="editable-cell"><button @click="addPcsInfo" style="border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
                                                             </tr>
                                                             <tr v-if="validationErrors.length > 0">
                                                                 <td colspan="7" style="border:0px">
@@ -1309,7 +1309,7 @@
                                                                 <td class="editable-cell pr-8">
                                                                     <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.owner" />
                                                                 </td>
-                                                                <td class="editable-cell"><button @click="addUldInfo" style="border-radius: 30px;color: #355594;background: #ffffff;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
+                                                                <td class="editable-cell"><button @click="addUldInfo" style="border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
                                                             </tr>
                                                             <tr v-if="uld_error.length" style="color: red;">
                                                                 <td colspan="4" style="border:0px">
@@ -1343,7 +1343,7 @@
                                             </b-col>
                                         </b-row>
                                         <div class="d-flex justify-content-end">
-                                            <button class="btn btn-secondary" @click="addOrUpdateEntry">
+                                            <button class="btn btn-secondary" @click="addOrUpdateEntry" style="background: transparent !important;">
                                                 {{ edit_entry_index !== null ? 'Update' : 'Add' }}
                                             </button>
                                         </div>
@@ -2550,30 +2550,55 @@
                                 </div>
                                 
                                 <div class="pt-7 pb-28">
+                                    <div v-if="showSpinner" class="spin" style="margin-top: 20px;"></div>
+                                    <div class="d-flex justify-content-between">
+                                        <div v-if="is_generate_pdf" class="mb-24" style="box-shadow: 0px 3px 15px 0px #0013;border-radius: 12px;width: 100%;">
+                                            <div class="" style="display:flex;width:96%;margin-left: 2%;margin-right: 2%;">
+                                                <div style="display:flex;justify-content: start;color:#355594;font-size:15px;line-height:71px;font-weight:500;width:100%">Cargo document created</div>
+                                                <div style="display:flex;justify-content: end;line-height: 71px;align-self: center;width:100%" @click="isGeneratePdf(generateButton=0);"><img src="/media/custome/cross.png" alt="cross button" style="width:24px;height: 24px;cursor: pointer;"></div>
+                                            </div>
+                                            <div style="width:96%;margin-left: 2%;margin-right: 2%;">
+                                                <div style="width:100%;">
+                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:22px;font-weight: 400;">To deliver a valid cargo document, the following changes were made:</p>
+                                                </div>
+                                                <div style="width:100%;">
+                                                    <ul>
+                                                        <li>Lorum ipsum</li>
+                                                        <li>Lorum ipsum</li>
+                                                    </ul>
+                                                </div>
+                                                <div style="width:100%;">
+                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:13px;font-weight: 400;margin: 0;">Airway bill message saved in database</p>
+                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">PDF documents prepared</p>
+                                                </div>
+                                            </div>
+                                            <div class="mb-16" style="width:96%;margin-left: 2%;margin-right: 2%;">
+                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-hawb-pdf')">
+                                                    <p class="mb-0 ml-2">House Waybill Pdf file</p>
+                                                </a>
+                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
+                                                    <p class="mb-0 ml-2">Multipage House Waybill Pdf</p>
+                                                </a>
+                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
+                                                    <p class="mb-0 ml-2">Multipage House Waybill Pdf with back pages</p>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div v-if="main_error_msg" class="text-danger text-right mb-3">
+                                            <div v-html="main_error_msg"></div>
+                                        </div>
+                                    </div>
                                     <div v-if="successMessage" class="" style="font-weight: bold; display: flex; justify-content: flex-end; text-align: right;">
                                         <span>
                                             {{ successMessage.split('-Pass')[0] }}
                                             <span style="color: green;">-Pass</span>
                                         </span>
                                     </div>
-                                    <div class="d-flex justify-content-between">
-                                        <div v-if="is_generate_pdf">
-                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-hawb-pdf')">
-                                                <p class="mb-0 ml-2">House Waybill Pdf file</p>
-                                            </a>
-                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
-                                                <p class="mb-0 ml-2">Multipage House Waybill Pdf</p>
-                                            </a>
-                                            <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
-                                                <p class="mb-0 ml-2">Multipage House Waybill Pdf with back pages</p>
-                                            </a>
-                                        </div>
-                                        <div v-if="main_error_msg" class="text-danger text-right mb-3">
-                                            <div v-html="main_error_msg"></div>
-                                        </div>
+                                    <div v-if="main_error_msg" class="text-danger text-right mb-3">
+                                        <div v-html="main_error_msg"></div>
                                     </div>
                                     <div class="d-flex justify-content-end">
-                                        <b-button class="mr-2" @click="is_generate_pdf=1">Generate PDF</b-button>
+                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1);">Generate PDF</b-button>
                                         <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
                                         <b-button class="mr-2">Send & Clear</b-button>
                                         <!-- <b-button type="submit">Save Draft</b-button> -->
@@ -2944,6 +2969,7 @@ export default {
             logoSrc: "/media/custome/logo-1.png",
             main_error_msg: "",
             is_generate_pdf:0,
+            showSpinner: false,  // Initially, the progress bar is hidden
         };
     },
 
@@ -2953,6 +2979,32 @@ export default {
             if (value) {
                 window.location.href = value;  // This will navigate to the selected page
             }
+        },
+        isGeneratePdf(generateButton) {
+            // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
+            
+            // Start the progress bar animation
+            if(generateButton == 0 && this.is_generate_pdf == 1) {
+                this.is_generate_pdf = 0;
+            }
+            
+            if(generateButton == 1 && this.is_generate_pdf == 1) {
+                this.showSpinner = true;
+                this.is_generate_pdf = 0;
+            }
+            if(generateButton == 1 && this.is_generate_pdf == 0) {
+                this.showSpinner = true;
+            }
+            setTimeout(() => {
+                if(generateButton == 1 && this.is_generate_pdf == 1) {
+                    this.showSpinner = false;
+                    this.is_generate_pdf = 1;
+                }
+                if(generateButton == 1 && this.is_generate_pdf == 0) {
+                    this.showSpinner = false;
+                    this.is_generate_pdf = 1;
+                }
+            }, 2000);
         },
         // handleSaveAndGeneratePDF() {
         //     this.generatePDFAfterSave = true;
@@ -4608,7 +4660,7 @@ th {
     }
     .modal-header {
         padding: 1rem 0rem !important;
-        border-bottom: 1px solid #CDCDCD !important;
+        border-bottom:0px !important;
     }
     .modal .modal-header .modal-title {
         color: #355594 !important;
@@ -4657,5 +4709,20 @@ th {
         color: #355594 !important;
         stroke: #355594 !important;
         vertical-align: middle;
+    }
+    /* Spinner Styles */
+    .spin {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #355594;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>

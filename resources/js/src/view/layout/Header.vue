@@ -125,7 +125,10 @@
                 </b-form-group>
 
                 <div class="d-flex justify-content-center">
-                  <button class="my-2 my-md-6 btn-color" type="submit">Sign in</button>
+                    <b-button class="my-2 my-md-6 sign-in-btn" type="submit"
+                  style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:transparent !important;" 
+                  >Sign in</b-button>
+                  <!-- <button class="my-2 my-md-6 btn-color">Sign in</button> -->
                 </div>
                 <div class="d-flex justify-content-center mb-4 mb-md-8 mt-3 mt-md-6">
                   <p class="bottom-text">Can’t recall your User ID or Password?<br /> 
@@ -308,9 +311,9 @@ color: White;
   color: #355594;
 }
 .sign-in-btn:hover {
-  color:#fff !important;
-  background-color: #355594;
-  background:#355594 !important;
+  /* color:#fff !important; */
+  /* background-color: #355594; */
+  /* background:#355594 !important; */
 }
 .whats-new-btn {
   font-size: 14px;

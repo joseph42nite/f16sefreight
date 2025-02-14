@@ -24,9 +24,9 @@
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td align="left" valign="top" style="font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;">
-                                                    <font style="font-size:16px;line-height:22px;"><b>{{ $agentInfo->agent_name }}</b></font><br/>
-                                                    {{ $agentInfo->agent_address }}<br>
-                                                    {{ $agentInfo->agent_city }} - {{ $agentInfo->agent_pincode }},{{ $agentInfo->agent_country }}
+                                                    <font style="font-size:16px;line-height:22px;"><b>{{ $agentInfo->agent_name ?? ''}}</b></font><br/>
+                                                    {{ $agentInfo->agent_address ?? ''}}<br>
+                                                    {{ $agentInfo->agent_city ?? ''}} - {{ $agentInfo->agent_pincode ?? ''}},{{ $agentInfo->agent_country ?? ''}}
                                                 </td>
                                             </tr>
                                         </table>
@@ -67,7 +67,7 @@
                                                                         <td align="left" valign="top" style="font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;padding-left:2px;border:1px solid #000;">
                                                                             <b>MAWB</b>
                                                                             <br />
-                                                                            {{ $airWayBill->awb_code }} - {{ $airWayBill->awb_no }}
+                                                                            {{ $airWayBill->awb_code ?? ''}} - {{ $airWayBill->awb_no ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -81,7 +81,7 @@
                                                                             <b>DATE</b>
                                                                             <br />
                                                                             @php
-                                                                                echo date('d-M-Y', strtotime($airWayBill->created_at));
+                                                                                echo date('d-M-Y', strtotime($airWayBill->created_at ?? ''));
                                                                             @endphp
                                                                         </td>
                                                                     </tr>
@@ -165,7 +165,7 @@
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="right" valign="top" style="font-size: 12px;line-height: 16px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                <b>PRINTED BY : {{ $agentInfo->agent_issue_sign }}</b>
+                                                                <b>PRINTED BY : {{ $agentInfo->agent_issue_sign ?? ''}}</b>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -206,11 +206,11 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" height="110px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                                        {{ $wayBillAddress->ship_name }}<br />
-                                                                                        {{ $wayBillAddress->ship_address }}<br />
-                                                                                        {{ $wayBillAddress->ship_address_line_2 }}<br />
-                                                                                        {{ $wayBillAddress->ship_city }} - {{ $wayBillAddress->ship_post_code }},<br />
-                                                                                        {{ $wayBillAddress->ship_state }}, {{ $wayBillAddress->ship_country }}
+                                                                                        {{ $wayBillAddress->ship_name ?? ''}}<br />
+                                                                                        {{ $wayBillAddress->ship_address ?? ''}}<br />
+                                                                                        {{ $wayBillAddress->ship_address_line_2 ?? ''}}<br />
+                                                                                        {{ $wayBillAddress->ship_city ?? ''}} - {{ $wayBillAddress->ship_post_code ?? ''}},<br />
+                                                                                        {{ $wayBillAddress->ship_state ?? ''}}, {{ $wayBillAddress->ship_country ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -238,11 +238,11 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" height="110px" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                                        {{ $wayBillAddress->cons_name }}<br />
-                                                                                        {{ $wayBillAddress->cons_address }}<br />
-                                                                                        {{ $wayBillAddress->cons_address_line_2 }}<br />
-                                                                                        {{ $wayBillAddress->cons_city }} - {{ $wayBillAddress->cons_post_code }},<br />
-                                                                                        {{ $wayBillAddress->cons_state }}, {{ $wayBillAddress->cons_country }}
+                                                                                        {{ $wayBillAddress->cons_name ?? ''}}<br />
+                                                                                        {{ $wayBillAddress->cons_address ?? ''}}<br />
+                                                                                        {{ $wayBillAddress->cons_address_line_2 ?? ''}}<br />
+                                                                                        {{ $wayBillAddress->cons_city ?? ''}} - {{ $wayBillAddress->cons_post_code ?? ''}},<br />
+                                                                                        {{ $wayBillAddress->cons_state ?? ''}}, {{ $wayBillAddress->cons_country ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -280,7 +280,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                                        {{ $wayBillConsignmentData->gross_weight }}
+                                                                                        {{ $wayBillConsignmentData->gross_weight ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -294,7 +294,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                                        {{ $airWayBill->total_volume }} {{ $airWayBill->dimention_unit }}
+                                                                                        {{ $airWayBill->total_volume ?? ''}} {{ $airWayBill->dimention_unit ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -308,7 +308,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                                        {{ $wayBillConsignmentData->chargable_weight }} {{ $wayBillConsignmentData->weight_code }}  
+                                                                                        {{ $wayBillConsignmentData->chargable_weight ?? ''}} {{ $wayBillConsignmentData->weight_code ?? ''}}  
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -385,7 +385,7 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 9px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                           {{ $paymentInfo->declear_value_carriage }}
+                                                                           {{ $paymentInfo->declear_value_carriage ?? ''}}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -423,8 +423,10 @@
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
                                                                                         @php
+                                                                                         if (isset($wayBillConsignmentData->pieces_info)) {
                                                                                             $decodedInfo = json_decode($wayBillConsignmentData->pieces_info, true);
                                                                                             echo $decodedInfo[0]['pcs'].' NOS';
+                                                                                         }
                                                                                         @endphp
                                                                                     </td>
                                                                                 </tr>
@@ -440,7 +442,7 @@
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;border-right:1px solid #000;padding: 0px 0px 0px 2px;">
                                                                                         @php
-                                                                                            $prepaidTaxType = $paymentInfo->type_of_payment;
+                                                                                            $prepaidTaxType = $paymentInfo->type_of_payment ?? '';
                                                                                             if ($prepaidTaxType == "PP") {
                                                                                                 echo "Prepaid";
                                                                                             }
@@ -475,7 +477,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                                        {{ $airWayBill->departure_airport }}
+                                                                                        {{ $airWayBill->departure_airport ?? '' }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -489,7 +491,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="right" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-right:1px solid #000;padding: 0px 2px 0px 2px;">
-                                                                                        {{ $airWayBill->date }}
+                                                                                        {{ $airWayBill->date ?? '' }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -514,7 +516,7 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-left:1px solid #000;padding: 0px 0px 0px 2px;">
-                                                                            {{ $airWayBill->destination_airport }}
+                                                                            {{ $airWayBill->destination_airport ?? '' }}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -528,7 +530,7 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="right" valign="top" style="font-size: 10px;line-height: 14px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;font-weight: 700;border-bottom:1px solid #000;border-right:1px solid #000;padding: 0px 2px 0px 2px;">
-                                                                            {{ $airWayBill->date_3 }}
+                                                                            {{ $airWayBill->date_3 ?? '' }}
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -907,45 +909,49 @@
                                                                     <b>HAWB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->id }}<br />
                                                                     {{-- <b>Job Ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;HRS/AE/0538/24-25<br /> --}}
                                                                     @php
+                                                                    if (isset($wayBillConsignmentData->pieces_info)) {
                                                                         $decodedInfo = json_decode($wayBillConsignmentData->pieces_info, true);
+                                                                    }
                                                                     @endphp
                                                                     <b>Wgt / Vol / Pkg&nbsp;:</b>&nbsp;{{ $decodedInfo[0]['wgt'] }} / {{ $houseWayBill->total_volume }} / {{ $decodedInfo[0]['pcs'].' NOS' }}<br />
                                                                     {{-- <b>INCO Terms&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;EX WORKS<br /> --}}
-                                                                    <b>Origin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->departure_airport }}<br />
-                                                                    <b>Destination&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->destination_airport }}<br />
+                                                                    <b>Origin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->departure_airport ?? ''}}<br />
+                                                                    <b>Destination&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $airWayBill->destination_airport ?? ''}}<br />
                                                                     {{-- <b>Shippers Ref&nbsp;&nbsp;&nbsp;:</b>&nbsp;<br /> --}}
-                                                                    <b>Master&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->awb_code.' - '.$houseWayBill->awb_no }}
+                                                                    <b>Master&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</b>&nbsp;{{ $houseWayBill->awb_code ?? ''.' - '.$houseWayBill->awb_no ?? '' }}
                                                                 </td>
                                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
-                                                                    {{ $wayBillAddress->ship_name }}<br />
-                                                                    {{ $wayBillAddress->ship_address }}<br />
-                                                                    {{ $wayBillAddress->ship_address_line_2 }}<br />
-                                                                    {{ $wayBillAddress->ship_city }} - {{ $wayBillAddress->ship_post_code }},<br />
-                                                                    {{ $wayBillAddress->ship_state }}, {{ $wayBillAddress->ship_country }}
+                                                                    {{ $wayBillAddress->ship_name ?? '' }}<br />
+                                                                    {{ $wayBillAddress->ship_address ?? '' }}<br />
+                                                                    {{ $wayBillAddress->ship_address_line_2 ?? '' }}<br />
+                                                                    {{ $wayBillAddress->ship_city ?? '' }} - {{ $wayBillAddress->ship_post_code ?? '' }},<br />
+                                                                    {{ $wayBillAddress->ship_state ?? '' }}, {{ $wayBillAddress->ship_country ?? '' }}
                                                                 </td>
                                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
-                                                                    {{ $wayBillAddress->cons_name }}<br />
-                                                                    {{ $wayBillAddress->cons_address }}<br />
-                                                                    {{ $wayBillAddress->cons_address_line_2 }}<br />
-                                                                    {{ $wayBillAddress->cons_city }} - {{ $wayBillAddress->cons_post_code }},<br />
-                                                                    {{ $wayBillAddress->cons_state }}, {{ $wayBillAddress->cons_country }}
+                                                                    {{ $wayBillAddress->cons_name ?? '' }}<br />
+                                                                    {{ $wayBillAddress->cons_address ?? '' }}<br />
+                                                                    {{ $wayBillAddress->cons_address_line_2 ?? '' }}<br />
+                                                                    {{ $wayBillAddress->cons_city ?? '' }} - {{ $wayBillAddress->cons_post_code ?? '' }},<br />
+                                                                    {{ $wayBillAddress->cons_state ?? '' }}, {{ $wayBillAddress->cons_country ?? '' }}
                                                                 </td>
                                                                 <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding-left: 2px;padding: 0px 2px 10px;">
                                                                     <b>Goods Description&nbsp;:</b>
-                                                                    {{ $wayBillConsignmentData->description }}
+                                                                    {{ $wayBillConsignmentData->description ?? '' }}
                                                                     HS CODE: 
                                                                     <br>
                                                                     @php
+                                                                    if (isset($wayBillConsignmentData->hs_code)) {
                                                                         $decodedInfo = json_decode($wayBillConsignmentData->hs_code, true);
                                                                         foreach ($decodedInfo as $key => $value) 
                                                                         {
                                                                             echo $decodedInfo[$key].'<br/>' ;
 
                                                                         }
+                                                                    }
                                                                     @endphp
                                                                 </td>
                                                                 <td align="left" valign="top" width="135px" style="font-size: 10px;line-height: 12px;font-family:Segoe UI, Helvatica, Arial,sans-serif;color: #000000;border-bottom:1px solid #000;padding: 0px 2px 10px;">
-                                                                    {{ $houseWayBill->other_service_information }}
+                                                                    {{ $houseWayBill->other_service_information ?? '' }}
                                                                 </td>
                                                             </tr>
                                                         @endforeach

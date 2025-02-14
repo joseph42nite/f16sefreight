@@ -396,6 +396,7 @@ class AirwayBill extends Controller
             'other_service_information' => 'nullable|string|max:195',
             'shipment_ref_no' => 'nullable|string|max:35',
             'supplementary_shipment_info' => 'nullable|string|max:35',
+            'supplementary_shipment_info_line_2' => 'nullable|string|max:35',
             'letter_credit' => 'nullable|string|size:3',
             'extra_print' => 'nullable|string|max:195'
         ]);
@@ -413,6 +414,7 @@ class AirwayBill extends Controller
         $AirwayBills->other_service_information = $custom_origin['other_service_information'];
         $AirwayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
         $AirwayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
+        $AirwayBills->supplementary_shipment_info_line_2 = $custom_origin['supplementary_shipment_info_line_2'];
         $AirwayBills->letter_credit = $custom_origin['letter_credit'];
         $AirwayBills->extra_print = $custom_origin['extra_print'];
         $AirwayBills->save();

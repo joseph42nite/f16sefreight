@@ -6,6 +6,7 @@ use App\AirwayBills; // Import the model
 use App\PaymentInfo; // Import the model
 use App\ConsignmentData; // Import the model
 use App\Agent; // Import the model
+use App\Airline;
 use App\OtherCharge; // Import the model
 use App\GeneratePdf;
 use Illuminate\Http\Request;
@@ -21,7 +22,10 @@ class GenerateAwbPdfController extends Controller
        $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
             ->where('id', $id)
             ->first();
-            // print_r($airWayBill);
+            $prefix = substr($airWayBill->awb_code, 0, 3);
+            $airline = Airline::where('prefix', $prefix)->whereNotNull('airline_address')->first();
+            $airlineAddress = $airline ? $airline->airline_address : '';
+            print_r($airlineAddress);
         $specialHandlingInfo = '';
         if ($airWayBill && !empty($airWayBill->special_handling_info)) {
             $decodedInfo = json_decode($airWayBill->special_handling_info, true);
@@ -40,7 +44,7 @@ class GenerateAwbPdfController extends Controller
         
         // Create a variable with true value to show or hide back page.
         $showBothPage = true;
-        $pdf = Pdf::loadView('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'showBothPage'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
+        $pdf = Pdf::loadView('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'showBothPage','airlineAddress'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
         return $pdf->stream();
     
     }

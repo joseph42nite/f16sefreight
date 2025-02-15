@@ -252,7 +252,7 @@
                                                             <span style="color: red;">*</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }" @keydown="inputLimit($event, 'shipper_address.ship_address', 40)"></b-form-input>
                                                     <has-error :form="form" field="ship_address"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -261,7 +261,7 @@
                                                             <span>&nbsp;</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }" @keydown="inputLimit($event, 'shipper_address.ship_address_line_2', 35)"></b-form-input>
                                                     <has-error :form="form" field="ship_address_line_2"></has-error>
                                                 </b-form-group>
                                                 
@@ -409,7 +409,7 @@
                                                             <span style="color: red;">*</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }" @keydown="inputLimit($event, 'consignee_address.cons_address', 40)"></b-form-input>
                                                     <has-error :form="form" field="cons_address"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -418,7 +418,7 @@
                                                             <span>&nbsp;</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }"></b-form-input>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }" @keydown="inputLimit($event, 'consignee_address.cons_address_line_2', 35)"></b-form-input>
                                                     <has-error :form="form" field="cons_address_line_2"></has-error>
                                                 </b-form-group>
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
@@ -1262,7 +1262,7 @@
                                                             <div class="py-7">
                                                                 <b-form-textarea class="" style="height:80px;width: 60% !important;" id="textarea"
                                                                     v-model="form.custom_origin.other_service_information"
-                                                                    :class="{ 'is-invalid': form.errors.has('other_service_information') }"></b-form-textarea>
+                                                                    :class="{ 'is-invalid': form.errors.has('other_service_information') }" @input="validateTextarea"></b-form-textarea>
                                                                 <has-error :form="form" field="other_service_information"></has-error>
                                                             </div>
                                                         </div>
@@ -1320,7 +1320,8 @@
                                                                 </div>
                                                                 <div class="d-flex align-items-center">
                                                                     <label style="width:230px;justify-content: end;display: flex;padding-right: 2px;">&nbsp;</label>
-                                                                    <b-form-input style="width:200px;" id="input-horizontal" class="form-control" v-model="form.custom_origin.supplementary_shipment_info"></b-form-input>
+                                                                    <b-form-input style="width:200px;" id="input-horizontal" class="form-control" v-model="form.custom_origin.supplementary_shipment_info_line_2" :class="{ 'is-invalid': form.errors.has('supplementary_shipment_info_line_2') }"></b-form-input>
+                                                                    <has-error :form="form" field="supplementary_shipment_info_line_2"></has-error>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -2610,6 +2611,7 @@ export default {
                     letter_credit: '',
                     shipment_ref_no: null,
                     supplementary_shipment_info: '',
+                    supplementary_shipment_info_line_2: '',
                     extra_print: null,
                 },
 
@@ -2770,6 +2772,7 @@ export default {
             awb_prefix_message: '',
             showAWBSection: false,
             successMessage: '',
+            charCount: 0, lineCount: 0,
             codes: [
                 { value: 'ACT', text: 'ACT - Active Temperature Controlled System' },
                 { value: 'AOG', text: 'AOG - Aircraft on ground' },
@@ -2887,6 +2890,52 @@ export default {
             if (value) {
                 window.location.href = value;
             }
+        },
+        inputLimit(event, fieldPath, maxLength) {
+            const allowedChars = /^[a-zA-Z0-9 ,\-_]+$/;
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight'];
+
+            if (allowedKeys.includes(event.key)) {
+                return;
+            }
+            const fields = fieldPath.split(".");
+            let input = this.form;
+            
+            for (let i = 0; i < fields.length; i++) {
+                if (input[fields[i]] === undefined) {
+                    return; // Stop if any level is undefined
+                }
+                if (i === fields.length - 1) {
+                    input = input[fields[i]];
+                } else {
+                    input = input[fields[i]];
+                }
+            }
+            if (typeof input !== "string") return;
+            input = input.split('').filter(char => allowedChars.test(char)).join('');
+
+            // Prevent typing beyond maxLength
+            if (input.length >= maxLength) {
+                event.preventDefault();
+            }
+            let obj = this.form;
+            for (let i = 0; i < fields.length - 1; i++) {
+                obj = obj[fields[i]];
+            }
+            obj[fields[fields.length - 1]] = input.substring(0, maxLength);
+        },
+        validateTextarea() {
+            let text = this.form.custom_origin.other_service_information || '';
+            let lines = text.split(/\r?\n/);
+
+            if (text.length > 195) this.form.custom_origin.other_service_information = text.slice(0, 195);
+            if (lines.length > 3) {
+                alert("You can add a maximum of three lines.");
+                this.form.custom_origin.other_service_information = lines.slice(0, 3).join("\n");
+            }
+
+            this.charCount = this.form.custom_origin.other_service_information.length;
+            this.lineCount = this.form.custom_origin.other_service_information.split(/\r?\n/).length;
         },
         isGeneratePdf(generateButton) {
             // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);

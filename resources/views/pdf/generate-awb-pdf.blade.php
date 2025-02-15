@@ -215,8 +215,12 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                        Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
+                                                                                        {{-- Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France --}}
+                                                                                        @if(!empty($airlineAddress))
+                                                                                            {!! nl2br(str_replace(',', '<br>', $airlineAddress ?? '')) !!}
+                                                                                            {{-- {{ $airlineAddress ?? '' }}</p> --}}
+                                                                                        @endif
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

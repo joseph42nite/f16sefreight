@@ -922,6 +922,19 @@ export default {
                 this.oci_data.oci_custom_info_identifier = []; 
             });
         },
+        getHouseWayBill(id) { 
+            ApiService.get(`/houseway-bill/${id}`)
+                .then(response => {
+                    this.existingData = response.data;
+                    this.openForm('update', this.existingData.id);
+                    if (this.existingData && this.existingData.consignment_data) {
+                        this.isConsignmentAdded = true;
+                    }
+                })
+                .catch(error => {
+                    console.error("Failed to fetch data for updating:", error);
+                });
+        },
         handleRadioChange() {
             const selectedCode = this.selectedCode;
             this.form.tableCodes = [];
@@ -1063,13 +1076,22 @@ export default {
             if (newId) {
                 this.getAirWayBill(newId);
             }
-        }
+        },
+        '$route.params.id'(newId) {
+            if (newId) {
+                this.getHouseWayBill(newId);
+            }
+        },
     },
     created() {
         const id = this.$route.params.id;
         if (id) {
             this.isEdit = true;
             this.getAirWayBill(id);
+        }
+        if (id) {
+            this.isEdit = true;
+            this.getHouseWayBill(id);
         }
         this.getOCIData();
     },

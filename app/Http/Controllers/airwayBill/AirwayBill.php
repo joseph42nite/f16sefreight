@@ -396,6 +396,7 @@ class AirwayBill extends Controller
             'other_service_information' => 'nullable|string|max:195',
             'shipment_ref_no' => 'nullable|string|max:35',
             'supplementary_shipment_info' => 'nullable|string|max:35',
+            'supplementary_shipment_info_line_2' => 'nullable|string|max:35',
             'letter_credit' => 'nullable|string|size:3',
             'extra_print' => 'nullable|string|max:195'
         ]);
@@ -413,6 +414,7 @@ class AirwayBill extends Controller
         $AirwayBills->other_service_information = $custom_origin['other_service_information'];
         $AirwayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
         $AirwayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
+        $AirwayBills->supplementary_shipment_info_line_2 = $custom_origin['supplementary_shipment_info_line_2'];
         $AirwayBills->letter_credit = $custom_origin['letter_credit'];
         $AirwayBills->extra_print = $custom_origin['extra_print'];
         $AirwayBills->save();
@@ -544,10 +546,10 @@ class AirwayBill extends Controller
         $AirwayBills->awb_id = $awb_id;
         $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
         // $AirwayBills->total_charges = $payment_info['total_charges'];
-        $AirwayBills->currency = $payment_info['currency'];
-        $AirwayBills->declear_value_carriage = $payment_info['declear_value_carriage'];
-        $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'];
-        $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'];
+        $AirwayBills->currency = $payment_info['currency'] ?? 'INR';
+        $AirwayBills->declear_value_carriage = $payment_info['declear_value_carriage'] ?? 'NVD';
+        $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? 'NCV';
+        $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? 'XXX';
         $AirwayBills->weight_charge = $payment_info['weight_charge'];
         $AirwayBills->taxes = $payment_info['taxes'];
         $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];

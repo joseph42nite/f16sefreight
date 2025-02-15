@@ -13,6 +13,7 @@ use App\OtherCharge; // Import the model
 use App\WayBillAddress; // Import the model
 use Illuminate\Support\Facades\App;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class GenerateHawbPdfController extends Controller
 {
@@ -20,10 +21,18 @@ class GenerateHawbPdfController extends Controller
     public function downloadHawbPdf($hawb_id) {
         // $houseWayBill1 = HouseWayBills::where('id', $hawb_id)->first();
         // dd($houseWayBill1);die();
-        $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
-            ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
-            ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
+        $houseWayBill = HouseWayBills::leftJoin('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
+            ->leftJoin('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
+            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+            ->leftJoin('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
+            ->leftJoin('airlines', function($join) {
+                $join->on('airlines.prefix', '=', DB::raw('SUBSTRING(house_way_bills.awb_code, 1, LENGTH(airlines.prefix))'));
+            })
+        // $houseWayBill = HouseWayBills::join('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
+        //     ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
+        //     ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+        //     ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
             ->where('house_way_bills.id', $hawb_id)
             ->select(
                 // house_way_bills column declare here 
@@ -114,7 +123,10 @@ class GenerateHawbPdfController extends Controller
                 'agents_info.iata_agent_cass as iata_agent_cass',
                 'agents_info.agent_issue_sign as agent_issue_sign',
                 'agents_info.agent_issue_date as agent_issue_date',
-                'agents_info.agent_issue_loc_code as agent_issue_loc_code'
+                'agents_info.agent_issue_loc_code as agent_issue_loc_code',
+
+                  // Airline Address
+                'airlines.airline_address as airline_address'
             )
             ->first();
         if ($houseWayBill) {
@@ -158,6 +170,9 @@ class GenerateHawbPdfController extends Controller
             ->join('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
             ->join('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
             ->join('agents_info', 'house_way_bills.agent_id', '=', 'agents_info.id')
+            ->leftJoin('airlines', function($join) {
+                $join->on('airlines.prefix', '=', DB::raw('SUBSTRING(house_way_bills.awb_code, 1, LENGTH(airlines.prefix))'));
+            })
             ->where('house_way_bills.id', $hawb_id)
             ->select(
                 // house_way_bills column declare here 
@@ -248,7 +263,10 @@ class GenerateHawbPdfController extends Controller
                 'agents_info.iata_agent_cass as iata_agent_cass',
                 'agents_info.agent_issue_sign as agent_issue_sign',
                 'agents_info.agent_issue_date as agent_issue_date',
-                'agents_info.agent_issue_loc_code as agent_issue_loc_code'
+                'agents_info.agent_issue_loc_code as agent_issue_loc_code',
+
+                //airline_address
+                'airlines.airline_address as airline_address'
             )
             ->first();
         if ($houseWayBill) {

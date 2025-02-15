@@ -41,7 +41,8 @@ class CreateHousewayBillsTable extends Migration
             $table->string('special_service_request')->nullable();
             $table->string('accounting_information')->nullable();
             $table->string('shipment_ref_no')->nullable();
-            $table->string('supplementary_shipment_info')->nullable();
+            $table->string('supplementary_shipment_info', 50)->nullable();
+            $table->string('supplementary_shipment_info_line_2', 50)->nullable();
             $table->string('extra_print')->nullable();
             $table->integer('shipper_id')->nullable();
             $table->integer('consignee_id')->nullable();

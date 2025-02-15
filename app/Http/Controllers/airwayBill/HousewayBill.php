@@ -10,7 +10,7 @@ use App\SavedAddress;
 use App\ConsignmentData;
 use App\HousewayBills;
 use App\OtherCharge;
-use App\OtherCustomInformation;
+use App\otherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -424,6 +424,7 @@ class HousewayBill extends Controller
             'other_service_information' => 'nullable|string|max:195',
             'shipment_ref_no' => 'nullable|string|max:35',
             'supplementary_shipment_info' => 'nullable|string|max:35',
+            'supplementary_shipment_info_line_2' => 'nullable|string|max:35',
             'letter_credit' => 'nullable|string|size:3',
             'extra_print' => 'nullable|string|max:195'
         ]);
@@ -441,6 +442,7 @@ class HousewayBill extends Controller
         $HousewayBills->other_service_information = $custom_origin['other_service_information'];
         $HousewayBills->shipment_ref_no = $custom_origin['shipment_ref_no'];
         $HousewayBills->supplementary_shipment_info = $custom_origin['supplementary_shipment_info'];
+        $HousewayBills->supplementary_shipment_info_line_2 = $custom_origin['supplementary_shipment_info_line_2'];
         $HousewayBills->letter_credit = $custom_origin['letter_credit'];
         $HousewayBills->extra_print = $custom_origin['extra_print'];
         $HousewayBills->save();
@@ -589,7 +591,7 @@ class HousewayBill extends Controller
             $validator = Validator::make($oci_entry, [
                 'country_code' => 'required|string|max:2',
                 'info_identifier' => 'required|string|max:3',
-                'custom_info_identifier' => 'required|string|max:2',
+                'custom_info_identifier' => 'nullable|string|max:2',
                 'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
             ],[
                 'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',

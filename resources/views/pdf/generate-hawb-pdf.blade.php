@@ -209,7 +209,11 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                        Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France
+                                                                                        {{-- Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France --}}
+                                                                                        @if (!empty($houseWayBill->airline_address)) 
+                                                                                            {!! nl2br(str_replace(',', '<br>', $houseWayBill->airline_address ?? '')) !!}
+                                                                                            {{-- {{ $houseWayBill->airline_address ?? ''}} --}}
+                                                                                        @endif
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -538,7 +542,7 @@
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                        {{ $houseWayBill->supplementary_shipment_info }}
+                                                                                        {{ $houseWayBill->supplementary_shipment_info_line_2 }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

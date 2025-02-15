@@ -678,7 +678,7 @@
                                 <hr class="hr" />
                                 <!-- ROUTING INDORMATION AND SEARCH FLIGHTS TABS -->
                                 <div>
-                                    <b-tabs content-class="mt-3" class="custom-nav">
+                                    <b-tabs content-class="mt-7" class="custom-nav">
                                         <b-tab title="Routing Information">
                                             <b-row class="mt-5">
                                                 <b-col cols="5">
@@ -2012,6 +2012,19 @@
                                                         </div>
                                                     </div>
                                                 </b-tab>
+                                                <b-tab title="Exta Print Information">
+                                                        <div class="ml-3 mt-8">
+                                                            <h6 class="h-color" style="font-size: 15px;font-weight:500">Extra information printed of Air Way Bill (Only printed - not saved or sent
+                                                                to Airlines):</h6>
+                                                            <div class="py-7">
+                                                                <b-row>
+                                                                    <b-col cols="auto">
+                                                                        <b-form-textarea style="width:500px;height:80px !important;" class="" id="textarea" v-model="form.custom_origin.extra_print"></b-form-textarea>
+                                                                    </b-col>
+                                                                </b-row>
+                                                            </div>
+                                                        </div>
+                                                    </b-tab>
                                             </b-tabs>
                                         </b-col>
                                     </b-row>
@@ -2195,7 +2208,7 @@
                                                             </thead>
                                                             <tbody>
                                                                 <tr>
-                                                                    <td class="pt-5 editable-cell align-items-center" style="width:300px;">
+                                                                    <td class="pt-5 editable-cell align-items-center" style="width:300px;vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal" class="d-flex align-items-center">
                                                                             <b-form-select class="form-control" v-model="other_charges.other_charge_code" :class="{ 'is-invalid': form.errors.has('other_charge_code') }"> 
                                                                                 <option value="">Select an Other Charge Code</option>
@@ -2206,7 +2219,7 @@
                                                                             <has-error :form="form" field="other_charge_code"></has-error>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell">
+                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-or" class="align-items-center">
                                                                             <template #label>
                                                                                 <div class="d-flex align-items-center">
@@ -2216,41 +2229,41 @@
                                                                             <b-form-input id="input-or" style="width:40px;" class="form-control" v-model="other_charges.other_code"></b-form-input>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell">
+                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal" label-for="input-other-charge-amount"
                                                                             class="align-items-center">
                                                                             <b-form-input id="input-other-charge-amount" style="width:80px;" class="form-control"
                                                                                 v-model="other_charges.amount"></b-form-input>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell">
+                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal"
                                                                             class="align-items-center">
                                                                             <b-form-radio name="due" size="sm" v-model="other_charges.due" value="A">Due Agent</b-form-radio>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell">
+                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal"
                                                                             class="align-items-center">
                                                                             <b-form-radio name="due" size="sm" v-model="other_charges.due"
                                                                                 value="C">Due Carrier</b-form-radio>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell">
+                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal"
                                                                             class="align-items-center">
                                                                             <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
                                                                                 value="P">Prepaid</b-form-radio>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell">
+                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal"
                                                                             class="align-items-center">
                                                                             <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
                                                                                 value="C">Collect</b-form-radio>
                                                                         </b-form-group>
                                                                     </td>
-                                                                    <td class="pt-5 editable-cell align-items-center">
+                                                                    <td class="pt-5 editable-cell align-items-center" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal"
                                                                             class="align-items-center">
                                                                             <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;"
@@ -2276,19 +2289,19 @@
                                                                 </thead>
                                                                 <tbody>
                                                                     <tr>
-                                                                        <td class="pt-5 editable-cell">Chargeable Weight</td>
-                                                                        <td class="pt-5 editable-cell">
+                                                                        <td class="pt-5 editable-cell" style="vertical-align: middle;">Chargeable Weight</td>
+                                                                        <td class="pt-5 editable-cell" style="vertical-align: middle;">
                                                                             <input type="text" class="form-control" style="width: 100px"
                                                                                 v-model="other_charges.chargable_weight1" />
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td class="editable-cell">Charge</td>
+                                                                        <td class="editable-cell" style="vertical-align: middle;">Charge</td>
                                                                         <td class="editable-cell">
                                                                             <input type="text" class="form-control" style="width: 100px"
                                                                                 v-model="other_charges.charge" />
                                                                         </td>
-                                                                        <td class="editable-cell mb-2">
+                                                                        <td class="editable-cell mb-2" style="vertical-align: middle;">
                                                                             <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="form-control-sm px-5"
                                                                                 @click="calculateCharge">Calculate</b-button>
                                                                         </td>

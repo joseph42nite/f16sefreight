@@ -219,7 +219,6 @@
                                                                                         {{-- Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France --}}
                                                                                         @if(!empty($airlineAddress))
                                                                                             {!! nl2br(str_replace(',', '<br>', $airlineAddress ?? '')) !!}
-                                                                                            {{-- {{ $airlineAddress ?? '' }}</p> --}}
                                                                                         @endif
                                                                                     </td>
                                                                                 </tr>
@@ -1047,11 +1046,13 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" width="370px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 400;padding-left:1px;">
+                                                                                    <td align="left" valign="top" width="370px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $airWayBill->other_service_information ?? '' }}<br />
                                                                                         <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        {{ $airWayBill->special_service_request ?? '' }}<br />
-                                                                                        {{ $airWayBill->extra_print ?? '' }}
+                                                                                        <div style="z-index:9999 !important;position:absolute;top:56%;left:11%;right:0%;bottom:0%;width:400px;">
+                                                                                            {{ $airWayBill->special_service_request ?? '' }}<br />
+                                                                                            {{ $airWayBill->extra_print ?? '' }}
+                                                                                        </div>
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

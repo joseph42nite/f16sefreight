@@ -50,6 +50,10 @@
             border-right: none;
             transform: skew(-40deg);
         }
+        @page  {
+            margin: 0mm;
+            size: letter; /*or width then height 150mm 50mm*/
+        }
     </style>
 </head>
 <body style="word-spacing:normal;margin: 0 auto;">
@@ -59,14 +63,14 @@
                 <table cellpadding="0" cellspacing="0" width="100%">
                     <!-- UDR Section -->
                     <tr>
-                        <td align="center" valign="top" width="600px" style="padding-bottom:5px;">
+                        <td align="center" valign="top" width="600px" style="padding-bottom:2px;padding-top:15px;">
                             <table cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <!-- first section code -->
                                     <td align="left" valign="top" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="left" valign="top" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
+                                                <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
                                                     $departure_airport =  explode(',', $houseWayBill->departure_airport);
                                                     $departure_airport = $departure_airport[0] ?? '';
@@ -81,10 +85,10 @@
                                     <td align="center" valign="top" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="center" valign="top" width="60px" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="top" width="60px" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                     &nbsp;
                                                 </td>
-                                                <td align="center" valign="top" width="140px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="top" width="140px" style="font-size: 10px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                     {{$houseWayBill->house_way_bills_id ?? ''}}
                                                 </td>
                                             </tr>
@@ -116,12 +120,12 @@
                                                                         <td align="left" valign="top" width="140px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Shipper's Name and Address
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Curiour New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px;">
                                                                                         {{ $houseWayBill->ship_name ?? ''}}<br/>
                                                                                         {{ $houseWayBill->ship_name_2 ?? ''}} <br/>
                                                                                         {{ $houseWayBill->ship_address ?? ''}}<br/>
@@ -138,7 +142,7 @@
                                                                         <td align="center" valign="top" width="140px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
+                                                                                    <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 15px 0px;">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
@@ -154,7 +158,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
                                                                                         @if ($houseWayBill->ship_phone)
                                                                                             Phone : {{ $houseWayBill->ship_phone ?? ''}} <br/>
                                                                                         @endif
@@ -187,12 +191,12 @@
                                                                         <td align="left" valign="top" width="60px" style="padding-left: 5px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Not Negotiable
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
                                                                                         Issued by
                                                                                     </td>
                                                                                 </tr>
@@ -208,11 +212,10 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         {{-- Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France --}}
                                                                                         @if (!empty($houseWayBill->airline_address)) 
                                                                                             {!! nl2br(str_replace(',', '<br>', $houseWayBill->airline_address ?? '')) !!}
-                                                                                            {{-- {{ $houseWayBill->airline_address ?? ''}} --}}
                                                                                         @endif
                                                                                     </td>
                                                                                 </tr>
@@ -244,12 +247,12 @@
                                                             <td align="left" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                             Consignee's Name and Address
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Curiour New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px;">
                                                                             {{ $houseWayBill->cons_name ?? ''}}<br/>{{ $houseWayBill->cons_name_2 ?? ''}}<br/>
                                                                             {{ $houseWayBill->cons_address ?? ''}}<br/>{{ $houseWayBill->cons_address_line_2 ?? ''}}<br />
                                                                             {{ $houseWayBill->cons_city ?? ''}}&nbsp;&nbsp;
@@ -264,15 +267,15 @@
                                                             <td align="center" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
+                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 15px 0px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Consignee's Account Number
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                        {{ $houseWayBill->cons_account ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -280,7 +283,7 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
                                                                             @if ($houseWayBill->cons_phone)
                                                                                 Phone : {{ $houseWayBill->cons_phone ?? ''}} <br/>
                                                                             @endif
@@ -306,7 +309,7 @@
                                                             <td align="center" valign="top" >
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 0px;">
+                                                                        <td align="left" valign="top" style="font-size: 7px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 2px;">
                                                                             It is agreed that the goods described herein are accepted in apparent good order and condition (except as noted) for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. ALL GOODS MAY BE CARRIED BY ANY OTHER MEANS INCLUDING ROAD OR ANY OTHER CARRIER UNLESS SPECIFIC CONTRARY INSTRUCTIONS ARE GIVEN HEREON BY THE SHIPPER, AND SHIPPER AGREES THAT THE SHIPMENT MAY BE CARRIED VIA INTERMEDIATE STOPPING PLACES WHICH THE CARRIER DEEMS APPROPRIATE. THE SHIPPER'S ATTENTION IS DRAWN TO THE NOTICE CONCERNING CARRIER'S LIMITATION OF LIABILITY. Shipper may increase such limitation of liability by declaring a higher value for carriage and paying a supplemental charge if required.
                                                                         </td>
                                                                     </tr>
@@ -339,7 +342,7 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 10px 10px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 0px 10px 10px;">
                                                                             {{ $houseWayBill->agent_name ?? ''}}
                                                                             <br>
                                                                             {{ $houseWayBill->agent_address ?? ''}}
@@ -372,7 +375,7 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                            <td align="center" valign="top" style="font-size: 11px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:5px;">
                                                                                                                 {{ $houseWayBill->iata_agent_code ?? ''}}  
                                                                                                             </td>
                                                                                                         </tr>
@@ -383,7 +386,7 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="top" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="right" valign="top" style="font-size: 11px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                             {{ $houseWayBill->iata_agent_cass ?? ''}}   
                                                                                                             </td>
                                                                                                         </tr>
@@ -410,7 +413,7 @@
                                                                                     <td align="center" valign="bottom">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:10px;">
+                                                                                                <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:10px;">
                                                                                                     {{ $houseWayBill->agent_account ?? ''}}  
                                                                                                 </td>
                                                                                             </tr>
@@ -444,7 +447,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px; padding-top:5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px; padding-top:5px;">
                                                                                         {{ $houseWayBill->accounting_information ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -476,7 +479,7 @@
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td align="left" valign="top" width="292px" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
+                                                            <td align="left" valign="top" width="292px" style="font-size: 11px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
                                                                 @php
                                                                 $departureAirport = explode(',', $houseWayBill->departure_airport);
                                                                 $departureAirport = $departureAirport[0];  
@@ -523,7 +526,7 @@
                                                                         <td align="left" valign="bottom" width="148px" height="23px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         {{ $houseWayBill->shipment_ref_no }}
                                                                                     </td>
                                                                                 </tr>
@@ -532,7 +535,7 @@
                                                                         <td align="left" valign="bottom" width="88px" style="border-left:1px solid #000;border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         {{ $houseWayBill->supplementary_shipment_info }}
                                                                                     </td>
                                                                                 </tr>
@@ -541,7 +544,7 @@
                                                                         <td align="center" valign="bottom" width="64px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         {{ $houseWayBill->supplementary_shipment_info_line_2 }}
                                                                                     </td>
                                                                                 </tr>
@@ -579,7 +582,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
                                                                                 @php
                                                                                     $to1 = explode(',', $houseWayBill->to);
                                                                                     $to1 = $to1[0];
@@ -599,7 +602,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
+                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
                                                                                 {{ $houseWayBill->by ?? ''}}
                                                                             </td>
                                                                     </tr>
@@ -626,7 +629,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
                                                                                     $to2 = explode(',', $houseWayBill->to_2);
                                                                                     $to2 = $to2[0];
@@ -646,7 +649,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $houseWayBill->by_2 ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -662,7 +665,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
                                                                                     $to3 = explode(',', $houseWayBill->to_3);
                                                                                     $to3 = $to3[0];
@@ -682,7 +685,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $houseWayBill->by_3 ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -706,7 +709,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:15px;">
                                                                                 {{ $houseWayBill->currency ?? ''}} 
                                                                             </td>
                                                                         </tr>
@@ -722,7 +725,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $houseWayBill->type_of_payment ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -749,7 +752,7 @@
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'PP') {
                                                                                                                 echo "X";
@@ -767,7 +770,7 @@
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                         if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'CC') {
                                                                                                             echo "X";
@@ -804,7 +807,7 @@
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'PP') {
                                                                                                                 echo "X";
@@ -822,7 +825,7 @@
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($houseWayBill->weight_charge) && $houseWayBill->type_of_payment == 'CC') {
                                                                                                                 echo "X";
@@ -848,7 +851,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:10px;">
+                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:10px;">
                                                                                 {{ $houseWayBill->declear_value_carriage ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -864,7 +867,7 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:10px;">
+                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:10px;">
                                                                                 {{ $houseWayBill->declear_value_customs ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -902,7 +905,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;vertical-align:bottom;">
                                                                                         {{ $houseWayBill->destination_airport ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -931,7 +934,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px" style="border-right:1px solid #000000;">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                                 {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -942,7 +945,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                                 {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -979,7 +982,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         {{ $houseWayBill->declear_value_insurance ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -1031,11 +1034,13 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:1px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $houseWayBill->other_service_information ?? '' }}<br />
                                                                                         <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        {{ $houseWayBill->special_service_request ?? '' }}<br />
-                                                                                        {{ $houseWayBill->extra_print ?? '' }}
+                                                                                        <div style="z-index:9999 !important;position:absolute;top:58%;left:11%;right:0%;bottom:0%;width:400px;">
+                                                                                            {{ $houseWayBill->special_service_request ?? '' }}<br />
+                                                                                            {{ $houseWayBill->extra_print ?? '' }}
+                                                                                        </div>
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1068,7 +1073,7 @@
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     @php
                                                                                                     $splHandlingInfo = !empty($houseWayBill->special_handling_info) ? json_decode($houseWayBill->special_handling_info, true) : '';
                                                                                                         //$splHandlingInfo = json_decode($houseWayBill->special_handling_info, true);
@@ -1098,7 +1103,7 @@
                                                                                         </td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                             @foreach ($houseWayBill->otherCustomInformation as $otherCustomInformation)
                                                                                                 {{ $otherCustomInformation->country_code }}/{{ $otherCustomInformation->info_identifier }}/{{ $otherCustomInformation->custom_info_identifier }}/{{ $otherCustomInformation->supplementary_info }}
                                                                                                 <br/>
@@ -1143,7 +1148,7 @@
                                                                                     <td align="right" valign="bottom">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     &nbsp;
                                                                                                 </td>
                                                                                             </tr>
@@ -1157,8 +1162,13 @@
                                                                         <td align="right" valign="bottom" width="120px" style="text-align:right;border-top: 1px solid #000000;border-left: 1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 0px 10px;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding:0px 0px 10px;">
                                                                                         SCI
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding:0px 2px 0px;">
+                                                                                        {{ $houseWayBill->customs_origin_code }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1281,7 +1291,7 @@
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->pieces }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1292,7 +1302,7 @@
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->gross_weight }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1327,7 +1337,7 @@
                                                                                     <td align="center" valign="top" width="8px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
+                                                                                                <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:40px;">
                                                                                                    {{ $houseWayBill->service_code }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1370,7 +1380,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:158px;">
                                                                                                     {{ $houseWayBill->rate_class }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1386,7 +1396,7 @@
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="80px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 400;">
                                                                                                     &nbsp; 
                                                                                                 </td>
                                                                                             </tr>
@@ -1452,7 +1462,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->chargable_weight }}
                                                                                                 </td>
                                                                                             </tr>
@@ -1473,7 +1483,7 @@
                                                                         <td align="center" valign="top">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="top" width="8px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         &nbsp; 
                                                                                     </td>
                                                                                 </tr>
@@ -1521,7 +1531,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="75px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="75px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->rate }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1593,7 +1603,7 @@
                                                                                     <td align="right" valign="top" style="border-bottom: 1px solid #000;padding-bottom: 130px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->total_amount }}  
                                                                                                 </td>
                                                                                             </tr>
@@ -1613,7 +1623,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $houseWayBill->total_amount }} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1680,7 +1690,7 @@
                                                                                     <td align="left" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:5px;">
                                                                                                     {{ $houseWayBill->description }}<br>
 
                                                                                                         @php
@@ -1719,7 +1729,7 @@
                                                                                     <td align="left" valign="bottom" style="text-align:center;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" style="font-size: 10px;line-height: 14px;padding-left:5px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="left" valign="bottom" style="font-size: 10px;line-height: 14px;padding-left:5px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     Total volume: {{ $houseWayBill->total_volume ?? ''}} {{ $houseWayBill->dimention_unit ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1822,7 +1832,7 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="130px" height="20px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
@@ -1830,7 +1840,7 @@
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
@@ -2006,7 +2016,7 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
@@ -2014,7 +2024,7 @@
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" width="146px" height="20px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
@@ -2103,10 +2113,10 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_agent_prepaid }}
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom" height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_agent_collect }}
                                                                                                 </td>
                                                                                             </tr>
@@ -2185,10 +2195,10 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom"  height="20px" width="130px" style="border-right:1px solid #000000;border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_carrier_prepaid }}
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                <td align="right" valign="bottom"  height="20px" width="146px" style="border-bottom:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                     {{ $houseWayBill->other_charges_due_carrier_collect }}
                                                                                                 </td>
                                                                                             </tr>
@@ -2261,19 +2271,19 @@
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="132px" style="border-right:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="bottom" width="132px" style="border-right:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                            <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                                 {{ $houseWayBill->total_charges_prepaid }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="right" valign="bottom" width="148px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="148px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
+                                                                                                            <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
                                                                                                                 {{ $houseWayBill->total_charges_collect }}
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2435,7 +2445,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 9px;line-height: 11px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
+                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 10px;">
                                                                                         @foreach ($houseWayBill->other_charges as $otherChargesRow)
                                                                                             {{ $otherChargesRow->other_charge_code }} {{ $otherChargesRow->due }} {{ $otherChargesRow->amount }}<br> 
                                                                                         @endforeach
@@ -2466,7 +2476,7 @@
                                                                                                 <td align="center" valign="bottom">
                                                                                                     <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
+                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 0px;" >
                                                                                                                 {{ $houseWayBill->agent_name }}
                                                                                                             </td>
                                                                                                         </tr>
@@ -2503,7 +2513,7 @@
                                                                                                         <td align="center" valign="bottom" width="70px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         @php
                                                                                                                             echo date('d-M-y', strtotime($houseWayBill->agent_issue_date));
                                                                                                                         @endphp
@@ -2514,7 +2524,7 @@
                                                                                                         <td align="center" valign="top" width="70px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         @php
                                                                                                                             $locationCode = explode(',', $houseWayBill->agent_issue_loc_code);
                                                                                                                             echo $locationCode[0];
@@ -2526,7 +2536,7 @@
                                                                                                         <td align="center" valign="top" width="160px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         {{ $houseWayBill->agent_issue_sign }}
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2596,7 +2606,7 @@
                                                                                                 <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:30px;">
                                                                                                                 {{$houseWayBill->awb_code . ' '. $houseWayBill->awb_no}}
                                                                                                             </td>
                                                                                                         </tr>  

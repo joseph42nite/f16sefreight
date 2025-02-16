@@ -45,7 +45,9 @@ class GenerateAwbPdfController extends Controller
         // Create a variable with true value to show or hide back page.
         $showBothPage = true;
         $pdf = Pdf::loadView('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'showBothPage','airlineAddress'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
+        return $pdf->stream();
     }
+    
     public function downloadMultipleAwbPdf($id) {
 
         // Fetch the AirWayBill along with related data

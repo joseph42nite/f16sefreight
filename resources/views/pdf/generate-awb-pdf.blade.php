@@ -1046,10 +1046,10 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" width="370px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
+                                                                                    <td align="left" valign="top" width="370px" style="position:relative;font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $airWayBill->other_service_information ?? '' }}<br />
                                                                                         <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        <div style="z-index:9999 !important;position:absolute;top:56%;left:11%;right:0%;bottom:0%;width:400px;">
+                                                                                        <div style="z-index:9999 !important;position:absolute;top:16%;left:5%;right:0%;bottom:0%;width:370px;">
                                                                                             {{ $airWayBill->special_service_request ?? '' }}<br />
                                                                                             {{ $airWayBill->extra_print ?? '' }}
                                                                                         </div>
@@ -1383,7 +1383,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:158px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:170px;">
                                                                                                     {{ $airWayBill->consignmentData->rate_class ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1402,6 +1402,7 @@
                                                                                     </td>
                                                                                     <!-- Two -->
                                                                                 </tr>
+                                                                                
                                                                             </table>
                                                                         </td>
                                                                     </tr>
@@ -2463,7 +2464,7 @@
                                                                         <td align="left" valign="top"  style="border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="71px" width="370px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                    <td align="left" valign="top" height="60" width="370px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                         Shipper certifies that the particulars on the face hereof are correct and that insofar as any part of the consignment contains dangerous goods, such part is properly described by name and is in proper condition for carriage by air according to the applicable Dangerous Goods Regulations
                                                                                     </td>
                                                                                 </tr>

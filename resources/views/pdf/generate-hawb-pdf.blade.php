@@ -1034,10 +1034,10 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
+                                                                                    <td align="left" valign="top" style="position:relative;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $houseWayBill->other_service_information ?? '' }}<br />
                                                                                         <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        <div style="z-index:9999 !important;position:absolute;top:58%;left:11%;right:0%;bottom:0%;width:400px;">
+                                                                                        <div style="z-index:9999 !important;position:absolute;top:16%;left:5%;right:0%;bottom:0%;width:370px;">
                                                                                             {{ $houseWayBill->special_service_request ?? '' }}<br />
                                                                                             {{ $houseWayBill->extra_print ?? '' }}
                                                                                         </div>
@@ -1380,7 +1380,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:158px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:165px;">
                                                                                                     {{ $houseWayBill->rate_class }}
                                                                                                 </td>
                                                                                             </tr>
@@ -2465,7 +2465,7 @@
                                                                         <td align="left" valign="top"  style="border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="66px" width="370px" style="font-size: 8px;line-height: 11px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                    <td align="left" valign="top" height="60" width="370px" style="font-size: 8px;line-height: 11px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                         Shipper certifies that the particulars on the face hereof are correct and that insofar as any part of the consignment contains dangerous goods, such part is properly described by name and is in proper condition for carriage by air according to the applicable Dangerous Goods Regulations
                                                                                     </td>
                                                                                 </tr>
@@ -2600,13 +2600,18 @@
                                                                                                             <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 Total Collect Charges
                                                                                                             </td>
+                                                                                                        </tr> 
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="top" width="112px" style="font-size: 8px;line-height: 9px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                &nbsp;
+                                                                                                            </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
                                                                                                 <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:30px;">
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:30px;">
                                                                                                                 {{$houseWayBill->awb_code . ' '. $houseWayBill->awb_no}}
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2626,19 +2631,19 @@
                                                                                     <td align="center" valign="top" width="370px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="width: 112px;border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 10px;line-height: 14px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="112px" style="font-size: 10px;line-height: 14px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                                <td align="center" valign="top" width="108px" style="width: 108px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="width:108px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                                 &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2720,22 +2725,22 @@
                 <td align="center" valign="top" width="600px">
                     <table cellpadding="0" cellspacing="0" width="100%"> 
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
                                 <img src="{{ public_path('media/custome/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
                                 NOTICE CONCERNING CARRIER’S LIMITATION OF LIABILITY 
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
                                 If the carriage involves an ultimate destination or stop in a country other than the country of departure, the Montreal Convention or the Warsaw Convention may be applicable to the liability of the Carrier in respect of loss of, damage or delay to cargo. Carrier's limitation of liability in accordance with those Conventions shall be as set forth in subparagraph 4 unless a higher value is declared.
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
                                 CONDITIONS OF CONTRACT
                             </td>
                         </tr>
@@ -2746,7 +2751,7 @@
                                         <td align="center" valign="top">
                                             <table cellpadding="0" cellspacing="0" width="100%"> 
                                                 <tr>
-                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    <td width="280px" align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                         <b>1.</b> In this contract and the Notices appearing hereon:<br aria-hidden="true" />
                                                         CARRIER includes the air carrier issuing this air waybill and all carriers that carry or undertake to carry the cargo or perform any other services related to such carriage. SPECIAL DRAWING RIGHT (SDR) is a Special Drawing Right as defined by the International Monetary Fund. WARSAW CONVENTION means whichever of the following instruments is applicable to the contract of carriage: the Convention for the Unification of Certain Rules Relating to International Carriage by Air, signed at Warsaw, 12 October 1929; that Convention as amended at The Hague on 28 September 1955; that Convention as amended at The Hague 1955 and by Montreal Protocol No. 1, 2, or 4 (1975) as the case may be. MONTREAL CONVENTION means the Convention for the Unification of Certain Rules for International Carriage by Air, done at Montreal on 28 May 1999. 
                                                         <br aria-hidden="true" />
@@ -2812,7 +2817,7 @@
                                                         <br aria-hidden="true" />
                                                         <b>6.2</b> In carriage to which neither the Warsaw Convention nor the Montreal                               
                                                     </td>
-                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    <td width="280px" align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                         Convention applies Carrier shall, in accordance with the procedures set
                                                         forth in its general conditions of carriage and applicable tariffs, permit
                                                         shipper to increase the limitation of liability by declaring a higher value

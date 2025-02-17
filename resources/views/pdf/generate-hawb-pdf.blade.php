@@ -900,12 +900,12 @@
                                                                         <td align="center" valign="top" width="120px" style="border:2px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
                                                                                         Airport of Destination
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;vertical-align:bottom;">
                                                                                         {{ $houseWayBill->destination_airport ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -934,7 +934,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px" style="border-right:1px solid #000000;">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="18" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                                 {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -945,7 +945,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="18" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                                 {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -1036,11 +1036,6 @@
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="position:relative;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $houseWayBill->other_service_information ?? '' }}<br />
-                                                                                        <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        <div style="z-index:9999 !important;position:absolute;top:16%;left:5%;right:0%;bottom:0%;width:370px;">
-                                                                                            {{ $houseWayBill->special_service_request ?? '' }}<br />
-                                                                                            {{ $houseWayBill->extra_print ?? '' }}
-                                                                                        </div>
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1191,7 +1186,12 @@
                                     <td align="center">
                                         <table cellpadding="0" cellspacing="0">
                                             <tr>
-                                                <td align="center">
+                                                <td align="center" style="position: relative;">
+                                                    <!-- SSR and Exta Print Information value of the form shows here -->
+                                                    <div style="text-align:left;align-item:left;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;z-index:9999 !important;position:absolute;top:10%;left:1%;right:0%;bottom:0%;width:300px;display:inline-block;">
+                                                        {{ $houseWayBill->special_service_request ?? '' }}<br />
+                                                        {{ $houseWayBill->extra_print ?? '' }}
+                                                    </div>
                                                     <table cellpadding="0" cellspacing="0">
                                                         <tr>
                                                             <!-- One -->
@@ -1380,7 +1380,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:165px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:162px;">
                                                                                                     {{ $houseWayBill->rate_class }}
                                                                                                 </td>
                                                                                             </tr>

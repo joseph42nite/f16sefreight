@@ -538,7 +538,7 @@
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="left" valign="bottom" width="88px" style="border-left:1px solid #000;border-right:1px solid #000;">
+                                                                        <td align="left" valign="bottom" width="87px" style="border-left:1px solid #000;border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="left" valign="bottom" style="font-size: 8px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
@@ -1046,13 +1046,8 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" width="370px" style="position:relative;font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
-                                                                                        {{ $airWayBill->other_service_information ?? '' }}<br />
-                                                                                        <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        <div style="z-index:9999 !important;position:absolute;top:16%;left:5%;right:0%;bottom:0%;width:370px;">
-                                                                                            {{ $airWayBill->special_service_request ?? '' }}<br />
-                                                                                            {{ $airWayBill->extra_print ?? '' }}
-                                                                                        </div>
+                                                                                    <td align="left" valign="top" width="370px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
+                                                                                        {{ $airWayBill->other_service_information ?? '' }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1194,7 +1189,12 @@
                                     <td align="center">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="center">
+                                                <td align="center" style="position:relative">
+                                                    <!-- SSR and Exta Print Information value of the form shows here -->
+                                                    <div style="text-align:left;align-item:left;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;z-index:9999 !important;position:absolute;top:10%;left:1%;right:0%;bottom:0%;width:300px;display:inline-block;">
+                                                        {{ $airWayBill->special_service_request ?? '' }}<br />
+                                                        {{ $airWayBill->extra_print ?? '' }}
+                                                    </div>
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <!-- One -->
@@ -1383,7 +1383,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:170px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:158px;">
                                                                                                     {{ $airWayBill->consignmentData->rate_class ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1402,7 +1402,6 @@
                                                                                     </td>
                                                                                     <!-- Two -->
                                                                                 </tr>
-                                                                                
                                                                             </table>
                                                                         </td>
                                                                     </tr>

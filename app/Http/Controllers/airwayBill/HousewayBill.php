@@ -10,7 +10,7 @@ use App\SavedAddress;
 use App\ConsignmentData;
 use App\HousewayBills;
 use App\OtherCharge;
-use App\otherCustomInformation;
+use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

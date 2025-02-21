@@ -327,34 +327,7 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Routing Information saved successfull";
     }
-    // private function consignmentInformation($awb_no, $awb_code, $entries)
-    // {
-    //     $awb_id = $awb_code . $awb_no;
-    //     for ($i = 0; $i < sizeof($entries); $i++) {
-    //         $pieces = $entries[$i]['pieces'];
-    //         $ConsignmentData = ConsignmentData::where(['awb_id', $awb_id])->first();
-    //         if (!isset($ConsignmentData))
-    //             $ConsignmentData = new ConsignmentData();
-    //         $ConsignmentData->awb_id = $awb_id;
-    //         $ConsignmentData->pieces = $pieces;
-    //         $ConsignmentData->description = $entries[$i]['description'];
-    //         $ConsignmentData->rate_class = $entries[$i]['rate_class'];
-    //         $ConsignmentData->uld_rate_class = $entries[$i]['uld_rate_class'];
-    //         $ConsignmentData->service_code = $entries[$i]['service_code'];
-    //         $ConsignmentData->commodity_item = $entries[$i]['commodity_item'];
-    //         $ConsignmentData->country_origin_goods = $entries[$i]['country_origin_goods'];
-    //         $ConsignmentData->slac = $entries[$i]['slac'];
-    //         $ConsignmentData->hs_code = json_encode($entries[$i]['hsCodes']);
-    //         $ConsignmentData->gross_weight = $entries[$i]['gross_weight'];
-    //         $ConsignmentData->weight_code = $entries[$i]['weight_code'];
-    //         $ConsignmentData->chargable_weight = $entries[$i]['chargable_weight'];
-    //         $ConsignmentData->rate = $entries[$i]['rate'];
-    //         $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
-    //         $ConsignmentData->uld_info = json_encode($entries[$i]['uld_infos']);
-    //         $ConsignmentData->save();
-    //         return "Consignment Data saved successfull";
-    //     }
-    // }
+ 
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
         $awb_id = $awb_code . $awb_no;
@@ -420,38 +393,6 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Custom Origin Code and other tab information save successfully";
     }
-    // private function otherCharges($awb_no, $awb_code, $charges)
-    // {
-    //     $awb_id = $awb_code . $awb_no;
-    //     for ($i = 0; $i < sizeof($charges); $i++) {
-    //         $validator = Validator::make($charges[$i], [
-    //             'payment_type' => 'nullable|string',
-    //             'other_code' => 'nullable|string',
-    //             'other_charge_code' => 'nullable|string',
-    //             'amount' => 'nullable|numeric|min:0.01|max:999999999',
-    //             'due' => 'nullable|string',
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             return response()->json(['errors' => $validator->errors()], 422);
-    //         }
-
-    //         $other_charge_code = $charges[$i]['other_charge_code'];
-    //         $otherChargesData = OtherCharge::where([['awb_id', $awb_id], ['other_charge_code', $other_charge_code]])->first();
-
-    //         if (!isset($otherChargesData)) {
-    //             $otherChargesData = new OtherCharge();
-    //         }
-    //         $otherChargesData->awb_id = $awb_id;
-    //         $otherChargesData->other_charge_code = $other_charge_code;
-    //         $otherChargesData->other_code = $charges[$i]['other_code'];
-    //         $otherChargesData->payment_type = $charges[$i]['payment_type'];
-    //         $otherChargesData->due = $charges[$i]['due'];
-    //         $otherChargesData->amount = $charges[$i]['amount'];
-    //         $otherChargesData->save();
-    //     }
-    //     return "Other Charges Data saved successfully";
-    // }
     private function otherCharges($awb_no, $awb_code, $charges)
     {
         $awb_id = $awb_code . $awb_no;
@@ -624,28 +565,42 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Toatl Amount and Total Volume saved successfull";
     }
-    private function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
+    // private function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
+    // {
+    //     $awb_id = $awb_code . $awb_no;
+    //     if (empty($tableCodes)) {
+    //         return "Code is missing in tableCodes entry.";
+    //     }
+    //     $codesArray = [];
+    //     foreach ($tableCodes as $code) {
+    //         if (!empty($code)) {
+    //             $codesArray[] = $code;
+    //         }
+    //     }
+    //     $codesJson = json_encode($codesArray);
+    //     $handlingCode = AirwayBills::find($awb_id)->first();
+    //     if (!$handlingCode) {
+    //         $handlingCode = new AirwayBills();
+    //     }
+    //     $handlingCode->special_handling_info = $codesJson;
+    //     $handlingCode->save();
+    //     return "Special Handling Codes saved successfully.";
+    // }
+    public function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
     {
         $awb_id = $awb_code . $awb_no;
         if (empty($tableCodes)) {
-            return "Code is missing in tableCodes entry.";
+            return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
         }
-        $codesArray = [];
-        foreach ($tableCodes as $code) {
-            if (!empty($code)) {
-                $codesArray[] = $code;
-            }
-        }
-        $codesJson = json_encode($codesArray);
-        $handlingCode = AirwayBills::find($awb_id)->first();
+        $handlingCode = AirwayBills::where('id', $awb_id)->first();
         if (!$handlingCode) {
             $handlingCode = new AirwayBills();
+            $handlingCode->hawb_no = $awb_id;
         }
-        $handlingCode->special_handling_info = $codesJson;
+        $handlingCode->special_handling_info = json_encode(array_values(array_filter($tableCodes)));
         $handlingCode->save();
-        return "Special Handling Codes saved successfully.";
+        return response()->json(['message' => "Special Handling Codes saved successfully."]);
     }
-
     public function store(Request $request)
     {
         $main_return_data = [];

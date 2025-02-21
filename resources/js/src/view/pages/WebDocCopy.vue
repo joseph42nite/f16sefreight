@@ -140,8 +140,7 @@
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                     label-for="input-horizontal"
                                                     class="form-control-sm align-items-center">
-                                                        <b-form-checkbox size="sm" v-model="form.first_box.consolidated_mawb">Consolidate
-                                                            MAWB</b-form-checkbox>
+                                                        <b-form-checkbox size="sm" v-model="form.first_box.consolidated_mawb">Consolidate MAWB</b-form-checkbox>
                                                     </b-form-group>
                                                 </div>
                                                 <div>
@@ -168,16 +167,16 @@
                                             <b-form-group
                                             label-for="name-input">
                                                 <b-form-radio name="radio-size" size="sm" v-model="form.first_box.awb"
-                                                :value="true">AWB</b-form-radio>
+                                                :value="true" @change="handleRadioChange(true)">AWB</b-form-radio>
                                             </b-form-group>
                                             <b-form-group label-for="">
                                                 <b-form-radio name="radio-size" size="sm" value="EAW" v-model="selectedCode"
-                                                    @change="handleRadioChange">e-AWB With No Accompanying Paper
+                                                    @change="handleRadioChange('EAW')">e-AWB With No Accompanying Paper
                                                     Documents</b-form-radio>
                                             </b-form-group>
 
                                             <b-form-group label-for="name-input">
-                                                <b-form-radio name="radio-size" size="sm" @change="handleRadioChange"
+                                                <b-form-radio name="radio-size" size="sm" @change="handleRadioChange('EAP')"
                                                     v-model="selectedCode" value="EAP">e-AWB With Accompanying Paper
                                                     Documents</b-form-radio>
                                             </b-form-group>
@@ -3330,6 +3329,18 @@ export default {
                     this.form.totals = this.existingData;
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
+
+                    const specialHandlingCodes = this.form.tableCodes;
+                    if (specialHandlingCodes.includes("EAW")) {
+                        this.selectedCode = "EAW";
+                        this.form.first_box.awb = false;
+                    } else if (specialHandlingCodes.includes("EAP")) {
+                        this.selectedCode = "EAP";
+                        this.form.first_box.awb = false;
+                    } else if (this.form.first_box.awb === true) {
+                        this.selectedCode = "";
+                    }
+
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
                     
                     this.form.payment_info = this.existingData.payment_info || {};
@@ -3454,18 +3465,36 @@ export default {
                 this.oci_data.oci_custom_info_identifier = []; 
             });
         },
-        handleRadioChange() {
-            const selectedCode = this.selectedCode;
-            this.form.tableCodes = [];
-            this.form.tableCodes.push(selectedCode);
+        handleRadioChange(value) {
+            // const selectedCode = this.selectedCode;
+            // this.form.tableCodes = [];
+            // this.form.tableCodes.push(selectedCode);
             
-            this.form.first_box.awb = false;
+            // this.form.first_box.awb = false;
+
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+
+            if (value === true) {
+                this.selectedCode = "";
+                this.form.tableCodes = this.form.tableCodes.filter(code => code !== "EAW" && code !== "EAP");
+                this.form.first_box.awb = true;
+            } else {
+                this.form.tableCodes = this.form.tableCodes.filter(code => code !== "EAW" && code !== "EAP");
+                if (value) {
+                    this.form.tableCodes.push(value);
+                }
+                this.form.first_box.awb = false;
+            }
+            console.log("Updated Table Codes:", this.form.tableCodes);
         },
         addManualCode() {
             if (!Array.isArray(this.form.tableCodes)) {
                 this.form.tableCodes = [];
             }
             const code = this.selectedCode || this.custom_special_handling_code.trim();
+
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
@@ -3473,7 +3502,10 @@ export default {
                 } else {
                     alert('This code is already added.');
                 }
+            } else {
+                alert('Please select or enter a code.');
             }
+
             this.selectedCode = '';
             this.custom_special_handling_code = '';
         },

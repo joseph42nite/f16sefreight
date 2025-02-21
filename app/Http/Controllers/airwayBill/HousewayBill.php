@@ -660,27 +660,41 @@ class HousewayBill extends Controller
         }
         return "Toatl Amount and Total Volume saved successfull";
     }
-    private function saveSpecialHandlingCode($hawb_no, $tableCodes)
+    // private function saveSpecialHandlingCode($hawb_no, $tableCodes)
+    // {
+    //     if (empty($tableCodes)) {
+    //         return "Code is missing in tableCodes entry.";
+    //     }
+    //     $codesArray = [];
+    //     foreach ($tableCodes as $code) {
+    //         if (!empty($code)) {
+    //             $codesArray[] = $code;
+    //         }
+    //     }
+    //     $codesJson = json_encode($codesArray);
+    //     $handlingCode = HousewayBills::find($hawb_no)->first();
+    //     if (!$handlingCode) {
+    //         $handlingCode = new HousewayBills();
+    //     }
+    //     $handlingCode->special_handling_info = $codesJson;
+    //     $handlingCode->save();
+    //     return "Special Handling Codes saved successfully.";
+    // }
+    public function saveSpecialHandlingCode($hawb_no, $tableCodes)
     {
         if (empty($tableCodes)) {
-            return "Code is missing in tableCodes entry.";
+            return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
         }
-        $codesArray = [];
-        foreach ($tableCodes as $code) {
-            if (!empty($code)) {
-                $codesArray[] = $code;
-            }
-        }
-        $codesJson = json_encode($codesArray);
-        $handlingCode = HousewayBills::find($hawb_no)->first();
+        $handlingCode = HousewayBills::where('id', $hawb_no)->first();
         if (!$handlingCode) {
             $handlingCode = new HousewayBills();
+            $handlingCode->hawb_no = $hawb_no;
         }
-        $handlingCode->special_handling_info = $codesJson;
+        $handlingCode->special_handling_info = json_encode(array_values(array_filter($tableCodes)));
         $handlingCode->save();
-        return "Special Handling Codes saved successfully.";
+        return response()->json(['message' => "Special Handling Codes saved successfully."]);
     }
-
+    
     public function store(Request $request)
     {
         $main_return_data = [];

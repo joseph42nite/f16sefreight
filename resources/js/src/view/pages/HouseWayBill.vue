@@ -3485,11 +3485,6 @@ export default {
                 this.oci_data.oci_custom_info_identifier = []; 
             });
         },
-        handleRadioChange() {
-            const selectedCode = this.selectedCode;
-            this.form.tableCodes = [];
-            this.form.tableCodes.push(selectedCode);
-        },
         // addManualCode() {
         //     const code = this.selectedCode || this.manualCode.trim();
         //     if (code) {

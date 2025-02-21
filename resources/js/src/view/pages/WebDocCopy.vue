@@ -3207,6 +3207,8 @@ export default {
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
+                    console.log('existingData:', this.existingData);
+                    console.log('existingData Data id:', this.existingData.id);
                     console.error('Update Failed: existingData is missing or invalid');
                     return;
                 }
@@ -3330,7 +3332,9 @@ export default {
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
 
-                    const specialHandlingCodes = this.form.tableCodes;
+                    // const specialHandlingCodes = this.form.tableCodes;
+                    const specialHandlingCodes = Array.isArray(this.form.tableCodes) ? this.form.tableCodes : [];
+
                     if (specialHandlingCodes.includes("EAW")) {
                         this.selectedCode = "EAW";
                         this.form.first_box.awb = false;

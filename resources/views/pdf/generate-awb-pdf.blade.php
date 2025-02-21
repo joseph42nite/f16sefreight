@@ -52,6 +52,11 @@
             border-right: none;
             transform: skew(-40deg);
         }
+        @page  {
+            margin: 0mm;
+            size: letter; /*or width then height 150mm 50mm*/
+        }
+   
     </style>
 </head>
 <body style="word-spacing:normal;margin: 0 auto;">
@@ -61,14 +66,14 @@
                 <table cellpadding="0" cellspacing="0" width="100%">
                     <!-- UDR Section -->
                     <tr>
-                        <td align="center" valign="top" width="600px" style="padding-bottom:5px;">
+                        <td align="center" valign="bottom" width="300px" style="padding-top:10px;padding-bottom:5px;">
                             <table cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <!-- first section code -->
-                                    <td align="left" valign="top" width="300px">
+                                    <td align="left" valign="bottom" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="left" valign="top" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:10px;">
+                                                <td align="left" valign="bottom" style="font-size: 10px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:10px;">
                                                     @php
                                                     $departure_airport =  explode(',', $airWayBill->departure_airport);
                                                     $departure_airport = $departure_airport[0] ?? '';
@@ -80,13 +85,13 @@
                                     </td>
                                     <!-- first section code -->
                                     <!-- second section code -->
-                                    <td align="center" valign="top" width="300px">
+                                    <td align="center" valign="bottom" width="300px">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="center" valign="top" width="60px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                <td align="center" valign="bottom" width="60px" style="">
                                                     &nbsp;
-                                                    </td>
-                                                <td align="center" valign="top" width="140px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                </td>
+                                                <td align="center" valign="bottom" width="140px" style="font-size: 10px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;font-weight: 700;">
                                                     {{$airWayBill->awb_code . ' - '. $airWayBill->awb_no ?? ''}}
                                                 </td>
                                             </tr>
@@ -118,12 +123,12 @@
                                                                         <td align="left" valign="top" width="140px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Shipper's Name and Address
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px 2px 5px 5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px 2px 5px 5px;">
                                                                                         {{ $airWayBill->wayBillAddress->ship_name ?? ''}} <br/>
                                                                                         {{ $airWayBill->wayBillAddress->ship_name_2 ?? ''}} <br/>
                                                                                         {{ $airWayBill->wayBillAddress->ship_address ?? ''}} <br/>
@@ -140,15 +145,15 @@
                                                                         <td align="center" valign="top" width="140px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
+                                                                                    <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 15px 0px;">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:4px;">
                                                                                                     Shipper's Account Number
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700; padding-left:2px;">
+                                                                                                <td align="left" valign="bottom" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700; padding-left:2px;">
                                                                                                     {{ $airWayBill->wayBillAddress->ship_account ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -156,7 +161,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
                                                                                         @if ($airWayBill->wayBillAddress->ship_phone)
                                                                                             Phone : {{ $airWayBill->wayBillAddress->ship_phone ?? ''}} <br/>
                                                                                         @endif
@@ -176,7 +181,7 @@
                                                             </td>
                                                         </tr>
                                                     </table>
-                                                 </td>
+                                                    </td>
                                                 <!-- first column section -->
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="300px">
@@ -189,12 +194,12 @@
                                                                         <td align="left" valign="top" width="60px" style="padding-left: 5px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Not Negotiable
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
                                                                                         Issued by
                                                                                     </td>
                                                                                 </tr>
@@ -205,16 +210,15 @@
                                                                         <td align="left" valign="top" width="220px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="center" valign="top" style="font-size: 16px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                         Air Waybill
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                         {{-- Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France --}}
                                                                                         @if(!empty($airlineAddress))
                                                                                             {!! nl2br(str_replace(',', '<br>', $airlineAddress ?? '')) !!}
-                                                                                            {{-- {{ $airlineAddress ?? '' }}</p> --}}
                                                                                         @endif
                                                                                     </td>
                                                                                 </tr>
@@ -246,12 +250,12 @@
                                                             <td align="left" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                             Consignee's Name and Address
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px 2px 5px 10px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px 2px 5px 10px;">
                                                                             {{ $airWayBill->wayBillAddress->cons_name ?? ''}}<br/>
                                                                             {{ $airWayBill->wayBillAddress->cons_name_2 ?? ''}}<br/>
                                                                             {{ $airWayBill->wayBillAddress->cons_address ?? ''}} <br />
@@ -268,23 +272,23 @@
                                                             <td align="center" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
+                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 15px 0px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:4px;">
                                                                                         Consignee's Account Number
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
-                                                                                       {{ $airWayBill->wayBillAddress->cons_account ?? ''}}
+                                                                                    <td align="left" valign="bottom" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                                                        {{ $airWayBill->wayBillAddress->cons_account ?? ''}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
                                                                             @if ($airWayBill->wayBillAddress->cons_phone)
                                                                                 Phone : {{ $airWayBill->wayBillAddress->cons_phone ?? ''}} <br/>
                                                                             @endif
@@ -310,7 +314,7 @@
                                                             <td align="center" valign="top" >
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 0px;">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 9px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 2px 2px;">
                                                                             It is agreed that the goods described herein are accepted in apparent good order and condition (except as noted) for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. ALL GOODS MAY BE CARRIED BY ANY OTHER MEANS INCLUDING ROAD OR ANY OTHER CARRIER UNLESS SPECIFIC CONTRARY INSTRUCTIONS ARE GIVEN HEREON BY THE SHIPPER, AND SHIPPER AGREES THAT THE SHIPMENT MAY BE CARRIED VIA INTERMEDIATE STOPPING PLACES WHICH THE CARRIER DEEMS APPROPRIATE. THE SHIPPER'S ATTENTION IS DRAWN TO THE NOTICE CONCERNING CARRIER'S LIMITATION OF LIABILITY. Shipper may increase such limitation of liability by declaring a higher value for carriage and paying a supplemental charge if required.
                                                                         </td>
                                                                     </tr>
@@ -338,12 +342,12 @@
                                                             <td align="left" valign="top" style="border-bottom: 1px solid #000000;">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px">
+                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px">
                                                                             Issuing Carrier's Agent Name and City
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 2px 2px 10px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px 2px 2px 10px;">
                                                                             {{ $airWayBill->agentsInfo->agent_name ?? '' }}
                                                                             <br>
                                                                             {{ $airWayBill->agentsInfo->agent_address ?? ''}}
@@ -364,7 +368,7 @@
                                                                         <td align="left" valign="top" width="50%" style="border-right: 1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 10px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 10px;">
                                                                                         Agent's IATA Code
                                                                                     </td>
                                                                                 </tr>
@@ -376,7 +380,7 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 11px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:5px;">
                                                                                                                 {{ $airWayBill->agentsInfo->iata_agent_code ?? ''}}  
                                                                                                             </td>
                                                                                                         </tr>
@@ -387,7 +391,7 @@
                                                                                                 <td align="center" valign="top" width="75px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
                                                                                                             {{ $airWayBill->agentsInfo->iata_agent_cass ?? ''}}   
                                                                                                             </td>
                                                                                                         </tr>
@@ -405,7 +409,7 @@
                                                                         <td align="center" valign="top" width="50%">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;padding-bottom:10px;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;padding-bottom:10px;">
                                                                                         Agent's Account no.
                                                                                     </td>
                                                                                 </tr>
@@ -414,7 +418,7 @@
                                                                                     <td align="center" valign="bottom">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="center" valign="bottom" style="font-size: 11px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="center" valign="bottom" style="font-size: 9px;line-height: 11px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->agentsInfo->agent_account ?? ''}}  
                                                                                                 </td>
                                                                                             </tr>
@@ -448,7 +452,7 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-right: 5px; padding-top:5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 5px;padding-right: 5px;">
                                                                                         {{ $airWayBill->accounting_information ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -472,15 +476,15 @@
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
-                                                <td align="center" valign="top" width="300px" style="border-right:1px solid #000;">
+                                                <td align="center" valign="top" width="300px" style="border-right:1px solid #000;max-width:300px;">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="left" valign="top" width="292px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                            <td align="left" valign="top" width="300px" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                 Airport of Departure (Addr. of First Carrier and Requested Routing)
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td align="left" valign="bottom" width="292px" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;padding-top:5px;">
+                                                            <td align="left" valign="bottom" width="292px" style="font-size: 9px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 10px;padding-top:10px;">
                                                                 @php
                                                                 // $departureAirport = explode(',', $airWayBill->departure_airport);
                                                                 // $departureAirport = $departureAirport[0] . ' - ' . $departureAirport[2];  
@@ -493,25 +497,25 @@
                                                 </td>
                                                 <!-- first column section -->
                                                 <!-- second column section -->
-                                                <td align="center" valign="top" width="300px">
+                                                <td align="center" valign="top" width="300px" style="max-width:300px;">
                                                     <table cellpadding="0" cellspacing="0">
                                                         <tr>
                                                             <td align="left" valign="top" width="300px">
                                                                 <table cellpadding="0" cellspacing="0">
                                                                     <tr> 
-                                                                        <td align="left" valign="top" width="125px">
+                                                                        <td align="left" valign="top" width="120px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                         Reference Number
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="center" valign="top" width="175px">
+                                                                        <td align="center" valign="top" width="180px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" width="140px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" width="140px" class="optional-Shipping-information" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:4px;">
                                                                                         Optional Shipping Information
                                                                                     </td>
                                                                                 </tr>
@@ -525,28 +529,28 @@
                                                             <td align="left" valign="bottom" width="300px">
                                                                 <table cellpadding="0" cellspacing="0">
                                                                     <tr> 
-                                                                        <td align="left" valign="bottom" width="148px" height="23px">
+                                                                        <td align="left" valign="bottom" width="146px" height="23px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $airWayBill->shipment_ref_no }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="left" valign="bottom" width="88px" style="border-left:1px solid #000;border-right:1px solid #000;">
+                                                                        <td align="left" valign="bottom" width="87px" style="border-left:1px solid #000;border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $airWayBill->supplementary_shipment_info }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
-                                                                        <td align="center" valign="bottom" width="64px">
+                                                                        <td align="center" valign="bottom" width="66px">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
                                                                                         {{ $airWayBill->supplementary_shipment_info }}
                                                                                     </td>
                                                                                 </tr>
@@ -576,15 +580,15 @@
                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                             <tr>
                                                                 <!-- first column code -->
-                                                                <td align="center" valign="top" width="35px" style="border-right: 1px solid #000000;">
+                                                                <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:2px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 5px;padding-top:13px;">
                                                                                 @php
                                                                                     $to1 = explode(',', $airWayBill->to);
                                                                                     $to1 = $to1[0];
@@ -596,15 +600,15 @@
                                                                 </td>
                                                                 <!-- first column code -->
                                                                 <!-- second column code -->
-                                                                <td align="left" valign="top" width="66px">
+                                                                <td align="left" valign="top" width="65px">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                                 By First Carrier
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="left" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
+                                                                            <td align="left" valign="bottom" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:5px;padding-top:13px;">
                                                                                 {{ $airWayBill->by ?? ''}}
                                                                             </td>
                                                                     </tr>
@@ -612,10 +616,10 @@
                                                                 </td>
                                                                 <!-- second column code -->
                                                                 <!-- third column code -->
-                                                                <td align="center" valign="top" width="80px" style="border-right: 1px solid #000000;padding-right:6px;">
+                                                                <td align="center" valign="top" width="88px" style="border-right: 1px solid #000000;padding-right:6px;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" class="routing-and-destination" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px;">
+                                                                            <td align="center" valign="top" class="routing-and-destination" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px;">
                                                                                 Routing and Destination
                                                                             </td>
                                                                         </tr>
@@ -626,12 +630,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
                                                                                     $to2 = explode(',', $airWayBill->to_2);
                                                                                     $to2 = $to2[0];
@@ -646,12 +650,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;">
                                                                                 by
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $airWayBill->by_2 ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -662,12 +666,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;">
                                                                                 to
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 @php
                                                                                     $to3 = explode(',', $airWayBill->to_3);
                                                                                     $to3 = $to3[0];
@@ -682,12 +686,12 @@
                                                                 <td align="center" valign="top" width="30px">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                            <td align="left" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;">
                                                                                 by
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $airWayBill->by_3 ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -706,12 +710,12 @@
                                                                 <td align="center" valign="top" width="30px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                 Currency
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:15px;">
+                                                                            <td align="center" valign="bottom" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $airWayBill->paymentInfo->currency ?? ''}} 
                                                                             </td>
                                                                         </tr>
@@ -719,15 +723,15 @@
                                                                 </td>
                                                                 <!-- first column code -->
                                                                 <!-- second column code -->
-                                                                <td align="center" valign="top" width="25px" bgcolor="bee3fe" style="border-right: 1px solid #000000;">
+                                                                <td align="center" valign="top" width="26px" bgcolor="bee3fe" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                 CHGS
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="bottom" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $airWayBill->paymentInfo->type_of_payment ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -735,10 +739,10 @@
                                                                 </td>
                                                                 <!-- second column code -->
                                                                 <!-- third column code -->
-                                                                <td align="center" valign="top" width="40px" style="border-right: 1px solid #000000;">
+                                                                <td align="center" valign="top" width="36px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;border-bottom: 1px solid #000000;">
                                                                                 WT/VAL
                                                                             </td>
                                                                         </tr>
@@ -746,15 +750,15 @@
                                                                             <td align="center" valign="top">
                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                     <tr>
-                                                                                        <td align="center" valign="top" width="20px" style="border-right: 1px solid #000000;">
+                                                                                        <td align="center" valign="top" width="18px" style="border-right: 1px solid #000000;">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family: Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family: Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                         PPD
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" height="10px" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'PP') {
                                                                                                                 echo "X";
@@ -764,15 +768,15 @@
                                                                                                 </tr>
                                                                                             </table>
                                                                                         </td>
-                                                                                        <td align="center" valign="top" width="20px">
+                                                                                        <td align="center" valign="top" width="18px">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                         COLL
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" height="12px" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" height="10px" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                         if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'CC') {
                                                                                                             echo "X";
@@ -790,10 +794,10 @@
                                                                 </td>
                                                                 <!-- third column code -->
                                                                 <!-- fourth column code -->
-                                                                <td align="center" valign="top" width="40px" style="border-right: 1px solid #000000;">
+                                                                <td align="center" valign="top" width="36px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom: 0px;border-bottom: 1px solid #000000;">
                                                                                 Other
                                                                             </td>
                                                                         </tr>
@@ -801,15 +805,15 @@
                                                                             <td align="center" valign="top">
                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                     <tr>
-                                                                                        <td align="center" valign="top" width="20px" style="border-right: 1px solid #000000;">
+                                                                                        <td align="center" valign="top" width="18px" style="border-right: 1px solid #000000;">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         PPD
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" height="10px" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'PP') {
                                                                                                                 echo "X";
@@ -819,15 +823,15 @@
                                                                                                 </tr>
                                                                                             </table>
                                                                                         </td>
-                                                                                        <td align="center" valign="top" width="20px">
+                                                                                        <td align="center" valign="top" width="18px">
                                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                                         COLL
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="center" valign="bottom" style="vertical-align:bottom;font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                    <td align="center" valign="bottom" height="10px" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                         @php
                                                                                                             if (!empty($airWayBill->paymentInfo->weight_charge) && $airWayBill->paymentInfo->type_of_payment == 'CC') {
                                                                                                                 echo "X";
@@ -848,12 +852,12 @@
                                                                 <td align="center" valign="top" width="84px" style="border-right: 1px solid #000000;">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
                                                                                 Declared Value for Carriage
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $airWayBill->paymentInfo->declear_value_carriage ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -861,15 +865,15 @@
                                                                 </td>
                                                                 <!-- fifth column code -->
                                                                 <!-- sixth column code -->
-                                                                <td align="center" valign="top" width="84px">
+                                                                <td align="center" valign="top" width="87px">
                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom: 0px;">
+                                                                            <td align="center" valign="top" style="font-size: 7px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;">
                                                                                 Declared Value for Customs
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:13px;">
+                                                                            <td align="center" valign="top" style="font-size: 8px;line-height: 8px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:13px;">
                                                                                 {{ $airWayBill->paymentInfo->declear_value_customs ?? ''}}
                                                                             </td>
                                                                         </tr>
@@ -902,12 +906,12 @@
                                                                         <td align="center" valign="top" width="120px" style="border:2px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-bottom:5px;">
                                                                                         Airport of Destination
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                                                    <td align="center" valign="bottom" style="font-size: 9px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;vertical-align:bottom;">
                                                                                         {{ $airWayBill->destination_airport ?? ''}}
                                                                                     </td>
                                                                                 </tr>
@@ -921,7 +925,7 @@
                                                                                     <td align="center" valign="top" style="padding-left:20px;padding-right:40px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family: Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px ;padding-right: 2px;">
+                                                                                                <td align="center" valign="top" width="100px" class="optional-Shipping-information" style="font-size: 8px;line-height: 8px;font-family: Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 2px;padding-right: 2px; padding-bottom: 4px;">
                                                                                                     Requested Flight/Date 
                                                                                                 </td>
                                                                                             </tr>
@@ -936,7 +940,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px" style="border-right:1px solid #000000;">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="19px" style="font-size: 8px;line-height: 10px;font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                                 {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -947,7 +951,7 @@
                                                                                                 <td align="center" valign="bottom" width="70px">
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                            <td align="center" valign="bottom" width="70px" height="19px" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                                 {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -979,7 +983,7 @@
                                                                         <td align="left" valign="top" width="100px" style="padding-left: 5px;border-right:1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="width:100px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" width="100px" style="font-size: 8px;line-height: 9px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Amount of Insurance
                                                                                     </td>
                                                                                 </tr>
@@ -987,7 +991,7 @@
                                                                                     <td align="left" valign="bottom" width="100px" style="vertical-align:bottom !important;">
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" style="font-size: 8px;line-height: 8px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom !important;">
+                                                                                                <td align="left" valign="bottom" style="font-size: 8px;line-height: 8px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;vertical-align:bottom !important;">
                                                                                                     {{ $airWayBill->paymentInfo->declear_value_insurance ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1023,30 +1027,27 @@
                                 <!-- Airport of Destination Section Code -->
                                 <!-- Handling Information -->
                                 <tr>
-                                    <td align="center" valign="top" style="border:1px solid #000000;">
+                                    <td align="center" valign="top" width="600px" style="border:1px solid #000000;">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
-                                                <td align="center" valign="top" width="430px" style="">
+                                                <td align="center" valign="top" width="400px" style="">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" >
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        <td align="left" valign="top" width="140px" style="width:140px;text-align:left;">
+                                                                        <td align="left" valign="top" width="370px" style="">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:1px;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:1px;">
                                                                                         Handling Information:
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 10px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;padding-left:1px;">
-                                                                                        {{ $airWayBill->other_service_information ?? '' }}<br />
-                                                                                        <!-- SSR and Exta Print Information value of the form shows here -->
-                                                                                        {{ $airWayBill->special_service_request ?? '' }}<br />
-                                                                                        {{ $airWayBill->extra_print ?? '' }}
+                                                                                    <td align="left" valign="top" width="370px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:1px;">
+                                                                                        {{ $airWayBill->other_service_information ?? '' }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1059,27 +1060,26 @@
                                                     </table>
                                                 </td>
                                                 <!-- first column section -->
-
                                                 <!-- second column section -->
-                                                <td align="center" valign="top" width="170px;" style="">
+                                                <td align="center" valign="top" width="200px;" style="">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" >
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        <td align="left" valign="top" width="95px" style="">
+                                                                        <td align="left" valign="top" width="100px" style="">
                                                                             <table cellpadding="0" cellspacing="0" >
                                                                                 <tr>
                                                                                     <td align="left" valign="top" >
                                                                                         <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     Special Handling Codes:
                                                                                                 </td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                                <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                                     @php
                                                                                                         echo str_replace('"', '', $specialHandlingInfo);
                                                                                                     @endphp
@@ -1093,15 +1093,15 @@
                                                                         <!-- first column code-->
                                                                         <!-- second column code-->
                                                                         @if(count($airWayBill->otherCustomInformation) > 0) 
-                                                                            <td align="left" valign="top" width="95px" >
+                                                                            <td align="left" valign="top" width="100px" >
                                                                                 <table cellpadding="0" cellspacing="0">
                                                                                     <tr>
-                                                                                        <td align="left" valign="top" style="font-size: 7px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                             Other Customs Information:
                                                                                         </td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
+                                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;margin: 0;padding-left: 5px;padding-right: 5px;">
                                                                                             @foreach ($airWayBill->otherCustomInformation as $otherCustomInformation)
                                                                                                 {{ $otherCustomInformation->country_code }}/{{ $otherCustomInformation->info_identifier }}/{{ $otherCustomInformation->custom_info_identifier }}/{{ $otherCustomInformation->supplementary_info }}
                                                                                                 <br/>
@@ -1122,10 +1122,10 @@
                                             </tr>
                                             <tr>
                                                 <!-- first column section -->
-                                                <td align="center" valign="top" width="430px" style="">
+                                                <td align="center" valign="top" width="400px" style="">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                            <td align="center" valign="top" width="430px" style="width:430px;">
+                                                            <td align="center" valign="top" width="400px">
                                                                 &nbsp;
                                                             </td>
                                                         </tr>
@@ -1133,14 +1133,14 @@
                                                 </td>
                                                 <!-- first column section -->
                                                 <!-- second column section -->
-                                                <td align="right" valign="bottom" width="170px;" style="">
+                                                <td align="right" valign="bottom" width="200px;" style="">
                                                     <table cellpadding="0" cellspacing="0" style="text-align:right;">
                                                         <tr>
-                                                            <td align="right" valign="bottom" width="170px;" style="text-align:right;">
+                                                            <td align="right" valign="bottom" width="200px;" style="text-align:right;">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                        <td align="right" valign="bottom" width="100px" style="text-align:right;">
+                                                                        <td align="right" valign="bottom" width="150px" style="text-align:right;">
                                                                             <table cellpadding="0" cellspacing="0" >
                                                                                 <tr>
                                                                                     <td align="right" valign="bottom">
@@ -1157,11 +1157,16 @@
                                                                         </td>
                                                                         <!-- first column code-->
                                                                         <!-- second column code-->
-                                                                        <td align="right" valign="bottom" width="120px" style="text-align:right;border-top: 1px solid #000000;border-left: 1px solid #000000;">
-                                                                            <table cellpadding="0" cellspacing="0" width="100%">
+                                                                        <td align="right" valign="bottom" width="100px" style="text-align:right;border-top: 1px solid #000000;border-left: 1px solid #000000;">
+                                                                            <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="center" valign="bottom" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding:0px 0px 10px;">
+                                                                                    <td align="center" valign="bottom" width="100px" style="font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding:0px 0px 10px;">
                                                                                         SCI
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td align="left" valign="bottom" width="100px" style="font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding:0px 0px 2px;">
+                                                                                        {{ $airWayBill->customs_origin_code }}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1184,7 +1189,12 @@
                                     <td align="center">
                                         <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td align="center">
+                                                <td align="center" style="position:relative">
+                                                    <!-- SSR and Exta Print Information value of the form shows here -->
+                                                    <div style="text-align:left;align-item:left;font-size: 9px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;z-index:9999 !important;position:absolute;top:10%;left:1%;right:0%;bottom:0%;width:300px;display:inline-block;">
+                                                        {{ $airWayBill->special_service_request ?? '' }}<br />
+                                                        {{ $airWayBill->extra_print ?? '' }}
+                                                    </div>
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <!-- One -->
@@ -1239,7 +1249,7 @@
                                                                                     <td align="right" valign="top" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="39px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="39px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->consignmentData->pieces ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1250,7 +1260,7 @@
                                                                                     <td align="right" valign="top" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->consignmentData->gross_weight ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1261,7 +1271,7 @@
                                                                                     <td align="center" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom: 130px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom: 130px;">
                                                                                                     @if ($airWayBill->consignmentData->weight_code == "KGM")
                                                                                                         K
                                                                                                     @else
@@ -1284,7 +1294,7 @@
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="39px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="39px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->consignmentData->pieces ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1295,7 +1305,7 @@
                                                                                     <td align="right" valign="bottom" style="border-right:1px solid #000000;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="bottom" width="40px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->consignmentData->gross_weight ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1330,8 +1340,8 @@
                                                                                     <td align="center" valign="top" width="8px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-top:40px;">
-                                                                                                   {{ $airWayBill->consignmentData->service_code ?? ''}} 
+                                                                                                <td align="center" valign="top" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-top:40px;">
+                                                                                                    {{ $airWayBill->consignmentData->service_code ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1373,7 +1383,7 @@
                                                                                     <td align="center" valign="top" style="padding-top: 10px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom:158px;">
+                                                                                                <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-bottom:158px;">
                                                                                                     {{ $airWayBill->consignmentData->rate_class ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1450,7 +1460,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->consignmentData->chargable_weight ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -1519,7 +1529,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="75px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="75px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->consignmentData->rate ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1593,7 +1603,7 @@
                                                                                     <td align="right" valign="top" style="border-bottom: 1px solid #000;padding-bottom: 130px;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->total_amount ?? ''}}  
                                                                                                 </td>
                                                                                             </tr>
@@ -1613,7 +1623,7 @@
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     {{ $airWayBill->total_amount ?? ''}} 
                                                                                                 </td>
                                                                                             </tr>
@@ -1680,7 +1690,7 @@
                                                                                     <td align="left" valign="top" width="160px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="top" width="160px" style="font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:5px;">
+                                                                                                <td align="left" valign="top" width="160px" style="font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:5px;">
                                                                                                     {{ $airWayBill->consignmentData->description ?? ''}}<br>
 
                                                                                                         @php
@@ -1718,7 +1728,7 @@
                                                                                     <td align="left" valign="bottom" style="text-align:center;">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="left" valign="bottom" width="160px" style="padding-left:5px;font-size: 8px;line-height: 10px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                <td align="left" valign="bottom" width="160px" style="padding-left:5px;font-size: 8px;line-height: 10px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                                     Total volume: {{ $airWayBill->total_volume ?? ''}} {{ $airWayBill->dimention_unit ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
@@ -2155,7 +2165,6 @@
                                                                                         </table>
                                                                                     </td>
                                                                                     <!-- Two -->
-
                                                                                     <!-- three -->
                                                                                     <td align="center" valign="top" width="40px">
                                                                                         <table cellpadding="0" cellspacing="0">
@@ -2339,7 +2348,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" height="20px" width="146px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;padding-right:2px;">
-                                                                                                               &nbsp;
+                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2405,7 +2414,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                               &nbsp;
+                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2422,19 +2431,19 @@
                                                             </td>
                                                             <!-- first section -->
                                                             <!-- second section -->
-                                                            <td align="left" valign="top" width="370px" style="width:370px;">
+                                                            <td align="left" valign="top" width="320px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <!-- First Column -->
                                                                     <tr>
                                                                         <td align="left" valign="top" width="370px" style="border-bottom:1px solid #000000;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;">
+                                                                                    <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left: 5px;padding-bottom:2px;">
                                                                                         Other Charges
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left: 10px;">
+                                                                                    <td align="left" valign="top" height="77px" style="border-right:1px solid #000;font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left: 10px;">
                                                                                         @foreach ($airWayBill->otherCharge as $charge)
                                                                                             {{ $charge->other_charge_code ?? ''}} {{ $charge->due ?? ''}} {{ $charge->amount ?? ''}}<br> 
                                                                                         @endforeach
@@ -2442,7 +2451,7 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                       &nbsp;
+                                                                                        &nbsp;
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -2454,7 +2463,7 @@
                                                                         <td align="left" valign="top"  style="border-right:1px solid #000;">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" height="66px" width="370px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
+                                                                                    <td align="left" valign="top" height="60" width="370px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;" >
                                                                                         Shipper certifies that the particulars on the face hereof are correct and that insofar as any part of the consignment contains dangerous goods, such part is properly described by name and is in proper condition for carriage by air according to the applicable Dangerous Goods Regulations
                                                                                     </td>
                                                                                 </tr>
@@ -2465,7 +2474,7 @@
                                                                                                 <td align="center" valign="bottom">
                                                                                                     <table cellpadding="0" cellspacing="0" style="width:300px;">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px 0px;" >
+                                                                                                            <td align="center" valign="bottom" style="border-bottom:1px dotted #000000;font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 0px 0px;" >
                                                                                                                 {{ $airWayBill->agentsInfo->agent_name ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
@@ -2502,12 +2511,12 @@
                                                                                                         <td align="center" valign="bottom" width="70px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="bottom" width="70px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         @php
                                                                                                                             echo $agentIssueDate = !empty($airWayBill->agentsInfo) && !empty($airWayBill->agentsInfo->agent_issue_date) 
                                                                                                                             ? date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date)) 
                                                                                                                             : '';
-                                                                                                                           // echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
+                                                                                                                            // echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
                                                                                                                         @endphp
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2516,7 +2525,7 @@
                                                                                                         <td align="center" valign="top" width="70px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="top" width="70px" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         @php
                                                                                                                             //$locationCode = explode(',', $airWayBill->agentsInfo->agent_issue_loc_code);
                                                                                                                             //echo $locationCode = $locationCode[0] ?? '';
@@ -2534,7 +2543,7 @@
                                                                                                         <td align="center" valign="top" width="160px">
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
-                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
+                                                                                                                    <td align="center" valign="top" width="160px" style="font-size: 9px;line-height: 11px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
                                                                                                                         {{ $airWayBill->agentsInfo->agent_issue_sign ?? ''}}
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -2592,7 +2601,7 @@
                                                                                     <td align="center" valign="top" width="370px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-right:1px solid #000;padding:0px 20px;">
+                                                                                                <td align="center" valign="top" width="112px" height="16" bgcolor="bee3fe" style="border-right:1px solid #000;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" width="112px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
@@ -2604,7 +2613,7 @@
                                                                                                 <td align="center" valign="top" width="108px" style="">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
-                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 14px;line-height: 21px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-left:30px;">
+                                                                                                            <td align="center" valign="top" width="108px" style="font-size: 10px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-left:30px;">
                                                                                                                 {{$airWayBill->awb_code . ' '. $airWayBill->awb_no ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>  
@@ -2628,7 +2637,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="top" width="112px" style="height:15px;width:112px;font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                               &nbsp;
+                                                                                                                &nbsp;
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2664,7 +2673,8 @@
                             </table>
                         </td>
                     </tr>
-                    <!-- Main Border Section Code -->
+                <!-- Main Border Section Code -->
+                    
                 </table>
             </td>
         </tr>
@@ -2717,22 +2727,22 @@
                 <td align="center" valign="top" width="600px">
                     <table cellpadding="0" cellspacing="0" width="100%"> 
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
                                 <img src="{{ public_path('media/custome/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 0px;" >
                                 NOTICE CONCERNING CARRIER’S LIMITATION OF LIABILITY 
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 0px" >
                                 If the carriage involves an ultimate destination or stop in a country other than the country of departure, the Montreal Convention or the Warsaw Convention may be applicable to the liability of the Carrier in respect of loss of, damage or delay to cargo. Carrier's limitation of liability in accordance with those Conventions shall be as set forth in subparagraph 4 unless a higher value is declared.
                             </td>
                         </tr>
                         <tr>
-                            <td align="center" valign="middle" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
+                            <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding: 10px 0px;" >
                                 CONDITIONS OF CONTRACT
                             </td>
                         </tr>
@@ -2743,7 +2753,7 @@
                                         <td align="center" valign="top">
                                             <table cellpadding="0" cellspacing="0" width="100%"> 
                                                 <tr>
-                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    <td width="280px" align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                         <b>1.</b> In this contract and the Notices appearing hereon:<br aria-hidden="true" />
                                                         CARRIER includes the air carrier issuing this air waybill and all carriers that carry or undertake to carry the cargo or perform any other services related to such carriage. SPECIAL DRAWING RIGHT (SDR) is a Special Drawing Right as defined by the International Monetary Fund. WARSAW CONVENTION means whichever of the following instruments is applicable to the contract of carriage: the Convention for the Unification of Certain Rules Relating to International Carriage by Air, signed at Warsaw, 12 October 1929; that Convention as amended at The Hague on 28 September 1955; that Convention as amended at The Hague 1955 and by Montreal Protocol No. 1, 2, or 4 (1975) as the case may be. MONTREAL CONVENTION means the Convention for the Unification of Certain Rules for International Carriage by Air, done at Montreal on 28 May 1999. 
                                                         <br aria-hidden="true" />
@@ -2809,7 +2819,7 @@
                                                         <br aria-hidden="true" />
                                                         <b>6.2</b> In carriage to which neither the Warsaw Convention nor the Montreal                               
                                                     </td>
-                                                    <td width="280px" align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
+                                                    <td width="280px" align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 10px;" >
                                                         Convention applies Carrier shall, in accordance with the procedures set
                                                         forth in its general conditions of carriage and applicable tariffs, permit
                                                         shipper to increase the limitation of liability by declaring a higher value

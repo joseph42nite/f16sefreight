@@ -40,23 +40,23 @@ class GenerateAwbPdfController extends Controller
             if (is_array($decodedInfo)) {
                 $hsCode = implode(' ', $decodedInfo);
             }
-        }   
+        }    
         
         // Create a variable with true value to show or hide back page.
         $showBothPage = true;
         $pdf = Pdf::loadView('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'showBothPage','airlineAddress'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
         return $pdf->stream();
-    
     }
-
-    // This function will work when user click on Generate Multiple PDF file
+    
     public function downloadMultipleAwbPdf($id) {
 
         // Fetch the AirWayBill along with related data
         $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
             ->where('id', $id)
             ->first();
-            
+            $prefix = substr($airWayBill->awb_code, 0, 3);
+            $airline = Airline::where('prefix', $prefix)->whereNotNull('airline_address')->first();
+            $airlineAddress = $airline ? $airline->airline_address : '';
             $specialHandlingInfo = '';
             if ($airWayBill && !empty($airWayBill->special_handling_info)) {
                 $decodedInfo = json_decode($airWayBill->special_handling_info, true);
@@ -78,7 +78,7 @@ class GenerateAwbPdfController extends Controller
             $renderedPages = [];
 
             foreach ($pages as $page) {
-                $renderedPages[] = view('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'page'))->render();
+                $renderedPages[] = view('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'airlineAddress', 'hsCode', 'page'))->render();
             }
             
             // Join all pages together
@@ -100,7 +100,9 @@ class GenerateAwbPdfController extends Controller
         $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
             ->where('id', $id)
             ->first();
-            
+            $prefix = substr($airWayBill->awb_code, 0, 3);
+            $airline = Airline::where('prefix', $prefix)->whereNotNull('airline_address')->first();
+            $airlineAddress = $airline ? $airline->airline_address : '';
             $specialHandlingInfo = '';
             if ($airWayBill && !empty($airWayBill->special_handling_info)) {
                 $decodedInfo = json_decode($airWayBill->special_handling_info, true);
@@ -125,7 +127,7 @@ class GenerateAwbPdfController extends Controller
             $showBothPage = true;
 
             foreach ($pages as $page) {
-                $renderedPages[] = view('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'page', 'showBothPage'))->render();
+                $renderedPages[] = view('./pdf/generate-awb-pdf', compact('airWayBill', 'specialHandlingInfo', 'airlineAddress', 'hsCode', 'page', 'showBothPage'))->render();
             }
             
             // Join all pages together

@@ -327,7 +327,7 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Routing Information saved successfull";
     }
- 
+
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
         $awb_id = $awb_code . $awb_no;
@@ -335,7 +335,7 @@ class AirwayBill extends Controller
         foreach ($entries as $entry) {
             $ConsignmentData = ConsignmentData::where('awb_id', $awb_id)->first();
             if (!isset($ConsignmentData))
-                        $ConsignmentData = new ConsignmentData();
+                $ConsignmentData = new ConsignmentData();
             // Update the fields
             $ConsignmentData->awb_id = $awb_id;
             $ConsignmentData->pieces = $entry['pieces'];
@@ -962,5 +962,30 @@ class AirwayBill extends Controller
         } else {
             return response()->json(null, 404);
         }
+    }
+
+    public function testXmlFilegenerate()
+    {
+        $xml_code = '<ns2:MessageHeaderDocument>
+        <ID>123-12345678_1740419426</ID>
+        <Name>Air Waybill</Name>
+        <TypeCode>740</TypeCode>
+        <IssueDateTime>2025-02-24 17:50:26</IssueDateTime>
+        <PurposeCode>Creation</PurposeCode>
+        <VersionID>5.00</VersionID>
+        <SenderParty>
+        <PrimaryID schemeID="P">REUAGT82INKN/BLR01</PrimaryID>
+        </SenderParty>
+        <SenderParty>
+        <PrimaryID schemeID="C">KUEHNENAGELAGT</PrimaryID>
+        </SenderParty>
+        <RecipientParty>
+        <PrimaryID schemeID="P">REUAIR08AFR</PrimaryID>
+        </RecipientParty>
+        <RecipientParty>
+        <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
+        </RecipientParty>
+        </ns2:MessageHeaderDocument>';
+        $xlm_file_name="";
     }
 }

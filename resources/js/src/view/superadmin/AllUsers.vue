@@ -57,9 +57,9 @@ export default {
         {label:'Email address',key:"email"},
         {label:'Company',key:"company_name"},
         {label:'Status',key:"is_active"},
-        {label:'Today login count',key:"daily_login_count"},
-        {label:'Plan expiry date',key:"plan_expiry_date"},
-        {label:'Plan status',key:"plan_status"},
+        // {label:'Today login count',key:"daily_login_count"},
+        // {label:'Plan expiry date',key:"plan_expiry_date"},
+        // {label:'Plan status',key:"plan_status"},
         {label:"Action",key:"action"}
         ],
       items: [],

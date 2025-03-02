@@ -18,6 +18,10 @@ class BranchController extends Controller
 
         return json_encode($data);
     }
+    public function getCompanyBranch($company_id){
+        $data = Agent::where([['company_id', $company_id]])->select(['id','agent_city'])->get()->toArray();
+        return json_encode($data);
+    }
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [

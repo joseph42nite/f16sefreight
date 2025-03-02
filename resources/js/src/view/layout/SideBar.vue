@@ -1,13 +1,13 @@
 <template>
     <ul class="list-unstyled">
         <!-- Redirect to dashboard -->
-        <router-link to="/dashboard" :class="{ active: isActive('/dashboard') }">
+        <router-link to="#" :class="{ active: isActive('/dashboard') }">
             <li :style="{ padding: isActive('/dashboard') ? '10px 0px' : '10px 15px' }">
                 <img :src="isActive('/dashboard') ? '/media/custome/side-menu/1-active.png' : '/media/custome/side-menu/1.png'" alt="one">
             </li>
         </router-link>
         <!-- Redirect to stock management -->
-        <router-link to="/stock" :class="{ active: isActive('/stock') }">
+        <router-link to="#" :class="{ active: isActive('/stock') }">
             <li :style="{ padding: isActive('/stock') ? '10px 0px' : '10px 15px' }">
                 <img :src="isActive('/stock') ? '/media/custome/side-menu/2-active.png' : '/media/custome/side-menu/2.png'" alt="two">
             </li>

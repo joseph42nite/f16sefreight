@@ -2451,7 +2451,7 @@
                                                 <div style="display:flex;justify-content: end;line-height: 71px;align-self: center;width:100%" @click="isGeneratePdf(generateButton=0);"><img src="/media/custome/cross.png" alt="cross button" style="width:24px;height: 24px;cursor: pointer;"></div>
                                             </div>
                                             <div style="width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <div style="width:100%;">
+                                                <!-- <div style="width:100%;">
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:22px;font-weight: 400;">To deliver a valid cargo document, the following changes were made:</p>
                                                 </div>
                                                 <div style="width:100%;">
@@ -2459,7 +2459,7 @@
                                                         <li>Lorum ipsum</li>
                                                         <li>Lorum ipsum</li>
                                                     </ul>
-                                                </div>
+                                                </div> -->
                                                 <div style="width:100%;">
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:13px;font-weight: 400;margin: 0;">Airway bill message saved in database</p>
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">PDF documents prepared</p>
@@ -2516,6 +2516,7 @@ import "vue2-datepicker/index.css";
 import debounce from 'lodash.debounce';
 import Header from "@/view/layout/Header.vue";
 import SideBar from "../layout/SideBar.vue";
+import { mapGetters } from "vuex";
 // import PageLoader from "../components/PageLoader.vue";
 export default {
     data() {
@@ -3411,8 +3412,8 @@ export default {
                 window.location.reload();
             }
         },
-        getAgent(){
-            ApiService.get(`/agent-info/`)
+        getAgent(company_id,branch_id){
+            ApiService.get(`/agent-info`)
                 .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) {
                     this.agent_information = data[0];
@@ -4242,6 +4243,8 @@ export default {
                 this.showAWBSection = false;
             }
         }
+        if(this.current_user)
+        this.getAgent(this.current_user.company_name,this.current_user.branch_name);
     },
     watch: {
         // 'consignment_list': function () {
@@ -4351,9 +4354,9 @@ export default {
         this.getOCIData();
         this.onSubmit = this.onSubmit.bind(this);
         // this.handleSaveAndGeneratePDF = this.handleSaveAndGeneratePDF.bind(this);
-        // this.getAgent();
     },
     computed: {
+        ...mapGetters({ current_user: "currentUser"}),
         isPrepaid() {
             const prepaidTypes = ['PP'];
             return prepaidTypes.includes(this.form.payment_info.type_of_payment);

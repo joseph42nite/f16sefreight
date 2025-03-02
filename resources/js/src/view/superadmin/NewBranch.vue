@@ -35,8 +35,13 @@
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.agent_issue_loc_code" type="text" required placeholder="Agent Issue Loc Code" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_loc_code'),}"></b-form-input>
-                        <has-error :form="branch_form" field="agent_issue_loc_code"></has-error>
+                        <div class="custom-dropdown" ref="dropdownContainer" @click="toggleDropdown">
+                            <input type="text" v-model="searchQuery" placeholder="Agent Issue Loc Code" id="from_id" class="form-control" autocomplete="off">
+                            <div v-if="isDropdownOpen" class="dropdown-options">
+                                <div v-for="(item, index) in filteredLocations" :key="index" @click="selectOption(item)" class="option">{{ item.iata_code }}, {{ item.destination }} ({{ item.iata_code }})</div>
+                            </div>
+                            </div>
+                        </b-input-group>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
                         <b-form-input id="input-1" v-model="branch_form.agent_issue_date" type="date" required placeholder="Agent Issue Date" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_date'),}"></b-form-input>
@@ -152,7 +157,7 @@ export default {
                 agent_city:"",
                 company_id: null,
                 agent_issue_sign:"",
-                agent_issue_loc_code: "",
+                agent_issue_loc_code: '',
                 agent_issue_date:"",
                 agent_account: "",
                 //iata cass and code
@@ -178,6 +183,7 @@ export default {
             }),
             action: "Add",
             all_company:[{ value: null, text: 'Select Company' }],
+            location: [],
             searchQuery: "",
             isDropdownOpen: false,
             showpass: true,
@@ -205,28 +211,68 @@ export default {
         getData(id) {
             ApiService.get(`/superadmin/all-branch/${id}`).then(({ data }) => {
                 this.branch_form.fill(data[0]);
+                this.searchQuery=data[0].agent_issue_loc_code;
             });
         },
         getCompany() {
             ApiService.get(`/superadmin/all-company`).then(({ data }) => {
                 for(let i=0;i<data.length;i++){
-                    this.all_company.push({"value":data[0].id,"text":data[0].name})
+                    this.all_company.push({"value":data[i].id,"text":data[i].name})
                 }
             });
+        },
+        getLocation(){
+            ApiService.get(`/superadmin/get-location`)
+                .then(({ data }) => {
+                this.location=data;
+            })
+        },
+        normalizer(node) {
+            return {
+                id: node.value,
+                label: node.name,
+            };
+        },
+        selectOption(item) {
+            this.branch_form.agent_issue_loc_code=item.iata_code+", "+item.destination+" ("+item.iata_code+")";
+            this.searchQuery=this.branch_form.agent_issue_loc_code;
+            
+        },
+         toggleDropdown() {
+           this.isDropdownOpen = !this.isDropdownOpen;
+        },
+        closeDropdown(event) {
+            const dropdownContainer = this.$refs.dropdownContainer;
+            if (!dropdownContainer.contains(event.target)) {
+                this.isDropdownOpen = false;
+            }
         },
     },
     mounted() {
         this.getCompany();
+        this.getLocation();
         if (this.get_item) {
             this.getData(this.get_item);
             this.action = "Edit";
         }
+        window.addEventListener('click', this.closeDropdown);
     },
     computed: {
         get_item: function () {
             if (this.$route.params.id) return this.$route.params.id;
             else return 0;
         },
+        filteredLocations() {
+            if (!this.searchQuery) {
+                return this.location;
+            }
+            const query = this.searchQuery.toLowerCase();
+            return this.location.filter(item => {
+                return (
+                    item.iata_code.toLowerCase().includes(query)
+                );
+            });
+        }
     },
 };
 </script>

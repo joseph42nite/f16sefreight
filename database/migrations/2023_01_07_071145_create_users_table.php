@@ -18,6 +18,7 @@ class CreateUsersTable extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('company_name',100)->nullable();
+            $table->string('branch_name',50)->nullable();
             $table->string('origin_airport_code',10)->nullable();
             $table->string('password');
             $table->boolean('is_active')->default(true);

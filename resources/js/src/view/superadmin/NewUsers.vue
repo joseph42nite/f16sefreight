@@ -34,18 +34,14 @@
         </b-form-group>
         </div>
         <b-form-group>
-          <b-form-input
-            id="input-1"
-            v-model="user_form.company_name"
-            type="text"
-            required
-            placeholder="Company name"
-            class="mx-1 input-box"
-            :class="{ 'is-invalid': user_form.errors.has('company_name') }"
-          ></b-form-input>
+          <b-form-select v-model="user_form.company_name" :options="all_company" @change="getBranch('add')"></b-form-select>
           <has-error :form="user_form" field="company_name"></has-error>
         </b-form-group>
-        <b-form-group v-if="action=='Edit'">
+        <b-form-group>
+          <b-form-select v-model="user_form.branch_name" :options="all_branch"></b-form-select>
+          <has-error :form="user_form" field="branch_name"></has-error>
+        </b-form-group>
+        <!-- <b-form-group v-if="action=='Edit'">
           <b-form-input
             id="input-1"
             v-model="user_form.daily_login_count"
@@ -66,7 +62,7 @@
             :class="{ 'is-invalid': user_form.errors.has('plan_expiry_date') }"
           ></b-form-input>
           <has-error :form="user_form" field="plan_expiry_date"></has-error>
-        </b-form-group>
+        </b-form-group> -->
         <b-form-group>
           <b-input-group class="input-group-merge">
             <div class="custom-dropdown" ref="dropdownContainer" @click="toggleDropdown">
@@ -115,13 +111,16 @@ export default {
         name: "",
         email: "",
         origin_airport_code:null,
-        company_name:'',
+        company_name:null,
+        branch_name:null,
         daily_login_count:'',
         password: "",
         is_active:"",
         plan_expiry_date:'',
       }),
       action: 'Add',
+      all_company:[{ value: null, text: 'Select Company' }],
+      all_branch:[{ value: null, text: 'Select Branch' }],
       location:[],
       searchQuery: '',
       isDropdownOpen: false,
@@ -168,19 +167,32 @@ export default {
         .then(({ data }) => {
           this.user_form.fill(data[0])
           this.searchQuery=data[0].origin_airport_code;
+          this.getBranch('edit');
         })
     },
     getLocation(){
       ApiService.get(`/superadmin/get-location`)
         .then(({ data }) => {
           this.location=data;
-          // data.forEach((element) => {
-          //   this.location.push({
-          //     value: element["iata_code"],
-          //     name: element["iata_code"] + " (" + element["destination"] + ")",
-          //   });
-          // });
         })
+    },
+    getCompany() {
+        ApiService.get(`/superadmin/all-company`).then(({ data }) => {
+            for(let i=0;i<data.length;i++){
+                this.all_company.push({"value":data[i].id,"text":data[i].name})
+            }
+        });
+    },
+    getBranch(operation){
+      if(operation=='add'){
+        this.all_branch=[{ value: null, text: 'Select Branch' }];
+        this.user_form.branch_name=null;
+      }
+        ApiService.get(`/superadmin/get-company-branch/${this.user_form.company_name}`).then(({ data }) => {
+            for(let i=0;i<data.length;i++){
+                this.all_branch.push({"value":data[i].id,"text":data[i].agent_city})
+            }
+        });
     },
     normalizer(node) {
       return {
@@ -191,6 +203,7 @@ export default {
   },
   mounted(){
    this.getLocation();
+   this.getCompany();
    if(this.get_item){
       this.getData(this.get_item);
       this.action='Edit';

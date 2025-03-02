@@ -14,7 +14,7 @@ class UserController extends Controller
         if($id)
           $data=User::where([['id',$id]])->limit(1)->get()->toArray();
         else
-          $data=User::all()->toArray();
+          $data = User::orderBy('created_at', 'desc')->get()->toArray();
         
         return json_encode($data);
     }
@@ -22,7 +22,8 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
             'origin_airport_code' => ['required', 'string', 'max:100'],
-            'company_name' => ['required', 'string', 'max:100'],
+            'company_name' => ['required', 'max:100'],
+            'branch_name' => ['required', 'max:50'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
         ]);
@@ -36,6 +37,7 @@ class UserController extends Controller
         $user->name=$request->name;
         $user->origin_airport_code=$request->origin_airport_code;
         $user->company_name=$request->company_name;
+        $user->branch_name=$request->branch_name;
         $user->email=$request->email;
         $user->password=Hash::make($request->password);
         $user->plan_expiry_date=$current_date;
@@ -67,8 +69,8 @@ class UserController extends Controller
         $user->name=$request->name;
         $user->company_name=$request->company_name;
         $user->origin_airport_code=$request->origin_airport_code;
-        $user->daily_login_count=$request->daily_login_count;
-        $user->plan_expiry_date=$request->plan_expiry_date;
+        // $user->daily_login_count=$request->daily_login_count;
+        // $user->plan_expiry_date=$request->plan_expiry_date;
         $user->is_active=$request->is_active;
         if(!empty($request->password))
         $user->password=Hash::make($request->password);

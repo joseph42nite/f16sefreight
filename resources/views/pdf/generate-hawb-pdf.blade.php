@@ -1269,11 +1269,12 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" width="20px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Arial,sans-serif;color: #000000;font-weight: 700;padding-bottom: 130px;">
-                                                                                                    @if ($houseWayBill->weight_code == "KGM")
+                                                                                                    {{-- @if ($houseWayBill->weight_code == "KGM")
                                                                                                         K
                                                                                                     @else
                                                                                                         L
-                                                                                                    @endif
+                                                                                                    @endif --}}
+                                                                                                    {{ ($houseWayBill->weight_code ?? '') == 'KGM' ? 'K' : (($houseWayBill->weight_code ?? '') ? 'L' : '') }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>

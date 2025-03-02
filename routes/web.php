@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\airwayBill\AirwayBill;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\IMPConversionController;
@@ -18,7 +19,8 @@ Route::get('generic-message', [ConversionController::class, 'GenericRequestMessa
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
 Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
 Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
-// Route::get('test-route', [HousewayBill::class,'getOtherCharges']);
+// Route::get('/agent-info', [AirwayBill::class, 'get_agent']);
+// Route::get('test-route', [AirwayBill::class,'get_agent']);
 // Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
 Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
 Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf']);

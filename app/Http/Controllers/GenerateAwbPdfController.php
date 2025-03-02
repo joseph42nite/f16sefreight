@@ -25,7 +25,7 @@ class GenerateAwbPdfController extends Controller
             $prefix = substr($airWayBill->awb_code, 0, 3);
             $airline = Airline::where('prefix', $prefix)->whereNotNull('airline_address')->first();
             $airlineAddress = $airline ? $airline->airline_address : '';
-            // print_r($airlineAddress);
+            dd($airWayBill);die;
         $specialHandlingInfo = '';
         if ($airWayBill && !empty($airWayBill->special_handling_info)) {
             $decodedInfo = json_decode($airWayBill->special_handling_info, true);

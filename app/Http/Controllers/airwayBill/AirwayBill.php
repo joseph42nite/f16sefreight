@@ -15,6 +15,9 @@ use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use phpseclib3\Crypt\PublicKeyLoader;
+use phpseclib3\Net\SFTP;
 
 class AirwayBill extends Controller
 {
@@ -964,6 +967,7 @@ class AirwayBill extends Controller
         }
     }
 
+//    SFTP file transfer 
     public function testXmlFilegenerate()
     {
         $xml_code = '<ns2:MessageHeaderDocument>
@@ -986,6 +990,154 @@ class AirwayBill extends Controller
         <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
         </RecipientParty>
         </ns2:MessageHeaderDocument>';
-        $xlm_file_name="";
+
+        // Generate File Name & Path
+        $xml_file_name = 'message_' . time() . '.xml';
+        $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
+
+        // Ensure Directory Exists
+        if (!file_exists(public_path('xml-conversion-files'))) {
+            mkdir(public_path('xml-conversion-files'), 0777, true);
+        }
+
+        // Save XML File
+        file_put_contents($xml_file_path, $xml_code);
+
+        // Send File to Server
+        try {
+            $this->sendFileToServer($xml_file_path, $xml_file_name);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'message' => 'XML File Created and Sent to Server',
+            'file' => $xml_file_name
+        ]);
     }
+
+    public function sendFileToServer($local_file_path, $remote_file_name)
+    {
+        $sftp_host = '65.0.228.88';
+        $sftp_username = 'ubuntu';
+        $ppk_file_path = storage_path('key/f16s.ppk');
+        $remote_folder = '/var/www/html/f16sefreight.com/public/xml-conversion-files/';
+
+        // Load Private Key
+        $private_key = PublicKeyLoader::load(file_get_contents($ppk_file_path));
+
+        // Establish SFTP Connection
+        $sftp = new SFTP($sftp_host);
+        if (!$sftp->login($sftp_username, $private_key)) {
+            throw new \Exception('SFTP Login Failed - Check credentials & key');
+        }
+
+        // Ensure Remote Folder Exists
+        if (!$sftp->chdir($remote_folder)) {
+            if (!$sftp->mkdir($remote_folder, 0777, true)) {
+                throw new \Exception("Remote folder '$remote_folder' does not exist and cannot be created");
+            }
+            $sftp->chdir($remote_folder);
+        }
+
+        // Upload File
+        if (!$sftp->put($remote_folder . $remote_file_name, $local_file_path, SFTP::SOURCE_LOCAL_FILE)) {
+            throw new \Exception('File Upload Failed - Unable to send file');
+        }
+
+        return true;
+    }
+
+
+    // ftp File transfer
+    public function xmlFilegenerate()
+    {
+        $xml_code = '<ns2:MessageHeaderDocument>
+        <ID>123-12345678_1740419426</ID>
+        <Name>Air Waybill</Name>
+        <TypeCode>740</TypeCode>
+        <IssueDateTime>2025-02-24 17:50:26</IssueDateTime>
+        <PurposeCode>Creation</PurposeCode>
+        <VersionID>5.00</VersionID>
+        <SenderParty>
+        <PrimaryID schemeID="P">REUAGT82INKN/BLR01</PrimaryID>
+        </SenderParty>
+        <SenderParty>
+        <PrimaryID schemeID="C">KUEHNENAGELAGT</PrimaryID>
+        </SenderParty>
+        <RecipientParty>
+        <PrimaryID schemeID="P">REUAIR08AFR</PrimaryID>
+        </RecipientParty>
+        <RecipientParty>
+        <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
+        </RecipientParty>
+        </ns2:MessageHeaderDocument>';
+    
+        // Generate File Name & Path
+        $xml_file_name = 'message_' . time() . '.xml';
+        $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
+    
+        // Ensure Directory Exists
+        if (!file_exists(public_path('xml-conversion-files'))) {
+            mkdir(public_path('xml-conversion-files'), 0777, true);
+        }
+    
+        // Save XML File
+        file_put_contents($xml_file_path, $xml_code);
+    
+        // Send File to FTP Server
+        try {
+            $this->sendFileToServer($xml_file_path, $xml_file_name);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    
+        return response()->json([
+            'message' => 'XML File Created and Sent to FTP Server',
+            'file' => $xml_file_name
+        ]);
+    }
+
+    public function sendFileToServerFTP($local_file_path, $remote_file_name)
+    {
+        // FTP Credentials
+        $ftp_host = '65.0.228.88';
+        $ftp_username = 'ubuntu';
+        $ftp_password = '';
+        $ftp_port = 22;
+        $remote_folder = '/var/www/html/f16sefreight.com/public/xml-conversion-files/';
+
+        // file exists locally
+        if (!file_exists($local_file_path)) {
+            throw new \Exception('Local XML file does not exist');
+        }
+
+        // Connect to FTP Server
+        $ftp_conn = ftp_connect($ftp_host, $ftp_port);
+        if (!$ftp_conn) {
+            throw new \Exception('Could not connect to FTP server');
+        }
+
+        // Login to FTP
+        if (!ftp_login($ftp_conn, $ftp_username, $ftp_password)) {
+            ftp_close($ftp_conn);
+            throw new \Exception('FTP Login Failed - Check credentials');
+        }
+
+        // Set Passive Mode
+        ftp_pasv($ftp_conn, true);
+
+        // Upload File to FTP
+        $remote_file_path = $remote_folder . $remote_file_name;
+        if (!ftp_put($ftp_conn, $remote_file_path, $local_file_path, FTP_BINARY)) {
+            ftp_close($ftp_conn);
+            throw new \Exception('FTP File Upload Failed');
+        }
+
+        // Close FTP Connection
+        ftp_close($ftp_conn);
+
+        return true;
+    }
+
 }

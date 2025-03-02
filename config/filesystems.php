@@ -65,6 +65,20 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
         ],
 
+        // 'ftp' => [
+        //     'driver'   => 'ftp',
+        //     'host'     => env('FTP_HOST'),
+        //     'username' => env('FTP_USERNAME'),
+        //     'password' => env('FTP_PASSWORD'),
+            
+        //     // Optional Configuration
+        //     'port'     => 22, 
+        //     'root'     => '/public/xml-conversion-files',
+        //     'passive'  => true,
+        //     'ssl'      => false,
+        //     'timeout'  => 30,
+        // ],
+
     ],
 
     /*

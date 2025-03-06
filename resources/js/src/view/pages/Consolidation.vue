@@ -749,7 +749,7 @@ export default {
             this.isOpen = false;
         },
         converXml(awb_no){
-            ApiService.get(`/waybill/${awb_no}`)
+            ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
                     console.log(data);
                 });
@@ -768,7 +768,7 @@ export default {
         },
         // location
         getLocation() {
-            ApiService.get(`/get-location`).then(({ data }) => {
+            ApiService.get(`/user/get-location`).then(({ data }) => {
                 this.location=data;
             });
         },
@@ -779,7 +779,7 @@ export default {
             // })
         },
         allHousewayBill() {
-            ApiService.get('/all-houseway-bill')
+            ApiService.get('/user/all-houseway-bill')
                 .then(response => {
                     this.data_items = response.data;
                 })
@@ -795,7 +795,7 @@ export default {
         },
         searchWayBills() {
             // this.hasSearchResults = true;
-            this.form.post('/search-house-way-bills', {
+            this.form.post('/user/search-house-way-bills', {
                 awb_no: this.form.awb_no,
                 awb_code: this.form.awb_code
             })
@@ -821,7 +821,7 @@ export default {
             });
         },
         getAirWayBill(id) { 
-            ApiService.get(`/airway-bill/${id}`)
+            ApiService.get(`/user/airway-bill/${id}`)
                 .then(response => {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
@@ -835,7 +835,7 @@ export default {
                 });
         },
         updateform(id){
-            this.form.put(`/update-consolidation/${this.form.id}`)
+            this.form.put(`/user/update-consolidation/${this.form.id}`)
             .then(response => {
                 console.log("Waybill updated:", response.data);
             })
@@ -875,7 +875,7 @@ export default {
             this.form.tableCodes.splice(index, 1);
         },
         getCountry(){
-            ApiService.get('/get-country').then(({ data }) => {
+            ApiService.get('/user/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({
                     value: key,
                     text: data[key]
@@ -885,7 +885,7 @@ export default {
             });
         },
         getAgent(){
-            ApiService.get(`/agent-info/`)
+            ApiService.get(`/user/agent-info/`)
                 .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) {
                     this.agent_information = data[0];
@@ -902,7 +902,7 @@ export default {
                 });
         },
         getOCIData(){
-            ApiService.get('/get-oci-data').then(({ data }) => {
+            ApiService.get('/user/get-oci-data').then(({ data }) => {
             if (data && data.oci_custom_info_identifier) {
                 this.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(([key, value]) => ({
                     value: key,
@@ -923,7 +923,7 @@ export default {
             });
         },
         getHouseWayBill(id) { 
-            ApiService.get(`/houseway-bill/${id}`)
+            ApiService.get(`/user/houseway-bill/${id}`)
                 .then(response => {
                     this.existingData = response.data;
                     this.openForm('update', this.existingData.id);

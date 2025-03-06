@@ -25,11 +25,11 @@ class CreatePaymentInfoTable extends Migration
             $table->integer('weight_charge')->nullable();
             // $table->integer('total_charges')->nullable();
             // $table->string('no_value_declear_carriage')->nullable(); 
-            $table->string('declear_value_carriage', 50)->nullable();  //carriage   NVD
+            $table->string('declear_value_carriage', 50)->default('NVD')->nullable();  //carriage   NVD
             // $table->string('no_value_declear_customs')->nullable(); 
-            $table->string('declear_value_customs', 50)->nullable();   //customs   NCV
+            $table->string('declear_value_customs', 50)->default('NCV')->nullable();   //customs   NCV
             // $table->string('no_value_declear_insurance')->nullable(); 
-            $table->string('declear_value_insurance', 50)->nullable();  //Insurance   XXX
+            $table->string('declear_value_insurance', 50)->default('XXX')->nullable();  //Insurance   XXX
             $table->integer('total_charges_prepaid')->nullable();
             $table->integer('total_charges_collect')->nullable();
             $table->integer('other_charges_due_agent_prepaid')->nullable();

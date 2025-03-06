@@ -23,11 +23,21 @@ class AirwayBill extends Controller
 {
     public function get_agent()
     {
-        $data = Agent::where('id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
+        $user = auth()->guard('user-api')->user();
+        $user_id = $user->id;
+        $company_id = $user->company_id; // Company ID from user table
+        $branch_name = $user->branch_name;
+        // $agent = Agent::where('id', $branch_name)->first();
+        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         return json_encode($data);
     }
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
@@ -67,6 +77,7 @@ class AirwayBill extends Controller
         $WayBillAddress->ship_phone = $shipper_address['ship_phone'] ?? null;
         $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
         $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
+        $WayBillAddress->agent_id = $agent->id ?? null;
         // dd($WayBillAddress);die();
         $WayBillAddress->save();
 
@@ -91,6 +102,8 @@ class AirwayBill extends Controller
             $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
+            $SavedAddress->user_id= $user->id ?? null;
             // dd($SavedAddress);die();
             $SavedAddress->save();
         }
@@ -98,6 +111,11 @@ class AirwayBill extends Controller
     }
     private function saveConsigneeAddress($awb_no, $awb_code, $consignee_address, $is_consignee_address_save)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+        
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
@@ -134,6 +152,7 @@ class AirwayBill extends Controller
         $WayBillAddress->cons_phone = $consignee_address['cons_phone'] ?? null;
         $WayBillAddress->cons_fax = $consignee_address['cons_fax'] ?? null;
         $WayBillAddress->cons_telex = $consignee_address['cons_telex'] ?? null;
+        $WayBillAddress->agent_id = $agent->id;
         $WayBillAddress->save();
 
         //insert address if saved button checked
@@ -157,12 +176,18 @@ class AirwayBill extends Controller
             $SavedAddress->phone = $consignee_address['cons_phone'] ?? null;
             $SavedAddress->fax = $consignee_address['cons_fax'] ?? null;
             $SavedAddress->telex = $consignee_address['cons_telex'] ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return "consignee address saved successfull";
     }
     private function saveAlsoNotify($awb_no, $awb_code, $also_notify_address, $is_also_notify_address_save)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
             'also_name_2' => 'nullable|string|max:70',
@@ -196,6 +221,7 @@ class AirwayBill extends Controller
         $WayBillAddress->also_phone = $also_notify_address['also_phone'] ?? null;
         $WayBillAddress->also_fax = $also_notify_address['also_fax'] ?? null;
         $WayBillAddress->also_telex = $also_notify_address['also_telex'] ?? null;
+        $WayBillAddress->agent_id = $agent->id ?? null;
         $WayBillAddress->save();
 
         if ($is_also_notify_address_save) {
@@ -216,12 +242,18 @@ class AirwayBill extends Controller
             $SavedAddress->phone = $also_notify_address['also_phone'] ?? null;
             $SavedAddress->fax = $also_notify_address['also_fax'] ?? null;
             $SavedAddress->telex = $also_notify_address['also_telex'] ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return "Also notify address saved successfull";
     }
     private function firstBox($first_box, $id = null)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+
         if ($first_box['consolidated_mawb'] == true) {
             $first_box['consolidated_mawb'] = "true";
         } else {
@@ -252,6 +284,7 @@ class AirwayBill extends Controller
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
             $AirwayBills->awb = $first_box['awb'];
+            $AirwayBills->agent_id = $agent->id ?? null;
             // dd($first_box);
             $AirwayBills->save();
             return response()->json([
@@ -265,6 +298,7 @@ class AirwayBill extends Controller
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
             $AirwayBills->awb = $first_box['awb'];
+            $AirwayBills->agent_id = $agent->id ?? null;
             // dd($first_box);
             // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] == 1) ? true : false;
             // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
@@ -286,6 +320,11 @@ class AirwayBill extends Controller
     }
     private function routingInformation($awb_no, $awb_code, $routing_information)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($routing_information, [
             'departure_airport' => 'required|string',
             'destination_airport' => 'required|string',
@@ -327,12 +366,18 @@ class AirwayBill extends Controller
         $AirwayBills->by_3 = $routing_information['by_3'];
         $AirwayBills->flight_3 = $routing_information['flight_3'];
         $AirwayBills->date_3 = $routing_information['date_3'];
+        $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Routing Information saved successfull";
     }
 
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+
         $awb_id = $awb_code . $awb_no;
 
         foreach ($entries as $entry) {
@@ -356,7 +401,7 @@ class AirwayBill extends Controller
             $ConsignmentData->rate = $entry['rate'];
             $ConsignmentData->pieces_info = json_encode($entry['itemss']);
             $ConsignmentData->uld_info = json_encode($entry['uld_infos']);
-
+            $ConsignmentData->agent_id = $agent->id ?? null;
             // Save the updated or new record
             $ConsignmentData->save();
         }
@@ -365,6 +410,12 @@ class AirwayBill extends Controller
     }
     private function customOriginAndOsiInfo($awb_no, $awb_code, $custom_origin)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+        
+
         $validator = Validator::make($custom_origin, [
             'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:2',
             'accounting_information' => 'nullable|string|max:70',
@@ -393,11 +444,17 @@ class AirwayBill extends Controller
         $AirwayBills->supplementary_shipment_info_line_2 = $custom_origin['supplementary_shipment_info_line_2'];
         $AirwayBills->letter_credit = $custom_origin['letter_credit'];
         $AirwayBills->extra_print = $custom_origin['extra_print'];
+        $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Custom Origin Code and other tab information save successfully";
     }
     private function otherCharges($awb_no, $awb_code, $charges)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first(); 
+
         $awb_id = $awb_code . $awb_no;
 
         for ($i = 0; $i < sizeof($charges); $i++) {
@@ -429,6 +486,7 @@ class AirwayBill extends Controller
             $otherChargesData->payment_type = $charges[$i]['payment_type'] ?? null;
             $otherChargesData->due = $charges[$i]['due'] ?? null;
             $otherChargesData->amount = $charges[$i]['amount'] ?? null;
+            $otherChargesData->agent_id = $agent->id ?? null;
             $otherChargesData->save();
         }
         return "Other Charges Data saved successfully";
@@ -436,6 +494,11 @@ class AirwayBill extends Controller
 
     private function paymentInformation($awb_no, $awb_code, $payment_info)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first(); 
+
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
             // 'total_charges' => 'nullable|numeric|min:0.000|max:999999999999',
@@ -495,19 +558,25 @@ class AirwayBill extends Controller
         $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? 'NCV';
         $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? 'XXX';
         $AirwayBills->weight_charge = $payment_info['weight_charge'];
-        $AirwayBills->taxes = $payment_info['taxes'];
-        $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'];
-        $AirwayBills->total_charges_collect = $payment_info['total_charges_collect'];
-        $AirwayBills->other_charges_due_agent_prepaid = $payment_info['other_charges_due_agent_prepaid'];
-        $AirwayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'];
-        $AirwayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'];
-        $AirwayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'];
+        $AirwayBills->taxes = $payment_info['taxes'] ?? 0;
+        $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'] ?? 0;
+        $AirwayBills->total_charges_collect = $payment_info['total_charges_collect'] ?? 0;
+        $AirwayBills->other_charges_due_agent_prepaid = $payment_info['other_charges_due_agent_prepaid'] ?? 0;
+        $AirwayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'] ?? 0;
+        $AirwayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'] ?? 0;
+        $AirwayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'] ?? 0;
+        $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Payment Information save successfully";
     }
 
     private function otherCustomInformation($awb_no, $awb_code, $oci_entries)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first(); 
+
         $awb_id = $awb_code . $awb_no;
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make(
@@ -540,6 +609,7 @@ class AirwayBill extends Controller
             $OtherCustomInfo->country_code = $oci_entry['country_code'];
             $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
             $OtherCustomInfo->supplementary_info = $oci_entry['supplementary_info'];
+            $OtherCustomInfo->agent_id = $agent->id ?? null;
             if (!$OtherCustomInfo->save()) {
                 Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $awb_id, 'oci_entry' => $oci_entry]);
             }
@@ -548,6 +618,11 @@ class AirwayBill extends Controller
     }
     private function totalAmountValume($awb_no, $awb_code, $totals)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first(); 
+
         $validator = Validator::make($totals, [
             'total_volume' => 'required|numeric|min:0|max:999999999',
             //'required|regex:/^[0-9]+$/|max:9',
@@ -565,6 +640,7 @@ class AirwayBill extends Controller
         $AirwayBills->total_volume = $totals['total_volume'];
         $AirwayBills->total_amount = $totals['total_amount'];
         $AirwayBills->dimention_unit = $totals['dimention_unit'];
+        $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Toatl Amount and Total Volume saved successfull";
     }
@@ -591,6 +667,11 @@ class AirwayBill extends Controller
     // }
     public function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first(); 
+
         $awb_id = $awb_code . $awb_no;
         if (empty($tableCodes)) {
             return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
@@ -797,6 +878,11 @@ class AirwayBill extends Controller
 
     public function getAllawb()
     {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $agentId = $user->branch_name;
         $airwayBill = AirwayBills::with([
             'paymentInfo',
             'wayBillAddress',
@@ -804,7 +890,7 @@ class AirwayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->orderBy('created_at', 'desc')
+        ])->where('agent_id', $agentId)->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
         if ($airwayBill->isEmpty()) {
@@ -840,8 +926,13 @@ class AirwayBill extends Controller
 
     public function getShippers(Request $request)
     {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $agentId = $user->branch_name;
         // $shippers = SavedAddress::all();
-        $shippers = SavedAddress::where('id', 123456)->get();
+        $shippers = SavedAddress::where('agent_id', $agentId)->get();
         // dd($shippers);
         return response()->json($shippers);
     }

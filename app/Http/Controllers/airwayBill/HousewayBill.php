@@ -20,8 +20,15 @@ class HousewayBill extends Controller
 {
     public function get_agent()
     {
-        $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
+        $user = auth()->guard('user-api')->user();
+        $user_id = $user->id;
+        $company_id = $user->company_id; // Company ID from user table
+        $branch_name = $user->branch_name;
+        // $agent = Agent::where('id', $branch_name)->first();
+        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         return json_encode($data);
+        // $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
+        // return json_encode($data);
     }
     public function getCountry(){
         $countries = config('country');
@@ -43,6 +50,11 @@ class HousewayBill extends Controller
     }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name; 
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
@@ -78,6 +90,7 @@ class HousewayBill extends Controller
             $WayBillAddress->ship_phone = $shipper_address['ship_phone'] ?? null;
             $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
             $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
+            $WayBillAddress->agent_id = $agent->id ?? null;
             $WayBillAddress->save();
             return response()->json([
                 'message' => 'Shipper address updated successfully',
@@ -101,6 +114,7 @@ class HousewayBill extends Controller
         $WayBillAddress->ship_phone = $shipper_address['ship_phone'] ?? null;
         $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
         $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
+        $WayBillAddress->agent_id = $agent->id ?? null;
         $WayBillAddress->save();
 
         //insert address if saved button checked
@@ -123,6 +137,7 @@ class HousewayBill extends Controller
                 $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
                 $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
                 $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
+                $WayBillAddress->agent_id = $agent->id ?? null;
                 $SavedAddress->save();
                 return response()->json([
                     'message' => 'Shippers Information updated successfully',
@@ -147,12 +162,18 @@ class HousewayBill extends Controller
             $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
+            $WayBillAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return 'shipper address saved successfull';
     }
     private function saveConsigneeAddress($hawb_no, $consignee_address, $is_consignee_address_save)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
@@ -189,6 +210,7 @@ class HousewayBill extends Controller
         $WayBillAddress->cons_phone = $consignee_address['cons_phone'] ?? null;
         $WayBillAddress->cons_fax = $consignee_address['cons_fax'] ?? null;
         $WayBillAddress->cons_telex = $consignee_address['cons_telex'] ?? null;
+        $WayBillAddress->agent_id = $agent->id ?? null;
         $WayBillAddress->save();
 
         //insert address if saved button checked
@@ -212,12 +234,18 @@ class HousewayBill extends Controller
             $SavedAddress->phone = $consignee_address['cons_phone'] ?? null;
             $SavedAddress->fax = $consignee_address['cons_fax'] ?? null;
             $SavedAddress->telex = $consignee_address['cons_telex'] ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return "consignee address saved successfull";
     }
     private function saveAlsoNotify($hawb_no, $also_notify_address, $is_also_notify_address_save)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
             'also_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
@@ -250,6 +278,7 @@ class HousewayBill extends Controller
         $WayBillAddress->also_phone = $also_notify_address['also_phone'] ?? null;
         $WayBillAddress->also_fax = $also_notify_address['also_fax'] ?? null;
         $WayBillAddress->also_telex = $also_notify_address['also_telex'] ?? null;
+        $WayBillAddress->agent_id = $agent->id ?? null;
         $WayBillAddress->save();
 
         if ($is_also_notify_address_save) {
@@ -270,12 +299,18 @@ class HousewayBill extends Controller
             $SavedAddress->phone = $also_notify_address['also_phone'] ?? null;
             $SavedAddress->fax = $also_notify_address['also_fax'] ?? null;
             $SavedAddress->telex = $also_notify_address['also_telex'] ?? null;
+            $WayBillAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return "Also notify address saved successfull";
     }
     private function firstBox($first_box, $id = null)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($first_box, [
             'hawb_no' => 'required|regex:/^[a-zA-Z0-9]+$/|max:35',
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
@@ -290,6 +325,7 @@ class HousewayBill extends Controller
             // Update the existing record
             $HousewayBill->awb_no = $first_box['awb_no'];
             $HousewayBill->awb_code = $first_box['awb_code'];
+            $HousewayBill->agent_id = $agent->id ?? null;
             $HousewayBill->save();
     
             return response()->json([
@@ -302,6 +338,7 @@ class HousewayBill extends Controller
             $HousewayBill->id = $first_box['hawb_no'];
             $HousewayBill->awb_no = $first_box['awb_no'];
             $HousewayBill->awb_code = $first_box['awb_code'];
+            $HousewayBill->agent_id = $agent->id ?? null;
             $HousewayBill->save();
     
             return response()->json([
@@ -313,6 +350,11 @@ class HousewayBill extends Controller
 
     private function routingInformation($hawb_no, $routing_information)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($routing_information, [
             'departure_airport' => 'required|string',
             'destination_airport' => 'required|string',
@@ -357,6 +399,7 @@ class HousewayBill extends Controller
             $HousewayBills->date_3 = $routing_information['date_3'];
             $HousewayBills->master_origin = $routing_information['master_origin'];
             $HousewayBills->master_destination = $routing_information['master_destination'];
+            $HousewayBills->agent_id = $agent->id ?? null;
             $HousewayBills->save();
             return response()->json([
                 'message' => 'Routing Information updated successfully',
@@ -383,12 +426,18 @@ class HousewayBill extends Controller
        $HousewayBills->date_3 = $routing_information['date_3'];
        $HousewayBills->master_origin = $routing_information['master_origin'];
        $HousewayBills->master_destination = $routing_information['master_destination'];
+       $HousewayBills->agent_id = $agent->id ?? null;
        //    dd($HousewayBills);die;
        $HousewayBills->save();
         return "Routing Information saved successfull";
     }
     private function consignmentInformation($hawb_no, $entries)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         for ($i = 0; $i < sizeof($entries); $i++) {
             $pieces = $entries[$i]['pieces'];
             $ConsignmentData = ConsignmentData::where([['awb_id', $hawb_no], ['pieces', $pieces]])->first();
@@ -410,6 +459,7 @@ class HousewayBill extends Controller
             $ConsignmentData->rate = $entries[$i]['rate'];
             $ConsignmentData->pieces_info = json_encode($entries[$i]['itemss']);
             $ConsignmentData->uld_info = json_encode($entries[$i]['uld_infos']);
+            $ConsignmentData->agent_id = $agent->id ?? null;
             // $ConsignmentData->dimention_unit = $entries[$i]['dimention_unit'];
             $ConsignmentData->save();
             return "Consignment Data saved successfull";
@@ -417,6 +467,11 @@ class HousewayBill extends Controller
     }
     private function customOriginAndOsiInfo($hawb_no, $custom_origin)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($custom_origin, [
             'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'accounting_information' => 'nullable|string|max:70',
@@ -445,6 +500,7 @@ class HousewayBill extends Controller
         $HousewayBills->supplementary_shipment_info_line_2 = $custom_origin['supplementary_shipment_info_line_2'];
         $HousewayBills->letter_credit = $custom_origin['letter_credit'];
         $HousewayBills->extra_print = $custom_origin['extra_print'];
+        $HousewayBills->agent_id = $agent->id ?? null;
         $HousewayBills->save();
         return "Custom Origin Code and other tab information save successfully";
     }
@@ -481,6 +537,11 @@ class HousewayBill extends Controller
     // }
     private function otherCharges($hawb_no, $charges)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
 
         for ($i = 0; $i < sizeof($charges); $i++) {
             $finalOtherChargeCode = isset($charges[$i]['other_code']) && !empty($charges[$i]['other_code'])
@@ -511,12 +572,18 @@ class HousewayBill extends Controller
             $otherChargesData->payment_type = $charges[$i]['payment_type'] ?? null;
             $otherChargesData->due = $charges[$i]['due'] ?? null;
             $otherChargesData->amount = $charges[$i]['amount'] ?? null;
+            $otherChargesData->agent_id = $agent->id ?? null;
             $otherChargesData->save();
         }
         return "Other Charges Data saved successfully";
     }
     private function paymentInformation($hawb_no, $payment_info)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         // dd($payment_info['declear_value_carriage']);die;
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
@@ -581,12 +648,17 @@ class HousewayBill extends Controller
         $HousewayBills->other_charges_due_agent_collect = $payment_info['other_charges_due_agent_collect'] ?? null;
         $HousewayBills->other_charges_due_carrier_prepaid = $payment_info['other_charges_due_carrier_prepaid'] ?? null;
         $HousewayBills->other_charges_due_carrier_collect = $payment_info['other_charges_due_carrier_collect'] ?? null;
-        
+        $HousewayBills->agent_id = $agent->id ?? null;
         $HousewayBills->save();
         return "Payment Information save successfully";
     }
     private function otherCustomInformation($hawb_no, $oci_entries)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make($oci_entry, [
                 'country_code' => 'required|string|max:2',
@@ -615,6 +687,7 @@ class HousewayBill extends Controller
             $OtherCustomInfo->country_code = $oci_entry['country_code'];
             $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
             $OtherCustomInfo->supplementary_info = $oci_entry['supplementary_info'];
+            $OtherCustomInfo->agent_id = $agent->id ?? null;
             if (!$OtherCustomInfo->save()) {
                 Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $hawb_no, 'oci_entry' => $oci_entry]);
             }
@@ -623,6 +696,11 @@ class HousewayBill extends Controller
     }
     private function totalAmountValume($hawb_no, $totals)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         $validator = Validator::make($totals, [
             'total_volume' => 'required|numeric|min:0|max:999999999',
             //'required|regex:/^[0-9]+$/|max:9',
@@ -643,6 +721,7 @@ class HousewayBill extends Controller
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
             $HousewayBills->dimention_unit = $totals['dimention_unit'] ?? null;
+            $HousewayBills->agent_id = $agent->id ?? null;
             $HousewayBills->save();
             return response()->json([
                 'message' => 'Toatl Amount and Total Volume updated successfully',
@@ -656,6 +735,7 @@ class HousewayBill extends Controller
         $HousewayBills->master_pcs = $totals['master_pcs'];
         $HousewayBills->master_weight = $totals['master_weight'];
         $HousewayBills->dimention_unit = $totals['dimention_unit'] ?? null;
+        $HousewayBills->agent_id = $agent->id ?? null;
         $HousewayBills->save();
         }
         return "Toatl Amount and Total Volume saved successfull";
@@ -682,6 +762,11 @@ class HousewayBill extends Controller
     // }
     public function saveSpecialHandlingCode($hawb_no, $tableCodes)
     {
+        $user = auth()->guard('user-api')->user();
+        $company_id = $user->company_id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+
         if (empty($tableCodes)) {
             return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
         }
@@ -908,6 +993,12 @@ class HousewayBill extends Controller
     }
 
     public function getAllHawb(){
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $agentId = $user->branch_name;
+
         $housewayBill = HousewayBills::with([
             'paymentInfo',
             'wayBillAddress',
@@ -915,7 +1006,7 @@ class HousewayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->orderBy('created_at', 'desc')
+        ])->where('agent_id', $agentId)->orderBy('created_at', 'desc')
         ->limit(10)
         ->get();
         if ($housewayBill->isEmpty()) {
@@ -926,8 +1017,14 @@ class HousewayBill extends Controller
     
     public function getShippers(Request $request)
     {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $agentId = $user->branch_name;
         // $shippers = SavedAddress::all();
-        $shippers = SavedAddress::where('user_id', 123456)->get();
+        $shippers = SavedAddress::where('agent_id', $agentId)->get();
+        // $shippers = SavedAddress::where('user_id', 123456)->get();
         // dd($shippers);
         return response()->json($shippers);
     }

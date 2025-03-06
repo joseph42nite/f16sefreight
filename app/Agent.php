@@ -11,7 +11,7 @@ class Agent extends Model
 
     public function airWayBill()
     {
-        return $this->hasOne(AirWayBill::class, 'agent_id', 'id');
+        return $this->hasOne(AirwayBills::class, 'agent_id', 'id');
     }
     public function companyName(){
         return $this->hasOne(Company::class, 'id', 'company_id');

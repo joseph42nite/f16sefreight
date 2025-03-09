@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\airwayBill;
 
+use App\Agent;
 use App\AirwayBills;
 use App\ConsignmentData;
 use App\HousewayBills;
@@ -28,12 +29,31 @@ class ConsolidationController extends Controller
 
     public function searchHouseWayBills(Request $request)
     {
+        
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+        $agentId = $agent->id;
+
         $request->validate([
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
         ]);
+
+        // $existsInAirwayBills = AirwayBills::where('awb_no', $request->awb_no)
+        // ->where('awb_code', $request->awb_code)
+        // ->exists();
+
+        // if (!$existsInAirwayBills) {
+        //     return response()->json(['message' => 'No records found in AirwayBills'], 404);
+        // }
+
         $wayBills = HousewayBills::where('house_way_bills.awb_no', $request->awb_no)
             ->where('house_way_bills.awb_code', $request->awb_code)
+            ->where('house_way_bills.agent_id', $agentId)
             ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
             ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
             // ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
@@ -184,6 +204,4 @@ class ConsolidationController extends Controller
     
         return response()->json($data);
     }
-    
-
 }

@@ -13,7 +13,7 @@ use App\Http\Controllers\airwayBill\HousewayBill;
 
 // Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
 Route::get('air-waybill', [ConversionController::class, 'WayBillConversion']);
-Route::get('test-route1', [IMPConversionController::class, 'HouseWayBillConversion']);
+Route::get('test-route1', [IMPConversionController::class, 'ConsolidationConversion']);
 Route::get('message-response', [ConversionController::class, 'ResponseMessage']);
 Route::get('generic-message', [ConversionController::class, 'GenericRequestMessage']);
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);

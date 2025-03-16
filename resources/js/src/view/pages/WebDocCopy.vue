@@ -3027,7 +3027,7 @@ export default {
             this.isOpen = false;
         },
         converXml(awb_no){
-            ApiService.get(`/waybill/${awb_no}`)
+            ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
                     console.log(data);
                 });
@@ -3081,12 +3081,12 @@ export default {
         },
         // location
         getLocation() {
-            ApiService.get(`/get-location`).then(({ data }) => {
+            ApiService.get(`/user/get-location`).then(({ data }) => {
                 this.location=data;
             });
         },
         fetchShippers() {
-            ApiService.get(`/get-shippers`).then(response => {
+            ApiService.get(`/user/get-shippers`).then(response => {
                 this.shippers = response.data;
                 this.filteredShippers = this.shippers.filter(shipper => shipper.address_type === 'shipper_address');
                 // this.filteredShippers = this.shippers;
@@ -3094,7 +3094,7 @@ export default {
             });
         },
         fetchConsignee() {
-            ApiService.get(`/get-shippers`).then(response => {
+            ApiService.get(`/user/get-shippers`).then(response => {
                 this.consignees = response.data;
                 this.filteredConsignees = this.consignees.filter(consignee => consignee.address_type === 'consignee_address');
                 // this.filteredConsignees = this.consignees;
@@ -3102,7 +3102,7 @@ export default {
             });
         },
         fetchAlsoNotify() {
-            ApiService.get(`/get-shippers`).then(response => {
+            ApiService.get(`/user/get-shippers`).then(response => {
                 this.alsoNotify = response.data;
                 this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
                 // this.filteredConsignees = this.consignees;
@@ -3111,7 +3111,7 @@ export default {
         },
         fillShipperDetails() {
             if (this.selectedShipper) {
-                ApiService.get(`/get-shipper-address?id=${this.selectedShipper}`)
+                ApiService.get(`/user/get-shipper-address?id=${this.selectedShipper}`)
                 .then( response => {
                     this.form.shipper_address = response.data; 
                     // console.log('Shipper', response.data);
@@ -3131,7 +3131,7 @@ export default {
         },
         fillConsigneeDetails() {
             if (this.selectedConsignee) {
-                ApiService.get(`/get-consignee-address?id=${this.selectedConsignee}`)
+                ApiService.get(`/user/get-consignee-address?id=${this.selectedConsignee}`)
                 .then( response => {
                     this.form.consignee_address = response.data; 
                     console.log('Consignee', response.data);
@@ -3151,7 +3151,7 @@ export default {
         },
         fillAlsoNotifyDetails() {
             if (this.selectAlsoNotify) {
-                ApiService.get(`/get-alsonotify-address?id=${this.selectAlsoNotify}`)
+                ApiService.get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`)
                 .then( response => {
                     this.form.also_notify_address = response.data; 
                     console.log('Also Notify address', response.data);
@@ -3180,7 +3180,7 @@ export default {
             this.main_error_msg='';
             // this.is_generate_pdf=0;
             if (this.mode === 'add') {
-                this.form.post('/create-webdoc')
+                this.form.post('/user/create-webdoc')
                 .then(response => {
                     console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
@@ -3213,7 +3213,7 @@ export default {
                     console.error('Update Failed: existingData is missing or invalid');
                     return;
                 }
-                this.form.put(`/update-airway-bill/${this.existingData.id}`)
+                this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
@@ -3266,7 +3266,7 @@ export default {
         // },
 
         allAirwayBill() {
-            ApiService.get('/all-airway-bill')
+            ApiService.get('/user/all-airway-bill')
                 .then(response => {
                     this.data_items = response.data;
                 })
@@ -3275,7 +3275,7 @@ export default {
                 });
         },
         getAirWayBill(id) { 
-            ApiService.get(`/airway-bill/${id}`)
+            ApiService.get(`/user/airway-bill/${id}`)
                 .then(response => {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
@@ -3299,7 +3299,7 @@ export default {
                 });
         },
         getAirWayBillForRealod(id){
-            ApiService.get(`/airway-bill/${id}`).then((response) => {
+            ApiService.get(`/user/airway-bill/${id}`).then((response) => {
                 const fetchedId = response.data?.id?.toString();
                 const inputId = id.toString();
                 if (fetchedId === inputId) {
@@ -3413,7 +3413,7 @@ export default {
             }
         },
         getAgent(company_id,branch_id){
-            ApiService.get(`/agent-info`)
+            ApiService.get(`/user/agent-info`)
                 .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) {
                     this.agent_information = data[0];
@@ -3430,7 +3430,7 @@ export default {
                 });
         },
         getCountry(){
-            ApiService.get('/get-country').then(({ data }) => {
+            ApiService.get('/user/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({
                     value: key,
                     text: data[key]
@@ -3440,7 +3440,7 @@ export default {
             });
         },
         getOtherChargesCode(){
-            ApiService.get('/other-charges').then(({ data }) => {
+            ApiService.get('/user/other-charges').then(({ data }) => {
                 this.other_charges_code = Object.keys(data).map(key => ({
                     value: key,
                     text: data[key]
@@ -3450,7 +3450,7 @@ export default {
             });
         },
         getOCIData(){
-            ApiService.get('/get-oci-data').then(({ data }) => {
+            ApiService.get('/user/get-oci-data').then(({ data }) => {
             if (data && data.oci_custom_info_identifier) {
                 this.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(([key, value]) => ({
                     value: key,
@@ -3627,7 +3627,7 @@ export default {
             if (!(this.consignment_list instanceof Form)) {
                 this.consignment_list = new Form(this.consignment_list);
             }
-            this.consignment_list.post(`/get-consignment-error`)
+            this.consignment_list.post(`/user/get-consignment-error`)
             .then(response => {
                 console.log("Response from server:", response);
                 const updatedEntry = { 
@@ -4062,7 +4062,7 @@ export default {
         onAWBInput: debounce(function () {
             const { awb_code, awb_no } = this.form.first_box;
             if (awb_code && awb_code.length === 3) {
-                ApiService.get(`/get-awbcode-prefix/${awb_code}`)
+                ApiService.get(`/user/get-awbcode-prefix/${awb_code}`)
                     .then((response) => {
                         if (response.data) {
                             const { name, code} = response.data;
@@ -4108,7 +4108,7 @@ export default {
                 console.error('AWB ID is missing');
                 return;
             }
-               ApiService.get(`/airway-bill/${awbId}`)
+               ApiService.get(`/user/airway-bill/${awbId}`)
                 .then(response => {
                     this.existingData = response.data;
                     if (this.existingData) {
@@ -4243,6 +4243,7 @@ export default {
                 this.showAWBSection = false;
             }
         }
+        console.log("Current User:", this.current_user);
         if(this.current_user)
         this.getAgent(this.current_user.company_name,this.current_user.branch_name);
     },

@@ -739,7 +739,7 @@
                                             </b-col>
                                         </b-row>
                                     </b-tab>
-                                    <b-tab title="Search Flights">
+                                    <!-- <b-tab title="Search Flights">
                                         <b-row>
                                             <b-col cols="12">
                                                 <div class="container d-flex align-items-center" style="background-color:#F2F9FF;color:#355594 !important;">
@@ -780,7 +780,7 @@
                                                 </div>
                                             </b-col>
                                         </b-row>
-                                    </b-tab>
+                                    </b-tab> -->
                                 </b-tabs>
                                 <!-- ROUTING INFORMATION TAB SECTION END -->
                                 <hr class="hr" />

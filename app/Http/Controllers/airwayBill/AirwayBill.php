@@ -158,9 +158,10 @@ class AirwayBill extends Controller
         //insert address if saved button checked
         if ($is_consignee_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $awb_id], ['address_type', 'consignee_address']])->first();
-            if (!isset($SavedAddress))
+            if (!isset($SavedAddress)){
                 $SavedAddress = new SavedAddress();
-            $SavedAddress->awb_id = $awb_id;
+            }
+                $SavedAddress->awb_id = $awb_id;
             // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];

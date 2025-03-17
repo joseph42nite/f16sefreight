@@ -946,7 +946,10 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" width="70px" height="18" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                                                {{ $houseWayBill->by.''.$houseWayBill->flight.' / '.$houseWayBill->date ?? ''}}
+                                                                                                                {{ $houseWayBill->by_2.''.$houseWayBill->flight_2.' / '.$houseWayBill->date_2 ?? ''}}
+                                                                                                            </td>
+                                                                                                             <td align="center" valign="bottom" width="70px" height="18" style="font-size: 8px;line-height: 12px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
+                                                                                                                {{ $houseWayBill->by_3.''.$houseWayBill->flight_3.' / '.$houseWayBill->date_3 ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>           

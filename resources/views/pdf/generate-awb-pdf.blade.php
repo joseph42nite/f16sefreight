@@ -948,7 +948,10 @@
                                                                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                                                                         <tr>
                                                                                                             <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                {{ $airWayBill->by.''.$airWayBill->flight.' / '.$airWayBill->date ?? ''}}
+                                                                                                                {{ $airWayBill->by_2.''.$airWayBill->flight_2.' / '.$airWayBill->date_2 ?? ''}}
+                                                                                                            </td>
+                                                                                                            <td align="center" valign="bottom" width="70px" height="20px" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                                {{ $airWayBill->by_3.''.$airWayBill->flight_3.' / '.$airWayBill->date_3 ?? ''}}
                                                                                                             </td>
                                                                                                         </tr>
                                                                                                     </table>           

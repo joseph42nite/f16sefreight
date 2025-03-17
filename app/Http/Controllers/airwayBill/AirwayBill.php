@@ -1086,11 +1086,6 @@ class AirwayBill extends Controller
         $xml_file_name = 'message_' . time() . '.xml';
         $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
 
-        // Ensure Directory Exists
-        if (!file_exists(public_path('xml-conversion-files'))) {
-            mkdir(public_path('xml-conversion-files'), 0777, true);
-        }
-
         // Save XML File
         file_put_contents($xml_file_path, $xml_code);
 
@@ -1167,11 +1162,6 @@ class AirwayBill extends Controller
         // Generate File Name & Path
         $xml_file_name = 'message_' . time() . '.xml';
         $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
-    
-        // Ensure Directory Exists
-        if (!file_exists(public_path('xml-conversion-files'))) {
-            mkdir(public_path('xml-conversion-files'), 0777, true);
-        }
     
         // Save XML File
         file_put_contents($xml_file_path, $xml_code);

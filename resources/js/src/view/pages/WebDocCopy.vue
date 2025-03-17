@@ -2833,7 +2833,7 @@ export default {
                 { value: 'RDS', text: 'RDS - Biological Substance' },
                 { value: 'REQ', text: 'REQ - Dangerous Goods in Excepted Quantities' },
                 { value: 'REX', text: 'REX - To be reserved for normally forbidden Explosives, Divisions 1.1, 1.2, 1.3, 1.4F, 1.5 and 1.6' },
-                { value: 'RFG', text: '>RFG - Flammable Gas' },
+                { value: 'RFG', text: 'RFG - Flammable Gas' },
                 { value: 'RFL', text: 'RFL - Flammable Liquid' },
                 { value: 'RFS', text: 'RFS - Flammable Solid' },
                 { value: 'RFW', text: 'RFW - Dangerous When Wet' },

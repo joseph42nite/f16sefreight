@@ -122,7 +122,7 @@ class HousewayBill extends Controller
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
             if(!empty($hawb_no)){
                  $SavedAddress->awb_id = $hawb_no;
-                $SavedAddress->user_id = '123456';
+                $SavedAddress->user_id = $agent->id ?? null;
                 $SavedAddress->address_type = 'shipper_address';
                 $SavedAddress->name = $shipper_address['ship_name'];
                 $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
@@ -147,7 +147,7 @@ class HousewayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
-            $SavedAddress->user_id = '123456';
+            $SavedAddress->user_id = $agent->id ?? null;
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
             $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
@@ -219,7 +219,7 @@ class HousewayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
-            $SavedAddress->user_id = '123456';
+            $SavedAddress->user_id = $agent->id ?? null;
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
             $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
@@ -286,7 +286,7 @@ class HousewayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
-            $SavedAddress->user_id = '123456';
+            $SavedAddress->user_id = $agent->id ?? null;
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
             $SavedAddress->address = $also_notify_address['also_address'];

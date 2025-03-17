@@ -87,7 +87,7 @@ class AirwayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $awb_id;
-            $SavedAddress->id = '123456';
+            // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
             $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
@@ -161,7 +161,7 @@ class AirwayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $awb_id;
-            $SavedAddress->id = '123456';
+            // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
             $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
@@ -229,7 +229,7 @@ class AirwayBill extends Controller
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $awb_id;
-            $SavedAddress->id = '123456';
+            // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
             $SavedAddress->address = $also_notify_address['also_address'];

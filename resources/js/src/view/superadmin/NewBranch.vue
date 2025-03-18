@@ -273,6 +273,8 @@ export default {
                 );
             });
         }
+        // item.iata_code.toLowerCase().includes(query) ||
+        // item.destination.toLowerCase().includes(query)
     },
 };
 </script>

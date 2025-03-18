@@ -4374,8 +4374,7 @@ export default {
             if (!query) return this.location;
 
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         filteredLocations_to2() {
@@ -4383,8 +4382,7 @@ export default {
             if (!query) return this.location;
 
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         filteredLocations_to3() {
@@ -4392,8 +4390,7 @@ export default {
             if (!query) return this.location;
 
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         filteredLocations_from() {
@@ -4401,8 +4398,7 @@ export default {
             if (!query) return this.location;
 
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         filteredLocations_destination() {
@@ -4410,8 +4406,7 @@ export default {
             if (!query) return this.location;
 
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         filteredLocations_departure() {
@@ -4419,16 +4414,14 @@ export default {
             if (!query) return this.location;
 
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         filteredLocations_issuing() {
             const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
             if (!query) return this.location;
             return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query) ||
-                item.destination.toLowerCase().includes(query)
+                item.iata_code.toLowerCase().includes(query)
             );
         },
         remainingPieces() {

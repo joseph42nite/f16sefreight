@@ -29,7 +29,6 @@ class ConsolidationController extends Controller
 
     public function searchHouseWayBills(Request $request)
     {
-        
         $user = auth()->guard('user-api')->user();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
@@ -37,12 +36,10 @@ class ConsolidationController extends Controller
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
         $agentId = $agent->id;
-
         $request->validate([
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
         ]);
-
         // $existsInAirwayBills = AirwayBills::where('awb_no', $request->awb_no)
         // ->where('awb_code', $request->awb_code)
         // ->exists();

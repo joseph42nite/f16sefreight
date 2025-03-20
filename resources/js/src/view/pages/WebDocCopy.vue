@@ -516,8 +516,8 @@
                                                             <span style="color: red;">*</span>
                                                         </div>
                                                     </template>
-                                                    <div class="custom-dropdown  align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
-                                                        <input style="width:230px" type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
+                                                    <div style="width: 60%;" class="custom-dropdown  align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
+                                                        <input style="width:100%" type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
                                                             autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
                                                         <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
                                                             <div v-for="(item, index) in filteredLocations_departure" :key="index" @click.stop="selectOption_departure(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
@@ -534,8 +534,8 @@
                                                             <span style="color: red;">*</span>
                                                         </div>
                                                     </template>
-                                                        <div class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
-                                                            <input style="width:230px" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
+                                                        <div style="width: 60%;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
+                                                            <input style="width:100%" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
                                                             <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
                                                                 <div v-for="(item, index) in filteredLocations_destination" 
@@ -551,8 +551,8 @@
                                             </b-col>
                                             <b-col cols="7">
                                                 <!-- <div class="d-flex flex-column align-items-center"> -->
-                                                    <div class="container">
-                                                        <table class="">
+                                                    <!-- <div class="container"> -->
+                                                        <table class="table" style="max-width:100%;width:100%;">
                                                             <thead>
                                                                 <tr class="">
                                                                     <th class=""style="color:#355594;">&nbsp;</th>
@@ -566,10 +566,10 @@
                                                             </thead>
                                                             <tbody>
                                                                 <tr>
-                                                                    <td>Routing:<span style="color: red;">*</span></td>
-                                                                    <td class="editable-cell">
-                                                                        <div class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown_from">
-                                                                            <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="width:170px !important;" class="form-control" 
+                                                                    <td class="editable-cell" style="width: 7%;padding: 2px;">Routing:<span style="color: red;">*</span></td>
+                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
+                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                                                                            <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
                                                                             <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
                                                                                 <div v-for="(item, index) in filteredLocations_from" 
@@ -581,9 +581,9 @@
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <div class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown_to">
-                                                                            <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="width:170px !important;" class="form-control" 
+                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
+                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                                                                            <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
                                                                             <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
                                                                                 <div v-for="(item, index) in filteredLocations_to" 
@@ -595,53 +595,53 @@
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="editable-cell">
+                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
                                                                         <input type="text" class="form-control"
-                                                                            style="width: 80px;" v-model="form.routing_information.by"
+                                                                            style="" v-model="form.routing_information.by"
                                                                             :class="{ 'is-invalid': form.errors.has('by') }" />
                                                                     </td>
-                                                                    <td class="editable-cell">
+                                                                    <td class="editable-cell" style="width: 12%;padding: 2px;">
                                                                         <input type="text" class="form-control"
-                                                                            style=" width: 90px;" v-model="form.routing_information.flight"
+                                                                            style=" " v-model="form.routing_information.flight"
                                                                             :class="{ 'is-invalid': form.errors.has('flight') }" />
                                                                     </td>
-                                                                    <td class="editable-cell">
+                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
                                                                         <input type="text" class="form-control"
-                                                                            style="width: 90px;" v-model="form.routing_information.date"
+                                                                            style="" v-model="form.routing_information.date"
                                                                             :class="{ 'is-invalid': form.errors.has('date') }" />
                                                                     </td>
-                                                                    <td class="editable-cell w-10" style="width: 60px">
+                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">
                                                                         <date-picker valueType="format"
-                                                                            style="width: 30px !important;"
+                                                                            style="width: 100%;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
                                                                     </td>
                                                                 </tr>
                                                                 <tr v-if="form.errors.has('from') || form.errors.has('to') || form.errors.has('by') || form.errors.has('flight') || form.errors.has('date')">
-                                                                    <td>&nbsp;</td>
-                                                                    <td valign="top" class="text-danger" style="width:170px;">
+                                                                    <td class="editable-cell" style="width: 7%;padding: 2px;">&nbsp;</td>
+                                                                    <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="from" :class="{ 'd-block': form.errors.has('from') }"></has-error>
                                                                     </td>
-                                                                    <td valign="top" class="text-danger" style="width:170px;">
+                                                                    <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="to" :class="{ 'd-block': form.errors.has('to') }"></has-error>
                                                                     </td>
-                                                                    <td valign="top" class="text-danger" style="width:80px;">
+                                                                    <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="by" :class="{ 'd-block': form.errors.has('by') }"></has-error>
                                                                     </td>
-                                                                    <td valign="top" class="text-danger" style="width:90px;">
+                                                                    <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="flight" :class="{ 'd-block': form.errors.has('flight') }"></has-error>
                                                                     </td>
-                                                                    <td valign="top" class="text-danger" style="width:90px;">
+                                                                    <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="date" :class="{ 'd-block': form.errors.has('date') }"></has-error>
                                                                     </td>
-                                                                    <td>&nbsp;</td>
+                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">&nbsp;</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td style="">&nbsp;</td>
-                                                                    <td style="width:170px;">&nbsp;</td>
-                                                                    <td class="editable-cell">
+                                                                    <td style="width: 7%;padding: 2px;" class="editable-cell">&nbsp;</td>
+                                                                    <td style="width: 28%;padding: 2px;" class="editable-cell">&nbsp;</td>
+                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
                                                                         <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to2" class="form-control-sm col-form-label"> -->
-                                                                        <div class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
-                                                                            <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" style="width:170px;"
+                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
+                                                                            <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" style=""
                                                                             class="form-control" autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_2') }">
                                                                             <div v-if="isDropdownOpen_to2 && filteredLocations_to2.length" class="dropdown-options">
                                                                                 <div v-for="(item, index) in filteredLocations_to2" 
@@ -655,31 +655,31 @@
                                                                         <has-error :form="form" field="to_2"></has-error>
                                                                         <!-- </b-form-group> -->
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 80px"
+                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                        <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.by_2"
                                                                             :class="{ 'is-invalid': form.errors.has('by_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 90px"
+                                                                    <td class="editable-cell" style="width: 12%;padding: 2px;">
+                                                                        <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.flight_2"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 90px"
+                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                        <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.date_2"
                                                                             :class="{ 'is-invalid': form.errors.has('date_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell w-10" style="width: 60px !important;">
+                                                                    <td class="editable-cell w-10" style="width: 5%;padding: 2px;">
                                                                         <date-picker valueType="format"
-                                                                            style=" width: 30px !important;"
+                                                                            style="width: 100%;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td style="">&nbsp;</td>
-                                                                    <td style="width:170px;">&nbsp;</td>
-                                                                    <td class="editable-cell">
+                                                                    <td style="width: 7%;padding: 2px;" class="editable-cell" >&nbsp;</td>
+                                                                    <td style="width: 28%;padding: 2px;" class="editable-cell">&nbsp;</td>
+                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
                                                                         <!-- <b-form-select class="form-control" style="width: 150px"
                                                                             v-model="form.routing_information.to_3"
                                                                             :class="{ 'is-invalid': form.errors.has('to_3') }">
@@ -691,8 +691,8 @@
                                                                                 Aberdeen (ABZ), United Kingdom</option>
                                                                         </b-form-select> -->
                                                                         <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to3" class="form-control-sm col-form-label"> -->
-                                                                        <div class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown_to3">
-                                                                            <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" style="width:170px;" class="form-control" 
+                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown_to3">
+                                                                            <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_3') }">
                                                                             <div v-if="isDropdownOpen_to3 && filteredLocations_to3.length" class="dropdown-options">
                                                                                 <div v-for="(item, index) in filteredLocations_to3" 
@@ -706,30 +706,30 @@
                                                                         <has-error :form="form" field="to_3"></has-error>
                                                                         <!-- </b-form-group> -->
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 80px"
+                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                        <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.by_3"
                                                                             :class="{ 'is-invalid': form.errors.has('by_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 90px"
+                                                                    <td class="editable-cell" style="width: 12%;padding: 2px;">
+                                                                        <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.flight_3"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 90px"
+                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                        <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.date_3"
                                                                             :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 60px !important;">
+                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">
                                                                         <date-picker valueType="format"
-                                                                            style=" width: 30px !important;"
+                                                                            style=" width: 100%;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
                                                                     </td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
-                                                    </div>
+                                                    <!-- </div> -->
                                                 <!-- </div> -->
                                             </b-col>
                                         </b-row>
@@ -4732,13 +4732,13 @@ th {
     display: block;
     margin-bottom: 0.5rem;
     color: #4C4C4C;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 .custom-link:hover {
     /* color: #2637a8; */
-    text-decoration: underline #4C4C4C !important;
-    text-decoration-color: #4C4C4C;
+    text-decoration: underline #355594 !important;
+    text-decoration-color: #355594;
 }
 .custom-link-custom {
     display: block;

@@ -2587,13 +2587,13 @@
                                                 </div>
                                             </div>
                                             <div class="mb-16" style="width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-hawb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-hawb-pdf')">
                                                     <p class="mb-0 ml-2">House Waybill Pdf file</p>
                                                 </a>
-                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
                                                     <p class="mb-0 ml-2">Multipage House Waybill Pdf</p>
                                                 </a>
-                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
                                                     <p class="mb-0 ml-2">Multipage House Waybill Pdf with back pages</p>
                                                 </a>
                                             </div>
@@ -4632,16 +4632,16 @@ th {
 }
 
 .custom-link {
-    display: block;
+    display: block; 
     margin-bottom: 0.5rem;
     color: #4C4C4C;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 .custom-link:hover {
-    /* color: #2637a8; */
-    text-decoration: underline #4C4C4C !important;
-    text-decoration-color: #4C4C4C;
+    color: #355594;
+    text-decoration: underline #355594 !important;
+    text-decoration-color: #355594;
 }
 .custom-link-custom {
     display: block;

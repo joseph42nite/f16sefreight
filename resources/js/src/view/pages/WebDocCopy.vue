@@ -2462,13 +2462,13 @@
                                                 </div>
                                             </div>
                                             <div class="mb-16" style="width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-awb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-awb-pdf')">
                                                     <p class="mb-0 ml-2">e-AWB Pdf file</p>
                                                 </a>
-                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-awb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-awb-pdf')">
                                                     <p class="mb-0 ml-2">Multipage e-AWB Pdf</p>
                                                 </a>
-                                                <a href="#" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-awb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-awb-pdf')">
                                                     <p class="mb-0 ml-2">Multipage e-AWB Pdf with back pages</p>
                                                 </a>
                                             </div>
@@ -4737,7 +4737,7 @@ th {
 }
 
 .custom-link:hover {
-    /* color: #2637a8; */
+    color: #355594;
     text-decoration: underline #355594 !important;
     text-decoration-color: #355594;
 }

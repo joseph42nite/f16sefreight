@@ -509,6 +509,7 @@
                                             <b-col cols="5">
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                     label-for="input-departure-airport"
+                                                    style="width:100%;"
                                                     class="align-items-center">
                                                     <template #label>
                                                         <div class="routing-info-label">

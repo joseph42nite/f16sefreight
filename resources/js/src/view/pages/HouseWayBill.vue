@@ -2633,6 +2633,7 @@ import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 import SideBar from "../layout/SideBar.vue";
 import Header from "../layout/Header.vue";
+import { mapGetters } from "vuex";
 // import PageLoader from "../components/PageLoader.vue";
 export default {
     data() {
@@ -4298,9 +4299,13 @@ export default {
         }
         this.getOCIData();
         this.onSubmit = this.onSubmit.bind(this);
+        console.log("Current User:", this.current_user);
+        if(this.current_user)
+        this.getAgent(this.current_user.company_name,this.current_user.branch_name);
         // this.getAgent();
     },
     computed: {
+        ...mapGetters({ current_user: "currentUser"}),
         isPrepaid() {
             const prepaidTypes = ['PP'];
             return prepaidTypes.includes(this.form.payment_info.type_of_payment);

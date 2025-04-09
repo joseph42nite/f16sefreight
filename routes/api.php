@@ -5,6 +5,7 @@ use App\Airline;
 use App\Http\Controllers\airwayBill\AirwayBill;
 use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
+use App\Http\Controllers\airwayBill\MessageLog;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +99,13 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-shipper-address', [HousewayBill::class, 'getShipperAddress']);
     Route::get('/get-consignee-address', [HousewayBill::class, 'getConsigneeAddress']);
     Route::get('/get-alsonotify-address', [HousewayBill::class, 'getAlsoNotifyAddress']);
+
+
+    //message Log 
+    Route::get('/house-way-bills/{awb_code}/{awb_no}', [MessageLog::class,'getHouseWayBills']);
+    Route::get('/get-all-airwaybill', [MessageLog::class,'getAllAirwaybills']);
+    Route::delete('/house-way-bills/{id}', [MessageLog::class, 'deleteHouseWayBill']);
+    
     //========end of the  airway bill operation=====
 
 });

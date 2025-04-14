@@ -27,70 +27,155 @@ class MessageLog extends Controller
         }
     }
 
+    // public function searchHouseWayBills(Request $request)
+    // {
+    //     $user = auth()->guard('user-api')->user();
+    //     if (!$user) {
+    //         return response()->json(['message' => 'Unauthorized'], 401);
+    //     }
+    //     $branch_name = $user->branch_name;
+    //     $agent = Agent::where('id', $branch_name)->first();
+    //     $agentId = $agent->id;
+    //     $request->validate([
+    //         'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+    //         'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
+    //     ]);
+    //     // $existsInAirwayBills = AirwayBills::where('awb_no', $request->awb_no)
+    //     // ->where('awb_code', $request->awb_code)
+    //     // ->exists();
+
+    //     // if (!$existsInAirwayBills) {
+    //     //     return response()->json(['message' => 'No records found in AirwayBills'], 404);
+    //     // }
+
+    //     $wayBills = HousewayBills::where('house_way_bills.awb_no', $request->awb_no)
+    //         ->where('house_way_bills.awb_code', $request->awb_code)
+    //         ->where('house_way_bills.agent_id', $agentId)
+    //         ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+    //         ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+    //         // ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+    //         ->select(
+    //             'house_way_bills.id',
+    //             'house_way_bills.master_origin',
+    //             'house_way_bills.master_destination',
+    //             'house_way_bills.special_handling_info',
+    //             'house_way_bills.special_service_request',
+    //             'house_way_bills.other_service_information',
+
+    //             // Fields from way_bill_consignment_data
+    //             'way_bill_consignment_data.pieces',
+    //             'way_bill_consignment_data.gross_weight',
+    //             'way_bill_consignment_data.description',
+
+    //             'way_bill_custom_info.country_code',
+    //             'way_bill_custom_info.info_identifier',
+    //             'way_bill_custom_info.custom_info_identifier',
+    //             'way_bill_custom_info.supplementary_info'
+    //         )
+    //         ->distinct()
+    // ->get();
+    //         $groupedWayBills = $wayBills->groupBy('id')->map(function ($group) {
+    //             $waybill = $group->first()->toArray();
+    //             // Extract custom information based on `country_code` and `info_identifier`
+    //             $customInfo = $group->map(function ($item) {
+    //                 return [
+    //                     'country_code' => $item->country_code,
+    //                     'info_identifier' => $item->info_identifier,
+    //                     'custom_info_identifier' => $item->custom_info_identifier,
+    //                     'supplementary_info' => $item->supplementary_info,
+    //                 ];
+    //             });
+    //             $waybill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
+            
+    //             return $waybill;
+    //         });
+            
+    //     return response()->json($groupedWayBills->values());
+    // }
     public function searchHouseWayBills(Request $request)
-    {
-        $user = auth()->guard('user-api')->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
-        $agentId = $agent->id;
-        $request->validate([
-            'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
-            'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
-        ]);
-        // $existsInAirwayBills = AirwayBills::where('awb_no', $request->awb_no)
-        // ->where('awb_code', $request->awb_code)
-        // ->exists();
-
-        // if (!$existsInAirwayBills) {
-        //     return response()->json(['message' => 'No records found in AirwayBills'], 404);
-        // }
-
-        $wayBills = HousewayBills::where('house_way_bills.awb_no', $request->awb_no)
-            ->where('house_way_bills.awb_code', $request->awb_code)
-            ->where('house_way_bills.agent_id', $agentId)
-            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
-            // ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
-            ->select(
-                'house_way_bills.id',
-                'house_way_bills.master_origin',
-                'house_way_bills.master_destination',
-                'house_way_bills.special_handling_info',
-                'house_way_bills.special_service_request',
-                'house_way_bills.other_service_information',
-
-                // Fields from way_bill_consignment_data
-                'way_bill_consignment_data.pieces',
-                'way_bill_consignment_data.gross_weight',
-                'way_bill_consignment_data.description',
-
-                'way_bill_custom_info.country_code',
-                'way_bill_custom_info.info_identifier',
-                'way_bill_custom_info.custom_info_identifier',
-                'way_bill_custom_info.supplementary_info'
-            )
-            ->get();
-            $groupedWayBills = $wayBills->groupBy('id')->map(function ($group) {
-                $waybill = $group->first()->toArray();
-                // Extract custom information based on `country_code` and `info_identifier`
-                $customInfo = $group->map(function ($item) {
-                    return [
-                        'country_code' => $item->country_code,
-                        'info_identifier' => $item->info_identifier,
-                        'custom_info_identifier' => $item->custom_info_identifier,
-                        'supplementary_info' => $item->supplementary_info,
-                    ];
-                });
-                $waybill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
-            
-                return $waybill;
-            });
-            
-        return response()->json($groupedWayBills->values());
+{
+    $user = auth()->guard('user-api')->user();
+    if (!$user) {
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
+
+    $branch_name = $user->branch_name;
+    $agent = Agent::where('id', $branch_name)->first();
+    $agentId = $agent->id;
+
+    $request->validate([
+        'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+        'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
+    ]);
+
+    // Fetch the Airway Bill
+    $airwayBill = AirwayBills::where('awb_no', $request->awb_no)
+        ->where('awb_code', $request->awb_code)
+        ->first();
+
+    if (!$airwayBill) {
+        return response()->json(['message' => 'No AirwayBill Found'], 404);
+    }
+
+    // Fetch associated House Waybills
+    $houseWayBills = HousewayBills::where('awb_no', $request->awb_no)
+        ->where('awb_code', $request->awb_code)
+        ->where('agent_id', $agentId)
+        ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+        ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+        ->select(
+            'house_way_bills.id',
+            'house_way_bills.house_no',
+            'house_way_bills.destination_airport',
+            'house_way_bills.created_at',
+            'way_bill_consignment_data.pieces',
+            'way_bill_consignment_data.gross_weight',
+            'way_bill_consignment_data.description',
+            'way_bill_custom_info.country_code',
+            'way_bill_custom_info.info_identifier',
+            'way_bill_custom_info.custom_info_identifier',
+            'way_bill_custom_info.supplementary_info'
+        )
+        ->get();
+
+    // Group HWBs by their ID to aggregate custom info
+    $groupedHWBs = $houseWayBills->groupBy('id')->map(function ($group) {
+        $first = $group->first();
+        $customInfo = $group->map(function ($item) {
+            return [
+                'country_code' => $item->country_code,
+                'info_identifier' => $item->info_identifier,
+                'custom_info_identifier' => $item->custom_info_identifier,
+                'supplementary_info' => $item->supplementary_info,
+            ];
+        })->values()->all();
+
+        return [
+            'id' => $first->id,
+            'house_no' => $first->house_no,
+            'destination_airport' => $first->destination_airport,
+            'created_at' => $first->created_at,
+            'pieces' => $first->pieces,
+            'gross_weight' => $first->gross_weight,
+            'description' => $first->description,
+            'custom_info' => $customInfo,
+        ];
+    })->values();
+
+    // Structure the response
+    $response = [
+        'airway_bill' => [
+            'awb_no' => $airwayBill->awb_no,
+            'awb_code' => $airwayBill->awb_code,
+            'destination_airport' => $airwayBill->destination_airport,
+            'created_at' => $airwayBill->created_at,
+        ],
+        'house_way_bills' => $groupedHWBs,
+    ];
+
+    return response()->json($response);
+}
+
     public function getHouseWayBills($awb_code, $awb_no)
     {
         try {
@@ -263,4 +348,84 @@ class MessageLog extends Controller
             ], 500);
         }
     }
+
+    public function searchBills(Request $request)
+    {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+            'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
+        ]);
+
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+        $agentId = $agent->id;
+
+        // ✅ Fetch Airway Bill (master-level info)
+        $airwayBill = AirwayBills::where('awb_no', $request->awb_no)
+            ->where('awb_code', $request->awb_code)
+            ->where('agent_id', $agentId)
+            ->first();
+
+        if (!$airwayBill) {
+            return response()->json(['message' => 'No AirwayBill Found'], 404);
+        }
+
+        // ✅ Fetch House Way Bills with related data
+        $houseWayBills = HousewayBills::where('house_way_bills.awb_no', $request->awb_no)
+            ->where('house_way_bills.awb_code', $request->awb_code)
+            ->where('house_way_bills.agent_id', $agentId)
+            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+            ->select(
+                'house_way_bills.id',
+                'house_way_bills.destination_airport',
+                'house_way_bills.master_origin',
+                'house_way_bills.master_destination',
+                'house_way_bills.special_handling_info',
+                'house_way_bills.special_service_request',
+                'house_way_bills.other_service_information',
+                'house_way_bills.created_at',
+                'house_way_bills.updated_at',
+
+                'way_bill_consignment_data.pieces',
+                'way_bill_consignment_data.gross_weight',
+                'way_bill_consignment_data.description',
+
+                'way_bill_custom_info.country_code',
+                'way_bill_custom_info.info_identifier',
+                'way_bill_custom_info.custom_info_identifier',
+                'way_bill_custom_info.supplementary_info'
+            )
+            ->get();
+
+        // ✅ Group by house waybill and attach custom info
+        $groupedHouseBills = $houseWayBills->groupBy('id')->map(function ($group) {
+            $bill = $group->first()->toArray();
+
+            $customInfo = $group->map(function ($item) {
+                return [
+                    'country_code' => $item->country_code,
+                    'info_identifier' => $item->info_identifier,
+                    'custom_info_identifier' => $item->custom_info_identifier,
+                    'supplementary_info' => $item->supplementary_info,
+                ];
+            });
+
+            $bill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
+
+            return $bill;
+        })->values();
+
+        // ✅ Return combined result
+        return response()->json([
+            'airway_bill' => $airwayBill,
+            'house_way_bills' => $groupedHouseBills
+        ]);
+    }
+
 }

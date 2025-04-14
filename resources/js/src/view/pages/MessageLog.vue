@@ -2,146 +2,234 @@
     <div class="body-color">
         <div class="container-fluid">
             <!-- Include Page Loader -->
-             <!-- <PageLoader></PageLoader> -->
+            <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
             <Header></Header>
             <div class="d-flex">
                 <SideBar></SideBar>
-                <div style="background-color: #fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
-                    <div class="container">
-                        <b-card-title class="title_color mt-9"> Search </b-card-title>
-                        <hr class="hr" />
-                        <b-card-text class="border_rounded">
-                            <div class="mr-8">
-                                <b-row class="my-8">
-                                    <b-col cols="5">
-                                        <div>
-                                            <div class="d-flex">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                    label-for="input-horizontal" class="form-control-sm align-items-center">
-                                                    <template #label>
-                                                        <span>Master No:</span>
-                                                        <span style="color: red">*</span>
-                                                    </template>
-                                                    <b-form-input id="input-horizontal" class="form-control-sm" style="width: 50px" v-model="searchForm.awb_code" maxlength="3" @input="validateAwbCode"></b-form-input>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="form-control-sm align-items-center">
-                                                    <template #label>
-                                                        <span>-</span>
-                                                    </template>
-                                                    <b-form-input v-model="searchForm.awb_no" maxlength="8" @input="validateAwbNo" id="input-horizontal" class="form-control-sm" style="width: 90px"></b-form-input>
-                                                </b-form-group>
-                                                <div class="mt-3">
-                                                    <b-button :disabled="!isSearchValid" @click="searchAirwayBills" pill style="color: #2637a8; background: #ffffff !important; border: 1px solid #2637a8;padding: 6px 25px;">Search</b-button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </b-col>
-                                </b-row>
-                            </div>
+                <template>
+                    <div
+                        class="table-responsive"
+                        style="
+                            overflow-x: hidden !important;
+                            background-color: #fff;
+                            box-shadow: 3px 3px 10px #d0d0d0;
+                            z-index: 1;
+                            border-radius: 30px;
+                        "
+                    >
+                        <b-card class="p-4 mb-5">
+                            <h3 class="mb-3">Search</h3>
 
-                            <div>
-                                <div class="py-5">
-                                    <div class="ml-3 mt-8">
-                                        <div class="">
-                                            <b-row>
-                                                <b-col cols="12">
-                                                    <table class="table table-sm" style="max-width:100%;">
-                                                        <thead>
-                                                            <tr style="background-color: #F2F9FF;">
-                                                                <th style="width:30px !important;">Sl No.</th>
-                                                                <th style="width: 100px !important;">AWB No.</th>
-                                                                <th style="width: 100px;">Destination</th>
-                                                                <th style="width: 120px;">Date & time</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr v-for="(item, index) in data_items" :key="index" class="tr">
-                                                                <td class="editable-cell align-items-center pt-4 " style="width:60px;">
-                                                                    {{ index + 1 }}
-                                                                </td>
-                                                                <td class="editable-cell align-items-center pt-4" style="width:70px;">
-                                                                    <a :href="'/edit-airway-bill/' + item.id" class="custom-link" @click="getAirWayBill(item.id)">
-                                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                            {{ item.awb_code }} {{ item.awb_no }}
-                                                                        </router-link>
-                                                                    </a>
-                                                                   
-                                                                </td>
-                                                                <td class="editable-cell align-items-center pt-4" style="width:70px;">
-                                                                    {{ getAirportCode(item.destination_airport) }} 
-                                                                </td>
-                                                                <td class="editable-cell align-items-center pt-4" style="width:70px;">
-                                                                    {{ formatDate(item.updated_at) }}
-                                                                </td>
-                                                                <td style="margin-left: 10px;">
-                                                                    <div style="width: 112%;">
-                                                                        <table class="table table-sm" style="max-width:100%;">
-                                                                            <thead v-if="index === 0">
-                                                                                <tr style="background-color: #F2F9FF;overflow: hidden;">
-                                                                                    <th style="width:400px !important;padding-left: 15px !important;">Houseway Bills</th>
-                                                                                    <th style="width:130px !important;">&nbsp;&nbsp;&nbsp;</th>
-                                                                                    <th style="width:150px !important;">Place </th>
-                                                                                    <th style="width:130px !important;">Date</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                <tr v-for="(houseBill, hIndex) in getHouseWayBills(item)" :key="hIndex" style="padding-left: 10px !important;" class="tr">
-                                                                                    <td class="editable-cell align-items-center px-4 " style="width:60px;">
-                                                                                        <!-- 217 pieces CRC - Consignment reported to customs authorities -->
-                                                                                        <!-- {{ houseBill.pieces }} pieces {{ houseBill.description }} -->
-                                                                                        {{ houseBill.id }}
-                                                                                    </td>
-                                                                                    <td class="editable-cell align-items-center" style="width:60px;">
-                                                                                        <div class="d-flex align-items-center">
-                                                                                            <router-link :to="'/edit-houseway-bill/' + houseBill.id" custom v-slot="{ navigate }">
-                                                                                                <b-icon 
-                                                                                                    icon="pencil" 
-                                                                                                    aria-hidden="true" 
-                                                                                                    style="color: #355594 !important; cursor: pointer; margin-right: 10px;"
-                                                                                                    @click="navigate"
-                                                                                                ></b-icon>
-                                                                                            </router-link>
-                                                                                            <b-icon 
-                                                                                                icon="trash" 
-                                                                                                aria-hidden="true" 
-                                                                                                style="color: #355594 !important; cursor: pointer;"
-                                                                                                @click="handleDeleteHouseBill(houseBill.id)"
-                                                                                            ></b-icon>
-                                                                                        </div>
-                                                                                    </td>
-                                                                                    <td class="editable-cell align-items-center" style="width:60px;">
-                                                                                        <!-- {{ houseBill.destination_airport }} -->
-                                                                                        {{ getAirportCode(houseBill.destination_airport) }} 
-                                                                                        <b-icon icon="flag-fill" aria-hidden="true"></b-icon>
-                                                                                    </td>
-                                                                                    <td class="editable-cell align-items-center" style="width:60px;">
-                                                                                        {{ formatDate(houseBill.created_at) }}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </b-col>
-                                            </b-row>
-                                        </div>
-                                    </div>  
+                            <b-form inline class="mb-4">
+                                <label class="mr-2"
+                                    >Master No:
+                                    <span class="text-danger">*</span></label
+                                >
+                                <b-form-input
+                                    v-model="form.masterStart"
+                                    class="mr-2" id="awb_code"
+                                    style="width: 100px" maxlength="3" @input="validateAwbCode"
+                                />
+                                <b-form-input
+                                    v-model="form.masterEnd" id="awb_no"
+                                    class="mr-2"
+                                    style="width: 100px" maxlength="8" @input="validateAwbNo"
+                                />
+                                <b-button
+                                    pill
+                                    style="
+                                        color: #2637a8;
+                                        background: #ffffff !important;
+                                        border: 1px solid #2637a8;
+                                        padding: 6px 25px;
+                                    "
+                                    @click="searchAWB"
+                                    >Search</b-button
+                                >
+                            </b-form>
+                            <div v-if="errorMessage" class="text-center text-danger my-3">
+  {{ errorMessage }}
+</div>
+
+                            <div class="d-flex">
+                                <div class="d-flex align-items-center ml-auto">
+                                    <b-form-select
+                                        id="per-page-select"
+                                        v-model="perPage"
+                                        :options="pageOptions"
+                                        class="mr-2 mb-1"
+                                        style="background: white; width: 60px"
+                                    ></b-form-select>
                                 </div>
                             </div>
-                        </b-card-text>
+                            <!-- :items="data_items" -->
+                            <b-table
+                            :items="normalizedItems"
+                                :fields="fields"
+                                small
+                                responsive
+                                class="w-100 custom-table"
+                                :per-page="perPage"
+                                :current-page="currentPage"
+                                @filtered="onFiltered"
+                            >
+                                <template #cell(index)="row">
+                                    {{ row.index + 1 }}
+                                </template>
+                                <template #cell(id)="row">
+                                    <a
+                                        :href="
+                                            '/edit-airway-bill/' + row.item.id
+                                        "
+                                        class="custom-link"
+                                        @click="getAirWayBill(row.item.id)"
+                                    >
+                                        <router-link
+                                            v-slot="{ navigate, href }"
+                                            :to="
+                                                '/edit-airway-bill/' +
+                                                row.item.id
+                                            "
+                                            custom
+                                        >
+                                            {{ row.item.awb_code }}
+                                            {{ row.item.awb_no }}
+                                        </router-link>
+                                    </a>
+                                </template>
+                                <template #cell(destination_airport)="row">
+                                    {{
+                                        getAirportCode(
+                                            row.item.destination_airport
+                                        )
+                                    }}
+                                </template>
+                                <template #cell(created_at)="row">
+                                    {{ formatDate(row.item.created_at) }}
+                                </template>
+                                <div
+                                    v-for="(item, index) in data_items"
+                                    :key="index"
+                                    class="d-flex py-1 house-row"
+                                >
+                                    <div class="w-25">
+                                        <a
+                                            :href="
+                                                '/edit-airway-bill/' + item.id
+                                            "
+                                            class="custom-link"
+                                            @click="getAirWayBill(item.id)"
+                                        >
+                                            <router-link
+                                                v-slot="{ navigate, href }"
+                                                :to="
+                                                    '/edit-airway-bill/' +
+                                                    item.id
+                                                "
+                                                custom
+                                            >
+                                                {{ item.awb_code }}
+                                                {{ item.awb_no }}
+                                            </router-link>
+                                        </a>
+                                    </div>
+                                    <div class="w-25">
+                                        {{
+                                            getAirportCode(
+                                                item.destination_airport
+                                            )
+                                        }}
+                                    </div>
+                                    <div class="w-25">
+                                        {{ formatDate(item.created_at) }}
+                                    </div>
+                                </div>
+
+                                <template #cell(houseway)="row">
+                                    <div v-if="row.index === 0">
+                                        <div
+                                            class="d-flex font-weight-bold house-row"
+                                            style="
+                                                background-color: rgb(
+                                                    242,
+                                                    249,
+                                                    255
+                                                );
+                                                padding-top: 10px;
+                                                padding-bottom: 10px;
+                                            "
+                                        >
+                                            <div class="w-25">House No.</div>
+                                            <div class="w-25"></div>
+                                            <div class="w-25">Place</div>
+                                            <div class="w-25">Date</div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        v-for="(bill, i) in getHouseWayBills(
+                                            row.item
+                                        )"
+                                        :key="i"
+                                        class="d-flex py-1 house-row"
+                                    >
+                                        <div class="w-25">
+                                            {{ bill.id }}
+                                        </div>
+                                        <div class="w-25">
+                                            <router-link
+                                                :to="
+                                                    '/edit-houseway-bill/' +
+                                                    bill.id
+                                                "
+                                                custom
+                                                v-slot="{ navigate }"
+                                            >
+                                                <b-icon
+                                                    icon="pencil"
+                                                    aria-hidden="true"
+                                                    style="
+                                                        color: #355594 !important;
+                                                        cursor: pointer;
+                                                        margin-right: 10px;
+                                                    "
+                                                    @click="navigate"
+                                                ></b-icon>
+                                            </router-link>
+                                            <b-icon
+                                                icon="trash"
+                                                class="text-danger"
+                                                style="cursor: pointer"
+                                                @click="
+                                                    handleDeleteHouseBill(
+                                                        bill.id
+                                                    )
+                                                "
+                                            />
+                                        </div>
+                                        <div class="w-25">
+                                            {{ getAirportCode(bill.destination_airport) }}
+                                            <b-icon
+                                                icon="flag-fill"
+                                                class="ml-1 text-dark"
+                                            />
+                                        </div>
+                                        <div class="w-25">
+                                            {{ formatDate(bill.created_at) }}
+                                        </div>
+                                    </div>
+                                </template>
+                            </b-table>
+                            <b-pagination
+                                v-model="currentPage"
+                                :total-rows="totalRows"
+                                :per-page="perPage"
+                                align="right"
+                                class="mt-3 custom-pagination"
+                            ></b-pagination>
+                        </b-card>
                     </div>
-                </div>
+                </template>
             </div>
         </div>
     </div>
@@ -152,256 +240,321 @@ import SideBar from "../layout/SideBar.vue";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
 // import PageLoader from '../components/PageLoader.vue';
+
 export default {
     data() {
         return {
+            form: new Form({
+                masterStart: "",
+                masterEnd: "",
+            }),
+            filter: "",
+            currentPage: 1,
+            perPage: 10,
+            totalRows: 0,
+            pageOptions: [10, 20, 50, 100],
             data_items: [],
             house_way_bills: {},
-            // searchForm: new Form({ 
-            //     awb_code: '',
-            //     awb_no: ''
-            // }),
-            searchForm: { 
-                awb_code: '',
-                awb_no: ''
-            },
+            filteredData: [],
             isSearchValid: false,
             searchPerformed: false,
             consolidation: [],
             existingData: {},
+            errorMessage: '',
+            fields: [
+                { key: "index", label: "Sl No." },
+                { key: "id", label: "AWB No." },
+                { key: "destination_airport", label: "Destination" },
+                { key: "created_at", label: "Date & time" },
+                { key: "houseway", label: "" },
+            ],
+
+            houseFields: [
+                { key: "id", label: "House No." },
+                { key: "actions", label: "", class: "text-right" },
+                { key: "destination_airport", label: "Place" },
+                { key: "created_at", label: "Date" },
+            ],
+        };
+    },
+    computed: {
+        ...mapGetters({ current_user: "currentUser" }),
+        filteredItems() {
+            if (!this.filter) return this.data_items;
+
+            const search = this.filter.toLowerCase();
+            return this.data_items.filter(
+                (item) =>
+                (item.awb_code || "")
+                        .toString()
+                        .toLowerCase()
+                        .includes(search) ||
+                    (item.awb_no || "")
+                        .toString()
+                        .toLowerCase()
+                        .includes(search) ||
+                    (item.destination_airport || "")
+                        .toLowerCase()
+                        .includes(search) ||
+                    (item.place || "").toLowerCase().includes(search)
+            );
+        },
+        normalizedItems() {
+            if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
+            return [{
+                awb_no: this.data_items.airway_bill.awb_no,
+                awb_code: this.data_items.airway_bill.awb_code,
+                destination_airport: this.getAirportCode(this.data_items.airway_bill.destination_airport),
+                created_at: this.formatDate(this.data_items.airway_bill.created_at),
+                house_way_bills: this.data_items.house_way_bills.map(hwb => ({
+                ...hwb,
+                destination_airport: this.getAirportCode(hwb.destination_airport),
+                created_at: this.formatDate(hwb.created_at),
+                }))
+            }];
+            } else if (Array.isArray(this.data_items)) {
+            return this.data_items;
+            }
+            return [];
         }
     },
-
+    watch: {
+        filteredItems(val) {
+            this.totalRows = val.length;
+        },
+        "$route.params.id"(newId) {
+            if (newId) {
+                this.getAirWayBill(newId);
+                this.getHouseWayBill(newId);
+            }
+        },
+    },
+    mounted() {
+        this.totalRows = this.data_items.length;
+        this.allAirwayBill();
+    },
     methods: {
+        onFiltered(filteredItems) {
+            this.totalRows = filteredItems.length;
+            this.currentPage = 1;
+        },
         getHouseWayBills(item) {
             if (!item.awb_code || !item.awb_no) return [];
             const key = `${item.awb_code}-${item.awb_no}`;
             if (!this.house_way_bills[key]) {
-                ApiService.get(`/user/house-way-bills/${item.awb_code}/${item.awb_no}`)
-                    .then(response => {
+                ApiService.get(
+                    `/user/house-way-bills/${item.awb_code}/${item.awb_no}`
+                )
+                    .then((response) => {
                         this.$set(this.house_way_bills, key, response.data);
                     })
-                    .catch(error => {
-                        console.error("Failed to fetch house way bills:", error);
+                    .catch((error) => {
+                        console.error(
+                            "Failed to fetch house way bills:",
+                            error
+                        );
                         this.$set(this.house_way_bills, key, []);
                     });
                 return [];
             }
             return this.house_way_bills[key];
         },
-        getHouseWayBill(id) { 
+        getHouseWayBill(id) {
             ApiService.get(`/user/houseway-bill/${id}`)
-                .then(response => {
+                .then((response) => {
                     this.existingData = response.data;
-                    this.openForm('update', this.existingData.id);
-                    if (this.existingData && this.existingData.consignment_data) {
+                    this.openForm("update", this.existingData.id);
+                    if (
+                        this.existingData &&
+                        this.existingData.consignment_data
+                    ) {
                         this.isConsignmentAdded = true;
                     }
                 })
-                .catch(error => {
+                .catch((error) => {
                     console.error("Failed to fetch data for updating:", error);
                 });
         },
         formatDate(dateString) {
-            if (!dateString) return '';
+            if (!dateString) return "";
             const date = new Date(dateString);
-            return date.toLocaleString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).replace(',', '');
+            return date
+                .toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                })
+                .replace(",", "");
         },
         getAirportCode(airport) {
-            if (!airport) return '';
-            return airport.split(',')[0].trim();
+            if (!airport) return "";
+            return airport.split(",")[0].trim();
         },
-        validateAwbCode(value) {
-        this.searchForm.awb_code = value.replace(/[^0-9]/g, '').slice(0, 3);
-        this.validateSearch();
-    },
-
-    validateAwbNo(value) {
-        this.searchForm.awb_no = value.replace(/[^0-9]/g, '').slice(0, 8);
-        this.validateSearch();
-    },
-
-    validateSearch() {
-        this.isSearchValid = this.searchForm.awb_code.length === 3 && this.searchForm.awb_no.length === 8;
-    },
-
-    searchAirwayBills() {
-        if (!this.isSearchValid) return;
-        this.searchPerformed = true;
-        ApiService.get(`/user/all-airway-bill?awb_code=${this.searchForm.awb_code}&awb_no=${this.searchForm.awb_no}`)
-        
-        .then(response => {
-            this.data_items = response.data;
-            this.house_way_bills = {};
-        })
-        .catch(error => {
-            console.error("Failed to fetch items:", error);
-            this.data_items = [];
-        });
-    },
-
-    // Add clear search method
-    searchWayBills() {
-        if (!this.isSearchValid) return;
-        
-        this.searchPerformed = true;
-        ApiService.get('/user/all-airway-bill', {
-            params: {
-                awb_code: this.searchForm.awb_code,
-                awb_no: this.searchForm.awb_no
-            }
-        })
-        .then(response => {
-            this.data_items = response.data;
-            // this.house_way_bills = {};  // Clear cached house way bills
-            
-            if (response.data.length === 0) {
-                const id = `${this.searchForm.awb_code}${this.searchForm.awb_no}`;
-                this.getAirWayBill(id);
-                this.hasSearchResults = true;
-            } else {
-                this.hasSearchResults = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-            this.data_items = [];
-            this.hasSearchResults = false;
-        });
-    },
-    clearSearch() {
-        this.searchForm.awb_code = '';
-        this.searchForm.awb_no = '';
-        this.searchPerformed = false;
-        this.isSearchValid = false;
-        this.allAirwayBill();
-    },
-
-    // Update allAirwayBill method
-    allAirwayBill() {
-        // if (this.searchPerformed) return; 
-        ApiService.get('/user/all-airway-bill')
-            .then(response => {
-                this.data_items = response.data;
-                // this.house_way_bills = {};
-            })
-            .catch(error => {
-                console.error("Failed to fetch items:", error);
-                this.data_items = [];
-            });
-    },
-        getAirWayBill(id) { 
+        allAirwayBill() {
+            // if (this.searchPerformed) return;
+            ApiService.get("/user/all-airway-bill")
+                .then((response) => {
+                    this.data_items = response.data;
+                    this.filteredData = response.data;
+                    this.totalRows = response.data.length;
+                    // this.house_way_bills = {};
+                })
+                .catch((error) => {
+                    console.error("Failed to fetch items:", error);
+                    this.data_items = [];
+                    this.filteredData = [];
+                });
+        },
+        getAirWayBill(id) {
             ApiService.get(`/user/airway-bill/${id}`)
-                .then(response => {
+                .then((response) => {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
                     } else {
-                       console.log("something went wrong");
+                        console.log("something went wrong");
                     }
                 })
-                .catch(error => {
+                .catch((error) => {
                     this.existingData = null;
                     console.error("Failed to fetch data for updating:", error);
                 });
         },
         handleDeleteHouseBill(id) {
-        if (confirm('Are you sure you want to delete this house way bill?')) {
-            ApiService.delete(`/user/house-way-bills/${id}`)
-                .then(() => {
-                    // Clear the cached house way bills
-                    this.house_way_bills = {};
-                    // Refresh the data
-                    this.allAirwayBill();
-                })
-                .catch(error => {
-                    console.error("Failed to delete house way bill:", error);
-                });
-        }
-    }
-    },
-    mounted() {
-        this.allAirwayBill(); 
-    },
-    watch: {
-        '$route.params.id'(newId) {
-            if (newId) {
-                this.getAirWayBill(newId);
+            if (
+                confirm("Are you sure you want to delete this house way bill?")
+            ) {
+                ApiService.delete(`/user/house-way-bills/${id}`)
+                    .then(() => {
+                        // Clear the cached house way bills
+                        this.house_way_bills = {};
+                        // Refresh the data
+                        this.allAirwayBill();
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "Failed to delete house way bill:",
+                            error
+                        );
+                    });
             }
         },
-        '$route.params.id'(newId) {
-            if (newId) {
-                this.getHouseWayBill(newId);
+        searchAWB() {
+            this.errorMessage = ''; // reset
+            this.searchPerformed = false;
+            if (!this.form.masterStart || !this.form.masterEnd) {
+            this.$bvToast.toast('Please enter both master start and end numbers.', {
+                title: 'Validation Error',
+                variant: 'danger',
+                solid: true
+            });
+            return;
             }
+
+            this.form.post(`/user/search-airway-bills`, {
+                params: {
+                    awb_code: this.form.masterStart,
+                    awb_no: this.form.masterEnd
+                }
+            })
+            .then(response => {
+                // this.airway_bill = response.data.airway_bill;
+                // this.data_items = response.data.house_way_bills;
+                this.data_items = response.data;
+                this.currentPage = 1;
+                this.searchPerformed = true;
+                this.totalRows = response.data.length;
+                // this.form.reset();
+               
+            })
+            .catch(error => {
+                this.searchPerformed = true;
+                if (error.response && error.response.data && error.response.data.message) {
+                this.errorMessage = error.response.data.message;
+                } else {
+                this.errorMessage = 'Something went wrong.';
+                }
+            });
         },
-    },
-    created() {
-        // this.allAirwayBill();
-    },
-    computed: {
-        ...mapGetters({ current_user: "currentUser"}), 
+        validateAwbCode(value) {
+            this.form.masterStart = value.replace(/[^0-9]/g, '').slice(0, 3);
+            this.validateSearch();
+        },
+
+        validateAwbNo(value) {
+            this.form.masterEnd = value.replace(/[^0-9]/g, '').slice(0, 8);
+            this.validateSearch();
+        },
+
+        validateSearch() {
+            this.isSearchValid = this.form.masterStart.length === 3 && this.form.masterEnd.length === 8;
+        },
     },
     components: {
         Header,
         SideBar,
         // PageLoader
-    }
-}
+    },
+};
 </script>
 <style scoped>
-.body-color {
-    background: linear-gradient(180deg, #D0E6F8 8%, #FFFFFF 20%);
-}
-.border_rounded {
-    border-radius: 30px !important;
-}
-.title_color {
-    color: #355594;
-    font-size: 30px;
-    font-weight: 500;
-}
-.card-title {
-    margin-bottom: 5px;
-}
-.hr {
-    border-top: 2px solid #CDCDCD;
-}
-.vr{
-    display: inline-block;
-    align-self: stretch;
-    width: 1px;
-    min-height: 1em;
-    background-color: #CDCDCD;
-    margin-right: 10px;
-}
-.tr {
-    padding-bottom: 2.75rem !important;
-    vertical-align: top;
-    border-bottom: 2px solid #EBEDF3;
-}
-.tr-padding {
-    padding-top: 10px;
-}
-.table thead th, .table thead td {
-    font-weight: 600;
-    font-size: 1rem;
-    /* border-bottom-width: 1px; */
-    /* padding-top: 1rem; */
-    /* padding-bottom: 1rem; */
-    height: 10px !important;
+.custom-table {
+    /* background-color: #f8fcff; */
+    /* border-radius: 8px; */
+    width: 100%;
 }
 
-.table thead th, .table thead td {
-    font-weight: 600;
-    font-size: 1rem;
-    border-bottom-width: 1px;
-    /* padding-top: 1rem; */
-    /* padding-bottom: 1rem; */
+.nested-table {
+    margin-top: -12px;
+    margin-bottom: -10px;
+    border-top: none;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+[class^="only-first-header-"] thead {
+    display: none;
+}
+
+.only-first-header-0 thead {
+    display: table-header-group;
+}
+.custom-table th:nth-child(1),
+.custom-table td:nth-child(1) {
+    width: 40px;
+    text-align: center;
+}
+
+.custom-table th:nth-child(2),
+.custom-table td:nth-child(2) {
+    width: 120px;
+}
+.body-color {
+    background: linear-gradient(180deg, #d0e6f8 8%, #ffffff 20%);
+}
+.custom-table >>> thead {
+    background-color: rgb(242, 249, 255);
+}
+.custom-table {
+    border-left: none !important;
+    border-right: none !important;
+}
+.house-row {
+    border-bottom: 1px solid #dee2e6;
+}
+.custom-pagination .page-link {
+    background-color: rgb(242, 249, 255) !important;
+    color: #000;
+    border-color: #dee2e6;
+}
+.page-item.active .page-link {
+    z-index: 3;
+    color: #ffffff;
+    background-color: rgb(38, 55, 168) !important;
+    border-color: rgb(38, 55, 168);
 }
 </style>

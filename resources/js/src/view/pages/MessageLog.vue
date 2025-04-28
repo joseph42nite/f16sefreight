@@ -47,6 +47,18 @@
                                     @click="searchAWB"
                                     >Search</b-button
                                 >
+                                <b-button
+                                    pill
+                                    class="ml-2"
+                                    style="
+                                        color: #2637a8;
+                                        background: #ffffff !important;
+                                        border: 1px solid #2637a8;
+                                        padding: 6px 25px;
+                                    "
+                                    @click="clearSearch"
+                                    >Clear</b-button
+                                >
                             </b-form>
                             <div v-if="errorMessage" class="text-center text-danger my-3">
   {{ errorMessage }}
@@ -93,8 +105,7 @@
                                             "
                                             custom
                                         >
-                                            {{ row.item.awb_code }}
-                                            {{ row.item.awb_no }}
+                                            {{ row.item.awb_code }}-{{ row.item.awb_no }}
                                         </router-link>
                                     </a>
                                 </template>
@@ -467,7 +478,7 @@ export default {
                 this.searchPerformed = true;
                 this.totalRows = response.data.length;
                 // this.form.reset();
-               
+
             })
             .catch(error => {
                 this.searchPerformed = true;
@@ -481,15 +492,35 @@ export default {
         validateAwbCode(value) {
             this.form.masterStart = value.replace(/[^0-9]/g, '').slice(0, 3);
             this.validateSearch();
+            this.checkEmptyFields();
         },
 
         validateAwbNo(value) {
             this.form.masterEnd = value.replace(/[^0-9]/g, '').slice(0, 8);
             this.validateSearch();
+            this.checkEmptyFields();
         },
 
         validateSearch() {
             this.isSearchValid = this.form.masterStart.length === 3 && this.form.masterEnd.length === 8;
+        },
+
+        checkEmptyFields() {
+            // If both fields are empty, reload all data
+            if (this.form.masterStart === "" && this.form.masterEnd === "") {
+                this.searchPerformed = false;
+                this.errorMessage = '';
+                this.allAirwayBill();
+            }
+        },
+
+        clearSearch() {
+            // Clear the form fields
+            this.form.masterStart = "";
+            this.form.masterEnd = "";
+            this.searchPerformed = false;
+            this.errorMessage = '';
+            this.allAirwayBill();
         },
     },
     components: {

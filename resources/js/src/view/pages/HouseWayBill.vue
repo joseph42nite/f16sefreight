@@ -56,12 +56,13 @@
                                     <b-row>
                                         <b-col>
                                             <div v-for="item in data_items" :key="item.id">
-                                                <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport" class="py-2">
+                                                <div v-if="item.awb_no && item.awb_code" class="py-2">
                                                     <a href="#" class="custom-link-custom mb-3" @click.prevent="handleEditNavigation(item.id)">
                                                         <router-link v-slot="{ navigate, href }" :to="'/edit-houseway-bill/' + item.id" custom>
                                                             <p @click="navigate" class="mb-0">
                                                                 {{ item.id }} 
-                                                                ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                                ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
+                                                                <!-- ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }}) -->
                                                             </p>
                                                         </router-link>
                                                     </a>
@@ -2054,7 +2055,7 @@
                                                                 <b-form-select class="form-control"
                                                                     style="width: 210px;"
                                                                     v-model="form.payment_info.type_of_payment">
-                                                                    <option disabled value="">Please select one</option>
+                                                                    <!-- <option disabled value="">Please select one</option> -->
                                                                     <option value="">Please select one</option>
                                                                     <option value="CC">CA - Partial collect credit - partial prepaid cash</option>
                                                                     <option value="CC">CB - Partial collect credit - partial prepaid credit</option>
@@ -2834,6 +2835,12 @@ export default {
                 charge: '',
                 chargable_weight1: '',
             },
+            defaultPaymentInfo: {
+                declear_value_carriage: 'NVD',
+                declear_value_customs: 'NCV',
+                declear_value_insurance: 'XXX',
+                currency: 'INR',
+            },
             selectedViewPageOption: '/house-way-bill',
             searchQuery_to: '',
             isDropdownOpen_to: false,
@@ -3305,6 +3312,10 @@ export default {
             ApiService.get(`/user/houseway-bill/${id}`)
                 .then(response => {
                     this.existingData = response.data;
+                    this.existingData.payment_info = {
+                        ...this.defaultPaymentInfo,
+                        ...(this.existingData.payment_info || {})
+                    };
                     this.openForm('update', this.existingData.id);
                     if (this.existingData && this.existingData.consignment_data) {
                         this.isConsignmentAdded = true;
@@ -3326,7 +3337,11 @@ export default {
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
                     
-                    this.form.payment_info = this.existingData.payment_info || {};
+                    // this.form.payment_info = this.existingData.payment_info || {};
+                    this.form.payment_info = {
+                        ...this.defaultPaymentInfo,
+                        ...(this.existingData.payment_info || {})
+                    };
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];

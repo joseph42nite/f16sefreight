@@ -4714,7 +4714,7 @@ th {
     color: #355594 !important;
     border-radius: 30px;
     border: 1px solid #355594 !important;
-    padding: 6px 20px !important;
+    padding: 6px 30px !important;
     background: #fff !important;
 }
 

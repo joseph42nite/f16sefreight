@@ -58,12 +58,13 @@
                                         <b-row>
                                             <b-col>
                                                 <div v-for="item in data_items" :key="item.id">
-                                                    <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport" class="py-2">
+                                                    <div v-if="item.awb_no && item.awb_code" class="py-2">
                                                         <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(item.id)">
                                                             <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
                                                                 <p @click="navigate" class="mb-0">
                                                                     {{ item.awb_code }}-{{ item.awb_no }} 
-                                                                    ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                                    ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
+                                                                    <!-- ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }}) -->
                                                                 </p>
                                                             </router-link>
                                                         </a>
@@ -1496,7 +1497,7 @@
                                                                                         <span>Participant Airport:</span>
                                                                                     </div>
                                                                                 </template>
-                                                                                <div class="custom-dropdown" ref="dropdownContainer_participant" @click="toggleDropdown_participant_airport">
+                                                                                <div class="custom-dropdown dropdown-container" ref="dropdownContainer_participant" @click="toggleDropdown_participant_airport">
                                                                                     <input type="text" v-model="agent_information.participate_airport" placeholder="Search location" id="participant" class="form-control" 
                                                                                         autocomplete="off" :class="{ 'is-invalid': form.errors.has('participate_airport') }">
                                                                                     <div v-if="isDropdownOpen_participant && filteredLocations_participant.length" class="dropdown-options">
@@ -2622,6 +2623,9 @@ export default {
                 payment_info:{
                     type_of_payment: '',
                     currency: 'INR',
+                    // declear_value_carriage: '',
+                    // declear_value_customs: '',
+                    // declear_value_insurance: '',
                     declear_value_carriage: 'NVD',
                     declear_value_insurance: 'XXX',
                     declear_value_customs: 'NCV',
@@ -2716,6 +2720,12 @@ export default {
                 payment_type: "P",
                 charge: '',
                 chargable_weight1: '',
+            },
+            defaultPaymentInfo: {
+                declear_value_carriage: 'NVD',
+                declear_value_customs: 'NCV',
+                declear_value_insurance: 'XXX',
+                currency: 'INR',
             },
             selectedViewPageOption: '/web-doc',
             selectedShipper: null,
@@ -3176,7 +3186,7 @@ export default {
             this.main_error_msg='';
             // this.is_generate_pdf=0;
             if (this.mode === 'add') {
-                this.form.post('/user/create-webdoc')
+                this.form.post(`/user/create-webdoc`)
                 .then(response => {
                     console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
@@ -3275,6 +3285,11 @@ export default {
                 .then(response => {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
+                        this.existingData.payment_info = {
+                            ...this.defaultPaymentInfo,
+                            ...(this.existingData.payment_info || {})
+                        };
+                        // this.setDefaultValues();
                         this.showAWBSection = true;
                         this.awbError = null;
                         this.openForm('update', this.existingData.id);
@@ -3344,7 +3359,11 @@ export default {
 
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
                     
-                    this.form.payment_info = this.existingData.payment_info || {};
+                    // this.form.payment_info = this.existingData.payment_info || {};
+                    this.form.payment_info = {
+                        ...this.defaultPaymentInfo,
+                        ...(this.existingData.payment_info || {})
+                    };
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
@@ -4040,7 +4059,10 @@ export default {
         },
         closeDropdown_participant_airport(event) {
             const dropdownContainer_participant = this.$refs.dropdownContainer_participant;
-            if (!dropdownContainer_participant.contains(event.target)) {
+            // if (!dropdownContainer_participant.contains(event.target)) {
+            //     this.isDropdownOpen_participant = false;
+            // }
+             if (dropdownContainer_participant && !dropdownContainer_participant.contains(event.target)) {
                 this.isDropdownOpen_participant = false;
             }
         },
@@ -4194,9 +4216,10 @@ export default {
                 return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
                 also_notify.name.toLowerCase().includes(query)
             );
-        },
+        }
     },
     mounted(){
+        // this.setDefaultValues();
         this.calculateTotalVolume();
         this.allAirwayBill();
         window.addEventListener('click', this.closeDropdown_to);
@@ -4419,31 +4442,55 @@ export default {
             return this.form.totals.total_amount;
         },
         filteredLocations_to() {
-            const query = this.form.routing_information.to.toLowerCase().trim();
+            const query = (this.form?.routing_information?.to || '').toLowerCase().trim();
             if (!query) return this.location;
 
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query)
             );
+            // const query = this.form.routing_information.to.toLowerCase().trim();
+            // if (!query) return this.location;
+
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
         },
         filteredLocations_to2() {
-            const query = this.form.routing_information.to_2.toLowerCase().trim();
+            const query = (this.form?.routing_information?.to_2 || '').toLowerCase().trim();
             if (!query) return this.location;
 
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query)
             );
+            // const query = this.form.routing_information.to_2.toLowerCase().trim();
+            // if (!query) return this.location;
+
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
         },
         filteredLocations_to3() {
-            const query = this.form.routing_information.to_3.toLowerCase().trim();
+            const query = (this.form?.routing_information?.to_3 || '').toLowerCase().trim();
             if (!query) return this.location;
 
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query)
             );
+            // const query = this.form.routing_information.to_3.toLowerCase().trim();
+            // if (!query) return this.location;
+
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
         },
         filteredLocations_from() {
-            const query = this.form.routing_information.from.toLowerCase().trim();
+            // const query = this.form.routing_information.from.toLowerCase().trim();
+            // if (!query) return this.location;
+
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
+            const query = (this.form?.routing_information?.from || '').toLowerCase().trim();
             if (!query) return this.location;
 
             return this.location.filter(item =>
@@ -4451,7 +4498,13 @@ export default {
             );
         },
         filteredLocations_destination() {
-            const query = this.form.routing_information.destination_airport.toLowerCase().trim();
+            // const query = this.form.routing_information.destination_airport.toLowerCase().trim();
+            // if (!query) return this.location;
+
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
+            const query = (this.form?.routing_information?.destination_airport || '').toLowerCase().trim();
             if (!query) return this.location;
 
             return this.location.filter(item =>
@@ -4459,7 +4512,13 @@ export default {
             );
         },
         filteredLocations_departure() {
-            const query = this.form.routing_information.departure_airport.toLowerCase().trim();
+            // const query = this.form.routing_information.departure_airport.toLowerCase().trim();
+            // if (!query) return this.location;
+
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
+            const query = (this.form?.routing_information?.departure_airport || '').toLowerCase().trim();
             if (!query) return this.location;
 
             return this.location.filter(item =>
@@ -4467,14 +4526,20 @@ export default {
             );
         },
         filteredLocations_issuing() {
-            const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
+            const query = (this.agent_information?.routing_information?.departure_airport || '').toLowerCase().trim();
             if (!query) return this.location;
+
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query)
             );
+            // const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
+            // if (!query) return this.location;
+            // return this.location.filter(item =>
+            //     item.iata_code.toLowerCase().includes(query)
+            // );
         },
         filteredLocations_participant() {
-            const query = this.agent_information.participate_airport.toLowerCase().trim();
+            const query = this.agent_information?.participate_airport?.toLowerCase().trim();
             if (!query) return this.location;
             return this.location.filter(item =>
                 item.iata_code.toLowerCase().includes(query)

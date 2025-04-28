@@ -16,7 +16,7 @@ class CreateAirWayBillsTable extends Migration
         Schema::create('air_way_bills', function (Blueprint $table) {
             $table->id();
             $table->string('awb_no', 50)->nullable();
-            $table->integer('awb_code')->nullable();
+            $table->string('awb_code',50)->nullable();
             $table->string('reference_id', 50)->nullable();
             $table->string('awb', 10)->nullable()->default("false");
             $table->string('consolidated_mawb')->nullable()->default("false");

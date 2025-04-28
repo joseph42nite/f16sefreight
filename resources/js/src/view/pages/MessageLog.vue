@@ -64,7 +64,7 @@
                                 </div>
                             </div>
                             <!-- :items="data_items" -->
-                            <b-table
+                            <!-- <b-table
                             :items="normalizedItems"
                                 :fields="fields"
                                 small
@@ -219,7 +219,87 @@
                                         </div>
                                     </div>
                                 </template>
-                            </b-table>
+                            </b-table> -->
+                            <b-table
+                                :items="normalizedItems"
+                                :fields="fields"
+                                small
+                                responsive
+                                class="w-100 custom-table"
+                                :per-page="perPage"
+                                :current-page="currentPage"
+                                @filtered="onFiltered"
+                                >
+                                <!-- Index -->
+                                <template #cell(index)="row">
+                                    {{ row.index + 1 }}
+                                </template>
+
+                                <!-- AWB No. -->
+                                <template #cell(id)="row">
+                                    <router-link
+                                    :to="'/edit-airway-bill/' + row.item.id"
+                                    class="custom-link"
+                                    @click.native="getAirWayBill(row.item.id)"
+                                    >
+                                    {{ row.item.awb_code }} {{ row.item.awb_no }}
+                                    </router-link>
+                                </template>
+
+                                <!-- Destination -->
+                                <template #cell(destination_airport)="row">
+                                    {{ getAirportCode(row.item.destination_airport) }}
+                                </template>
+
+                                <!-- Created At -->
+                                <template #cell(created_at)="row">
+                                    {{ formatDate(row.item.created_at) }}
+                                </template>
+
+                                <!-- Custom Header for Houseway Column -->
+                                <template #head(houseway)>
+                                    <div class="d-flex font-weight-bold">
+                                    <div class="w-25">House No.</div>
+                                    <div class="w-25">Actions</div>
+                                    <div class="w-25">Place</div>
+                                    <div class="w-25">Date</div>
+                                    </div>
+                                </template>
+
+                                <!-- Houseway Details in Same Row -->
+                                <template #cell(houseway)="row">
+                                    <div v-if="getHouseWayBills(row.item).length">
+                                    <div
+                                        v-for="(bill, i) in getHouseWayBills(row.item)"
+                                        :key="i"
+                                        class="d-flex py-1 house-row border-bottom"
+                                    >
+                                        <div class="w-25">{{ bill.id }}</div>
+                                        <div class="w-25">
+                                        <b-icon
+                                            icon="pencil"
+                                            class="text-primary mr-2"
+                                            style="cursor: pointer"
+                                            @click="$router.push('/edit-houseway-bill/' + bill.id)"
+                                        />
+                                        <b-icon
+                                            icon="trash"
+                                            class="text-danger"
+                                            style="cursor: pointer"
+                                            @click="handleDeleteHouseBill(bill.id)"
+                                        />
+                                        </div>
+                                        <div class="w-25">
+                                        {{ getAirportCode(bill.destination_airport) }}
+                                        </div>
+                                        <div class="w-25">
+                                        {{ formatDate(bill.created_at) }}
+                                        </div>
+                                    </div>
+                                    </div>
+                                </template>
+                                </b-table>
+
                             <b-pagination
                                 v-model="currentPage"
                                 :total-rows="totalRows"

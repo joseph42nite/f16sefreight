@@ -4627,7 +4627,7 @@ th {
 .form-control {
     border: 1px solid #A6A6A6 !important;
     border-radius: 7px !important;
-    height: 38px !important;
+    height: 38px;
 }
 
 .form-control1 {

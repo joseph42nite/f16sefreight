@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SFTP;
 
@@ -28,14 +29,14 @@ class AirwayBill extends Controller
         $company_id = $user->company_id; // Company ID from user table
         $branch_name = $user->branch_name;
         // $agent = Agent::where('id', $branch_name)->first();
-        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference','ho_name','ho_address','ho_city','ho_pincode','ho_state','ho_country']);
+        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference', 'ho_name', 'ho_address', 'ho_city', 'ho_pincode', 'ho_state', 'ho_country']);
         return json_encode($data);
     }
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($shipper_address, [
@@ -103,7 +104,7 @@ class AirwayBill extends Controller
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
             $SavedAddress->agent_id = $agent->id ?? null;
-            $SavedAddress->user_id= $user->id ?? null;
+            $SavedAddress->user_id = $user->id ?? null;
             // dd($SavedAddress);die();
             $SavedAddress->save();
         }
@@ -113,9 +114,9 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
-        
+
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
@@ -158,10 +159,10 @@ class AirwayBill extends Controller
         //insert address if saved button checked
         if ($is_consignee_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $awb_id], ['address_type', 'consignee_address']])->first();
-            if (!isset($SavedAddress)){
+            if (!isset($SavedAddress)) {
                 $SavedAddress = new SavedAddress();
             }
-                $SavedAddress->awb_id = $awb_id;
+            $SavedAddress->awb_id = $awb_id;
             // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
@@ -252,7 +253,7 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         if ($first_box['consolidated_mawb'] == true) {
@@ -323,7 +324,7 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($routing_information, [
@@ -376,7 +377,7 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
@@ -413,9 +414,9 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
-        
+
 
         $validator = Validator::make($custom_origin, [
             'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:2',
@@ -454,7 +455,7 @@ class AirwayBill extends Controller
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
         $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
 
@@ -497,8 +498,8 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
@@ -575,8 +576,8 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
         foreach ($oci_entries as $oci_entry) {
@@ -621,8 +622,8 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($totals, [
             'total_volume' => 'required|numeric|min:0|max:999999999',
@@ -670,8 +671,8 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
         if (empty($tableCodes)) {
@@ -774,6 +775,10 @@ class AirwayBill extends Controller
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->first_box['awb_code'], $request->tableCodes);
         }
+
+        //for status update
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $request->status]);
         return response()->json(['data' => $main_return_data]);
         // return json_encode($main_return_data);
     }
@@ -857,6 +862,10 @@ class AirwayBill extends Controller
         if (!empty($id)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->first_box['awb_code'], $request->tableCodes);
         }
+
+        //for status update
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $request->status]);
         return response()->json(['data' => $main_return_data]);
     }
 
@@ -1059,7 +1068,7 @@ class AirwayBill extends Controller
         }
     }
 
-//    SFTP file transfer 
+    //    SFTP file transfer 
     public function testXmlFilegenerate()
     {
         $xml_code = '<ns2:MessageHeaderDocument>
@@ -1085,100 +1094,33 @@ class AirwayBill extends Controller
 
         // Generate File Name & Path
         $xml_file_name = 'message_' . time() . '.xml';
-        $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
-
-        // Save XML File
-        file_put_contents($xml_file_path, $xml_code);
-
-        // Send File to Server
-        try {
-            $this->sendFileToServer($xml_file_path, $xml_file_name);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        Storage::put('xml-conversion-files/' . $xml_file_name, $xml_code);
 
         return response()->json([
-            'message' => 'XML File Created and Sent to Server',
-            'file' => $xml_file_name
+            'message' => 'XML file generated and saved',
+            'path' => storage_path('app/xml-conversion-files/' . $xml_file_name),
         ]);
-    }
 
-    public function sendFileToServer($local_file_path, $remote_file_name)
+    }
+    public function sendXmlToDescartes()
     {
-        $sftp_host = '65.0.228.88';
-        $sftp_username = 'ubuntu';
-        $ppk_file_path = storage_path('key/f16s.ppk');
-        $remote_folder = '/var/www/html/f16sefreight.com/public/xml-conversion-files/';
+        $fullPath = Storage::path('xml-conversion-files/message_1752994182.xml');
+        $username = config('common-data.descartes_username');
+        $password = config('common-data.descartes_password');
 
-        // Load Private Key
-        $private_key = PublicKeyLoader::load(file_get_contents($ppk_file_path));
+        $response = Http::attach(
+            'file',
+            file_get_contents($fullPath),
+            basename($fullPath)
+        )->withBasicAuth($username, $password)->post('https://www.myvan.descartes.com/HttpUpload/SimpleUploadHandler.aspx');
 
-        // Establish SFTP Connection
-        $sftp = new SFTP($sftp_host);
-        if (!$sftp->login($sftp_username, $private_key)) {
-            throw new \Exception('SFTP Login Failed - Check credentials & key');
+        if ($response->successful()) {
+            return response()->json(['status' => 'success', 'body' => $response->body()]);
+        } else {
+            return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'body' => $response->body()]);
         }
-
-        // Ensure Remote Folder Exists
-        if (!$sftp->chdir($remote_folder)) {
-            if (!$sftp->mkdir($remote_folder, 0777, true)) {
-                throw new \Exception("Remote folder '$remote_folder' does not exist and cannot be created");
-            }
-            $sftp->chdir($remote_folder);
-        }
-
-        // Upload File
-        if (!$sftp->put($remote_folder . $remote_file_name, $local_file_path, SFTP::SOURCE_LOCAL_FILE)) {
-            throw new \Exception('File Upload Failed - Unable to send file');
-        }
-
-        return true;
     }
-
-
     // ftp File transfer
-    public function xmlFilegenerate()
-    {
-        $xml_code = '<ns2:MessageHeaderDocument>
-        <ID>123-12345678_1740419426</ID>
-        <Name>Air Waybill</Name>
-        <TypeCode>740</TypeCode>
-        <IssueDateTime>2025-02-24 17:50:26</IssueDateTime>
-        <PurposeCode>Creation</PurposeCode>
-        <VersionID>5.00</VersionID>
-        <SenderParty>
-        <PrimaryID schemeID="P">REUAGT82INKN/BLR01</PrimaryID>
-        </SenderParty>
-        <SenderParty>
-        <PrimaryID schemeID="C">KUEHNENAGELAGT</PrimaryID>
-        </SenderParty>
-        <RecipientParty>
-        <PrimaryID schemeID="P">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        <RecipientParty>
-        <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        </ns2:MessageHeaderDocument>';
-    
-        // Generate File Name & Path
-        $xml_file_name = 'message_' . time() . '.xml';
-        $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
-    
-        // Save XML File
-        file_put_contents($xml_file_path, $xml_code);
-    
-        // Send File to FTP Server
-        try {
-            $this->sendFileToServer($xml_file_path, $xml_file_name);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    
-        return response()->json([
-            'message' => 'XML File Created and Sent to FTP Server',
-            'file' => $xml_file_name
-        ]);
-    }
 
     public function sendFileToServerFTP($local_file_path, $remote_file_name)
     {

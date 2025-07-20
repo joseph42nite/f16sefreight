@@ -22,7 +22,7 @@ Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
 // Route::get('/agent-info', [AirwayBill::class, 'get_agent']);
 // Route::get('test-route', [AirwayBill::class,'get_agent']);
 // Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
-Route::get('/test-route', [AirwayBill::class, 'testXmlFilegenerate']);
+Route::get('/test-route', [AirwayBill::class, 'sendXmlToDescartes']);
 Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
 Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf']);
 Route::get('download-multiple-both-page-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleWithBackAwbPdf']);

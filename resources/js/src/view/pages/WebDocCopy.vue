@@ -64,7 +64,6 @@
                                                                 <p @click="navigate" class="mb-0">
                                                                     {{ item.awb_code }}-{{ item.awb_no }} 
                                                                     ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
-                                                                    <!-- ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }}) -->
                                                                 </p>
                                                             </router-link>
                                                         </a>
@@ -2448,15 +2447,6 @@
                                                 <div style="display:flex;justify-content: end;line-height: 71px;align-self: center;width:100%" @click="isGeneratePdf(generateButton=0);"><img src="/media/custome/cross.png" alt="cross button" style="width:24px;height: 24px;cursor: pointer;"></div>
                                             </div>
                                             <div style="width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <!-- <div style="width:100%;">
-                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:22px;font-weight: 400;">To deliver a valid cargo document, the following changes were made:</p>
-                                                </div>
-                                                <div style="width:100%;">
-                                                    <ul>
-                                                        <li>Lorum ipsum</li>
-                                                        <li>Lorum ipsum</li>
-                                                    </ul>
-                                                </div> -->
                                                 <div style="width:100%;">
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:13px;font-weight: 400;margin: 0;">Airway bill message saved in database</p>
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">PDF documents prepared</p>
@@ -2486,14 +2476,10 @@
                                     </div>
                                     <div class="d-flex justify-content-end">
                                         <!-- <b-button class="mr-2" @click="generateAwbPDF" -->
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1);"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
-                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no);"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
-                                        <b-button class="mr-2"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
-                                        <b-button type="submit"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
+                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='pdf_generate';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
+                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no); form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
+                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no);form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
+                                        <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
                                     </div>
                                 </div>
                             </div>
@@ -2646,6 +2632,7 @@ export default {
                 is_shipper_address_save: false,
                 is_also_notify_address_save: false,
                 is_iata_login_later: false,
+                status:'',
             }),
             oci_info:{
                 country_code: '',
@@ -2944,8 +2931,6 @@ export default {
             this.lineCount = this.form.custom_origin.other_service_information.split(/\r?\n/).length;
         },
         isGeneratePdf(generateButton) {
-            // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
-            
             // Start the progress bar animation
             if(generateButton == 0 && this.is_generate_pdf == 1) {
                 this.is_generate_pdf = 0;
@@ -3182,16 +3167,14 @@ export default {
         //     })
         // },
         onSubmit() {
-            console.log('Current mode:', this.mode);
             this.main_error_msg='';
             // this.is_generate_pdf=0;
+            console.log(this.form.status);
             if (this.mode === 'add') {
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
-                    console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
@@ -3221,9 +3204,9 @@ export default {
                 }
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
+                    console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
@@ -3231,7 +3214,6 @@ export default {
                     } else {
                         console.error('ID is missing in response data');
                     }
-                    console.log('Update Successful:', response);
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
@@ -3408,14 +3390,6 @@ export default {
                     console.log("Add mode activated");
                 }
         },
-        // beforeRouteEnter(to, from) {
-        //     const awbId = to.params.id;
-        //     next(vm => {
-        //         if (awbId) {
-        //             vm.getAirWayBill(awbId);
-        //         }
-        //     });
-        // },
         handleEditNavigation(id) {
             this.$bvModal.hide('modal-s');
             const targetPath = `/edit-airway-bill/${id}`;

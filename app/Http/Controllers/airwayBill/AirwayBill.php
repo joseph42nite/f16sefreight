@@ -1104,7 +1104,7 @@ class AirwayBill extends Controller
     }
     public function sendXmlToDescartes()
     {
-        $fullPath = Storage::path('xml-conversion-files/message_1752994182.xml');
+        $fullPath = Storage::path('xml-conversion-files/message_1752994182111.xml');
         $username = config('common-data.descartes_username');
         $password = config('common-data.descartes_password');
 

@@ -1117,7 +1117,21 @@ class AirwayBill extends Controller
             return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'body' => $response->body()]);
         } else {
             $xml = simplexml_load_string($response->body());
-            echo $xml;
+            $data = [
+                'host' => (string) $xml->host,
+                'service' => (string) $xml->service,
+                'created' => (string) $xml->created,
+                'version' => (string) $xml->version,
+                'bytesReceived' => (int) $xml->bytesReceived,
+                'transaction_id' => (string) $xml->tid,
+                'error' => (string) $xml->error,
+                'errorDetail' => (string) $xml->errorDetail,
+            ];
+
+            return response()->json([
+                'status' => 'success',
+                'parsed' => $data,
+            ]);
         }
     }
     // ftp File transfer

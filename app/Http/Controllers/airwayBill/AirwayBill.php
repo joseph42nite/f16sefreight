@@ -1117,6 +1117,7 @@ class AirwayBill extends Controller
             return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'body' => $response->body()]);
         } else {
             $xml = simplexml_load_string($response->body());
+            return $xml;
             $data = [
                 'host' => (string) $xml->host,
                 'service' => (string) $xml->service,

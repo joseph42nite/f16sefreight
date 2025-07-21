@@ -1119,7 +1119,7 @@ class AirwayBill extends Controller
             $xml = simplexml_load_string($response->body());
             return response()->json([
                 'status' => 'success',
-                'parsed' => $xml,
+                'parsed' => $xml->tid,
             ]);
             $data = [
                 'host' => (string) $xml->host,

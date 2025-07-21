@@ -1113,11 +1113,11 @@ class AirwayBill extends Controller
             file_get_contents($fullPath),
             basename($fullPath)
         )->withBasicAuth($username, $password)->post('https://www.myvan.descartes.com/HttpUpload/SimpleUploadHandler.aspx');
-        if ($response->successful()) {
-            return response()->json(['status' => 'success', 'body' => $response->body()]);
-            // return $response->body();
-        } else {
+        if (!$response->successful()) {
             return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'body' => $response->body()]);
+        } else {
+            $xml = simplexml_load_string($response->body());
+            echo $xml;
         }
     }
     // ftp File transfer

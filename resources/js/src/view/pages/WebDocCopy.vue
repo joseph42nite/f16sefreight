@@ -2476,9 +2476,9 @@
                                     </div>
                                     <div class="d-flex justify-content-end">
                                         <!-- <b-button class="mr-2" @click="generateAwbPDF" -->
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='pdf_generate';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
-                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no); form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
-                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no);form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
+                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
+                                        <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
+                                        <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
                                         <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
                                     </div>
                                 </div>
@@ -2972,6 +2972,7 @@ export default {
         //     window.open(pdfUrl, '_blank');
         // },
         generateAwbPDF(pdf_generate_type) {
+            this.generatePDFAfterSave='';
             if (!this.existingData || !this.existingData.id) {
                 console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
@@ -2984,7 +2985,6 @@ export default {
             const result = this.onSubmit() || Promise.resolve({});
             result.then(response => {
                 if (response.data && response.data.data && response.data.data.id) {
-                    // this.generateAwbPDF(pdf_generate_type);
                 } else {
                     console.error('ID is missing in the response data');
                 }
@@ -3017,18 +3017,7 @@ export default {
         mouseleave: function () {
             this.isOpen = false;
         },
-        converXml(awb_no){
-            ApiService.get(`/user/waybill/${awb_no}`)
-                .then(({ data }) => {
-                    console.log(data);
-                });
-        },
-        // showModal() {
-        //     this.$refs["my-modal"].show();
-        // },
-        // hideModal() {
-        //     this.$refs["my-modal"].hide();
-        // },
+
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3160,16 +3149,10 @@ export default {
                 };
             }
         },
-        // onSubmit(evt) {
-        //     evt.preventDefault();
-        //     this.form.post(`/create-webdoc`).then(response => {
-        //         console.log(response);
-        //     })
-        // },
+
         onSubmit() {
             this.main_error_msg='';
-            // this.is_generate_pdf=0;
-            console.log(this.form.status);
+            console.log(this.form.status +" hello");
             if (this.mode === 'add') {
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
@@ -4347,7 +4330,6 @@ export default {
         this.allAirwayBill();
         this.getOCIData();
         this.onSubmit = this.onSubmit.bind(this);
-        // this.handleSaveAndGeneratePDF = this.handleSaveAndGeneratePDF.bind(this);
     },
     computed: {
         ...mapGetters({ current_user: "currentUser"}),

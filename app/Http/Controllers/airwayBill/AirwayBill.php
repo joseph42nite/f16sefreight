@@ -1121,21 +1121,16 @@ class AirwayBill extends Controller
                 'status' => 'success',
                 'parsed' => $xml,
             ]);
-            $data = [
-                'host' => (string) $xml->host,
-                'service' => (string) $xml->service,
-                'created' => (string) $xml->created,
-                'version' => (string) $xml->version,
-                'bytesReceived' => (int) $xml->bytesReceived,
-                'transaction_id' => (string) $xml->tid,
-                'error' => (string) $xml->error,
-                'errorDetail' => (string) $xml->errorDetail,
-            ];
-
-            return response()->json([
-                'status' => 'success',
-                'parsed' => $data,
-            ]);
+            // $data = [
+            //     'host' => (string) $xml->host,
+            //     'service' => (string) $xml->service,
+            //     'created' => (string) $xml->created,
+            //     'version' => (string) $xml->version,
+            //     'bytesReceived' => (int) $xml->bytesReceived,
+            //     'transaction_id' => (string) $xml->tid,
+            //     'error' => (string) $xml->error,
+            //     'errorDetail' => (string) $xml->errorDetail,
+            // ];
         }
     }
     // ftp File transfer

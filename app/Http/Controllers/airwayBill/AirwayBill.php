@@ -17,11 +17,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\ConversionController;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SFTP;
 
 class AirwayBill extends Controller
 {
+    protected $conversionController;
+
+    public function __construct(ConversionController $conversionController)
+    {
+        $this->conversionController = $conversionController;
+    }
+
     public function get_agent()
     {
         $user = auth()->guard('user-api')->user();
@@ -778,9 +786,12 @@ class AirwayBill extends Controller
 
         //for status update
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
-        AirwayBills::where(['id' => $awb_id])->update(['status' => $request->status]);
+        $status = $request->status;
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        if ($status == 'send') {
+            $response=$this->conversionController->WayBillConversion($awb_id);
+        }
         return response()->json(['data' => $main_return_data]);
-        // return json_encode($main_return_data);
     }
 
     public function update(Request $request, $id, $awb_no = null)
@@ -886,7 +897,7 @@ class AirwayBill extends Controller
         return response()->json($airwayBill, 200);
     }
 
-    public function getAllawb()
+    public function getAirwayBills($status)
     {
         $user = auth()->guard('user-api')->user();
         if (!$user) {
@@ -900,7 +911,7 @@ class AirwayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->where('agent_id', $agentId)->orderBy('created_at', 'desc')
+        ])->where('agent_id', $agentId)->where('status', $status)->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
         if ($airwayBill->isEmpty()) {
@@ -1067,73 +1078,6 @@ class AirwayBill extends Controller
             return response()->json(null, 404);
         }
     }
-
-    //    SFTP file transfer 
-    public function testXmlFilegenerate()
-    {
-        $xml_code = '<ns2:MessageHeaderDocument>
-        <ID>123-12345678_1740419426</ID>
-        <Name>Air Waybill</Name>
-        <TypeCode>740</TypeCode>
-        <IssueDateTime>2025-02-24 17:50:26</IssueDateTime>
-        <PurposeCode>Creation</PurposeCode>
-        <VersionID>5.00</VersionID>
-        <SenderParty>
-        <PrimaryID schemeID="P">REUAGT82INKN/BLR01</PrimaryID>
-        </SenderParty>
-        <SenderParty>
-        <PrimaryID schemeID="C">KUEHNENAGELAGT</PrimaryID>
-        </SenderParty>
-        <RecipientParty>
-        <PrimaryID schemeID="P">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        <RecipientParty>
-        <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        </ns2:MessageHeaderDocument>';
-
-        // Generate File Name & Path
-        $xml_file_name = 'message_' . time() . '.xml';
-        Storage::put('xml-conversion-files/' . $xml_file_name, $xml_code);
-
-        return response()->json([
-            'message' => 'XML file generated and saved',
-            'path' => storage_path('app/xml-conversion-files/' . $xml_file_name),
-        ]);
-
-    }
-    public function sendXmlToDescartes()
-    {
-        $fullPath = Storage::path('xml-conversion-files/message_1752994182111.xml');
-        $username = config('common-data.descartes_username');
-        $password = config('common-data.descartes_password');
-
-        $response = Http::attach(
-            'file',
-            file_get_contents($fullPath),
-            basename($fullPath)
-        )->withBasicAuth($username, $password)->post('https://www.myvan.descartes.com/HttpUpload/SimpleUploadHandler.aspx');
-        if (!$response->successful()) {
-            return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'body' => $response->body()]);
-        } else {
-            $xml = simplexml_load_string($response->body());
-            return response()->json([
-                'status' => 'success',
-                'parsed' => $xml,
-            ]);
-            // $data = [
-            //     'host' => (string) $xml->host,
-            //     'service' => (string) $xml->service,
-            //     'created' => (string) $xml->created,
-            //     'version' => (string) $xml->version,
-            //     'bytesReceived' => (int) $xml->bytesReceived,
-            //     'transaction_id' => (string) $xml->tid,
-            //     'error' => (string) $xml->error,
-            //     'errorDetail' => (string) $xml->errorDetail,
-            // ];
-        }
-    }
-    // ftp File transfer
 
     public function sendFileToServerFTP($local_file_path, $remote_file_name)
     {

@@ -12,6 +12,9 @@ use App\OtherCharge;
 use App\OtherCustomInformation;
 use App\Ams;
 use App\Airline;
+
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use DOMDocument;
 
@@ -560,8 +563,11 @@ class ConversionController extends Controller
         $xml->appendChild($waybill);
 
         // Prepare response as an XML download
-        return response($xml->saveXML(), 200)
-            ->header('Content-Type', 'application/xml');
+        $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
+        Storage::put('xml-conversion-files/' . $xml_file_name, $xml_code);
+        $send_response = $this->sendXmlToDescartes($xml_file_name);
+        return $send_response;
+        // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
 
     public function HouseWayBillConversion($hawb_no = '57HOUSE10')
@@ -1736,5 +1742,37 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
+    }
+
+    public function sendXmlToDescartes($xml_file_name)
+    {
+        $fullPath = Storage::path("xml-conversion-files/$xml_file_name");
+        $username = config('common-data.descartes_username');
+        $password = config('common-data.descartes_password');
+
+        $response = Http::attach(
+            'file',
+            file_get_contents($fullPath),
+            basename($fullPath)
+        )->withBasicAuth($username, $password)->post(config('common-data.descartes_upload_url'));
+        if (!$response->successful()) {
+            return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'data' => $response->body()]);
+        } else {
+            $xml = simplexml_load_string($response->body());
+            return response()->json([
+                'status' => 'success',
+                'data' => $xml,
+            ]);
+            // $data = [
+            //     'host' => (string) $xml->host,
+            //     'service' => (string) $xml->service,
+            //     'created' => (string) $xml->created,
+            //     'version' => (string) $xml->version,
+            //     'bytesReceived' => (int) $xml->bytesReceived,
+            //     'transaction_id' => (string) $xml->tid,
+            //     'error' => (string) $xml->error,
+            //     'errorDetail' => (string) $xml->errorDetail,
+            // ];
+        }
     }
 }

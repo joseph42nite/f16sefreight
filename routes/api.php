@@ -67,7 +67,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
     Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
     Route::get('/get-alsonotify-address', [AirwayBill::class, 'getAlsoNotifyAddress']);
-    Route::get('/all-airway-bill', [AirwayBill::class, 'getAllawb']);
+    Route::get('/get-airway-bills/{status}', [AirwayBill::class, 'getAirwayBills']);
     Route::put('/update-airway-bill/{id}', [AirwayBill::class, 'update']);
     Route::get('/airway-bill/{id}', [AirwayBill::class, 'show']);
     Route::get('/get-awbcode-prefix/{code}', [AirwayBill::class, 'getAwbPrefixData']);

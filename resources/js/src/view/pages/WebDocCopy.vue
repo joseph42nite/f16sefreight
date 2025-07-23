@@ -29,24 +29,37 @@
                                 </b-col>
                                 <b-col cols="6">
                                     <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                        <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                        id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
-                                        <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                        id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
+                                        <b-button @click.prevent="getAirwayBills('draft')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
+                                        <b-button @click.prevent="getAirwayBills('send')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
                                 <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
                                     <div class="d-block">
-                                        <b-row class="mt-5">
-                                            <b-col cols="auto">
-                                                <a href="" class="custom-link">none</a>
-                                                <h6>( - )</h6>
-                                            </b-col>
-                                            <b-col cols="auto">
-                                                <a href="" class="custom-link">Edit e-AWB Data</a>
-                                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                                <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
+                                        <b-row>
+                                            <b-col>
+                                                <div v-for="item in data_items" :key="item.id">
+                                                    <div v-if="item.awb_no && item.awb_code" class="py-2">
+                                                        <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(item.id)">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                <p @click="navigate" class="mb-0">
+                                                                    {{ item.awb_code }}-{{ item.awb_no }} 
+                                                                    ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
+                                                                </p>
+                                                            </router-link>
+                                                        </a>
+                                                        <div class="d-flex flex-row justify-content-start">
+                                                            <div class="px-2">
+                                                                <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                        <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                                                    </router-link>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <!-- <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p> -->
+                                                    </div>
+                                                </div>
                                             </b-col>
                                         </b-row>
                                     </div>
@@ -93,7 +106,7 @@
                                                                 </a>
                                                             </div>
                                                         </div>
-                                                        <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                        <!-- <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p> -->
                                                     </div>
                                                 </div>
                                             </b-col>
@@ -3236,8 +3249,8 @@ export default {
         //     }
         // },
 
-        allAirwayBill() {
-            ApiService.get('/user/all-airway-bill')
+        getAirwayBills(status) {
+            ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;
                 })
@@ -4178,7 +4191,6 @@ export default {
     mounted(){
         // this.setDefaultValues();
         this.calculateTotalVolume();
-        this.allAirwayBill();
         window.addEventListener('click', this.closeDropdown_to);
         window.addEventListener('click', this.closeDropdown_to2);
         window.addEventListener('click', this.closeDropdown_to3);
@@ -4327,7 +4339,6 @@ export default {
             this.isEdit = true;
             this.getAirWayBill(id);
         }
-        this.allAirwayBill();
         this.getOCIData();
         this.onSubmit = this.onSubmit.bind(this);
     },

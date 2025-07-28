@@ -564,7 +564,7 @@ class ConversionController extends Controller
 
         // Prepare response as an XML download
         $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
-        Storage::put('xml-conversion-files/' . $xml_file_name, $xml_code);
+        Storage::put('xml-conversion-files/' . $xml_file_name, $xml);
         $send_response = $this->sendXmlToDescartes($xml_file_name);
         return $send_response;
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');

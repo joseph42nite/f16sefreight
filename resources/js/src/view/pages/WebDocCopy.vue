@@ -3165,7 +3165,6 @@ export default {
 
         onSubmit() {
             this.main_error_msg='';
-            console.log(this.form.status +" hello");
             if (this.mode === 'add') {
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
@@ -3253,6 +3252,7 @@ export default {
             ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;
+                    console.log(response);
                 })
                 .catch(error => {
                     console.error("Failed to fetch items:", error);

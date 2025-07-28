@@ -29,7 +29,6 @@ class AirwayBill extends Controller
     {
         $this->conversionController = $conversionController;
     }
-
     public function get_agent()
     {
         $user = auth()->guard('user-api')->user();
@@ -380,7 +379,6 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Routing Information saved successfull";
     }
-
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
         $user = auth()->guard('user-api')->user();
@@ -501,7 +499,6 @@ class AirwayBill extends Controller
         }
         return "Other Charges Data saved successfully";
     }
-
     private function paymentInformation($awb_no, $awb_code, $payment_info)
     {
         $user = auth()->guard('user-api')->user();
@@ -579,7 +576,6 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Payment Information save successfully";
     }
-
     private function otherCustomInformation($awb_no, $awb_code, $oci_entries)
     {
         $user = auth()->guard('user-api')->user();
@@ -788,12 +784,12 @@ class AirwayBill extends Controller
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         $status = $request->status;
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        $send_response = [];
         if ($status == 'send') {
-            $response=$this->conversionController->WayBillConversion($awb_id);
+            $send_response = $this->conversionController->WayBillConversion($awb_id);
         }
-        return response()->json(['data' => $main_return_data]);
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
-
     public function update(Request $request, $id, $awb_no = null)
     {
         $main_return_data = [];
@@ -875,11 +871,15 @@ class AirwayBill extends Controller
         }
 
         //for status update
+        $status=$request->status;
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
-        AirwayBills::where(['id' => $awb_id])->update(['status' => $request->status]);
-        return response()->json(['data' => $main_return_data]);
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->WayBillConversion($awb_id);
+        }
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
-
     public function show($id)
     {
         $airwayBill = AirwayBills::with([
@@ -896,7 +896,6 @@ class AirwayBill extends Controller
         }
         return response()->json($airwayBill, 200);
     }
-
     public function getAirwayBills($status)
     {
         $user = auth()->guard('user-api')->user();
@@ -944,7 +943,6 @@ class AirwayBill extends Controller
         }
         return response()->json(['msg' => 'No error'], 200);
     }
-
     public function getShippers(Request $request)
     {
         $user = auth()->guard('user-api')->user();
@@ -1063,7 +1061,6 @@ class AirwayBill extends Controller
             ]);
         }
     }
-
     public function getAwbPrefixData($code)
     {
         $awbDetails = Airline::where('prefix', $code)->first();
@@ -1078,7 +1075,6 @@ class AirwayBill extends Controller
             return response()->json(null, 404);
         }
     }
-
     public function sendFileToServerFTP($local_file_path, $remote_file_name)
     {
         // FTP Credentials

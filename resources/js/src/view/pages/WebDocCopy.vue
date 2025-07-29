@@ -3168,6 +3168,7 @@ export default {
             if (this.mode === 'add') {
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
+                    console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {

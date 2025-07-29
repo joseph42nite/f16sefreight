@@ -561,10 +561,9 @@ class ConversionController extends Controller
 
         // Append to the root element
         $xml->appendChild($waybill);
-
         // Prepare response as an XML download
         $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
-        Storage::put('xml-conversion-files/' . $xml_file_name, $xml);
+        Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
         $send_response = $this->sendXmlToDescartes($xml_file_name);
         return $send_response;
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
@@ -1759,9 +1758,10 @@ class ConversionController extends Controller
             return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'data' => $response->body()]);
         } else {
             $xml = simplexml_load_string($response->body());
+            $response_data = json_decode(json_encode($xml), true);
             return response()->json([
                 'status' => 'success',
-                'data' => $xml,
+                'data' => $response_data,
             ]);
             // $data = [
             //     'host' => (string) $xml->host,

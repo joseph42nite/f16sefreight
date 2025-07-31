@@ -58,25 +58,25 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('SenderParty');
-        $senderParty1->appendChild($xml->createElement('PrimaryID', 'REUAGT82INKN/BLR01'));
+        $senderParty1->appendChild($xml->createElement('PrimaryID', 'TDVAGT03BASTEST/BOM1'));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 
-        $senderParty2 = $xml->createElement('SenderParty');
-        $senderParty2->appendChild($xml->createElement('PrimaryID', 'KUEHNENAGELAGT'));
-        $senderParty2->firstChild->setAttribute('schemeID', 'C');
-        $messageHeaderDocument->appendChild($senderParty2);
+        // $senderParty2 = $xml->createElement('SenderParty');
+        // $senderParty2->appendChild($xml->createElement('PrimaryID', 'KUEHNENAGELAGT'));
+        // $senderParty2->firstChild->setAttribute('schemeID', 'C');
+        // $messageHeaderDocument->appendChild($senderParty2);
 
         // RecipientParty
         $recipientParty1 = $xml->createElement('RecipientParty');
-        $recipientParty1->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
+        $recipientParty1->appendChild($xml->createElement('PrimaryID', 'TDVSYS03GLNUNADDR'));
         $recipientParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($recipientParty1);
 
-        $recipientParty2 = $xml->createElement('RecipientParty');
-        $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
-        $recipientParty2->firstChild->setAttribute('schemeID', 'C');
-        $messageHeaderDocument->appendChild($recipientParty2);
+        // $recipientParty2 = $xml->createElement('RecipientParty');
+        // $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
+        // $recipientParty2->firstChild->setAttribute('schemeID', 'C');
+        // $messageHeaderDocument->appendChild($recipientParty2);
 
         // Business Header Document
         $businessHeaderDocument = $xml->createElement('ns2:BusinessHeaderDocument');

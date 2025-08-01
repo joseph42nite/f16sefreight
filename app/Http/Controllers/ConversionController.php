@@ -62,21 +62,11 @@ class ConversionController extends Controller
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 
-        // $senderParty2 = $xml->createElement('SenderParty');
-        // $senderParty2->appendChild($xml->createElement('PrimaryID', 'KUEHNENAGELAGT'));
-        // $senderParty2->firstChild->setAttribute('schemeID', 'C');
-        // $messageHeaderDocument->appendChild($senderParty2);
-
         // RecipientParty
         $recipientParty1 = $xml->createElement('RecipientParty');
         $recipientParty1->appendChild($xml->createElement('PrimaryID', 'TDVSYS03GLNUNADDR'));
         $recipientParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($recipientParty1);
-
-        // $recipientParty2 = $xml->createElement('RecipientParty');
-        // $recipientParty2->appendChild($xml->createElement('PrimaryID', 'REUAIR08AFR'));
-        // $recipientParty2->firstChild->setAttribute('schemeID', 'C');
-        // $messageHeaderDocument->appendChild($recipientParty2);
 
         // Business Header Document
         $businessHeaderDocument = $xml->createElement('ns2:BusinessHeaderDocument');

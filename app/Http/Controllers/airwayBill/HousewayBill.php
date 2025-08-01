@@ -30,11 +30,13 @@ class HousewayBill extends Controller
         // $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         // return json_encode($data);
     }
-    public function getCountry(){
+    public function getCountry()
+    {
         $countries = config('country');
         return response()->json($countries);
     }
-    public function getOtherCharges(){
+    public function getOtherCharges()
+    {
         $other_charge_code = config('info_identifier.Other_charge');
         return response()->json($other_charge_code);
     }
@@ -52,7 +54,7 @@ class HousewayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($shipper_address, [
@@ -75,7 +77,7 @@ class HousewayBill extends Controller
         }
         //for update
         $WayBillAddress = WayBillAddress::where('awb_id', $hawb_no)->first();
-        if(!empty($WayBillAddress)){
+        if (!empty($WayBillAddress)) {
             $WayBillAddress->awb_id = $hawb_no;
             $WayBillAddress->ship_name = $shipper_address['ship_name'];
             $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
@@ -120,8 +122,8 @@ class HousewayBill extends Controller
         //insert address if saved button checked
         if ($is_shipper_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
-            if(!empty($hawb_no)){
-                 $SavedAddress->awb_id = $hawb_no;
+            if (!empty($hawb_no)) {
+                $SavedAddress->awb_id = $hawb_no;
                 $SavedAddress->user_id = $agent->id ?? null;
                 $SavedAddress->address_type = 'shipper_address';
                 $SavedAddress->name = $shipper_address['ship_name'];
@@ -327,7 +329,7 @@ class HousewayBill extends Controller
             $HousewayBill->awb_code = $first_box['awb_code'];
             $HousewayBill->agent_id = $agent->id ?? null;
             $HousewayBill->save();
-    
+
             return response()->json([
                 'message' => 'First box updated successfully',
                 'data' => $HousewayBill
@@ -340,7 +342,7 @@ class HousewayBill extends Controller
             $HousewayBill->awb_code = $first_box['awb_code'];
             $HousewayBill->agent_id = $agent->id ?? null;
             $HousewayBill->save();
-    
+
             return response()->json([
                 'message' => 'First box created successfully',
                 'data' => $HousewayBill
@@ -380,7 +382,7 @@ class HousewayBill extends Controller
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);
-        if(!empty($hawb_no)){
+        if (!empty($hawb_no)) {
             $HousewayBills->id = $hawb_no;
             $HousewayBills->departure_airport = $routing_information['departure_airport'];
             $HousewayBills->destination_airport = $routing_information['destination_airport'];
@@ -406,29 +408,29 @@ class HousewayBill extends Controller
                 'data' => $HousewayBills
             ], 200);
         }
-      
+
         if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
-       $HousewayBills->departure_airport = $routing_information['departure_airport'];
-       $HousewayBills->destination_airport = $routing_information['destination_airport'];
-       $HousewayBills->from = $routing_information['departure_airport'];
-       $HousewayBills->to = $routing_information['to'];
-       $HousewayBills->by = $routing_information['by'];
-       $HousewayBills->flight = $routing_information['flight'];
-       $HousewayBills->date = $routing_information['date'];
-       $HousewayBills->to_2 = $routing_information['to_2'];
-       $HousewayBills->by_2 = $routing_information['by_2'];
-       $HousewayBills->flight_2 = $routing_information['flight_2'];
-       $HousewayBills->date_2 = $routing_information['date_2'];
-       $HousewayBills->to_3 = $routing_information['to_3'];
-       $HousewayBills->by_3 = $routing_information['by_3'];
-       $HousewayBills->flight_3 = $routing_information['flight_3'];
-       $HousewayBills->date_3 = $routing_information['date_3'];
-       $HousewayBills->master_origin = $routing_information['master_origin'];
-       $HousewayBills->master_destination = $routing_information['master_destination'];
-       $HousewayBills->agent_id = $agent->id ?? null;
-       //    dd($HousewayBills);die;
-       $HousewayBills->save();
+        $HousewayBills->departure_airport = $routing_information['departure_airport'];
+        $HousewayBills->destination_airport = $routing_information['destination_airport'];
+        $HousewayBills->from = $routing_information['departure_airport'];
+        $HousewayBills->to = $routing_information['to'];
+        $HousewayBills->by = $routing_information['by'];
+        $HousewayBills->flight = $routing_information['flight'];
+        $HousewayBills->date = $routing_information['date'];
+        $HousewayBills->to_2 = $routing_information['to_2'];
+        $HousewayBills->by_2 = $routing_information['by_2'];
+        $HousewayBills->flight_2 = $routing_information['flight_2'];
+        $HousewayBills->date_2 = $routing_information['date_2'];
+        $HousewayBills->to_3 = $routing_information['to_3'];
+        $HousewayBills->by_3 = $routing_information['by_3'];
+        $HousewayBills->flight_3 = $routing_information['flight_3'];
+        $HousewayBills->date_3 = $routing_information['date_3'];
+        $HousewayBills->master_origin = $routing_information['master_origin'];
+        $HousewayBills->master_destination = $routing_information['master_destination'];
+        $HousewayBills->agent_id = $agent->id ?? null;
+        //    dd($HousewayBills);die;
+        $HousewayBills->save();
         return "Routing Information saved successfull";
     }
     private function consignmentInformation($hawb_no, $entries)
@@ -590,32 +592,32 @@ class HousewayBill extends Controller
             // 'total_charges' => 'required|numeric|min:0.000|max:999999999999',
             'currency' => 'nullable|string|size:3',
             'declear_value_carriage' => [
-                'required', 
+                'required',
                 function ($attribute, $value, $fail) {
                     if (!is_numeric($value) && $value !== 'NVD') {
-                        $fail($attribute.' must be a number or "NVD".');
+                        $fail($attribute . ' must be a number or "NVD".');
                     } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
-                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                        $fail($attribute . ' must be a number between 0.000 and 999999999999.');
                     }
                 }
             ],
             'declear_value_customs' => [
-                'required', 
+                'required',
                 function ($attribute, $value, $fail) {
                     if (!is_numeric($value) && $value !== 'NCV') {
-                        $fail($attribute.' must be a number or "NCV".');
+                        $fail($attribute . ' must be a number or "NCV".');
                     } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
-                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                        $fail($attribute . ' must be a number between 0.000 and 999999999999.');
                     }
                 }
             ],
             'declear_value_insurance' => [
-                'required', 
+                'required',
                 function ($attribute, $value, $fail) {
                     if (!is_numeric($value) && $value !== 'XXX') {
-                        $fail($attribute.' must be a number or "XXX".');
+                        $fail($attribute . ' must be a number or "XXX".');
                     } elseif (is_numeric($value) && ($value < 0 || $value > 999999999999)) {
-                        $fail($attribute.' must be a number between 0.000 and 999999999999.');
+                        $fail($attribute . ' must be a number between 0.000 and 999999999999.');
                     }
                 }
             ],
@@ -624,8 +626,8 @@ class HousewayBill extends Controller
             'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
             'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999',
         ]);
-       
-        
+
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -637,9 +639,9 @@ class HousewayBill extends Controller
         $HousewayBills->type_of_payment = $payment_info['type_of_payment'];
         // $HousewayBills->total_charges = $payment_info['total_charges'];
         $HousewayBills->currency = $payment_info['currency'];
-        $HousewayBills->declear_value_carriage =  $payment_info['declear_value_carriage'] ?? null;
-        $HousewayBills->declear_value_customs =  $payment_info['declear_value_customs'] ?? null;
-        $HousewayBills->declear_value_insurance =  $payment_info['declear_value_insurance'] ?? null;
+        $HousewayBills->declear_value_carriage = $payment_info['declear_value_carriage'] ?? null;
+        $HousewayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? null;
+        $HousewayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? null;
         $HousewayBills->weight_charge = $payment_info['weight_charge'];
         $HousewayBills->taxes = $payment_info['taxes'] ?? null;
         $HousewayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'] ?? null;
@@ -660,15 +662,18 @@ class HousewayBill extends Controller
         $agent = Agent::where('id', $branch_name)->first();
 
         foreach ($oci_entries as $oci_entry) {
-            $validator = Validator::make($oci_entry, [
-                'country_code' => 'required|string|max:2',
-                'info_identifier' => 'required|string|max:3',
-                'custom_info_identifier' => 'nullable|string|max:2',
-                'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
-            ],[
-                'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
-            ]
-        );
+            $validator = Validator::make(
+                $oci_entry,
+                [
+                    'country_code' => 'required|string|max:2',
+                    'info_identifier' => 'required|string|max:3',
+                    'custom_info_identifier' => 'nullable|string|max:2',
+                    'supplementary_info' => 'required|string|max:70|regex:/^[a-zA-Z0-9\s\-]+$/',
+                ],
+                [
+                    'supplementary_info.regex' => 'Supplementary information may consist of a-z, 0-9, hyphen.',
+                ]
+            );
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
@@ -727,16 +732,16 @@ class HousewayBill extends Controller
                 'message' => 'Toatl Amount and Total Volume updated successfully',
                 'data' => $HousewayBills
             ], 200);
-        }else{
-        // if (!isset($HousewayBills))
+        } else {
+            // if (!isset($HousewayBills))
             $HousewayBills = new HousewayBills();
-        $HousewayBills->total_volume = $totals['total_volume'];
-        $HousewayBills->total_amount = $totals['total_amount'];
-        $HousewayBills->master_pcs = $totals['master_pcs'];
-        $HousewayBills->master_weight = $totals['master_weight'];
-        $HousewayBills->dimention_unit = $totals['dimention_unit'] ?? null;
-        $HousewayBills->agent_id = $agent->id ?? null;
-        $HousewayBills->save();
+            $HousewayBills->total_volume = $totals['total_volume'];
+            $HousewayBills->total_amount = $totals['total_amount'];
+            $HousewayBills->master_pcs = $totals['master_pcs'];
+            $HousewayBills->master_weight = $totals['master_weight'];
+            $HousewayBills->dimention_unit = $totals['dimention_unit'] ?? null;
+            $HousewayBills->agent_id = $agent->id ?? null;
+            $HousewayBills->save();
         }
         return "Toatl Amount and Total Volume saved successfull";
     }
@@ -779,7 +784,7 @@ class HousewayBill extends Controller
         $handlingCode->save();
         return response()->json(['message' => "Special Handling Codes saved successfully."]);
     }
-    
+
     public function store(Request $request)
     {
         $main_return_data = [];
@@ -977,7 +982,8 @@ class HousewayBill extends Controller
         return response()->json(['data' => $main_return_data]);
     }
 
-    public function show($id){
+    public function show($id)
+    {
         $housewayBill = HousewayBills::with([
             'paymentInfo',
             'wayBillAddress',
@@ -992,7 +998,8 @@ class HousewayBill extends Controller
         return response()->json($housewayBill, 200);
     }
 
-    public function getAllHawb(){
+    public function getAllHawb($status)
+    {
         $user = auth()->guard('user-api')->user();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
@@ -1006,15 +1013,15 @@ class HousewayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->where('agent_id', $agentId)->orderBy('created_at', 'desc')
-        ->limit(10)
-        ->get();
+        ])->where('agent_id', $agentId)->where('status', $status)->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
         if ($housewayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }
         return response()->json($housewayBill, 200);
-    } 
-    
+    }
+
     public function getShippers(Request $request)
     {
         $user = auth()->guard('user-api')->user();
@@ -1037,7 +1044,7 @@ class HousewayBill extends Controller
             return response()->json(['error' => 'Address not found'], 404);
         }
         $userId = $agenData->user_id;
-    
+
         $query = SavedAddress::where('user_id', $userId);
         if ($addressId) {
             $query->where('id', $addressId);
@@ -1045,7 +1052,7 @@ class HousewayBill extends Controller
             $query->where('address_type', $addressType);
         }
         $address = $query->first();
-    
+
         if ($address) {
             return response()->json([
                 'ship_name' => $address->name,

@@ -93,7 +93,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
 
     Route::put('/update-houseway-bill/{id}', [HousewayBill::class, 'update']);
     Route::get('/houseway-bill/{id}', [HousewayBill::class, 'show']);
-    Route::get('/all-houseway-bill', [HousewayBill::class, 'getAllHawb']);
+    Route::get('/all-houseway-bill/{status}', [HousewayBill::class, 'getAllHawb']);
 
     Route::get('/get-shippers', [HousewayBill::class, 'getShippers']);
     Route::get('/get-shipper-address', [HousewayBill::class, 'getShipperAddress']);

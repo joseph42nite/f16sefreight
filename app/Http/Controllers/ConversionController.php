@@ -36,20 +36,19 @@ class ConversionController extends Controller
 
         //update refrance id
         // AirwayBills::where([['id', $awb_id]])->update(['reference_id', $time]);
-
+        // replacing ns2 -> rsm
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
 
         // Create root element
-        // replacing ns2 -> rsm
         $waybill = $xml->createElementNS('iata:waybill:1', 'rsm:Waybill');
-        $waybill->setAttribute('xmlns:ram', 'iata:datamodel:5');
+        $waybill->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->setAttribute('xmlns:rsm', 'iata:waybill:1');
 
         // Message Header Document
         $messageHeaderDocument = $xml->createElement('rsm:MessageHeaderDocument');
-        $messageHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:5');
+        // $messageHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($messageHeaderDocument);
         $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('ram:Name', 'Air Waybill'));
@@ -72,7 +71,7 @@ class ConversionController extends Controller
 
         // Business Header Document
         $businessHeaderDocument = $xml->createElement('rsm:BusinessHeaderDocument');
-        $businessHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:5');
+        $businessHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($businessHeaderDocument);
 
         $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
@@ -585,7 +584,7 @@ class ConversionController extends Controller
 
         // Create root element
         $housewaybill = $xml->createElementNS('iata:housewaybill:1', 'rsm:HouseWaybill');
-        $housewaybill->setAttribute('xmlns', 'iata:datamodel:5');
+        $housewaybill->setAttribute('xmlns', 'iata:datamodel:3');
         $housewaybill->setAttribute('xmlns:rsm', 'iata:housewaybill:1');
 
         // Message Header Document
@@ -1153,7 +1152,7 @@ class ConversionController extends Controller
         // Create root element
         $generic_request = $xml->createElementNS('iata:GenericRequest:1', 'rsm:GenericRequest');
         $generic_request->setAttribute('xmlns:rsm', 'iata:GenericRequest:1');
-        $generic_request->setAttribute('xmlns', 'iata:datamodel:5');
+        $generic_request->setAttribute('xmlns', 'iata:datamodel:3');
 
         // Message Header Document
         $messageHeaderDocument = $xml->createElement('rsm:MessageHeaderDocument');
@@ -1399,7 +1398,7 @@ class ConversionController extends Controller
 
         // Create root element
         $direct_data = $xml->createElementNS('iata:directdataexchange:1', 'rsm:DirectDataExchange');
-        $direct_data->setAttribute('xmlns', 'iata:datamodel:5');
+        $direct_data->setAttribute('xmlns', 'iata:datamodel:3');
         $direct_data->setAttribute('xmlns:rsm', 'iata:directdataexchange:1');
 
         // Message Header Document

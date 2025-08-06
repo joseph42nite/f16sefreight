@@ -53,9 +53,9 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('ram:Name', 'Air Waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', '740'));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('ram:PurposeCode', 'Creation'));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '5.00'));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '3.00'));
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
@@ -119,7 +119,7 @@ class ConversionController extends Controller
             $masterConsignment->appendChild($xml->createElement('ram:NilInsuranceValueIndicator', 'false'));
             $masterConsignment->appendChild($xml->createElement('ram:InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
-        $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment']));
+        $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
         $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
@@ -420,7 +420,7 @@ class ConversionController extends Controller
 
         if ($payment_details['type_of_payment']) {
             $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
-            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment']));
+            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment'] == 'PP' ? true : false));
             if ($consignment_data['service_code'])
                 $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:ServiceTypeCode', $consignment_data['service_code']));
             $masterConsignment->appendChild($ApplicableLogisticsServiceCharge);
@@ -534,12 +534,12 @@ class ConversionController extends Controller
         // Applicable Total Rating
         $applicableTotalRating = $xml->createElement('ram:ApplicableTotalRating');
         $applicableTotalRating->appendChild($xml->createElement('ram:TypeCode', 'F'));
-        if ($payment_details['type_of_payment'] == 'P')
+        if ($payment_details['type_of_payment'] == 'PP')
             $prepaid_collect_text = "prepaid";
         else
             $prepaid_collect_text = "collect";
         $applicablePrepaidCollectMonetarySummation = $xml->createElement('ram:ApplicablePrepaidCollectMonetarySummation');
-        $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:PrepaidIndicator', $payment_details['type_of_payment']));
+        $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:PrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
         $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:WeightChargeTotalAmount', $payment_details['weight_charge']))->setAttribute('currencyID', $payment_details['currency']);
         if ($payment_details['taxes'])
             $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:TaxTotalAmount', $payment_details['taxes']))->setAttribute('currencyID', $payment_details['currency']);
@@ -593,7 +593,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $house_data['id'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'House waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '703'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -676,7 +676,7 @@ class ConversionController extends Controller
             $IncludedHouseConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'false'));
             $IncludedHouseConsignment->appendChild($xml->createElement('InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
-        $IncludedHouseConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment']));
+        $IncludedHouseConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
         $IncludedHouseConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $IncludedHouseConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
@@ -1160,7 +1160,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $main_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Query'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '21'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Request'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -1254,7 +1254,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id'] . '_' . $waybill_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Cargo Manifest'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '785'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '3.00'));
 
@@ -1407,7 +1407,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Invoicing data sheet'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '130'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '2.00'));
 
@@ -1571,7 +1571,7 @@ class ConversionController extends Controller
         $TypeCode->setAttribute('listID', 1001);
         $TypeCode->setAttribute('listVersionID', 'D09A');
         $messageHeaderDocument->appendChild($TypeCode);
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '1.00'));
 

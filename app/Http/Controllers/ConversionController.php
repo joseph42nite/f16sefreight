@@ -32,6 +32,7 @@ class ConversionController extends Controller
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
 
         $utc_current_date = gmdate("Y-m-d H:i:s");
+        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         //update refrance id
@@ -53,7 +54,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
         $messageHeaderDocument->appendChild($xml->createElement('ram:Name', 'Air Waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', '740'));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('ram:PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '3.00'));
 
@@ -556,8 +557,9 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
         Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
-        $send_response = $this->sendXmlToDescartes($xml_file_name);
-        return $send_response;
+        // $send_response = $this->sendXmlToDescartes($xml_file_name);
+        // return $send_response;
+        return "hello check";
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
 
@@ -573,6 +575,7 @@ class ConversionController extends Controller
         $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
 
         $utc_current_date = gmdate("Y-m-d H:i:s");
+        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         //update refrance id
@@ -593,7 +596,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $house_data['id'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'House waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '703'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -1141,6 +1144,7 @@ class ConversionController extends Controller
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $message_format = config("xml_message_format.$request_code");
         $utc_current_date = gmdate("Y-m-d H:i:s");
+        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
         if ($request_code == 703)
             $main_data = $house_data;
         else
@@ -1160,7 +1164,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $main_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Query'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '21'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Request'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -1238,7 +1242,7 @@ class ConversionController extends Controller
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-
+        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
@@ -1254,7 +1258,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id'] . '_' . $waybill_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Cargo Manifest'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '785'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '3.00'));
 
@@ -1390,6 +1394,7 @@ class ConversionController extends Controller
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
+        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         // Start conversion to XML
@@ -1407,7 +1412,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Invoicing data sheet'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '130'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '2.00'));
 
@@ -1551,6 +1556,7 @@ class ConversionController extends Controller
     {
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
+        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         // Start conversion to XML
@@ -1571,7 +1577,7 @@ class ConversionController extends Controller
         $TypeCode->setAttribute('listID', 1001);
         $TypeCode->setAttribute('listVersionID', 'D09A');
         $messageHeaderDocument->appendChild($TypeCode);
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '1.00'));
 

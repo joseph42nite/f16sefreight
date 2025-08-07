@@ -32,7 +32,7 @@ class ConversionController extends Controller
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
 
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
+        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         //update refrance id
@@ -244,16 +244,16 @@ class ConversionController extends Controller
             // Arrival Event
             $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
             $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
             $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
             $arrivalEvent->appendChild($occurrenceArrivalLocation);
             $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
 
             // Departure Event
             $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', $waybill_data['date']));
+            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date'])));
             $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', $waybill_data['from']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['from'], 0, 3)));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
             $arrivalEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
@@ -278,16 +278,16 @@ class ConversionController extends Controller
             // Arrival Event
             $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
             $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to_2']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
             $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
             $arrivalEvent->appendChild($occurrenceArrivalLocation);
             $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
 
             // Departure Event
             $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', $waybill_data['date_2']));
+            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date_2'])));
             $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
             $arrivalEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
@@ -312,16 +312,16 @@ class ConversionController extends Controller
             // Arrival Event
             $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
             $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to_3']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_3'], 0, 3)));
             $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
             $arrivalEvent->appendChild($occurrenceArrivalLocation);
             $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
 
             // Departure Event
             $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', $waybill_data['date_3']));
+            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date_3'])));
             $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to_2']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
             $arrivalEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
@@ -557,8 +557,9 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
         Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
-        $send_response = $this->sendXmlToDescartes($xml_file_name);
-        return $send_response;
+        // $send_response = $this->sendXmlToDescartes($xml_file_name);
+        // return $send_response;
+        return "hello check";
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
 
@@ -574,7 +575,7 @@ class ConversionController extends Controller
         $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
 
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
+        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         //update refrance id
@@ -1143,7 +1144,7 @@ class ConversionController extends Controller
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $message_format = config("xml_message_format.$request_code");
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
+        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         if ($request_code == 703)
             $main_data = $house_data;
         else
@@ -1241,7 +1242,7 @@ class ConversionController extends Controller
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
+        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
@@ -1393,7 +1394,7 @@ class ConversionController extends Controller
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
+        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         // Start conversion to XML
@@ -1555,7 +1556,7 @@ class ConversionController extends Controller
     {
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date=str_replace(' ', 'T', $utc_current_date);
+        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         // Start conversion to XML

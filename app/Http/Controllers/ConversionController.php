@@ -38,7 +38,7 @@ class ConversionController extends Controller
         // AirwayBills::where([['id', $awb_id]])->update(['reference_id', $time]);
         // replacing ns2 -> rsm
         // Start conversion to XML
-        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml = new DOMDocument();
         $xml->formatOutput = true;
 
         // Create root element
@@ -50,7 +50,7 @@ class ConversionController extends Controller
         $messageHeaderDocument = $xml->createElement('rsm:MessageHeaderDocument');
         // $messageHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($messageHeaderDocument);
-        $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no'] . '_' . $time));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
         $messageHeaderDocument->appendChild($xml->createElement('ram:Name', 'Air Waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', '740'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', str_replace(' ', 'T', $utc_current_date)));

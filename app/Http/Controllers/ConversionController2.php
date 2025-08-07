@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use DOMDocument;
 
-class ConversionController extends Controller
+class ConversionController2 extends Controller
 {
     public function WayBillConversion($awb_id = "12312345678")
     {
@@ -119,8 +119,8 @@ class ConversionController extends Controller
             $masterConsignment->appendChild($xml->createElement('ram:NilInsuranceValueIndicator', 'false'));
             $masterConsignment->appendChild($xml->createElement('ram:InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
-        $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
+        $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
+        $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
             $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
@@ -420,7 +420,7 @@ class ConversionController extends Controller
 
         if ($payment_details['type_of_payment']) {
             $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
-            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
+            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment'] == 'PP' ? true : false));
             if ($consignment_data['service_code'])
                 $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:ServiceTypeCode', $consignment_data['service_code']));
             $masterConsignment->appendChild($ApplicableLogisticsServiceCharge);
@@ -539,7 +539,7 @@ class ConversionController extends Controller
         else
             $prepaid_collect_text = "collect";
         $applicablePrepaidCollectMonetarySummation = $xml->createElement('ram:ApplicablePrepaidCollectMonetarySummation');
-        $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:PrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
+        $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:PrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
         $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:WeightChargeTotalAmount', $payment_details['weight_charge']))->setAttribute('currencyID', $payment_details['currency']);
         if ($payment_details['taxes'])
             $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:TaxTotalAmount', $payment_details['taxes']))->setAttribute('currencyID', $payment_details['currency']);
@@ -676,8 +676,8 @@ class ConversionController extends Controller
             $IncludedHouseConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'false'));
             $IncludedHouseConsignment->appendChild($xml->createElement('InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
-        $IncludedHouseConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $IncludedHouseConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
+        $IncludedHouseConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
+        $IncludedHouseConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $IncludedHouseConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
             $IncludedHouseConsignment->appendChild($xml->createElement('GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit']);

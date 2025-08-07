@@ -39,7 +39,7 @@ class ConversionController extends Controller
         // replacing ns2 -> rsm
         // Start conversion to XML
         $xml = new DOMDocument();
-        // $xml->formatOutput = true;
+        $xml->formatOutput = true;
 
         // Create root element
         $waybill = $xml->createElementNS('iata:waybill:1', 'rsm:Waybill');
@@ -556,9 +556,8 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
         Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
-        // $send_response = $this->sendXmlToDescartes($xml_file_name);
-        // return $send_response;
-        return "hello check";
+        $send_response = $this->sendXmlToDescartes($xml_file_name);
+        return $send_response;
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
 

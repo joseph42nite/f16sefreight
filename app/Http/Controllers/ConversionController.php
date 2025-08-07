@@ -39,7 +39,7 @@ class ConversionController extends Controller
         // replacing ns2 -> rsm
         // Start conversion to XML
         $xml = new DOMDocument();
-        $xml->formatOutput = true;
+        // $xml->formatOutput = true;
 
         // Create root element
         $waybill = $xml->createElementNS('iata:waybill:1', 'rsm:Waybill');

@@ -478,8 +478,8 @@ class ConversionController extends Controller
             $AssociatedUnitLoadTransportEquipment = $xml->createElement('ram:AssociatedUnitLoadTransportEquipment');
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:ID', $uld_info[$j]['uld_serial']));
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:CharacteristicCode', $uld_info[$j]['uld_type']));
-            $OperatingParty = $xml->createElement("OperatingParty");
-            $PrimaryID = $xml->createElement("PrimaryID", $uld_info[$j]['owner']);
+            $OperatingParty = $xml->createElement("ram:OperatingParty");
+            $PrimaryID = $xml->createElement("ram:PrimaryID", $uld_info[$j]['owner']);
             $PrimaryID->setAttribute('schemeAgencyID', $j + 1);
             $OperatingParty->appendChild($PrimaryID);
             $AssociatedUnitLoadTransportEquipment->appendChild($OperatingParty);

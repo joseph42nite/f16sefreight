@@ -430,8 +430,8 @@ class ConversionController extends Controller
         // Applicable Logistics Allowance Charge (Multiple Entries)
         for ($i = 0; $i < sizeof($other_charges); $i++) {
             $applicableLogisticsAllowanceCharge = $xml->createElement('ram:ApplicableLogisticsAllowanceCharge');
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:ID', $other_charges[$i]['other_charge_code']));
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:PrepaidIndicator', $other_charges[$i]['payment_type']));
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:ID', substr($other_charges[$i]['other_charge_code'], 0, 2)));
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:PrepaidIndicator', $other_charges[$i]['payment_type'] == 'P' ? 'true' : 'false'));
             $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:PartyTypeCode', $other_charges[$i]['due']));
             $applicableAmount = $xml->createElement('ram:ActualAmount', $other_charges[$i]['amount']);
             $applicableAmount->setAttribute('currencyID', $payment_details['currency']);

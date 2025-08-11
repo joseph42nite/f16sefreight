@@ -218,12 +218,12 @@ class ConversionController extends Controller
 
         // Origin Location
         $originLocation = $xml->createElement('ram:OriginLocation');
-        $originLocation->appendChild($xml->createElement('ram:ID', $waybill_data['departure_airport']));
+        $originLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['departure_airport'], 0, 3)));
         $masterConsignment->appendChild($originLocation);
 
         // Final Destination Location
         $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
-        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', $waybill_data['destination_airport']));
+        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['destination_airport'], 0, 3)));
         $masterConsignment->appendChild($finalDestinationLocation);
 
         // ===========First route info=============

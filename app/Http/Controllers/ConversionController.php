@@ -255,7 +255,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['from'], 0, 3)));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $departureEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -289,7 +289,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $departureEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -323,7 +323,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $departureEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -834,7 +834,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $house_data['from']));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $departureEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -868,7 +868,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $house_data['to']));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $departureEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -902,7 +902,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $house_data['to_2']));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $departureEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);

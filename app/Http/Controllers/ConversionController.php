@@ -230,7 +230,7 @@ class ConversionController extends Controller
         if (!empty($waybill_data['by']) && !empty($waybill_data['flight'])) {
             // Create the SpecifiedLogisticsTransportMovement element
             $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'RTG')); //Main-Carriage
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by'] . $waybill_data['flight']));
@@ -264,7 +264,7 @@ class ConversionController extends Controller
         if (!empty($waybill_data['by_2']) && !empty($waybill_data['flight_2'])) {
             // ===========Second route info=============
             $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'RTG'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_2'] . $waybill_data['flight_2']));
@@ -298,7 +298,7 @@ class ConversionController extends Controller
         if (!empty($waybill_data['by_3']) && !empty($waybill_data['flight_3'])) {
             // ===========Third route info=============
             $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'RTG'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
             $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_3'] . $waybill_data['flight_3']));
@@ -421,7 +421,7 @@ class ConversionController extends Controller
 
         if ($payment_details['type_of_payment']) {
             $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
-            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
+            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode',  $payment_details['type_of_payment']));
             if ($consignment_data['service_code'])
                 $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:ServiceTypeCode', $consignment_data['service_code']));
             $masterConsignment->appendChild($ApplicableLogisticsServiceCharge);

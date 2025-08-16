@@ -345,7 +345,7 @@ class ConversionController extends Controller
             $masterConsignment->appendChild($handlingSSRInstructions);
         }
         //also notify
-        if (!empty($waybill_address['also_name'])) {
+        if (!empty($waybill_address['also_name']) && 0) {
             $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
             $AssociatedParty = $xml->createElement('ram:AssociatedParty');
             $AssociatedParty->appendChild($xml->createElement('ram:Name', $waybill_address['also_name']));

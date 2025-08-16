@@ -216,6 +216,48 @@ class ConversionController extends Controller
         $freightForwarderParty->appendChild($DefinedTradeContact);
         $masterConsignment->appendChild($freightForwarderParty);
 
+        //also notify
+        if (!empty($waybill_address['also_name'])) {
+            $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
+            $AssociatedParty = $xml->createElement('ram:AssociatedParty');
+            $AssociatedParty->appendChild($xml->createElement('ram:Name', $waybill_address['also_name']));
+
+            $roleCode = $xml->createElement('ram:RoleCode', 'NI');
+            $roleCode->setAttribute('listID', '3035');
+            $roleCode->setAttribute('listAgencyID', '6');
+            $roleCode->setAttribute('listVersionID', 'D09A');
+            $AssociatedParty->appendChild($roleCode);
+
+            $postalStructuredAddress3 = $xml->createElement('ram:PostalStructuredAddress');
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:PostcodeCode', $waybill_address['also_post_code']));
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:CityName', $waybill_address['also_city']));
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:CountryID', $waybill_address['also_country']));
+            // $postalStructuredAddress3->appendChild($xml->createElement('ram:CountrySubDivisionName', $waybill_address['also_state']));
+            $AssociatedParty->appendChild($postalStructuredAddress3);
+
+            if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
+                $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
+                if (!empty($waybill_address['also_phone'])) {
+                    $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
+                    $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $waybill_address['also_phone']));
+                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+                }
+                if (!empty($waybill_address['also_fax'])) {
+                    $FaxCommunication = $xml->createElement('ram:FaxCommunication');
+                    $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $waybill_address['also_fax']));
+                    $DefinedTradeContact->appendChild($FaxCommunication);
+                }
+                if ($waybill_address['also_telex']) {
+                    $TelexCommunication = $xml->createElement('ram:TelexCommunication');
+                    $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $waybill_address['also_telex']));
+                    $DefinedTradeContact->appendChild($TelexCommunication);
+                }
+                $AssociatedParty->appendChild($DefinedTradeContact);
+            }
+            $masterConsignment->appendChild($AssociatedParty);
+        }
+
         // Origin Location
         $originLocation = $xml->createElement('ram:OriginLocation');
         $originLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['departure_airport'], 0, 3)));
@@ -343,47 +385,6 @@ class ConversionController extends Controller
             $handlingSSRInstructions = $xml->createElement('ram:HandlingSSRInstructions');
             $handlingSSRInstructions->appendChild($xml->createElement('ram:Description', $waybill_data['special_service_request']));
             $masterConsignment->appendChild($handlingSSRInstructions);
-        }
-        //also notify
-        if (!empty($waybill_address['also_name']) && 0) {
-            $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
-            $AssociatedParty = $xml->createElement('ram:AssociatedParty');
-            $AssociatedParty->appendChild($xml->createElement('ram:Name', $waybill_address['also_name']));
-
-            $roleCode = $xml->createElement('ram:RoleCode', 'NI');
-            $roleCode->setAttribute('listID', '3035');
-            $roleCode->setAttribute('listAgencyID', '6');
-            $roleCode->setAttribute('listVersionID', 'D09A');
-            $AssociatedParty->appendChild($roleCode);
-
-            $postalStructuredAddress3 = $xml->createElement('ram:PostalStructuredAddress');
-            $postalStructuredAddress3->appendChild($xml->createElement('ram:PostcodeCode', $waybill_address['also_post_code']));
-            $postalStructuredAddress3->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
-            $postalStructuredAddress3->appendChild($xml->createElement('ram:CityName', $waybill_address['also_city']));
-            $postalStructuredAddress3->appendChild($xml->createElement('ram:CountryID', $waybill_address['also_country']));
-            // $postalStructuredAddress3->appendChild($xml->createElement('ram:CountrySubDivisionName', $waybill_address['also_state']));
-            $AssociatedParty->appendChild($postalStructuredAddress3);
-
-            if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
-                $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
-                if (!empty($waybill_address['also_phone'])) {
-                    $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
-                    $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $waybill_address['also_phone']));
-                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-                }
-                if (!empty($waybill_address['also_fax'])) {
-                    $FaxCommunication = $xml->createElement('ram:FaxCommunication');
-                    $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $waybill_address['also_fax']));
-                    $DefinedTradeContact->appendChild($FaxCommunication);
-                }
-                if ($waybill_address['also_telex']) {
-                    $TelexCommunication = $xml->createElement('ram:TelexCommunication');
-                    $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $waybill_address['also_telex']));
-                    $DefinedTradeContact->appendChild($TelexCommunication);
-                }
-                $AssociatedParty->appendChild($DefinedTradeContact);
-            }
-            $masterConsignment->appendChild($AssociatedParty);
         }
         if (!empty($waybill_data['other_service_information'])) {
             // Handling SSR Instructions

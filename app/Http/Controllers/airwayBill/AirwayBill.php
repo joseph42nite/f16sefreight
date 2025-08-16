@@ -792,6 +792,7 @@ class AirwayBill extends Controller
     }
     public function update(Request $request, $id, $awb_no = null)
     {
+        return $request->status;
         $main_return_data = [];
         $error_data = '';
         if (!empty($id)) {

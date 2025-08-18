@@ -27,8 +27,8 @@
                             </b-col>
                             <b-col cols="6">
                                 <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                    <b-button @click.prevent="allHousewayBill('draft')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
-                                    <b-button @click.prevent="allHousewayBill('send')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
+                                    <b-button @click.prevent="getHousewayBills('draft')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
+                                    <b-button @click.prevent="getHousewayBills('send')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
                                 </div>
                             </b-col>
                             <!-- Draft model code Start here -->
@@ -2617,11 +2617,10 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end">
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1);">Generate PDF</b-button>
-                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no)">Send</b-button>
-                                        <b-button class="mr-2">Send & Clear</b-button>
-                                        <!-- <b-button type="submit">Save Draft</b-button> -->
-                                        <b-button type="submit">{{submitButtonText}}</b-button>
+                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';">Generate PDF</b-button>
+                                        <b-button class="mr-2" type="submit" @click="form.status='send';">Send</b-button>
+                                        <b-button class="mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
+                                        <b-button type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
                                     </div>
                                 </div>
                             </div>
@@ -2773,6 +2772,7 @@ export default {
                 is_consignee_address_save: false,
                 is_shipper_address_save: false,
                 is_also_notify_address_save: false,
+                status:'',
             }),
             oci_info:{
                 country_code: '',
@@ -3160,12 +3160,6 @@ export default {
         mouseleave: function () {
             this.isOpen = false;
         },
-        converXml(awb_no){
-            ApiService.get(`/user/waybill/${awb_no}`)
-                .then(({ data }) => {
-                    console.log(data);
-                });
-        },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3241,12 +3235,11 @@ export default {
         // },
 
         onSubmit() {
-            console.log('Current mode:', this.mode);
             this.main_error_msg='';
             if (this.mode === 'add') {
                 this.form.post('/user/create-houseway-bill')
                 .then(response => {
-                    console.log('Add Successful:', response);
+                    console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         console.log('Existing data set:', this.existingData);
@@ -3278,9 +3271,9 @@ export default {
                 }
                 this.form.put(`/user/update-houseway-bill/${this.existingData.id}`)
                 .then(response => {
+                    console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
@@ -3288,7 +3281,6 @@ export default {
                     } else {
                         console.error('ID is missing in response data');
                     }
-                    console.log('Update Successful:', response);
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
@@ -3306,8 +3298,8 @@ export default {
                 });
             }
         },
-        allHousewayBill(status) {
-            ApiService.get(`/user/all-houseway-bill/${status}`)
+        getHousewayBills(status) {
+            ApiService.get(`/user/get-houseway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;
                 })

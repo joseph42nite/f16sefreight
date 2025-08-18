@@ -560,7 +560,6 @@ class ConversionController extends Controller
         Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
         $send_response = $this->sendXmlToDescartes($xml_file_name);
         return $send_response;
-        // return "hello check";
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
 
@@ -1054,10 +1053,12 @@ class ConversionController extends Controller
 
         // Append to the root element
         $xml->appendChild($housewaybill);
-
         // Prepare response as an XML download
-        return response($xml->saveXML(), 200)
-            ->header('Content-Type', 'application/xml');
+        $xml_file_name = 'xml_houseway_bill_' . $hawb_no . '.xml';
+        Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
+        $send_response = $this->sendXmlToDescartes($xml_file_name);
+        return $send_response;
+        // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
 
     function ResponseMessage()

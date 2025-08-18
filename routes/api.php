@@ -85,16 +85,12 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     //-------houseWaybills-----
     Route::post('/create-houseway-bill', [HousewayBill::class, 'store']);
     Route::put('/update-houseway-bill/{id}', [HousewayBill::class, 'update']);
-
     Route::post('/get-house-consignment-error', [HousewayBill::class, 'getConsignmentError']);
     Route::get('/get-country', [HousewayBill::class, 'getCountry']);
     Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
     Route::get('/get-oci-data', [HousewayBill::class, 'getOCIData']);
-
-    Route::put('/update-houseway-bill/{id}', [HousewayBill::class, 'update']);
     Route::get('/houseway-bill/{id}', [HousewayBill::class, 'show']);
-    Route::get('/all-houseway-bill/{status}', [HousewayBill::class, 'getAllHawb']);
-
+    Route::get('/get-houseway-bills/{status}', [HousewayBill::class, 'getAllHawb']);
     Route::get('/get-shippers', [HousewayBill::class, 'getShippers']);
     Route::get('/get-shipper-address', [HousewayBill::class, 'getShipperAddress']);
     Route::get('/get-consignee-address', [HousewayBill::class, 'getConsigneeAddress']);

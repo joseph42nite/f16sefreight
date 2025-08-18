@@ -14,10 +14,16 @@ use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\ConversionController;
 use Illuminate\Validation\Rule;
 
 class HousewayBill extends Controller
 {
+    protected $conversionController;
+    public function __construct(ConversionController $conversionController)
+    {
+        $this->conversionController = $conversionController;
+    }
     public function get_agent()
     {
         $user = auth()->guard('user-api')->user();
@@ -788,10 +794,11 @@ class HousewayBill extends Controller
     public function store(Request $request)
     {
         $main_return_data = [];
+        $hawb_id = $request->first_box['hawb_no'];
         $error_data = '';
         //for storing shipper address
         if (!empty($request->shipper_address['ship_name'])) {
-            $error_data = $this->saveShipperAddress($request->first_box['hawb_no'], $request->shipper_address, $request->is_shipper_address_save);
+            $error_data = $this->saveShipperAddress($hawb_id, $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -799,7 +806,7 @@ class HousewayBill extends Controller
         }
         // for storing consignee address
         if (!empty($request->consignee_address['cons_name'])) {
-            $error_data = $this->saveConsigneeAddress($request->first_box['hawb_no'], $request->consignee_address, $request->is_consignee_address_save);
+            $error_data = $this->saveConsigneeAddress($hawb_id, $request->consignee_address, $request->is_consignee_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -807,13 +814,13 @@ class HousewayBill extends Controller
         }
         //for storing also notify address
         if (!empty($request->also_notify_address['also_name'])) {
-            $error_data = $this->saveAlsoNotify($request->first_box['hawb_no'], $request->also_notify_address, $request->is_also_notify_address_save);
+            $error_data = $this->saveAlsoNotify($hawb_id, $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
-        if (!empty($request->first_box['hawb_no'])) {
+        if (!empty($hawb_id)) {
             $error_data = $this->firstBox($request->first_box);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -822,7 +829,7 @@ class HousewayBill extends Controller
         }
         // && !empty($request->routing_information['from'])
         if (!empty($request->routing_information['departure_airport'])) {
-            $error_data = $this->routingInformation($request->first_box['hawb_no'], $request->routing_information);
+            $error_data = $this->routingInformation($hawb_id, $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -830,11 +837,11 @@ class HousewayBill extends Controller
         }
         //for storing Consignment Information
         if (!empty($request->entries)) {
-            $main_return_data['entries'] = $this->consignmentInformation($request->first_box['hawb_no'], $request->entries);
+            $main_return_data['entries'] = $this->consignmentInformation($hawb_id, $request->entries);
         }
         //for custom origin code and OSI, SSR, Accounting and shipment reference information
         if (!empty($request->custom_origin)) {
-            $error_data = $this->customOriginAndOsiInfo($request->first_box['hawb_no'], $request->custom_origin);
+            $error_data = $this->customOriginAndOsiInfo($hawb_id, $request->custom_origin);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -842,11 +849,11 @@ class HousewayBill extends Controller
         }
         // for other charges 
         if (!empty($request->charges)) {
-            $main_return_data['charges'] = $this->otherCharges($request->first_box['hawb_no'], $request->charges);
+            $main_return_data['charges'] = $this->otherCharges($hawb_id, $request->charges);
         }
         //For payment information
         if (!empty($request->payment_info['type_of_payment']) && !empty($request->payment_info['currency'])) {
-            $error_data = $this->paymentInformation($request->first_box['hawb_no'], $request->payment_info);
+            $error_data = $this->paymentInformation($hawb_id, $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -854,7 +861,7 @@ class HousewayBill extends Controller
         }
         //for Other custom Information
         if (!empty($request->oci_entries)) {
-            $error_data = $this->otherCustomInformation($request->first_box['hawb_no'], $request->oci_entries);
+            $error_data = $this->otherCustomInformation($hawb_id, $request->oci_entries);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
@@ -862,17 +869,22 @@ class HousewayBill extends Controller
         }
         //for Total Consignee Amount and Total Volume
         if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
-            $error_data = $this->totalAmountValume($request->first_box['hawb_no'], $request->totals);
+            $error_data = $this->totalAmountValume($hawb_id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
             else
                 $main_return_data['totals'] = $error_data;
         }
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
-            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['hawb_no'], $request->tableCodes);
+            $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($hawb_id, $request->tableCodes);
         }
-        return response()->json(['data' => $main_return_data]);
-        // return json_encode($main_return_data);
+        $status = $request->status;
+        HousewayBills::where(['id' => $hawb_id])->update(['status' => $status]);
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->HouseWayBillConversion($hawb_id);
+        }
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
     public function getConsignmentError(Request $request)
     {
@@ -979,7 +991,14 @@ class HousewayBill extends Controller
         if (!empty($id) && !empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($id, $request->tableCodes);
         }
-        return response()->json(['data' => $main_return_data]);
+
+        $status = $request->status;
+        HousewayBills::where(['id' => $id])->update(['status' => $status]);
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->HouseWayBillConversion($id);
+        }
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
 
     public function show($id)

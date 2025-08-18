@@ -3253,7 +3253,6 @@ export default {
             ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;
-                    console.log(response);
                 })
                 .catch(error => {
                     console.error("Failed to fetch items:", error);

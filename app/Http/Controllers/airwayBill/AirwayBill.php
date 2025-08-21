@@ -64,7 +64,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         //for update
         $WayBillAddress = WayBillAddress::where('awb_id', $awb_id)->first();
 
@@ -142,7 +142,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         $WayBillAddress = WayBillAddress::where('awb_id', $awb_id)->first();
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
@@ -214,7 +214,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         $WayBillAddress = WayBillAddress::where('awb_id', $awb_id)->first();
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
@@ -284,7 +284,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($first_box['awb_code'] . $first_box['awb_no']);
+        $awb_id = ($first_box['awb_code'] . $first_box['awb_no']);
         // $AirwayBills = AirwayBills::find($first_box['awb_no']);
         $AirwayBills = AirwayBills::find($awb_id);
         if ($AirwayBills) {
@@ -302,7 +302,7 @@ class AirwayBill extends Controller
             ], 201);
         } else {
             $AirwayBills = new AirwayBills();
-            $AirwayBills->id = $awb_id;
+            $AirwayBills->id = "$awb_id";
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
@@ -355,7 +355,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         $AirwayBills = AirwayBills::find($awb_id);
         if (!isset($AirwayBills))
             $AirwayBills = new AirwayBills();
@@ -386,7 +386,7 @@ class AirwayBill extends Controller
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
 
         foreach ($entries as $entry) {
             $ConsignmentData = ConsignmentData::where('awb_id', $awb_id)->first();
@@ -438,7 +438,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         $AirwayBills = AirwayBills::find($awb_id);
         if (!isset($AirwayBills))
             $AirwayBills = new AirwayBills();
@@ -463,7 +463,7 @@ class AirwayBill extends Controller
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
 
         for ($i = 0; $i < sizeof($charges); $i++) {
             $finalOtherChargeCode = isset($charges[$i]['other_code']) && !empty($charges[$i]['other_code'])
@@ -552,7 +552,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         $AirwayBills = PaymentInfo::where('awb_id', $awb_id)->first();
         if (!isset($AirwayBills))
             $AirwayBills = new PaymentInfo();
@@ -583,7 +583,7 @@ class AirwayBill extends Controller
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make(
                 $oci_entry,
@@ -638,7 +638,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         $AirwayBills = AirwayBills::find($awb_id);
         if (!isset($AirwayBills))
             $AirwayBills = new AirwayBills();
@@ -652,7 +652,7 @@ class AirwayBill extends Controller
     }
     // private function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
     // {
-    //     $awb_id = (int)($awb_code . $awb_no);
+    //     $awb_id = $awb_code . $awb_no;
     //     if (empty($tableCodes)) {
     //         return "Code is missing in tableCodes entry.";
     //     }
@@ -678,7 +678,7 @@ class AirwayBill extends Controller
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
-        $awb_id = (int)($awb_code . $awb_no);
+        $awb_id = $awb_code . $awb_no;
         if (empty($tableCodes)) {
             return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
         }
@@ -781,7 +781,7 @@ class AirwayBill extends Controller
         }
 
         //for status update
-        $awb_id = (int)($request->first_box['awb_code'] . $request->first_box['awb_no']);
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         $status = $request->status;
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
@@ -872,7 +872,7 @@ class AirwayBill extends Controller
 
         //for status update
         $status=$request->status;
-        $awb_id = (int)($request->first_box['awb_code'] . $request->first_box['awb_no']);
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
         if ($status == 'send') {

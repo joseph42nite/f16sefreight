@@ -29,24 +29,37 @@
                                 </b-col>
                                 <b-col cols="6">
                                     <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                        <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                        id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
-                                        <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                        id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
+                                        <b-button @click.prevent="getAirwayBills('draft')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
+                                        <b-button @click.prevent="getAirwayBills('send')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
                                 <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
                                     <div class="d-block">
-                                        <b-row class="mt-5">
-                                            <b-col cols="auto">
-                                                <a href="" class="custom-link">none</a>
-                                                <h6>( - )</h6>
-                                            </b-col>
-                                            <b-col cols="auto">
-                                                <a href="" class="custom-link">Edit e-AWB Data</a>
-                                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                                <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
+                                        <b-row>
+                                            <b-col>
+                                                <div v-for="item in data_items" :key="item.id">
+                                                    <div v-if="item.awb_no && item.awb_code" class="py-2">
+                                                        <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(String(item.id))">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                                <p @click="navigate" class="mb-0">
+                                                                    {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
+                                                                    ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
+                                                                </p>
+                                                            </router-link>
+                                                        </a>
+                                                        <div class="d-flex flex-row justify-content-start">
+                                                            <div class="px-2">
+                                                                <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(String(item.id))">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                                        <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
+                                                                    </router-link>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <!-- <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p> -->
+                                                    </div>
+                                                </div>
                                             </b-col>
                                         </b-row>
                                     </div>
@@ -59,42 +72,41 @@
                                             <b-col>
                                                 <div v-for="item in data_items" :key="item.id">
                                                     <div v-if="item.awb_no && item.awb_code" class="py-2">
-                                                        <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(item.id)">
-                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                        <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(String(item.id))">
+                                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                                 <p @click="navigate" class="mb-0">
-                                                                    {{ item.awb_code }}-{{ item.awb_no }} 
+                                                                    {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
                                                                     ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
-                                                                    <!-- ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }}) -->
                                                                 </p>
                                                             </router-link>
                                                         </a>
                                                         <div class="d-flex flex-row justify-content-start">
                                                             <div class="px-2">
-                                                                <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
-                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                                                <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(String(item.id))">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                                         <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
                                                                     </router-link>
                                                                 </a>
                                                             </div>
                                                             <div class="px-2">
-                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                            <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                                            <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
                                                                     </router-link>
                                                                 </a>
-                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
                                                                     </router-link>
                                                                 </a>
-                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                                                <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
+                                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
                                                                     </router-link>
                                                                 </a>
                                                             </div>
                                                         </div>
-                                                        <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                        <!-- <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p> -->
                                                     </div>
                                                 </div>
                                             </b-col>
@@ -1293,7 +1305,7 @@
                                                                 <option value="GBL">Government Bill of Lading</option>
                                                                 <option value="STL">Mode of Settlement</option>
                                                                 <option value="RET">Return to Origin</option>
-                                                                <option value="SRN">Shipper’s Reference Number</option>
+                                                                <option value="SRN">Shipper's Reference Number</option>
                                                             </b-form-select>
                                                         </div>
                                                     </b-tab>
@@ -2451,15 +2463,6 @@
                                                 <div style="display:flex;justify-content: end;line-height: 71px;align-self: center;width:100%" @click="isGeneratePdf(generateButton=0);"><img src="/media/custome/cross.png" alt="cross button" style="width:24px;height: 24px;cursor: pointer;"></div>
                                             </div>
                                             <div style="width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <!-- <div style="width:100%;">
-                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:22px;font-weight: 400;">To deliver a valid cargo document, the following changes were made:</p>
-                                                </div>
-                                                <div style="width:100%;">
-                                                    <ul>
-                                                        <li>Lorum ipsum</li>
-                                                        <li>Lorum ipsum</li>
-                                                    </ul>
-                                                </div> -->
                                                 <div style="width:100%;">
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:13px;font-weight: 400;margin: 0;">Airway bill message saved in database</p>
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">PDF documents prepared</p>
@@ -2490,14 +2493,10 @@
                                     </div>
                                     <div class="d-flex justify-content-end">
                                         <!-- <b-button class="mr-2" @click="generateAwbPDF" -->
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1);"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
-                                        <b-button class="mr-2" @click="converXml(form.first_box.awb_no);"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
-                                        <b-button class="mr-2"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
-                                        <b-button type="submit"
-                                        style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
+                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
+                                        <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
+                                        <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
+                                        <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
                                     </div>
                                 </div>
                             </div>
@@ -2650,6 +2649,7 @@ export default {
                 is_shipper_address_save: false,
                 is_also_notify_address_save: false,
                 is_iata_login_later: false,
+                status:'',
             }),
             oci_info:{
                 country_code: '',
@@ -3025,6 +3025,7 @@ export default {
         //     window.open(pdfUrl, '_blank');
         // },
         generateAwbPDF(pdf_generate_type) {
+            this.generatePDFAfterSave='';
             if (!this.existingData || !this.existingData.id) {
                 // console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
@@ -3234,16 +3235,10 @@ export default {
                 };
             }
         },
-        // onSubmit(evt) {
-        //     evt.preventDefault();
-        //     this.form.post(`/create-webdoc`).then(response => {
-        //         console.log(response);
-        //     })
-        // },
+
         onSubmit() {
             // console.log('Current mode:', this.mode);
             this.main_error_msg='';
-            // this.is_generate_pdf=0;
             if (this.mode === 'add') {
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
@@ -3280,6 +3275,7 @@ export default {
                 }
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
+                    console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         // console.log('Existing data set:', this.existingData);
@@ -3330,10 +3326,11 @@ export default {
         //     }
         // },
 
-        allAirwayBill() {
-            ApiService.get('/user/all-airway-bill')
+        getAirwayBills(status) {
+            ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;
+                    // console.log('Data items:', this.data_items);
                 })
                 .catch(error => {
                     // console.error("Failed to fetch items:", error);
@@ -3467,17 +3464,9 @@ export default {
                     // console.log("Add mode activated");
                 }
         },
-        // beforeRouteEnter(to, from) {
-        //     const awbId = to.params.id;
-        //     next(vm => {
-        //         if (awbId) {
-        //             vm.getAirWayBill(awbId);
-        //         }
-        //     });
-        // },
         handleEditNavigation(id) {
             this.$bvModal.hide('modal-s');
-            const targetPath = `/edit-airway-bill/${id}`;
+            const targetPath = `/edit-airway-bill/${String(id)}`;
             if (this.$route.path !== targetPath) {
                 this.$router.push(targetPath).then(() => {
                     window.location.reload();
@@ -4159,9 +4148,9 @@ export default {
             if (awb_code && awb_no) {
                 // this.awbError = null;
                 // this.awb_prefix_message = "";
-                this.awbId = `${awb_code}${awb_no}`;
+                this.awbId = `${String(awb_code)}${String(awb_no)}`;
                 this.getAirWayBillForRealod(this.awbId);
-                this.$router.push({ query: { awb_code, awb_no } });
+                this.$router.push({ query: { awb_code: String(awb_code), awb_no: String(awb_no) } });
             } else{
                 this.awbId = null;
                 return;
@@ -4280,7 +4269,6 @@ export default {
     mounted(){
         // this.setDefaultValues();
         this.calculateTotalVolume();
-        this.allAirwayBill();
         window.addEventListener('click', this.closeDropdown_to);
         window.addEventListener('click', this.closeDropdown_to2);
         window.addEventListener('click', this.closeDropdown_to3);
@@ -4316,7 +4304,7 @@ export default {
         if (!this.awbId) {
             const { awb_code, awb_no } = this.$route.query;
             if (awb_code && awb_no) {
-                this.awbId = `${awb_code}${awb_no}`;
+                this.awbId = `${String(awb_code)}${String(awb_no)}`;
                 this.getAirWayBill(this.awbId);
                 this.showAWBSection = false;
             }
@@ -4429,10 +4417,8 @@ export default {
             this.isEdit = true;
             this.getAirWayBill(id);
         }
-        this.allAirwayBill();
         this.getOCIData();
         this.onSubmit = this.onSubmit.bind(this);
-        // this.handleSaveAndGeneratePDF = this.handleSaveAndGeneratePDF.bind(this);
     },
     computed: {
         ...mapGetters({ current_user: "currentUser"}),

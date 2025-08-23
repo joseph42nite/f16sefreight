@@ -8,6 +8,9 @@ class AirwayBills extends Model
 {
     //
     protected $table = 'air_way_bills';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     public function agentsInfo()
     {

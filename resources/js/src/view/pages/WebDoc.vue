@@ -91,16 +91,16 @@
                             <b-col>
                                 <div v-for="item in data_items" :key="item.id">
                                     <div v-if="item.awb_no && item.awb_code && item.destination_airport && item.departure_airport">
-                                        <a href="#" class="custom-link" @click.prevent="handleEditNavigation(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                        <a href="#" class="custom-link" @click.prevent="handleEditNavigation(String(item.id))">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                 <p @click="navigate" class="mb-0">
-                                                    {{ item.awb_code }}-{{ item.awb_no }} 
+                                                    {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
                                                     ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
                                                 </p>
                                             </router-link>
                                         </a>
-                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
+                                        <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(String(item.id))">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                 <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
                                             </router-link>
                                         </a>
@@ -109,19 +109,19 @@
                                                 <p @click="navigate" class="mb-0 ml-2">Create House Waybill from e-AWB Data </p>
                                             </router-link>
                                         </a> -->
-                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                    <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + item.id" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
+                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
                                             </router-link>
                                         </a>
-                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
+                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
                                             </router-link>
                                         </a>
-                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(item.id)">
-                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
+                                        <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
+                                            <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                    <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
                                             </router-link>
                                         </a>
                                         <p class="mt-5 mb-0">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
@@ -1395,7 +1395,7 @@
                                                     <option value="GBL">Government Bill of Lading</option>
                                                     <option value="STL">Mode of Settlement</option>
                                                     <option value="RET">Return to Origin</option>
-                                                    <option value="SRN">Shipper’s Reference Number</option>
+                                                    <option value="SRN">Shipper's Reference Number</option>
                                                 </b-form-select>
                                         </div>
                                     </b-tab>
@@ -3750,9 +3750,9 @@ export default {
             if (awb_code && awb_no) {
                 // this.awbError = null;
                 // this.awb_prefix_message = "";
-                this.awbId = `${awb_code}${awb_no}`;
+                this.awbId = `${String(awb_code)}${String(awb_no)}`;
                 this.getAirWayBillForRealod(this.awbId);
-                this.$router.push({ query: { awb_code, awb_no } });
+                this.$router.push({ query: { awb_code: String(awb_code), awb_no: String(awb_no) } });
             } else{
                 this.awbId = null;
                 return;
@@ -3906,7 +3906,7 @@ export default {
         if (!this.awbId) {
             const { awb_code, awb_no } = this.$route.query;
             if (awb_code && awb_no) {
-                this.awbId = `${awb_code}${awb_no}`;
+                this.awbId = `${String(awb_code)}${String(awb_no)}`;
                 this.getAirWayBill(this.awbId);
                 this.showAWBSection = false;
             }

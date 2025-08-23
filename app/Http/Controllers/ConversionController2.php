@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use DOMDocument;
 
-class ConversionController extends Controller
+class ConversionController2 extends Controller
 {
     public function WayBillConversion($awb_id = "12312345678")
     {
@@ -32,14 +32,13 @@ class ConversionController extends Controller
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
 
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         //update refrance id
         // AirwayBills::where([['id', $awb_id]])->update(['reference_id', $time]);
         // replacing ns2 -> rsm
         // Start conversion to XML
-        $xml = new DOMDocument();
+        $xml = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
 
         // Create root element
@@ -51,10 +50,10 @@ class ConversionController extends Controller
         $messageHeaderDocument = $xml->createElement('rsm:MessageHeaderDocument');
         // $messageHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($messageHeaderDocument);
-        $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('ram:Name', 'Air Waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', '740'));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('ram:PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '3.00'));
 
@@ -120,8 +119,8 @@ class ConversionController extends Controller
             $masterConsignment->appendChild($xml->createElement('ram:NilInsuranceValueIndicator', 'false'));
             $masterConsignment->appendChild($xml->createElement('ram:InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
-        $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
+        $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
+        $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
             $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
@@ -216,6 +215,134 @@ class ConversionController extends Controller
         $freightForwarderParty->appendChild($DefinedTradeContact);
         $masterConsignment->appendChild($freightForwarderParty);
 
+        // Origin Location
+        $originLocation = $xml->createElement('ram:OriginLocation');
+        $originLocation->appendChild($xml->createElement('ram:ID', $waybill_data['departure_airport']));
+        $masterConsignment->appendChild($originLocation);
+
+        // Final Destination Location
+        $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
+        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', $waybill_data['destination_airport']));
+        $masterConsignment->appendChild($finalDestinationLocation);
+
+        // ===========First route info=============
+        if (!empty($waybill_data['by']) && !empty($waybill_data['flight'])) {
+            // Create the SpecifiedLogisticsTransportMovement element
+            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by'] . $waybill_data['flight']));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '1'));
+
+            // Used Logistics Transport Means
+            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
+            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by']));
+            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
+
+            // Arrival Event
+            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
+            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($occurrenceArrivalLocation);
+            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+
+            // Departure Event
+            $departureEvent = $xml->createElement('ram:DepartureEvent');
+            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', $waybill_data['date']));
+            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', $waybill_data['from']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+
+            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // =========== End First route info=============
+        }
+        if (!empty($waybill_data['by_2']) && !empty($waybill_data['flight_2'])) {
+            // ===========Second route info=============
+            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_2'] . $waybill_data['flight_2']));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '2'));
+
+            // Used Logistics Transport Means
+            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
+            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by_2']));
+            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
+
+            // Arrival Event
+            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
+            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to_2']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($occurrenceArrivalLocation);
+            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+
+            // Departure Event
+            $departureEvent = $xml->createElement('ram:DepartureEvent');
+            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', $waybill_data['date_2']));
+            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+
+            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // ===========End Second route info=============
+        }
+        if (!empty($waybill_data['by_3']) && !empty($waybill_data['flight_3'])) {
+            // ===========Third route info=============
+            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_3'] . $waybill_data['flight_3']));
+            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '3'));
+
+            // Used Logistics Transport Means
+            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
+            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by_3']));
+            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
+
+            // Arrival Event
+            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
+            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to_3']));
+            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($occurrenceArrivalLocation);
+            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+
+            // Departure Event
+            $departureEvent = $xml->createElement('ram:DepartureEvent');
+            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', $waybill_data['date_3']));
+            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', $waybill_data['to_2']));
+            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
+            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+
+            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
+            // ===========End Third route info=============
+        }
+
+        $special_handling_info = json_decode($waybill_data['special_handling_info'], true);
+        // Handling SPH Instructions
+        for ($i = 0; $i < sizeof($special_handling_info); $i++) {
+            $handlingSPHInstructions = $xml->createElement('ram:HandlingSPHInstructions');
+            $handlingSPHInstructions->appendChild($xml->createElement('ram:DescriptionCode', $special_handling_info[$i]));
+            $masterConsignment->appendChild($handlingSPHInstructions);
+        }
+
+        if (!empty($waybill_data['special_service_request'])) {
+            // Handling SSR Instructions
+            $handlingSSRInstructions = $xml->createElement('ram:HandlingSSRInstructions');
+            $handlingSSRInstructions->appendChild($xml->createElement('ram:Description', $waybill_data['special_service_request']));
+            $masterConsignment->appendChild($handlingSSRInstructions);
+        }
         //also notify
         if (!empty($waybill_address['also_name'])) {
             $consignee_street_name = $waybill_address['also_address'] . (!empty($waybill_address['also_address_line_2']) ? ',' . $waybill_address['also_address_line_2'] : '');
@@ -257,135 +384,6 @@ class ConversionController extends Controller
             }
             $masterConsignment->appendChild($AssociatedParty);
         }
-
-        // Origin Location
-        $originLocation = $xml->createElement('ram:OriginLocation');
-        $originLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['departure_airport'], 0, 3)));
-        $masterConsignment->appendChild($originLocation);
-
-        // Final Destination Location
-        $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
-        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['destination_airport'], 0, 3)));
-        $masterConsignment->appendChild($finalDestinationLocation);
-
-        // ===========First route info=============
-        if (!empty($waybill_data['by']) && !empty($waybill_data['flight'])) {
-            // Create the SpecifiedLogisticsTransportMovement element
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by'] . $waybill_data['flight']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '1'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['from'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // =========== End First route info=============
-        }
-        if (!empty($waybill_data['by_2']) && !empty($waybill_data['flight_2'])) {
-            // ===========Second route info=============
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_2'] . $waybill_data['flight_2']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '2'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by_2']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date_2'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // ===========End Second route info=============
-        }
-        if (!empty($waybill_data['by_3']) && !empty($waybill_data['flight_3'])) {
-            // ===========Third route info=============
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_3'] . $waybill_data['flight_3']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '3'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by_3']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_3'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date_3'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // ===========End Third route info=============
-        }
-
-        $special_handling_info = json_decode($waybill_data['special_handling_info'], true);
-        // Handling SPH Instructions
-        for ($i = 0; $i < sizeof($special_handling_info); $i++) {
-            $handlingSPHInstructions = $xml->createElement('ram:HandlingSPHInstructions');
-            $handlingSPHInstructions->appendChild($xml->createElement('ram:DescriptionCode', $special_handling_info[$i]));
-            $masterConsignment->appendChild($handlingSPHInstructions);
-        }
-
-        if (!empty($waybill_data['special_service_request'])) {
-            // Handling SSR Instructions
-            $handlingSSRInstructions = $xml->createElement('ram:HandlingSSRInstructions');
-            $handlingSSRInstructions->appendChild($xml->createElement('ram:Description', $waybill_data['special_service_request']));
-            $masterConsignment->appendChild($handlingSSRInstructions);
-        }
         if (!empty($waybill_data['other_service_information'])) {
             // Handling SSR Instructions
             $HandlingOSIInstructions = $xml->createElement('ram:HandlingOSIInstructions');
@@ -422,7 +420,7 @@ class ConversionController extends Controller
 
         if ($payment_details['type_of_payment']) {
             $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
-            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode',  $payment_details['type_of_payment']));
+            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment'] == 'PP' ? true : false));
             if ($consignment_data['service_code'])
                 $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:ServiceTypeCode', $consignment_data['service_code']));
             $masterConsignment->appendChild($ApplicableLogisticsServiceCharge);
@@ -431,8 +429,8 @@ class ConversionController extends Controller
         // Applicable Logistics Allowance Charge (Multiple Entries)
         for ($i = 0; $i < sizeof($other_charges); $i++) {
             $applicableLogisticsAllowanceCharge = $xml->createElement('ram:ApplicableLogisticsAllowanceCharge');
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:ID', substr($other_charges[$i]['other_charge_code'], 0, 2)));
-            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:PrepaidIndicator', $other_charges[$i]['payment_type'] == 'P' ? 'true' : 'false'));
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:ID', $other_charges[$i]['other_charge_code']));
+            $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:PrepaidIndicator', $other_charges[$i]['payment_type']));
             $applicableLogisticsAllowanceCharge->appendChild($xml->createElement('ram:PartyTypeCode', $other_charges[$i]['due']));
             $applicableAmount = $xml->createElement('ram:ActualAmount', $other_charges[$i]['amount']);
             $applicableAmount->setAttribute('currencyID', $payment_details['currency']);
@@ -479,8 +477,8 @@ class ConversionController extends Controller
             $AssociatedUnitLoadTransportEquipment = $xml->createElement('ram:AssociatedUnitLoadTransportEquipment');
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:ID', $uld_info[$j]['uld_serial']));
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:CharacteristicCode', $uld_info[$j]['uld_type']));
-            $OperatingParty = $xml->createElement("ram:OperatingParty");
-            $PrimaryID = $xml->createElement("ram:PrimaryID", $uld_info[$j]['owner']);
+            $OperatingParty = $xml->createElement("OperatingParty");
+            $PrimaryID = $xml->createElement("PrimaryID", $uld_info[$j]['owner']);
             $PrimaryID->setAttribute('schemeAgencyID', $j + 1);
             $OperatingParty->appendChild($PrimaryID);
             $AssociatedUnitLoadTransportEquipment->appendChild($OperatingParty);
@@ -541,7 +539,7 @@ class ConversionController extends Controller
         else
             $prepaid_collect_text = "collect";
         $applicablePrepaidCollectMonetarySummation = $xml->createElement('ram:ApplicablePrepaidCollectMonetarySummation');
-        $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:PrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
+        $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:PrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
         $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:WeightChargeTotalAmount', $payment_details['weight_charge']))->setAttribute('currencyID', $payment_details['currency']);
         if ($payment_details['taxes'])
             $applicablePrepaidCollectMonetarySummation->appendChild($xml->createElement('ram:TaxTotalAmount', $payment_details['taxes']))->setAttribute('currencyID', $payment_details['currency']);
@@ -575,7 +573,6 @@ class ConversionController extends Controller
         $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
 
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         //update refrance id
@@ -596,7 +593,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $house_data['id'] . '_' . $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'House waybill'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '703'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -635,7 +632,7 @@ class ConversionController extends Controller
         $signatoryCarrierAuth->appendChild($xml->createElement('Signatory', $agent_details['agent_name']));
 
         $issueAuthLocation = $xml->createElement('IssueAuthenticationLocation');
-        $issueAuthLocation->appendChild($xml->createElement('Name', substr($agent_details['agent_issue_loc_code'],0,3)));
+        $issueAuthLocation->appendChild($xml->createElement('Name', $agent_details['agent_issue_loc_code']));
         $signatoryCarrierAuth->appendChild($issueAuthLocation);
         $businessHeaderDocument->appendChild($signatoryCarrierAuth);
 
@@ -679,8 +676,8 @@ class ConversionController extends Controller
             $IncludedHouseConsignment->appendChild($xml->createElement('NilInsuranceValueIndicator', 'false'));
             $IncludedHouseConsignment->appendChild($xml->createElement('InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
-        $IncludedHouseConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $IncludedHouseConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
+        $IncludedHouseConsignment->appendChild($xml->createElement('TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? true : false));
+        $IncludedHouseConsignment->appendChild($xml->createElement('TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type']));
         $IncludedHouseConsignment->appendChild($xml->createElement('IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
             $IncludedHouseConsignment->appendChild($xml->createElement('GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit']);
@@ -834,7 +831,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $house_data['from']));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -868,7 +865,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $house_data['to']));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -902,7 +899,7 @@ class ConversionController extends Controller
             $OccurrenceDepartureLocation = $xml->createElement('OccurrenceDepartureLocation');
             $OccurrenceDepartureLocation->appendChild($xml->createElement('ID', $house_data['to_2']));
             $OccurrenceDepartureLocation->appendChild($xml->createElement('TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
+            $arrivalEvent->appendChild($OccurrenceDepartureLocation);
             $specifiedLogisticsTransportMovement->appendChild($departureEvent);
 
             $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
@@ -1053,12 +1050,10 @@ class ConversionController extends Controller
 
         // Append to the root element
         $xml->appendChild($housewaybill);
+
         // Prepare response as an XML download
-        $xml_file_name = 'xml_houseway_bill_' . $hawb_no . '.xml';
-        Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
-        $send_response = $this->sendXmlToDescartes($xml_file_name);
-        return $send_response;
-        // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
+        return response($xml->saveXML(), 200)
+            ->header('Content-Type', 'application/xml');
     }
 
     function ResponseMessage()
@@ -1146,7 +1141,6 @@ class ConversionController extends Controller
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $message_format = config("xml_message_format.$request_code");
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         if ($request_code == 703)
             $main_data = $house_data;
         else
@@ -1166,7 +1160,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $main_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Query'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '21'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Request'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '5.00'));
 
@@ -1244,7 +1238,7 @@ class ConversionController extends Controller
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
+
         // Start conversion to XML
         $xml = new DOMDocument('1.0', 'UTF-8');
         $xml->formatOutput = true;
@@ -1260,7 +1254,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $waybill_data['awb_code'] . '-' . $waybill_data['id'] . '_' . $waybill_data['reference_id']));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Cargo Manifest'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '785'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '3.00'));
 
@@ -1396,7 +1390,6 @@ class ConversionController extends Controller
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         // Start conversion to XML
@@ -1414,7 +1407,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ID', $time));
         $messageHeaderDocument->appendChild($xml->createElement('Name', 'Invoicing data sheet'));
         $messageHeaderDocument->appendChild($xml->createElement('TypeCode', '130'));
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '2.00'));
 
@@ -1558,7 +1551,6 @@ class ConversionController extends Controller
     {
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
         // Start conversion to XML
@@ -1579,7 +1571,7 @@ class ConversionController extends Controller
         $TypeCode->setAttribute('listID', 1001);
         $TypeCode->setAttribute('listVersionID', 'D09A');
         $messageHeaderDocument->appendChild($TypeCode);
-        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', $utc_current_date));
+        $messageHeaderDocument->appendChild($xml->createElement('IssueDateTime', str_replace(' ', 'T', $utc_current_date)));
         $messageHeaderDocument->appendChild($xml->createElement('PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('VersionID', '1.00'));
 

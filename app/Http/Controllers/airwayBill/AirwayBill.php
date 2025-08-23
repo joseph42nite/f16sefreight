@@ -16,11 +16,19 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\ConversionController;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SFTP;
 
 class AirwayBill extends Controller
 {
+    protected $conversionController;
+
+    public function __construct(ConversionController $conversionController)
+    {
+        $this->conversionController = $conversionController;
+    }
     public function get_agent()
     {
         $user = auth()->guard('user-api')->user();
@@ -28,14 +36,14 @@ class AirwayBill extends Controller
         $company_id = $user->company_id; // Company ID from user table
         $branch_name = $user->branch_name;
         // $agent = Agent::where('id', $branch_name)->first();
-        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference','ho_name','ho_address','ho_city','ho_pincode','ho_state','ho_country']);
+        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference', 'ho_name', 'ho_address', 'ho_city', 'ho_pincode', 'ho_state', 'ho_country']);
         return json_encode($data);
     }
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($shipper_address, [
@@ -63,7 +71,7 @@ class AirwayBill extends Controller
         //for insert
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
-        $WayBillAddress->awb_id = $awb_id;
+        $WayBillAddress->awb_id = "$awb_id";
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
         $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
         $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
@@ -86,7 +94,7 @@ class AirwayBill extends Controller
             $SavedAddress = SavedAddress::where([['awb_id', $awb_id], ['address_type', 'shipper_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
-            $SavedAddress->awb_id = $awb_id;
+            $SavedAddress->awb_id = "$awb_id";
             // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
@@ -103,7 +111,7 @@ class AirwayBill extends Controller
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
             $SavedAddress->agent_id = $agent->id ?? null;
-            $SavedAddress->user_id= $user->id ?? null;
+            $SavedAddress->user_id = $user->id ?? null;
             // dd($SavedAddress);die();
             $SavedAddress->save();
         }
@@ -113,9 +121,9 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
-        
+
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
@@ -138,7 +146,7 @@ class AirwayBill extends Controller
         $WayBillAddress = WayBillAddress::where('awb_id', $awb_id)->first();
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
-        $WayBillAddress->awb_id = $awb_id;
+        $WayBillAddress->awb_id = "$awb_id";
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
         $WayBillAddress->cons_name_2 = $consignee_address['cons_name_2'] ?? null;
         $WayBillAddress->cons_account = $consignee_address['cons_account'] ?? null;
@@ -158,10 +166,10 @@ class AirwayBill extends Controller
         //insert address if saved button checked
         if ($is_consignee_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $awb_id], ['address_type', 'consignee_address']])->first();
-            if (!isset($SavedAddress)){
+            if (!isset($SavedAddress)) {
                 $SavedAddress = new SavedAddress();
             }
-                $SavedAddress->awb_id = $awb_id;
+            $SavedAddress->awb_id = "$awb_id";
             // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
@@ -210,7 +218,7 @@ class AirwayBill extends Controller
         $WayBillAddress = WayBillAddress::where('awb_id', $awb_id)->first();
         if (!isset($WayBillAddress))
             $WayBillAddress = new WayBillAddress();
-        $WayBillAddress->awb_id = $awb_id;
+        $WayBillAddress->awb_id = "$awb_id";
         $WayBillAddress->also_name = $also_notify_address['also_name'];
         $WayBillAddress->also_address = $also_notify_address['also_address'];
         $WayBillAddress->also_address_line_2 = $also_notify_address['also_address_line_2'] ?? null;
@@ -229,7 +237,7 @@ class AirwayBill extends Controller
             $SavedAddress = SavedAddress::where([['awb_id', $awb_id], ['address_type', 'also_notify_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
-            $SavedAddress->awb_id = $awb_id;
+            $SavedAddress->awb_id = "$awb_id";
             // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
@@ -252,7 +260,7 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         if ($first_box['consolidated_mawb'] == true) {
@@ -276,7 +284,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $awb_id = $first_box['awb_code'] . $first_box['awb_no'];
+        $awb_id = ($first_box['awb_code'] . $first_box['awb_no']);
         // $AirwayBills = AirwayBills::find($first_box['awb_no']);
         $AirwayBills = AirwayBills::find($awb_id);
         if ($AirwayBills) {
@@ -294,7 +302,7 @@ class AirwayBill extends Controller
             ], 201);
         } else {
             $AirwayBills = new AirwayBills();
-            $AirwayBills->id = $awb_id;
+            $AirwayBills->id = "$awb_id";
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
@@ -323,7 +331,7 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($routing_information, [
@@ -371,12 +379,11 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Routing Information saved successfull";
     }
-
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
@@ -386,7 +393,7 @@ class AirwayBill extends Controller
             if (!isset($ConsignmentData))
                 $ConsignmentData = new ConsignmentData();
             // Update the fields
-            $ConsignmentData->awb_id = $awb_id;
+            $ConsignmentData->awb_id = "$awb_id";
             $ConsignmentData->pieces = $entry['pieces'];
             $ConsignmentData->description = $entry['description'];
             $ConsignmentData->rate_class = $entry['rate_class'];
@@ -413,9 +420,9 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
+        $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
-        
+
 
         $validator = Validator::make($custom_origin, [
             'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:2',
@@ -454,7 +461,7 @@ class AirwayBill extends Controller
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
         $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
 
@@ -482,7 +489,7 @@ class AirwayBill extends Controller
             if (!isset($otherChargesData)) {
                 $otherChargesData = new OtherCharge();
             }
-            $otherChargesData->awb_id = $awb_id;
+            $otherChargesData->awb_id = "$awb_id";
             $otherChargesData->other_charge_code = $finalOtherChargeCode;
             $otherChargesData->payment_type = $charges[$i]['payment_type'] ?? null;
             $otherChargesData->due = $charges[$i]['due'] ?? null;
@@ -492,13 +499,12 @@ class AirwayBill extends Controller
         }
         return "Other Charges Data saved successfully";
     }
-
     private function paymentInformation($awb_no, $awb_code, $payment_info)
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
@@ -551,7 +557,7 @@ class AirwayBill extends Controller
         if (!isset($AirwayBills))
             $AirwayBills = new PaymentInfo();
 
-        $AirwayBills->awb_id = $awb_id;
+        $AirwayBills->awb_id = "$awb_id";
         $AirwayBills->type_of_payment = $payment_info['type_of_payment'];
         // $AirwayBills->total_charges = $payment_info['total_charges'];
         $AirwayBills->currency = $payment_info['currency'] ?? 'INR';
@@ -570,13 +576,12 @@ class AirwayBill extends Controller
         $AirwayBills->save();
         return "Payment Information save successfully";
     }
-
     private function otherCustomInformation($awb_no, $awb_code, $oci_entries)
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
         foreach ($oci_entries as $oci_entry) {
@@ -605,7 +610,7 @@ class AirwayBill extends Controller
             if (!isset($OtherCustomInfo)) {
                 $OtherCustomInfo = new OtherCustomInformation();
             }
-            $OtherCustomInfo->awb_id = $awb_id;
+            $OtherCustomInfo->awb_id = "$awb_id";
             $OtherCustomInfo->info_identifier = $oci_info_identifier;
             $OtherCustomInfo->country_code = $oci_entry['country_code'];
             $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
@@ -621,8 +626,8 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($totals, [
             'total_volume' => 'required|numeric|min:0|max:999999999',
@@ -670,8 +675,8 @@ class AirwayBill extends Controller
     {
         $user = auth()->guard('user-api')->user();
         $company_id = $user->company_id;
-        $branch_name = $user->branch_name; 
-        $agent = Agent::where('id', $branch_name)->first(); 
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
 
         $awb_id = $awb_code . $awb_no;
         if (empty($tableCodes)) {
@@ -680,7 +685,7 @@ class AirwayBill extends Controller
         $handlingCode = AirwayBills::where('id', $awb_id)->first();
         if (!$handlingCode) {
             $handlingCode = new AirwayBills();
-            $handlingCode->hawb_no = $awb_id;
+            $handlingCode->hawb_no = "$awb_id";
         }
         $handlingCode->special_handling_info = json_encode(array_values(array_filter($tableCodes)));
         $handlingCode->save();
@@ -774,10 +779,17 @@ class AirwayBill extends Controller
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->first_box['awb_code'], $request->tableCodes);
         }
-        return response()->json(['data' => $main_return_data]);
-        // return json_encode($main_return_data);
-    }
 
+        //for status update
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+        $status = $request->status;
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->WayBillConversion($awb_id);
+        }
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+    }
     public function update(Request $request, $id, $awb_no = null)
     {
         $main_return_data = [];
@@ -857,9 +869,17 @@ class AirwayBill extends Controller
         if (!empty($id)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($request->first_box['awb_no'], $request->first_box['awb_code'], $request->tableCodes);
         }
-        return response()->json(['data' => $main_return_data]);
-    }
 
+        //for status update
+        $status=$request->status;
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->WayBillConversion($awb_id);
+        }
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+    }
     public function show($id)
     {
         $airwayBill = AirwayBills::with([
@@ -876,8 +896,7 @@ class AirwayBill extends Controller
         }
         return response()->json($airwayBill, 200);
     }
-
-    public function getAllawb()
+    public function getAirwayBills($status)
     {
         $user = auth()->guard('user-api')->user();
         if (!$user) {
@@ -891,7 +910,7 @@ class AirwayBill extends Controller
             'consignmentData',
             'otherCharge',
             'otherCustomInformation'
-        ])->where('agent_id', $agentId)->orderBy('created_at', 'desc')
+        ])->where('agent_id', $agentId)->where('status', $status)->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
         if ($airwayBill->isEmpty()) {
@@ -924,7 +943,6 @@ class AirwayBill extends Controller
         }
         return response()->json(['msg' => 'No error'], 200);
     }
-
     public function getShippers(Request $request)
     {
         $user = auth()->guard('user-api')->user();
@@ -1043,7 +1061,6 @@ class AirwayBill extends Controller
             ]);
         }
     }
-
     public function getAwbPrefixData($code)
     {
         $awbDetails = Airline::where('prefix', $code)->first();
@@ -1058,128 +1075,6 @@ class AirwayBill extends Controller
             return response()->json(null, 404);
         }
     }
-
-//    SFTP file transfer 
-    public function testXmlFilegenerate()
-    {
-        $xml_code = '<ns2:MessageHeaderDocument>
-        <ID>123-12345678_1740419426</ID>
-        <Name>Air Waybill</Name>
-        <TypeCode>740</TypeCode>
-        <IssueDateTime>2025-02-24 17:50:26</IssueDateTime>
-        <PurposeCode>Creation</PurposeCode>
-        <VersionID>5.00</VersionID>
-        <SenderParty>
-        <PrimaryID schemeID="P">REUAGT82INKN/BLR01</PrimaryID>
-        </SenderParty>
-        <SenderParty>
-        <PrimaryID schemeID="C">KUEHNENAGELAGT</PrimaryID>
-        </SenderParty>
-        <RecipientParty>
-        <PrimaryID schemeID="P">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        <RecipientParty>
-        <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        </ns2:MessageHeaderDocument>';
-
-        // Generate File Name & Path
-        $xml_file_name = 'message_' . time() . '.xml';
-        $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
-
-        // Save XML File
-        file_put_contents($xml_file_path, $xml_code);
-
-        // Send File to Server
-        try {
-            $this->sendFileToServer($xml_file_path, $xml_file_name);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-
-        return response()->json([
-            'message' => 'XML File Created and Sent to Server',
-            'file' => $xml_file_name
-        ]);
-    }
-
-    public function sendFileToServer($local_file_path, $remote_file_name)
-    {
-        $sftp_host = '65.0.228.88';
-        $sftp_username = 'ubuntu';
-        $ppk_file_path = storage_path('key/f16s.ppk');
-        $remote_folder = '/var/www/html/f16sefreight.com/public/xml-conversion-files/';
-
-        // Load Private Key
-        $private_key = PublicKeyLoader::load(file_get_contents($ppk_file_path));
-
-        // Establish SFTP Connection
-        $sftp = new SFTP($sftp_host);
-        if (!$sftp->login($sftp_username, $private_key)) {
-            throw new \Exception('SFTP Login Failed - Check credentials & key');
-        }
-
-        // Ensure Remote Folder Exists
-        if (!$sftp->chdir($remote_folder)) {
-            if (!$sftp->mkdir($remote_folder, 0777, true)) {
-                throw new \Exception("Remote folder '$remote_folder' does not exist and cannot be created");
-            }
-            $sftp->chdir($remote_folder);
-        }
-
-        // Upload File
-        if (!$sftp->put($remote_folder . $remote_file_name, $local_file_path, SFTP::SOURCE_LOCAL_FILE)) {
-            throw new \Exception('File Upload Failed - Unable to send file');
-        }
-
-        return true;
-    }
-
-
-    // ftp File transfer
-    public function xmlFilegenerate()
-    {
-        $xml_code = '<ns2:MessageHeaderDocument>
-        <ID>123-12345678_1740419426</ID>
-        <Name>Air Waybill</Name>
-        <TypeCode>740</TypeCode>
-        <IssueDateTime>2025-02-24 17:50:26</IssueDateTime>
-        <PurposeCode>Creation</PurposeCode>
-        <VersionID>5.00</VersionID>
-        <SenderParty>
-        <PrimaryID schemeID="P">REUAGT82INKN/BLR01</PrimaryID>
-        </SenderParty>
-        <SenderParty>
-        <PrimaryID schemeID="C">KUEHNENAGELAGT</PrimaryID>
-        </SenderParty>
-        <RecipientParty>
-        <PrimaryID schemeID="P">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        <RecipientParty>
-        <PrimaryID schemeID="C">REUAIR08AFR</PrimaryID>
-        </RecipientParty>
-        </ns2:MessageHeaderDocument>';
-    
-        // Generate File Name & Path
-        $xml_file_name = 'message_' . time() . '.xml';
-        $xml_file_path = public_path('xml-conversion-files/' . $xml_file_name);
-    
-        // Save XML File
-        file_put_contents($xml_file_path, $xml_code);
-    
-        // Send File to FTP Server
-        try {
-            $this->sendFileToServer($xml_file_path, $xml_file_name);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    
-        return response()->json([
-            'message' => 'XML File Created and Sent to FTP Server',
-            'file' => $xml_file_name
-        ]);
-    }
-
     public function sendFileToServerFTP($local_file_path, $remote_file_name)
     {
         // FTP Credentials

@@ -59,19 +59,19 @@
                                                 <!-- <a href="#" class="custom-link-custom mb-3" @click="getHouseWayBill(item.id)">
                                                     <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom> -->
                                                         <p @click="navigate" class="awbcodetitle mb-3">
-                                                            {{ item.awb_code }}-{{ item.awb_no }} 
+                                                            {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
                                                             ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
                                                         </p>
                                                 <!-- </router-link>
                                                 </a> -->
-                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                            <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + item.awb_code+'/' + item.awb_no" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
+                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
+                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                            <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + String(item.awb_code)+'/' + String(item.awb_no)" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
                                                     </router-link>
                                                 </a>
-                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(item.id)">
-                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom>
-                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + item.id" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
+                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
+                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
                                                     </router-link>
                                                 </a>
                                                 <p class="mt-5 mb-0" style="border-bottom: 1px solid #cdcdcd;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
@@ -143,8 +143,8 @@
                                                     <!-- <b-button class="" style="background:#A4D3EE;">
                                                         <b-icon icon="pencil" font-scale="1"></b-icon>
                                                     </b-button> -->
-                                                    <a :href="'/edit-airway-bill/' + existingData.id" class="custom-link" @click="getAirWayBill(existingData.id)">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + existingData.id" custom>
+                                                    <a :href="'/edit-airway-bill/' + String(existingData.id)" class="custom-link" @click="getAirWayBill(String(existingData.id))">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(existingData.id)" custom>
                                                             <b-button class="" style="background:#A4D3EE;">
                                                                 <b-icon icon="pencil" font-scale="1"></b-icon>
                                                             </b-button>
@@ -152,7 +152,7 @@
                                                     </a>
                                                 </td>
                                                 <td class="">
-                                                    {{ existingData.awb_code }}-{{ existingData.awb_no }}
+                                                    {{ String(existingData.awb_code) }}-{{ String(existingData.awb_no) }}
                                                 </td>
                                                 <td class="">
                                                     {{ existingData.departure_airport }}
@@ -733,8 +733,8 @@ export default {
         generateAwbPDF(awbNo = this.form.awb_no, awbCode = this.form.awb_code) {
             const awb_code = this.form.awb_code; // Access the awb_code from the form data
             const awb_no = this.form.awb_no;
-            const itemId = awb_code+awb_no; // Access the awb_no from the form data
-            const pdfUrl = `/download-consolidation-pdf/${awb_code}/${awb_no}`; // Construct the URL for the PDF
+            const itemId = String(awb_code)+String(awb_no); // Access the awb_no from the form data
+            const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`; // Construct the URL for the PDF
             window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
             
         },
@@ -802,7 +802,7 @@ export default {
             .then(response => {
                 if (response.data && response.data.length) {
                     // console.log("console data", response.data);
-                    const id = `${this.form.awb_code}${this.form.awb_no}`;
+                    const id = `${String(this.form.awb_code)}${String(this.form.awb_no)}`;
                     // console.log("id", id);
                     this.getAirWayBill(id);
                     this.consolidation = response.data;
@@ -847,7 +847,7 @@ export default {
             const item = this.consolidation.find((waybill) => waybill.id === id);
             if (item) {
                 // console.log("item.country_code:", this.consolidation);
-                this.form.id = item.id;
+                                    this.form.id = String(item.id);
                 this.form.master_origin = item.master_origin;
                 this.form.master_destination = item.master_destination;
                 this.form.description = item.description;
@@ -926,7 +926,7 @@ export default {
             ApiService.get(`/user/houseway-bill/${id}`)
                 .then(response => {
                     this.existingData = response.data;
-                    this.openForm('update', this.existingData.id);
+                    this.openForm('update', String(this.existingData.id));
                     if (this.existingData && this.existingData.consignment_data) {
                         this.isConsignmentAdded = true;
                     }

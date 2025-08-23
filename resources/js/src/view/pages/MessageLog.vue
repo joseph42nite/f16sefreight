@@ -95,7 +95,7 @@
                                             '/edit-airway-bill/' + row.item.id
                                         "
                                         class="custom-link"
-                                        @click="getAirWayBill(row.item.id)"
+                                        @click="getAirWayBill(String(row.item.id))"
                                     >
                                         <router-link
                                             v-slot="{ navigate, href }"
@@ -105,7 +105,7 @@
                                             "
                                             custom
                                         >
-                                            {{ row.item.awb_code }}-{{ row.item.awb_no }}
+                                            {{ String(row.item.awb_code) }}-{{ String(row.item.awb_no) }}
                                         </router-link>
                                     </a>
                                 </template>
@@ -130,7 +130,7 @@
                                                 '/edit-airway-bill/' + item.id
                                             "
                                             class="custom-link"
-                                            @click="getAirWayBill(item.id)"
+                                            @click="getAirWayBill(String(item.id))"
                                         >
                                             <router-link
                                                 v-slot="{ navigate, href }"
@@ -140,8 +140,8 @@
                                                 "
                                                 custom
                                             >
-                                                {{ item.awb_code }}
-                                                {{ item.awb_no }}
+                                                {{ String(item.awb_code) }}
+                                                {{ String(item.awb_no) }}
                                             </router-link>
                                         </a>
                                     </div>
@@ -249,11 +249,11 @@
                                 <!-- AWB No. -->
                                 <template #cell(id)="row">
                                     <router-link
-                                    :to="'/edit-airway-bill/' + row.item.id"
+                                    :to="'/edit-airway-bill/' + String(row.item.id)"
                                     class="custom-link"
-                                    @click.native="getAirWayBill(row.item.id)"
+                                                                          @click.native="getAirWayBill(String(row.item.id))"
                                     >
-                                    {{ row.item.awb_code }} {{ row.item.awb_no }}
+                                    {{ String(row.item.awb_code) }} {{ String(row.item.awb_no) }}
                                     </router-link>
                                 </template>
 
@@ -473,10 +473,10 @@ export default {
         },
         getHouseWayBills(item) {
             if (!item.awb_code || !item.awb_no) return [];
-            const key = `${item.awb_code}-${item.awb_no}`;
+            const key = `${String(item.awb_code)}-${String(item.awb_no)}`;
             if (!this.house_way_bills[key]) {
                 ApiService.get(
-                    `/user/house-way-bills/${item.awb_code}/${item.awb_no}`
+                    `/user/house-way-bills/${String(item.awb_code)}/${String(item.awb_no)}`
                 )
                     .then((response) => {
                         this.$set(this.house_way_bills, key, response.data);

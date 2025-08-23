@@ -56,7 +56,7 @@
             if (typeof paths === 'string') {
                 paths = [paths];
             }
-            console.log(paths);
+            // console.log(paths);
             // Check if the current route matches any of the paths
             return paths.some(path => {
                 // Handle dynamic segments in the path

@@ -2827,7 +2827,7 @@ export default {
         converXml(awb_no){
             ApiService.get(`/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    console.log(data);
+                    // console.log(data);
                 });
         },
         showModal() {

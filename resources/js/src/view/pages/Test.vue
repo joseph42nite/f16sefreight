@@ -2536,7 +2536,7 @@ export default {
             this.form.post(`create-housewaybill`)
             //ApiService.post(`/create-webdoc`, this.form)
             .then(({ data }) => {
-                console.log('data', data);
+                // console.log('data', data);
             })
             .catch(err => { });
         },
@@ -6630,7 +6630,7 @@ export default {
         converXml(awb_no){
             ApiService.get(`/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    console.log(data);
+                    // console.log(data);
                 });
         },
         showModal() {
@@ -6668,31 +6668,31 @@ export default {
         getLocation() {
             ApiService.get(`/user/get-location`).then(({ data }) => {
                 this.location=data;
-                console.log('location',data);
+                // console.log('location',data);
             });
         },
         onSubmit(evt) {
             evt.preventDefault();
             this.form.post(`/create-webdoc`).then(response => {
-                console.log(response);
+                // console.log(response);
             })
         },
         addDraft() {
             this.form.post('/add-houseway-bill')
                 .then(response => {
-                    console.log('Add Successful:', response);
+                    // console.log('Add Successful:', response);
                 })
                 .catch(error => {
-                    console.error('Add Failed:', error);
+                    // console.error('Add Failed:', error);
                 });
         },
         updateDraft() {
             this.form.put(`/update-houseway-bill/${this.existingData.id}`)
             .then(response => {
-                console.log('Update Successful:', response);
+                // console.log('Update Successful:', response);
             })
             .catch(error => {
-                console.error('Update Failed:', error);
+                // console.error('Update Failed:', error);
             });
         },
         getAgent(){
@@ -6709,7 +6709,7 @@ export default {
                 }
                 })
                 .catch(error => {
-                    console.error("Error fetching agent information:", error);
+                    // console.error("Error fetching agent information:", error);
                 });
         },
         handleRadioChange() {
@@ -6722,7 +6722,7 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table code ", this.form.tableCodes);
+                    // console.log("Table code ", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -6781,7 +6781,7 @@ export default {
                 this.editIndex = null;
             } else {
                 this.form.charges.push(chargeData);
-                console.log('Added new charge:', chargeData);
+                // console.log('Added new charge:', chargeData);
             }
             for (let key in this.other_charges) {
                 if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
@@ -6837,7 +6837,7 @@ export default {
                 }
             })
             .catch(error => {
-                console.error("There was an error with the consignment request:", error);
+                // console.error("There was an error with the consignment request:", error);
             });
         },
         // calculateTotalVolume() {
@@ -7087,7 +7087,7 @@ export default {
             // this.isDropdownOpen_to = !this.isDropdownOpen_to;
             this.activeField = field;
             this.isDropdownOpen_to[field] = !this.isDropdownOpen_to[field];
-            console.log('active fields', field);
+            // console.log('active fields', field);
         },
         // selectOption_to(item) {
         //     const { iata_code, destination } = item;
@@ -7114,7 +7114,7 @@ export default {
         },
         filteredLocations_to(field) {
             const query = (this.form.routing_information[field] || '').toLowerCase().trim();
-            console.log("Current locations:", this.location);
+            // console.log("Current locations:", this.location);
             if (!query) return this.location;
             return this.location.filter(item =>
             item.iata_code.toLowerCase().includes(query) ||
@@ -7180,7 +7180,7 @@ export default {
             this.form.payment_info.other_charges_due_carrier_collect = newVal;
         },
         'agent_information.participate': function(newValue) {
-            console.log('Participate value changed to:', newValue);
+            // console.log('Participate value changed to:', newValue);
         }
     },
     created() {

@@ -373,7 +373,7 @@
                 if (index >= 0 && index < this.accordions.length) {
                     this.accordions[index].isOpen = !this.accordions[index].isOpen;
                 } else {
-                    console.error("Accordion index is invalid:", index);
+                    // console.error("Accordion index is invalid:", index);
                 }
             },
 
@@ -386,7 +386,7 @@
             // Method to check visibility periodically
             checkVisibility() {
                 if (!this.hasAnimated.count1 && this.isElementInViewport(this.$refs.countSection1)) {
-                    console.log(Intl.NumberFormat('en-US').format(this.targetCounts.count1));
+                    // console.log(Intl.NumberFormat('en-US').format(this.targetCounts.count1));
                     this.animateCount(this.targetCounts.count1, "count1");
                     this.hasAnimated.count1 = true;
                 }

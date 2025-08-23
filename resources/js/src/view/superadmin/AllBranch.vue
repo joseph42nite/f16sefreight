@@ -93,7 +93,7 @@ export default {
         get_branch() {
             this.items = [];
             ApiService.get(`/superadmin/all-branch/0`).then(({ data }) => {
-                console.log(data);
+                // console.log(data);
                 this.items = data;
                 this.totalRows = data.length;
             });

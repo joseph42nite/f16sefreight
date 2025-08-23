@@ -371,43 +371,85 @@ export default {
     computed: {
         ...mapGetters({ current_user: "currentUser" }),
         filteredItems() {
-            if (!this.filter) return this.data_items;
+        if (!this.filter) return this.data_items;
 
-            const search = this.filter.toLowerCase();
-            return this.data_items.filter(
-                (item) =>
-                (item.awb_code || "")
-                        .toString()
-                        .toLowerCase()
-                        .includes(search) ||
-                    (item.awb_no || "")
-                        .toString()
-                        .toLowerCase()
-                        .includes(search) ||
-                    (item.destination_airport || "")
-                        .toLowerCase()
-                        .includes(search) ||
-                    (item.place || "").toLowerCase().includes(search)
-            );
-        },
-        normalizedItems() {
-            if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
+        const search = this.filter.toLowerCase();
+        return this.data_items.filter(
+            (item) =>
+            (item.awb_code || "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(search) ||
+                (item.awb_no || "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(search) ||
+                (item.destination_airport || "")
+                    .toLowerCase()
+                    .includes(search) ||
+                (item.place || "").toLowerCase().includes(search)
+        );
+    },
+    normalizedItems() {
+        if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
+            if (!this.data_items.airway_bill.destination_airport) return [];
+            
             return [{
                 awb_no: this.data_items.airway_bill.awb_no,
                 awb_code: this.data_items.airway_bill.awb_code,
                 destination_airport: this.getAirportCode(this.data_items.airway_bill.destination_airport),
                 created_at: this.formatDate(this.data_items.airway_bill.created_at),
-                house_way_bills: this.data_items.house_way_bills.map(hwb => ({
-                ...hwb,
-                destination_airport: this.getAirportCode(hwb.destination_airport),
-                created_at: this.formatDate(hwb.created_at),
-                }))
+                house_way_bills: this.data_items.house_way_bills
+                    .filter(hwb => hwb.destination_airport)
+                    .map(hwb => ({
+                        ...hwb,
+                        destination_airport: this.getAirportCode(hwb.destination_airport),
+                        created_at: this.formatDate(hwb.created_at),
+                    }))
             }];
-            } else if (Array.isArray(this.data_items)) {
-            return this.data_items;
-            }
-            return [];
+        } else if (Array.isArray(this.data_items)) {
+            return this.data_items.filter(item => item.destination_airport);
         }
+        return [];
+    }
+        // filteredItems() {
+        //     if (!this.filter) return this.data_items;
+
+        //     const search = this.filter.toLowerCase();
+        //     return this.data_items.filter(
+        //         (item) =>
+        //         (item.awb_code || "")
+        //                 .toString()
+        //                 .toLowerCase()
+        //                 .includes(search) ||
+        //             (item.awb_no || "")
+        //                 .toString()
+        //                 .toLowerCase()
+        //                 .includes(search) ||
+        //             (item.destination_airport || "")
+        //                 .toLowerCase()
+        //                 .includes(search) ||
+        //             (item.place || "").toLowerCase().includes(search)
+        //     );
+        // },
+        // normalizedItems() {
+        //     if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
+        //     return [{
+        //         awb_no: this.data_items.airway_bill.awb_no,
+        //         awb_code: this.data_items.airway_bill.awb_code,
+        //         destination_airport: this.getAirportCode(this.data_items.airway_bill.destination_airport),
+        //         created_at: this.formatDate(this.data_items.airway_bill.created_at),
+        //         house_way_bills: this.data_items.house_way_bills.map(hwb => ({
+        //         ...hwb,
+        //         destination_airport: this.getAirportCode(hwb.destination_airport),
+        //         created_at: this.formatDate(hwb.created_at),
+        //         }))
+        //     }];
+        //     } else if (Array.isArray(this.data_items)) {
+        //     return this.data_items;
+        //     }
+        //     return [];
+        // }
     },
     watch: {
         filteredItems(val) {
@@ -505,12 +547,12 @@ export default {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
                     } else {
-                        console.log("something went wrong");
+                        // console.log("something went wrong");
                     }
                 })
                 .catch((error) => {
                     this.existingData = null;
-                    console.error("Failed to fetch data for updating:", error);
+                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
         handleDeleteHouseBill(id) {

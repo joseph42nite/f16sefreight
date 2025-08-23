@@ -332,15 +332,15 @@ class AirwayBill extends Controller
             'from' => 'nullable|string',
             'to' => 'required|string',
             'by' => 'required|string|size:2',
-            'flight' => 'required|regex:/^[a-zA-Z0-9]+$/|max:5',
+            'flight' => 'required|regex:/^[a-zA-Z0-9]+$/|max:4',
             'date' => 'required|string',
             'to_2' => 'nullable|string',
             'by_2' => 'nullable|string|size:2',
-            'flight_2' => 'nullable|string|max:5',
+            'flight_2' => 'nullable|string|max:4',
             'date_2' => 'nullable|string',
             'to_3' => 'nullable|string',
             'by_3' => 'nullable|string|size:2',
-            'flight_3' => 'nullable|string|max:5',
+            'flight_3' => 'nullable|string|max:4',
             'date_3' => 'nullable|string',
         ]);
 

@@ -33,7 +33,7 @@ export default {
   },
   mounted() {
     // check if current user is authenticated
-    console.log(this.currentUser);
+    // console.log(this.currentUser);
     if (!this.isAuthenticated) {
       this.$router.push({ name: "userlogin" });
     }

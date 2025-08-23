@@ -3156,7 +3156,7 @@ export default {
         converXml(awb_no){
             ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    console.log(data);
+                    // console.log(data);
                 });
         },
         toggleModal() {
@@ -3234,15 +3234,15 @@ export default {
         // },
 
         onSubmit() {
-            console.log('Current mode:', this.mode);
+            // console.log('Current mode:', this.mode);
             this.main_error_msg='';
             if (this.mode === 'add') {
                 this.form.post('/user/create-houseway-bill')
                 .then(response => {
-                    console.log('Add Successful:', response);
+                    // console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
+                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
@@ -3273,15 +3273,15 @@ export default {
                 .then(response => {
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
+                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
                         this.successMessage = '-e-HSWB Saved in database -Pass';
                     } else {
-                        console.error('ID is missing in response data');
+                        // console.error('ID is missing in response data');
                     }
-                    console.log('Update Successful:', response);
+                    // console.log('Update Successful:', response);
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
@@ -3328,7 +3328,7 @@ export default {
         openForm(mode, id = null) {
             this.mode = mode;
             if (mode === 'update' && id) {
-                    console.log("Data prepared for update, ID:", this.existingData);
+                    // console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
                     this.form.first_box.hawb_no = this.existingData.id;
                     this.form.routing_information = this.existingData;
@@ -3364,13 +3364,13 @@ export default {
                     if(!this.form.entries){
                         this.isConsignmentAdded = true;
                     }
-                    console.log("hs code", parsedEntry);
+                    // console.log("hs code", parsedEntry);
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
                 } else {
                     // console.error('existingData is not an array:', this.existingData);
-                    console.log("Add mode activated");
+                    // console.log("Add mode activated");
                 }
         },
         getCountry(){
@@ -3430,7 +3430,7 @@ export default {
         fetchAlsoNotify() {
             ApiService.get(`/user/get-shippers`).then(response => {
                 this.alsoNotify = response.data;
-                console.log("fgweuf", response.data);
+                // console.log("fgweuf", response.data);
                 this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
                 // this.filteredConsignees = this.consignees;
                 // console.log('Shipper', response.data);
@@ -3460,10 +3460,10 @@ export default {
                 ApiService.get(`/user/get-consignee-address?id=${this.selectedConsignee}`)
                 .then( response => {
                     this.form.consignee_address = response.data; 
-                    console.log('Consignee', response.data);
+                    // console.log('Consignee', response.data);
                 })
                 .catch(error => {
-                    console.error('Error fetching shipper address:', error);
+                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.consignee_address = {
@@ -3479,10 +3479,10 @@ export default {
                 ApiService.get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`)
                 .then( response => {
                     this.form.also_notify_address = response.data; 
-                    console.log('Also Notify address', response.data);
+                    // console.log('Also Notify address', response.data);
                 })
                 .catch(error => {
-                    console.error('Error fetching Also notify address address:', error);
+                    // console.error('Error fetching Also notify address address:', error);
                 });
             } else {
                 this.form.also_notify_address = {
@@ -3537,7 +3537,7 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table codes:", this.form.tableCodes);
+                    // console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3657,7 +3657,7 @@ export default {
                 this.isConsignmentAdded = this.form.entries.length > 0;
             })
             .catch(error => {
-                console.error("There was an error with the consignment request:", error);
+                // console.error("There was an error with the consignment request:", error);
             });
         },
         // calculateTotalVolume() {
@@ -3868,7 +3868,7 @@ export default {
                 this.editIndex = null;
             } else {
                 this.form.charges.push(chargeData);
-                console.log('Added new charge:', chargeData);
+                // console.log('Added new charge:', chargeData);
             }
             for (let key in this.other_charges) {
                 if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
@@ -4298,11 +4298,11 @@ export default {
             }
         },
         existingData(newData) {
-            console.log("New data:", newData);
+            // console.log("New data:", newData);
             if (newData && newData.id) {
                 // this.generateAwbPDF();
             } else {
-                console.error('ID is missing in new data, cannot generate PDF.');
+                // console.error('ID is missing in new data, cannot generate PDF.');
             }
         }
     },
@@ -4314,7 +4314,7 @@ export default {
         }
         this.getOCIData();
         this.onSubmit = this.onSubmit.bind(this);
-        console.log("Current User:", this.current_user);
+        // console.log("Current User:", this.current_user);
         if(this.current_user)
         this.getAgent(this.current_user.company_name,this.current_user.branch_name);
         // this.getAgent();

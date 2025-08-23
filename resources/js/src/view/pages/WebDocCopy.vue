@@ -2440,6 +2440,9 @@
                                 </div>
                                 <div class="py-10">
                                     <!-- Spinner (Initially Hidden) -->
+                                    <div v-if="pdf_error_msg" class="text-danger text-right mb-3">
+                                        <div v-html="pdf_error_msg"></div>
+                                    </div>
                                     <div v-if="showSpinner" class="spin" style="margin-top: 20px;"></div>
                                     <div class="d-flex justify-content-between">
                                         <div v-if="is_generate_pdf" class="mb-24" style="box-shadow: 0px 3px 15px 0px #0013;border-radius: 12px;width: 100%;">
@@ -2475,6 +2478,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                   
                                     <div v-if="main_error_msg" class="text-danger text-right mb-3">
                                         <div v-html="main_error_msg"></div>
                                     </div>
@@ -2886,6 +2890,7 @@ export default {
             ],
             logoSrc: "/media/custome/logo-1.png",
             main_error_msg: "",
+            pdf_error_msg: '',
             is_generate_pdf:0,
             showSpinner: false,  // Initially, the progress bar is hidden
         };
@@ -2945,7 +2950,40 @@ export default {
         },
         isGeneratePdf(generateButton) {
             // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
+            const errors = [];
+        
+        // Check first box
+        if (!this.form.first_box.awb_code) errors.push('AWB Code');
+        if (!this.form.first_box.awb_no) errors.push('AWB Number');
+        
+        // Check routing information
+        if (!this.form.routing_information.departure_airport) errors.push('Departure Airport');
+        if (!this.form.routing_information.destination_airport) errors.push('Destination Airport');
+        if (!this.form.routing_information.from) errors.push('From Airport');
+        
+        // Check shipper details
+        if (!this.form.shipper_address.ship_name) errors.push('Shipper Name');
+        if (!this.form.shipper_address.ship_address) errors.push('Shipper Address');
+        if (!this.form.shipper_address.ship_city) errors.push('Shipper City');
+        
+        // Check consignee details
+        if (!this.form.consignee_address.cons_name) errors.push('Consignee Name');
+        if (!this.form.consignee_address.cons_address) errors.push('Consignee Address');
+        if (!this.form.consignee_address.cons_city) errors.push('Consignee City');
+
+        // Check if there are any entries in the consignment
+        if (this.form.entries.length === 0) {
             
+        }
+
+        if (errors.length > 0) {
+            this.pdf_error_msg = `<br>- ${errors.join('<br>- ')}`;
+            return;
+        }
+
+        // Clear error message if validation passes
+        this.pdf_error_msg = '';
+        this.is_generate_pdf = generateButton === 1;
             // Start the progress bar animation
             if(generateButton == 0 && this.is_generate_pdf == 1) {
                 this.is_generate_pdf = 0;
@@ -2988,24 +3026,45 @@ export default {
         // },
         generateAwbPDF(pdf_generate_type) {
             if (!this.existingData || !this.existingData.id) {
-                console.error('Existing data ID is missing. Cannot generate PDF.');
+                // console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
             window.open(pdfUrl, '_blank');
         },
         handleSaveAndGeneratePDF(pdf_generate_type) {
-            this.generatePDFAfterSave = pdf_generate_type;
-            const result = this.onSubmit() || Promise.resolve({});
-            result.then(response => {
-                if (response.data && response.data.data && response.data.data.id) {
-                    // this.generateAwbPDF(pdf_generate_type);
+            // this.generatePDFAfterSave = pdf_generate_type;
+            // const result = this.onSubmit() || Promise.resolve({});
+            // result.then(response => {
+            //     if (response.data && response.data.data && response.data.data.id) {
+            //         // this.generateAwbPDF(pdf_generate_type);
+            //     } else {
+            //         console.error('ID is missing in the response data');
+            //     }
+            // }).catch(error => {
+            //     console.error('Error while saving data:', error);
+            // });
+            try {
+                this.showSpinner = true;
+                this.pdf_error_msg = ''; // Clear previous errors
+                
+                const result = this.onSubmit() || Promise.resolve({});
+                result.then(response => {
+                
+                if (response.data.error) {
+                    this.pdf_error_msg = response.data.error;
+                    this.is_generate_pdf = false;
                 } else {
-                    console.error('ID is missing in the response data');
+                    // Handle successful PDF generation
+                    window.open(response.data.url, '_blank');
                 }
-            }).catch(error => {
-                console.error('Error while saving data:', error);
             });
+            } catch (error) {
+                this.pdf_error_msg = error.response?.data?.message || 'Failed to generate PDF';
+                this.is_generate_pdf = false;
+            } finally {
+                this.showSpinner = false;
+            }
         },
         validateFormFields() {
             const requiredFields = {
@@ -3035,7 +3094,7 @@ export default {
         converXml(awb_no){
             ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    console.log(data);
+                    // console.log(data);
                 });
         },
         // showModal() {
@@ -3123,7 +3182,7 @@ export default {
                     // console.log('Shipper', response.data);
                 })
                 .catch(error => {
-                    console.error('Error fetching shipper address:', error);
+                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.shipper_address = {
@@ -3140,10 +3199,10 @@ export default {
                 ApiService.get(`/user/get-consignee-address?id=${this.selectedConsignee}`)
                 .then( response => {
                     this.form.consignee_address = response.data; 
-                    console.log('Consignee', response.data);
+                    // console.log('Consignee', response.data);
                 })
                 .catch(error => {
-                    console.error('Error fetching shipper address:', error);
+                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.consignee_address = {
@@ -3160,10 +3219,10 @@ export default {
                 ApiService.get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`)
                 .then( response => {
                     this.form.also_notify_address = response.data; 
-                    console.log('Also Notify address', response.data);
+                    // console.log('Also Notify address', response.data);
                 })
                 .catch(error => {
-                    console.error('Error fetching Also notify address address:', error);
+                    // console.error('Error fetching Also notify address address:', error);
                 });
             } else {
                 this.form.also_notify_address = {
@@ -3182,22 +3241,22 @@ export default {
         //     })
         // },
         onSubmit() {
-            console.log('Current mode:', this.mode);
+            // console.log('Current mode:', this.mode);
             this.main_error_msg='';
             // this.is_generate_pdf=0;
             if (this.mode === 'add') {
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
-                    console.log('Add Successful:', response);
+                    // console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
+                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {
-                        console.error('ID is missing in response data');
+                        // console.error('ID is missing in response data');
                     }
                 })
                 .catch(error => {
@@ -3214,24 +3273,24 @@ export default {
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
-                    console.log('existingData:', this.existingData);
-                    console.log('existingData Data id:', this.existingData.id);
-                    console.error('Update Failed: existingData is missing or invalid');
+                    // console.log('existingData:', this.existingData);
+                    // console.log('existingData Data id:', this.existingData.id);
+                    // console.error('Update Failed: existingData is missing or invalid');
                     return;
                 }
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        console.log('Existing data set:', this.existingData);
+                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {
-                        console.error('ID is missing in response data');
+                        // console.error('ID is missing in response data');
                     }
-                    console.log('Update Successful:', response);
+                    // console.log('Update Successful:', response);
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
@@ -3277,7 +3336,7 @@ export default {
                     this.data_items = response.data;
                 })
                 .catch(error => {
-                    console.error("Failed to fetch items:", error);
+                    // console.error("Failed to fetch items:", error);
                 });
         },
         getAirWayBill(id) { 
@@ -3306,7 +3365,7 @@ export default {
                     this.showAWBSection = false;
                     this.awbError = "No data found for this AWB ID.";
                     this.awbDetails = false;
-                    console.error("Failed to fetch data for updating:", error);
+                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
         getAirWayBillForRealod(id){
@@ -3325,7 +3384,7 @@ export default {
                 }
             })
             .catch((error) => {
-                console.error("Error fetching AWB:", error.response || error);
+                // console.error("Error fetching AWB:", error.response || error);
                 this.showAWBSection = false;
                 this.awbError = error.response?.status === 404
                     ? "Air Waybill not found."
@@ -3336,7 +3395,7 @@ export default {
             this.mode = mode;
             this.showAWBSection = false;
             if (mode === 'update' && id) {
-                    console.log("Data prepared for update, ID:", this.existingData);
+                    // console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
                     this.form.first_box.hawb_no = this.existingData.id;
                     this.form.routing_information = this.existingData;
@@ -3390,9 +3449,9 @@ export default {
                             uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
                         };
                         this.form.entries = [parsedEntry];
-                        console.log("Parsed entry:", parsedEntry);
+                        // console.log("Parsed entry:", parsedEntry);
                     } else {
-                        console.warn("No consignment data available. Entry is null or undefined.");
+                        // console.warn("No consignment data available. Entry is null or undefined.");
                         this.form.entries = []; // Default to an empty array if no data exists
                     }
                     if(!this.form.entries){
@@ -3405,7 +3464,7 @@ export default {
                     this.form.also_notify_address = this.existingData.way_bill_address;
                 } else {
                     // console.error('existingData is not an array:', this.existingData);
-                    console.log("Add mode activated");
+                    // console.log("Add mode activated");
                 }
         },
         // beforeRouteEnter(to, from) {
@@ -3441,7 +3500,7 @@ export default {
                 }
                 })
                 .catch(error => {
-                    console.error("Error fetching agent information:", error);
+                    // console.error("Error fetching agent information:", error);
                 });
         },
         getCountry(){
@@ -3451,7 +3510,7 @@ export default {
                     text: data[key]
                 }));
             }).catch(error => {
-                console.error("Error fetching countries:", error);
+                // console.error("Error fetching countries:", error);
             });
         },
         getOtherChargesCode(){
@@ -3461,7 +3520,7 @@ export default {
                     text: data[key]
                 }));
             }).catch(error => {
-                console.error("Error fetching countries:", error);
+                // console.error("Error fetching countries:", error);
             });
         },
         getOCIData(){
@@ -3481,7 +3540,7 @@ export default {
                 }));
             }
             }).catch(error => {
-                console.error("Error fetching countries:", error);
+                // console.error("Error fetching countries:", error);
                 this.oci_data.oci_custom_info_identifier = []; 
             });
         },
@@ -3507,7 +3566,7 @@ export default {
                 }
                 this.form.first_box.awb = false;
             }
-            console.log("Updated Table Codes:", this.form.tableCodes);
+            // console.log("Updated Table Codes:", this.form.tableCodes);
         },
         addManualCode() {
             if (!Array.isArray(this.form.tableCodes)) {
@@ -3518,7 +3577,7 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table codes:", this.form.tableCodes);
+                    // console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3588,7 +3647,7 @@ export default {
                 this.editIndex = null;
             } else {
                 this.form.charges.push(chargeData);
-                console.log('Added new charge:', chargeData);
+                // console.log('Added new charge:', chargeData);
             }
             for (let key in this.other_charges) {
                 if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
@@ -3638,13 +3697,13 @@ export default {
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
-            console.log("Before request, consignment_list:", this.consignment_list);
+            // console.log("Before request, consignment_list:", this.consignment_list);
             if (!(this.consignment_list instanceof Form)) {
                 this.consignment_list = new Form(this.consignment_list);
             }
             this.consignment_list.post(`/user/get-consignment-error`)
             .then(response => {
-                console.log("Response from server:", response);
+                // console.log("Response from server:", response);
                 const updatedEntry = { 
                     ...this.consignment_list,
                     uld_info: JSON.stringify(this.consignment_list.uld_infos),
@@ -3652,14 +3711,14 @@ export default {
                     hs_code: JSON.stringify(this.consignment_list.hsCodes)
                 };
                 if (this.edit_entry_index !== null) {
-                    console.log("Updating entry at index", this.edit_entry_index, "with data:", updatedEntry);
+                    // console.log("Updating entry at index", this.edit_entry_index, "with data:", updatedEntry);
                     this.form.entries[this.edit_entry_index] = updatedEntry;
                     // console.log("Updating entry at index", this.edit_entry_index, "with data:", this.consignment_list);
                     // this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
                     // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
                     this.edit_entry_index = null;
                 } else {
-                    console.log("Adding new entry:", updatedEntry);
+                    // console.log("Adding new entry:", updatedEntry);
                     this.form.entries.push(updatedEntry);
                     // console.log("Adding new entry:", this.consignment_list);
                     // this.form.entries.push({ ...this.consignment_list });
@@ -3668,7 +3727,7 @@ export default {
                 this.calculateTotalAmount();
                  this.isConsignmentAdded = this.form.entries.length > 0;
                 this.closeModal();
-                console.log("Updated form entries:", this.form.entries);
+                // console.log("Updated form entries:", this.form.entries);
                 //clear consignment_list data
                 for (let key in this.consignment_list) {
                     if(key !='busy' && key !='successful' && key !='errors' && key !='originalData'){
@@ -3682,7 +3741,7 @@ export default {
                 this.isConsignmentAdded = this.form.entries.length > 0;
             })
             .catch(error => {
-                console.error("There was an error with the consignment request:", error);
+                // console.error("There was an error with the consignment request:", error);
             });
         },
         calculateTotalVolume() {
@@ -4123,7 +4182,7 @@ export default {
         reloadPageWithContent() {
             const awbId = this.awbId;
             if (!awbId) {
-                console.error('AWB ID is missing');
+                // console.error('AWB ID is missing');
                 return;
             }
                ApiService.get(`/user/airway-bill/${awbId}`)
@@ -4144,7 +4203,7 @@ export default {
                     this.existingData = null;
                     // this.awbError = "No data found for this AWB ID.";
                     this.awbDetails = false;
-                    console.error("Failed to fetch data for updating:", error);
+                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
         selectShipper(shipper) {
@@ -4262,7 +4321,7 @@ export default {
                 this.showAWBSection = false;
             }
         }
-        console.log("Current User:", this.current_user);
+        // console.log("Current User:", this.current_user);
         if(this.current_user)
         this.getAgent(this.current_user.company_name,this.current_user.branch_name);
     },
@@ -4321,7 +4380,7 @@ export default {
             this.form.payment_info.other_charges_due_carrier_collect = newVal;
         },
         'agent_information.participate': function(newValue) {
-            console.log('Participate value changed to:', newValue);
+            // console.log('Participate value changed to:', newValue);
         },
         "form.shipper_address.ship_name"(newVal) {
             if (!newVal) {
@@ -4356,11 +4415,11 @@ export default {
             }
         },
         existingData(newData) {
-            console.log("New data:", newData);
+            // console.log("New data:", newData);
             if (newData && newData.id) {
                 // this.generateAwbPDF();
             } else {
-                console.error('ID is missing in new data, cannot generate PDF.');
+                // console.error('ID is missing in new data, cannot generate PDF.');
             }
         }
     },

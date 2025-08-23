@@ -48,7 +48,7 @@ export default {
                this.password_changed=true;
             })
             .catch(err=>{
-                console.log(err);
+                // console.log(err);
             });
         }
     },

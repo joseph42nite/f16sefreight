@@ -751,7 +751,7 @@ export default {
         converXml(awb_no){
             ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    console.log(data);
+                    // console.log(data);
                 });
         },
         showModal() {
@@ -803,7 +803,7 @@ export default {
                 if (response.data && response.data.length) {
                     // console.log("console data", response.data);
                     const id = `${this.form.awb_code}${this.form.awb_no}`;
-                    console.log("id", id);
+                    // console.log("id", id);
                     this.getAirWayBill(id);
                     this.consolidation = response.data;
                     this.hasSearchResults = true; 
@@ -826,7 +826,7 @@ export default {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
                     } else {
-                       console.log("something went wrong");
+                    //    console.log("something went wrong");
                     }
                 })
                 .catch(error => {
@@ -837,7 +837,7 @@ export default {
         updateform(id){
             this.form.put(`/user/update-consolidation/${this.form.id}`)
             .then(response => {
-                console.log("Waybill updated:", response.data);
+                // console.log("Waybill updated:", response.data);
             })
             .catch(error => {
                 console.error("Error updating waybill:", error);
@@ -846,7 +846,7 @@ export default {
         editConsolidation(id) {
             const item = this.consolidation.find((waybill) => waybill.id === id);
             if (item) {
-                console.log("item.country_code:", this.consolidation);
+                // console.log("item.country_code:", this.consolidation);
                 this.form.id = item.id;
                 this.form.master_origin = item.master_origin;
                 this.form.master_destination = item.master_destination;
@@ -865,13 +865,13 @@ export default {
                 } else {
                     this.form.tableCodes = [];
                 }
-                console.log("Editing consolidation with ID:", id);
+                // console.log("Editing consolidation with ID:", id);
             } else {
                 console.warn("Item not found for ID:", id);
             }
         },
         deleteConsolidation(index) {
-            console.log("Deleting code at index", index);
+            // console.log("Deleting code at index", index);
             this.form.tableCodes.splice(index, 1);
         },
         getCountry(){
@@ -963,7 +963,7 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    console.log("Table codes:", this.form.tableCodes);
+                    // console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }

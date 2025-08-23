@@ -71,7 +71,7 @@ export default {
         },
     },
     mounted() {
-        console.log(this.get_item)
+        // console.log(this.get_item)
         if (this.get_item) {
             this.getData(this.get_item);
             this.action = "Edit";

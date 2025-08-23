@@ -477,7 +477,7 @@ export default {
       event.preventDefault();
         axios.post('/contact', this.form.data())
         .then(({ data }) => {
-            console.log('contact created successfully:', data);
+            // console.log('contact created successfully:', data);
             this.showSuccessMessage = true;
             setTimeout(() => {
               this.showSuccessMessage = false;

@@ -956,7 +956,7 @@ class ConversionController extends Controller
         $applicableOriginCurrencyExchange->appendChild($xml->createElement('ram:SourceCurrencyCode', 'INR'));
         $IncludedHouseConsignment->appendChild($applicableOriginCurrencyExchange);
 
-        if ($consignment_data['type_of_payment']) {
+        if ($payment_details['type_of_payment']) {
             $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
             $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment']));
             if ($consignment_data['service_code'])

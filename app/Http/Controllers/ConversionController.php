@@ -681,7 +681,7 @@ class ConversionController extends Controller
             $IncludedHouseConsignment->appendChild($xml->createElement('ram:InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
+        $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] ?? '' == 'P' ? 'true' : 'false'));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         if (!empty($waybill_data['total_volume']))
             $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit']);

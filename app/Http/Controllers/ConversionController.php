@@ -579,7 +579,7 @@ class ConversionController extends Controller
         $time = time();
 
         //update refrance id
-        HousewayBills::where([['id', $hawb_no]])->update(['reference_id', $time]);
+        // HousewayBills::where([['id', $hawb_no]])->update(['reference_id', $time]);
 
         // Start conversion to XML
         $xml = new DOMDocument();

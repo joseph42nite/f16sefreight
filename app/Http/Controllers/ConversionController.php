@@ -1020,7 +1020,7 @@ class ConversionController extends Controller
         for ($j = 0; $j < sizeof($pieces_info); $j++) {
             $TransportLogisticsPackage = $xml->createElement('ram:TransportLogisticsPackage');
             $TransportLogisticsPackage->appendChild($xml->createElement('ram:ItemQuantity', $pieces_info[$j]['pcs']));
-            if ($pieces_info[$j]['gross_weight']) {
+            if (isset($pieces_info[$j]['gross_weight'])) {
                 $GrossWeightMeasure = $xml->createElement('ram:GrossWeightMeasure', $pieces_info[$j]['gross_weight']);
                 $GrossWeightMeasure->setAttribute('unitCode', 'KGM');
                 $TransportLogisticsPackage->appendChild($GrossWeightMeasure);

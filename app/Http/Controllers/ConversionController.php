@@ -587,7 +587,7 @@ class ConversionController extends Controller
 
         // Create root element
         $housewaybill = $xml->createElementNS('iata:housewaybill:1', 'rsm:HouseWaybill');
-        $housewaybill->setAttribute('xmlns', 'iata:datamodel:3');
+        $housewaybill->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $housewaybill->setAttribute('xmlns:rsm', 'iata:housewaybill:1');
 
         // Message Header Document

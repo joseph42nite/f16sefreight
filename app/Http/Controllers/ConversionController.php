@@ -955,13 +955,10 @@ class ConversionController extends Controller
         $applicableOriginCurrencyExchange->appendChild($xml->createElement('ram:SourceCurrencyCode', 'INR'));
         $IncludedHouseConsignment->appendChild($applicableOriginCurrencyExchange);
 
-        if ($payment_details['type_of_payment']) {
-            $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
-            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:TransportPaymentMethodCode', $payment_details['type_of_payment']));
-            if ($consignment_data['service_code'])
-                $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:ServiceTypeCode', $consignment_data['service_code']));
-            $IncludedHouseConsignment->appendChild($ApplicableLogisticsServiceCharge);
-        }
+        $ApplicableLogisticsServiceCharge = $xml->createElement('ram:ApplicableLogisticsServiceCharge');
+        if ($consignment_data['service_code'])
+            $ApplicableLogisticsServiceCharge->appendChild($xml->createElement('ram:ServiceTypeCode', $consignment_data['service_code']));
+        $IncludedHouseConsignment->appendChild($ApplicableLogisticsServiceCharge);
 
         // Applicable Logistics Allowance Charge (Multiple Entries)
         for ($i = 0; $i < sizeof($other_charges); $i++) {

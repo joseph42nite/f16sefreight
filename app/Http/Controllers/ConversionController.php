@@ -614,7 +614,6 @@ class ConversionController extends Controller
 
         // Business Header Document
         $businessHeaderDocument = $xml->createElement('rsm:BusinessHeaderDocument');
-        $businessHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $housewaybill->appendChild($businessHeaderDocument);
 
         $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $house_data['id']));
@@ -686,115 +685,115 @@ class ConversionController extends Controller
         if (!empty($waybill_data['total_volume']))
             $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit']);
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
-
+        $IncludedHouseConsignment->appendChild($xml->createElement('ram:SummaryDescription', $consignment_data['description']));
         // Consignor Party
-        // $consignor_street_name = $house_address['ship_address'] . (!empty($house_address['ship_address_line_2']) ? ',' . $house_address['ship_address_line_2'] : '');
-        // $consignorParty = $xml->createElement('ram:ConsignorParty');
-        // $consignorParty->appendChild($xml->createElement('ram:Name', $house_address['ship_name']));
-        // $consignorParty->appendChild($xml->createElement('ram:AccountID', $house_address['ship_account']));
-        // $postalStructuredAddress1 = $xml->createElement('ram:PostalStructuredAddress');
-        // $postalStructuredAddress1->appendChild($xml->createElement('ram:PostcodeCode', $house_address['ship_post_code']));
-        // $postalStructuredAddress1->appendChild($xml->createElement('ram:StreetName', $consignor_street_name));
-        // $postalStructuredAddress1->appendChild($xml->createElement('ram:CityName', $house_address['ship_city']));
-        // $postalStructuredAddress1->appendChild($xml->createElement('ram:CountryID', $house_address['ship_country']));
-        // // $postalStructuredAddress1->appendChild($xml->createElement('ram:CountrySubDivisionName', $house_address['ship_state']));
-        // $consignorParty->appendChild($postalStructuredAddress1);
+        $consignor_street_name = $house_address['ship_address'] . (!empty($house_address['ship_address_line_2']) ? ',' . $house_address['ship_address_line_2'] : '');
+        $consignorParty = $xml->createElement('ram:ConsignorParty');
+        $consignorParty->appendChild($xml->createElement('ram:Name', $house_address['ship_name']));
+        $consignorParty->appendChild($xml->createElement('ram:AccountID', $house_address['ship_account']));
+        $postalStructuredAddress1 = $xml->createElement('ram:PostalStructuredAddress');
+        $postalStructuredAddress1->appendChild($xml->createElement('ram:PostcodeCode', $house_address['ship_post_code']));
+        $postalStructuredAddress1->appendChild($xml->createElement('ram:StreetName', $consignor_street_name));
+        $postalStructuredAddress1->appendChild($xml->createElement('ram:CityName', $house_address['ship_city']));
+        $postalStructuredAddress1->appendChild($xml->createElement('ram:CountryID', $house_address['ship_country']));
+        // $postalStructuredAddress1->appendChild($xml->createElement('ram:CountrySubDivisionName', $house_address['ship_state']));
+        $consignorParty->appendChild($postalStructuredAddress1);
 
-        // if (!empty($house_address['ship_phone']) || !empty($house_address['ship_fax']) || !empty($house_address['ship_telex'])) {
-        //     $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
-        //     if (!empty($house_address['ship_phone'])) {
-        //         $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
-        //         $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['ship_phone']));
-        //         $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-        //     }
-        //     if (!empty($house_address['ship_fax'])) {
-        //         $FaxCommunication = $xml->createElement('ram:FaxCommunication');
-        //         $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['ship_fax']));
-        //         $DefinedTradeContact->appendChild($FaxCommunication);
-        //     }
-        //     if ($house_address['ship_telex']) {
-        //         $TelexCommunication = $xml->createElement('ram:TelexCommunication');
-        //         $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['ship_telex']));
-        //         $DefinedTradeContact->appendChild($TelexCommunication);
-        //     }
-        //     $consignorParty->appendChild($DefinedTradeContact);
-        // }
-        // $IncludedHouseConsignment->appendChild($consignorParty);
+        if (!empty($house_address['ship_phone']) || !empty($house_address['ship_fax']) || !empty($house_address['ship_telex'])) {
+            $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
+            if (!empty($house_address['ship_phone'])) {
+                $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
+                $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['ship_phone']));
+                $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+            }
+            if (!empty($house_address['ship_fax'])) {
+                $FaxCommunication = $xml->createElement('ram:FaxCommunication');
+                $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['ship_fax']));
+                $DefinedTradeContact->appendChild($FaxCommunication);
+            }
+            if ($house_address['ship_telex']) {
+                $TelexCommunication = $xml->createElement('ram:TelexCommunication');
+                $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['ship_telex']));
+                $DefinedTradeContact->appendChild($TelexCommunication);
+            }
+            $consignorParty->appendChild($DefinedTradeContact);
+        }
+        $IncludedHouseConsignment->appendChild($consignorParty);
 
         // Consignee Party
-        // $consignee_street_name = $house_address['cons_address'] . (!empty($house_address['cons_address_line_2']) ? ',' . $house_address['cons_address_line_2'] : '');
-        // $consigneeParty = $xml->createElement('ram:ConsigneeParty');
-        // $consigneeParty->appendChild($xml->createElement('ram:Name', $house_address['cons_name']));
-        // $consigneeParty->appendChild($xml->createElement('ram:AccountID', $house_address['cons_account']));
-        // $postalStructuredAddress2 = $xml->createElement('ram:PostalStructuredAddress');
-        // $postalStructuredAddress2->appendChild($xml->createElement('ram:PostcodeCode', $house_address['cons_post_code']));
-        // $postalStructuredAddress2->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
-        // $postalStructuredAddress2->appendChild($xml->createElement('ram:CityName', $house_address['cons_city']));
-        // $postalStructuredAddress2->appendChild($xml->createElement('ram:CountryID', $house_address['cons_country']));
-        // // $postalStructuredAddress2->appendChild($xml->createElement('ram:CountrySubDivisionName', $house_address['cons_state']));
-        // $consigneeParty->appendChild($postalStructuredAddress2);
+        $consignee_street_name = $house_address['cons_address'] . (!empty($house_address['cons_address_line_2']) ? ',' . $house_address['cons_address_line_2'] : '');
+        $consigneeParty = $xml->createElement('ram:ConsigneeParty');
+        $consigneeParty->appendChild($xml->createElement('ram:Name', $house_address['cons_name']));
+        $consigneeParty->appendChild($xml->createElement('ram:AccountID', $house_address['cons_account']));
+        $postalStructuredAddress2 = $xml->createElement('ram:PostalStructuredAddress');
+        $postalStructuredAddress2->appendChild($xml->createElement('ram:PostcodeCode', $house_address['cons_post_code']));
+        $postalStructuredAddress2->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
+        $postalStructuredAddress2->appendChild($xml->createElement('ram:CityName', $house_address['cons_city']));
+        $postalStructuredAddress2->appendChild($xml->createElement('ram:CountryID', $house_address['cons_country']));
+        // $postalStructuredAddress2->appendChild($xml->createElement('ram:CountrySubDivisionName', $house_address['cons_state']));
+        $consigneeParty->appendChild($postalStructuredAddress2);
 
-        // if (!empty($house_address['cons_phone']) || !empty($house_address['cons_fax']) || !empty($house_address['cons_telex'])) {
-        //     $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
-        //     if (!empty($house_address['cons_phone'])) {
-        //         $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
-        //         $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['cons_phone']));
-        //         $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-        //     }
-        //     if (!empty($house_address['cons_fax'])) {
-        //         $FaxCommunication = $xml->createElement('ram:FaxCommunication');
-        //         $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['cons_fax']));
-        //         $DefinedTradeContact->appendChild($FaxCommunication);
-        //     }
-        //     if ($house_address['cons_telex']) {
-        //         $TelexCommunication = $xml->createElement('ram:TelexCommunication');
-        //         $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['cons_telex']));
-        //         $DefinedTradeContact->appendChild($TelexCommunication);
-        //     }
-        //     $consigneeParty->appendChild($DefinedTradeContact);
-        // }
-        // $IncludedHouseConsignment->appendChild($consigneeParty);
+        if (!empty($house_address['cons_phone']) || !empty($house_address['cons_fax']) || !empty($house_address['cons_telex'])) {
+            $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
+            if (!empty($house_address['cons_phone'])) {
+                $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
+                $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['cons_phone']));
+                $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+            }
+            if (!empty($house_address['cons_fax'])) {
+                $FaxCommunication = $xml->createElement('ram:FaxCommunication');
+                $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['cons_fax']));
+                $DefinedTradeContact->appendChild($FaxCommunication);
+            }
+            if ($house_address['cons_telex']) {
+                $TelexCommunication = $xml->createElement('ram:TelexCommunication');
+                $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['cons_telex']));
+                $DefinedTradeContact->appendChild($TelexCommunication);
+            }
+            $consigneeParty->appendChild($DefinedTradeContact);
+        }
+        $IncludedHouseConsignment->appendChild($consigneeParty);
 
         //also notify
-        // if (!empty($house_address['also_name'])) {
-        //     $consignee_street_name = $house_address['also_address'] . (!empty($house_address['also_address_line_2']) ? ',' . $house_address['also_address_line_2'] : '');
-        //     $AssociatedParty = $xml->createElement('ram:AssociatedParty');
-        //     $AssociatedParty->appendChild($xml->createElement('ram:Name', $house_address['also_name']));
+        if (!empty($house_address['also_name'])) {
+            $consignee_street_name = $house_address['also_address'] . (!empty($house_address['also_address_line_2']) ? ',' . $house_address['also_address_line_2'] : '');
+            $AssociatedParty = $xml->createElement('ram:AssociatedParty');
+            $AssociatedParty->appendChild($xml->createElement('ram:Name', $house_address['also_name']));
 
-        //     $roleCode = $xml->createElement('ram:RoleCode', 'NI');
-        //     $roleCode->setAttribute('listID', '3035');
-        //     $roleCode->setAttribute('listAgencyID', '6');
-        //     $roleCode->setAttribute('listVersionID', 'D09A');
-        //     $AssociatedParty->appendChild($roleCode);
+            $roleCode = $xml->createElement('ram:RoleCode', 'NI');
+            $roleCode->setAttribute('listID', '3035');
+            $roleCode->setAttribute('listAgencyID', '6');
+            $roleCode->setAttribute('listVersionID', 'D09A');
+            $AssociatedParty->appendChild($roleCode);
 
-        //     $postalStructuredAddress3 = $xml->createElement('ram:PostalStructuredAddress');
-        //     $postalStructuredAddress3->appendChild($xml->createElement('ram:PostcodeCode', $house_address['also_post_code']));
-        //     $postalStructuredAddress3->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
-        //     $postalStructuredAddress3->appendChild($xml->createElement('ram:CityName', $house_address['also_city']));
-        //     $postalStructuredAddress3->appendChild($xml->createElement('ram:CountryID', $house_address['also_country']));
-        //     $AssociatedParty->appendChild($postalStructuredAddress3);
+            $postalStructuredAddress3 = $xml->createElement('ram:PostalStructuredAddress');
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:PostcodeCode', $house_address['also_post_code']));
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:CityName', $house_address['also_city']));
+            $postalStructuredAddress3->appendChild($xml->createElement('ram:CountryID', $house_address['also_country']));
+            $AssociatedParty->appendChild($postalStructuredAddress3);
 
-        //     if (!empty($house_address['also_phone']) || !empty($house_address['also_fax']) || !empty($house_address['also_telex'])) {
-        //         $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
-        //         if (!empty($house_address['also_phone'])) {
-        //             $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
-        //             $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['also_phone']));
-        //             $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
-        //         }
-        //         if (!empty($house_address['also_fax'])) {
-        //             $FaxCommunication = $xml->createElement('ram:FaxCommunication');
-        //             $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['also_fax']));
-        //             $DefinedTradeContact->appendChild($FaxCommunication);
-        //         }
-        //         if ($house_address['also_telex']) {
-        //             $TelexCommunication = $xml->createElement('ram:TelexCommunication');
-        //             $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['also_telex']));
-        //             $DefinedTradeContact->appendChild($TelexCommunication);
-        //         }
-        //         $AssociatedParty->appendChild($DefinedTradeContact);
-        //     }
-        //     $IncludedHouseConsignment->appendChild($AssociatedParty);
-        // }
+            if (!empty($house_address['also_phone']) || !empty($house_address['also_fax']) || !empty($house_address['also_telex'])) {
+                $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
+                if (!empty($house_address['also_phone'])) {
+                    $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
+                    $DirectTelephoneCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['also_phone']));
+                    $DefinedTradeContact->appendChild($DirectTelephoneCommunication);
+                }
+                if (!empty($house_address['also_fax'])) {
+                    $FaxCommunication = $xml->createElement('ram:FaxCommunication');
+                    $FaxCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['also_fax']));
+                    $DefinedTradeContact->appendChild($FaxCommunication);
+                }
+                if ($house_address['also_telex']) {
+                    $TelexCommunication = $xml->createElement('ram:TelexCommunication');
+                    $TelexCommunication->appendChild($xml->createElement('ram:CompleteNumber', $house_address['also_telex']));
+                    $DefinedTradeContact->appendChild($TelexCommunication);
+                }
+                $AssociatedParty->appendChild($DefinedTradeContact);
+            }
+            $IncludedHouseConsignment->appendChild($AssociatedParty);
+        }
 
         // Origin Location
         $originLocation = $xml->createElement('ram:OriginLocation');

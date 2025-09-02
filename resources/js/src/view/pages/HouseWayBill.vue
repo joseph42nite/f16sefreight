@@ -41,7 +41,8 @@
                                                     <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(String(item.id))">
                                                         <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                             <p @click="navigate" class="mb-0">
-                                                                {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
+                                                                {{ item.id }}
+                                                                <!-- {{ String(item.awb_code) }}-{{ String(item.awb_no) }}  -->
                                                                 ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
                                                             </p>
                                                         </router-link>
@@ -73,7 +74,8 @@
                                                     <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(String(item.id))">
                                                         <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                             <p @click="navigate" class="mb-0">
-                                                                {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
+                                                                {{ item.id }}
+                                                                <!-- {{ String(item.awb_code) }}-{{ String(item.awb_no) }}  -->
                                                                 ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
                                                             </p>
                                                         </router-link>
@@ -3201,17 +3203,56 @@ export default {
         //     this.form.routing_information.date = this.formatDate(date);
         // },
         handleDateChange(date, field) {
-            const formattedDate = this.formatDate(date);
             const keys = field.split('.');
             let target = this;
 
             for (let i = 0; i < keys.length - 1; i++) {
-            target = target[keys[i]];
+                target = target[keys[i]];
             }
-            target[keys[keys.length - 1]] = formattedDate;
+            
+            // Store the actual date value for backend processing
+            target[keys[keys.length - 1]] = date;
         },
         issueDateChange(date) {
             this.form.agent_issue_date = this.formatDate(date);
+        },
+        
+        // Prepare form data for submission - convert display dates back to proper format
+        prepareFormDataForSubmission() {
+            const formData = { ...this.form };
+            
+            // Convert display dates back to proper format for backend
+            if (formData.routing_information) {
+                if (formData.routing_information.date && typeof formData.routing_information.date === 'string') {
+                    // If it's a formatted string like "02Sept", convert it back to proper date
+                    const date = new Date(formData.routing_information.date);
+                    if (!isNaN(date.getTime())) {
+                        formData.routing_information.date = date.toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                }
+                if (formData.routing_information.date_2 && typeof formData.routing_information.date_2 === 'string') {
+                    if (formData.routing_information.date_2.length <= 10) {
+                        const date = new Date(formData.routing_information.date_2);
+                        if (!isNaN(date.getTime())) {
+                            formData.routing_information.date_2 = date.toISOString().slice(0, 19).replace('T', ' ');
+                        }
+                    } else if (formData.routing_information.date_2 instanceof Date) {
+                        formData.routing_information.date_2 = formData.routing_information.date_2.toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                }
+                if (formData.routing_information.date_3 && typeof formData.routing_information.date_3 === 'string') {
+                    if (formData.routing_information.date_3.length <= 10) {
+                        const date = new Date(formData.routing_information.date_3);
+                        if (!isNaN(date.getTime())) {
+                            formData.routing_information.date_3 = date.toISOString().slice(0, 19).replace('T', ' ');
+                        }
+                    } else if (formData.routing_information.date_3 instanceof Date) {
+                        formData.routing_information.date_3 = formData.routing_information.date_3.toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                }
+            }
+            
+            return formData;
         },
         // onSubmit(evt) {
         //     evt.preventDefault();
@@ -3243,8 +3284,14 @@ export default {
         onSubmit() {
             // console.log('Current mode:', this.mode);
             this.main_error_msg='';
+            
+            // Prepare form data for submission - convert display dates to proper format
+            const preparedFormData = this.prepareFormDataForSubmission();
+            
             if (this.mode === 'add') {
-                this.form.post('/user/create-houseway-bill')
+                // Create a new Form instance with prepared data
+                const form = new Form(preparedFormData);
+                form.post('/user/create-houseway-bill')
                 .then(response => {
                     // console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
@@ -3276,7 +3323,10 @@ export default {
                     console.error('Update Failed: existingData is missing or invalid');
                     return;
                 }
-                this.form.put(`/user/update-houseway-bill/${this.existingData.id}`)
+                
+                // Create a new Form instance with prepared data for update
+                const form = new Form(preparedFormData);
+                form.put(`/user/update-houseway-bill/${this.existingData.id}`)
                 .then(response => {
                     console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
@@ -3339,7 +3389,20 @@ export default {
                     // console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
                     this.form.first_box.hawb_no = this.existingData.id;
-                    this.form.routing_information = this.existingData;
+                    
+                    // Format dates for display when editing
+                    const routingInfo = { ...this.existingData };
+                    if (routingInfo.date) {
+                        routingInfo.date = this.formatDate(routingInfo.date);
+                    }
+                    if (routingInfo.date_2) {
+                        routingInfo.date_2 = this.formatDate(routingInfo.date_2);
+                    }
+                    if (routingInfo.date_3) {
+                        routingInfo.date_3 = this.formatDate(routingInfo.date_3);
+                    }
+                    
+                    this.form.routing_information = routingInfo;
                     this.form.totals = this.existingData;
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);

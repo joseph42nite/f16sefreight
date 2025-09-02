@@ -370,21 +370,58 @@ class HousewayBill extends Controller
             'to' => 'required|string',
             'by' => 'required|string|size:2',
             'flight' => 'required|regex:/^[a-zA-Z0-9]+$/|max:4',
-            'date' => 'required|string',
+            'date' => 'required',
             'to_2' => 'nullable|string',
             'by_2' => 'nullable|string|size:2',
             'flight_2' => 'nullable|string|max:4',
-            'date_2' => 'nullable|string',
+            'date_2' => 'nullable',
             'to_3' => 'nullable|string',
             'by_3' => 'nullable|string|size:2',
             'flight_3' => 'nullable|string|max:4',
-            'date_3' => 'nullable|string',
+            'date_3' => 'nullable',
             'master_origin' => 'required|regex:/^[a-zA-Z0-9]+$/|max:3',
             'master_destination' => 'required|regex:/^[a-zA-Z0-9]+$/|max:3'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+        
+        // Additional date validation after basic validation passes
+        if (isset($routing_information['date']) && !empty($routing_information['date'])) {
+            if (strtotime($routing_information['date']) === false) {
+                return response()->json(['errors' => ['date' => ['The date field must be a valid date.']]], 422);
+            }
+        }
+        if (isset($routing_information['date_2']) && !empty($routing_information['date_2'])) {
+            if (strtotime($routing_information['date_2']) === false) {
+                return response()->json(['errors' => ['date_2' => ['The date_2 field must be a valid date.']]], 422);
+            }
+        }
+        if (isset($routing_information['date_3']) && !empty($routing_information['date_3'])) {
+            if (strtotime($routing_information['date_3']) === false) {
+                return response()->json(['errors' => ['date_3' => ['The date_3 field must be a valid date.']]], 422);
+            }
+        }
+        
+        // Format dates to ensure proper format Y-m-d H:i:s
+        if (isset($routing_information['date']) && !empty($routing_information['date'])) {
+            $timestamp = strtotime($routing_information['date']);
+            if ($timestamp !== false) {
+                $routing_information['date'] = date('Y-m-d H:i:s', $timestamp);
+            }
+        }
+        if (isset($routing_information['date_2']) && !empty($routing_information['date_2'])) {
+            $timestamp = strtotime($routing_information['date_2']);
+            if ($timestamp !== false) {
+                $routing_information['date_2'] = date('Y-m-d H:i:s', $timestamp);
+            }
+        }
+        if (isset($routing_information['date_3']) && !empty($routing_information['date_3'])) {
+            $timestamp = strtotime($routing_information['date_3']);
+            if ($timestamp !== false) {
+                $routing_information['date_3'] = date('Y-m-d H:i:s', $timestamp);
+            }
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);

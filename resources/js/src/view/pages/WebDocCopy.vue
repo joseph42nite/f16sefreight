@@ -3136,14 +3136,58 @@ export default {
             return `${day}${month}`;
         },
         handleDateChange(date, field) {
-            const formattedDate = this.formatDate(date);
             const keys = field.split('.');
             let target = this;
 
             for (let i = 0; i < keys.length - 1; i++) {
-            target = target[keys[i]];
+                target = target[keys[i]];
             }
-            target[keys[keys.length - 1]] = formattedDate;
+            
+            // Store the actual date value for backend processing
+            target[keys[keys.length - 1]] = date;
+        },
+        
+        // Prepare form data for submission - convert display dates back to proper format
+        prepareFormDataForSubmission() {
+            const formData = { ...this.form };
+            
+            // Convert display dates back to proper format for backend
+            if (formData.routing_information) {
+                if (formData.routing_information.date) {
+                    if (typeof formData.routing_information.date === 'string' && formData.routing_information.date.length <= 10) {
+                        // If it's a formatted string like "02Sept", convert it back to proper date
+                        const date = new Date(formData.routing_information.date);
+                        if (!isNaN(date.getTime())) {
+                            formData.routing_information.date = date.toISOString().slice(0, 19).replace('T', ' ');
+                        }
+                    } else if (formData.routing_information.date instanceof Date) {
+                        // If it's already a Date object, format it
+                        formData.routing_information.date = formData.routing_information.date.toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                }
+                if (formData.routing_information.date_2) {
+                    if (typeof formData.routing_information.date_2 === 'string' && formData.routing_information.date_2.length <= 10) {
+                        const date = new Date(formData.routing_information.date_2);
+                        if (!isNaN(date.getTime())) {
+                            formData.routing_information.date_2 = date.toISOString().slice(0, 19).replace('T', ' ');
+                        }
+                    } else if (formData.routing_information.date_2 instanceof Date) {
+                        formData.routing_information.date_2 = formData.routing_information.date_2.toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                }
+                if (formData.routing_information.date_3) {
+                    if (typeof formData.routing_information.date_3 === 'string' && formData.routing_information.date_3.length <= 10) {
+                        const date = new Date(formData.routing_information.date_3);
+                        if (!isNaN(date.getTime())) {
+                            formData.routing_information.date_3 = date.toISOString().slice(0, 19).replace('T', ' ');
+                        }
+                    } else if (formData.routing_information.date_3 instanceof Date) {
+                        formData.routing_information.date_3 = formData.routing_information.date_3.toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                }
+            }
+            
+            return formData;
         },
         // location
         getLocation() {
@@ -3239,7 +3283,13 @@ export default {
         onSubmit() {
             // console.log('Current mode:', this.mode);
             this.main_error_msg='';
+            
+            // Prepare form data for submission - convert display dates to proper format
+            const preparedFormData = this.prepareFormDataForSubmission();
+            
             if (this.mode === 'add') {
+                // Update the existing form with prepared data
+                Object.assign(this.form, preparedFormData);
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
                     // console.log('Add Successful:', response);
@@ -3273,6 +3323,8 @@ export default {
                     // console.error('Update Failed: existingData is missing or invalid');
                     return;
                 }
+                // Update the existing form with prepared data
+                Object.assign(this.form, preparedFormData);
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
                     console.log(response);
@@ -3395,7 +3447,20 @@ export default {
                     // console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
                     this.form.first_box.hawb_no = this.existingData.id;
-                    this.form.routing_information = this.existingData;
+                    
+                    // Format dates for display when editing
+                    const routingInfo = { ...this.existingData };
+                    if (routingInfo.date) {
+                        routingInfo.date = this.formatDate(routingInfo.date);
+                    }
+                    if (routingInfo.date_2) {
+                        routingInfo.date_2 = this.formatDate(routingInfo.date_2);
+                    }
+                    if (routingInfo.date_3) {
+                        routingInfo.date_3 = this.formatDate(routingInfo.date_3);
+                    }
+                    this.form.routing_information = routingInfo;
+                    
                     this.form.totals = this.existingData;
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);

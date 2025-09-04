@@ -58,9 +58,9 @@
                                             <div class="py-2">
                                                 <!-- <a href="#" class="custom-link-custom mb-3" @click="getHouseWayBill(item.id)">
                                                     <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom> -->
-                                                        <p @click="navigate" class="awbcodetitle mb-3">
+                                                        <p class="awbcodetitle mb-3">
                                                             {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
-                                                            ({{ item.departure_airport.split(',')[0] }}-{{ item.destination_airport.split(',')[0] }})
+                                                            ({{ item.departure_airport ? item.departure_airport.split(',')[0] : 'N/A' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : 'N/A' }})
                                                         </p>
                                                 <!-- </router-link>
                                                 </a> -->
@@ -505,7 +505,8 @@
                                         </tr>
                                     </table>
                                 </div>
-                                <div v-for="(waybill, index) in consolidation" :key="index" class="d-flex" style="background-color: #E6EBFF;">
+                                <template v-if="consolidation && consolidation.length > 0">
+                                    <div v-for="(waybill, index) in consolidation" :key="index" class="d-flex" style="background-color: #E6EBFF;">
                                     <div class="d-flex justify-content-center" style="width: 70px;background: #A4D3EE;">
                                         <div>
                                             <b-icon icon="pencil" font-scale="1" @click="editConsolidation(waybill.id)"></b-icon>
@@ -528,6 +529,10 @@
                                     <div class="" style="width: 407px;">
                                         {{ waybill.description }}
                                     </div>
+                                    </div>
+                                </template>
+                                <div v-else class="d-flex justify-content-center text-muted mt-2">
+                                    <p>No house waybills found for this master AWB.</p>
                                 </div>
                                 <!-- <div class="d-flex justify-content-center text-danger mt-2">
                                     <div style="border:1px solid #000;width:700px;">
@@ -548,8 +553,8 @@
                             </b-col>
                         </b-row>
                     </div>
-                    <div v-else-if="hasSearchResults" class="d-flex flex-column align-items-start pt-2 pb-2">
-                        <p>No house waybill information found. Please use the UI above to add house waybills.</p>
+                    <div v-else-if="searchPerformed && !hasSearchResults" class="d-flex flex-column align-items-start pt-2 pb-2">
+                        <p class="text-danger mt-5">No house waybills found for this master AWB.</p>
                     </div>
                 </div>
             </div>
@@ -573,6 +578,7 @@ export default {
                 master_destination: '',
                 description:'',
                 gross_weight: '',
+                pieces: '',
                 special_handling_info:'',
                 special_service_request:'',
                 other_service_information:'',
@@ -710,6 +716,7 @@ export default {
             editIndex: null,
             edit_entry_index: null,
             hasSearchResults: false,
+            searchPerformed: false,
             data_items: [],
             oci_data:{}, ///get-oci-data
             oci_identifiers:{},
@@ -751,7 +758,7 @@ export default {
         converXml(awb_no){
             ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    // console.log(data);
+                    // XML conversion completed
                 });
         },
         showModal() {
@@ -790,33 +797,28 @@ export default {
         allConsolidation(){
             // ApiService.get(`/all-consolidation`).then(({ data }) => {
             //     this.consolidation =  data;
-            //     console.log("consolidation", data);
             // });
         },
         searchWayBills() {
-            // this.hasSearchResults = true;
+            this.searchPerformed = true;
             this.form.post('/user/search-house-way-bills', {
                 awb_no: this.form.awb_no,
                 awb_code: this.form.awb_code
             })
             .then(response => {
                 if (response.data && response.data.length) {
-                    // console.log("console data", response.data);
                     const id = `${String(this.form.awb_code)}${String(this.form.awb_no)}`;
-                    // console.log("id", id);
                     this.getAirWayBill(id);
                     this.consolidation = response.data;
                     this.hasSearchResults = true; 
                 } else {
                     this.consolidation = [];
-                    // this.form = [];
                     this.hasSearchResults = false; 
                 }
             })
             .catch(error => {
                 console.error('Error fetching data:', error);
                 this.consolidation = [];
-                // this.form = [];
                 this.hasSearchResults = false; 
             });
         },
@@ -825,8 +827,6 @@ export default {
                 .then(response => {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
-                    } else {
-                    //    console.log("something went wrong");
                     }
                 })
                 .catch(error => {
@@ -837,7 +837,7 @@ export default {
         updateform(id){
             this.form.put(`/user/update-consolidation/${this.form.id}`)
             .then(response => {
-                // console.log("Waybill updated:", response.data);
+                // Waybill updated successfully
             })
             .catch(error => {
                 console.error("Error updating waybill:", error);
@@ -846,8 +846,7 @@ export default {
         editConsolidation(id) {
             const item = this.consolidation.find((waybill) => waybill.id === id);
             if (item) {
-                // console.log("item.country_code:", this.consolidation);
-                                    this.form.id = String(item.id);
+                this.form.id = String(item.id);
                 this.form.master_origin = item.master_origin;
                 this.form.master_destination = item.master_destination;
                 this.form.description = item.description;
@@ -865,13 +864,11 @@ export default {
                 } else {
                     this.form.tableCodes = [];
                 }
-                // console.log("Editing consolidation with ID:", id);
             } else {
                 console.warn("Item not found for ID:", id);
             }
         },
         deleteConsolidation(index) {
-            // console.log("Deleting code at index", index);
             this.form.tableCodes.splice(index, 1);
         },
         getCountry(){
@@ -940,21 +937,6 @@ export default {
             this.form.tableCodes = [];
             this.form.tableCodes.push(selectedCode);
         },
-        // addManualCode() {
-        //     const code = this.selectedCode || this.manualCode.trim();
-        //     if (code) {
-        //         if (!this.form.tableCodes.includes(code)) {
-        //             this.form.tableCodes.push(code);
-        //             console.log("Table code ", this.form.tableCodes);
-        //         } else {
-        //             alert('This code is already added.');
-        //         }
-        //     } else {
-        //         alert('Please select or enter a code.');
-        //     }
-        //     this.selectedCode = '';
-        //     this.manualCode = '';
-        // },
         addManualCode() {
             if (!Array.isArray(this.form.tableCodes)) {
                 this.form.tableCodes = [];
@@ -963,7 +945,6 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    // console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }

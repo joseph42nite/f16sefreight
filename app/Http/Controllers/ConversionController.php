@@ -1274,13 +1274,13 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($recipientParty2);
 
         // Business Header Document
-        $businessHeaderDocument = $xml->createElement('ram:rsm:BusinessHeaderDocument');
+        $businessHeaderDocument = $xml->createElement('rsm:BusinessHeaderDocument');
         $housemanifest->appendChild($businessHeaderDocument);
 
         $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
 
         // Master Consignment
-        $masterConsignment = $xml->createElement('ram:rsm:MasterConsignment');
+        $masterConsignment = $xml->createElement('rsm:MasterConsignment');
         $housemanifest->appendChild($masterConsignment);
         $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
         $masterConsignment->appendChild($xml->createElement('ram:ConsignmentItemQuantity', 1));

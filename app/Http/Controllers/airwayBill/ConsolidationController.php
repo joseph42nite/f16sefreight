@@ -211,7 +211,7 @@ class ConsolidationController extends Controller
     {
         $send_response = [];
         $send_response = $this->conversionController->HouseManifestMessage($awb_id);
-        AirwayBills::where('id', $awb_id)->upadte(['manifest_status' => 'send']);
+        AirwayBills::where('id', $awb_id)->update(['manifest_status' => 'send']);
         return response()->json(['data' => '', 'send_response' => $send_response, 'awb_id' => $awb_id]);
     }
 }

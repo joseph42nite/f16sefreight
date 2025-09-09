@@ -1294,12 +1294,12 @@ class ConversionController extends Controller
 
         // Origin Location
         $originLocation = $xml->createElement('ram:OriginLocation');
-        $originLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $waybill_data['departure_airport'])));
+        $originLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['departure_airport'], 0, 3)));
         $masterConsignment->appendChild($originLocation);
 
         // Final Destination Location
         $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
-        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $waybill_data['destination_airport'])));
+        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['destination_airport'], 0, 3)));
         $masterConsignment->appendChild($finalDestinationLocation);
 
         for ($i = 0; $i < sizeof($custom_info); $i++) {
@@ -1334,12 +1334,12 @@ class ConversionController extends Controller
 
             // Origin Location
             $originLocation = $xml->createElement('ram:OriginLocation');
-            $originLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $house_data[$i]['departure_airport'])));
+            $originLocation->appendChild($xml->createElement('ram:ID', substr($house_data[$i]['departure_airport'], 0, 3)));
             $housewaybill->appendChild($originLocation);
 
             // Final Destination Location
             $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
-            $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $house_data[$i]['destination_airport'])));
+            $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($house_data[$i]['destination_airport'], 0, 3)));
             $housewaybill->appendChild($finalDestinationLocation);
 
             $special_handling_info = json_decode($house_data[$i]['special_handling_info'], true);

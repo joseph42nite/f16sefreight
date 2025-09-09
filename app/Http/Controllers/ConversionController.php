@@ -1264,12 +1264,12 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
-        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'REUAGT82INKN/BLR01'));
+        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASTEST/BOM1'));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 
         $recipientParty2 = $xml->createElement('ram:RecipientParty');
-        $recipientParty2->appendChild($xml->createElement('ram:PrimaryID', 'REUAIR08AFR'));
+        $recipientParty2->appendChild($xml->createElement('ram:PrimaryID', 'TDVSYS03GLNUNADDR'));
         $recipientParty2->firstChild->setAttribute('schemeID', 'C');
         $messageHeaderDocument->appendChild($recipientParty2);
 
@@ -1294,12 +1294,12 @@ class ConversionController extends Controller
 
         // Origin Location
         $originLocation = $xml->createElement('ram:OriginLocation');
-        $originLocation->appendChild($xml->createElement('ram:ID', $waybill_data['departure_airport']));
+        $originLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $waybill_data['departure_airport'])));
         $masterConsignment->appendChild($originLocation);
 
         // Final Destination Location
         $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
-        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', $waybill_data['destination_airport']));
+        $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $waybill_data['destination_airport'])));
         $masterConsignment->appendChild($finalDestinationLocation);
 
         for ($i = 0; $i < sizeof($custom_info); $i++) {
@@ -1334,12 +1334,12 @@ class ConversionController extends Controller
 
             // Origin Location
             $originLocation = $xml->createElement('ram:OriginLocation');
-            $originLocation->appendChild($xml->createElement('ram:ID', $house_data[$i]['departure_airport']));
+            $originLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $house_data[$i]['departure_airport'])));
             $housewaybill->appendChild($originLocation);
 
             // Final Destination Location
             $finalDestinationLocation = $xml->createElement('ram:FinalDestinationLocation');
-            $finalDestinationLocation->appendChild($xml->createElement('ram:ID', $house_data[$i]['destination_airport']));
+            $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr(0, 3, $house_data[$i]['destination_airport'])));
             $housewaybill->appendChild($finalDestinationLocation);
 
             $special_handling_info = json_decode($house_data[$i]['special_handling_info'], true);

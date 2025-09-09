@@ -7,6 +7,7 @@ use App\AirwayBills;
 use App\ConsignmentData;
 use App\HousewayBills;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\ConversionController;
 use App\OtherCustomInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,12 @@ use Illuminate\Support\Facades\Validator;
 
 class ConsolidationController extends Controller
 {
+    protected $conversionController;
+
+    public function __construct(ConversionController $conversionController)
+    {
+        $this->conversionController = $conversionController;
+    }
     public function index()
     {
         $awbNo = 12345678;
@@ -26,7 +33,6 @@ class ConsolidationController extends Controller
             return response()->json(['message' => 'Record not found'], 404);
         }
     }
-
     public function searchHouseWayBills(Request $request)
     {
         $user = auth()->guard('user-api')->user();
@@ -73,22 +79,22 @@ class ConsolidationController extends Controller
                 'way_bill_custom_info.supplementary_info'
             )
             ->get();
-            $groupedWayBills = $wayBills->groupBy('id')->map(function ($group) {
-                $waybill = $group->first()->toArray();
-                // Extract custom information based on `country_code` and `info_identifier`
-                $customInfo = $group->map(function ($item) {
-                    return [
-                        'country_code' => $item->country_code,
-                        'info_identifier' => $item->info_identifier,
-                        'custom_info_identifier' => $item->custom_info_identifier,
-                        'supplementary_info' => $item->supplementary_info,
-                    ];
-                });
-                $waybill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
-            
-                return $waybill;
+        $groupedWayBills = $wayBills->groupBy('id')->map(function ($group) {
+            $waybill = $group->first()->toArray();
+            // Extract custom information based on `country_code` and `info_identifier`
+            $customInfo = $group->map(function ($item) {
+                return [
+                    'country_code' => $item->country_code,
+                    'info_identifier' => $item->info_identifier,
+                    'custom_info_identifier' => $item->custom_info_identifier,
+                    'supplementary_info' => $item->supplementary_info,
+                ];
             });
-            
+            $waybill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
+
+            return $waybill;
+        });
+
         return response()->json($groupedWayBills->values());
     }
     public function update(Request $request, $id)
@@ -186,19 +192,26 @@ class ConsolidationController extends Controller
             'awb_code' => 'nullable|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'nullable|regex:/^[0-9]+$/|size:8',
         ]);
-    
+
         // Initialize query
         $query = AirwayBills::query();
-    
+
         // Filter by awb_code and awb_no
         if ($request->filled('awb_code') && $request->filled('awb_no')) {
             $query->where('awb_code', $request->awb_code)
-                  ->where('awb_no', $request->awb_no);
+                ->where('awb_no', $request->awb_no);
         }
-    
+
         // Fetch specific fields
         $data = $query->get(['awb_no as air_waybill_number', 'departure_airport as master_origin', 'destination_airport as master_destination', 'total_volume as air_waybill_quantity']);
-    
+
         return response()->json($data);
+    }
+    public function manifestSend($awb_id)
+    {
+        $send_response = [];
+        $send_response = $this->conversionController->HouseManifestMessage($awb_id);
+        AirwayBills::where('id', $awb_id)->upadte(['manifest_status' => 'send']);
+        return response()->json(['data' => '', 'send_response' => $send_response, 'awb_id' => $awb_id]);
     }
 }

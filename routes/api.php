@@ -77,6 +77,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::put('/update-consolidation/{id}', [ConsolidationController::class, 'update']);
     Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
     Route::get('/fetch-airwaybill-data', [ConsolidationController::class, 'fetchTableData']);
+    Route::get('/manifest-send/{awb_id}', [ConsolidationController::class, 'manifestSend']);
 
     Route::get('/get-location', [LocationController::class, 'getLocation']);
 

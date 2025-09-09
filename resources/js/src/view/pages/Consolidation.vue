@@ -548,7 +548,7 @@
                             <b-col cols="12">
                                 <div class="d-flex justify-content-end align-items-center mr-16 py-8">
                                     <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" class="mr-2" @click="generateAwbPDF">Generate PDF</b-button>
-                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" class="mr-2" @click="converXml(form.awb_no)">Send</b-button>
+                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" class="mr-2" @click="manifest_send()" id="manifest-send-btn">Send</b-button>
                                 </div>
                             </b-col>
                         </b-row>
@@ -755,10 +755,11 @@ export default {
         mouseleave: function () {
             this.isOpen = false;
         },
-        converXml(awb_no){
-            ApiService.get(`/user/waybill/${awb_no}`)
-                .then(({ data }) => {
-                    // XML conversion completed
+        manifest_send(){
+            // $('#manifest-send-btn').text('Wait...');
+            ApiService.get(`/user/manifest-send/${this.form.awb_code}${this.form.awb_no}`)
+                .then(response => {
+                    console.log(response);
                 });
         },
         showModal() {

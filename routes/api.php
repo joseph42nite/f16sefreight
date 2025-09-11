@@ -6,6 +6,7 @@ use App\Http\Controllers\airwayBill\AirwayBill;
 use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
 use App\Http\Controllers\airwayBill\MessageLog;
+use App\Http\Controllers\airwayBill\GLNResponseController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -165,3 +166,6 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/contact', [ContactController::class, 'store']);
 Route::get('/all-contacts', [ContactController::class, 'index']);
 Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
+
+//gln response url
+Route::match(['get', 'post'], '/gln-response', [GLNResponseController::class, 'handle']);

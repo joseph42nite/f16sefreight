@@ -6,6 +6,7 @@ use App\Http\Controllers\airwayBill\AirwayBill;
 use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
 use App\Http\Controllers\airwayBill\MessageLog;
+use App\Http\Controllers\airwayBill\GLNResponseController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +78,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::put('/update-consolidation/{id}', [ConsolidationController::class, 'update']);
     Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
     Route::get('/fetch-airwaybill-data', [ConsolidationController::class, 'fetchTableData']);
+    Route::get('/manifest-send/{awb_id}', [ConsolidationController::class, 'manifestSend']);
 
     Route::get('/get-location', [LocationController::class, 'getLocation']);
 
@@ -165,3 +167,6 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/contact', [ContactController::class, 'store']);
 Route::get('/all-contacts', [ContactController::class, 'index']);
 Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
+
+//gln response url
+Route::match(['get', 'post'], '/gln-response', [GLNResponseController::class, 'handle']);

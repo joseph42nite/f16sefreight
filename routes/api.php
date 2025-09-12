@@ -100,6 +100,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     //message Log 
     Route::get('/house-way-bills/{awb_code}/{awb_no}', [MessageLog::class,'getHouseWayBills']);
     Route::get('/get-all-airwaybill', [MessageLog::class,'getAllAirwaybills']);
+    Route::get('/get-master-awbs-with-housewaybills', [MessageLog::class,'getMasterAwbsWithHouseWaybills']);
     Route::delete('/house-way-bills/{id}', [MessageLog::class, 'deleteHouseWayBill']);
     Route::post('/search-airway-bills', [MessageLog::class, 'searchBills']);
     //========end of the  airway bill operation=====

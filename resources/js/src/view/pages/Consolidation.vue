@@ -26,8 +26,8 @@
                         </b-col>
                         <b-col cols="6">
                             <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
+                              <!--  <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
+                                id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button> -->
                                 <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
                                 id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
                             </div>
@@ -54,28 +54,31 @@
                             <div class="d-block">
                                 <b-row class="mt-5">
                                     <b-col>
-                                        <div v-for="item in data_items" :key="item.id">
-                                            <div class="py-2">
-                                                <!-- <a href="#" class="custom-link-custom mb-3" @click="getHouseWayBill(item.id)">
-                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + item.id" custom> -->
-                                                        <p class="awbcodetitle mb-3">
-                                                            {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
-                                                            ({{ item.departure_airport ? item.departure_airport.split(',')[0] : 'N/A' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : 'N/A' }})
-                                                        </p>
-                                                <!-- </router-link>
-                                                </a> -->
-                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
-                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                        <div v-if="data_items && data_items.length > 0">
+                                            <div v-for="item in data_items" :key="item.id">
+                                                <div class="py-2">
+                                                    <p class="awbcodetitle mb-3" style="cursor: pointer;" @click="selectAndSearchAwb(item)">
+                                                        {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
+                                                        ({{ item.departure_airport ? item.departure_airport.split(',')[0] : 'N/A' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : 'N/A' }})
+                                                    </p>
+                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                             <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + String(item.awb_code)+'/' + String(item.awb_no)" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
-                                                    </router-link>
-                                                </a>
-                                                <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
-                                                    <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
+                                                        </router-link>
+                                                    </a>
+                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
+                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
                                                             <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
-                                                    </router-link>
-                                                </a>
-                                                <p class="mt-5 mb-0" style="border-bottom: 1px solid #cdcdcd;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p>
+                                                        </router-link>
+                                                    </a>
+                                                    <p class="mt-5 mb-0" style="border-bottom: 1px solid #cdcdcd;">
+                                                        Issued at: {{ formatDate(item.updated_at) }} By: {{ getCurrentUser() }}
+                                                    </p>
+                                                </div>
                                             </div>
+                                        </div>
+                                        <div v-else class="text-center py-4">
+                                            <p class="text-muted">No master AWBs with house waybills found.</p>
                                         </div>
                                     </b-col>
                                 </b-row>
@@ -87,7 +90,9 @@
                     <b-row>
                         <b-col cols="12">
                             <div class="align-items-center">
-                                <h6 class="h-color ml-4 mb-0">Create Electronic Consolidation (FHL)</h6>
+                                <h6 class="h-color ml-4 mb-0">
+                                    {{ form.id ? 'Edit House Waybill Details' : 'Create Electronic Consolidation (FHL)' }}
+                                </h6>
                             </div>
                             <div class="d-flex ml-4 mt-7">
                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
@@ -486,8 +491,9 @@
                         <b-row>
                             <b-col cols="12">
                                 <div class="d-flex justify-content-end align-items-center mr-16 pb-5">
-                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8;">Cancel</p>
-                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8;">Add details row</p>
+                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer;" @click="cancelUpdate">Cancel</p>
+                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer;" @click="updateHouseWayBill">Update</p>
+                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer;" @click="addDetailsRow">Add details row</p>
                                 </div>
                             </b-col>
                         </b-row>
@@ -786,12 +792,13 @@ export default {
             // })
         },
         allHousewayBill() {
-            ApiService.get('/user/all-houseway-bill')
+            ApiService.get('/user/get-master-awbs-with-housewaybills')
                 .then(response => {
                     this.data_items = response.data;
                 })
                 .catch(error => {
-                    console.error("Failed to fetch items:", error);
+                    console.error("Failed to fetch master AWBs with house waybills:", error);
+                    this.data_items = [];
                 });
         },
         allConsolidation(){
@@ -843,6 +850,76 @@ export default {
                 console.error("Error updating waybill:", error);
             });
         },
+        updateHouseWayBill() {
+            if (!this.form.id) {
+                this.$bvToast.toast('Please select a house waybill to update', {
+                    title: 'Warning',
+                    variant: 'warning',
+                    solid: true,
+                    autoHideDelay: 3000
+                });
+                return;
+            }
+            
+            // Prepare the data for update
+            const updateData = {
+                awb_code: this.form.awb_code,
+                awb_no: this.form.awb_no,
+                master_origin: this.form.master_origin,
+                master_destination: this.form.master_destination,
+                pieces: this.form.pieces,
+                gross_weight: this.form.gross_weight,
+                description: this.form.description,
+                special_handling_info: JSON.stringify(this.form.tableCodes),
+                other_service_information: this.form.other_service_information,
+                oci_entries: this.form.oci_entries,
+                status: 'draft'
+            };
+            
+            this.form.put(`/user/update-consolidation/${this.form.id}`, updateData)
+            .then(response => {
+                this.$bvToast.toast('House waybill updated successfully', {
+                    title: 'Success',
+                    variant: 'success',
+                    solid: true,
+                    autoHideDelay: 3000
+                });
+                // Refresh the consolidation data
+                this.searchWayBills();
+                // Clear the form
+                this.clearForm();
+            })
+            .catch(error => {
+                console.error("Error updating house waybill:", error);
+                this.$bvToast.toast('Error updating house waybill. Please try again.', {
+                    title: 'Error',
+                    variant: 'danger',
+                    solid: true,
+                    autoHideDelay: 5000
+                });
+            });
+        },
+        cancelUpdate() {
+            this.clearForm();
+        },
+        addDetailsRow() {
+            // This method can be used to add a new house waybill row
+            // For now, it will clear the form to allow adding new data
+            this.clearForm();
+        },
+        clearForm() {
+            this.form.id = '';
+            this.form.master_origin = '';
+            this.form.master_destination = '';
+            this.form.description = '';
+            this.form.gross_weight = '';
+            this.form.pieces = '';
+            this.form.special_handling_info = '';
+            this.form.other_service_information = '';
+            this.form.tableCodes = [];
+            this.form.oci_entries = [];
+            this.editIndex = null;
+        },
         editConsolidation(id) {
             const item = this.consolidation.find((waybill) => waybill.id === id);
             if (item) {
@@ -864,8 +941,21 @@ export default {
                 } else {
                     this.form.tableCodes = [];
                 }
+                // Scroll to the form section for better UX
+                this.$nextTick(() => {
+                    const formElement = document.querySelector('.custom-nav');
+                    if (formElement) {
+                        formElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
             } else {
                 console.warn("Item not found for ID:", id);
+                this.$bvToast.toast('House waybill not found', {
+                    title: 'Error',
+                    variant: 'danger',
+                    solid: true,
+                    autoHideDelay: 3000
+                });
             }
         },
         deleteConsolidation(index) {
@@ -1040,6 +1130,40 @@ export default {
             if (this.form[field].length >= maxLength) {
                 evt.preventDefault();
             }
+        },
+        formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+        getCurrentUser() {
+            // You can get this from your auth store or API
+            // For now, returning a placeholder
+            return 'Current User';
+        },
+        selectAndSearchAwb(item) {
+            // Fill the search fields with the selected AWB data
+            this.form.awb_code = String(item.awb_code);
+            this.form.awb_no = String(item.awb_no);
+            
+            // Close the modal
+            this.$bvModal.hide('modal-s');
+            
+            // Perform the search automatically
+            this.searchWayBills();
+            
+            // Show a toast notification
+            this.$bvToast.toast(`Searching for AWB ${item.awb_code}-${item.awb_no}`, {
+                title: 'Search Initiated',
+                variant: 'info',
+                solid: true,
+                autoHideDelay: 2000
+            });
         },
     },
     mounted(){
@@ -1415,6 +1539,12 @@ th {
 } 
 .awbcodetitle {
     color: #355594;
+    transition: color 0.3s ease;
+}
+
+.awbcodetitle:hover {
+    color: #2637a8;
+    text-decoration: underline;
 }
 </style>
 <style>

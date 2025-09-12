@@ -315,6 +315,35 @@ class MessageLog extends Controller
         }
     }
 
+    public function getMasterAwbsWithHouseWaybills()
+    {
+        try {
+            $user = auth()->guard('user-api')->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+            
+            $branch_name = $user->branch_name;
+            $agent = Agent::where('id', $branch_name)->first();
+            $agentId = $agent->id;
+
+            // Get master AWBs that have house waybills
+            $masterAwbs = AirwayBills::where('agent_id', $agentId)
+                ->whereHas('houseWayBills', function($query) use ($agentId) {
+                    $query->where('agent_id', $agentId);
+                })
+                ->with(['consignmentData'])
+                ->select('id', 'awb_code', 'awb_no', 'departure_airport', 'destination_airport', 'created_at', 'updated_at')
+                ->orderBy('updated_at', 'desc')
+                ->limit(10)
+                ->get();
+            
+            return response()->json($masterAwbs);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function deleteHouseWayBill($id)
     {
         try {

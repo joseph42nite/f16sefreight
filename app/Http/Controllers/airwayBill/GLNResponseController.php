@@ -5,6 +5,7 @@ namespace App\Http\Controllers\airwayBill;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\StatusReponse;
 
 class GLNResponseController extends Controller
 {
@@ -51,4 +52,26 @@ class GLNResponseController extends Controller
         return response()->json(['status' => 'ok'], 200);
     }
 
+    public function store(Request $request)
+    {
+        $xmlContent = $request->getContent();
+        $xml = simplexml_load_string($xmlContent, "SimpleXMLElement", LIBXML_NOCDATA);
+        $xml->registerXPathNamespace('rsm', 'iata:response:3');
+        $xml->registerXPathNamespace('ram', 'iata:datamodel:3');
+        $data = [
+            'message_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ID')[0] ?? null),
+            'type_code' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:TypeCode')[0] ?? null),
+            'issue_datetime' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:IssueDateTime')[0] ?? null),
+            'conversation_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ConversationID')[0] ?? null),
+            'primary_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:SenderParty/ram:PrimaryID')[0] ?? null),
+            'business_id' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null),
+            'business_name' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:Name')[0] ?? null),
+            'business_type_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:TypeCode')[0] ?? null),
+            'business_status_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:StatusCode')[0] ?? null),
+        ];
+        StatusReponse::create($data);
+        // $filePath = storage_path('logs/gln_responses.txt');
+        // file_put_contents($filePath, $xmlContent, FILE_APPEND);
+        return response()->json(['status' => true], 200);
+    }
 }

@@ -169,4 +169,4 @@ Route::get('/all-contacts', [ContactController::class, 'index']);
 Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
 
 //gln response url
-Route::match(['get', 'post'], '/gln-response', [GLNResponseController::class, 'handle']);
+Route::post('/gln-response', [GLNResponseController::class, 'store']);

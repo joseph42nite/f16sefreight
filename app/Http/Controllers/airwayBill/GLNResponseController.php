@@ -61,7 +61,7 @@ class GLNResponseController extends Controller
         $data = [
             'message_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ID')[0] ?? null),
             'type_code' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:TypeCode')[0] ?? null),
-            'issue_datetime' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:IssueDateTime')[0] ?? null),
+            'issue_date_time' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:IssueDateTime')[0] ?? null),
             'conversation_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ConversationID')[0] ?? null),
             'primary_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:SenderParty/ram:PrimaryID')[0] ?? null),
             'business_id' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null),
@@ -70,8 +70,8 @@ class GLNResponseController extends Controller
             'business_status_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:StatusCode')[0] ?? null),
         ];
         StatusReponse::create($data);
-        // $filePath = storage_path('logs/gln_responses.txt');
-        // file_put_contents($filePath, $xmlContent, FILE_APPEND);
+        $filePath = storage_path('logs/gln_responses.txt');
+        file_put_contents($filePath, '================='.$xmlContent, FILE_APPEND);
         return response()->json(['status' => true], 200);
     }
 }

@@ -949,7 +949,7 @@ class AirwayBill extends Controller
             // $original = json_decode($send_response, true)['original'];
         }
         echo "<pre>";
-        print_r($send_response);
+        print_r($send_response->getData(true));
         echo "</pre>";
         die();
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);

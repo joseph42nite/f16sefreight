@@ -386,7 +386,7 @@ class HousewayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        
+
         // Additional date validation after basic validation passes
         if (isset($routing_information['date']) && !empty($routing_information['date'])) {
             if (strtotime($routing_information['date']) === false) {
@@ -403,7 +403,7 @@ class HousewayBill extends Controller
                 return response()->json(['errors' => ['date_3' => ['The date_3 field must be a valid date.']]], 422);
             }
         }
-        
+
         // Format dates to ensure proper format Y-m-d H:i:s
         if (isset($routing_information['date']) && !empty($routing_information['date'])) {
             $timestamp = strtotime($routing_information['date']);
@@ -920,6 +920,8 @@ class HousewayBill extends Controller
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->HouseWayBillConversion($hawb_id);
+            $send_response = $send_response->getData(true);
+            HousewayBills::where(['id' => $hawb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
         }
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
@@ -1034,6 +1036,8 @@ class HousewayBill extends Controller
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->HouseWayBillConversion($id);
+            $send_response = $send_response->getData(true);
+            HousewayBills::where(['id' => $id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
         }
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }

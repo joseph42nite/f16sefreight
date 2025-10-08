@@ -3292,17 +3292,13 @@ export default {
                 Object.assign(this.form, preparedFormData);
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
-                    // console.log('Add Successful:', response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
-                    } else {
-                        // console.error('ID is missing in response data');
-                    }
+                    } else {}
                 })
                 .catch(error => {
                     var main_error_msg='';
@@ -3318,9 +3314,6 @@ export default {
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
-                    // console.log('existingData:', this.existingData);
-                    // console.log('existingData Data id:', this.existingData.id);
-                    // console.error('Update Failed: existingData is missing or invalid');
                     return;
                 }
                 // Update the existing form with prepared data
@@ -3330,15 +3323,11 @@ export default {
                     console.log(response);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
-                    } else {
-                        // console.error('ID is missing in response data');
-                    }
-                    // console.log('Update Successful:', response);
+                    } else {}
                     // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {

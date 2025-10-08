@@ -1058,7 +1058,6 @@ class ConversionController extends Controller
         return $send_response;
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
-
     function ResponseMessage()
     {
 
@@ -1132,7 +1131,6 @@ class ConversionController extends Controller
         echo "Reason1: $reason1<br>";
         echo "==========================================================<br>";
     }
-
     function GenericRequestMessage()
     {
         $awb_id = '571070525';
@@ -1229,12 +1227,9 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-
     function StatusMessage()
     {
     }
-
-
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)
@@ -1384,7 +1379,6 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
-
     public function DirectDataMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)
@@ -1555,7 +1549,6 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-
     public function CreatePartner()
     {
         $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
@@ -1744,7 +1737,6 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-
     public function sendXmlToDescartes($xml_file_name)
     {
         $fullPath = Storage::path("xml-conversion-files/$xml_file_name");

@@ -355,7 +355,7 @@ class AirwayBill extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        
+
         // Additional date validation after basic validation passes
         if (isset($routing_information['date']) && !empty($routing_information['date'])) {
             if (strtotime($routing_information['date']) === false) {
@@ -372,7 +372,7 @@ class AirwayBill extends Controller
                 return response()->json(['errors' => ['date_3' => ['The date_3 field must be a valid date.']]], 422);
             }
         }
-        
+
         // Format dates to ensure proper format Y-m-d H:i:s
         if (isset($routing_information['date']) && !empty($routing_information['date'])) {
             $dateValue = $routing_information['date'];
@@ -420,7 +420,7 @@ class AirwayBill extends Controller
                 }
             }
         }
-        
+
         $awb_id = $awb_code . $awb_no;
         $AirwayBills = AirwayBills::find($awb_id);
         if (!isset($AirwayBills))
@@ -853,8 +853,9 @@ class AirwayBill extends Controller
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
+            $original = json_decode($send_response, true)['original'];
         }
-        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response, 'original' => $original]);
     }
     public function update(Request $request, $id, $awb_no = null)
     {
@@ -937,7 +938,7 @@ class AirwayBill extends Controller
         }
 
         //for status update
-        $status=$request->status;
+        $status = $request->status;
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];

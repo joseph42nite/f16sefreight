@@ -851,7 +851,7 @@ class AirwayBill extends Controller
         $status = $request->status;
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
-        $original=[];
+        $original = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
             $original = json_decode($send_response, true)['original'];
@@ -943,10 +943,12 @@ class AirwayBill extends Controller
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
+        $original = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
+            $original = json_decode($send_response, true)['original'];
         }
-        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response, 'original' => $original]);
     }
     public function show($id)
     {

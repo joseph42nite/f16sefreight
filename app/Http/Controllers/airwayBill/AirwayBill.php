@@ -948,7 +948,7 @@ class AirwayBill extends Controller
             $send_response = $this->conversionController->WayBillConversion($awb_id);
             // $original = json_decode($send_response, true)['original'];
         }
-        return response()->json(['data' => $main_return_data, 'send_response' => json_decode($send_response, true)]);
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response['original']]);
     }
     public function show($id)
     {

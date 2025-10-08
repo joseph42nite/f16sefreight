@@ -851,6 +851,7 @@ class AirwayBill extends Controller
         $status = $request->status;
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
+        $original=[];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
             $original = json_decode($send_response, true)['original'];

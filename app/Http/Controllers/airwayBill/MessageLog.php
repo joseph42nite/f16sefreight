@@ -6,6 +6,7 @@ use App\Agent;
 use App\AirwayBills;
 use App\ConsignmentData;
 use App\HousewayBills;
+use App\StatusReponse;
 use App\Http\Controllers\Controller;
 use App\OtherCustomInformation;
 use Illuminate\Http\Request;
@@ -86,95 +87,95 @@ class MessageLog extends Controller
     //                 ];
     //             });
     //             $waybill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
-            
+
     //             return $waybill;
     //         });
-            
+
     //     return response()->json($groupedWayBills->values());
     // }
     public function searchHouseWayBills(Request $request)
-{
-    $user = auth()->guard('user-api')->user();
-    if (!$user) {
-        return response()->json(['message' => 'Unauthorized'], 401);
-    }
+    {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-    $branch_name = $user->branch_name;
-    $agent = Agent::where('id', $branch_name)->first();
-    $agentId = $agent->id;
+        $branch_name = $user->branch_name;
+        $agent = Agent::where('id', $branch_name)->first();
+        $agentId = $agent->id;
 
-    $request->validate([
-        'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
-        'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
-    ]);
+        $request->validate([
+            'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
+            'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
+        ]);
 
-    // Fetch the Airway Bill
-    $airwayBill = AirwayBills::where('awb_no', $request->awb_no)
-        ->where('awb_code', $request->awb_code)
-        ->first();
+        // Fetch the Airway Bill
+        $airwayBill = AirwayBills::where('awb_no', $request->awb_no)
+            ->where('awb_code', $request->awb_code)
+            ->first();
 
-    if (!$airwayBill) {
-        return response()->json(['message' => 'No AirwayBill Found'], 404);
-    }
+        if (!$airwayBill) {
+            return response()->json(['message' => 'No AirwayBill Found'], 404);
+        }
 
-    // Fetch associated House Waybills
-    $houseWayBills = HousewayBills::where('awb_no', $request->awb_no)
-        ->where('awb_code', $request->awb_code)
-        ->where('agent_id', $agentId)
-        ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-        ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
-        ->select(
-            'house_way_bills.id',
-            'house_way_bills.house_no',
-            'house_way_bills.destination_airport',
-            'house_way_bills.created_at',
-            'way_bill_consignment_data.pieces',
-            'way_bill_consignment_data.gross_weight',
-            'way_bill_consignment_data.description',
-            'way_bill_custom_info.country_code',
-            'way_bill_custom_info.info_identifier',
-            'way_bill_custom_info.custom_info_identifier',
-            'way_bill_custom_info.supplementary_info'
-        )
-        ->get();
+        // Fetch associated House Waybills
+        $houseWayBills = HousewayBills::where('awb_no', $request->awb_no)
+            ->where('awb_code', $request->awb_code)
+            ->where('agent_id', $agentId)
+            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
+            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
+            ->select(
+                'house_way_bills.id',
+                'house_way_bills.house_no',
+                'house_way_bills.destination_airport',
+                'house_way_bills.created_at',
+                'way_bill_consignment_data.pieces',
+                'way_bill_consignment_data.gross_weight',
+                'way_bill_consignment_data.description',
+                'way_bill_custom_info.country_code',
+                'way_bill_custom_info.info_identifier',
+                'way_bill_custom_info.custom_info_identifier',
+                'way_bill_custom_info.supplementary_info'
+            )
+            ->get();
 
-    // Group HWBs by their ID to aggregate custom info
-    $groupedHWBs = $houseWayBills->groupBy('id')->map(function ($group) {
-        $first = $group->first();
-        $customInfo = $group->map(function ($item) {
+        // Group HWBs by their ID to aggregate custom info
+        $groupedHWBs = $houseWayBills->groupBy('id')->map(function ($group) {
+            $first = $group->first();
+            $customInfo = $group->map(function ($item) {
+                return [
+                    'country_code' => $item->country_code,
+                    'info_identifier' => $item->info_identifier,
+                    'custom_info_identifier' => $item->custom_info_identifier,
+                    'supplementary_info' => $item->supplementary_info,
+                ];
+            })->values()->all();
+
             return [
-                'country_code' => $item->country_code,
-                'info_identifier' => $item->info_identifier,
-                'custom_info_identifier' => $item->custom_info_identifier,
-                'supplementary_info' => $item->supplementary_info,
+                'id' => $first->id,
+                'house_no' => $first->house_no,
+                'destination_airport' => $first->destination_airport,
+                'created_at' => $first->created_at,
+                'pieces' => $first->pieces,
+                'gross_weight' => $first->gross_weight,
+                'description' => $first->description,
+                'custom_info' => $customInfo,
             ];
-        })->values()->all();
+        })->values();
 
-        return [
-            'id' => $first->id,
-            'house_no' => $first->house_no,
-            'destination_airport' => $first->destination_airport,
-            'created_at' => $first->created_at,
-            'pieces' => $first->pieces,
-            'gross_weight' => $first->gross_weight,
-            'description' => $first->description,
-            'custom_info' => $customInfo,
+        // Structure the response
+        $response = [
+            'airway_bill' => [
+                'awb_no' => $airwayBill->awb_no,
+                'awb_code' => $airwayBill->awb_code,
+                'destination_airport' => $airwayBill->destination_airport,
+                'created_at' => $airwayBill->created_at,
+            ],
+            'house_way_bills' => $groupedHWBs,
         ];
-    })->values();
 
-    // Structure the response
-    $response = [
-        'airway_bill' => [
-            'awb_no' => $airwayBill->awb_no,
-            'awb_code' => $airwayBill->awb_code,
-            'destination_airport' => $airwayBill->destination_airport,
-            'created_at' => $airwayBill->created_at,
-        ],
-        'house_way_bills' => $groupedHWBs,
-    ];
-
-    return response()->json($response);
-}
+        return response()->json($response);
+    }
 
     public function getHouseWayBills($awb_code, $awb_no)
     {
@@ -187,9 +188,9 @@ class MessageLog extends Controller
             $branch_name = $user->branch_name;
             $agent = Agent::where('id', $branch_name)->first();
             $agentId = $agent->id;
-    
+
             // Query house way bills related to the airway bill
-            $houseWayBills = HousewayBills::where('house_way_bills.awb_code', $awb_code)->where('house_way_bills.awb_no', $awb_no)
+            $houseWayBills = HousewayBills::where('house_way_bills.awb_code', $awb_code)->where('house_way_bills.status','send')->where('house_way_bills.awb_no', $awb_no)
                 ->where('house_way_bills.agent_id', $agentId)
                 ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
                 ->select(
@@ -202,9 +203,9 @@ class MessageLog extends Controller
                     'way_bill_consignment_data.description'
                 )
                 ->get();
-    
+
             return response()->json($houseWayBills);
-    
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to fetch house way bills',
@@ -271,19 +272,19 @@ class MessageLog extends Controller
             'awb_code' => 'nullable|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'nullable|regex:/^[0-9]+$/|size:8',
         ]);
-    
+
         // Initialize query
         $query = AirwayBills::query();
-    
+
         // Filter by awb_code and awb_no
         if ($request->filled('awb_code') && $request->filled('awb_no')) {
             $query->where('awb_code', $request->awb_code)
-                  ->where('awb_no', $request->awb_no);
+                ->where('awb_no', $request->awb_no);
         }
-    
+
         // Fetch specific fields
         $data = $query->get(['awb_no as air_waybill_number', 'departure_airport as master_origin', 'destination_airport as master_destination', 'total_volume as air_waybill_quantity']);
-    
+
         return response()->json($data);
     }
 
@@ -294,7 +295,7 @@ class MessageLog extends Controller
             if (!$user) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
-            
+
             $branch_name = $user->branch_name;
             $agent = Agent::where('id', $branch_name)->first();
             $agentId = $agent->id;
@@ -308,7 +309,7 @@ class MessageLog extends Controller
             }
 
             $airwayBills = $query->get();
-            
+
             return response()->json($airwayBills);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -322,14 +323,14 @@ class MessageLog extends Controller
             if (!$user) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
-            
+
             $branch_name = $user->branch_name;
             $agent = Agent::where('id', $branch_name)->first();
             $agentId = $agent->id;
 
             // Get master AWBs that have house waybills
             $masterAwbs = AirwayBills::where('agent_id', $agentId)
-                ->whereHas('houseWayBills', function($query) use ($agentId) {
+                ->whereHas('houseWayBills', function ($query) use ($agentId) {
                     $query->where('agent_id', $agentId);
                 })
                 ->with(['consignmentData'])
@@ -337,7 +338,7 @@ class MessageLog extends Controller
                 ->orderBy('updated_at', 'desc')
                 ->limit(10)
                 ->get();
-            
+
             return response()->json($masterAwbs);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -353,7 +354,7 @@ class MessageLog extends Controller
             }
 
             $houseWayBill = HousewayBills::find($id);
-            
+
             if (!$houseWayBill) {
                 return response()->json(['message' => 'House way bill not found'], 404);
             }
@@ -381,10 +382,6 @@ class MessageLog extends Controller
     public function searchBills(Request $request)
     {
         $user = auth()->guard('user-api')->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
         $request->validate([
             'awb_code' => 'required|regex:/^[0-9]+$/|size:3',
             'awb_no' => 'required|regex:/^[0-9]+$/|size:8'
@@ -395,47 +392,32 @@ class MessageLog extends Controller
         $agentId = $agent->id;
 
         // ✅ Fetch Airway Bill (master-level info)
-        $airwayBill = AirwayBills::where('awb_no', $request->awb_no)
-            ->where('awb_code', $request->awb_code)
-            ->where('agent_id', $agentId)
-            ->first();
-
+        $airwayBill = AirwayBills::where('awb_no', $request->awb_no)->where('awb_code', $request->awb_code)->where('agent_id', $agentId)->first();
         if (!$airwayBill) {
             return response()->json(['message' => 'No AirwayBill Found'], 404);
         }
 
         // ✅ Fetch House Way Bills with related data
-        $houseWayBills = HousewayBills::where('house_way_bills.awb_no', $request->awb_no)
-            ->where('house_way_bills.awb_code', $request->awb_code)
-            ->where('house_way_bills.agent_id', $agentId)
-            ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
-            ->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')
-            ->select(
-                'house_way_bills.id',
-                'house_way_bills.destination_airport',
-                'house_way_bills.master_origin',
-                'house_way_bills.master_destination',
-                'house_way_bills.special_handling_info',
-                'house_way_bills.special_service_request',
-                'house_way_bills.other_service_information',
-                'house_way_bills.created_at',
-                'house_way_bills.updated_at',
-
-                'way_bill_consignment_data.pieces',
-                'way_bill_consignment_data.gross_weight',
-                'way_bill_consignment_data.description',
-
-                'way_bill_custom_info.country_code',
-                'way_bill_custom_info.info_identifier',
-                'way_bill_custom_info.custom_info_identifier',
-                'way_bill_custom_info.supplementary_info'
-            )
-            ->get();
-
-        // ✅ Group by house waybill and attach custom info
+        $houseWayBills = HousewayBills::where('house_way_bills.status','send')->where('house_way_bills.awb_no', $request->awb_no)->where('house_way_bills.awb_code', $request->awb_code)->where('house_way_bills.agent_id', $agentId)->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')->select(
+            'house_way_bills.id',
+            'house_way_bills.destination_airport',
+            'house_way_bills.master_origin',
+            'house_way_bills.master_destination',
+            'house_way_bills.special_handling_info',
+            'house_way_bills.special_service_request',
+            'house_way_bills.other_service_information',
+            'house_way_bills.created_at',
+            'house_way_bills.updated_at',
+            'way_bill_consignment_data.pieces',
+            'way_bill_consignment_data.gross_weight',
+            'way_bill_consignment_data.description',
+            'way_bill_custom_info.country_code',
+            'way_bill_custom_info.info_identifier',
+            'way_bill_custom_info.custom_info_identifier',
+            'way_bill_custom_info.supplementary_info'
+        )->get();
         $groupedHouseBills = $houseWayBills->groupBy('id')->map(function ($group) {
             $bill = $group->first()->toArray();
-
             $customInfo = $group->map(function ($item) {
                 return [
                     'country_code' => $item->country_code,
@@ -446,14 +428,14 @@ class MessageLog extends Controller
             });
 
             $bill['custom_info'] = $customInfo->isEmpty() ? [] : $customInfo->values()->all();
-
             return $bill;
         })->values();
-
         // ✅ Return combined result
+        $status_reponse = StatusReponse::where('message_id', $airwayBill['t_id'])->get();
         return response()->json([
             'airway_bill' => $airwayBill,
-            'house_way_bills' => $groupedHouseBills
+            'house_way_bills' => $groupedHouseBills,
+            'status_reponse' => $status_reponse
         ]);
     }
 

@@ -952,15 +952,7 @@ class AirwayBill extends Controller
     }
     public function show($id)
     {
-        $airwayBill = AirwayBills::with([
-            'paymentInfo',
-            'wayBillAddress',
-            'savedAddress',
-            'consignmentData',
-            'otherCharge',
-            'otherCustomInformation'
-        ])->find($id);
-        // dd($airwayBill);die;
+        $airwayBill = AirwayBills::with(['paymentInfo','wayBillAddress','savedAddress','consignmentData','otherCharge','otherCustomInformation'])->find($id);
         if (!$airwayBill) {
             return response()->json(['message' => 'Record not found'], 404);
         }

@@ -1,3 +1,12 @@
+<style>
+.waybill-status-header{
+        background: #3b6fb6;
+        color: #fff;
+        font-weight: 600;
+        padding: 6px 8px;
+        justify-content: space-between;
+}
+</style>
 <template>
     <div class="body-color">
         <div class="container-fluid">
@@ -231,16 +240,7 @@
                                     </div>
                                 </template>
                             </b-table> -->
-                            <b-table
-                                :items="normalizedItems"
-                                :fields="fields"
-                                small
-                                responsive
-                                class="w-100 custom-table"
-                                :per-page="perPage"
-                                :current-page="currentPage"
-                                @filtered="onFiltered"
-                                >
+                            <b-table :items="normalizedItems" :fields="fields" small responsive class="w-100 custom-table" :per-page="perPage" :current-page="currentPage" @filtered="onFiltered" >
                                 <!-- Index -->
                                 <template #cell(index)="row">
                                     {{ row.index + 1 }}
@@ -248,11 +248,7 @@
 
                                 <!-- AWB No. -->
                                 <template #cell(id)="row">
-                                    <router-link
-                                    :to="'/edit-airway-bill/' + String(row.item.id)"
-                                    class="custom-link"
-                                                                          @click.native="getAirWayBill(String(row.item.id))"
-                                    >
+                                    <router-link :to="'/edit-airway-bill/' + String(row.item.id)" class="custom-link"  @click.native="getAirWayBill(String(row.item.id))">
                                     {{ String(row.item.awb_code) }} {{ String(row.item.awb_no) }}
                                     </router-link>
                                 </template>
@@ -263,61 +259,48 @@
                                 </template>
 
                                 <!-- Created At -->
-                                <template #cell(created_at)="row">
-                                    {{ formatDate(row.item.created_at) }}
+                                <template #cell(send_created)="row">
+                                    {{ formatDate(row.item.send_created) }}
                                 </template>
 
                                 <!-- Custom Header for Houseway Column -->
                                 <template #head(houseway)>
                                     <div class="d-flex font-weight-bold">
-                                    <div class="w-25">House No.</div>
-                                    <div class="w-25">Actions</div>
-                                    <div class="w-25">Place</div>
-                                    <div class="w-25">Date</div>
+                                        <div class="w-25">House No.</div>
+                                        <div class="w-25">Actions</div>
+                                        <div class="w-25">Place</div>
+                                        <div class="w-25">Date</div>
                                     </div>
                                 </template>
 
                                 <!-- Houseway Details in Same Row -->
                                 <template #cell(houseway)="row">
                                     <div v-if="getHouseWayBills(row.item).length">
-                                    <div
-                                        v-for="(bill, i) in getHouseWayBills(row.item)"
-                                        :key="i"
-                                        class="d-flex py-1 house-row border-bottom"
-                                    >
-                                        <div class="w-25">{{ bill.id }}</div>
-                                        <div class="w-25">
-                                        <b-icon
-                                            icon="pencil"
-                                            class="text-primary mr-2"
-                                            style="cursor: pointer"
-                                            @click="$router.push('/edit-houseway-bill/' + bill.id)"
-                                        />
-                                        <b-icon
-                                            icon="trash"
-                                            class="text-danger"
-                                            style="cursor: pointer"
-                                            @click="handleDeleteHouseBill(bill.id)"
-                                        />
-                                        </div>
-                                        <div class="w-25">
-                                        {{ getAirportCode(bill.destination_airport) }}
-                                        </div>
-                                        <div class="w-25">
-                                        {{ formatDate(bill.created_at) }}
+                                        <div v-for="(bill, i) in getHouseWayBills(row.item)" :key="i" class="d-flex py-1 house-row border-bottom">
+                                            <div class="w-25">{{ bill.id }}</div>
+                                            <div class="w-25">
+                                                <b-icon icon="pencil" class="text-primary mr-2" style="cursor: pointer" @click="$router.push('/edit-houseway-bill/' + bill.id)"/>
+                                                <b-icon icon="trash" class="text-danger" style="cursor: pointer" @click="handleDeleteHouseBill(bill.id)"/>
+                                            </div>
+                                            <div class="w-25">
+                                            {{ getAirportCode(bill.destination_airport) }}
+                                            </div>
+                                            <div class="w-25">
+                                            {{ formatDate(bill.created_at) }}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="d-flex font-weight-bold waybill-status-header">
+                                        <div class="w-25">FNA and FMAs</div>
+                                        <div class="w-25">Date</div>
+                                    </div>
+                                    <div class="d-flex font-weight-bold justify-content-between" v-for="(status,i) in data_items.status_reponse">
+                                        <div>{{status.business_status_code}}</div>
+                                        <div>{{ formatDate(status.issue_date_time) }}</div>
                                     </div>
                                 </template>
                                 </b-table>
-
-                            <b-pagination
-                                v-model="currentPage"
-                                :total-rows="totalRows"
-                                :per-page="perPage"
-                                align="right"
-                                class="mt-3 custom-pagination"
-                            ></b-pagination>
+                            <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="right" class="mt-3 custom-pagination"></b-pagination>
                         </b-card>
                     </div>
                 </template>
@@ -358,14 +341,7 @@ export default {
                 { key: "destination_airport", label: "Destination" },
                 { key: "created_at", label: "Date & time" },
                 { key: "houseway", label: "" },
-            ],
-
-            houseFields: [
-                { key: "id", label: "House No." },
-                { key: "actions", label: "", class: "text-right" },
-                { key: "destination_airport", label: "Place" },
-                { key: "created_at", label: "Date" },
-            ],
+            ]
         };
     },
     computed: {
@@ -510,6 +486,7 @@ export default {
         },
         formatDate(dateString) {
             if (!dateString) return "";
+            dateString = dateString.replace(/\.\d+Z$/, "");
             const date = new Date(dateString);
             return date
                 .toLocaleString("en-GB", {
@@ -527,13 +504,11 @@ export default {
             return airport.split(",")[0].trim();
         },
         allAirwayBill() {
-            // if (this.searchPerformed) return;
             ApiService.get("/user/all-airway-bill")
                 .then((response) => {
                     this.data_items = response.data;
                     this.filteredData = response.data;
                     this.totalRows = response.data.length;
-                    // this.house_way_bills = {};
                 })
                 .catch((error) => {
                     console.error("Failed to fetch items:", error);
@@ -547,12 +522,10 @@ export default {
                     if (response.data && response.data.id == id) {
                         this.existingData = response.data;
                     } else {
-                        // console.log("something went wrong");
                     }
                 })
                 .catch((error) => {
                     this.existingData = null;
-                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
         handleDeleteHouseBill(id) {

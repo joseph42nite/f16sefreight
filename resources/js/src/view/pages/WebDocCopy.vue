@@ -2952,27 +2952,27 @@ export default {
             // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
             const errors = [];
         
-        // Check first box
-        if (!this.form.first_box.awb_code) errors.push('AWB Code');
-        if (!this.form.first_box.awb_no) errors.push('AWB Number');
-        
-        // Check routing information
-        if (!this.form.routing_information.departure_airport) errors.push('Departure Airport');
-        if (!this.form.routing_information.destination_airport) errors.push('Destination Airport');
-        if (!this.form.routing_information.from) errors.push('From Airport');
-        
-        // Check shipper details
-        if (!this.form.shipper_address.ship_name) errors.push('Shipper Name');
-        if (!this.form.shipper_address.ship_address) errors.push('Shipper Address');
-        if (!this.form.shipper_address.ship_city) errors.push('Shipper City');
-        
-        // Check consignee details
-        if (!this.form.consignee_address.cons_name) errors.push('Consignee Name');
-        if (!this.form.consignee_address.cons_address) errors.push('Consignee Address');
-        if (!this.form.consignee_address.cons_city) errors.push('Consignee City');
+            // Check first box
+            if (!this.form.first_box.awb_code) errors.push('AWB Code');
+            if (!this.form.first_box.awb_no) errors.push('AWB Number');
+            
+            // Check routing information
+            if (!this.form.routing_information.departure_airport) errors.push('Departure Airport');
+            if (!this.form.routing_information.destination_airport) errors.push('Destination Airport');
+            if (!this.form.routing_information.from) errors.push('From Airport');
+            
+            // Check shipper details
+            if (!this.form.shipper_address.ship_name) errors.push('Shipper Name');
+            if (!this.form.shipper_address.ship_address) errors.push('Shipper Address');
+            if (!this.form.shipper_address.ship_city) errors.push('Shipper City');
+            
+            // Check consignee details
+            if (!this.form.consignee_address.cons_name) errors.push('Consignee Name');
+            if (!this.form.consignee_address.cons_address) errors.push('Consignee Address');
+            if (!this.form.consignee_address.cons_city) errors.push('Consignee City');
 
-        // Check if there are any entries in the consignment
-        if (this.form.entries.length === 0) {
+            // Check if there are any entries in the consignment
+            if (this.form.entries.length === 0) {
             
         }
 
@@ -3320,7 +3320,8 @@ export default {
                 Object.assign(this.form, preparedFormData);
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
-                    console.log(response);
+                    console.log(response.data.send_response);
+                    console.log(response.data.send_response?.status);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {

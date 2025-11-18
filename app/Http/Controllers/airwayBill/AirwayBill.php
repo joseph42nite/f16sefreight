@@ -853,8 +853,8 @@ class AirwayBill extends Controller
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
-            // $send_response = $send_response->getData(true);
-            // AirwayBills::where(['id' => $awb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
+            $send_response = $send_response->getData(true);
+            AirwayBills::where(['id' => $awb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
         }
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
@@ -944,9 +944,9 @@ class AirwayBill extends Controller
         AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
         if ($status == 'send') {
-            // $send_response = $this->conversionController->WayBillConversion($awb_id);
-            // $send_response = $send_response->getData(true);
-            // AirwayBills::where(['id' => $awb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
+            $send_response = $this->conversionController->WayBillConversion($awb_id);
+            $send_response = $send_response->getData(true);
+            AirwayBills::where(['id' => $awb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
         }
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }

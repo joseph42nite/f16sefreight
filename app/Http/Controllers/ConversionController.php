@@ -60,7 +60,7 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
-        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASTEST/BOM1'));
+        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASFREIGHT/BOM1'));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 
@@ -75,7 +75,7 @@ class ConversionController extends Controller
         $businessHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($businessHeaderDocument);
 
-        $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
+        $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
 
         // Included Header Note
         $includedHeaderNote = $xml->createElement('ram:IncludedHeaderNote');
@@ -601,7 +601,7 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
-        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASTEST/BOM1'));
+        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASFREIGHT/BOM1'));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 

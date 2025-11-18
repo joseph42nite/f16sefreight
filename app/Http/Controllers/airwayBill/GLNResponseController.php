@@ -76,4 +76,11 @@ class GLNResponseController extends Controller
         file_put_contents($filePath, "=================\n".$xmlContent, FILE_APPEND);
         return response()->json(['status' => true], 200);
     }
+
+    public function check(){
+        $user_data = auth()->guard('user-api')->user();
+        echo "<pre>";
+        print_r($user_data);
+        echo "</pre>";
+    }
 }

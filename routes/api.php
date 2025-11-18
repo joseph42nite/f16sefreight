@@ -107,6 +107,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/search-airway-bills', [MessageLog::class, 'searchBills']);
     //========end of the  airway bill operation=====
 
+    Route::get('/check', [GLNResponseController::class, 'check']);
 });
 
 // =================superAdmin section==========================

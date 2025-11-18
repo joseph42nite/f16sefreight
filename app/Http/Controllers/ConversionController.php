@@ -23,6 +23,7 @@ class ConversionController extends Controller
     public function WayBillConversion($awb_id = "12312345678")
     {
         // Fetch data from the database (this is just sample data for now)
+        $user_data = auth()->guard('user-api')->user();
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
@@ -60,7 +61,7 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
-        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASFREIGHT/BOM1'));
+        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', "{$user_data->pima_address}"));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 
@@ -565,6 +566,7 @@ class ConversionController extends Controller
     public function HouseWayBillConversion($hawb_no = '57HOUSE10')
     {
         // Fetch data from the database (this is just sample data for now)
+        $user_data = auth()->guard('user-api')->user();
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
         $house_address = WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
@@ -601,7 +603,7 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
-        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASFREIGHT/BOM1'));
+        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', "{$user_data->pima_address}"));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 

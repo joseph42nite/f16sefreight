@@ -68,10 +68,12 @@ class GLNResponseController extends Controller
             'business_name' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:Name')[0] ?? null),
             'business_type_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:TypeCode')[0] ?? null),
             'business_status_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:StatusCode')[0] ?? null),
+            'condition_code' => (string) ($xml->xpath('//rsm:ResponseStatus/ram:ConditionCode')[0] ?? null),
+            'reason' => (string) ($xml->xpath('//rsm:ResponseStatus/ram:Reason')[0] ?? null),
         ];
         StatusReponse::create($data);
         $filePath = storage_path('logs/gln_responses.txt');
-        file_put_contents($filePath, '================='.$xmlContent, FILE_APPEND);
+        file_put_contents($filePath, "=================\n".$xmlContent, FILE_APPEND);
         return response()->json(['status' => true], 200);
     }
 }

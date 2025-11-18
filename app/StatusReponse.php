@@ -17,6 +17,8 @@ class StatusReponse extends Model
         'business_id',
         'business_name',
         'business_type_code',
-        'business_status_code'
+        'business_status_code',
+        'condition_code',
+        'reason'
     ];
 }

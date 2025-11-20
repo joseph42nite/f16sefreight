@@ -76,7 +76,7 @@ class ConversionController extends Controller
         $businessHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($businessHeaderDocument);
 
-        $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['id']));
+        $businessHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
 
         // Included Header Note
         $includedHeaderNote = $xml->createElement('ram:IncludedHeaderNote');

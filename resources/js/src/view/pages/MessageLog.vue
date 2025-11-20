@@ -292,11 +292,15 @@
                                     </div>
                                     <div class="d-flex font-weight-bold waybill-status-header">
                                         <div class="w-25">FNA and FMAs</div>
+                                        <div class="w-25">Condition</div>
+                                        <div class="w-25">Message</div>
                                         <div class="w-25">Date</div>
                                     </div>
                                     <div class="d-flex font-weight-bold justify-content-between" v-for="(status,i) in data_items.status_reponse">
-                                        <div>{{status.business_status_code}}</div>
-                                        <div>{{ formatDate(status.issue_date_time) }}</div>
+                                        <div style="margin-left: 5px; margin-right: 5px;">{{i+1}}. {{status.business_status_code}}</div>
+                                        <div style="margin-left: 5px; margin-right: 5px;">{{status.condition_code}}</div>
+                                        <div style="margin-left: 5px; margin-right: 5px;">{{status.reason}}</div>
+                                        <div style="margin-left: 5px; margin-right: 5px;">{{ formatDate(status.issue_date_time) }}</div>
                                     </div>
                                 </template>
                                 </b-table>

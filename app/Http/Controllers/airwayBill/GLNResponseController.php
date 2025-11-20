@@ -73,7 +73,15 @@ class GLNResponseController extends Controller
         ];
         StatusReponse::create($data);
         $filePath = storage_path('logs/gln_responses.txt');
-        file_put_contents($filePath, '=================' . $xmlContent, FILE_APPEND);
+        file_put_contents($filePath, "=================\n" . $xmlContent, FILE_APPEND);
         return response()->json(['status' => true], 200);
+    }
+
+    public function check()
+    {
+        $user_data = auth()->guard('user-api')->user();
+        echo "<pre>";
+        print_r($user_data);
+        echo "</pre>";
     }
 }

@@ -37,7 +37,7 @@
         "moment": "^2.29.4",
         "momment": "^0.0.1",
         "object-path": "^0.11.4",
-        "pdfjs": "^2.4.6",
+        "pdfjs": "^2.5.4",
         "pdfvuer": "^1.9.2",
         "perfect-scrollbar": "^1.5.6",
         "portal-vue": "^2.1.7",
@@ -52,7 +52,7 @@
         "vue-apexcharts": "^1.7.0",
         "vue-axios": "^2.1.4",
         "vue-carousel-3d": "^1.0.1",
-        "vue-color": "^2.8.1",
+        "vue-color": "^2.8.2",
         "vue-cropperjs": "^4.1.0",
         "vue-excel-xlsx": "^1.2.2",
         "vue-flip": "^1.0.2",
@@ -91,6 +91,6 @@
         "vue-loader": "^15.11.1",
         "vue-template-compiler": "^2.7.16",
         "webpack-livereload-plugin": "^1.2.0",
-        "webpack-shell-plugin-next": "^2.3.2"
+        "webpack-shell-plugin-next": "^2.3.3"
     }
 }

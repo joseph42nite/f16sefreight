@@ -23,26 +23,26 @@ class LoginController extends Controller
         if ($role == 'user')
             User::where('id', $user_data->id)->update(['latest_token' => $token]);
 
-        //for stope multiple login
-        // if($current_date==$user_data->current_date && $role=='user')
-        //     User::where('id',$user_data->id)->update(['latest_token'=>$token,'daily_login_count'=>$user_data->daily_login_count+1,'current_date'=>$current_date]);
-        // elseif($role=='user')
-        //     User::where('id',$user_data->id)->update(['latest_token'=>$token,'daily_login_count'=>1,'current_date'=>$current_date]);
+            //for stope multiple login
+            // if($current_date==$user_data->current_date && $role=='user')
+            //     User::where('id',$user_data->id)->update(['latest_token'=>$token,'daily_login_count'=>$user_data->daily_login_count+1,'current_date'=>$current_date]);
+            // elseif($role=='user')
+            //     User::where('id',$user_data->id)->update(['latest_token'=>$token,'daily_login_count'=>1,'current_date'=>$current_date]);
 
-        // for user valid login check
-        // $daily_login_count=User::where('id',$user_data->id)->first()->daily_login_count; 
-        // if($user_data->is_active==0 && $role=='user'){
-        //     auth()->guard($guard)->logout();
-        //     return response()->json(['error' => 'Blocked'], 401);
-        // }
-        // if($daily_login_count>3 && $role=='user'){
-        //     auth()->guard($guard)->logout();
-        //     return response()->json(['error' => 'Daily_Limit'], 401);
-        // }
-        // if($role=='user' && $user_data->plan_expiry_date<$current_date){
-        //     auth()->guard($guard)->logout();
-        //     return response()->json(['error' => 'Expired'], 401);
-        // }
+            // for user valid login check
+            // $daily_login_count=User::where('id',$user_data->id)->first()->daily_login_count; 
+            // if($user_data->is_active==0 && $role=='user'){
+            //     auth()->guard($guard)->logout();
+            //     return response()->json(['error' => 'Blocked'], 401);
+            // }
+            // if($daily_login_count>3 && $role=='user'){
+            //     auth()->guard($guard)->logout();
+            //     return response()->json(['error' => 'Daily_Limit'], 401);
+            // }
+            // if($role=='user' && $user_data->plan_expiry_date<$current_date){
+            //     auth()->guard($guard)->logout();
+            //     return response()->json(['error' => 'Expired'], 401);
+            // }
 
         return json_encode(['token' => $token, 'user' => $user_data, 'role' => $role]);
     }

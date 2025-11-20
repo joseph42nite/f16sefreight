@@ -190,7 +190,7 @@ class MessageLog extends Controller
             $agentId = $agent->id;
 
             // Query house way bills related to the airway bill
-            $houseWayBills = HousewayBills::where('house_way_bills.awb_code', $awb_code)->where('house_way_bills.status','send')->where('house_way_bills.awb_no', $awb_no)
+            $houseWayBills = HousewayBills::where('house_way_bills.awb_code', $awb_code)->where('house_way_bills.status', 'send')->where('house_way_bills.awb_no', $awb_no)
                 ->where('house_way_bills.agent_id', $agentId)
                 ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
                 ->select(
@@ -205,7 +205,6 @@ class MessageLog extends Controller
                 ->get();
 
             return response()->json($houseWayBills);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to fetch house way bills',
@@ -370,7 +369,6 @@ class MessageLog extends Controller
             $houseWayBill->delete();
 
             return response()->json(['message' => 'House way bill deleted successfully']);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to delete house way bill',
@@ -398,7 +396,7 @@ class MessageLog extends Controller
         }
 
         // ✅ Fetch House Way Bills with related data
-        $houseWayBills = HousewayBills::where('house_way_bills.status','send')->where('house_way_bills.awb_no', $request->awb_no)->where('house_way_bills.awb_code', $request->awb_code)->where('house_way_bills.agent_id', $agentId)->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')->select(
+        $houseWayBills = HousewayBills::where('house_way_bills.status', 'send')->where('house_way_bills.awb_no', $request->awb_no)->where('house_way_bills.awb_code', $request->awb_code)->where('house_way_bills.agent_id', $agentId)->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')->leftJoin('way_bill_custom_info', 'house_way_bills.id', '=', 'way_bill_custom_info.awb_id')->select(
             'house_way_bills.id',
             'house_way_bills.destination_airport',
             'house_way_bills.master_origin',
@@ -431,12 +429,12 @@ class MessageLog extends Controller
             return $bill;
         })->values();
         // ✅ Return combined result
-        $status_reponse = StatusReponse::where('message_id', $airwayBill['t_id'])->get();
+        $awb_id = $request->awb_code . '-' . $request->awb_no;
+        $status_reponse = StatusReponse::where('message_id', $airwayBill['t_id'])->orWhere('conversation_id', $awb_id)->get();
         return response()->json([
             'airway_bill' => $airwayBill,
             'house_way_bills' => $groupedHouseBills,
             'status_reponse' => $status_reponse
         ]);
     }
-
 }

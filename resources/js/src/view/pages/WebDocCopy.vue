@@ -2108,18 +2108,18 @@
                                                                     style="width: 205px;"
                                                                     v-model="form.payment_info.type_of_payment">
                                                                     <option value=""> Please select one</option>
-                                                                    <option value="CC">CA - Partial collect credit - partial prepaid cash</option>
-                                                                    <option value="CC">CB - Partial collect credit - partial prepaid credit</option>
+                                                                    <option value="CA">CA - Partial collect credit - partial prepaid cash</option>
+                                                                    <option value="CB">CB - Partial collect credit - partial prepaid credit</option>
                                                                     <option value="CC">CC - All charges collect</option> <!-- CC -->
-                                                                    <option value="CC">CG - All Charges collect by GBL</option>
-                                                                    <option value="CC">CP - Destination collect cash</option>
-                                                                    <option value="CC">CX - Destination collect credit</option>
-                                                                    <option value="CP">NC - Service rate. No charge</option>
-                                                                    <option value="PP">PC - Partial prepaid cash - partial collect cash</option>
-                                                                    <option value="PP">PD - Partial prepaid credit - partial collect cash</option>
-                                                                    <option value="PP">PG - All charges prepaid by GBL</option>
+                                                                    <option value="CG">CG - All Charges collect by GBL</option>
+                                                                    <option value="CP">CP - Destination collect cash</option>
+                                                                    <option value="CX">CX - Destination collect credit</option>
+                                                                    <option value="NC">NC - Service rate. No charge</option>
+                                                                    <option value="PC">PC - Partial prepaid cash - partial collect cash</option>
+                                                                    <option value="PD">PD - Partial prepaid credit - partial collect cash</option>
+                                                                    <option value="PG">PG - All charges prepaid by GBL</option>
                                                                     <option value="PP">PP - All charges prepaid cash</option>
-                                                                    <option value="PP">PX - All charges prepaid credit</option>
+                                                                    <option value="PX">PX - All charges prepaid credit</option>
                                                                 </b-form-select>
                                                             </b-form-group>
                                                         </div>
@@ -3320,8 +3320,6 @@ export default {
                 Object.assign(this.form, preparedFormData);
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
-                    console.log(response.data.send_response);
-                    console.log(response.data.send_response?.status);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {

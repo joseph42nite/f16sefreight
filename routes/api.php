@@ -108,6 +108,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     //========end of the  airway bill operation=====
 
     Route::get('/check', [GLNResponseController::class, 'check']);
+    Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
 });
 
 // =================superAdmin section==========================

@@ -20,19 +20,14 @@
           <has-error :form="user_form" field="name"></has-error>
         </b-form-group>
         <b-form-group class="w-50 ml-2">
-          <b-form-input
-            id="input-2"
-            v-model="user_form.email"
-            type="email"
-            required
-            placeholder="Email address"
-            class="mx-1 input-box"
-            :readonly="action=='Edit'"
-            :class="{ 'is-invalid': user_form.errors.has('email') }"
-          ></b-form-input>
+          <b-form-input id="input-2" v-model="user_form.email" type="email" required placeholder="Email address" class="mx-1 input-box" :readonly="action=='Edit'" :class="{ 'is-invalid': user_form.errors.has('email') }"></b-form-input>
           <has-error :form="user_form" field="email"></has-error>
         </b-form-group>
         </div>
+        <b-form-group>
+            <b-form-input id="input-5" v-model="user_form.pima_address" placeholder="Pima Address" class="ml-1 input-box" :class="{ 'is-invalid': user_form.errors.has('pima_address') }"></b-form-input>
+            <has-error :form="user_form" field="pima_address"></has-error>
+        </b-form-group>
         <b-form-group>
           <b-form-select v-model="user_form.company_name" :options="all_company" @change="getBranch('add')"></b-form-select>
           <has-error :form="user_form" field="company_name"></has-error>
@@ -76,18 +71,11 @@
         </b-form-group>
         <div>
           <b-form-group>
-            <b-form-input
-              id="input-5"
-              v-model="user_form.password"
-              :type="showpass?'password':'text'"
-              placeholder="Password"
-              class="ml-1 input-box"
-              :class="{ 'is-invalid': user_form.errors.has('password') }"
-            ></b-form-input>
+            <b-form-input id="input-5" v-model="user_form.password" :type="showpass?'password':'text'" placeholder="Password" class="ml-1 input-box" :class="{ 'is-invalid': user_form.errors.has('password') }"></b-form-input>
             <has-error :form="user_form" field="password"></has-error>
           </b-form-group>
           <input type="checkbox" @change="showpass=!showpass" /> Show/Hide Password
-        </div>  
+        </div>
         <b-form-group v-if="action=='Edit'" class="mt-5 float-right">
           <input type="checkbox" v-model="user_form.is_active" class="ml-1 input-box"> <span v-if="user_form.is_active">Active</span><span v-else>InActive</span>
         </b-form-group>
@@ -115,6 +103,7 @@ export default {
         branch_name:null,
         daily_login_count:'',
         password: "",
+        pima_address: "",
         is_active:"",
         plan_expiry_date:'',
       }),

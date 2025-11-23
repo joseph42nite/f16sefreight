@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<htm l lang="en">    
 <head>
     <title></title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+     <meta http-equiv="Content-Type " content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{-- <title>F16s E-Freight Solutions</title> --}}
-    <link rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
+     <ink rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
     <style>
         .routing-and-destination {
         border-bottom: 1px solid #000;
@@ -56,7 +56,7 @@
         }
     </style>
 </head>
-<body style="word-spacing:normal;margin: 0 auto;">
+<bod ystyle="word-spacing:normal;margin: 0 auto;">
     <table align="center" cellpadding="0" cellspacing="0" align="center" width="600px">
         <tr>
             <td align="center" valign="top">
@@ -74,7 +74,7 @@
                                                     @php
                                                     $departure_airport =  explode(',', $airWayBill->departure_airport);
                                                     $departure_airport = $departure_airport[0] ?? '';
-                                                    @endphp
+                                                   @endphp
                                                     {{$airWayBill->awb_code .' '. $departure_airport .' '. $airWayBill->awb_no ?? ''}}
                                                 </td>
                                             </tr>
@@ -104,10 +104,10 @@
                     <tr>
                         <td align="center" valign="top">
                             <table cellpadding="0" cellspacing="0" width="600px">
-                                <!-- Shipper's Name and Address Code -->
+                                <!-- Shipper'sName and Address Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table cellpadding="0" cellspacing="0" width="100%">
+                                        <table cellpading="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
                                                 <td align="center" valign="top" width="300px" style="border-right: 1px solid #000000;">
@@ -143,37 +143,37 @@
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <td align="center" valign="top" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
-                                                                                        <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                                             <tr>
                                                                                                 <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    Shipper's Account Number
+                                                                                                            Shipper's Account Number
                                                                                                 </td>
                                                                                             </tr>
-                                                                                            <tr>
+                                                                                                    <tr>
                                                                                                 <td align="left" valign="bottom" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700; padding-left:2px;">
                                                                                                     {{ $airWayBill->wayBillAddress->ship_account ?? ''}}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
-                                                                                    </td>
+                                                                                   </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
+                                                                                   <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
                                                                                         @if ($airWayBill->wayBillAddress->ship_phone)
                                                                                             Phone : {{ $airWayBill->wayBillAddress->ship_phone ?? ''}} <br/>
-                                                                                        @endif
+                                                                                       @endif
                                                                                         @if ($airWayBill->wayBillAddress->ship_fax)
                                                                                             Fax :{{ $airWayBill->wayBillAddress->ship_fax ?? ''}} <br/>
-                                                                                        @endif
+                                                                                       @endif
                                                                                         @if ($airWayBill->wayBillAddress->ship_telex)
                                                                                             Telex : {{ $airWayBill->wayBillAddress->ship_telex ?? ''}}
-                                                                                        @endif
+                                                                                       @endif
                                                                                     </td>
                                                                                 </tr>
-                                                                            </table>
+                                                                           </table>
                                                                         </td>
                                                                         <!-- second column code -->
-                                                                    </tr>
+                                                                   </tr>
                                                                 </table>
                                                             </td>
                                                         </tr>
@@ -251,49 +251,73 @@
                                                                         <td align="left" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                             Consignee's Name and Address
                                                                         </td>
-                                                                    </tr>
+                                                                      </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 5px 2px 5px 10px;">
-                                                                            {{ $airWayBill->wayBillAddress->cons_name ?? ''}}<br/>
+                                                                           {{ $airWayBill->wayBillAddress->cons_name ?? ''}}<br/>
                                                                             {{ $airWayBill->wayBillAddress->cons_name_2 ?? ''}}<br/>
                                                                             {{ $airWayBill->wayBillAddress->cons_address ?? ''}} <br />
-                                                                            {{ $airWayBill->wayBillAddress->cons_address_line_2 ?? ''}} <br />
+                                            
+     
+                                {{ $airWayBill->wayBillAddress->cons_address_line_2 ?? ''}} <br />
                                                                             {{ $airWayBill->wayBillAddress->cons_city ?? ''}}&nbsp;&nbsp;
                                                                             {{ $airWayBill->wayBillAddress->cons_state ?? ''}}&nbsp;&nbsp;
-                                                                            {{ $airWayBill->wayBillAddress->cons_post_code ?? ''}}
+                                          
+     
+                                  {{ $airWayBill->wayBillAddress->cons_post_code ?? ''}}
                                                                         </td>
                                                                     </tr>
-                                                                </table>
+                                            
+     
+                    </table>
                                                             </td>
                                                             <!-- first column code -->
-                                                            <!-- second column code-->
+                            
+     
+                                <!-- second column code-->
                                                             <td align="center" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
-                                                                    <tr>
+                                            
+     
+                        <tr>
                                                                         <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 20px 0px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
-                                                                                <tr>
+                                          
+     
+                                      <tr>
                                                                                     <td align="center" valign="top" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Consignee's Account Number
-                                                                                    </td>
+                                            
+     
+                                        </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
+                                                   
+     
+                                 <td align="left" valign="bottom" style="font-size: 8px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;vertical-align:bottom;">
                                                                                        {{ $airWayBill->wayBillAddress->cons_account ?? ''}}
                                                                                     </td>
-                                                                                </tr>
+                                                                        
+     
+       </tr>
                                                                             </table>
                                                                         </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 12px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding: 2px;">
-                                                                            @if ($airWayBill->wayBillAddress->cons_phone)
+                                                       
+     
+                                                                      <tr>
+                                                   
+     
+                              @if ($airWayBill->wayBillAddress->cons_phone)
                                                                                 Phone : {{ $airWayBill->wayBillAddress->cons_phone ?? ''}} <br/>
                                                                             @endif
-                                                                            @if ($airWayBill->wayBillAddress->cons_fax)
+                 
+     
+                                                           @if ($airWayBill->wayBillAddress->cons_fax)
                                                                                 Fax :{{ $airWayBill->wayBillAddress->cons_fax ?? ''}} <br/>
                                                                             @endif
-                                                                            @if ($airWayBill->wayBillAddress->cons_telex)
+                                                  
+     
+                          @if ($airWayBill->wayBillAddress->cons_telex)
                                                                                 Telex : {{ $airWayBill->wayBillAddress->cons_telex ?? ''}}
                                                                             @endif
                                                                         </td>
@@ -2510,12 +2534,12 @@
                                                                                                             <table cellpadding="0" cellspacing="0"> 
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;" >
-                                                                                                                        @php
-                                                                                                                            echo $agentIssueDate = !empty($airWayBill->agentsInfo) && !empty($airWayBill->agentsInfo->agent_issue_date) 
-                                                                                                                            ? date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date)) 
-                                                                                                                            : '';
-                                                                                                                           // echo $agentIssueDate = date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date));
-                                                                                                                        @endphp
+                                                                                                                        <?php
+                                                                                                                            // echo $agentIssueDate = !empty($airWayBill->agentsInfo) && !empty($airWayBill->agentsInfo->agent_issue_date) 
+                                                                                                                            // ? date('d-M-y', strtotime($airWayBill->agentsInfo->agent_issue_date)) 
+                                                                                                                            // : '';
+                                                                                                                            echo !empty($airWayBill->send_created)?date('d-M-y', strtotime($airWayBill->send_created)):'';
+                                                                                                                        ?>
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                             </table>

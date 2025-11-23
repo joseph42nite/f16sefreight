@@ -619,7 +619,7 @@
                                                                             style=" " v-model="form.routing_information.flight"
                                                                             :class="{ 'is-invalid': form.errors.has('flight') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
                                                                         <input type="text" class="form-control"
                                                                             style="" v-model="form.routing_information.date"
                                                                             :class="{ 'is-invalid': form.errors.has('date') }" />
@@ -679,7 +679,7 @@
                                                                             v-model="form.routing_information.flight_2"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
                                                                         <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.date_2"
                                                                             :class="{ 'is-invalid': form.errors.has('date_2') }" />
@@ -730,7 +730,7 @@
                                                                             v-model="form.routing_information.flight_3"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
                                                                         <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.date_3"
                                                                             :class="{ 'is-invalid': form.errors.has('date_3') }" />
@@ -2491,12 +2491,13 @@
                                             <span style="color: green;">-Pass</span>
                                         </span>
                                     </div>
-                                    <div class="d-flex justify-content-end">
-                                        <!-- <b-button class="mr-2" @click="generateAwbPDF" -->
+                                    <div class="d-flex justify-content-end submit-button">
                                         <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
-                                        <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
+                                        <div v-if="form.first_box.status!='send'">
+                                           <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3123,17 +3124,19 @@ export default {
             }
         },
         getCurrentDate() {
-            const today = new Date();
-            const day = today.getDate().toString().padStart(2, '0');
-            const month = today.toLocaleString('en-GB', { month: 'short' });
-            return `${day}${month}`;
+            // const today = new Date();
+            // const day = today.getDate().toString().padStart(2, '0');
+            // const month = today.toLocaleString('en-GB', { month: 'short' });
+            // return `${day}${month}`;
+            return new Date().toLocaleDateString("en-CA");
         },
         formatDate(date) {
-            if (!date) return '';
-            const day = new Date(date).getDate().toString().padStart(2, '0');
-            const month = new Date(date).toLocaleString('en-GB', { month: 'short' });
-
-            return `${day}${month}`;
+            console.log(date);
+            // if (!date) return '';
+            // const day = new Date(date).getDate().toString().padStart(2, '0');
+            // const month = new Date(date).toLocaleString('en-GB', { month: 'short' });
+            // return `${day}${month}`;
+            return new Date(date).toLocaleDateString("en-CA");
         },
         handleDateChange(date, field) {
             const keys = field.split('.');
@@ -3142,12 +3145,10 @@ export default {
             for (let i = 0; i < keys.length - 1; i++) {
                 target = target[keys[i]];
             }
-            
-            // Store the actual date value for backend processing
             target[keys[keys.length - 1]] = date;
         },
         
-        // Prepare form data for submission - convert display dates back to proper format
+        // for remove
         prepareFormDataForSubmission() {
             const formData = { ...this.form };
             
@@ -3281,17 +3282,18 @@ export default {
         },
 
         onSubmit() {
-            // console.log('Current mode:', this.mode);
             this.main_error_msg='';
-            
+            $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             // Prepare form data for submission - convert display dates to proper format
-            const preparedFormData = this.prepareFormDataForSubmission();
+            // const preparedFormData = this.prepareFormDataForSubmission();
             
             if (this.mode === 'add') {
                 // Update the existing form with prepared data
-                Object.assign(this.form, preparedFormData);
+                // Object.assign(this.form, preparedFormData);
+                this.from= { ...this.form };
                 this.form.post(`/user/create-webdoc`)
                 .then(response => {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
@@ -3301,6 +3303,7 @@ export default {
                     } else {}
                 })
                 .catch(error => {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     var main_error_msg='';
                     if (error.response) {
                         if (error.response.status === 422) {
@@ -3314,12 +3317,15 @@ export default {
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     return;
                 }
                 // Update the existing form with prepared data
-                Object.assign(this.form, preparedFormData);
+                // Object.assign(this.form, preparedFormData);
+                this.from= { ...this.form };
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
@@ -3327,9 +3333,9 @@ export default {
                         }
                         this.successMessage = '-e-AWB Saved in database -Pass';
                     } else {}
-                    // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     var main_error_msg='';
                     if (error.response) {
                         if (error.response.status === 422) {
@@ -3343,29 +3349,6 @@ export default {
                 });
             }
         },
-        // onSubmit() {
-        //     console.log('Current mode:', this.mode);
-        //     if (this.mode === 'add') {
-        //         this.form.post('/create-webdoc')
-        //         .then(response => {
-        //             console.log('Add Successful:', response);
-        //             console.log("debug", response.data.data.first_box); 
-        //             if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
-        //                 this.existingData = response.data.data.first_box.original.data;
-        //                 console.log('Existing data set:', this.existingData);
-        //                 if (this.existingData && this.existingData.id) {
-        //                     this.generateAwbPDF();
-        //                 }
-        //             } else {
-        //                 console.error('ID is missing in response data');
-        //             }
-        //         })
-        //         .catch(error => {
-        //             console.error('Add Failed:', error);
-        //         });
-        //     }
-        // },
-
         getAirwayBills(status) {
             ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
@@ -3402,7 +3385,6 @@ export default {
                     this.showAWBSection = false;
                     this.awbError = "No data found for this AWB ID.";
                     this.awbDetails = false;
-                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
         getAirWayBillForRealod(id){

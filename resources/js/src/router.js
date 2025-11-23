@@ -57,6 +57,12 @@ export default new Router({
           meta: { userType: 'user' }
         },
         {
+          name: "XML View",
+          path: "xml-view/:id?",
+          component: () =>import("@/view/pages/XmlView"),
+          meta: { userType: 'user' }
+        },
+        {
           name: "Test",
           path: "/test-view",
           component: () =>import("@/view/pages/Test"),

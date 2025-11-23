@@ -6,6 +6,13 @@
         padding: 6px 8px;
         justify-content: space-between;
 }
+hr{
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}
+td[aria-colindex="5"] {
+  width: 50% !important;
+}
 </style>
 <template>
     <div class="body-color">
@@ -251,6 +258,7 @@
                                     <router-link :to="'/edit-airway-bill/' + String(row.item.id)" class="custom-link"  @click.native="getAirWayBill(String(row.item.id))">
                                     {{ String(row.item.awb_code) }} {{ String(row.item.awb_no) }}
                                     </router-link>
+                                    <router-link :to="'/xml-view/' + String(row.item.id)" class="custom-link"> (View XML)</router-link>
                                 </template>
 
                                 <!-- Destination -->
@@ -262,7 +270,6 @@
                                 <template #cell(send_created)="row">
                                     {{ formatDate(row.item.send_created) }}
                                 </template>
-
                                 <!-- Custom Header for Houseway Column -->
                                 <template #head(houseway)>
                                     <div class="d-flex font-weight-bold">
@@ -292,15 +299,18 @@
                                     </div>
                                     <div class="d-flex font-weight-bold waybill-status-header">
                                         <div class="w-25">FNA and FMAs</div>
-                                        <div class="w-25">Condition</div>
-                                        <div class="w-25">Message</div>
-                                        <div class="w-25">Date</div>
+                                        <div class="w-25" style="text-align: center;">Date</div>
                                     </div>
-                                    <div class="d-flex font-weight-bold justify-content-between" v-for="(status,i) in data_items.status_reponse">
-                                        <div style="margin-left: 5px; margin-right: 5px;">{{i+1}}. {{status.business_status_code}}</div>
-                                        <div style="margin-left: 5px; margin-right: 5px;">{{status.condition_code}}</div>
-                                        <div style="margin-left: 5px; margin-right: 5px;">{{status.reason}}</div>
-                                        <div style="margin-left: 5px; margin-right: 5px;">{{ formatDate(status.issue_date_time) }}</div>
+                                    <div v-for="(status,i) in data_items.status_reponse">
+                                        <hr>
+                                        <div class="d-flex font-weight-bold justify-content-between">
+                                            <div style="margin-left: 5px; margin-right: 5px;">{{i+1}}. {{status.business_status_code}}</div>
+                                            <div style="margin-left: 5px; margin-right: 5px;">{{ formatDate(status.created_at) }}</div>
+                                        </div>
+                                        <div v-if="status.reason">
+                                           <p>{{status.condition_code}}: {{status.reason}}</p>
+                                        </div>
+                                        <hr>
                                     </div>
                                 </template>
                                 </b-table>
@@ -375,6 +385,7 @@ export default {
             if (!this.data_items.airway_bill.destination_airport) return [];
             
             return [{
+                id: this.data_items.airway_bill.id,
                 awb_no: this.data_items.airway_bill.awb_no,
                 awb_code: this.data_items.airway_bill.awb_code,
                 destination_airport: this.getAirportCode(this.data_items.airway_bill.destination_airport),
@@ -489,8 +500,6 @@ export default {
                 });
         },
         formatDate(dateString) {
-            if (!dateString) return "";
-            dateString = dateString.replace(/\.\d+Z$/, "");
             const date = new Date(dateString);
             return date
                 .toLocaleString("en-GB", {

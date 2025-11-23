@@ -846,14 +846,14 @@
                                                                             style="" v-model="form.routing_information.flight"
                                                                             :class="{ 'is-invalid': form.errors.has('flight') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
                                                                         <input type="text" class="form-control"
                                                                             style="" v-model="form.routing_information.date"
                                                                             :class="{ 'is-invalid': form.errors.has('date') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 5%;">
+                                                                    <td class="editable-cell" style="width: 5%; padding-left: 20px;">
                                                                         <date-picker valueType="format"
-                                                                            style="width: 100%;" format="DDMMM"
+                                                                            style="width: 100%;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
                                                                     </td>
                                                                 </tr>
@@ -904,12 +904,12 @@
                                                                             v-model="form.routing_information.flight_2"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
                                                                         <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.date_2"
                                                                             :class="{ 'is-invalid': form.errors.has('date_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell w-10" style="width: 5%;padding: 2px;">
+                                                                    <td class="editable-cell w-10" style="width: 5%; padding-left: 20px;">
                                                                         <date-picker valueType="format"
                                                                             style=" width: 100%;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
@@ -953,12 +953,12 @@
                                                                             v-model="form.routing_information.flight_3"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
                                                                         <input type="text" class="form-control" style=""
                                                                             v-model="form.routing_information.date_3"
                                                                             :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 5%; padding-left: 20px;">
                                                                         <date-picker valueType="format"
                                                                             style="width: 100%;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
@@ -2618,11 +2618,13 @@
                                             <span style="color: green;">-Pass</span>
                                         </span>
                                     </div>
-                                    <div class="d-flex justify-content-end">
+                                    <div class="d-flex justify-content-end submit-button">
                                         <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';">Generate PDF</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';">Send</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
-                                        <b-button type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
+                                        <div v-if="form.first_box.status!='send'">
+                                            <b-button type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3187,17 +3189,18 @@ export default {
             }
         },
         getCurrentDate() {
-            const today = new Date();
-            const day = today.getDate().toString().padStart(2, '0');
-            const month = today.toLocaleString('en-GB', { month: 'short' });
-            return `${day}${month}`;
+            // const today = new Date();
+            // const day = today.getDate().toString().padStart(2, '0');
+            // const month = today.toLocaleString('en-GB', { month: 'short' });
+            // return `${day}${month}`;
+            return new Date().toLocaleDateString("en-CA");
         },
         formatDate(date) {
-            if (!date) return '';
-            const day = new Date(date).getDate().toString().padStart(2, '0');
-            const month = new Date(date).toLocaleString('en-GB', { month: 'short' });
-
-            return `${day}${month}`;
+            // if (!date) return '';
+            // const day = new Date(date).getDate().toString().padStart(2, '0');
+            // const month = new Date(date).toLocaleString('en-GB', { month: 'short' });
+            // return `${day}${month}`;
+            return new Date(date).toLocaleDateString("en-CA");
         },
         // handleDateChange(date) {
         //     this.form.routing_information.date = this.formatDate(date);
@@ -3282,21 +3285,20 @@ export default {
         // },
 
         onSubmit() {
-            // console.log('Current mode:', this.mode);
+            $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             this.main_error_msg='';
             
             // Prepare form data for submission - convert display dates to proper format
-            const preparedFormData = this.prepareFormDataForSubmission();
+            // const preparedFormData = this.prepareFormDataForSubmission();
             
             if (this.mode === 'add') {
                 // Create a new Form instance with prepared data
-                const form = new Form(preparedFormData);
+                const form = new Form({ ...this.form });
                 form.post('/user/create-houseway-bill')
                 .then(response => {
-                    // console.log('Add Successful:', response);
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
@@ -3306,6 +3308,7 @@ export default {
                     }
                 })
                 .catch(error => {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     var main_error_msg='';
                     if (error.response) {
                         if (error.response.status === 422) {
@@ -3325,24 +3328,21 @@ export default {
                 }
                 
                 // Create a new Form instance with prepared data for update
-                const form = new Form(preparedFormData);
+                const form = new Form({ ...this.form });
                 form.put(`/user/update-houseway-bill/${this.existingData.id}`)
                 .then(response => {
-                    console.log(response);
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
-                        // console.log('Existing data set:', this.existingData);
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF();
                         }
                         this.successMessage = '-e-HSWB Saved in database -Pass';
                     } else {
-                        // console.error('ID is missing in response data');
                     }
-                    // console.log('Update Successful:', response);
-                    // this.$router.push({ path: '/house-way-bill' });
                 })
                 .catch(error => {
+                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
                     var main_error_msg='';
                     if (error.response) {
                         if (error.response.status === 422) {
@@ -3386,7 +3386,6 @@ export default {
         openForm(mode, id = null) {
             this.mode = mode;
             if (mode === 'update' && id) {
-                    // console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
                     this.form.first_box.hawb_no = this.existingData.id;
                     

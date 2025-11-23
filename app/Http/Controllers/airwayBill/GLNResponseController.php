@@ -84,4 +84,8 @@ class GLNResponseController extends Controller
         print_r($user_data);
         echo "</pre>";
     }
+    public function get_awb($awb_id){
+        $content = Storage::get("xml-conversion-files/xml_airway_bill_$awb_id.xml");
+        return $content;
+    }
 }

@@ -24,10 +24,11 @@ class ConversionController extends Controller
     {
         // Fetch data from the database (this is just sample data for now)
         $user_data = auth()->guard('user-api')->user();
+        $branch_id=$user_data->branch_name;
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', $branch_id)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
@@ -570,10 +571,11 @@ class ConversionController extends Controller
     {
         // Fetch data from the database (this is just sample data for now)
         $user_data = auth()->guard('user-api')->user();
+        $branch_id=$user_data->branch_name;
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
         $house_address = WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('id', 1)->limit(1)->first()->toArray();
+        $agent_details = Agent::where('id', $branch_id)->limit(1)->first()->toArray();
         $payment_details = PaymentInfo::where('awb_id', $hawb_no)->limit(1)->first()->toArray();
         $other_charges = OtherCharge::where('awb_id', $hawb_no)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();

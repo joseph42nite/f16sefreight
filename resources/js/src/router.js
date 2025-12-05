@@ -183,6 +183,18 @@ export default new Router({
           meta: { logo: 'blue' }
         },
         {
+          name: "Services",
+          path: "/services",
+          component: () => import("@/view/pages/Services"),
+          meta: { logo: 'blue' }
+        },
+        {
+          name: "Solutions",
+          path: "/solutions",
+          component: () => import("@/view/pages/Solutions"),
+          meta: { logo: 'blue' }
+        },
+        {
           name: "Contact Us",
           path: "/contact-us",
           component: () => import("@/view/pages/ContactUs"),

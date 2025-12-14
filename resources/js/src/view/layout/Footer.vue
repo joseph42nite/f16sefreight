@@ -58,7 +58,7 @@
                             <div class="my-sm-14 mt-7 list-group">
                                 <h5 class="mb-sm-8 mb-5">Contact Info</h5>
                                 <ul class="list-unstyled">
-                                    <li class="mb-sm-6 mb-3"><b-link href="tel:+918660320019">Call: +91 8660320019</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link href="tel:+918660320019">Call: +91&nbsp;8660320019</b-link></li>
                                     <!-- <li class="mb-sm-6 mb-3 contactInfo-phone">
                                         <a href="tel:+918660320019" style="text-decoration: none; color: inherit;">
                                             +91 8660320019
@@ -70,7 +70,7 @@
                                             joseph@f16sefreight.com
                                         </a>
                                     </li> -->
-                                    <li class="mb-sm-6 mb-3"><b-link>Address</b-link></li>
+                                    <li class="mb-sm-6 mb-3"><b-link>Address: Bengaluru, Karnataka 560064</b-link></li>
                                     <!-- <li class="mb-sm-6 mb-3 contactInfo-address">
                                         <a href="#" style="text-decoration: none; color: inherit;">
                                             www.f16sefreight.com

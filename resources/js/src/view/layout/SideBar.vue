@@ -1,17 +1,17 @@
 <template>
     <ul class="list-unstyled">
         <!-- Redirect to dashboard -->
-        <router-link to="#" :class="{ active: isActive('/dashboard') }">
+        <!-- <router-link to="#" :class="{ active: isActive('/dashboard') }">
             <li :style="{ padding: isActive('/dashboard') ? '10px 0px' : '10px 15px' }">
                 <img :src="isActive('/dashboard') ? '/media/custome/side-menu/1-active.png' : '/media/custome/side-menu/1.png'" alt="one">
             </li>
-        </router-link>
+        </router-link> -->
         <!-- Redirect to stock management -->
-        <router-link to="#" :class="{ active: isActive('/stock') }">
+        <!-- <router-link to="#" :class="{ active: isActive('/stock') }">
             <li :style="{ padding: isActive('/stock') ? '10px 0px' : '10px 15px' }">
                 <img :src="isActive('/stock') ? '/media/custome/side-menu/2-active.png' : '/media/custome/side-menu/2.png'" alt="two">
             </li>
-        </router-link>
+        </router-link> -->
         <!-- Redirect to Documentation /web-doc/houseway bill/consolidation -->
         <router-link to="/web-doc" :class="{ active: isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) }">
             <li :style="{ padding: isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '10px 0px' : '10px 15px' }">

@@ -24,7 +24,7 @@ class ConversionController extends Controller
     {
         // Fetch data from the database (this is just sample data for now)
         $user_data = auth()->guard('user-api')->user();
-        $branch_id=$user_data->branch_name;
+        $branch_id = $user_data->branch_name;
         $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
         $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
@@ -571,7 +571,7 @@ class ConversionController extends Controller
     {
         // Fetch data from the database (this is just sample data for now)
         $user_data = auth()->guard('user-api')->user();
-        $branch_id=$user_data->branch_name;
+        $branch_id = $user_data->branch_name;
         $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
         $house_address = WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
         $consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
@@ -915,7 +915,7 @@ class ConversionController extends Controller
             // ===========End Third route info=============
         }
 
-        $special_handling_info = json_decode($house_data['special_handling_info'], true);
+        $special_handling_info = json_decode($house_data['special_handling_info'], true) ?? [];
         // Handling SPH Instructions
         for ($i = 0; $i < sizeof($special_handling_info); $i++) {
             $handlingSPHInstructions = $xml->createElement('ram:HandlingSPHInstructions');
@@ -1234,7 +1234,9 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-    function StatusMessage() {}
+    function StatusMessage()
+    {
+    }
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)

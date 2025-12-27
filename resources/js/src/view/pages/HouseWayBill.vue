@@ -2583,15 +2583,6 @@
                                             </div>
                                             <div style="width:96%;margin-left: 2%;margin-right: 2%;">
                                                 <div style="width:100%;">
-                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:22px;font-weight: 400;">To deliver a valid cargo document, the following changes were made:</p>
-                                                </div>
-                                                <div style="width:100%;">
-                                                    <ul>
-                                                        <li>Lorum ipsum</li>
-                                                        <li>Lorum ipsum</li>
-                                                    </ul>
-                                                </div>
-                                                <div style="width:100%;">
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:13px;font-weight: 400;margin: 0;">Airway bill message saved in database</p>
                                                     <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">PDF documents prepared</p>
                                                 </div>
@@ -2619,7 +2610,7 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';">Generate PDF</b-button>
+                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';">Send</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
                                         <div v-if="form.first_box.status!='send'">
@@ -3319,7 +3310,6 @@ export default {
                         }
                     }
                     this.main_error_msg=main_error_msg;
-                    console.error('Add Failed:', error);
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {

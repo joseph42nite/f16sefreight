@@ -19,9 +19,7 @@ class GenerateAwbPdfController extends Controller
     public function downloadPdf($id) {
 
         // Fetch the AirWayBill along with related data
-       $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])
-            ->where('id', $id)
-            ->first();
+       $airWayBill = AirWayBills::with(['paymentInfo', 'wayBillAddress', 'consignmentData', 'otherCustomInformation', 'agentsInfo', 'otherCharge'])->where('id', $id)->first();
             $prefix = substr($airWayBill->awb_code, 0, 3);
             $airline = Airline::where('prefix', $prefix)->whereNotNull('airline_address')->first();
             $airlineAddress = $airline ? $airline->airline_address : '';

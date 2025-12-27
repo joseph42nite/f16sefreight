@@ -2492,7 +2492,7 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
+                                        <b-button class="mr-2" type="button" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
                                         <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
                                         <div v-if="form.first_box.status!='send'">
@@ -3035,38 +3035,37 @@ export default {
             window.open(pdfUrl, '_blank');
         },
         handleSaveAndGeneratePDF(pdf_generate_type) {
-            // this.generatePDFAfterSave = pdf_generate_type;
-            // const result = this.onSubmit() || Promise.resolve({});
-            // result.then(response => {
-            //     if (response.data && response.data.data && response.data.data.id) {
-            //         // this.generateAwbPDF(pdf_generate_type);
-            //     } else {
-            //         console.error('ID is missing in the response data');
-            //     }
-            // }).catch(error => {
-            //     console.error('Error while saving data:', error);
-            // });
-            try {
-                this.showSpinner = true;
-                this.pdf_error_msg = ''; // Clear previous errors
-                
-                const result = this.onSubmit() || Promise.resolve({});
-                result.then(response => {
-                
-                if (response.data.error) {
-                    this.pdf_error_msg = response.data.error;
-                    this.is_generate_pdf = false;
+            this.generatePDFAfterSave = pdf_generate_type;
+            const result = this.onSubmit() || Promise.resolve({});
+            result.then(response => {
+                if (response.data && response.data.data && response.data.data.id) {
+                    // this.generateAwbPDF(pdf_generate_type);
                 } else {
-                    // Handle successful PDF generation
-                    window.open(response.data.url, '_blank');
+                    console.error('ID is missing in the response data');
                 }
+            }).catch(error => {
+                console.error('Error while saving data:', error);
             });
-            } catch (error) {
-                this.pdf_error_msg = error.response?.data?.message || 'Failed to generate PDF';
-                this.is_generate_pdf = false;
-            } finally {
-                this.showSpinner = false;
-            }
+            // try {
+            //     this.showSpinner = true;
+            //     this.pdf_error_msg = ''; // Clear previous errors
+            //     const result = this.onSubmit() || Promise.resolve({});
+            //     result.then(response => {
+            //     if (response.data.error) {
+            //         this.pdf_error_msg = response.data.error;
+            //         this.is_generate_pdf = false;
+            //         console.log("hello");
+            //     } else {
+            //         // Handle successful PDF generation
+            //         window.open(response.data.url, '_blank');
+            //     }
+            // });
+            // } catch (error) {
+            //     this.pdf_error_msg = error.response?.data?.message || 'Failed to generate PDF';
+            //     this.is_generate_pdf = false;
+            // } finally {
+            //     this.showSpinner = false;
+            // }
         },
         validateFormFields() {
             const requiredFields = {
@@ -3131,7 +3130,6 @@ export default {
             return new Date().toLocaleDateString("en-CA");
         },
         formatDate(date) {
-            console.log(date);
             // if (!date) return '';
             // const day = new Date(date).getDate().toString().padStart(2, '0');
             // const month = new Date(date).toLocaleString('en-GB', { month: 'short' });

@@ -207,6 +207,9 @@ class ConversionController extends Controller
         $freightForwarderAddress->appendChild($xml->createElement('ram:CityName', $agent_details['agent_city']));
         $freightForwarderAddress->appendChild($xml->createElement('ram:CountryID', $agent_details['agent_country'])); //
         $freightForwarderParty->appendChild($freightForwarderAddress);
+        $SpecifiedCargoAgentLocation = $xml->createElement('ram:SpecifiedCargoAgentLocation');
+        $SpecifiedCargoAgentLocation->appendChild($xml->createElement('ram:ID', $agent_details['iata_agent_cass']));
+        $freightForwarderParty->appendChild($SpecifiedCargoAgentLocation);
 
         $DefinedTradeContact = $xml->createElement('ram:DefinedTradeContact');
         $DirectTelephoneCommunication = $xml->createElement('ram:DirectTelephoneCommunication');
@@ -1467,6 +1470,9 @@ class ConversionController extends Controller
         $freightForwarderAddress->appendChild($xml->createElement('CityName', $agent_details['agent_city']));
         $freightForwarderAddress->appendChild($xml->createElement('CountryID', $agent_details['agent_country'])); //
         $freightForwarderParty->appendChild($freightForwarderAddress);
+        $SpecifiedCargoAgentLocation = $xml->createElement('ram:SpecifiedCargoAgentLocation');
+        $SpecifiedCargoAgentLocation->appendChild($xml->createElement('ram:ID', $agent_details['iata_agent_cass']));
+        $freightForwarderParty->appendChild($SpecifiedCargoAgentLocation);
 
         $DefinedTradeContact = $xml->createElement('DefinedTradeContact');
         $DirectTelephoneCommunication = $xml->createElement('DirectTelephoneCommunication');

@@ -1032,7 +1032,8 @@ class HousewayBill extends Controller
         }
 
         $status = $request->status;
-        HousewayBills::where(['id' => $id])->update(['status' => $status]);
+        if ($status != 'generate_pdf')
+            HousewayBills::where(['id' => $id])->update(['status' => $status]);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->HouseWayBillConversion($id);

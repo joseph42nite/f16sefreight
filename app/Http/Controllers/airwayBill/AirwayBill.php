@@ -941,7 +941,8 @@ class AirwayBill extends Controller
         //for status update
         $status = $request->status;
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
-        AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        if ($status != 'generate_pdf')
+            AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
@@ -952,7 +953,7 @@ class AirwayBill extends Controller
     }
     public function show($id)
     {
-        $airwayBill = AirwayBills::with(['paymentInfo','wayBillAddress','savedAddress','consignmentData','otherCharge','otherCustomInformation'])->find($id);
+        $airwayBill = AirwayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->find($id);
         if (!$airwayBill) {
             return response()->json(['message' => 'Record not found'], 404);
         }

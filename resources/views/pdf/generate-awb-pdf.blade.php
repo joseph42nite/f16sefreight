@@ -2724,7 +2724,7 @@
         </tr>
     @endif
     </table>
-    <div style="margin-left:23px; margin-top:5px; font-size:10px">Created by F16s System Group</div>
+    <div style="margin-left:23px; margin-top:5px; font-size:10px">Created by F16s E-Freight Solutions</div>
     <!-- Second Page code --> 
     @if (isset($showBothPage) && $showBothPage == true)
         <table cellpadding="0" cellspacing="0" width="600px" align="center">

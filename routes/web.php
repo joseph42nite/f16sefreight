@@ -8,6 +8,7 @@ use App\Http\Controllers\IMPConversionController;
 use App\Http\Controllers\GenerateAwbPdfController;
 use App\Http\Controllers\GenerateConsolidationPdfController;
 use App\Http\Controllers\GenerateHawbPdfController;
+use App\Http\Controllers\OcrController;
 
 use App\Http\Controllers\airwayBill\HousewayBill;
 
@@ -31,7 +32,8 @@ Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class,
 Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf']);
 Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
 Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf']);
-
+Route::get('/ocr', fn() => view('ocr.upload')); 
+Route::post('/ocr-extract', [OcrController::class, 'extract'])->name('ocr.extract');
 Route::get('{any}', function () {
     return view('welcome');
-})->where('any', '(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');
+})->where('any', '(?!ocr)(?!ocr-extract)(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');

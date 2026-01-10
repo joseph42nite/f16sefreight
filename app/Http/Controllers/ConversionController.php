@@ -388,7 +388,9 @@ class ConversionController extends Controller
         if (!empty($waybill_data['special_service_request'])) {
             // Handling SSR Instructions
             $handlingSSRInstructions = $xml->createElement('ram:HandlingSSRInstructions');
-            $handlingSSRInstructions->appendChild($xml->createElement('ram:Description', $waybill_data['special_service_request']));
+            $description_element = $xml->createElement('ram:Description');
+            $description_element->appendChild($xml->createTextNode($waybill_data['special_service_request']));
+            $handlingSSRInstructions->appendChild($description_element);
             $masterConsignment->appendChild($handlingSSRInstructions);
         }
         if (!empty($waybill_data['other_service_information'])) {
@@ -931,13 +933,17 @@ class ConversionController extends Controller
         if (!empty($house_data['special_service_request'])) {
             // Handling SSR Instructions
             $handlingSSRInstructions = $xml->createElement('ram:HandlingSSRInstructions');
-            $handlingSSRInstructions->appendChild($xml->createElement('ram:Description', $house_data['special_service_request']));
+            $description_element = $xml->createElement('ram:Description');
+            $description_element->appendChild($xml->createTextNode($house_data['special_service_request']));
+            $handlingSSRInstructions->appendChild($description_element);
             $IncludedHouseConsignment->appendChild($handlingSSRInstructions);
         }
         if (!empty($house_data['other_service_information'])) {
             // Handling SSR Instructions
             $HandlingOSIInstructions = $xml->createElement('ram:HandlingOSIInstructions');
-            $HandlingOSIInstructions->appendChild($xml->createElement('ram:Description', $house_data['other_service_information']));
+            $description_element = $xml->createElement('ram:Description');
+            $description_element->appendChild($xml->createTextNode($house_data['other_service_information']));
+            $HandlingOSIInstructions->appendChild($description_element);
             $IncludedHouseConsignment->appendChild($HandlingOSIInstructions);
         }
         if (!empty($house_data['letter_credit']) && !empty($house_data['accounting_information'])) {

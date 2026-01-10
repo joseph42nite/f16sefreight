@@ -711,7 +711,8 @@ class AirwayBill extends Controller
 
         $AirwayBills->total_volume = $totals['total_volume'];
         $AirwayBills->total_amount = $totals['total_amount'];
-        $AirwayBills->dimention_unit = $totals['dimention_unit'];
+        if ($totals['dimention_unit'])
+            $AirwayBills->dimention_unit = $totals['dimention_unit'];
         $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Toatl Amount and Total Volume saved successfull";

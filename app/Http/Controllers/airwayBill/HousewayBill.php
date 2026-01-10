@@ -768,7 +768,8 @@ class HousewayBill extends Controller
             $HousewayBills->total_amount = $totals['total_amount'];
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
-            $HousewayBills->dimention_unit = $totals['dimention_unit'] ?? null;
+            if ($totals['dimention_unit'])
+                $HousewayBills->dimention_unit = $totals['dimention_unit'];
             $HousewayBills->agent_id = $agent->id ?? null;
             $HousewayBills->save();
             return response()->json([
@@ -782,7 +783,8 @@ class HousewayBill extends Controller
             $HousewayBills->total_amount = $totals['total_amount'];
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
-            $HousewayBills->dimention_unit = $totals['dimention_unit'] ?? null;
+            if ($totals['dimention_unit'])
+                $HousewayBills->dimention_unit = $totals['dimention_unit'];
             $HousewayBills->agent_id = $agent->id ?? null;
             $HousewayBills->save();
         }

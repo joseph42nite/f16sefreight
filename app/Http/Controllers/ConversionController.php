@@ -394,7 +394,9 @@ class ConversionController extends Controller
         if (!empty($waybill_data['other_service_information'])) {
             // Handling SSR Instructions
             $HandlingOSIInstructions = $xml->createElement('ram:HandlingOSIInstructions');
-            $HandlingOSIInstructions->appendChild($xml->createElement('ram:Description', $waybill_data['other_service_information']));
+            $description_element = $xml->createElement('ram:Description');
+            $description_element->appendChild($xml->createTextNode($waybill_data['other_service_information']));
+            $HandlingOSIInstructions->appendChild($description_element);
             $masterConsignment->appendChild($HandlingOSIInstructions);
         }
         if (!empty($waybill_data['letter_credit']) && !empty($waybill_data['accounting_information'])) {

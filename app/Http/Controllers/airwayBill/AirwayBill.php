@@ -12,6 +12,7 @@ use App\SavedAddress;
 use App\ConsignmentData;
 use App\OtherCharge;
 use App\OtherCustomInformation;
+use App\Location;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -1179,6 +1180,12 @@ class AirwayBill extends Controller
         ftp_close($ftp_conn);
 
         return true;
+    }
+
+    public function get_airport_by_airport_code(Request $request)
+    {
+        $data = Location::whereIn('iata_code', $request->airport_code)->get(['destination', 'iata_code']);
+        return response()->json(['status' => true, 'data' => $data, 'msg' => '']);
     }
 
 }

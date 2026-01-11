@@ -1,15 +1,12 @@
 <?php
-// auth()->guard('admin-api')->user()->id;
 
-use App\Airline;
 use App\Http\Controllers\airwayBill\AirwayBill;
+use App\Http\Controllers\OcrController;
 use App\Http\Controllers\airwayBill\ConsolidationController;
 use App\Http\Controllers\airwayBill\HousewayBill;
 use App\Http\Controllers\airwayBill\MessageLog;
 use App\Http\Controllers\airwayBill\GLNResponseController;
 use App\Http\Controllers\ContactController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\user\UserController;
 use App\Http\Controllers\superAdmin\SuperAdminController;
 use App\Http\Controllers\PasswordResetRequestController;
@@ -23,8 +20,8 @@ use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\BranchController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,8 +79,6 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
 
     Route::get('/get-location', [LocationController::class, 'getLocation']);
 
-
-
     //-------houseWaybills-----
     Route::post('/create-houseway-bill', [HousewayBill::class, 'store']);
     Route::put('/update-houseway-bill/{id}', [HousewayBill::class, 'update']);
@@ -109,6 +104,10 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
 
     Route::get('/check', [GLNResponseController::class, 'check']);
     Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
+
+    //File Uplaod API
+    Route::post('/upload-awb-file', [OcrController::class, 'extract']);
+    Route::post('/get-airport-by-airport-code', [AirwayBill::class, 'get_airport_by_airport_code']);
 });
 
 // =================superAdmin section==========================

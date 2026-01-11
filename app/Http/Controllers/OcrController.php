@@ -11,15 +11,15 @@ class OcrController extends Controller
     public function extract(Request $request)
     {
         $request->validate([
-            'pdf' => ['required','file','mimes:pdf']
+            'upload_file' => ['required', 'file', 'mimes:pdf']
         ]);
 
-        $file = $request->file('pdf');
+        $file = $request->file('upload_file');
         $path = $file->storeAs('uploads', $file->getClientOriginalName());
 
-        $python = config('common-data.python_path'); 
-        $script = realpath(base_path('python/extract_awb.py')); 
-        $pdf = realpath(storage_path('app/' . $path)); 
+        $python = config('common-data.python_path');
+        $script = realpath(base_path('python/extract_awb.py'));
+        $pdf = realpath(storage_path('app/' . $path));
 
         $process = new Process([$python, $script, $pdf]);
         $process->setWorkingDirectory(base_path());
@@ -28,17 +28,14 @@ class OcrController extends Controller
         try {
             $process->mustRun();
         } catch (ProcessFailedException $e) {
-            \Log::error('Python failed: '.$process->getErrorOutput());
+            \Log::error('Python failed: ' . $process->getErrorOutput());
             throw $e;
         }
 
         $output = $process->getOutput();
         $data = json_decode($output, true) ?: [];
-
+        return response()->json(['status' => true, 'data' => $data, 'msg' => '']);
         // Option 1: redirect with data in session
-        return redirect('/ocr')->with('data', $data);
-
-        // Option 2: return JSON directly
-        // return response()->json($data);
+        // return redirect('/ocr')->with('data', $data);
     }
 }

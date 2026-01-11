@@ -15,11 +15,7 @@
                                 <b-col cols="6">
                                     <h6 style="color:#355594;font-size:22px;line-height:30px;font-weight:600;">Documentation</h6>
                                     <b-form-group id="fieldset-horizontal" class="d-flex align-items-center ">
-                                        <b-form-select 
-                                            style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;"
-                                            class="form-control-sm"
-                                            v-model="selectedViewPageOption"
-                                            @change="onSelect">
+                                        <b-form-select  style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
                                             <option value="/web-doc">Master Airway Bill</option>
                                             <option value="/house-way-bill">Houseway Bill</option>
                                             <option value="/consolidation">Consolidation</option>
@@ -29,8 +25,9 @@
                                 </b-col>
                                 <b-col cols="6">
                                     <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                        <b-button @click.prevent="getAirwayBills('draft')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
-                                        <b-button @click.prevent="getAirwayBills('send')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
+                                        <b-button @click.prevent="getAirwayBills('draft')" v-b-modal.modal-draft class="mx-2 show-btn">Draft</b-button>
+                                        <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="ml-2 mx-2 show-btn">10 Latest</b-button>
+                                        <b-button style="background:#355594; color:white;" v-b-modal.upload-file-modal class="ml-2 mx-2 show-btn">Upload</b-button>
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
@@ -114,6 +111,29 @@
                                     </div>
                                 </b-modal>
                                 <!-- 10 Latest model code Ends here -->
+                                <!-- Upload file model code start here -->
+                                <b-modal id="upload-file-modal" title="Uplaod File" :hide-footer="true" ok-only>
+                                    <div class="d-block">
+                                        <b-row>
+                                            <b-col>
+                                                <div class="upload-container">
+                                                    <div class="upload-box" @click="triggerFileInput">
+                                                        <div class="upload-icon">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="upload-text">Drop your file here</div>
+                                                        <div class="upload-divider">Or</div>
+                                                        <div class="upload-link">Select file to be uploaded</div>
+                                                        <input type="file" ref="fileInput" accept=".pdf,application/pdf" @change="handleFileSelect" style="display:none">
+                                                    </div>
+                                                </div>
+                                            </b-col>
+                                        </b-row>
+                                    </div>
+                                </b-modal>
+                                <!-- Upload file model code Ends here -->
                             </b-row>
                         </template>
                     </div>
@@ -2893,11 +2913,87 @@ export default {
             main_error_msg: "",
             pdf_error_msg: '',
             is_generate_pdf:0,
-            showSpinner: false,  // Initially, the progress bar is hidden
+            showSpinner: false,
         };
     },
     
     methods: {
+        //file upload code
+        triggerFileInput() {
+            this.$refs.fileInput.click()
+        },
+        handleFileSelect(event) {
+            const upload_file = event.target.files[0]
+            if (upload_file) {
+                if (upload_file.type !== 'application/pdf') {
+                    alert('Please select a PDF file only')
+                    this.$refs.fileInput.value = ''
+                    return
+                }
+                const formData = new FormData()
+                formData.append('upload_file', upload_file)
+                ApiService.post('/user/upload-awb-file', formData, {
+                headers: {
+                'Content-Type': 'multipart/form-data'
+                }
+                }).then((response) => {
+                    this.$bvModal.hide('upload-file-modal')
+                    response=response.data?.data;
+                    console.log(response);
+                    var awb_number=response.awb_number.split("-");
+                    this.form.first_box.awb_code=awb_number[0];
+                    this.form.first_box.awb_no=awb_number[1];
+                    //routing
+                    var routing=response.routing;
+                    var all_airport_short_code=[routing.departure_airport,routing.destination_airport,routing.transit_airports?.[0],routing.transit_airports?.[1]];
+                    ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
+                      response2=response2.data?.data;
+                      this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                      this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                      this.form.routing_information.to = `${response2?.[2]['iata_code']}, ${response2?.[2]['destination']}`;
+                      this.form.routing_information.to_2 = `${response2?.[3]['iata_code']}, ${response2?.[3]['destination']}`;
+                    });
+                    this.form.routing_information.by =routing.flights?.[0].flight_code?.slice(0,2);
+                    this.form.routing_information.flight =routing.flights?.[0].flight_code?.slice(2);
+                    this.form.routing_information.date = routing.flights?.[0].date;
+                    this.form.routing_information.by_2 =routing.flights?.[1].flight_code?.slice(0,2);
+                    this.form.routing_information.flight_2 =routing.flights?.[1].flight_code?.slice(2);
+                    this.form.routing_information.date_2 = routing.flights?.[1].date;
+                    this.$refs.fileInput.value = ''
+                    //end routing
+
+                    //shipper
+                    this.showShipper=true;
+                    var shipper=response.shipper;
+                    this.form.shipper_address.ship_name=shipper.company_name;
+                    this.form.shipper_address.ship_address=shipper.address;
+                    this.form.shipper_address.ship_city=shipper.city;
+                    this.form.shipper_address.ship_post_code=shipper.pincode;
+                    this.form.shipper_address.ship_state=shipper.state;
+                    this.form.shipper_address.ship_country=shipper.country;
+                    this.form.shipper_address.ship_phone=shipper.phone;
+                    this.form.shipper_address.ship_fax=shipper.email;
+                    //end shipper
+                    //consignee
+                    this.showConsignee=true;
+                    var consignee=response.consignee;
+                    this.form.consignee_address.cons_name=consignee.company_name;
+                    this.form.consignee_address.cons_address=consignee.address;
+                    this.form.consignee_address.cons_city=consignee.city;
+                    this.form.consignee_address.cons_post_code=consignee.pincode;
+                    this.form.consignee_address.cons_state=consignee.state;
+                    this.form.consignee_address.cons_country=consignee.country;
+                    this.form.consignee_address.cons_phone=consignee.phone;
+                    this.form.consignee_address.cons_fax=consignee.email;
+                    //end consignee
+                })
+                .catch(error => {
+                    this.$refs.fileInput.value = ''
+                })
+            }
+        },
+        //end of file upload code
         onSelect(value) {
             if (value) {
                 window.location.href = value;
@@ -4656,6 +4752,72 @@ export default {
 </script>
 
 <style scoped>
+/* file upload css */
+.upload-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.upload-box {
+    border: 2px dashed #d0d5dd;
+    border-radius: 12px;
+    padding: 60px 40px;
+    text-align: center;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-box:hover {
+    border-color: #4a5568;
+    background-color: #f8f9fa;
+}
+
+.upload-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f5f9ff 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-icon svg {
+    width: 32px;
+    height: 32px;
+    color: #4a6fa5;
+}
+
+.upload-text {
+    color: #4a6fa5;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.upload-divider {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 12px 0;
+}
+
+.upload-link {
+    color: #4a6fa5;
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.upload-link:hover {
+    color: #3b5a8a;
+}
+
+#fileInput {
+    display: none;
+}
+/* end of file upload css */
 .body-color {
     background: linear-gradient(180deg, #D0E6F8 3%, #FFFFFF 9%);
 }
@@ -4756,9 +4918,13 @@ li {
     transition: background-color 0.3s;
 }
 
-/* #show-btn:hover {
-  background-color: #007bff;
-} */
+.show-btn {
+  border-radius:30px;
+  border:1px solid #355594;
+  padding:6px 30px;
+  color:#355594;
+  background:#ffffff;
+}
 
 .custom-btn:hover {
     background-color: #007bff !important;

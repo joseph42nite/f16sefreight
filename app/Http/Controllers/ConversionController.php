@@ -510,13 +510,13 @@ class ConversionController extends Controller
             }
             $LinearSpatialDimension = $xml->createElement('ram:LinearSpatialDimension');
             $WidthMeasure = $xml->createElement('ram:WidthMeasure', $pieces_info[$j]['width']);
-            $WidthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit']);
+            $WidthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit'] ?? 'CMT');
             $LinearSpatialDimension->appendChild($WidthMeasure);
             $LengthMeasure = $xml->createElement('ram:LengthMeasure', $pieces_info[$j]['length']);
-            $LengthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit']);
+            $LengthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit'] ?? 'CMT');
             $LinearSpatialDimension->appendChild($LengthMeasure);
             $HeightMeasure = $xml->createElement('ram:HeightMeasure', $pieces_info[$j]['height']);
-            $HeightMeasure->setAttribute('unitCode', $pieces_info[$j]['unit']);
+            $HeightMeasure->setAttribute('unitCode', $pieces_info[$j]['unit'] ?? 'CMT');
             $LinearSpatialDimension->appendChild($HeightMeasure);
             $TransportLogisticsPackage->appendChild($LinearSpatialDimension);
             $includedMasterConsignmentItem->appendChild($TransportLogisticsPackage);
@@ -568,11 +568,11 @@ class ConversionController extends Controller
         // Append to the root element
         $xml->appendChild($waybill);
         // Prepare response as an XML download
-        $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
-        Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
-        $send_response = $this->sendXmlToDescartes($xml_file_name);
-        return $send_response;
-        // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
+        // $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
+        // Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
+        // $send_response = $this->sendXmlToDescartes($xml_file_name);
+        // return $send_response;
+        return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
     public function HouseWayBillConversion($hawb_no = '57HOUSE10')
     {
@@ -1041,13 +1041,13 @@ class ConversionController extends Controller
             }
             $LinearSpatialDimension = $xml->createElement('ram:LinearSpatialDimension');
             $WidthMeasure = $xml->createElement('ram:WidthMeasure', $pieces_info[$j]['width']);
-            $WidthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit']);
+            $WidthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit'] ?? 'CMT');
             $LinearSpatialDimension->appendChild($WidthMeasure);
             $LengthMeasure = $xml->createElement('ram:LengthMeasure', $pieces_info[$j]['length']);
-            $LengthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit']);
+            $LengthMeasure->setAttribute('unitCode', $pieces_info[$j]['unit'] ?? 'CMT');
             $LinearSpatialDimension->appendChild($LengthMeasure);
             $HeightMeasure = $xml->createElement('ram:HeightMeasure', $pieces_info[$j]['height']);
-            $HeightMeasure->setAttribute('unitCode', $pieces_info[$j]['unit']);
+            $HeightMeasure->setAttribute('unitCode', $pieces_info[$j]['unit'] ?? 'CMT');
             $LinearSpatialDimension->appendChild($HeightMeasure);
             $TransportLogisticsPackage->appendChild($LinearSpatialDimension);
             $IncludedHouseConsignmentItem->appendChild($TransportLogisticsPackage);

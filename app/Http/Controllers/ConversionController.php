@@ -568,11 +568,11 @@ class ConversionController extends Controller
         // Append to the root element
         $xml->appendChild($waybill);
         // Prepare response as an XML download
-        // $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
-        // Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
+        $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
+        Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
         // $send_response = $this->sendXmlToDescartes($xml_file_name);
         // return $send_response;
-        return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
+        // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
     public function HouseWayBillConversion($hawb_no = '57HOUSE10')
     {
@@ -611,7 +611,7 @@ class ConversionController extends Controller
         $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', '703'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('ram:PurposeCode', 'Creation'));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '5.00'));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '3.00'));
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');

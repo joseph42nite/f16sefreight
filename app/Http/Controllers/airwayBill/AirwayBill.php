@@ -51,7 +51,7 @@ class AirwayBill extends Controller
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
-            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
+            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:255',
             'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
@@ -59,7 +59,7 @@ class AirwayBill extends Controller
             'ship_state' => 'nullable|string|max:35',
             'ship_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
             'ship_phone' => 'nullable|max:20',
-            'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'ship_fax' => 'nullable|max:50',
             'ship_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
         if ($validator->fails()) {
@@ -129,7 +129,7 @@ class AirwayBill extends Controller
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
-            'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
+            'cons_address' => 'required|max:255|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
@@ -137,7 +137,7 @@ class AirwayBill extends Controller
             'cons_state' => 'nullable|string|max:35',
             'cons_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
             'cons_phone' => 'nullable|max:20',
-            'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'cons_fax' => 'nullable|max:50',
             'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
         if ($validator->fails()) {
@@ -201,7 +201,7 @@ class AirwayBill extends Controller
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
             'also_name_2' => 'nullable|string|max:70',
-            'also_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s]+$/',
+            'also_address' => 'required|max:255|regex:/^[a-zA-Z0-9\s]+$/',
             'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
@@ -209,7 +209,7 @@ class AirwayBill extends Controller
             'also_state' => 'nullable|string|max:35',
             'also_country' => 'required|regex:/^[a-zA-Z0-9]+$/|max:2',
             'also_phone' => 'nullable|max:20',
-            'also_fax' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:35',
+            'also_fax' => 'nullable|max:35',
             'also_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
         ]);
         if ($validator->fails()) {

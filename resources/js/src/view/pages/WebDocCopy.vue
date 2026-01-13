@@ -2951,15 +2951,15 @@ export default {
                       this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
                       this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
                       this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.to = `${response2?.[2]['iata_code']}, ${response2?.[2]['destination']}`;
-                      this.form.routing_information.to_2 = `${response2?.[3]['iata_code']}, ${response2?.[3]['destination']}`;
+                      this.form.routing_information.to = `${response2[2]?.['iata_code']}, ${response2[2]?.['destination']}`;
+                      this.form.routing_information.to_2 = `${response2[3]?.['iata_code']}, ${response2[3]?.['destination']}`;
                     });
-                    this.form.routing_information.by =routing.flights?.[0].flight_code?.slice(0,2);
-                    this.form.routing_information.flight =routing.flights?.[0].flight_code?.slice(2);
-                    this.form.routing_information.date = routing.flights?.[0].date;
-                    this.form.routing_information.by_2 =routing.flights?.[1].flight_code?.slice(0,2);
-                    this.form.routing_information.flight_2 =routing.flights?.[1].flight_code?.slice(2);
-                    this.form.routing_information.date_2 = routing.flights?.[1].date;
+                    this.form.routing_information.by =routing.flights[0]?.flight_code?.slice(0,2);
+                    this.form.routing_information.flight =routing.flights[0]?.flight_code?.slice(2);
+                    this.form.routing_information.date = routing.flights[0]?.date;
+                    this.form.routing_information.by_2 =routing.flights[1]?.flight_code?.slice(0,2);
+                    this.form.routing_information.flight_2 =routing.flights[1]?.flight_code?.slice(2);
+                    this.form.routing_information.date_2 = routing.flights[1]?.date;
                     this.$refs.fileInput.value = ''
                     //end routing
 
@@ -2987,6 +2987,27 @@ export default {
                     this.form.consignee_address.cons_phone=consignee.phone;
                     this.form.consignee_address.cons_fax=consignee.email;
                     //end consignee
+                    //Consignment Information
+                    let file_consignment_data=response.cargo;
+                    this.consignment_list.pieces=file_consignment_data.pieces;
+                    this.consignment_list.rate=file_consignment_data.rate;
+                    this.consignment_list.hsCodes=file_consignment_data.hs_codes;
+                    this.consignment_list.gross_weight=file_consignment_data.gross_weight_kg;
+                    this.consignment_list.chargable_weight=file_consignment_data.chargeable_weight_kg;
+                    this.consignment_list.description=file_consignment_data.description;
+                    for(let i=0;i<file_consignment_data.dimensions.length;i++){
+                        let dimensions_data=file_consignment_data.dimensions[i].dimensions.split('x');
+                        this.consignment_list.itemss.push({
+                            pcs: file_consignment_data.dimensions[i].count,
+                            wgt: '',
+                            length: dimensions_data[0]??'',
+                            width: dimensions_data[1]??'',
+                            height: dimensions_data[2]??'',
+                            unit: 'CMT'
+                        });
+                    }
+                    this.$refs.modalConsignment.show();
+                    //end Consignment Information
                 })
                 .catch(error => {
                     this.$refs.fileInput.value = ''

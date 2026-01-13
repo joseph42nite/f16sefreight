@@ -124,9 +124,9 @@ class ConversionController extends Controller
         }
         $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
         $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
-        $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+        $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         if (!empty($waybill_data['total_volume']))
-            $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
+            $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
         $masterConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
 
         // Consignor Party
@@ -465,8 +465,8 @@ class ConversionController extends Controller
         $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0]);
         $TypeCode->setAttribute('listAgencyID', 1);
         $includedMasterConsignmentItem->appendChild($TypeCode);
-        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
-        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit']);
+        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
+        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
         if (!empty($consignment_data['slac']))
             $includedMasterConsignmentItem->appendChild($xml->createElement('ram:PackageQuantity', $consignment_data['slac']));
         $includedMasterConsignmentItem->appendChild($xml->createElement('ram:PieceQuantity', $consignment_data['pieces']));
@@ -526,7 +526,7 @@ class ConversionController extends Controller
         $applicableFreightRateServiceCharge = $xml->createElement('ram:ApplicableFreightRateServiceCharge');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CategoryCode', $consignment_data['rate_class']));
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CommodityItemID', $consignment_data['commodity_item']));
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:ChargeableWeightMeasure', $consignment_data['chargable_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:ChargeableWeightMeasure', $consignment_data['chargable_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:AppliedRate', $consignment_data['rate']));
         $applicableAppliedAmount = $xml->createElement('ram:AppliedAmount', $waybill_data['total_amount']);
         $applicableAppliedAmount->setAttribute('currencyID', $payment_details['currency']);
@@ -570,8 +570,8 @@ class ConversionController extends Controller
         // Prepare response as an XML download
         $xml_file_name = 'xml_airway_bill_' . $awb_id . '.xml';
         Storage::put('xml-conversion-files/' . $xml_file_name, $xml->saveXML());
-        // $send_response = $this->sendXmlToDescartes($xml_file_name);
-        // return $send_response;
+        $send_response = $this->sendXmlToDescartes($xml_file_name);
+        return $send_response;
         // return response($xml->saveXML(), 200)->header('Content-Type', 'application/xml');
     }
     public function HouseWayBillConversion($hawb_no = '57HOUSE10')
@@ -694,9 +694,9 @@ class ConversionController extends Controller
         }
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] ?? '' == 'P' ? 'true' : 'false'));
-        $IncludedHouseConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+        $IncludedHouseConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         if (!empty($waybill_data['total_volume']))
-            $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit']);
+            $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:SummaryDescription', $consignment_data['description']));
         // Consignor Party
@@ -996,8 +996,8 @@ class ConversionController extends Controller
         $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0]);
         $TypeCode->setAttribute('listAgencyID', 1);
         $IncludedHouseConsignmentItem->appendChild($TypeCode);
-        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
-        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit']);
+        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
+        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $totalChargeAmount = $xml->createElement('ram:TotalChargeAmount', $house_data['total_amount']);
         $totalChargeAmount->setAttribute('currencyID', $payment_details['currency']);
         $IncludedHouseConsignmentItem->appendChild($totalChargeAmount);
@@ -1057,7 +1057,7 @@ class ConversionController extends Controller
         $applicableFreightRateServiceCharge = $xml->createElement('ram:ApplicableFreightRateServiceCharge');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CategoryCode', $consignment_data['rate_class']));
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CommodityItemID', $consignment_data['commodity_item']));
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:ChargeableWeightMeasure', $consignment_data['chargable_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:ChargeableWeightMeasure', $consignment_data['chargable_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:AppliedRate', $consignment_data['rate']));
         $applicableAppliedAmount = $xml->createElement('ram:AppliedAmount', $house_data['total_amount']);
         $applicableAppliedAmount->setAttribute('currencyID', $payment_details['currency']);
@@ -1295,7 +1295,7 @@ class ConversionController extends Controller
         // Master Consignment
         $masterConsignment = $xml->createElement('rsm:MasterConsignment');
         $housemanifest->appendChild($masterConsignment);
-        $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code']);
+        $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         $masterConsignment->appendChild($xml->createElement('ram:ConsignmentItemQuantity', 1));
         if (!empty($consignment_data['slac']))
             $masterConsignment->appendChild($xml->createElement('ram:PackageQuantity', $consignment_data['slac']));
@@ -1334,7 +1334,7 @@ class ConversionController extends Controller
             $housewaybill = $xml->createElement('ram:IncludedHouseConsignment');
             $masterConsignment->appendChild($housewaybill);
             $housewaybill->appendChild($xml->createElement('ram:SequenceNumeric', $i + 1));
-            $housewaybill->appendChild($xml->createElement('ram:GrossWeightMeasure', $house_consignment_data['gross_weight']))->setAttribute('unitCode', $house_consignment_data['weight_code']);
+            $housewaybill->appendChild($xml->createElement('ram:GrossWeightMeasure', $house_consignment_data['gross_weight']))->setAttribute('unitCode', $house_consignment_data['weight_code'] ?? 'KGM');
             if (!empty($house_consignment_data['slac']))
                 $housewaybill->appendChild($xml->createElement('ram:PackageQuantity', $house_consignment_data['slac']));
             $housewaybill->appendChild($xml->createElement('ram:TotalPieceQuantity', $house_consignment_data['pieces']));

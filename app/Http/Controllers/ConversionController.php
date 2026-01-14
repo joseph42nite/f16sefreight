@@ -132,7 +132,7 @@ class ConversionController extends Controller
         // Consignor Party
         $consignor_street_name = $waybill_address['ship_address'] . (!empty($waybill_address['ship_address_line_2']) ? ',' . $waybill_address['ship_address_line_2'] : '');
         $consignorParty = $xml->createElement('ram:ConsignorParty');
-        $consignorParty->appendChild($xml->createElement('ram:Name', $waybill_address['ship_name']));
+        $consignorParty->appendChild(($e = $xml->createElement('ram:Name')))->appendChild($xml->createTextNode($waybill_address['ship_name']));
         $consignorParty->appendChild($xml->createElement('ram:AccountID', $waybill_address['ship_account']));
         $postalStructuredAddress1 = $xml->createElement('ram:PostalStructuredAddress');
         $postalStructuredAddress1->appendChild($xml->createElement('ram:PostcodeCode', $waybill_address['ship_post_code']));
@@ -166,7 +166,7 @@ class ConversionController extends Controller
         // Consignee Party
         $consignee_street_name = $waybill_address['cons_address'] . (!empty($waybill_address['cons_address_line_2']) ? ',' . $waybill_address['cons_address_line_2'] : '');
         $consigneeParty = $xml->createElement('ram:ConsigneeParty');
-        $consigneeParty->appendChild($xml->createElement('ram:Name', $waybill_address['cons_name']));
+        $consigneeParty->appendChild(($e = $xml->createElement('ram:Name')))->appendChild($xml->createTextNode($waybill_address['cons_name']));
         $consigneeParty->appendChild($xml->createElement('ram:AccountID', $waybill_address['cons_account']));
         $postalStructuredAddress2 = $xml->createElement('ram:PostalStructuredAddress');
         $postalStructuredAddress2->appendChild($xml->createElement('ram:PostcodeCode', $waybill_address['cons_post_code']));
@@ -702,7 +702,7 @@ class ConversionController extends Controller
         // Consignor Party
         $consignor_street_name = $house_address['ship_address'] . (!empty($house_address['ship_address_line_2']) ? ',' . $house_address['ship_address_line_2'] : '');
         $consignorParty = $xml->createElement('ram:ConsignorParty');
-        $consignorParty->appendChild($xml->createElement('ram:Name', $house_address['ship_name']));
+        $consignorParty->appendChild(($e = $xml->createElement('ram:Name')))->appendChild($xml->createTextNode($house_address['ship_name']));
         $consignorParty->appendChild($xml->createElement('ram:AccountID', $house_address['ship_account']));
         $postalStructuredAddress1 = $xml->createElement('ram:PostalStructuredAddress');
         $postalStructuredAddress1->appendChild($xml->createElement('ram:PostcodeCode', $house_address['ship_post_code']));
@@ -736,7 +736,7 @@ class ConversionController extends Controller
         // Consignee Party
         $consignee_street_name = $house_address['cons_address'] . (!empty($house_address['cons_address_line_2']) ? ',' . $house_address['cons_address_line_2'] : '');
         $consigneeParty = $xml->createElement('ram:ConsigneeParty');
-        $consigneeParty->appendChild($xml->createElement('ram:Name', $house_address['cons_name']));
+        $consigneeParty->appendChild(($e = $xml->createElement('ram:Name')))->appendChild($xml->createTextNode($house_address['cons_name']));
         $consigneeParty->appendChild($xml->createElement('ram:AccountID', $house_address['cons_account']));
         $postalStructuredAddress2 = $xml->createElement('ram:PostalStructuredAddress');
         $postalStructuredAddress2->appendChild($xml->createElement('ram:PostcodeCode', $house_address['cons_post_code']));

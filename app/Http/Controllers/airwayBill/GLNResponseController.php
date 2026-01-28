@@ -58,18 +58,31 @@ class GLNResponseController extends Controller
         $xml = simplexml_load_string($xmlContent, "SimpleXMLElement", LIBXML_NOCDATA);
         $xml->registerXPathNamespace('rsm', 'iata:response:3');
         $xml->registerXPathNamespace('ram', 'iata:datamodel:3');
+        $message_type = (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:Name')[0] ?? null);
+        if ($message_type == 'Cargo Status') {
+            $business_id = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null);
+            $business_status_code = 'Cargo Status';
+            $condition_code=substr($business_id, -3);
+            $reason=substr($business_id, -3);
+            $business_id = substr($business_id, 0, -3);
+        } else {
+            $business_id = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null);
+            $business_status_code = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:StatusCode')[0] ?? null);
+            $condition_code = (string) ($xml->xpath('//rsm:ResponseStatus/ram:ConditionCode')[0] ?? null);
+            $reason = (string) ($xml->xpath('//rsm:ResponseStatus/ram:Reason')[0] ?? null);
+        }
         $data = [
             'message_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ID')[0] ?? null),
             'type_code' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:TypeCode')[0] ?? null),
             'issue_date_time' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:IssueDateTime')[0] ?? null),
             'conversation_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ConversationID')[0] ?? null),
             'primary_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:SenderParty/ram:PrimaryID')[0] ?? null),
-            'business_id' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null),
+            'business_id' => $business_id,
             'business_name' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:Name')[0] ?? null),
             'business_type_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:TypeCode')[0] ?? null),
-            'business_status_code' => (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:StatusCode')[0] ?? null),
-            'condition_code' => (string) ($xml->xpath('//rsm:ResponseStatus/ram:ConditionCode')[0] ?? null),
-            'reason' => (string) ($xml->xpath('//rsm:ResponseStatus/ram:Reason')[0] ?? null),
+            'business_status_code' => $business_status_code,
+            'condition_code' => $condition_code,
+            'reason' => $reason,
         ];
         StatusReponse::create($data);
         $filePath = storage_path('logs/gln_responses.txt');
@@ -84,7 +97,8 @@ class GLNResponseController extends Controller
         print_r($user_data);
         echo "</pre>";
     }
-    public function get_awb($awb_id){
+    public function get_awb($awb_id)
+    {
         $content = Storage::get("xml-conversion-files/xml_airway_bill_$awb_id.xml");
         return $content;
     }

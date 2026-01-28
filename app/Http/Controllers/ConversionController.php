@@ -462,7 +462,7 @@ class ConversionController extends Controller
         $includedMasterConsignmentItem = $xml->createElement('ram:IncludedMasterConsignmentItem');
         $includedMasterConsignmentItem->appendChild($xml->createElement('ram:SequenceNumeric', $i + 1));
         $hs_code = json_decode($consignment_data['hs_code'], true);
-        $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0]);
+        $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0] ?? '');
         $TypeCode->setAttribute('listAgencyID', 1);
         $includedMasterConsignmentItem->appendChild($TypeCode);
         $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
@@ -993,7 +993,7 @@ class ConversionController extends Controller
         $IncludedHouseConsignmentItem = $xml->createElement('ram:IncludedHouseConsignmentItem');
         $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:SequenceNumeric', 1));
         $hs_code = json_decode($consignment_data['hs_code'], true);
-        $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0]);
+        $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0] ?? '');
         $TypeCode->setAttribute('listAgencyID', 1);
         $IncludedHouseConsignmentItem->appendChild($TypeCode);
         $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
@@ -1245,9 +1245,7 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-    function StatusMessage()
-    {
-    }
+    function StatusMessage() {}
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)

@@ -430,7 +430,7 @@ class MessageLog extends Controller
         })->values();
         // ✅ Return combined result
         $awb_id = $request->awb_code . '-' . $request->awb_no;
-        $status_reponse = StatusReponse::where('message_id', $airwayBill['t_id'])->orWhere('conversation_id', $awb_id)->get();
+        $status_reponse = StatusReponse::where('message_id', $airwayBill['t_id'])->orWhere('business_id', $awb_id)->get();
         return response()->json([
             'airway_bill' => $airwayBill,
             'house_way_bills' => $groupedHouseBills,

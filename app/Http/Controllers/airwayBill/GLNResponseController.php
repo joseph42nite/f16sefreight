@@ -62,8 +62,9 @@ class GLNResponseController extends Controller
         if ($message_type == 'Cargo Status') {
             $business_id = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null);
             $business_status_code = 'Cargo Status';
-            $condition_code=substr($business_id, -3);
-            $reason=substr($business_id, -3);
+            $condition_code = substr($business_id, -3);
+            $cargo_status_description = config('common-data.cargo_status_description');
+            $reason = $cargo_status_description[$condition_code] ?? '';
             $business_id = substr($business_id, 0, -3);
         } else {
             $business_id = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null);

@@ -18,7 +18,7 @@
                                         class="form-control-sm"
                                         v-model="selectedViewPageOption"
                                         @change="onSelect">
-                                        <option value="/web-doc">Master Airway Bill</option>
+                                        <option value="/focus-air">Master Airway Bill</option>
                                         <option value="/house-way-bill">Houseway Bill</option>
                                         <option value="/consolidation">Consolidation</option>
                                         <!-- <option value="/message-log">Message Log</option> -->
@@ -27,8 +27,9 @@
                             </b-col>
                             <b-col cols="6">
                                 <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                    <b-button @click.prevent="getHousewayBills('draft')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button>
-                                    <b-button @click.prevent="getHousewayBills('send')" style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
+                                    <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="mx-2 show-btn">Draft</b-button>
+                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="ml-2 mx-2 show-btn">10 Latest</b-button>
+                                    <b-button style="background: rgb(53, 85, 148) !important; color:white !important;" class="ml-2 mx-2 show-btn">Upload</b-button>
                                 </div>
                             </b-col>
                             <!-- Draft model code Start here -->

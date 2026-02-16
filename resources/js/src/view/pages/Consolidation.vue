@@ -17,7 +17,7 @@
                                     class="form-control-sm"
                                     v-model="selectedViewPageOption"
                                     @change="onSelect">
-                                    <option value="/web-doc">Master Airway Bill</option>
+                                    <option value="/focus-air">Master Airway Bill</option>
                                     <option value="/house-way-bill">Houseway Bill</option>
                                     <option value="/consolidation">Consolidation</option>
                                     <!-- <option value="/message-log">Message Log</option> -->

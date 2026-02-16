@@ -16,7 +16,7 @@
                                     <h6 style="color:#355594;font-size:22px;line-height:30px;font-weight:600;">Documentation</h6>
                                     <b-form-group id="fieldset-horizontal" class="d-flex align-items-center ">
                                         <b-form-select  style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
-                                            <option value="/web-doc">Master Airway Bill</option>
+                                            <option value="/focus-air">Master Airway Bill</option>
                                             <option value="/house-way-bill">Houseway Bill</option>
                                             <option value="/consolidation">Consolidation</option>
                                             <!-- <option value="/message-log">Message Log</option> -->
@@ -2752,7 +2752,7 @@ export default {
                 declear_value_insurance: 'XXX',
                 currency: 'INR',
             },
-            selectedViewPageOption: '/web-doc',
+            selectedViewPageOption: '/focus-air',
             selectedShipper: null,
             selectedConsignee: null,
             selectAlsoNotify: null,

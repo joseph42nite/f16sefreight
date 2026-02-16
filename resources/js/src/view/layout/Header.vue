@@ -37,7 +37,7 @@
               <!-- <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item> -->
               <b-nav-item to="/solutions" class="nav-link-custom text-white">Solutions</b-nav-item>
               <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
-              <!-- <b-nav-item to="/web-doc" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
+              <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
               <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
               <!-- If not loged-in user -->
               <div  class="head-btn d-md-none">

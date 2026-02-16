@@ -105,7 +105,7 @@
                                             </router-link>
                                         </a>
                                         <!-- <a href="#" class="custom-link mb-0">
-                                            <router-link v-slot="{ navigate, href }" :to="'/web-doc/'" custom>
+                                            <router-link v-slot="{ navigate, href }" :to="'/focus-air/'" custom>
                                                 <p @click="navigate" class="mb-0 ml-2">Create House Waybill from e-AWB Data </p>
                                             </router-link>
                                         </a> -->

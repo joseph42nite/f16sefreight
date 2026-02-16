@@ -9,7 +9,7 @@ export default new Router({
     {
       path: "/",
       // redirect: "/focusakash",
-      redirect: "/web-doc",
+      redirect: "/focus-air",
       component: () => import("@/view/layout/MainLayout"),
       children: [
         {
@@ -19,8 +19,8 @@ export default new Router({
           meta: { userType: 'user' }
         },
         {
-          name: "Web Doc",
-          path: "web-doc",
+          name: "Focus Air",
+          path: "focus-air",
           //component: () =>import("@/view/pages/WebDoc"),
           component: () =>import("@/view/pages/WebDocCopy"),
           meta: { userType: 'user' }
@@ -214,7 +214,7 @@ export default new Router({
     },
     // {
     //   name: "Web Doc",
-    //   path: "/web-doc",
+    //   path: "/focus-air",
     //   component: () =>import("@/view/pages/WebDoc"),
     // },
     //-----------for admin login-------------------

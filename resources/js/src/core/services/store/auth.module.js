@@ -51,7 +51,7 @@ const actions = {
           if(data.role=='user'){
             JwtService.saveSource(data.user.origin_airport_code);
             context.commit(SET_Source, data.user.origin_airport_code);
-            router.push(`/web-doc`);
+            router.push(`/focus-air`);
           }
           else if(data.role=='superAdmin')
              router.push(`/superadmin/all-users`);

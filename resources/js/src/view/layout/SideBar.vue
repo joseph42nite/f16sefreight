@@ -12,10 +12,10 @@
                 <img :src="isActive('/stock') ? '/media/custome/side-menu/2-active.png' : '/media/custome/side-menu/2.png'" alt="two">
             </li>
         </router-link> -->
-        <!-- Redirect to Documentation /web-doc/houseway bill/consolidation -->
-        <router-link to="/web-doc" :class="{ active: isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) }">
-            <li :style="{ padding: isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '10px 0px' : '10px 15px' }">
-                <img :src="isActive(['/web-doc', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '/media/custome/side-menu/3-active.png' : '/media/custome/side-menu/3.png'" alt="three">
+        <!-- Redirect to Documentation /focus-air/houseway bill/consolidation -->
+        <router-link to="/focus-air" :class="{ active: isActive(['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) }">
+            <li :style="{ padding: isActive(['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '10px 0px' : '10px 15px' }">
+                <img :src="isActive(['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) ? '/media/custome/side-menu/3-active.png' : '/media/custome/side-menu/3.png'" alt="three">
             </li>
         </router-link>
         <!-- Redirect to search -->
@@ -30,7 +30,7 @@
                 <img :src="isActive('/rate') ? '/media/custome/side-menu/5-active.png' : '/media/custome/side-menu/5.png'" alt="five">
             </li>
         </router-link>
-        <router-link to="/dashboard">
+        <router-link to="#">
             <li class="sideBarLevelText">
                 <img :src="primaryText" alt="Primary Text" class="primary-text">
             </li>

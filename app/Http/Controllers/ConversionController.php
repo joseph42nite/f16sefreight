@@ -37,9 +37,25 @@ class ConversionController extends Controller
         $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         $time = time();
 
-        //update refrance id
-        // AirwayBills::where([['id', $awb_id]])->update(['reference_id', $time]);
-        // replacing ns2 -> rsm
+        $description = $consignment_data['description'];
+        $words = ['CONSOLIDATION', 'CONSOLE', 'CONSOL', 'CONSOLIDATED'];
+        $found = false;
+        foreach ($words as $word) {
+            if (stripos($description, $word) !== false) {
+                $found = true;
+                break;
+            }
+        }
+        $waybill_name = '';
+        $waybill_code = '';
+        if ($found || $waybill_data['consolidated_mawb']) {
+            $waybill_name = 'Master Air Waybill';
+            $waybill_code = 741;
+        } else {
+            $waybill_name = 'Air Waybill';
+            $waybill_code = 740;
+        }
+
         // Start conversion to XML
         $xml = new DOMDocument();
         $xml->formatOutput = true;
@@ -54,8 +70,8 @@ class ConversionController extends Controller
         // $messageHeaderDocument->setAttribute('xmlns:ram', 'iata:datamodel:3');
         $waybill->appendChild($messageHeaderDocument);
         $messageHeaderDocument->appendChild($xml->createElement('ram:ID', $waybill_data['awb_code'] . '-' . $waybill_data['awb_no']));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:Name', 'Air Waybill'));
-        $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', '740'));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:Name', $waybill_name));
+        $messageHeaderDocument->appendChild($xml->createElement('ram:TypeCode', $waybill_code));
         $messageHeaderDocument->appendChild($xml->createElement('ram:IssueDateTime', $utc_current_date));
         $messageHeaderDocument->appendChild($xml->createElement('ram:PurposeCode', 'Creation'));
         $messageHeaderDocument->appendChild($xml->createElement('ram:VersionID', '3.00'));
@@ -126,7 +142,7 @@ class ConversionController extends Controller
         $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
         $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         if (!empty($waybill_data['total_volume']))
-            $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
+            $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($waybill_data['total_volume'], 0, 9)))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
         $masterConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
 
         // Consignor Party
@@ -466,7 +482,7 @@ class ConversionController extends Controller
         $TypeCode->setAttribute('listAgencyID', 1);
         $includedMasterConsignmentItem->appendChild($TypeCode);
         $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
-        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', $waybill_data['total_volume']))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
+        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($waybill_data['total_volume'], 0, 9)))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
         if (!empty($consignment_data['slac']))
             $includedMasterConsignmentItem->appendChild($xml->createElement('ram:PackageQuantity', $consignment_data['slac']));
         $includedMasterConsignmentItem->appendChild($xml->createElement('ram:PieceQuantity', $consignment_data['pieces']));
@@ -696,7 +712,7 @@ class ConversionController extends Controller
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] ?? '' == 'P' ? 'true' : 'false'));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         if (!empty($waybill_data['total_volume']))
-            $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
+            $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($house_data['total_volume'], 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:SummaryDescription', $consignment_data['description']));
         // Consignor Party
@@ -997,7 +1013,7 @@ class ConversionController extends Controller
         $TypeCode->setAttribute('listAgencyID', 1);
         $IncludedHouseConsignmentItem->appendChild($TypeCode);
         $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
-        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', $house_data['total_volume']))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
+        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($house_data['total_volume'], 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $totalChargeAmount = $xml->createElement('ram:TotalChargeAmount', $house_data['total_amount']);
         $totalChargeAmount->setAttribute('currencyID', $payment_details['currency']);
         $IncludedHouseConsignmentItem->appendChild($totalChargeAmount);
@@ -1245,7 +1261,9 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-    function StatusMessage() {}
+    function StatusMessage()
+    {
+    }
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)

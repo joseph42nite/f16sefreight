@@ -529,9 +529,8 @@ class AirwayBill extends Controller
         $company_id = $user->company_id;
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
-
         $awb_id = $awb_code . $awb_no;
-
+        OtherCharge::where('awb_id', $awb_id)->delete();
         for ($i = 0; $i < sizeof($charges); $i++) {
             $finalOtherChargeCode = isset($charges[$i]['other_code']) && !empty($charges[$i]['other_code'])
                 ? $charges[$i]['other_code']
@@ -548,14 +547,7 @@ class AirwayBill extends Controller
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-            $otherChargesData = OtherCharge::where([
-                ['awb_id', $awb_id],
-                ['other_charge_code', $finalOtherChargeCode],
-            ])->first();
-
-            if (!isset($otherChargesData)) {
-                $otherChargesData = new OtherCharge();
-            }
+            $otherChargesData = new OtherCharge();
             $otherChargesData->awb_id = "$awb_id";
             $otherChargesData->other_charge_code = $finalOtherChargeCode;
             $otherChargesData->payment_type = $charges[$i]['payment_type'] ?? null;

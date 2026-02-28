@@ -2456,11 +2456,7 @@
                                 <div class="py-7">
                                     <b-row class="justify-content-end">
                                         <b-col cols="auto" class="text-right">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                label-for="input-horizontal" label="Email PDF copy To:"
-                                                class="form-control-sm col-form-label">
-                                                <b-form-input id="input-horizontal" class="form-control-sm"
-                                                    style="width: 300px"></b-form-input>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA 2:" class="form-control-sm col-form-label"> <b-form-input id="input-horizontal" v-model="form.awb_email" class="form-control-sm" style="width: 300px"></b-form-input>
                                             </b-form-group>
                                             <div class="d-flex text-left ml-4 mt-4">
                                                 <b-form-checkbox size="sm" class="">Including Cargo
@@ -2513,8 +2509,10 @@
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
                                         <b-button class="mr-2" type="button" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
-                                        <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
-                                        <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
+                                        <div v-if="current_user.can_send">
+                                            <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
+                                            <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
+                                        </div>
                                         <div v-if="form.first_box.status!='send'">
                                            <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
                                         </div>
@@ -2543,6 +2541,7 @@ export default {
     data() {
         return {
             form: new Form({
+                awb_email:'',
                 first_box:{
                     awb_code: '',
                     awb_no: '',
@@ -3529,10 +3528,8 @@ export default {
             this.mode = mode;
             this.showAWBSection = false;
             if (mode === 'update' && id) {
-                    // console.log("Data prepared for update, ID:", this.existingData);
                     this.form.first_box = this.existingData;
                     this.form.first_box.hawb_no = this.existingData.id;
-                    
                     // Format dates for display when editing
                     const routingInfo = { ...this.existingData };
                     if (routingInfo.date) {
@@ -3609,6 +3606,7 @@ export default {
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
+                    this.form.awb_email=this.existingData.awb_email;
                 } else {
                     // console.error('existingData is not an array:', this.existingData);
                     // console.log("Add mode activated");

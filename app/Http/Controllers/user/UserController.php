@@ -27,6 +27,7 @@ class UserController extends Controller
             'origin_airport_code' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'max:100'],
             'branch_name' => ['required', 'max:50'],
+            'can_send' => ['required'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
         ]);
@@ -42,6 +43,7 @@ class UserController extends Controller
         $user->company_name = $request->company_name;
         $user->branch_name = $request->branch_name;
         $user->email = $request->email;
+        $user->can_send = $request->can_send;
         $user->password = Hash::make($request->password);
         $user->plan_expiry_date = $current_date;
         $user->pima_address = $request->pima_address;
@@ -64,6 +66,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'string', 'max:100'],
             'plan_expiry_date' => ['required'],
+            'can_send' => ['required'],
         ]);
 
         if ($validator->fails()) {
@@ -76,6 +79,7 @@ class UserController extends Controller
         // $user->daily_login_count=$request->daily_login_count;
         // $user->plan_expiry_date=$request->plan_expiry_date;
         $user->is_active = $request->is_active;
+        $user->can_send = $request->can_send;
         $user->pima_address = $request->pima_address;
         if (!empty($request->password))
             $user->password = Hash::make($request->password);

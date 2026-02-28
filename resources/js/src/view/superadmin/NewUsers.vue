@@ -69,6 +69,10 @@
             <!-- <treeselect :options="location" :value="user_form.origin_airport_code" v-model="user_form.origin_airport_code" :multiple="false" :searchable="true" placeholder="Select Origin City" :normalizer="normalizer"></treeselect> -->
           </b-input-group>
         </b-form-group>
+        <b-form-group>
+            <b-form-checkbox v-model="user_form.can_send" :value="1" :unchecked-value="0" class="ml-1" :class="{ 'is-invalid': user_form.errors.has('can_send') }"> User can send the data</b-form-checkbox>
+            <has-error :form="user_form" field="can_send"></has-error>
+        </b-form-group>
         <div>
           <b-form-group>
             <b-form-input id="input-5" v-model="user_form.password" :type="showpass?'password':'text'" placeholder="Password" class="ml-1 input-box" :class="{ 'is-invalid': user_form.errors.has('password') }"></b-form-input>
@@ -105,6 +109,7 @@ export default {
         password: "",
         pima_address: "",
         is_active:"",
+        can_send:1,
         plan_expiry_date:'',
       }),
       action: 'Add',

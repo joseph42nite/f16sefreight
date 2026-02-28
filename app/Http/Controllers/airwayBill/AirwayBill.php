@@ -843,7 +843,7 @@ class AirwayBill extends Controller
         //for status update
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         $status = $request->status;
-        AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+        AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email]);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
@@ -936,7 +936,7 @@ class AirwayBill extends Controller
         $status = $request->status;
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         if ($status != 'generate_pdf')
-            AirwayBills::where(['id' => $awb_id])->update(['status' => $status]);
+            AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email]);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);

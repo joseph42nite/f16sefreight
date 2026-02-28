@@ -101,8 +101,6 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::delete('/house-way-bills/{id}', [MessageLog::class, 'deleteHouseWayBill']);
     Route::post('/search-airway-bills', [MessageLog::class, 'searchBills']);
     //========end of the  airway bill operation=====
-
-    Route::get('/check', [GLNResponseController::class, 'check']);
     Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
 
     //File Uplaod API
@@ -171,3 +169,4 @@ Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
 
 //gln response url
 Route::post('/gln-response', [GLNResponseController::class, 'store']);
+Route::get('/check', [GLNResponseController::class, 'check']);

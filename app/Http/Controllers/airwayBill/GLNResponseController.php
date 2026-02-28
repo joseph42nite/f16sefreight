@@ -6,52 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\StatusReponse;
+use App\AirwayBills;
+use Mail;
 
 class GLNResponseController extends Controller
 {
-    public function handle(Request $request)
-    {
-        $rawBody = $request->getContent();
-
-        // Path to your text file
-        $filePath = storage_path('logs/gln_responses.txt');
-
-        // Start building log entry
-        $logText = "============================\n";
-        $logText .= "GLN Callback Received\n";
-        $logText .= "Time: " . now()->toDateTimeString() . "\n";
-
-        // Detect if XML or JSON
-        if (str_contains($request->header('content-type'), 'xml')) {
-            $xml = simplexml_load_string($rawBody);
-
-            $tid = (string) $xml->tid;
-            $error = (string) $xml->error;
-            $errorShort = (string) $xml->errorShort;
-            $errorDetail = (string) $xml->errorDetail;
-            $retryAfter = (string) $xml->retryAfter;
-            $processingLog = isset($xml->processingLog) ? $xml->processingLog->asXML() : null;
-
-            $logText .= "TID: $tid\n";
-            $logText .= "Error: $error\n";
-            $logText .= "Error Short: $errorShort\n";
-            $logText .= "Error Detail: $errorDetail\n";
-            $logText .= "Retry After: $retryAfter\n";
-            $logText .= "Processing Log: $processingLog\n";
-        } else {
-            $json = $request->json()->all();
-            $logText .= "JSON Response: " . json_encode($json, JSON_PRETTY_PRINT) . "\n";
-        }
-
-        $logText .= "Raw Body:\n" . $rawBody . "\n";
-        $logText .= "============================\n\n";
-
-        // Append log entry to file
-        file_put_contents($filePath, $logText, FILE_APPEND);
-
-        return response()->json(['status' => 'ok'], 200);
-    }
-
     public function store(Request $request)
     {
         $xmlContent = $request->getContent();
@@ -86,21 +45,38 @@ class GLNResponseController extends Controller
             'reason' => $reason,
         ];
         StatusReponse::create($data);
-        $filePath = storage_path('logs/gln_responses.txt');
-        file_put_contents($filePath, "=================\n" . $xmlContent, FILE_APPEND);
+        try {
+            if ($business_status_code == 'Rejected' && $data['business_name'] == 'Air Waybill') {
+                $business_id_arr = explode('-', $business_id);
+                $send_to = AirwayBills::where('awb_code', $business_id_arr[0])->where('awb_no', $business_id_arr[1])->value('awb_email');
+                if (!empty($send_to)) {
+                    $text = "$business_id AWB is Rejected.\n Reason: $reason";
+                    $subject = "$business_id AWB is Rejected";
+                    Mail::raw($text, function ($message) use ($send_to, $subject) {
+                        $message->to($send_to)
+                            ->subject($subject);
+                    });
+                }
+            }
+        } catch (\Exception $e) {
+
+        }
+        // $filePath = storage_path('logs/gln_responses.txt');
+        // file_put_contents($filePath, "=================\n" . $xmlContent, FILE_APPEND);
         return response()->json(['status' => true], 200);
     }
 
     public function check()
     {
-        $user_data = auth()->guard('user-api')->user();
-        echo "<pre>";
-        print_r($user_data);
-        echo "</pre>";
+        Mail::raw('Test Mail Body', function ($message) {
+            $message->to('dimpybca@gmail.com')
+                ->subject('Test Subject');
+        });
     }
     public function get_awb($awb_id)
     {
         $content = Storage::get("xml-conversion-files/xml_airway_bill_$awb_id.xml");
         return $content;
     }
+
 }

@@ -48,18 +48,21 @@ class GLNResponseController extends Controller
         try {
             if ($business_status_code == 'Rejected' && $data['business_name'] == 'Air Waybill') {
                 $business_id_arr = explode('-', $business_id);
-                $send_to = AirwayBills::where('awb_code', $business_id_arr[0])->where('awb_no', $business_id_arr[1])->value('awb_email');
+                $way_bill_data = AirwayBills::where('awb_code', $business_id_arr[0])->where('awb_no', $business_id_arr[1])->first(['awb_no', 'awb_code', 'awb_email', 'departure_airport', 'destination_airport', 'total_volume', 'dimention_unit'])->toArray();
+                $send_to = $way_bill_data['awb_email'];
                 if (!empty($send_to)) {
-                    $text = "$business_id AWB is Rejected.\n Reason: $reason";
-                    $subject = "$business_id AWB is Rejected";
-                    Mail::raw($text, function ($message) use ($send_to, $subject) {
+                    $way_bill_data['status'] = $business_status_code;
+                    $way_bill_data['reason'] = $reason;
+                    $way_bill_data['date_time'] = date("d M Y h:i A");
+                    $subject = "$business_id - {$way_bill_data['destination_airport']} - Rejection Notification (FNA Received)";
+                    Mail::send('Email.awb_reject_status', $way_bill_data, function ($message) use ($send_to, $subject) {
                         $message->to($send_to)
                             ->subject($subject);
                     });
                 }
             }
         } catch (\Exception $e) {
-
+            dd($e->getMessage());
         }
         // $filePath = storage_path('logs/gln_responses.txt');
         // file_put_contents($filePath, "=================\n" . $xmlContent, FILE_APPEND);
@@ -78,5 +81,4 @@ class GLNResponseController extends Controller
         $content = Storage::get("xml-conversion-files/xml_airway_bill_$awb_id.xml");
         return $content;
     }
-
 }

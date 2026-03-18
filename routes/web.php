@@ -20,10 +20,9 @@ Route::get('generic-message', [ConversionController::class, 'GenericRequestMessa
 Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
 Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
 Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
-// Route::get('/agent-info', [AirwayBill::class, 'get_agent']);
-// Route::get('test-route', [AirwayBill::class,'get_agent']);
-// Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
-Route::get('/test-route', [AirwayBill::class, 'sendXmlToDescartes']);
+Route::get('/test-route', function () {
+    return view('email/awb_reject_status');
+});
 Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
 Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf']);
 Route::get('download-multiple-both-page-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleWithBackAwbPdf']);
@@ -32,7 +31,7 @@ Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class,
 Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf']);
 Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
 Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf']);
-Route::get('/ocr', fn() => view('ocr.upload')); 
+Route::get('/ocr', fn() => view('ocr.upload'));
 Route::post('/ocr-extract', [OcrController::class, 'extract'])->name('ocr.extract');
 Route::get('{any}', function () {
     return view('welcome');

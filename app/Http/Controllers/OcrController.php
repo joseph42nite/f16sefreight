@@ -18,10 +18,10 @@ class OcrController extends Controller
         $path = $file->storeAs('uploads', $file->getClientOriginalName());
 
         $python = config('common-data.python_path');
-        $script = realpath(base_path('python/extract_awb.py'));
+        $script = realpath(base_path('python/extract_awb_new.py'));
         $pdf = realpath(storage_path('app/' . $path));
-
-        $process = new Process([$python, $script, $pdf]);
+        $box_path = realpath(base_path('python/boxes_config.json'));
+        $process = new Process([$python, $script, $pdf, 'ksr', $box_path]);
         $process->setWorkingDirectory(base_path());
         $process->setEnv(['PYTHONHASHSEED' => '0']);
 

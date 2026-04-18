@@ -2943,61 +2943,81 @@ export default {
                     this.form.first_box.awb_code=awb_number[0];
                     this.form.first_box.awb_no=awb_number[1];
                     //routing
-                    var routing=response.routing;
-                    var all_airport_short_code=[routing.departure_airport,routing.destination_airport,routing.transit_airports?.[0],routing.transit_airports?.[1]];
-                    ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
-                      response2=response2.data?.data;
-                      this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                      this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.to = `${response2[2]?.['iata_code']}, ${response2[2]?.['destination']}`;
-                      this.form.routing_information.to_2 = `${response2[3]?.['iata_code']}, ${response2[3]?.['destination']}`;
-                    });
-                    this.form.routing_information.by =routing.flights[0]?.flight_code?.slice(0,2);
-                    this.form.routing_information.flight =routing.flights[0]?.flight_code?.slice(2);
-                    this.form.routing_information.date = routing.flights[0]?.date;
-                    this.form.routing_information.by_2 =routing.flights[1]?.flight_code?.slice(0,2);
-                    this.form.routing_information.flight_2 =routing.flights[1]?.flight_code?.slice(2);
-                    this.form.routing_information.date_2 = routing.flights[1]?.date;
-                    this.$refs.fileInput.value = ''
+                    // var routing=response.routing;
+                    // var all_airport_short_code=[routing.departure_airport,routing.destination_airport,routing.transit_airports?.[0],routing.transit_airports?.[1]];
+                    // ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
+                    //   response2=response2.data?.data;
+                    //   this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                    //   this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                    //   this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                    //   this.form.routing_information.to = `${response2[2]?.['iata_code']}, ${response2[2]?.['destination']}`;
+                    //   this.form.routing_information.to_2 = `${response2[3]?.['iata_code']}, ${response2[3]?.['destination']}`;
+                    // });
+                    // this.form.routing_information.by =routing.flights[0]?.flight_code?.slice(0,2);
+                    // this.form.routing_information.flight =routing.flights[0]?.flight_code?.slice(2);
+                    // this.form.routing_information.date = routing.flights[0]?.date;
+                    // this.form.routing_information.by_2 =routing.flights[1]?.flight_code?.slice(0,2);
+                    // this.form.routing_information.flight_2 =routing.flights[1]?.flight_code?.slice(2);
+                    // this.form.routing_information.date_2 = routing.flights[1]?.date;
+                    // this.$refs.fileInput.value = ''
                     //end routing
 
                     //shipper
                     this.showShipper=true;
                     var shipper=response.shipper;
-                    this.form.shipper_address.ship_name=shipper.company_name;
+                    this.form.shipper_address.ship_name=shipper.name;
                     this.form.shipper_address.ship_address=shipper.address;
                     this.form.shipper_address.ship_city=shipper.city;
-                    this.form.shipper_address.ship_post_code=shipper.pincode;
+                    this.form.shipper_address.ship_post_code=shipper.pin;
                     this.form.shipper_address.ship_state=shipper.state;
-                    this.form.shipper_address.ship_country=shipper.country;
+                    if(shipper.country){
+                        let shipper_country_code='';
+                        for(let c=0;c<252;c++){
+                            if(this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
+                                shipper_country_code=this.countries[c].value;
+                                break;
+                            }
+                        }
+                        this.form.shipper_address.ship_country=shipper_country_code;
+                    }
                     this.form.shipper_address.ship_phone=shipper.phone;
                     this.form.shipper_address.ship_fax=shipper.email;
                     //end shipper
                     //consignee
                     this.showConsignee=true;
                     var consignee=response.consignee;
-                    this.form.consignee_address.cons_name=consignee.company_name;
+                    this.form.consignee_address.cons_name=consignee.name;
                     this.form.consignee_address.cons_address=consignee.address;
                     this.form.consignee_address.cons_city=consignee.city;
-                    this.form.consignee_address.cons_post_code=consignee.pincode;
+                    this.form.consignee_address.cons_post_code=consignee.pin;
                     this.form.consignee_address.cons_state=consignee.state;
-                    this.form.consignee_address.cons_country=consignee.country;
+                    if(consignee.country){
+                        let consignee_country_code='';
+                        for(let c=0;c<252;c++){
+                            if(this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
+                                consignee_country_code=this.countries[c].value;
+                                break;
+                            }
+                        }
+                        this.form.consignee_address.cons_country=consignee_country_code;
+                    }
                     this.form.consignee_address.cons_phone=consignee.phone;
                     this.form.consignee_address.cons_fax=consignee.email;
                     //end consignee
                     //Consignment Information
-                    let file_consignment_data=response.cargo;
-                    this.consignment_list.pieces=file_consignment_data.pieces;
-                    this.consignment_list.rate=file_consignment_data.rate;
-                    this.consignment_list.hsCodes=file_consignment_data.hs_codes;
-                    this.consignment_list.gross_weight=file_consignment_data.gross_weight_kg;
-                    this.consignment_list.chargable_weight=file_consignment_data.chargeable_weight_kg;
-                    this.consignment_list.description=file_consignment_data.description;
-                    for(let i=0;i<file_consignment_data.dimensions.length;i++){
-                        let dimensions_data=file_consignment_data.dimensions[i].dimensions.split('x');
+                    let cargo_data=response.cargo;
+                    let piece_weight=response.piece_weight;
+                    let weight_charge=response.weight_charge;
+                    this.consignment_list.pieces=piece_weight.no_of_pieces;
+                    this.consignment_list.rate=weight_charge.rate;
+                    this.consignment_list.hsCodes=cargo_data.hs_codes;
+                    this.consignment_list.gross_weight=piece_weight.gross_weight;
+                    this.consignment_list.chargable_weight=weight_charge.chargeable_weight;
+                    this.consignment_list.description=cargo_data.description;
+                    for(let i=0;i<cargo_data.dimensions.length;i++){
+                        let dimensions_data=cargo_data.dimensions[i].dimension.split('X');
                         this.consignment_list.itemss.push({
-                            pcs: file_consignment_data.dimensions[i].count,
+                            pcs: cargo_data.dimensions[i].count,
                             wgt: '',
                             length: dimensions_data[0]??'',
                             width: dimensions_data[1]??'',
@@ -3007,6 +3027,9 @@ export default {
                     }
                     this.$refs.modalConsignment.show();
                     //end Consignment Information
+
+                    //remaining data
+                    this.form.payment_info.type_of_payment=response.chrg_code;
                 })
                 .catch(error => {
                     this.$refs.fileInput.value = ''

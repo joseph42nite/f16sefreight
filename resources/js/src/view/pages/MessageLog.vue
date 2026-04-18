@@ -258,7 +258,7 @@ td[aria-colindex="5"] {
                                     <router-link :to="'/edit-airway-bill/' + String(row.item.id)" class="custom-link"  @click.native="getAirWayBill(String(row.item.id))">
                                     {{ String(row.item.awb_code) }} {{ String(row.item.awb_no) }}
                                     </router-link>
-                                    <router-link :to="'/xml-view/' + String(row.item.id)" class="custom-link"> (View XML)</router-link>
+                                    <!-- <router-link :to="'/xml-view/' + String(row.item.id)" class="custom-link"> (View XML)</router-link> -->
                                 </template>
 
                                 <!-- Destination -->

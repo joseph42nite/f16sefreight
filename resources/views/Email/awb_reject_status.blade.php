@@ -9,9 +9,9 @@
 
 <body>
     <h4>Dear Partner,</h4>
-    <p>This is to inform you that the following Air Waybill (<?= $awb_code - $awb_no  ?>) has been rejected, and an FNA (Freight Not Accepted) message has been received.</p>
+    <p>This is to inform you that the following Air Waybill (<?= $awb_code." - ".$awb_no  ?>) has been rejected, and an FNA (Freight Not Accepted) message has been received.</p>
 
-    <span>AWB Number: <?= $awb_code - $awb_no  ?></span><br>
+    <span>AWB Number: <?= $awb_code." - ".$awb_no  ?></span><br>
     <span>Origin: <?= $departure_airport ?></span><br>
     <span>Destination: <?= $destination_airport ?></span><br>
     <span>Total Volume: <?= $total_volume . " " . $dimention_unit ?></span><br>

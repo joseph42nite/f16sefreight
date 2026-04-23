@@ -2943,23 +2943,37 @@ export default {
                     this.form.first_box.awb_code=awb_number[0];
                     this.form.first_box.awb_no=awb_number[1];
                     //routing
-                    // var routing=response.routing;
-                    // var all_airport_short_code=[routing.departure_airport,routing.destination_airport,routing.transit_airports?.[0],routing.transit_airports?.[1]];
-                    // ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
-                    //   response2=response2.data?.data;
-                    //   this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                    //   this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                    //   this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                    //   this.form.routing_information.to = `${response2[2]?.['iata_code']}, ${response2[2]?.['destination']}`;
-                    //   this.form.routing_information.to_2 = `${response2[3]?.['iata_code']}, ${response2[3]?.['destination']}`;
-                    // });
-                    // this.form.routing_information.by =routing.flights[0]?.flight_code?.slice(0,2);
-                    // this.form.routing_information.flight =routing.flights[0]?.flight_code?.slice(2);
-                    // this.form.routing_information.date = routing.flights[0]?.date;
-                    // this.form.routing_information.by_2 =routing.flights[1]?.flight_code?.slice(0,2);
-                    // this.form.routing_information.flight_2 =routing.flights[1]?.flight_code?.slice(2);
-                    // this.form.routing_information.date_2 = routing.flights[1]?.date;
-                    // this.$refs.fileInput.value = ''
+                    var departure=response.departure;
+                    var destination=response.destination;
+                    var transit=response.transit?.[0];
+                    var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
+                    ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
+                      response2=response2.data?.data;
+                      this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                      this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                      this.form.routing_information.to = `${response2[2]?response2[2]['iata_code']:response2[1]['iata_code']}, ${response2[2]?response2[2]['destination']:response2[1]['destination']}`;
+                      if(transit.transit_airports[1]){
+                         this.form.routing_information.to_2 = `${response2[3]?response2[3]['iata_code']:response2[1]['iata_code']}, ${response2[3]?response2[3]['destination']:response2[1]['destination']}`;
+                      }
+                      if(transit.transit_airports[2]){
+                          this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      }
+                    });
+                    this.form.routing_information.by =transit.flights[0]?.flight_number?.slice(0,2);
+                    this.form.routing_information.flight =transit.flights[0]?.flight_number?.slice(2);
+                    this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                    if(transit.flights[1]){
+                        this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
+                        this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
+                        this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
+                    }
+                    if(transit.flights[2]){
+                        this.form.routing_information.by_3 =transit.flights[2]?.flight_number?.slice(0,2);
+                        this.form.routing_information.flight_3 =transit.flights[2]?.flight_number?.slice(2);
+                        this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
+                    }
+                    this.$refs.fileInput.value = ''
                     //end routing
 
                     //shipper
@@ -3009,10 +3023,10 @@ export default {
                     let piece_weight=response.piece_weight;
                     let weight_charge=response.weight_charge;
                     this.consignment_list.pieces=piece_weight.no_of_pieces;
-                    this.consignment_list.rate=weight_charge.rate;
+                    this.consignment_list.rate=piece_weight.rate;
                     this.consignment_list.hsCodes=cargo_data.hs_codes;
                     this.consignment_list.gross_weight=piece_weight.gross_weight;
-                    this.consignment_list.chargable_weight=weight_charge.chargeable_weight;
+                    this.consignment_list.chargable_weight=piece_weight.chargeable_weight;
                     this.consignment_list.description=cargo_data.description;
                     for(let i=0;i<cargo_data.dimensions.length;i++){
                         let dimensions_data=cargo_data.dimensions[i].dimension.split('X');
@@ -3035,6 +3049,16 @@ export default {
                     this.$refs.fileInput.value = ''
                 })
             }
+        },
+        formatDate(dateStr) {
+            if (!dateStr) return this.getCurrentDate();
+            const [day, mon, year] = dateStr.split('-');
+            const months = {
+                JAN: '01', FEB: '02', MAR: '03', APR: '04',
+                MAY: '05', JUN: '06', JUL: '07', AUG: '08',
+                SEP: '09', OCT: '10', NOV: '11', DEC: '12'
+            };
+            return `${year}-${months[mon]}-${day.padStart(2, '0')}`;
         },
         //end of file upload code
         onSelect(value) {

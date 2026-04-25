@@ -155,7 +155,8 @@ class ConversionController extends Controller
         $postalStructuredAddress1->appendChild($xml->createElement('ram:StreetName', $consignor_street_name));
         $postalStructuredAddress1->appendChild($xml->createElement('ram:CityName', $waybill_address['ship_city']));
         $postalStructuredAddress1->appendChild($xml->createElement('ram:CountryID', $waybill_address['ship_country']));
-        // $postalStructuredAddress1->appendChild($xml->createElement('ram:CountrySubDivisionName', $waybill_address['ship_state']));
+        if ($waybill_address['ship_state'])
+            $postalStructuredAddress1->appendChild($xml->createElement('ram:CountrySubDivisionID', $waybill_address['ship_state']));
         $consignorParty->appendChild($postalStructuredAddress1);
 
         if (!empty($waybill_address['ship_phone']) || !empty($waybill_address['ship_fax']) || !empty($waybill_address['ship_telex'])) {
@@ -189,7 +190,8 @@ class ConversionController extends Controller
         $postalStructuredAddress2->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
         $postalStructuredAddress2->appendChild($xml->createElement('ram:CityName', $waybill_address['cons_city']));
         $postalStructuredAddress2->appendChild($xml->createElement('ram:CountryID', $waybill_address['cons_country']));
-        // $postalStructuredAddress2->appendChild($xml->createElement('ram:CountrySubDivisionName', $waybill_address['cons_state']));
+        if ($waybill_address['cons_state'])
+            $postalStructuredAddress2->appendChild($xml->createElement('ram:CountrySubDivisionID', $waybill_address['cons_state']));
         $consigneeParty->appendChild($postalStructuredAddress2);
 
         if (!empty($waybill_address['cons_phone']) || !empty($waybill_address['cons_fax']) || !empty($waybill_address['cons_telex'])) {
@@ -254,7 +256,8 @@ class ConversionController extends Controller
             $postalStructuredAddress3->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
             $postalStructuredAddress3->appendChild($xml->createElement('ram:CityName', $waybill_address['also_city']));
             $postalStructuredAddress3->appendChild($xml->createElement('ram:CountryID', $waybill_address['also_country']));
-            // $postalStructuredAddress3->appendChild($xml->createElement('ram:CountrySubDivisionName', $waybill_address['also_state']));
+            if ($waybill_address['also_state'])
+                $postalStructuredAddress3->appendChild($xml->createElement('ram:CountrySubDivisionName', $waybill_address['also_state']));
             $AssociatedParty->appendChild($postalStructuredAddress3);
 
             if (!empty($waybill_address['also_phone']) || !empty($waybill_address['also_fax']) || !empty($waybill_address['also_telex'])) {
@@ -725,7 +728,8 @@ class ConversionController extends Controller
         $postalStructuredAddress1->appendChild($xml->createElement('ram:StreetName', $consignor_street_name));
         $postalStructuredAddress1->appendChild($xml->createElement('ram:CityName', $house_address['ship_city']));
         $postalStructuredAddress1->appendChild($xml->createElement('ram:CountryID', $house_address['ship_country']));
-        // $postalStructuredAddress1->appendChild($xml->createElement('ram:CountrySubDivisionName', $house_address['ship_state']));
+        if ($house_address['ship_state'])
+            $postalStructuredAddress1->appendChild($xml->createElement('ram:CountrySubDivisionID', $house_address['ship_state']));
         $consignorParty->appendChild($postalStructuredAddress1);
 
         if (!empty($house_address['ship_phone']) || !empty($house_address['ship_fax']) || !empty($house_address['ship_telex'])) {
@@ -759,7 +763,8 @@ class ConversionController extends Controller
         $postalStructuredAddress2->appendChild($xml->createElement('ram:StreetName', $consignee_street_name));
         $postalStructuredAddress2->appendChild($xml->createElement('ram:CityName', $house_address['cons_city']));
         $postalStructuredAddress2->appendChild($xml->createElement('ram:CountryID', $house_address['cons_country']));
-        // $postalStructuredAddress2->appendChild($xml->createElement('ram:CountrySubDivisionName', $house_address['cons_state']));
+        if ($house_address['cons_state'])
+            $postalStructuredAddress2->appendChild($xml->createElement('ram:CountrySubDivisionID', $house_address['cons_state']));
         $consigneeParty->appendChild($postalStructuredAddress2);
 
         if (!empty($house_address['cons_phone']) || !empty($house_address['cons_fax']) || !empty($house_address['cons_telex'])) {

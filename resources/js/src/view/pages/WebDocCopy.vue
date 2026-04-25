@@ -3022,6 +3022,8 @@ export default {
                     let cargo_data=response.cargo;
                     let piece_weight=response.piece_weight;
                     let weight_charge=response.weight_charge;
+                    let rate_class = piece_weight.rate_class? (piece_weight.rate_class.length > 2? piece_weight.rate_class.slice(2): piece_weight.rate_class.slice(0)): null;
+                    this.consignment_list.rate_class=piece_weight.rate_class?.slice(2);
                     this.consignment_list.pieces=piece_weight.no_of_pieces;
                     this.consignment_list.rate=piece_weight.rate;
                     this.consignment_list.hsCodes=cargo_data.hs_codes;

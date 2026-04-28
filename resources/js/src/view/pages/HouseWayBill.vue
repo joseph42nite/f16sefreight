@@ -29,7 +29,7 @@
                                 <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
                                     <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="mx-2 show-btn">Draft</b-button>
                                     <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="ml-2 mx-2 show-btn">10 Latest</b-button>
-                                    <b-button style="background: rgb(53, 85, 148) !important; color:white !important;" class="ml-2 mx-2 show-btn">Upload</b-button>
+                                    <b-button style="background: rgb(53, 85, 148) !important; color:white !important;" v-b-modal.upload-file-modal class="ml-2 mx-2 show-btn">Upload</b-button>
                                 </div>
                             </b-col>
                             <!-- Draft model code Start here -->
@@ -115,6 +115,29 @@
                                 </div>
                             </b-modal>
                             <!-- 10 Latest model code Ends here -->
+                            <!-- Upload file model code start here -->
+                                <b-modal id="upload-file-modal" title="Uplaod File" :hide-footer="true" ok-only>
+                                    <div class="d-block">
+                                        <b-row>
+                                            <b-col>
+                                                <div class="upload-container">
+                                                    <div class="upload-box" @click="triggerFileInput">
+                                                        <div class="upload-icon">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="upload-text">Drop your file here</div>
+                                                        <div class="upload-divider">Or</div>
+                                                        <div class="upload-link">Select file to be uploaded</div>
+                                                        <input type="file" ref="fileInput" accept=".pdf,application/pdf" @change="handleFileSelect" style="display:none">
+                                                    </div>
+                                                </div>
+                                            </b-col>
+                                        </b-row>
+                                    </div>
+                                </b-modal>
+                                <!-- Upload file model code Ends here -->
                         </b-row>
                     </div>
 
@@ -2995,6 +3018,156 @@ export default {
     },
 
     methods: {
+        //file upload code
+        triggerFileInput() {
+            this.$refs.fileInput.click()
+        },
+        handleFileSelect(event) {
+            const upload_file = event.target.files[0]
+            if (upload_file) {
+                if (upload_file.type !== 'application/pdf') {
+                    alert('Please select a PDF file only')
+                    this.$refs.fileInput.value = ''
+                    return
+                }
+                const formData = new FormData()
+                formData.append('upload_file', upload_file)
+                formData.append('type', 'ksr_house');
+                ApiService.post('/user/upload-awb-file', formData, {
+                headers: {
+                'Content-Type': 'multipart/form-data'
+                }
+                }).then((response) => {
+                    this.$bvModal.hide('upload-file-modal')
+                    response=response.data?.data;
+                    console.log(response);
+                    this.form.first_box.hawb_no=response.awb_number;
+                    //routing
+                    var departure=response.departure;
+                    var destination=response.destination;
+                    var transit=response.transit?.[0];
+                    var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
+                    ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
+                      response2=response2.data?.data;
+                      this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                      this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                      this.form.routing_information.to = `${response2[2]?response2[2]['iata_code']:response2[1]['iata_code']}, ${response2[2]?response2[2]['destination']:response2[1]['destination']}`;
+                      if(transit.transit_airports[1]){
+                         this.form.routing_information.to_2 = `${response2[3]?response2[3]['iata_code']:response2[1]['iata_code']}, ${response2[3]?response2[3]['destination']:response2[1]['destination']}`;
+                      }
+                      if(transit.transit_airports[2]){
+                          this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      }
+                    });
+                    this.form.routing_information.by =transit.flights[0]?.flight_number?.slice(0,2);
+                    this.form.routing_information.flight =transit.flights[0]?.flight_number?.slice(2);
+                    this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                    if(transit.flights[1]){
+                        this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
+                        this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
+                        this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
+                    }
+                    if(transit.flights[2]){
+                        this.form.routing_information.by_3 =transit.flights[2]?.flight_number?.slice(0,2);
+                        this.form.routing_information.flight_3 =transit.flights[2]?.flight_number?.slice(2);
+                        this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
+                    }
+                    this.$refs.fileInput.value = ''
+                    //end routing
+
+                    //shipper
+                    this.showShipper=true;
+                    var shipper=response.shipper;
+                    this.form.shipper_address.ship_name=shipper.name;
+                    this.form.shipper_address.ship_address=shipper.address;
+                    this.form.shipper_address.ship_city=shipper.city;
+                    this.form.shipper_address.ship_post_code=shipper.pin;
+                    this.form.shipper_address.ship_state=shipper.state;
+                    if(shipper.country){
+                        let shipper_country_code='';
+                        for(let c=0;c<252;c++){
+                            if(this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
+                                shipper_country_code=this.countries[c].value;
+                                break;
+                            }
+                        }
+                        this.form.shipper_address.ship_country=shipper_country_code;
+                    }
+                    this.form.shipper_address.ship_phone=shipper.phone;
+                    this.form.shipper_address.ship_fax=shipper.email;
+                    //end shipper
+                    //consignee
+                    this.showConsignee=true;
+                    var consignee=response.consignee;
+                    this.form.consignee_address.cons_name=consignee.name;
+                    this.form.consignee_address.cons_address=consignee.address;
+                    this.form.consignee_address.cons_city=consignee.city;
+                    this.form.consignee_address.cons_post_code=consignee.pin;
+                    this.form.consignee_address.cons_state=consignee.state;
+                    if(consignee.country){
+                        let consignee_country_code='';
+                        for(let c=0;c<252;c++){
+                            if(this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
+                                consignee_country_code=this.countries[c].value;
+                                break;
+                            }
+                        }
+                        this.form.consignee_address.cons_country=consignee_country_code;
+                    }
+                    this.form.consignee_address.cons_phone=consignee.phone;
+                    this.form.consignee_address.cons_fax=consignee.email;
+                    if(consignee.eori){
+                        this.oci_info.supplementary_info=consignee.eori;
+                        this.oci_info.custom_info_identifier="CNE";
+                    }
+                    //end consignee
+                    //Consignment Information
+                    let cargo_data=response.cargo;
+                    let piece_weight=response.piece_weight;
+                    let weight_charge=response.weight_charge;
+                    let rate_class = piece_weight.rate_class? (piece_weight.rate_class.length > 2? piece_weight.rate_class.slice(2): piece_weight.rate_class.slice(0)): null;
+                    this.consignment_list.rate_class=piece_weight.rate_class?.slice(2);
+                    this.consignment_list.pieces=piece_weight.no_of_pieces;
+                    this.consignment_list.rate=piece_weight.rate;
+                    this.consignment_list.hsCodes=cargo_data.hs_codes;
+                    this.consignment_list.gross_weight=piece_weight.gross_weight;
+                    this.consignment_list.chargable_weight=piece_weight.chargeable_weight;
+                    this.consignment_list.description=cargo_data.description;
+                    for(let i=0;i<cargo_data.dimensions.length;i++){
+                        let dimensions_data=cargo_data.dimensions[i].dimension.split('X');
+                        this.consignment_list.itemss.push({
+                            pcs: cargo_data.dimensions[i].count,
+                            wgt: '',
+                            length: dimensions_data[0]??'',
+                            width: dimensions_data[1]??'',
+                            height: dimensions_data[2]??'',
+                            unit: 'CMT'
+                        });
+                    }
+                    this.$refs.modalConsignment.show();
+                    //end Consignment Information
+
+                    //remaining data
+                    this.form.payment_info.type_of_payment=response.chrg_code;
+                })
+                .catch(error => {
+                    this.$refs.fileInput.value = ''
+                })
+            }
+        },
+        formatDate(dateStr) {
+            if (!dateStr) return this.getCurrentDate();
+            const [day, mon, year] = dateStr.split('-');
+            const months = {
+                JAN: '01', FEB: '02', MAR: '03', APR: '04',
+                MAY: '05', JUN: '06', JUL: '07', AUG: '08',
+                SEP: '09', OCT: '10', NOV: '11', DEC: '12'
+            };
+            return `${year}-${months[mon]}-${day.padStart(2, '0')}`;
+        },
+        //end of file upload code
+
         limitInput(event, fieldPath, maxLength) {
             const allowedChars = /^[a-zA-Z0-9 ,\-_]+$/;
             const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight'];
@@ -4519,6 +4692,72 @@ export default {
 </script>
 
 <style scoped>
+/* file upload css */
+.upload-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.upload-box {
+    border: 2px dashed #d0d5dd;
+    border-radius: 12px;
+    padding: 60px 40px;
+    text-align: center;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-box:hover {
+    border-color: #4a5568;
+    background-color: #f8f9fa;
+}
+
+.upload-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f5f9ff 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-icon svg {
+    width: 32px;
+    height: 32px;
+    color: #4a6fa5;
+}
+
+.upload-text {
+    color: #4a6fa5;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.upload-divider {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 12px 0;
+}
+
+.upload-link {
+    color: #4a6fa5;
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.upload-link:hover {
+    color: #3b5a8a;
+}
+
+#fileInput {
+    display: none;
+}
+/* end of file upload css */
 .body-color {
     background: linear-gradient(180deg, #D0E6F8 2%, #FFFFFF 9%);
 }

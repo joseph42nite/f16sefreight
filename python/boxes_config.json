@@ -1,42 +1,28 @@
 {
   "templates": {
     "ksr": {
-      "shipper": [42, 75, 290, 116],
-      "consignee": [42, 147, 290, 180],
-      "departure": [42, 282, 290, 294],
-      "destination": [42, 327, 160, 338],
+      "shipper": [42, 75, 290, 125],
+      "consignee": [42, 147, 293, 200],
+      "departure": [43, 283, 290, 294],
+      "destination": [42, 329, 160, 338],
       "transit": [42, 300, 293, 345],
       "cargo": [415, 418, 576, 568],
       "weight_charge": [42, 593, 576, 612],
       "piece_weight": [42, 418, 415, 432],
       "awb_number": [485, 33, 580, 52],
-      "chrg_code": [329, 313, 340, 321]
-    },
-    "ksr_house": {
-      "shipper": [42, 70, 290, 125],
-      "consignee": [42, 142, 290, 195],
-      "departure": [42, 280, 290, 295],
-      "destination": [42, 326, 160, 340],
-      "transit": [42, 304, 290, 342],
-      "cargo": [417, 418, 575, 580],
-      "weight_charge": [200, 417, 315, 430],
-      "piece_weight": [42, 560, 408, 582],
-      "awb_number": [30, 25, 290, 50],
-      "hawb_number": [480, 33, 580, 50],
       "chrg_code": [328, 310, 340, 319]
     },
-    "dhl": {
-      "shipper": [50, 30, 260, 95],
-      "consignee": [50, 115, 270, 170],
-      "departure": [50, 250, 270, 265],
-      "destination": [50, 300, 140, 320],
-      "transit": [50, 275, 270, 320],
-      "cargo": [418, 418, 576, 580],
-      "weight_charge": [175, 418, 291, 580],
-      "piece_weight": [50, 560, 383, 580],
-      "awb_number": [25, 5, 260, 20],
-      "hawb_number": [260, 5, 580, 20],
-      "chrg_code": [299, 277, 318, 290]
+     "ksr_house": {
+      "shipper": [14, 45, 138, 100],
+      "consignee": [13, 122, 170, 172],
+      "departure": [13, 256, 260, 267],
+      "destination": [13, 307, 140, 320],
+      "transit": [13, 272, 270, 323],
+      "cargo": [386, 392, 550, 558],
+      "weight_charge": [212, 552, 550, 632],
+      "piece_weight": [13, 392, 376, 405],
+      "awb_number": [500, 13, 555, 24],
+      "chrg_code": [295, 283, 313, 294]
     }
   }
 }

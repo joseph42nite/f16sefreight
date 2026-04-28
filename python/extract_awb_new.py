@@ -4,6 +4,18 @@ import json
 import sys
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from difflib import SequenceMatcher
+
+from geo_constants import (
+    GEO_DATA,
+    COUNTRY_PATTERNS,
+    STATE_PATTERNS,
+    CODE_PATTERNS,
+    POSTCODE_PATTERNS,
+    CITY_PATTERNS,
+    STREET_NOISE,
+    CLEAN_ADDRESS_PATTERNS,
+)
 
 # ---------------------------------------------------------------------------
 # IATA airport lookup
@@ -1086,7 +1098,6 @@ AIRPORT_IATA_MAP = {
     "bizant": "BZP",
     "vias": "BZR",
     "zega": "BZU",
-    "delhi": "DEL",
     "maya maya": "BZV",
     "balti": "BZY",
     "el aguacate": "CAA",
@@ -1656,6 +1667,7 @@ AIRPORT_IATA_MAP = {
     "decorah": "DEH",
     "denis island": "DEI",
     "indira gandhi": "DEL",
+    "delhi": "DEL",
     "dembi dolo": "DEM",
     "denver": "DEN",
     "deparijo": "DEP",
@@ -8398,6 +8410,15 @@ def resolve_iata(text: str) -> str:
     Falls back to the original normalized text if no match is found.
     """
     normalized = text.strip().lower()
+    
+    # Strip common form noise often captured in AWB boxes
+    noise_words = [
+        'airport', 'department', 'departure', 'destination', 'requested', 
+        'routing', 'carrier', 'first', 'first carrier', 'addr.', 'of', 'and'
+    ]
+    for word in noise_words:
+        normalized = re.sub(rf'\b{word}\b', '', normalized, flags=re.IGNORECASE)
+    normalized = normalized.strip()
 
     # Sort keys longest-first so multi-word names match before substrings
     # We use \b to ensure we match whole words only (e.g., 'MAA' won't match 'MAAD')
@@ -8432,9 +8453,12 @@ def extract_email(text: str) -> Optional[str]:
 
 def extract_phone(text: str) -> Optional[str]:
     """Extract phone number from text."""
-    phone_pattern = r'(?:PHONE|TEL|Phone|Tel|PH|Ph)\s*:\s*([+\d\s()-]+)'
+    phone_pattern = r'(?:PHONE|TEL|Phone|Tel|PH|Ph)\s*:?\s*([+\d()\-][+\d\s()\-]{3,30})'
     match = re.search(phone_pattern, text, re.IGNORECASE)
-    return match.group(1).strip() if match else None
+    if not match:
+        return None
+    # Strip trailing whitespace and any trailing non-numeric chars
+    return match.group(1).strip().rstrip(' -')
 
 def extract_fax(text: str) -> Optional[str]:
     """Extract fax number from text"""
@@ -8451,312 +8475,68 @@ def extract_eori(text: str) -> Optional[str]:
     return None
 
 def extract_pin(text: str) -> Optional[str]:
-    """Extract PIN/postal code from text."""
-    pin_pattern = r'(?<![0-9])\b(\d{5,6})\b(?![0-9])'
-    matches = re.findall(pin_pattern, text)
-    for m in matches:
-        if len(m) in (5, 6):
-            return m
+    """
+    Extract postal/PIN code from address text.
+    Tries formats in priority order — most distinctive first to avoid false matches.
+    """
+
+    # ------------------------------------------------------------------
+    # Priority order: most structurally distinctive formats first
+    # so unambiguous patterns don't get shadowed by the numeric fallback.
+    # ------------------------------------------------------------------
+
+    patterns = [
+
+        # === UK ===
+        # EC1A 1BB, SW1A 2AA, W1A 1AA, SK8 6QE, M1 1AE, B1 1BB
+        ('UK',      r'\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b'),
+
+        # === CANADA ===
+        # A1A 1A1 — alternating letter-digit-letter space digit-letter-digit
+        ('Canada',  r'\b([A-Z]\d[A-Z]\s*\d[A-Z]\d)\b'),
+
+        # === NETHERLANDS ===
+        # 1234 AB — 4 digits, space, 2 letters (not SA/SD/SS which are reserved)
+        ('NL',      r'\b(\d{4}\s*[A-Z]{2})\b'),
+
+        # === PORTUGAL ===
+        # 1234-567 — 4 digits, hyphen, 3 digits
+        ('PT',      r'\b(\d{4}-\d{3})\b'),
+
+        # === IRELAND ===
+        # D02 XY45 — letter + 2 digits, space, 4 alphanum
+        ('Ireland', r'\b([A-Z]\d{2}\s*[A-Z0-9]{4})\b'),
+
+        # === ARGENTINA ===
+        # B1636 or C1425 — letter + 4 digits (or letter + 4 digits + 3 letters)
+        ('AR',      r'\b([A-Z]\d{4}[A-Z]{0,3})\b'),
+
+        # === BRAZIL ===
+        # 01310-100 — 5 digits, hyphen, 3 digits
+        ('BR',      r'\b(\d{5}-\d{3})\b'),
+
+        # === US ZIP+4 ===
+        # 90210-1234 — must come before plain 5-digit to capture extended form
+        ('US+4',    r'\b(\d{5}-\d{4})\b'),
+
+        # === US / INDIA / RUSSIA / GERMANY / CHINA / AUSTRALIA (numeric) ===
+        # Generic numeric catch-all: 4–7 digits not adjacent to other digits
+        ('Numeric', r'(?<!\d)\b(\d{4,7})\b(?!\d)'),
+    ]
+
+    # Run each pattern in order, return first match
+    for country, pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE if country in ('UK', 'Canada', 'Ireland', 'AR') else 0)
+        if match:
+            return match.group(1).strip()
+
     return None
 
 def extract_country(text: str) -> Optional[str]:
     """Extract country from address"""
-    countries = [
-            r'\bU\.?S\.?A\.?\b',
-            r'\bUNITED STATES OF AMERICA\b',
-            r'\bUNITED STATES\b',
-
-            r'\bU\.?K\.?\b',
-            r'\bUNITED KINGDOM\b',
-
-            r'\bUAE\b',
-            r'\bUNITED ARAB EMIRATES\b',
-
-            r'\bDRC\b',
-            r'\bDEMOCRATIC REPUBLIC OF THE CONGO\b',
-            r'\bREPUBLIC OF THE CONGO\b',
-            r'\bCONGO\b',
-
-            r'\bIVORY COAST\b',
-            r"\bCOTE D'?IVOIRE\b",
-
-            r'\bBURMA\b',
-            r'\bMYANMAR\b',
-
-            r'\bCZECH REPUBLIC\b',
-            r'\bCZECHIA\b',
-
-            r'\bTIMOR-LESTE\b',
-            r'\bEAST TIMOR\b',
-
-            r'\bCABO VERDE\b',
-            r'\bCAPE VERDE\b',
-
-            r'\bNORTH MACEDONIA\b',
-            r'\bMACEDONIA\b',
-
-            # Missing / important additions
-            r'\bKOSOVO\b',
-
-            # Core countries (deduplicated)
-            r'\bAFGHANISTAN\b',
-            r'\bALBANIA\b',
-            r'\bALGERIA\b',
-            r'\bANDORRA\b',
-            r'\bANGOLA\b',
-            r'\bANTIGUA AND BARBUDA\b',
-            r'\bARGENTINA\b',
-            r'\bARMENIA\b',
-            r'\bAUSTRALIA\b',
-            r'\bAUSTRIA\b',
-            r'\bAZERBAIJAN\b',
-            r'\bBAHAMAS\b',
-            r'\bBAHRAIN\b',
-            r'\bBANGLADESH\b',
-            r'\bBARBADOS\b',
-            r'\bBELARUS\b',
-            r'\bBELGIUM\b',
-            r'\bBELIZE\b',
-            r'\bBENIN\b',
-            r'\bBHUTAN\b',
-            r'\bBOLIVIA\b',
-            r'\bBOSNIA AND HERZEGOVINA\b',
-            r'\bBOTSWANA\b',
-            r'\bBRAZIL\b',
-            r'\bBRUNEI\b',
-            r'\bBULGARIA\b',
-            r'\bBURKINA FASO\b',
-            r'\bBURUNDI\b',
-            r'\bCAMBODIA\b',
-            r'\bCAMEROON\b',
-            r'\bCANADA\b',
-            r'\bCENTRAL AFRICAN REPUBLIC\b',
-            r'\bCHAD\b',
-            r'\bCHILE\b',
-            r'\bCHINA\b',
-            r'\bCOLOMBIA\b',
-            r'\bCOMOROS\b',
-            r'\bCOSTA RICA\b',
-            r'\bCROATIA\b',
-            r'\bCUBA\b',
-            r'\bCYPRUS\b',
-            r'\bDENMARK\b',
-            r'\bDJIBOUTI\b',
-            r'\bDOMINICA\b',
-            r'\bDOMINICAN REPUBLIC\b',
-            r'\bECUADOR\b',
-            r'\bEGYPT\b',
-            r'\bEL SALVADOR\b',
-            r'\bEQUATORIAL GUINEA\b',
-            r'\bERITREA\b',
-            r'\bESTONIA\b',
-            r'\bESWATINI\b',
-            r'\bETHIOPIA\b',
-            r'\bFIJI\b',
-            r'\bFINLAND\b',
-            r'\bFRANCE\b',
-            r'\bGABON\b',
-            r'\bGAMBIA\b',
-            r'\bGEORGIA\b',
-            r'\bGERMANY\b',
-            r'\bGHANA\b',
-            r'\bGREECE\b',
-            r'\bGRENADA\b',
-            r'\bGUATEMALA\b',
-            r'\bGUINEA\b',
-            r'\bGUINEA-BISSAU\b',
-            r'\bGUYANA\b',
-            r'\bHAITI\b',
-            r'\bHONDURAS\b',
-            r'\bHUNGARY\b',
-            r'\bICELAND\b',
-            r'\bINDIA\b',
-            r'\bINDONESIA\b',
-            r'\bIRAN\b',
-            r'\bIRAQ\b',
-            r'\bIRELAND\b',
-            r'\bISRAEL\b',
-            r'\bITALY\b',
-            r'\bJAMAICA\b',
-            r'\bJAPAN\b',
-            r'\bJORDAN\b',
-            r'\bKAZAKHSTAN\b',
-            r'\bKENYA\b',
-            r'\bKIRIBATI\b',
-            r'\bNORTH KOREA\b',
-            r'\bSOUTH KOREA\b',
-            r'\bKUWAIT\b',
-            r'\bKYRGYZSTAN\b',
-            r'\bLAOS\b',
-            r'\bLATVIA\b',
-            r'\bLEBANON\b',
-            r'\bLESOTHO\b',
-            r'\bLIBERIA\b',
-            r'\bLIBYA\b',
-            r'\bLIECHTENSTEIN\b',
-            r'\bLITHUANIA\b',
-            r'\bLUXEMBOURG\b',
-            r'\bMADAGASCAR\b',
-            r'\bMALAWI\b',
-            r'\bMALAYSIA\b',
-            r'\bMALDIVES\b',
-            r'\bMALI\b',
-            r'\bMALTA\b',
-            r'\bMARSHALL ISLANDS\b',
-            r'\bMAURITANIA\b',
-            r'\bMAURITIUS\b',
-            r'\bMEXICO\b',
-            r'\bMICRONESIA\b',
-            r'\bMOLDOVA\b',
-            r'\bMONACO\b',
-            r'\bMONGOLIA\b',
-            r'\bMONTENEGRO\b',
-            r'\bMOROCCO\b',
-            r'\bMOZAMBIQUE\b',
-            r'\bNAMIBIA\b',
-            r'\bNAURU\b',
-            r'\bNEPAL\b',
-            r'\bNETHERLANDS\b',
-            r'\bNEW ZEALAND\b',
-            r'\bNICARAGUA\b',
-            r'\bNIGER\b',
-            r'\bNIGERIA\b',
-            r'\bNORWAY\b',
-            r'\bOMAN\b',
-            r'\bPAKISTAN\b',
-            r'\bPALAU\b',
-            r'\bPALESTINE\b',
-            r'\bPANAMA\b',
-            r'\bPAPUA NEW GUINEA\b',
-            r'\bPARAGUAY\b',
-            r'\bPERU\b',
-            r'\bPHILIPPINES\b',
-            r'\bPOLAND\b',
-            r'\bPORTUGAL\b',
-            r'\bQATAR\b',
-            r'\bROMANIA\b',
-            r'\bRUSSIA\b',
-            r'\bRWANDA\b',
-            r'\bSAINT KITTS AND NEVIS\b',
-            r'\bSAINT LUCIA\b',
-            r'\bSAINT VINCENT AND THE GRENADINES\b',
-            r'\bSAMOA\b',
-            r'\bSAN MARINO\b',
-            r'\bSAO TOME AND PRINCIPE\b',
-            r'\bSAUDI ARABIA\b',
-            r'\bSENEGAL\b',
-            r'\bSERBIA\b',
-            r'\bSEYCHELLES\b',
-            r'\bSIERRA LEONE\b',
-            r'\bSINGAPORE\b',
-            r'\bSLOVAKIA\b',
-            r'\bSLOVENIA\b',
-            r'\bSOLOMON ISLANDS\b',
-            r'\bSOMALIA\b',
-            r'\bSOUTH AFRICA\b',
-            r'\bSOUTH SUDAN\b',
-            r'\bSPAIN\b',
-            r'\bSRI LANKA\b',
-            r'\bSUDAN\b',
-            r'\bSURINAME\b',
-            r'\bSWEDEN\b',
-            r'\bSWITZERLAND\b',
-            r'\bSYRIA\b',
-            r'\bTAIWAN\b',
-            r'\bTAJIKISTAN\b',
-            r'\bTANZANIA\b',
-            r'\bTHAILAND\b',
-            r'\bTOGO\b',
-            r'\bTONGA\b',
-            r'\bTRINIDAD AND TOBAGO\b',
-            r'\bTUNISIA\b',
-            r'\bTURKEY\b',
-            r'\bTURKMENISTAN\b',
-            r'\bTUVALU\b',
-            r'\bUGANDA\b',
-            r'\bUKRAINE\b',
-            r'\bURUGUAY\b',
-            r'\bUZBEKISTAN\b',
-            r'\bVANUATU\b',
-            r'\bVATICAN CITY\b',
-            r'\bVENEZUELA\b',
-            r'\bVIETNAM\b',
-            r'\bYEMEN\b',
-            r'\bZAMBIA\b',
-            r'\bZIMBABWE\b',
-                # Missing Sovereign States
-            r'\bMALTA\b',
-            r'\bMAURITIUS\b',
-            r'\bMONACO\b',
-            r'\bNAURU\b',
-            r'\bPALAU\b',
-            r'\bSAN MARINO\b',
-            r'\bSEYCHELLES\b',
-            r'\bTUVALU\b',
-
-            # Updated / Alternative Names & Variations
-            r'\bTÜRKİYE\b', # Official name for Turkey
-            r'\bTURKEY\b',
-            
-            r'\bTHE GAMBIA\b',
-            r'\bGAMBIA\b',
-
-            r'\bNETHERLANDS\b',
-            r'\bHOLLAND\b',
-
-            r'\bHOLY SEE\b',
-            r'\bVATICAN CITY\b',
-            r'\bVATICAN\b',
-
-            r'\bSWAZILAND\b', # Old name for Eswatini
-            r'\bESWATINI\b',
-
-            # Formal / Alternate versions for existing entries
-            r'\bSOUTH KOREA\b',
-            r'\bREPUBLIC OF KOREA\b',
-            r'\bROK\b',
-
-            r'\bNORTH KOREA\b',
-            r'\bDEMOCRATIC PEOPLE\'S REPUBLIC OF KOREA\b',
-            r'\bDPRK\b',
-
-            r'\bVIETNAM\b',
-            r'\bVIET NAM\b',
-
-            r'\bSYRIA\b',
-            r'\bSYRIAN ARAB REPUBLIC\b',
-
-            r'\bLAOS\b',
-            r"\bLAO PEOPLE'S DEMOCRATIC REPUBLIC\b",
-
-            r'\bBRUNEI\b',
-            r'\bBRUNEI DARUSSALAM\b',
-
-            r'\bEAST TIMOR\b',
-            r'\bTIMOR-LESTE\b',
-
-            # Notable Territories / Regions often treated as countries
-            r'\bHONG KONG\b',
-            r'\bMACAU\b',
-            r'\bPUERTO RICO\b',
-            r'\bGREENLAND\b',
-            r'\bFRENCH GUIANA\b',
-            r'\bREUNION\b',
-            r'\bGUADELOUPE\b',
-            r'\bMARTINIQUE\b',
-            r'\bMAYOTTE\b',
-            r'\bNEW CALEDONIA\b',
-            r'\bFRENCH POLYNESIA\b',
-            r'\bBERMUDA\b',
-            r'\bCAYMAN ISLANDS\b',
-            r'\bGUAM\b',
-            r'\bAMERICAN SAMOA\b',
-        ]
-
-    for country_pattern in countries:
-        match = re.search(country_pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(0).strip()
+    for country_key, pattern in COUNTRY_PATTERNS.items():
+        if pattern.search(text):
+            return country_key
 
     us_city_state_zip = r'\b[A-Z][A-Z\s]+,\s*[A-Z]{2}\s+\d{5}\b'
     if re.search(us_city_state_zip, text):
@@ -8765,129 +8545,177 @@ def extract_country(text: str) -> Optional[str]:
     return None
 
 def extract_city(address: str, country: Optional[str]) -> Optional[str]:
-    """Extract city from address based on country context"""
+    """
+    Extract city from address text using country-specific strategies.
+    Priority: structured regex patterns first, state-anchor fallback second.
+    """
     if not address:
         return None
 
-    if country:
-        country_upper = country.upper()
+    def clean_city(raw: str) -> Optional[str]:
+        """Strip noise words and punctuation; return None if nothing useful remains."""
+        cleaned = STREET_NOISE.sub('', raw)
+        cleaned = re.sub(r'[,.\-/\\]+', ' ', cleaned)
+        cleaned = re.sub(r'\s{2,}', ' ', cleaned).strip()
+        return cleaned if len(cleaned) >= 2 else None
 
-        if 'U.S.A' in country_upper or 'UNITED STATES' in country_upper:
-            us_pattern = r'([A-Z][A-Z\s]+),\s*([A-Z]{2})\s+\d{5}'
-            match = re.search(us_pattern, address)
-            if match:
-                return match.group(1).strip()
+    country_upper = (country or '').upper()
 
-        elif 'INDIA' in country_upper:
-            states = ['ANDHRA PRADESH', 'ARUNACHAL PRADESH', 'ASSAM', 'BIHAR', 'CHHATTISGARH',
-              'GOA', 'GUJARAT', 'HARYANA', 'HIMACHAL PRADESH', 'JHARKHAND', 'KARNATAKA',
-              'KERALA', 'MADHYA PRADESH', 'MAHARASHTRA', 'MANIPUR', 'MEGHALAYA',
-              'MIZORAM', 'NAGALAND', 'ODISHA', 'PUNJAB', 'RAJASTHAN', 'SIKKIM',
-              'TAMIL NADU', 'TELANGANA', 'TRIPURA', 'UTTAR PRADESH', 'UTTARAKHAND',
-              'WEST BENGAL',
+    # 1. USA
+    if any(k in country_upper for k in ('U.S.A', 'UNITED STATES', 'USA')):
+        m = re.search(r'([A-Z][A-Z\s]+),\s*([A-Z]{2})\s+\d{5}', address)
+        if m:
+            return clean_city(m.group(1))
 
-            # === 8 Union Territories of India ===
-            'ANDAMAN AND NICOBAR ISLANDS', 'CHANDIGARH',
-            'DADRA AND NAGAR HAVELI AND DAMAN AND DIU', 'JAMMU AND KASHMIR',
-            'LADAKH', 'LAKSHADWEEP', 'PUDUCHERRY',
-            'NCT OF DELHI', 'NATIONAL CAPITAL TERRITORY OF DELHI',
+    # 2. CANADA
+    elif any(k in country_upper for k in ('CANADA',)):
+        m = re.search(r'([A-Z][A-Z\s]+),\s*([A-Z]{2})\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d', address)
+        if m:
+            return clean_city(m.group(1))
 
-            # === Common Indian Variations & Abbreviations ===
-            'DELHI', 'NEW DELHI', 'ANDHRA', 'ORISSA', 'UTTARANCHAL', 'CHATTISGARH',
-            'TAMILNADU', 'TELANGANA', 'PONDICHERRY',
-            'AP', 'AR', 'AS', 'BR', 'CG', 'GA', 'GJ', 'HR', 'HP', 'JH', 'KA', 'KL',
-            'MP', 'MH', 'MN', 'ML', 'MZ', 'NL', 'OD', 'OR', 'PB', 'RJ', 'SK', 'TN',
-            'TS', 'TR', 'UP', 'UK', 'WB',
-            'A&N', 'J&K', 'NCT DELHI', 'DAMAN DIU', 'DADRA NAGAR HAVELI',
+    # 3. UK
+    elif any(k in country_upper for k in ('UNITED KINGDOM', 'U.K', 'UK')):
+        m = re.search(
+            r'([A-Z][A-Z\s]+?)[.,]\s*[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}',
+            address
+        )
+        if m:
+            return clean_city(m.group(1))
 
-            # === MIDDLE EAST - Major States / Provinces / Emirates / Governorates ===
-            'RIYADH', 'MAKKAH', 'MADINAH', 'EASTERN PROVINCE', 'ASH SHARQIYAH',
-            'ABU DHABI', 'DUBAI', 'SHARJAH', 'AJMAN', 'RAS AL KHAIMAH',
-            'TEHRAN', 'ISFAHAN', 'BAGHDAD', 'BASRA', 'CAIRO', 'ALEXANDRIA',
-            'AMMAN', 'BEIRUT', 'DAMASCUS', 'ISTANBUL', 'ANKARA',
+    # 4. AUSTRALIA
+    elif 'AUSTRALIA' in country_upper:
+        au_codes = '|'.join(GEO_DATA['AUSTRALIA']['state_codes'])
+        m = re.search(rf'([A-Z][A-Z\s]+?),?\s*(?:{au_codes})\s+\d{{4}}', address)
+        if m:
+            return clean_city(m.group(1))
 
-            # === FAR EAST / EAST ASIA & SOUTHEAST ASIA - Major States / Provinces ===
-            'GUANGDONG', 'SHANDONG', 'HENAN', 'SICHUAN', 'JIANGSU', 'SHANGHAI', 'BEIJING',
-            'TOKYO', 'OSAKA', 'SEOUL', 'BUSAN', 'TAIPEI', 'JAKARTA', 'WEST JAVA',
-            'BANGKOK', 'HO CHI MINH CITY', 'HANOI',
+    # 5. GERMANY
+    elif any(k in country_upper for k in ('GERMANY', 'DEUTSCHLAND')):
+        m = re.search(r'\b\d{5}\s+([A-Z][A-ZÄÖÜäöüß\s]+)', address)
+        if m:
+            return clean_city(m.group(1).split(',')[0])
 
-            # === EUROPE - Major States / Provinces / Regions (Key Countries) ===
-            # Germany (Bundesländer)
-            'BAVARIA', 'NORTH RHINE-WESTPHALIA', 'BADEN-WURTTEMBERG', 'BERLIN',
-            'HESSE', 'SAXONY', 'LOWER SAXONY', 'BAVARIA', 'NRW',
+    # 6. FRANCE
+    elif 'FRANCE' in country_upper:
+        m = re.search(r'\b\d{5}\s+([A-Z][A-ZÉÈÊËÀÂÎÏÔÙÛÜ\s]+)', address)
+        if m:
+            return clean_city(m.group(1).split(',')[0])
 
-            # France (Major Regions)
-            'ILE DE FRANCE', 'PARIS REGION', 'PROVENCE ALPES COTE D AZUR', 'OCCITANIE',
-            'AUVERGNE RHONE ALPES', 'HAUTS DE FRANCE', 'GRAND EST',
+    # 7. NETHERLANDS
+    elif 'NETHERLANDS' in country_upper:
+        m = re.search(r'\d{4}\s*[A-Z]{2}\s+([A-Z][A-Z\s]+)', address)
+        if m:
+            return clean_city(m.group(1))
+        m = re.search(r'([A-Z][A-Z\s]+?),?\s*\d{4}\s*[A-Z]{2}', address)
+        if m:
+            return clean_city(m.group(1))
 
-            # Italy (Major Regions)
-            'LOMBARDY', 'LAZIO', 'CAMPANIA', 'VENETO', 'SICILY', 'EMILIA ROMAGNA',
-            'PIEDMONT',
+    # 8. RUSSIA
+    elif any(k in country_upper for k in ('RUSSIA', 'RUSSIAN')):
+        m = re.search(
+            rf'([A-Z][A-Z\s]+?),?\s*(?:{STATE_PATTERNS["RUSSIA"].pattern})',
+            address, re.IGNORECASE
+        )
+        if m:
+            return clean_city(m.group(1))
+        # Fallback: word before 6-digit postcode
+        m = re.search(r'([A-Z][A-Z\s]+?),?\s*\d{6}', address)
+        if m:
+            return clean_city(m.group(1))
 
-            # Spain (Major Autonomous Communities)
-            'CATALONIA', 'ANDALUSIA', 'MADRID', 'VALENCIA', 'GALICIA', 'BASQUE COUNTRY',
+    # 9. INDIA
+    elif 'INDIA' in country_upper:
+        # Priority: Direct lookup in major city list
+        city_pat = CITY_PATTERNS.get('INDIA')
+        if city_pat:
+            m = city_pat.search(address)
+            if m:
+                return m.group(1).strip().upper()
 
-            # United Kingdom (Countries & Key Regions)
-            'ENGLAND', 'SCOTLAND', 'WALES', 'NORTHERN IRELAND',
-            'LONDON', 'GREATER MANCHESTER', 'WEST MIDLANDS', 'YORKSHIRE',
+        state_pat = STATE_PATTERNS['INDIA']
+        # Fallback A: Use state name anchor
+        m = re.search(
+            rf'([A-Z0-9\s,.\-–]+?)\s*,?\s*(?:{state_pat.pattern})\b',
+            address, re.IGNORECASE
+        )
+        if m:
+            raw = m.group(1).strip().rstrip(',– -').strip()
+            # Strip trailing PIN if it got pulled in e.g. "BANGALORE - 560300"
+            raw = re.sub(r'[\s,–\-]*\d{5,6}\s*$', '', raw).strip().rstrip(',– -').strip()
+            if raw:
+                return raw
 
-            # Other Notable European Regions
-            'VIENNA', 'LOWER AUSTRIA', 'FLANDERS', 'WALLONIA', 'BRUSSELS',
-            'CATALONIA', 'BAVARIA', 'LOMBARDY',
+        # Fallback B: PIN code anchor
+        m = re.search(r'([A-Z0-9\s,.\-–]+?)\s*[–\-]\s*\d{6}', address)
+        if m:
+            raw = m.group(1).strip().rstrip(',– -').strip()
+            if raw:
+                return raw
 
-            # === RUSSIA - Major Federal Subjects (Oblasts, Krais, Republics, Cities) ===
-            'MOSCOW', 'MOSCOW OBLAST', 'SAINT PETERSBURG', 'LENINGRAD OBLAST',
-            'KRASNOYARSK KRAI', 'KRASNOYARSK',
-            'NOVOSIBIRSK OBLAST', 'EKATERINBURG', 'SVERDLOVSK OBLAST',
-            'ROSTOV OBLAST', 'NIZHNY NOVGOROD OBLAST', 'SAMARA OBLAST',
-            'CHELYABINSK OBLAST', 'OMSK OBLAST', 'VOLGOGRAD OBLAST',
-            'KRASNODAR KRAI', 'TATARSTAN', 'BASHKORTOSTAN', 'DAGESTAN',
-            'SIBERIA', 'FAR EAST', 'URAL',
+    # 10. MIDDLE EAST
+    elif any(k in country_upper for k in ('UAE', 'UNITED ARAB EMIRATES', 'SAUDI', 'QATAR', 'KUWAIT', 'BAHRAIN', 'OMAN', 'JORDAN', 'LEBANON', 'EGYPT')):
+        me_states = []
+        if 'UAE' in country_upper or 'UNITED ARAB EMIRATES' in country_upper:
+            me_states = GEO_DATA['UAE']['states']
+        elif 'SAUDI' in country_upper:
+            me_states = GEO_DATA['SAUDI ARABIA']['states']
+            
+        if me_states:
+            rp = '|'.join(re.escape(s) for s in sorted(me_states, key=len, reverse=True))
+            m = re.search(rf'([A-Z][A-Z\s]+?),?\s*(?:{rp})', address, re.IGNORECASE)
+            if m:
+                return clean_city(m.group(1))
+        
+        # Fallback: last meaningful uppercase word group
+        m = re.search(r'([A-Z][A-Z\s]{2,}?)(?:,|\.|$)', address)
+        if m:
+            return clean_city(m.group(1))
 
-            # Previous International Sections (kept for completeness)
-            'CALIFORNIA', 'TEXAS', 'FLORIDA', 'NEW YORK', 'ONTARIO', 'QUEBEC',
-            'NEW SOUTH WALES', 'VICTORIA', 'SAO PAULO', 'RIO DE JANEIRO']
-            states_pattern = '|'.join(states)
-            india_pattern = r'([A-Z][A-Z\s]+?)(?:\s*-\s*\d{6}|\s*,\s*(?:' + states_pattern + r'))'
-            match = re.search(india_pattern, address, re.IGNORECASE)
-            if match:
-                city = match.group(1).strip()
-                city = re.sub(r'\b(?:ROAD|STREET|AVENUE|MARKET|SOCIETY|ESTATE|FLOOR|BASEMENT|GROUND)\b', '', city, flags=re.IGNORECASE).strip()
-                if city:
-                    return city
+    # 11. GENERIC FALLBACK
+    # Pattern A: postcode then city (DE/FR/NL/RU style)  NNNNN CITY
+    m = re.search(r'\b\d{4,6}\s+([A-Z][A-Z\s]{2,}?)(?:,|$)', address)
+    if m:
+        return clean_city(m.group(1))
 
-        elif 'DENMARK' in country_upper or 'GERMANY' in country_upper or 'SWEDEN' in country_upper:
-            eu_pattern = r'\b\d{4}\s+([A-Z][A-Z\s]+?)(?:,|\.|$)'
-            match = re.search(eu_pattern, address)
-            if match:
-                return match.group(1).strip()
+    # Pattern B: city then postcode  CITY, NNNNN
+    m = re.search(r'([A-Z][A-Z\s]{2,}?),\s*\d{4,6}\b', address)
+    if m:
+        return clean_city(m.group(1))
 
-    temp_address = address
-    if country:
-        temp_address = re.sub(re.escape(country), '', temp_address, flags=re.IGNORECASE)
-
-    lines = [line.strip() for line in temp_address.split(',') if line.strip()]
-    if len(lines) >= 2:
-        for line in reversed(lines[-3:]):
-            city_pattern = r'^[A-Z][A-Z\s]+$'
-            digit_pattern = r'^\d+$'
-            if re.match(city_pattern, line) and not re.match(digit_pattern, line):
-                return line.strip()
+    # Pattern C: last comma-separated segment that looks like a city name
+    segments = [s.strip() for s in address.split(',') if s.strip()]
+    for seg in reversed(segments[-3:]):
+        if re.match(r'^[A-Z][A-Z\s]{1,}$', seg) and not STREET_NOISE.search(seg):
+            return clean_city(seg)
 
     return None
 
+def extract_state(text: str, country: Optional[str]) -> Optional[str]:
+    if not text or not country:
+        return None
+    key = country.upper()
+    if key not in STATE_PATTERNS:
+        return None
+    # Try full state name first
+    state_pat = STATE_PATTERNS.get(key)
+    if state_pat:
+        m = state_pat.search(text)
+        if m:
+            return m.group(1).strip().upper()
+    # Fallback to 2/3-letter codes
+    code_pat = CODE_PATTERNS.get(key)
+    if code_pat:
+        m = code_pat.search(text)
+        if m:
+            return m.group(1).strip().upper()
+    return None
+
 def clean_address(text: str) -> str:
-    """Removes phone, email, fax, and EORI details from the string."""
-    patterns_to_remove = [
-        r'(?:PHONE|TEL|Phone|Tel)\s*:\s*[+\d\s()-]+',
-        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-        r'(?:FAX|Fax)\s*:\s*[+\d\s()-]+',
-        r'(?:EORI|Eori)\s*:\s*[A-Z0-9]+',
-        r'E-MAIL\s*:\s*\S+'
-    ]
-    cleaned = text
-    for pattern in patterns_to_remove:
-        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\|', ' ', text)                          # strip PDF border artifacts
+    cleaned = re.sub(r'OFFICE\s*:\s*[\d\s\-]+', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'(?:EXT|CELL)\s*[\dA-Z\s\-:]+', '', cleaned, flags=re.IGNORECASE)
+    for pattern in CLEAN_ADDRESS_PATTERNS:
+        cleaned = pattern.sub('', cleaned)
     cleaned = re.sub(r',\s*,', ',', cleaned)
     cleaned = cleaned.strip().strip(',')
     cleaned = re.sub(r'\s+', ' ', cleaned)
@@ -8901,46 +8729,76 @@ def normalize_text(text: str) -> str:
 
 def transform_address_box(text: str) -> Dict[str, Any]:
     """Transform address box data."""
-    CONTACT_PATTERNS = [
-        r'(?:PHONE|TEL|Phone|Tel)\s*:\s*[+\d\s()-]+',
-        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-        r'(?:FAX|Fax)\s*:\s*[+\d\s()-]+',
-        r'(?:EORI|Eori)\s*:?\s*[A-Z]{2}[A-Z0-9]+',
-        r'E-MAIL\s*:\s*\S+',
-        r'(?:PH|Ph)\s*:\s*[+\d\s()-]+',
-    ]
+    text = re.sub(r'\|', ' ', text) # strip PDF border artifacts at the very start
     SKIP_PREFIXES = ('ATTN:', 'ATTN :', 'ATTENTION:', 'EORI')
-
-    def clean_line(line: str) -> str:
-        for p in CONTACT_PATTERNS:
-            line = re.sub(p, '', line, flags=re.IGNORECASE)
-        return line.strip().strip(',').strip()
 
     raw_lines = [l.strip() for l in text.split('\n') if l.strip()]
 
     cleaned_lines = []
     for line in raw_lines:
-        cl = clean_line(line)
+        cl = clean_address(line)
         if not cl:
             continue
         if any(cl.upper().startswith(p) for p in SKIP_PREFIXES):
             continue
         cleaned_lines.append(cl)
 
-    country = extract_country(text)
+    country     = extract_country(text)
     entity_name = raw_lines[0] if raw_lines else ''
     address_lines = cleaned_lines[1:] if len(cleaned_lines) > 1 else []
-    address_str = ', '.join(address_lines)
-    address_str = re.sub(r',\s*,', ',', address_str).strip().strip(',').strip()
-    city = extract_city(address_str, country)
+    address_str   = ', '.join(address_lines)
+    address_str   = re.sub(r',\s*,', ',', address_str).strip().strip(',').strip()
+    
+    city  = extract_city(address_str, country)
+    state = extract_state(address_str, country)
+    pin   = extract_pin(text)
+
+    # Strip extracted fields from address_str to leave only street details
+    clean_addr = address_str
+
+    # 1. Remove PIN
+    if pin:
+        clean_addr = re.sub(
+            r'[\s,–\-]*' + re.escape(pin) + r'[\s,–\-]*',
+            ' ', clean_addr, flags=re.IGNORECASE
+        )
+
+    # 2. Remove CITY
+    if city:
+        clean_addr = re.sub(
+            r'[\s,–\-]*\b' + re.escape(city) + r'\b[\s,–\-]*',
+            ' ', clean_addr, flags=re.IGNORECASE
+        )
+
+    # 3. Remove STATE
+    if state:
+        # Avoid stripping if state is also part of city (e.g. "NEW DELHI")
+        # but usually we want to strip the specific state mention.
+        clean_addr = re.sub(
+            r'[\s,–\-]*\b' + re.escape(state) + r'\b[\s,–\-]*',
+            ' ', clean_addr, flags=re.IGNORECASE
+        )
+
+    # 4. Remove COUNTRY
+    if country:
+        clean_addr = re.sub(
+            r',?\s*\b' + re.escape(country) + r'\b',
+            '', clean_addr, flags=re.IGNORECASE
+        )
+
+    # 5. Final cleanup
+    clean_addr = re.sub(r',\s*,+', ',', clean_addr)
+    clean_addr = re.sub(r'[,\s–\-]+$|^[,\s–\-]+', '', clean_addr)
+    clean_addr = re.sub(r'\s{2,}', ' ', clean_addr).strip()
 
     return {
         'full_details': normalize_text(text),
         'name':    entity_name,
-        'address': address_str,
+        'address': clean_addr,
         'city':    city,
+        'state':   state,
         'country': country,
-        'pin':     extract_pin(text),
+        'pin':     pin,
         'phone':   extract_phone(text),
         'fax':     extract_fax(text),
         'eori':    extract_eori(text),
@@ -9043,38 +8901,56 @@ def extract_dimensions(text: str) -> List[Dict[str, Any]]:
     return dimensions
 
 def transform_description(text: str) -> Dict[str, Any]:
-    """
-    Transform cargo description.
-    Strips HS CODE lines, DIM header lines, and bare dimension-only
-    continuation lines from the description, while extracting hs_codes
-    and dimensions from the full raw text first.
-    """
-    hs_codes = extract_hs_codes(text)
+    hs_codes   = extract_hs_codes(text)
     dimensions = extract_dimensions(text)
 
-    # Matches a line composed purely of dimension groups, e.g. "59X38X10 (2), 59X38X15 (4)"
-    DIM_ONLY_LINE_RE = re.compile(
-        r'^\s*(?:\d+[xX]\d+[xX]\d+\s*\(\s*\d+\s*\)\s*,?\s*)+\s*$'
+    description = normalize_text(text)
+
+    # Strip HS CODE line — e.g. "HS CODE: 62052090" or "HS CODE : 82019000"
+    description = re.sub(
+        r'HS\s*CODE\s*:?\s*[\d\s]+', '', description, flags=re.IGNORECASE
     )
 
-    clean_lines = []
-    for line in text.split('\n'):
-        line_stripped = line.strip()
-        if re.match(r'^HS\s+CODE\s*:', line_stripped, re.IGNORECASE):
-            continue
-        if re.match(r'^DIM\s*\(', line_stripped, re.IGNORECASE):
-            continue
-        if DIM_ONLY_LINE_RE.match(line_stripped):
-            continue
-        if line_stripped:
-            clean_lines.append(line_stripped)
+    # Strip individual HS code numbers that remain
+    for hs in hs_codes:
+        description = re.sub(r'\b' + re.escape(hs) + r'\b', '', description)
 
-    description = normalize_text(' '.join(clean_lines))
+    # Strip DIMS/DIM block in all known formats:
+    # "DIMS-36X32X25=125 50X30X47=18"
+    # "DIM(CMS): 59X38X15 (17), 59X38X10 (3), 59X38X30 (9)"
+    # "DIMENSIONS: ..."
+    description = re.sub(
+        r'\bDIMS?\s*(?:\([^)]*\))?\s*[-:]?\s*'   # DIMS- / DIM(CMS): / DIMENSIONS:
+        r'(?:'
+            r'\d+\s*[Xx*]\s*\d+\s*[Xx*]\s*\d+'   # NxNxN dimension
+            r'(?:\s*[=()\d,\s]*)?'                 # followed by count/separators
+        r')+'                                       # one or more dimension entries
+        r'[\d,\s()\-Xx*=]*',                       # trailing count debris
+        '', description, flags=re.IGNORECASE
+    )
+
+    # Strip any remaining standalone dimension expressions not caught above
+    # Format: NxNxN (N)  or  NxNxN=N  or  N/NxNxN  or  (N)NxNxN
+    description = re.sub(
+        r'[\(\d]*\d+\s*[Xx*]\s*\d+\s*[Xx*]\s*\d+[\s=\/\(\)]*\d*\s*[\),]?',
+        '', description, flags=re.IGNORECASE
+    )
+
+    # Strip VOL WT  — "VOL WT 931.72"
+    description = re.sub(
+        r'\bVOL\s*WT\s*[\d.]+', '', description, flags=re.IGNORECASE
+    )
+
+    # Final cleanup — remove orphaned punctuation and collapse spaces
+    description = re.sub(r'\s*,\s*,+', ',', description)
+    description = re.sub(r'^[\s,:\-]+|[\s,:\-]+$', '', description)
+    description = re.sub(r'\s{2,}', ' ', description).strip()
 
     return {
         'description': description,
         'hs_codes':    hs_codes,
         'dimensions':  dimensions,
+        'raw_text':    normalize_text(text),
     }
 
 def transform_piece_weight(text: str) -> Dict[str, Any]:
@@ -9160,7 +9036,8 @@ def extract_all_boxes(pdf_path: str, template_name: str,
         page = pdf.pages[page_num]
         for box_name, bbox in template.items():
             try:
-                text = page.within_bbox(tuple(bbox)).extract_text() or ''
+                # Use crop instead of within_bbox for better reliability with tight coordinates
+                text = page.crop(tuple(bbox)).extract_text() or ''
             except Exception as e:
                 print(f"Warning: Failed to extract '{box_name}' with bbox {bbox}: {e}")
                 text = ''
@@ -9174,6 +9051,7 @@ def main():
         print("Usage: python pdf_extractor.py <pdf_file> <template_name> [config_file] [page_number]")
         print("\nExamples:")
         print("  python pdf_extractor.py temp.pdf ksr")
+        print("  python pdf_extractor.py temp.pdf ksr_house")
         print("  python pdf_extractor.py temp.pdf ksr boxes_config.json")
         print("  python pdf_extractor.py temp.pdf ksr boxes_config.json 0")
         sys.exit(1)

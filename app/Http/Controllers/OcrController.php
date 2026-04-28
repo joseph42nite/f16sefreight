@@ -11,9 +11,11 @@ class OcrController extends Controller
     public function extract(Request $request)
     {
         $request->validate([
-            'upload_file' => ['required', 'file', 'mimes:pdf']
+            'upload_file' => ['required', 'file', 'mimes:pdf'],
+            'type' => ['required', 'string']
         ]);
 
+        $type = $request->type;
         $file = $request->file('upload_file');
         $path = $file->storeAs('uploads', $file->getClientOriginalName());
 
@@ -21,7 +23,7 @@ class OcrController extends Controller
         $script = realpath(base_path('python/extract_awb_new.py'));
         $pdf = realpath(storage_path('app/' . $path));
         $box_path = realpath(base_path('python/boxes_config.json'));
-        $process = new Process([$python, $script, $pdf, 'ksr', $box_path]);
+        $process = new Process([$python, $script, $pdf, $type, $box_path]);
         $process->setWorkingDirectory(base_path());
         $process->setEnv(['PYTHONHASHSEED' => '0']);
 

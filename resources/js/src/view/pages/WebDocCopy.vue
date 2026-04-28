@@ -2931,6 +2931,7 @@ export default {
                 }
                 const formData = new FormData()
                 formData.append('upload_file', upload_file)
+                formData.append('type', 'ksr');
                 ApiService.post('/user/upload-awb-file', formData, {
                 headers: {
                 'Content-Type': 'multipart/form-data'
@@ -3017,6 +3018,10 @@ export default {
                     }
                     this.form.consignee_address.cons_phone=consignee.phone;
                     this.form.consignee_address.cons_fax=consignee.email;
+                    if(consignee.eori){
+                        this.oci_info.supplementary_info=consignee.eori;
+                        this.oci_info.custom_info_identifier="CNE";
+                    }
                     //end consignee
                     //Consignment Information
                     let cargo_data=response.cargo;

@@ -3101,6 +3101,7 @@ export default {
                     this.showConsignee=true;
                     var consignee=response.consignee;
                     this.form.consignee_address.cons_name=consignee.name;
+                    this.form.consignee_address.cons_name_2=consignee.eori;
                     this.form.consignee_address.cons_address=consignee.address;
                     this.form.consignee_address.cons_city=consignee.city;
                     this.form.consignee_address.cons_post_code=consignee.pin;

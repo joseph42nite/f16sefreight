@@ -1176,8 +1176,15 @@ class AirwayBill extends Controller
 
     public function get_airport_by_airport_code(Request $request)
     {
-        $data = Location::whereIn('iata_code', $request->airport_code)->get(['destination', 'iata_code']);
-        return response()->json(['status' => true, 'data' => $data, 'msg' => '']);
+        $airport_code = $request->airport_code;
+        $data = Location::whereIn('iata_code', array_unique($airport_code))->get(['destination', 'iata_code'])->keyBy('iata_code');
+        $result = [];
+        foreach ($airport_code as $code) {
+            if (isset($data[$code])) {
+                $result[] = $data[$code];
+            }
+        }
+        return response()->json(['status' => true, 'data' => $result, 'msg' => '']);
     }
 
 }

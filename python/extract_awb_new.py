@@ -333,6 +333,7 @@ AIRPORT_IATA_MAP = {
     "apolo": "APB",
     "county": "YQL",
     "naples": "NAP",
+    "napoli": "NAP",
     "a.p. hill aaf": "APH",
     "apiay": "API",
     "apataki": "APK",
@@ -8447,6 +8448,12 @@ def load_boxes_config(config_path: str = "boxes_config.json") -> Dict[str, Any]:
 
 def extract_email(text: str) -> Optional[str]:
     """Extract email address from text"""
+    # Prefer strings labelled "EMAIL: ", forgiving missing .com domains often chopped by OCR
+    m = re.search(r'EMAIL\s*:?\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+)', text, re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+        
+    # Fallback generic pattern
     email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     match = re.search(email_pattern, text)
     return match.group(0) if match else None
@@ -8455,10 +8462,21 @@ def extract_phone(text: str) -> Optional[str]:
     """Extract phone number from text."""
     phone_pattern = r'(?:PHONE|TEL|Phone|Tel|PH|Ph)\s*:?\s*([+\d()\-][+\d\s()\-]{3,30})'
     match = re.search(phone_pattern, text, re.IGNORECASE)
-    if not match:
-        return None
-    # Strip trailing whitespace and any trailing non-numeric chars
-    return match.group(1).strip().rstrip(' -')
+    if match:
+        return match.group(1).strip().rstrip(' -')
+        
+    # Fallback missing prefix, but demanding typical phone structure
+    # e.g. "91-120-4319911" or "+1-800-555-1234"
+    # To avoid accidentally catching PIN codes, ensure it's long enough and has formatting dashes
+    fallback_pattern = r'(?<!\d)(?:(?:\+|00)?\d{1,3}[-.\s])?(?:\(?\d{2,4}\)?[-.\s])?\d{3,4}[-.\s]\d{4,9}(?!\d)'
+    match = re.search(fallback_pattern, text)
+    if match:
+        cand = match.group(0).strip()
+        # Ensure it has at least 8 digits
+        if len(re.sub(r'\D', '', cand)) >= 8:
+            return cand
+            
+    return None
 
 def extract_fax(text: str) -> Optional[str]:
     """Extract fax number from text"""
@@ -8474,61 +8492,51 @@ def extract_eori(text: str) -> Optional[str]:
         return f"EORI : {match.group(1).strip()}"
     return None
 
-def extract_pin(text: str) -> Optional[str]:
+def extract_pin(text: str, country: str = None) -> Optional[str]:
     """
     Extract postal/PIN code from address text.
-    Tries formats in priority order — most distinctive first to avoid false matches.
+    Tier 1: Country-specific pattern
+    Tier 2: Contextual numeric match
+    Tier 3: Continent-scoped sweep
+    Tier 4: Generic numeric fallback
     """
+    # Tier 1: country known and has a compiled pattern
+    if country and country in POSTCODE_PATTERNS:
+        pat = POSTCODE_PATTERNS[country]
+        if pat is None:
+            # Country explicitly has no postcode (UAE) → skip to Tier 2
+            pass
+        else:
+            m = pat.search(text)
+            if m:
+                return m.group(1).strip()
 
-    # ------------------------------------------------------------------
-    # Priority order: most structurally distinctive formats first
-    # so unambiguous patterns don't get shadowed by the numeric fallback.
-    # ------------------------------------------------------------------
+    # Tier 2: digit run immediately after a separator — high-confidence location signal
+    # e.g. "GURUGRAM – 122016 HARYANA" or "INDIA - 370201"
+    contextual = re.search(r'(?<!\d)[-–,]\s*(\d{4,7})\b(?!\s*[-–]\d)', text)
+    if contextual:
+        candidate = contextual.group(1)
+        # Reject if it looks like a year or phone segment
+        if not re.match(r'^(19|20)\d{2}$', candidate):
+            return candidate
 
-    patterns = [
+    # Tier 3: if country is unrecognised, try all POSTCODE_PATTERNS
+    # Stop at first match — patterns are ordered by specificity (alphanumeric before pure numeric)
+    if not country or country not in GEO_DATA:
+        for _country, pat in POSTCODE_PATTERNS.items():
+            if pat is None:
+                continue
+            m = pat.search(text)
+            if m:
+                return m.group(1).strip()
 
-        # === UK ===
-        # EC1A 1BB, SW1A 2AA, W1A 1AA, SK8 6QE, M1 1AE, B1 1BB
-        ('UK',      r'\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b'),
-
-        # === CANADA ===
-        # A1A 1A1 — alternating letter-digit-letter space digit-letter-digit
-        ('Canada',  r'\b([A-Z]\d[A-Z]\s*\d[A-Z]\d)\b'),
-
-        # === NETHERLANDS ===
-        # 1234 AB — 4 digits, space, 2 letters (not SA/SD/SS which are reserved)
-        ('NL',      r'\b(\d{4}\s*[A-Z]{2})\b'),
-
-        # === PORTUGAL ===
-        # 1234-567 — 4 digits, hyphen, 3 digits
-        ('PT',      r'\b(\d{4}-\d{3})\b'),
-
-        # === IRELAND ===
-        # D02 XY45 — letter + 2 digits, space, 4 alphanum
-        ('Ireland', r'\b([A-Z]\d{2}\s*[A-Z0-9]{4})\b'),
-
-        # === ARGENTINA ===
-        # B1636 or C1425 — letter + 4 digits (or letter + 4 digits + 3 letters)
-        ('AR',      r'\b([A-Z]\d{4}[A-Z]{0,3})\b'),
-
-        # === BRAZIL ===
-        # 01310-100 — 5 digits, hyphen, 3 digits
-        ('BR',      r'\b(\d{5}-\d{3})\b'),
-
-        # === US ZIP+4 ===
-        # 90210-1234 — must come before plain 5-digit to capture extended form
-        ('US+4',    r'\b(\d{5}-\d{4})\b'),
-
-        # === US / INDIA / RUSSIA / GERMANY / CHINA / AUSTRALIA (numeric) ===
-        # Generic numeric catch-all: 4–7 digits not adjacent to other digits
-        ('Numeric', r'(?<!\d)\b(\d{4,7})\b(?!\d)'),
-    ]
-
-    # Run each pattern in order, return first match
-    for country, pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE if country in ('UK', 'Canada', 'Ireland', 'AR') else 0)
-        if match:
-            return match.group(1).strip()
+    # Tier 4: absolute last resort — any 4-7 digit run not preceded by another digit
+    # Reject years (19xx, 20xx) and known charge-amount patterns
+    generic = re.search(r'(?<!\d)\b(\d{4,7})\b(?!\d)', text)
+    if generic:
+        candidate = generic.group(1)
+        if not re.match(r'^(19|20)\d{2}$', candidate):
+            return candidate
 
     return None
 
@@ -8544,7 +8552,114 @@ def extract_country(text: str) -> Optional[str]:
 
     return None
 
-def extract_city(address: str, country: Optional[str]) -> Optional[str]:
+def _strategy_generic(address: str) -> Optional[str]:
+    """
+    Fallback for any unrecognised country or failed strategy.
+    Tries three sub-approaches in order:
+
+    A) Last clean UPPERCASE token before a digit run or country name
+    B) Comma-separated segment scan (right to left, skip noise words)
+    C) None
+    """
+    # Sub-approach A: find a word run before a postcode-like digit cluster
+    m = re.search(r'([A-Z][A-Z\s]{2,}?)\s*[,.]?\s*\d{4,6}', address)
+    if m:
+        candidate = STREET_NOISE.sub('', m.group(1)).strip()
+        if len(candidate) > 2:
+            return candidate
+
+    # Sub-approach B: comma segments, right to left, reject noise
+    segments = [s.strip() for s in address.split(',') if s.strip()]
+    for seg in reversed(segments[-4:]):
+        if re.match(r'^[A-Z][A-Z\s]{2,}$', seg) and not STREET_NOISE.search(seg):
+            return seg
+
+    return None
+
+def _strategy_city_state_zip(address: str, country: str) -> Optional[str]:
+    """Matches: CITY, ST 12345  or  CITY ST 12345"""
+    code_pat = CODE_PATTERNS.get(country)
+    if code_pat:
+        # Walk backwards from state code
+        m = re.search(r'([A-Z][A-Z\s]+?),?\s*' + code_pat.pattern, address)
+        if m:
+            candidate = STREET_NOISE.sub('', m.group(1)).strip().rstrip(',')
+            if candidate:
+                return candidate
+    return _strategy_generic(address)   # ← always has a fallback
+
+def _strategy_postcode_then_city(address: str, postcode_pat) -> Optional[str]:
+    """Matches: 12345 CITY  (postcode precedes city on same line)"""
+    if postcode_pat:
+        m = re.search(postcode_pat.pattern + r'\s+(?P<city>[A-Z][A-Z\s\-]+)', address)
+        if m:
+            candidate = STREET_NOISE.sub('', m.group('city')).strip()
+            if candidate:
+                return candidate
+    return _strategy_generic(address)
+
+def _strategy_before_postcode(address: str, postcode_pat, dotted: bool = False) -> Optional[str]:
+    """
+    Matches: CITY POSTCODE  or  CITY. POSTCODE
+    Also handles UK multi-line: last text line before the postcode line.
+    """
+    if postcode_pat:
+        sep = r'[.\s]+' if dotted else r'\s+'
+        m = re.search(r'([A-Z][A-Z\s\-]+?)' + sep + postcode_pat.pattern, address)
+        if m:
+            candidate = STREET_NOISE.sub('', m.group(1)).strip().rstrip('.')
+            if candidate:
+                return candidate
+        # Multi-line fallback: city is the last non-postcode line
+        lines = [l.strip() for l in address.split('\n') if l.strip()]
+        for line in reversed(lines):
+            if postcode_pat.search(line):
+                continue   # skip the postcode line itself
+            if re.match(r'^[A-Z][A-Z\s\-]+$', line) and not STREET_NOISE.search(line):
+                return line
+    return _strategy_generic(address)
+
+def _strategy_state_then_pin(address: str, country: str) -> Optional[str]:
+    """
+    Matches:
+      GURUGRAM – 122016 HARYANA   → GURUGRAM
+      AHMEDABAD, INDIA - 370201   → AHMEDABAD
+    Rejects candidates that are themselves state/noise words.
+    """
+    state_pat = STATE_PATTERNS.get(country)
+
+    # Pattern A: CITY – PIN STATE
+    m = re.search(r'([A-Z][A-Z\s]+?)\s*[–\-]\s*\d{4,6}\s+', address)
+    if m:
+        candidate = m.group(1).strip()
+        if state_pat and state_pat.fullmatch(candidate.strip()):
+            pass   # it's a state name, not a city — keep searching
+        elif not STREET_NOISE.search(candidate) and len(candidate) > 2:
+            return candidate
+
+    # Pattern B: CITY, COUNTRY
+    if state_pat:
+        m2 = re.search(r'([A-Z][A-Z\s]+?),\s*' + '|'.join(
+            re.escape(p.lstrip(r'\b').rstrip(r'\b'))
+            for p in GEO_DATA.get(country, {}).get('country_patterns', [])
+        ), address, re.IGNORECASE)
+        if m2:
+            candidate = STREET_NOISE.sub('', m2.group(1)).strip()
+            if not STREET_NOISE.search(candidate) and len(candidate) > 2:
+                return candidate
+
+    return _strategy_generic(address)
+
+def _strategy_state_anchor(address: str, country: str) -> Optional[str]:
+    """State name IS the city (Dubai, Abu Dhabi, etc.)"""
+    state_pat = STATE_PATTERNS.get(country)
+    if state_pat:
+        m = state_pat.search(address)
+        if m:
+            return m.group(1).strip()
+    return _strategy_generic(address)
+
+def extract_city(address: str, country: str = None) -> Optional[str]:
     """
     Extract city from address text using country-specific strategies.
     Priority: structured regex patterns first, state-anchor fallback second.
@@ -8552,143 +8667,40 @@ def extract_city(address: str, country: Optional[str]) -> Optional[str]:
     if not address:
         return None
 
-    def clean_city(raw: str) -> Optional[str]:
-        """Strip noise words and punctuation; return None if nothing useful remains."""
-        cleaned = STREET_NOISE.sub('', raw)
-        cleaned = re.sub(r'[,.\-/\\]+', ' ', cleaned)
-        cleaned = re.sub(r'\s{2,}', ' ', cleaned).strip()
-        return cleaned if len(cleaned) >= 2 else None
-
-    country_upper = (country or '').upper()
-
-    # 1. USA
-    if any(k in country_upper for k in ('U.S.A', 'UNITED STATES', 'USA')):
-        m = re.search(r'([A-Z][A-Z\s]+),\s*([A-Z]{2})\s+\d{5}', address)
+    # ── Step 1: City list direct match (highest confidence, any country) ──────
+    if country and country in CITY_PATTERNS and CITY_PATTERNS[country]:
+        m = CITY_PATTERNS[country].search(address)
         if m:
-            return clean_city(m.group(1))
+            return m.group(1).strip()
+    elif not country:
+        # If country isn't known, sweep major global cities just in case
+        for c, pat in CITY_PATTERNS.items():
+            if pat:
+                m = pat.search(address)
+                if m:
+                    return m.group(1).strip()
 
-    # 2. CANADA
-    elif any(k in country_upper for k in ('CANADA',)):
-        m = re.search(r'([A-Z][A-Z\s]+),\s*([A-Z]{2})\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d', address)
-        if m:
-            return clean_city(m.group(1))
+    # ── Step 2: Read city_strategy from GEO_DATA ──────────────────────────────
+    strategy = GEO_DATA.get(country, {}).get('city_strategy', 'generic')
+    postcode_pat = POSTCODE_PATTERNS.get(country)
 
-    # 3. UK
-    elif any(k in country_upper for k in ('UNITED KINGDOM', 'U.K', 'UK')):
-        m = re.search(
-            r'([A-Z][A-Z\s]+?)[.,]\s*[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}',
-            address
-        )
-        if m:
-            return clean_city(m.group(1))
+    if strategy == 'city_state_zip':
+        return _strategy_city_state_zip(address, country)
 
-    # 4. AUSTRALIA
-    elif 'AUSTRALIA' in country_upper:
-        au_codes = '|'.join(GEO_DATA['AUSTRALIA']['state_codes'])
-        m = re.search(rf'([A-Z][A-Z\s]+?),?\s*(?:{au_codes})\s+\d{{4}}', address)
-        if m:
-            return clean_city(m.group(1))
+    elif strategy == 'postcode_then_city':
+        return _strategy_postcode_then_city(address, postcode_pat)
 
-    # 5. GERMANY
-    elif any(k in country_upper for k in ('GERMANY', 'DEUTSCHLAND')):
-        m = re.search(r'\b\d{5}\s+([A-Z][A-ZÄÖÜäöüß\s]+)', address)
-        if m:
-            return clean_city(m.group(1).split(',')[0])
+    elif strategy in ('before_postcode', 'before_postcode_dotted'):
+        return _strategy_before_postcode(address, postcode_pat, dotted=(strategy == 'before_postcode_dotted'))
 
-    # 6. FRANCE
-    elif 'FRANCE' in country_upper:
-        m = re.search(r'\b\d{5}\s+([A-Z][A-ZÉÈÊËÀÂÎÏÔÙÛÜ\s]+)', address)
-        if m:
-            return clean_city(m.group(1).split(',')[0])
+    elif strategy == 'state_then_pin':
+        return _strategy_state_then_pin(address, country)
 
-    # 7. NETHERLANDS
-    elif 'NETHERLANDS' in country_upper:
-        m = re.search(r'\d{4}\s*[A-Z]{2}\s+([A-Z][A-Z\s]+)', address)
-        if m:
-            return clean_city(m.group(1))
-        m = re.search(r'([A-Z][A-Z\s]+?),?\s*\d{4}\s*[A-Z]{2}', address)
-        if m:
-            return clean_city(m.group(1))
+    elif strategy == 'state_anchor':
+        return _strategy_state_anchor(address, country)
 
-    # 8. RUSSIA
-    elif any(k in country_upper for k in ('RUSSIA', 'RUSSIAN')):
-        m = re.search(
-            rf'([A-Z][A-Z\s]+?),?\s*(?:{STATE_PATTERNS["RUSSIA"].pattern})',
-            address, re.IGNORECASE
-        )
-        if m:
-            return clean_city(m.group(1))
-        # Fallback: word before 6-digit postcode
-        m = re.search(r'([A-Z][A-Z\s]+?),?\s*\d{6}', address)
-        if m:
-            return clean_city(m.group(1))
-
-    # 9. INDIA
-    elif 'INDIA' in country_upper:
-        # Priority: Direct lookup in major city list
-        city_pat = CITY_PATTERNS.get('INDIA')
-        if city_pat:
-            m = city_pat.search(address)
-            if m:
-                return m.group(1).strip().upper()
-
-        state_pat = STATE_PATTERNS['INDIA']
-        # Fallback A: Use state name anchor
-        m = re.search(
-            rf'([A-Z0-9\s,.\-–]+?)\s*,?\s*(?:{state_pat.pattern})\b',
-            address, re.IGNORECASE
-        )
-        if m:
-            raw = m.group(1).strip().rstrip(',– -').strip()
-            # Strip trailing PIN if it got pulled in e.g. "BANGALORE - 560300"
-            raw = re.sub(r'[\s,–\-]*\d{5,6}\s*$', '', raw).strip().rstrip(',– -').strip()
-            if raw:
-                return raw
-
-        # Fallback B: PIN code anchor
-        m = re.search(r'([A-Z0-9\s,.\-–]+?)\s*[–\-]\s*\d{6}', address)
-        if m:
-            raw = m.group(1).strip().rstrip(',– -').strip()
-            if raw:
-                return raw
-
-    # 10. MIDDLE EAST
-    elif any(k in country_upper for k in ('UAE', 'UNITED ARAB EMIRATES', 'SAUDI', 'QATAR', 'KUWAIT', 'BAHRAIN', 'OMAN', 'JORDAN', 'LEBANON', 'EGYPT')):
-        me_states = []
-        if 'UAE' in country_upper or 'UNITED ARAB EMIRATES' in country_upper:
-            me_states = GEO_DATA['UAE']['states']
-        elif 'SAUDI' in country_upper:
-            me_states = GEO_DATA['SAUDI ARABIA']['states']
-            
-        if me_states:
-            rp = '|'.join(re.escape(s) for s in sorted(me_states, key=len, reverse=True))
-            m = re.search(rf'([A-Z][A-Z\s]+?),?\s*(?:{rp})', address, re.IGNORECASE)
-            if m:
-                return clean_city(m.group(1))
-        
-        # Fallback: last meaningful uppercase word group
-        m = re.search(r'([A-Z][A-Z\s]{2,}?)(?:,|\.|$)', address)
-        if m:
-            return clean_city(m.group(1))
-
-    # 11. GENERIC FALLBACK
-    # Pattern A: postcode then city (DE/FR/NL/RU style)  NNNNN CITY
-    m = re.search(r'\b\d{4,6}\s+([A-Z][A-Z\s]{2,}?)(?:,|$)', address)
-    if m:
-        return clean_city(m.group(1))
-
-    # Pattern B: city then postcode  CITY, NNNNN
-    m = re.search(r'([A-Z][A-Z\s]{2,}?),\s*\d{4,6}\b', address)
-    if m:
-        return clean_city(m.group(1))
-
-    # Pattern C: last comma-separated segment that looks like a city name
-    segments = [s.strip() for s in address.split(',') if s.strip()]
-    for seg in reversed(segments[-3:]):
-        if re.match(r'^[A-Z][A-Z\s]{1,}$', seg) and not STREET_NOISE.search(seg):
-            return clean_city(seg)
-
-    return None
+    # ── Step 3: Generic fallback (unknown country or strategy miss) ───────────
+    return _strategy_generic(address)
 
 def extract_state(text: str, country: Optional[str]) -> Optional[str]:
     if not text or not country:
@@ -8751,7 +8763,7 @@ def transform_address_box(text: str) -> Dict[str, Any]:
     
     city  = extract_city(address_str, country)
     state = extract_state(address_str, country)
-    pin   = extract_pin(text)
+    pin   = extract_pin(text, country)
 
     # Strip extracted fields from address_str to leave only street details
     clean_addr = address_str
@@ -8906,9 +8918,9 @@ def transform_description(text: str) -> Dict[str, Any]:
 
     description = normalize_text(text)
 
-    # Strip HS CODE line — e.g. "HS CODE: 62052090" or "HS CODE : 82019000"
+    # Strip HS/HSN CODE labels and following numbers (e.g. "HS CODE: 6205", "HSN CODE: 8201", "HS CODE 123")
     description = re.sub(
-        r'HS\s*CODE\s*:?\s*[\d\s]+', '', description, flags=re.IGNORECASE
+        r'\b(?:HS|HSN)\s*CODE\s*:?\s*[\d\s\.]*', '', description, flags=re.IGNORECASE
     )
 
     # Strip individual HS code numbers that remain

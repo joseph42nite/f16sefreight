@@ -2519,7 +2519,7 @@
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         @php
-                                                                                                                            echo date('d-M-y', strtotime($houseWayBill->agent_issue_date));
+                                                                                                                            echo !empty($houseWayBill->send_created) ? date('d-M-y', strtotime($houseWayBill->send_created)) : '';
                                                                                                                         @endphp
                                                                                                                     </td>
                                                                                                                 </tr>

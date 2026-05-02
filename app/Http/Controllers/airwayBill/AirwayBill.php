@@ -960,16 +960,12 @@ class AirwayBill extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $agentId = $user->branch_name;
-        $airwayBill = AirwayBills::with([
-            'paymentInfo',
-            'wayBillAddress',
-            'savedAddress',
-            'consignmentData',
-            'otherCharge',
-            'otherCustomInformation'
-        ])->where('agent_id', $agentId)->where('status', $status)->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        $airwayBill=array();
+        $query = AirwayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->where('agent_id', $agentId);
+        if ($status == 'send')
+            $$airwayBill = $query->whereIn('status', ['send', 'generate_pdf'])->orderBy('created_at', 'desc')->limit(10)->get();
+        else
+            $$airwayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
         if ($airwayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }

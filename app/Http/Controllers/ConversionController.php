@@ -496,7 +496,6 @@ class ConversionController extends Controller
             $ident = $xml->createElement('ram:Identification');
             $ident->appendChild($xml->createTextNode($consignment_data['description']));
             $natureIdentificationTransportCargo->appendChild($ident);
-            // $natureIdentificationTransportCargo->appendChild($xml->createElement('ram:Identification', $consignment_data['description']));
             $includedMasterConsignmentItem->appendChild($natureIdentificationTransportCargo);
         }
         if (!empty($consignment_data['country_origin_goods'])) {
@@ -717,7 +716,10 @@ class ConversionController extends Controller
         if (!empty($waybill_data['total_volume']))
             $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($house_data['total_volume'], 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
-        $IncludedHouseConsignment->appendChild($xml->createElement('ram:SummaryDescription', $consignment_data['description']));
+        $ident = $xml->createElement('ram:SummaryDescription');
+        $ident->appendChild($xml->createTextNode($consignment_data['description']));
+        $IncludedHouseConsignment->appendChild($ident);
+        
         // Consignor Party
         $consignor_street_name = $house_address['ship_address'] . (!empty($house_address['ship_address_line_2']) ? ',' . $house_address['ship_address_line_2'] : '');
         $consignorParty = $xml->createElement('ram:ConsignorParty');
@@ -1029,7 +1031,9 @@ class ConversionController extends Controller
         // Nature Identification Transport Cargo
         if (!empty($consignment_data['description'])) {
             $natureIdentificationTransportCargo = $xml->createElement('ram:NatureIdentificationTransportCargo');
-            $natureIdentificationTransportCargo->appendChild($xml->createElement('ram:Identification', $consignment_data['description']));
+            $ident = $xml->createElement('ram:Identification');
+            $ident->appendChild($xml->createTextNode($consignment_data['description']));
+            $natureIdentificationTransportCargo->appendChild($ident);
             $IncludedHouseConsignmentItem->appendChild($natureIdentificationTransportCargo);
         }
         if (!empty($consignment_data['country_origin_goods'])) {

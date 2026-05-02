@@ -1061,17 +1061,12 @@ class HousewayBill extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $agentId = $user->branch_name;
-
-        $housewayBill = HousewayBills::with([
-            'paymentInfo',
-            'wayBillAddress',
-            'savedAddress',
-            'consignmentData',
-            'otherCharge',
-            'otherCustomInformation'
-        ])->where('agent_id', $agentId)->where('status', $status)->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        $housewayBill = array();
+        $query = HousewayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->where('agent_id', $agentId);
+        if ($status == 'send')
+            $housewayBill = $query->whereIn('status', ['send', 'generate_pdf'])->orderBy('created_at', 'desc')->limit(10)->get();
+        else
+            $housewayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
         if ($housewayBill->isEmpty()) {
             return response()->json(['message' => 'Record not found'], 404);
         }

@@ -104,6 +104,7 @@
 </template>
 
 <script>
+import { blogs } from "../blogData";
 
 export default {
   name: "BlogsAndNews",
@@ -113,64 +114,8 @@ export default {
     return {
       selectedCategory: 'All',
       categories: ['All', 'Air Freight', 'Technology', 'Sea Freight', 'Industry News', 'ERP Solutions'],
-      featuredPost: {
-        title: "The Future of E-Freight: How AI is Transforming Air Waybill Management",
-        excerpt: "Discover how artificial intelligence and machine learning are automating complex documentation processes, reducing errors by 99% and accelerating global trade.",
-        category: "Technology",
-        date: "May 02, 2026",
-        slug: "future-of-e-freight",
-        image: "/media/custome/gallary/img-2.png"
-      },
-      posts: [
-        {
-          title: "Standardizing EDI Connectivity for Small Forwarders",
-          excerpt: "How small businesses can leverage enterprise-grade EDI tools to compete with global logistics giants.",
-          category: "ERP Solutions",
-          date: "April 28, 2026",
-          slug: "standardizing-edi",
-          image: "/media/custome/gallary/img-3.png"
-        },
-        {
-          title: "Global Supply Chain Trends to Watch in 2026",
-          excerpt: "From sustainability to digital twins, explore the top 5 trends shaping the future of global logistics.",
-          category: "Industry News",
-          date: "April 25, 2026",
-          slug: "trends-2026",
-          image: "/media/custome/gallary/img-4.png"
-        },
-        {
-          title: "Optimizing Sea Freight with Real-time Tracking",
-          excerpt: "Learn how real-time visibility into ocean shipments is reducing demurrage and detention costs.",
-          category: "Sea Freight",
-          date: "April 20, 2026",
-          slug: "sea-freight-tracking",
-          image: "/media/custome/gallary/img-2.png"
-        },
-        {
-          title: "The Role of FWB and FHL in IATA e-AWB Compliance",
-          excerpt: "A deep dive into the technical standards of air freight messaging and why they matter for your business.",
-          category: "Air Freight",
-          date: "April 15, 2026",
-          slug: "iata-compliance",
-          image: "/media/custome/gallary/img-3.png"
-        },
-        {
-          title: "Cybersecurity in Logistics: Protecting Sensitive Trade Data",
-          excerpt: "Best practices for securing your freight forwarding data in an increasingly digital world.",
-          category: "Technology",
-          date: "April 10, 2026",
-          slug: "cybersecurity-logistics",
-          image: "/media/custome/gallary/img-4.png"
-        },
-        {
-          title: "Bridging the Gap: Road Freight Automation in South Asia",
-          excerpt: "Exploring the unique challenges and digital solutions for road transportation across regional borders.",
-          category: "Industry News",
-          date: "April 05, 2026",
-          slug: "road-freight-automation",
-          image: "/media/custome/gallary/img-2.png"
-        }
-      ]
+      featuredPost: blogs[0],
+      posts: blogs
     };
   },
   computed: {

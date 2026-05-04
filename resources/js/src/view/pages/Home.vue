@@ -200,20 +200,20 @@
             <b-row>
                 <b-col lg="6" class="mb-8">
                     <!-- Featured News Card -->
-                    <article class="news-card featured">
+                    <article class="news-card featured" @click="$router.push('/blog/' + featuredPost.slug)" style="cursor: pointer;">
                         <div class="news-image-wrap">
-                            <img src="/media/custome/gallary/img-1.png" class="news-img" alt="Digital data streams representing the future of EDI and logistics connectivity">
-                            <div class="news-category">Featured</div>
+                            <img :src="featuredPost.image" class="news-img" :alt="featuredPost.title">
+                            <div class="news-category">{{ featuredPost.category }}</div>
                         </div>
                         <div class="news-body">
                             <div class="news-meta">
-                                <time datetime="2026-05-01" class="news-date">May 1, 2026</time>
+                                <time :datetime="featuredPost.date" class="news-date">{{ featuredPost.date }}</time>
                                 <span class="meta-dot"></span>
                                 <span class="news-author">F16s Editorial</span>
                             </div>
-                            <h3 class="news-title">The Future of EDI: How F16s is Redefining Data Connectivity</h3>
-                            <p class="news-excerpt">Explore how next-generation EDI standards are eliminating manual entry and creating a more transparent global supply chain...</p>
-                            <b-link href="#" class="news-read-more" aria-label="Read full article about EDI and data connectivity">
+                            <h3 class="news-title">{{ featuredPost.title }}</h3>
+                            <p class="news-excerpt">{{ featuredPost.excerpt }}</p>
+                            <b-link :to="'/blog/' + featuredPost.slug" class="news-read-more" aria-label="Read full article">
                                 <span>Read Full Article</span>
                                 <b-icon icon="plus" class="ms-1" aria-hidden="true"></b-icon>
                             </b-link>
@@ -223,9 +223,9 @@
                 <b-col lg="6">
                     <b-row>
                         <b-col md="6" v-for="(news, idx) in newsItems" :key="idx" class="mb-8">
-                            <article class="news-card small">
+                            <article class="news-card small" @click="$router.push('/blog/' + news.slug)" style="cursor: pointer;">
                                 <div class="news-image-wrap small">
-                                    <img :src="news.image" class="news-img" :alt="`News image: ${news.title}`">
+                                    <img :src="news.image" class="news-img" :alt="news.title">
                                     <div class="news-category">{{ news.category }}</div>
                                 </div>
                                 <div class="news-body">
@@ -233,7 +233,7 @@
                                         <span class="news-date">{{ news.date }}</span>
                                     </div>
                                     <h4 class="news-title-small">{{ news.title }}</h4>
-                                    <b-link href="#" class="news-link-simple" :aria-label="`Read more about ${news.title}`">Read More</b-link>
+                                    <b-link :to="'/blog/' + news.slug" class="news-link-simple" :aria-label="`Read more about ${news.title}`">Read More</b-link>
                                 </div>
                             </article>
                         </b-col>
@@ -292,8 +292,37 @@
 
 <script>
 
+import { blogs } from "../blogData";
+
 export default {
     name: "Home",
+    metaInfo: {
+        title: "F16s E-Freight Solutions | Smart Logistics & AWB Automation",
+        meta: [
+            { name: 'description', content: 'Streamline your freight forwarding with F16s E-Freight Solutions. Process MAWB and HAWB in under 3 seconds, connect with 150+ airlines globally, and automate your digital logistics workflow.' },
+            { property: 'og:title', content: 'F16s E-Freight Solutions | Smart Logistics & AWB Automation' },
+            { property: 'og:description', content: 'Streamline your freight forwarding with F16s E-Freight Solutions. Process MAWB and HAWB in under 3 seconds, connect with 150+ airlines globally, and automate your digital logistics workflow.' }
+        ],
+        script: [
+            { 
+                innerHTML: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "SoftwareApplication",
+                    "name": "F16s E-Freight Platform",
+                    "operatingSystem": "Web-based",
+                    "applicationCategory": "BusinessApplication",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "USD"
+                    },
+                    "description": "Smart e-Freight Solutions for Freight Forwarders. Process MAWB and HAWB in seconds with 150+ airline connections."
+                }), 
+                type: 'application/ld+json' 
+            }
+        ],
+        __dangerouslyDisableSanitizers: ['script']
+    },
     components: { },
     data() {
         return {
@@ -324,12 +353,8 @@ export default {
                 { title: "Privacy", description: "Enterprise-grade encryption ensuring your sensitive data and trade secrets remain confidential.", icon: "/media/custome/privacy.png", link: "/privacy" },
                 { title: "End to End Service", description: "Comprehensive freight management from initial booking to final delivery, fully automated.", icon: "/media/custome/end-to-end-service.png", link: "/end-to-end" }
             ],
-            newsItems: [
-                { title: "Global Air Freight Trends in 2026", date: "April 28, 2026", category: "Air Freight", image: "/media/custome/gallary/img-2.png" },
-                { title: "Digital Transformation in Warehousing", date: "April 25, 2026", category: "Technology", image: "/media/custome/gallary/img-3.png" },
-                { title: "Sustainable Shipping Solutions", date: "April 22, 2026", category: "Eco", image: "/media/custome/gallary/img-4.png" },
-                { title: "Optimizing Last-Mile Delivery", date: "April 20, 2026", category: "Road", image: "/media/custome/gallary/img-5.png" }
-            ],
+            featuredPost: blogs[0],
+            newsItems: blogs.slice(1, 5),
             accordions: [
                 { title: "Does F16s support multiple AWB connections?", content: "Yes, our Pro plan allows users to connect multiple AWBs for seamless data transfer across airlines and logistics partners.", isOpen: false },
                 { title: "Can I print my freight documents from F16s?", content: "Yes, our platform includes a document printing option for MAWB, HAWB and consolidation.", isOpen: false },

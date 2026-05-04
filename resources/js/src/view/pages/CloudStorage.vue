@@ -174,6 +174,14 @@
 
 export default {
   name: "CloudStorage",
+  metaInfo: {
+    title: "Secure Cloud Storage for Logistics | F16s E-Freight",
+    meta: [
+      { name: 'description', content: 'Reliable, scalable cloud infrastructure for modern logistics. Secure your freight data with auto-backups, enterprise encryption, and 99.9% uptime.' },
+      { property: 'og:title', content: 'Secure Cloud Storage for Logistics | F16s E-Freight' },
+      { property: 'og:description', content: 'Reliable, scalable cloud infrastructure for modern logistics. Secure your freight data with auto-backups, enterprise encryption, and 99.9% uptime.' }
+    ]
+  },
   components: { },
   data() {
     return {

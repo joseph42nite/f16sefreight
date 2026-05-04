@@ -149,6 +149,14 @@
 
 export default {
   name: "Privacy",
+  metaInfo: {
+    title: "Privacy & Data Security | F16s E-Freight Solutions",
+    meta: [
+      { name: 'description', content: 'F16s prioritizes your privacy with strict access controls, global data compliance (GDPR), and enterprise-grade encryption for all your freight documentation.' },
+      { property: 'og:title', content: 'Privacy & Data Security | F16s E-Freight Solutions' },
+      { property: 'og:description', content: 'F16s prioritizes your privacy with strict access controls, global data compliance (GDPR), and enterprise-grade encryption for all your freight documentation.' }
+    ]
+  },
   components: { },
   data() {
     return {

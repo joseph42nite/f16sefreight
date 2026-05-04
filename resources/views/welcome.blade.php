@@ -23,6 +23,28 @@
     <meta property="twitter:image" content="{{ asset('/media/custome/blue-logo.svg') }}">
 
     <link rel="canonical" href="{{ url()->current() }}">
+
+    <!-- Organization Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "F16s E-Freight Solutions",
+        "url": "https://f16sefreight.com",
+        "logo": "https://f16sefreight.com/media/custome/blue-logo.svg",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "",
+            "contactType": "customer service",
+            "areaServed": "Global",
+            "availableLanguage": "English"
+        },
+        "sameAs": [
+            "https://www.linkedin.com/company/f16s-efreight-solutions",
+            "https://twitter.com/f16sefreight"
+        ]
+    }
+    </script>
     <title>F16s E-Freight Solutions | Smart Freight Forwarding Automation</title>
     <link rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
     <link rel="stylesheet" href="{{ asset('/css/app.css') }}">

@@ -11,9 +11,11 @@ import ApiService from "@/core/services/api.service";
 import { VERIFY_AUTH } from "@/core/services/store/auth.module";
 import { RESET_LAYOUT_CONFIG } from "@/core/services/store/config.module";
 import VueFlip from 'vue-flip';
+import VueMeta from 'vue-meta';
 
 Vue.config.productionTip = false;
 Vue.use(VueExcelXlsx);
+Vue.use(VueMeta);
 
 import { Form, HasError, AlertError } from "vform";
 window.Form = Form;

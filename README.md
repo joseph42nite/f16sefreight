@@ -34,6 +34,7 @@ F16s is a high-performance, premium freight logistics platform designed to strea
 - **Styling**: SASS / Vanilla CSS
 - **Asset Management**: Laravel Mix
 - **State Management**: Vuex
+- **SEO & Meta Management**: [Vue Meta](https://vue-meta.nuxtjs.org/) (Added: 2026-05-04)
 
 ---
 
@@ -61,6 +62,8 @@ F16s is a high-performance, premium freight logistics platform designed to strea
 3. **Install Frontend Dependencies**:
    ```bash
    npm install
+   # New package added on 2026-05-04:
+   npm install vue-meta
    ```
 
 4. **Environment Setup**:

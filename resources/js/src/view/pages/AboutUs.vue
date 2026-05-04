@@ -111,6 +111,14 @@
 
 export default {
     name: "AboutUs",
+    metaInfo: {
+        title: "About F16s | Our Vision for Digital Freight Forwarding",
+        meta: [
+            { name: 'description', content: 'Learn about F16s E-Freight Solutions, dedicated to transforming logistics management for small and medium-sized businesses with innovative, affordable digital tools.' },
+            { property: 'og:title', content: 'About F16s | Our Vision for Digital Freight Forwarding' },
+            { property: 'og:description', content: 'Learn about F16s E-Freight Solutions, dedicated to transforming logistics management for small and medium-sized businesses with innovative, affordable digital tools.' }
+        ]
+    },
     components: {
     },
     data() {

@@ -1,3 +1,6 @@
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 import Vue from "vue";
 import VueExcelXlsx from "vue-excel-xlsx";
 import App from "./App.vue";
@@ -44,11 +47,6 @@ router.beforeEach((to, from, next) => {
  }
   // reset config to initial state
   store.dispatch(RESET_LAYOUT_CONFIG);
-  
-  // Scroll page to top on every route change
-  setTimeout(() => {
-    window.scrollTo(0, 0);
-  }, 100);
 });
 
 new Vue({

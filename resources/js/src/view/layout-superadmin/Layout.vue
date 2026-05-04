@@ -35,7 +35,7 @@
                 container: !contentFluid
               }"
             >
-              <transition name="fade-in-up">
+              <transition name="fade-in-up" mode="out-in" @after-enter="scrollToTop">
                 <router-view />
               </transition>
             </div>
@@ -113,7 +113,13 @@ export default {
 
     // Simulate the delay page loading
   },
-  methods: {},
+  methods: {
+    scrollToTop() {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    }
+  },
   computed: {
     ...mapGetters([
       "isAuthenticated",

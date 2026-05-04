@@ -3,8 +3,6 @@
         <div class="container-fluid">
             <!-- Include Page Loader -->
             <!-- <PageLoader></PageLoader> -->
-            <!-- Include Header -->
-            <Header></Header>
             <div class="d-flex">
                 <SideBar></SideBar>
                 <div class="container" style="background-color:#fff;box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
@@ -571,7 +569,6 @@
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import SideBar from "../layout/SideBar.vue";
-import Header from "../layout/Header.vue";
 import ApiService from "@/core/services/api.service";
 import "vue2-datepicker/index.css";
 // import PageLoader from "../components/PageLoader.vue";
@@ -1224,16 +1221,13 @@ export default {
     components: {
         Datepicker,
         DatePicker,
-        Header,
         SideBar,
-        // PageLoader
     },
 };
 </script>
 
 <style scoped>
 .body-color {
-    background: linear-gradient(180deg, #D0E6F8 15%, #FFFFFF 55%);
 }
 .form-row {
     flex-wrap: nowrap !important;

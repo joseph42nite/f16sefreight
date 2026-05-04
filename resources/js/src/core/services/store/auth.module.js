@@ -43,24 +43,23 @@ const getters = {
 
 const actions = {
   [LOGIN](context, credentials) {
-    return new Promise(resolve => {
-      ApiService.post("/login", credentials)
-        .then(({ data }) => {
-          context.commit(SET_AUTH, data.user);
-          JwtService.saveToken(data.token); 
-          if(data.role=='user'){
-            JwtService.saveSource(data.user.origin_airport_code);
-            context.commit(SET_Source, data.user.origin_airport_code);
-            router.push(`/focus-air`);
-          }
-          else if(data.role=='superAdmin')
-             router.push(`/superadmin/all-users`);
-          resolve(data);
-        })
-        .catch(({ response }) => {
-          context.commit(SET_ERROR, response.data.error);
-        });
-    });
+    return ApiService.post("/login", credentials)
+      .then(({ data }) => {
+        context.commit(SET_AUTH, data.user);
+        JwtService.saveToken(data.token);
+        if (data.role == "user") {
+          JwtService.saveSource(data.user.origin_airport_code);
+          context.commit(SET_Source, data.user.origin_airport_code);
+          router.push(`/focus-air`);
+        } else if (data.role == "superAdmin")
+          router.push(`/superadmin/all-users`);
+        return data;
+      })
+      .catch((error) => {
+        const errorMessage = error.response?.data?.error || error.message || "Login failed";
+        context.commit(SET_ERROR, errorMessage);
+        throw error;
+      });
   },
   [LOGOUT](context) {
     context.commit(PURGE_AUTH);

@@ -2,7 +2,6 @@
     <b-container fluid class="main-container">
         <!-- Include PageLoader -->
          <!-- <PageLoader></PageLoader> -->
-        <Header></Header>
         <div class="d-flex">
             <SideBar></SideBar>
             <div style="background-color:#fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
@@ -194,7 +193,6 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
-import Header from "@/view/layout/Header.vue";
 import SideBar from "../layout/SideBar.vue";
 // import PageLoader from '../components/PageLoader.vue';
 import { mapGetters } from "vuex";
@@ -987,7 +985,6 @@ export default {
 </script>
 <style>
     .main-container {
-        background: linear-gradient(180deg, #D0E6F8 10%, #FFFFFF 25%);
         position: relative;
     }
     label {

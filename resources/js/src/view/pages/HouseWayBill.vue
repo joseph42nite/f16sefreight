@@ -3,8 +3,6 @@
         <div class="container-fluid">
             <!-- Include Page Loader -->
              <!-- <PageLoader></PageLoader> -->
-            <!-- Include Header -->
-            <Header></Header>
             <div class="d-flex">
                 <SideBar></SideBar>
                 <div class="container" style="background-color:#fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
@@ -2656,7 +2654,6 @@ import ApiService from "@/core/services/api.service";
 import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 import SideBar from "../layout/SideBar.vue";
-import Header from "../layout/Header.vue";
 import { mapGetters } from "vuex";
 // import PageLoader from "../components/PageLoader.vue";
 export default {
@@ -4685,7 +4682,6 @@ export default {
     components: {
         Datepicker,
         DatePicker,
-        Header,
         SideBar,
         // PageLoader
     },
@@ -4760,7 +4756,6 @@ export default {
 }
 /* end of file upload css */
 .body-color {
-    background: linear-gradient(180deg, #D0E6F8 2%, #FFFFFF 9%);
 }
 h6 {
     font-size: 15px !important;

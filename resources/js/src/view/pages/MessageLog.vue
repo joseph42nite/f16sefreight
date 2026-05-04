@@ -20,7 +20,7 @@ td[aria-colindex="5"] {
             <!-- Include Page Loader -->
             <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
-            <Header></Header>
+
             <div class="d-flex">
                 <SideBar></SideBar>
                 <template>
@@ -323,7 +323,7 @@ td[aria-colindex="5"] {
     </div>
 </template>
 <script>
-import Header from "../layout/Header.vue";
+
 import SideBar from "../layout/SideBar.vue";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
@@ -632,7 +632,7 @@ export default {
         },
     },
     components: {
-        Header,
+
         SideBar,
         // PageLoader
     },
@@ -673,7 +673,6 @@ export default {
     width: 120px;
 }
 .body-color {
-    background: linear-gradient(180deg, #d0e6f8 8%, #ffffff 20%);
 }
 .custom-table >>> thead {
     background-color: rgb(242, 249, 255);

@@ -5,6 +5,9 @@
 </template>
 
 <style lang="scss">
+html {
+  scroll-behavior: smooth;
+}
 // 3rd party plugins css
 @import "~bootstrap-vue/dist/bootstrap-vue.css";
 @import "~perfect-scrollbar/css/perfect-scrollbar.css";

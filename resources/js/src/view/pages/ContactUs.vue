@@ -1,734 +1,858 @@
-
 <template>
-    <b-container fluid class="main-container">
-        <!-- Include PageLoader -->
-        <!-- <PageLoader></PageLoader> -->
-        <!-- Include Header -->
-        <Header></Header>
-        <b-container>
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center" class="my-md-20 my-sm-12" style="position: relative;">
-                        <b-col cols="10">
-                            <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
-                            <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
-                            <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
-                            <div class="my-md-12 my-sm-8">
-                                <h2 class="section-title">Contact Us</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-6 mt-md-8">
-                                        <p class="section-text">We’re always here to assist you. Select the appropriate option below and let us help you with your inquiry.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
+  <b-container fluid class="main-wrapper p-0">
+    <!-- DECORATIVE ELLIPSES -->
+    <div class="decorative-ellipses d-none d-lg-block">
+        <div class="ellipse ellipse-tl"></div>
+        <div class="ellipse ellipse-tr"></div>
+        <div class="ellipse ellipse-br"></div>
+    </div>
 
-                        <b-col cols="10">
-                            <div class="query-section my-8 my-sm-12 my-md-15" v-b-modal.show-query-modal>
-                                <h2>Have a Dispute or Query? We’re Here to Help!</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="12" sm="10" md="10" lg="10" xl="10" xxl="10" class="">
-                                        <p>If you’re facing any issues or have a query regarding our services, we’re committed to resolving them quickly. When logged in, your details will be pre-filled, and a Ticket Number will be generated for tracking your request.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                            <!-- QUERY Modal start -->
-                            <b-modal id="show-query-modal" :hide-footer="true">
-                                <div class="d-flex flex-column-fluid flex-center">
-                                    <div class="w-100">
-                                        <div class="pb-15 pt-0 text-center">
-                                            <h2>Fill in your Query Details</h2>
-                                        </div>
-                                        <form class="form">
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="query-name"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Name:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="query-name" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="queryName" ref="queryName" placeholder="Enter your name">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="query-emailId"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Email ID:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="query-emailId" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="email" name="queryEmailId" ref="queryEmailId" placeholder="Enter your Email ID">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="query-companyName"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Company Name:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="query-companyName" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="queryCompanyName" ref="queryCompanyName" placeholder="Enter your Company Name">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="query-userId"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>User ID:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="query-userId" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="queryUserId" ref="queryUserId" placeholder="Enter your User ID">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="query-ticketNumber"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Ticket Number:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="query-ticketNumber" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="queryTicketNumber" ref="queryTicketNumber" placeholder="Enter your Ticket Number">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="query-queryDescription"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Query Description:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-textarea id="query-queryDescription" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="queryQueryDescription" ref="queryQueryDescription" placeholder="Type your queries here"></b-form-textarea>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <div class="d-flex justify-content-center">
-                                                <p class="text-center py-2" style="width: 60%;">Once submitted, you’ll receive a confirmation email with your <b>Ticket Number</b> to track your case.</p>
-                                            </div>
-                                        </form>
-                                        <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12" class="my-5">
-                                            <div class="d-flex flex-row justify-content-center">
-                                                <b-button class="submit-btn">Submit</b-button>
-                                            </div>
-                                        </b-col>
-                                    </div>
-                                </div>
-                            </b-modal>
-                            <!-- QUERY Modal end -->
-                        </b-col>
 
-                        <b-col cols="10" class="quote-col">
-                            <div class="quote-section my-8 my-sm-12 my-md-15" v-b-modal.show-quote-modal>
-                                <h2>Get a Customized Quote Based on Your Needs</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="12" sm="10" md="10" lg="10" xl="10" xxl="10" class="">
-                                        <p>Looking for the best pricing option for your business? Fill in the details below, and we’ll provide a quote tailored to your needs.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                            <!-- QUOTE Modal start -->
-                            <b-modal id="show-quote-modal" :hide-footer="true" ok-only>
-                                <div class="d-flex flex-column-fluid flex-center">
-                                    <div class="w-100">
-                                        <div class="pb-15 pt-0 text-center">
-                                            <h2>Fill in your Query Details</h2>
-                                        </div>
-                                        <form class="form" @submit.prevent="handleSubmit">
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="quote-quoteName"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Name:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="quote-quoteName" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="quoteName" ref="quoteName" placeholder="Enter your name">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="quote-companyEmailId"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Company Email ID:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="quote-companyEmailId" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="email" name="quoteCompanyEmailId" ref="quoteCompanyEmailId" placeholder="Enter your Email ID">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="quote-phoneNumber"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Phone Number:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="quote-phoneNumber" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="quotePhoneNumber" ref="quotePhoneNumber" placeholder="Enter your Phone Number">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="quote-designation"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Designation:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="quote-designation" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="quoteDesignation" ref="quoteDesignation" placeholder="Enter your Designation">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <!-- Select Box with Multiple Checkboxes -->
-                                            <b-form-group id="fieldset-checkbox" label-cols-md="auto" label-for="quote-productOption" class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Product Chosen:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <!-- Custom Dropdown for Multiple Checkboxes -->
-                                                        <b-form-select
-                                                            class="form-control-sm"
-                                                            v-model="selectedProductTypeOptions">
-                                                            <option
-                                                                v-for="(productTypeOption, index) in productTypeOptions" :key="index"
-                                                                size="sm"
-                                                                :value="productTypeOption.value"
-                                                                :id="'checkbox-' + index"
-                                                                >
-                                                                {{ productTypeOption.text }}
-                                                            </option>
-                                                        </b-form-select>
-                                                        <!-- {{ selectedOptions }} -->
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="quote-empNumber"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Number of Employees:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="quote-empNumber" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="quoteEmpNumber" ref="quoteEmpNumber" placeholder="Enter Number of Employees">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="quote-companyName"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 135px;">
-                                                        <span>Company Name:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="quote-companyName" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="quoteCompanyName" ref="quoteCompanyName" placeholder="Enter your Company Name"></b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <div class="d-flex justify-content-center">
-                                                <p class="text-center py-2" style="width: 60%;">Submit your details, and we’ll get back to you with a quote.</p>
-                                            </div>
-                                        </form>
-                                        <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12" class="my-5">
-                                            <div class="d-flex flex-row justify-content-center">
-                                                <b-button type="submit" class="submit-btn">Submit</b-button>
-                                            </div>
-                                        </b-col>
-                                    </div>
-                                </div>
-                            </b-modal>
-                            <!-- QUOTE Modal end -->
-                        </b-col>
+    <b-container class="content-container pb-30">
+      
+      <!-- HERO SECTION -->
+      <section class="contact-hero-section mt-12 mt-lg-20 mb-20 text-center">
+        <span class="section-eyebrow">Get in Touch</span>
+        <h1 class="section-title mb-6">How can we help you today?</h1>
+        <p class="section-subtitle mb-10 mx-auto" style="max-width: 700px;">
+            Whether you need technical support, a customized pricing quote, or just want to share feedback, our team is standing by to assist you. Select an option below to get started.
+        </p>
+      </section>
 
-                        <b-col cols="10" class="feedback-col">
-                            <div class="feedback-section my-8 my-sm-12 my-md-15" v-b-modal.show-feedback-modal>
-                                <h2>Feedback or Job Opportunities? Let’s Connect!</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="12" sm="10" md="10" lg="10" xl="10" xxl="10" class="">
-                                        <p>Share your feedback with us or let us know if you’re interested in joining our team. We appreciate your input!</p>
-                                    </b-col>
-                                </b-row>
+      <!-- CONTACT OPTIONS GRID -->
+      <section class="contact-options-section mb-30">
+        <b-row class="justify-content-center">
+            <!-- Query Card -->
+            <b-col lg="4" md="6" class="mb-8">
+                <div class="feature-card-wrapper" v-b-modal.show-query-modal role="button" tabindex="0">
+                    <div class="feature-card-glow"></div>
+                    <b-card class="feature-card h-100 border-0">
+                        <div class="feature-icon-container mb-8">
+                            <div class="icon-circle"></div>
+                            <b-icon icon="chat-square-dots" font-scale="2" class="feature-icon-svg" aria-hidden="true"></b-icon>
+                        </div>
+                        <h3 class="feature-title">Have a Dispute or Query?</h3>
+                        <p class="feature-desc">Facing any issues or have a query regarding our services? We’re committed to resolving them quickly. A Ticket Number will be generated for tracking.</p>
+                        <div class="feature-footer mt-auto pt-6">
+                            <div class="feature-link">
+                                <span>Submit Query</span>
+                                <b-icon icon="arrow-right" class="btn-icon" aria-hidden="true"></b-icon>
                             </div>
-                            <!-- FEEDBACK Modal start -->
-                            <b-modal id="show-feedback-modal" :hide-footer="true">
-                                <div class="d-flex flex-column-fluid flex-center">
-                                    <div class="w-100">
-                                        <div class="pb-15 pt-0 text-center">
-                                            <h2>Fill in your Query Details</h2>
-                                        </div>
-                                        <form class="form">
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="feedback-name"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Name:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="feedback-name" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="feedbackName" ref="feedbackName" placeholder="Enter your name">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="feedback-emailId"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Email ID:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="feedback-emailId" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="email" name="feedbackEmailId" ref="feedbackEmailId" placeholder="Enter your Email ID">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="feedback-companyName"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Company Name:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-input id="feedback-companyName" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="feedbackCompanyName" ref="feedbackCompanyName" placeholder="Enter your Company Name">
-                                                        </b-form-input>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto" label-for="feedback-productOption" class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Query Type:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-select
-                                                            class="form-control-sm"
-                                                            v-model="selectedQueryTypeOptions">
-                                                            <option value="Feedback">Feedback</option>
-                                                            <option value="Job enquiry">Job enquiry</option>
-                                                        </b-form-select>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                                                label-for="feedback-queryDescription"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="d-flex justify-content-end align-items-center label-label" style="width: 110px;">
-                                                        <span>Query Description:</span>
-                                                    </div>
-                                                </template>
-                                                <b-row>
-                                                    <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12">
-                                                        <b-form-textarea id="feedback-queryDescription" class="form-control form-control-solid h-auto py-4 px-2" 
-                                                            type="text" name="feedbackQueryDescription" ref="feedbackQueryDescription" placeholder="Type your queries here"></b-form-textarea>
-                                                    </b-col>
-                                                </b-row>
-                                            </b-form-group>
-                                            <div class="d-flex justify-content-center">
-                                                <p class="text-center py-2" style="width: 60%;">Once submitted, you’ll receive a confirmation email with your <b>Ticket Number</b> to track your case.</p>
-                                            </div>
-                                        </form>
-                                        <b-col cols="12" xs="12" sm="12" md="12" lg="12" xl="12" xxl="12" class="my-5">
-                                            <div class="d-flex flex-row justify-content-center">
-                                                <b-button class="submit-btn">Submit</b-button>
-                                            </div>
-                                        </b-col>
-                                    </div>
-                                </div>
-                            </b-modal>
-                            <!-- FEEDBACK Modal end -->
-                        </b-col>
+                        </div>
+                    </b-card>
+                </div>
+            </b-col>
 
-                    </b-row>
-                </b-col>
-            </b-row>
-        </b-container>
+            <!-- Quote Card -->
+            <b-col lg="4" md="6" class="mb-8">
+                <div class="feature-card-wrapper" v-b-modal.show-quote-modal role="button" tabindex="0">
+                    <div class="feature-card-glow"></div>
+                    <b-card class="feature-card h-100 border-0">
+                        <div class="feature-icon-container mb-8">
+                            <div class="icon-circle"></div>
+                            <b-icon icon="calculator" font-scale="2" class="feature-icon-svg" aria-hidden="true"></b-icon>
+                        </div>
+                        <h3 class="feature-title">Get a Customized Quote</h3>
+                        <p class="feature-desc">Looking for the best pricing option for your business? Fill in the details, and we’ll provide a personalized quote tailored exactly to your operational needs.</p>
+                        <div class="feature-footer mt-auto pt-6">
+                            <div class="feature-link">
+                                <span>Request Quote</span>
+                                <b-icon icon="arrow-right" class="btn-icon" aria-hidden="true"></b-icon>
+                            </div>
+                        </div>
+                    </b-card>
+                </div>
+            </b-col>
+
+            <!-- Feedback Card -->
+            <b-col lg="4" md="6" class="mb-8">
+                <div class="feature-card-wrapper" v-b-modal.show-feedback-modal role="button" tabindex="0">
+                    <div class="feature-card-glow"></div>
+                    <b-card class="feature-card h-100 border-0">
+                        <div class="feature-icon-container mb-8">
+                            <div class="icon-circle"></div>
+                            <b-icon icon="briefcase" font-scale="2" class="feature-icon-svg" aria-hidden="true"></b-icon>
+                        </div>
+                        <h3 class="feature-title">Feedback & Opportunities</h3>
+                        <p class="feature-desc">Share your feedback with us or let us know if you’re interested in joining our growing team. We highly appreciate your input and talent!</p>
+                        <div class="feature-footer mt-auto pt-6">
+                            <div class="feature-link">
+                                <span>Send Feedback</span>
+                                <b-icon icon="arrow-right" class="btn-icon" aria-hidden="true"></b-icon>
+                            </div>
+                        </div>
+                    </b-card>
+                </div>
+            </b-col>
+        </b-row>
+      </section>
+
     </b-container>
+
+    <!-- QUERY MODAL (ULTRA PREMIUM SPLIT) -->
+    <b-modal id="show-query-modal" hide-header hide-footer centered size="xl" modal-class="ultra-premium-modal">
+        <div class="modal-split-layout">
+            <button class="ultra-close-btn" @click="$bvModal.hide('show-query-modal')">
+                <b-icon icon="x"></b-icon>
+            </button>
+            <div class="modal-left-pane query-pane">
+                <div class="pane-content">
+                    <div class="pane-icon-wrapper mb-8">
+                        <b-icon icon="chat-left-dots" font-scale="2.5"></b-icon>
+                    </div>
+                    <h2 class="pane-title">Submit a Query</h2>
+                    <p class="pane-subtitle">We’re here to help. Fill out the details and our support team will resolve your issue quickly.</p>
+                    
+                    <div class="pane-footer mt-auto">
+                        <div class="pane-feature">
+                            <b-icon icon="clock-history" class="me-3"></b-icon>
+                            <span>24/7 Dedicated Support</span>
+                        </div>
+                        <div class="pane-feature">
+                            <b-icon icon="shield-check" class="me-3"></b-icon>
+                            <span>Priority Resolution</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Decorative element -->
+                <div class="pane-decoration"></div>
+            </div>
+            
+            <div class="modal-right-pane">
+                <div class="form-scroll-container">
+                    <form class="ultra-form">
+                        <h3 class="form-section-title mb-6">Query Details</h3>
+                        <b-row>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Full Name</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="email" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Email Address</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Company Name</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " />
+                                    <label class="floating-label">User ID (Optional)</label>
+                                </div>
+                            </b-col>
+                            <b-col md="12" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " />
+                                    <label class="floating-label">Ticket Number (if existing)</label>
+                                </div>
+                            </b-col>
+                            <b-col md="12" class="mb-8">
+                                <div class="floating-input-group">
+                                    <textarea class="floating-input" rows="4" placeholder=" " required></textarea>
+                                    <label class="floating-label">Detailed Description</label>
+                                </div>
+                            </b-col>
+                        </b-row>
+                        
+                        <div class="form-actions mt-4">
+                            <button type="button" class="ultra-submit-btn">
+                                <span>Submit Request</span>
+                                <b-icon icon="arrow-right" class="btn-icon"></b-icon>
+                            </button>
+                            <p class="form-note mt-4">You'll receive a confirmation email with your Ticket Number.</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </b-modal>
+
+    <!-- QUOTE MODAL (ULTRA PREMIUM SPLIT) -->
+    <b-modal id="show-quote-modal" hide-header hide-footer centered size="xl" modal-class="ultra-premium-modal">
+        <div class="modal-split-layout">
+            <button class="ultra-close-btn" @click="$bvModal.hide('show-quote-modal')">
+                <b-icon icon="x"></b-icon>
+            </button>
+            <div class="modal-left-pane quote-pane">
+                <div class="pane-content">
+                    <div class="pane-icon-wrapper mb-8">
+                        <b-icon icon="calculator" font-scale="2.5"></b-icon>
+                    </div>
+                    <h2 class="pane-title">Request a Custom Quote</h2>
+                    <p class="pane-subtitle">Looking for the perfect pricing plan? Tell us about your operations and we'll tailor a quote specifically for your business.</p>
+                    
+                    <div class="pane-footer mt-auto">
+                        <div class="pane-feature">
+                            <b-icon icon="graph-up-arrow" class="me-3"></b-icon>
+                            <span>Scalable Solutions</span>
+                        </div>
+                        <div class="pane-feature">
+                            <b-icon icon="tags" class="me-3"></b-icon>
+                            <span>Competitive Pricing</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Decorative element -->
+                <div class="pane-decoration"></div>
+            </div>
+            
+            <div class="modal-right-pane">
+                <div class="form-scroll-container">
+                    <form class="ultra-form" @submit.prevent="handleSubmit">
+                        <h3 class="form-section-title mb-6">Business Profile</h3>
+                        <b-row>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Full Name</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="email" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Work Email</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Phone Number</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Designation</label>
+                                </div>
+                            </b-col>
+                            <b-col md="12" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Company Name</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="number" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Number of Employees</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-8">
+                                <div class="floating-input-group">
+                                    <select class="floating-input floating-select" v-model="selectedProductTypeOptions" required>
+                                        <option value="" disabled selected></option>
+                                        <option v-for="(opt, idx) in productTypeOptions" :key="idx" :value="opt.value">{{ opt.text }}</option>
+                                    </select>
+                                    <label class="floating-label">Product of Interest</label>
+                                    <b-icon icon="chevron-down" class="select-icon"></b-icon>
+                                </div>
+                            </b-col>
+                        </b-row>
+                        
+                        <div class="form-actions mt-4">
+                            <button type="submit" class="ultra-submit-btn">
+                                <span>Get Your Quote</span>
+                                <b-icon icon="arrow-right" class="btn-icon"></b-icon>
+                            </button>
+                            <p class="form-note mt-4">An expert will contact you within 1 business day.</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </b-modal>
+
+    <!-- FEEDBACK MODAL (ULTRA PREMIUM SPLIT) -->
+    <b-modal id="show-feedback-modal" hide-header hide-footer centered size="xl" modal-class="ultra-premium-modal">
+        <div class="modal-split-layout">
+            <button class="ultra-close-btn" @click="$bvModal.hide('show-feedback-modal')">
+                <b-icon icon="x"></b-icon>
+            </button>
+            <div class="modal-left-pane feedback-pane">
+                <div class="pane-content">
+                    <div class="pane-icon-wrapper mb-8">
+                        <b-icon icon="star" font-scale="2.5"></b-icon>
+                    </div>
+                    <h2 class="pane-title">We Value Your Input</h2>
+                    <p class="pane-subtitle">Whether you're sharing feedback to help us improve or looking for exciting job opportunities, we want to hear from you.</p>
+                    
+                    <div class="pane-footer mt-auto">
+                        <div class="pane-feature">
+                            <b-icon icon="heart" class="me-3"></b-icon>
+                            <span>Community Driven</span>
+                        </div>
+                        <div class="pane-feature">
+                            <b-icon icon="briefcase" class="me-3"></b-icon>
+                            <span>Growing Fast</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Decorative element -->
+                <div class="pane-decoration"></div>
+            </div>
+            
+            <div class="modal-right-pane">
+                <div class="form-scroll-container">
+                    <form class="ultra-form">
+                        <h3 class="form-section-title mb-6">Drop us a line</h3>
+                        <b-row>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Full Name</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="email" class="floating-input" placeholder=" " required />
+                                    <label class="floating-label">Email Address</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <input type="text" class="floating-input" placeholder=" " />
+                                    <label class="floating-label">Company (Optional)</label>
+                                </div>
+                            </b-col>
+                            <b-col md="6" class="mb-5">
+                                <div class="floating-input-group">
+                                    <select class="floating-input floating-select" v-model="selectedQueryTypeOptions" required>
+                                        <option value="" disabled selected></option>
+                                        <option value="Feedback">Platform Feedback</option>
+                                        <option value="Job enquiry">Job Enquiry</option>
+                                        <option value="Partnership">Partnership</option>
+                                    </select>
+                                    <label class="floating-label">Topic</label>
+                                    <b-icon icon="chevron-down" class="select-icon"></b-icon>
+                                </div>
+                            </b-col>
+                            <b-col md="12" class="mb-8">
+                                <div class="floating-input-group">
+                                    <textarea class="floating-input" rows="4" placeholder=" " required></textarea>
+                                    <label class="floating-label">Your Message</label>
+                                </div>
+                            </b-col>
+                        </b-row>
+                        
+                        <div class="form-actions mt-4">
+                            <button type="button" class="ultra-submit-btn">
+                                <span>Send Message</span>
+                                <b-icon icon="arrow-right" class="btn-icon"></b-icon>
+                            </button>
+                            <p class="form-note mt-4">Thanks for taking the time to connect with us.</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </b-modal>
+
+  </b-container>
 </template>
+
 <script>
-    import Header from "@/view/layout/Header.vue";
-    import ApiService from "@/core/services/api.service";
-    // import PageLoader from '../components/PageLoader.vue';
-    export default {
-        data() {
-            return {
-                productTypeOptions: [
-                    { value: 'Focus Air', text: 'Focus Air' },
-                    { value: 'Focus Sea', text: 'Focus Sea' },
-                    { value: 'Focus Road', text: 'Focus Road' }
-                ],
-                selectedProductTypeOptions: [],
-                selectedQueryTypeOptions: []
-            };
-        },
-        components: {
-            Header,
-            // PageLoader
-        },
-    };
+
+export default {
+    name: "ContactUs",
+    components: {
+    },
+    data() {
+        return {
+            productTypeOptions: [
+                { value: 'Focus Air - Basic Plan', text: 'Focus Air - Basic Plan' },
+                { value: 'Focus Air - Pro Plan', text: 'Focus Air - Pro Plan' }
+            ],
+            selectedProductTypeOptions: "",
+            selectedQueryTypeOptions: ""
+        };
+    },
+    methods: {
+        handleSubmit() {
+            // Handle quote submission logic
+            console.log("Form submitted");
+        }
+    },
+    mounted() {
+        if (this.$route.query.modal === 'quote') {
+            this.$bvModal.show('show-quote-modal');
+        }
+    }
+};
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
+.main-wrapper {
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+}
 
-html, body, html * {
-  font-family: 'Roboto', sans-serif !important;
+/* Decorative background elements */
+.decorative-ellipses .ellipse {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.5;
 }
-.main-container {
-    background: linear-gradient(180deg, #EDF7FF 10%, #FFFFFF 38%);
+.ellipse-tl { width: 400px; height: 400px; background: #D0E6F8; top: -100px; left: -100px; }
+.ellipse-tr { width: 300px; height: 300px; background: #E6F0FF; top: 20%; right: -50px; }
+.ellipse-br { width: 500px; height: 500px; background: #F0F7FF; bottom: 10%; left: 20%; }
+
+.content-container {
+    position: relative;
+    z-index: 10;
+    padding-top: 0;
 }
+
+/* Typography Enhancements */
 .section-title {
-    font-size: 48px !important;
-    font-weight: 500;
-    line-height: 54px !important;
-    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
     color: #355594;
+    letter-spacing: -0.5px;
 }
-.section-text {
-    font-size: 14px;
+.section-subtitle {
+    font-size: 1.25rem;
+    color: #5A6B8A;
     font-weight: 400;
-    line-height: 20px;
-    text-align: center;
-    color:#4C4C4C;
 }
-.ellipse-1 {
-    position: absolute;
-    left: 93%;
-    top: -20%;
-}
-.circle-image-1 {
-    width: 60px;
-    height: auto;
-}
-.ellipse-2 {
-    position: absolute;
-    left: 5%;
-    top: 57%;
-}
-.circle-image-2 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-3 {
-    position: absolute;
-    left: -3%;
-    top: 100%;
-}
-.circle-image-3 {
-    width: 25px;
-    height: auto;
-}
-.query-section,
-.quote-section,
-.feedback-section {
-    padding: 78px 186px;
-    border-radius: 30px;
-    background: #FFFFFF;
-    box-shadow: 4px 4px 80px 5px #0000001A;
-}
-.query-section h2,
-.quote-section h2,
-.feedback-section h2 {
-    font-size: 40px;
-    font-weight: 500;
-    line-height: 45px;
-    text-align: center;
+.section-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: #355594;
-    margin: 0;
-    padding-bottom: 30px;
+    opacity: 0.6;
+    margin-bottom: 1rem;
+    display: block;
 }
-.query-section p,
-.quote-section p,
-.feedback-section p {
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 20px;
-    text-align: center;
-    color: #4C4C4C;
-    margin: 0;
-    padding-top: 30px;
+
+/* Feature Cards (Match Home.vue) */
+.feature-card-wrapper {
+    position: relative;
+    height: 100%;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    outline: none;
 }
-.query-section:hover,
-.quote-section:hover,
-.feedback-section:hover {
-    background: linear-gradient(180deg, #E8F6FF 0%, #FFFFFF 100%);
-    box-shadow: 4px 4px 80px 5px #0000001A;
+.feature-card-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #355594, #ABC0FF);
+    border-radius: 24px;
+    opacity: 0;
+    filter: blur(15px);
+    transition: opacity 0.4s ease;
+    z-index: 0;
+}
+.feature-card {
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%) !important;
+    backdrop-filter: blur(20px);
+    padding: 2.5rem;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+.feature-card :deep(.card-body) {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.feature-icon-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+.icon-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #F0F7FF;
+    border-radius: 28px;
+    transform: rotate(45deg);
+    transition: all 0.4s ease;
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.05);
+}
+.feature-icon-svg {
+    position: relative;
+    z-index: 2;
+    color: #355594;
+    transition: all 0.5s ease;
+}
+
+.feature-title {
+    color: #1e3a6e;
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.5px;
+}
+.feature-desc {
+    color: #5A6B8A;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.feature-link {
+    display: inline-flex;
+    align-items: center;
+    color: #355594;
+    font-weight: 700;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     cursor: pointer;
+    margin-top: auto;
+}
+.feature-link span {
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
 }
 
-#show-query-modal h2,
-#show-quote-modal h2,
-#show-feedback-modal h2 {
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 30px;
-    text-align: center;
-    color: #355594;
-    margin: 0;
+/* Hover States for Feature Cards */
+.feature-card-wrapper:hover {
+    transform: translateY(-8px);
 }
-.submit-btn {
-    background: transparent !important;
-    border: 1px solid #A6A6A6;
-    color: #A6A6A6;
-    border-radius: 30px;
-    padding: 8px 20px;
+.feature-card-wrapper:hover .feature-card-glow {
+    opacity: 0.3;
 }
-.submit-btn:hover {
-    background: transparent !important;
-    border: 1px solid #A6A6A6 !important;
-    color: #A6A6A6 !important;
-    box-shadow: 1px 0px 4px 0px #00000040;
+.feature-card-wrapper:hover .feature-card {
+    background: white !important;
+    border-color: #355594 !important;
+    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.1);
 }
-/* For Extra Small Screens (xs - <576px) */
-@media (max-width: 575px) {
+.feature-card-wrapper:hover .icon-circle {
+    background: #355594;
+    transform: rotate(45deg) scale(1.05);
+}
+.feature-card-wrapper:hover .feature-icon-svg {
+    color: white;
+    transform: scale(1.1);
+}
+.feature-card-wrapper:hover .feature-link {
+    color: #1e3a6e;
+}
+.feature-card-wrapper:hover .feature-link .b-icon {
+    transform: translateX(5px);
+}
+
+/* Media Queries */
+@media (max-width: 991px) {
     .section-title {
-        font-size: 36px !important;
-        line-height: 40px !important;
-    }
-    .query-section,
-    .quote-section,
-    .feedback-section {
-        padding: 20px;
-    }
-    .query-section h2,
-    .quote-section h2,
-    .feedback-section h2 {
-        font-size: 22px;
-        line-height: 28px;
-        padding-bottom: 10px;
-    }
-    .query-section p,
-    .quote-section p,
-    .feedback-section p {
-        font-size: 13px;
-        line-height: 20px;
-        padding-top: 10px;
-    }
-    .label-label {
-        width: auto !important;
-        justify-content: start !important;
+        font-size: 2.2rem;
     }
 }
-@media (max-width: 575px) {
+@media (max-width: 767px) {
     .section-title {
-        font-size: 40px !important;
-        line-height: 46px !important;
-    }
-    .section-text {
-        font-size: 12px;
-        line-height: 18px;
-    }
-    .circle-image-1 {
-        width: 30px;
-        height: auto;
-    }
-    .ellipse-2 {
-        top: 56%;
-        left: 4%;
-    }
-    .ellipse-3 {
-        top: 95%;
-        left: -5%;
+        font-size: 1.8rem;
     }
 }
-/* For Small Screens (sm - ≥576px) */
-@media (min-width: 576px) and (max-width: 767px) {
-    .section-title {
-        font-size: 44px !important;
-        line-height: 50px !important;
-    }
-    .section-text {
-        font-size: 12px;
-        line-height: 18px;
-    }
-    .circle-image-1 {
-        width: 45px;
-        height: auto;
-    }
-    .query-section,
-    .quote-section,
-    .feedback-section {
-        padding: 30px;
-    }
-    .query-section h2,
-    .quote-section h2,
-    .feedback-section h2 {
-        font-size: 28px;
-        line-height: 34px;
-        padding-bottom: 10px;
-    }
-    .query-section p,
-    .quote-section p,
-    .feedback-section p {
-        font-size: 13px;
-        line-height: 20px;
-        padding-top: 10px;
-    }
-    .label-label {
-        width: auto !important;
-        justify-content: start !important;
-    }
-}
-
-/* For Medium Screens (md - ≥768px) */
-@media (min-width: 768px) and (max-width: 991px) {
-    .query-section,
-    .quote-section,
-    .feedback-section {
-        padding: 50px;
-    }
-    .query-section h2,
-    .quote-section h2,
-    .feedback-section h2 {
-        font-size: 34px;
-        line-height: 40px;
-        padding-bottom: 12px;
-    }
-    .query-section p,
-    .quote-section p,
-    .feedback-section p {
-        font-size: 13px;
-        line-height: 20px;
-        padding-top: 12px;
-    }
-}
-
-/* For Large Screens (lg - ≥992px) */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .query-section,
-    .quote-section,
-    .feedback-section {
-        padding: 60px 80px;
-
-    }
-}
-
-/* For Extra Large Screens (xl - ≥1200px) */
-/* @media (min-width: 1200px) {
-    
-} */
 </style>
 
 <style>
-/* Model box css */
-.modal-content {
-    background-color: #F3F6F9 !important;
-    backdrop-filter: blur(130px) !important;
-    box-shadow: 5px 4px 25px 0px #0000001F !important;
-    border-radius: 40px !important;
-    padding: 2.5rem;
-}
-.modal-body {
-    padding: 0px !important;
-}
-.modal .modal-header {
-    border: 0px !important;
-}
-.close {
-    font-size: 3rem !important;
-    font-weight: 300 !important;
-}
-.modal .modal-header .close:hover {
-    color: #355594 !important;
-}
-.form-control, .form-control-solid {
-    background: transparent !important;
-    border: 1px solid #A6A6A6 !important;
-}
-.form-control-solid:active {
-    background-color: #f3f6f9 !important;
-}
-#quote-productOptions .btn {
-    background: transparent !important;
-    border: 1px solid #A6A6A6 !important;
-    text-align: left !important;
-}
-.custom-select {
-    background-color: transparent !important;
-    border-color: #a6a6a6 !important;
+/* ULTRA PREMIUM MODAL REDESIGN */
+.ultra-premium-modal .modal-dialog {
+    max-width: 1100px !important;
+    margin: 1.75rem auto;
 }
 
-@media (min-width: 576px) {
-    .modal-dialog {
-        max-width: 600px !important;
+.ultra-premium-modal .modal-content {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 32px !important;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.25) !important;
+    font-family: 'Inter', sans-serif !important;
+    overflow: hidden;
+}
+
+.ultra-premium-modal .modal-body {
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px);
+}
+
+/* Split Layout */
+.modal-split-layout {
+    display: flex;
+    flex-direction: row;
+    min-height: 700px;
+    position: relative;
+}
+
+.ultra-close-btn {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.05);
+    border: none;
+    color: #5A6B8A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 50;
+    transition: all 0.3s ease;
+}
+.ultra-close-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Left Pane Styles */
+.modal-left-pane {
+    flex: 0 0 40%;
+    padding: 4rem 3.5rem;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Different gradients for different modals */
+.query-pane {
+    background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%);
+}
+.quote-pane {
+    background: linear-gradient(135deg, #2a4476 0%, #4a72c9 100%);
+}
+.feedback-pane {
+    background: linear-gradient(135deg, #1c3361 0%, #3a5c9f 100%);
+}
+
+.pane-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.pane-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.pane-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+}
+
+.pane-subtitle {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    opacity: 0.85;
+}
+
+.pane-feature {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+.pane-feature:last-child {
+    margin-bottom: 0;
+}
+
+.pane-decoration {
+    position: absolute;
+    bottom: -150px;
+    left: -150px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Right Pane Styles */
+.modal-right-pane {
+    flex: 0 0 60%;
+    background: white;
+    position: relative;
+}
+
+.form-scroll-container {
+    height: 100%;
+    overflow-y: auto;
+    padding: 4.5rem 4rem;
+}
+
+/* Custom Scrollbar for form */
+.form-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+.form-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.02);
+}
+.form-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(53, 85, 148, 0.2);
+    border-radius: 10px;
+}
+
+.form-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3a6e;
+    letter-spacing: -0.5px;
+}
+
+/* Floating Input Group */
+.floating-input-group {
+    position: relative;
+    width: 100%;
+}
+
+.floating-input {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    border-bottom: 2px solid #e2e8f0;
+    border-radius: 12px 12px 0 0;
+    padding: 24px 16px 8px 16px;
+    font-size: 1rem;
+    color: #1e3a6e;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.floating-input:focus {
+    background: #f0f7ff;
+    border-bottom-color: #355594;
+    outline: none;
+}
+
+textarea.floating-input {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.floating-label {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    font-size: 1rem;
+    color: #64748b;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+/* Floating label active state */
+.floating-input:focus ~ .floating-label,
+.floating-input:not(:placeholder-shown) ~ .floating-label,
+.floating-select:valid ~ .floating-label {
+    top: 6px;
+    font-size: 0.75rem;
+    color: #355594;
+    font-weight: 600;
+}
+
+/* Custom Select tweaks */
+.floating-select {
+    appearance: none;
+    cursor: pointer;
+}
+.select-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    pointer-events: none;
+}
+
+/* Submit Action Area */
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ultra-submit-btn { background: #355594; border: none; border-radius: 999px; padding: 10px 10px 10px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(53, 85, 148, 0.25); cursor: pointer; width: auto; max-width: none; }
+.ultra-submit-btn:hover { background: #28447a; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(53, 85, 148, 0.35); }
+.ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }
+.ultra-submit-btn .btn-icon { background: white; color: #355594; border-radius: 50%; width: 32px !important; height: 32px !important; padding: 6px; margin-left: 0 !important; }
+
+.form-note {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+    .modal-split-layout {
+        flex-direction: column;
+        min-height: auto;
+    }
+    .modal-left-pane {
+        flex: 0 0 auto;
+        padding: 3rem 2rem;
+    }
+    .pane-title {
+        font-size: 1.8rem;
+    }
+    .pane-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1.5rem !important;
+    }
+    .modal-right-pane {
+        flex: 0 0 auto;
+    }
+    .form-scroll-container {
+        padding: 3rem 2rem;
+        height: auto;
+        max-height: 60vh;
+    }
+    .ultra-close-btn {
+        top: 15px;
+        right: 15px;
+        background: rgba(255,255,255,0.2);
+        color: white;
     }
 }
 </style>

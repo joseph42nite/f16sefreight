@@ -1,784 +1,525 @@
-
 <template>
-    <b-container fluid class="main-container">
-        <!-- Include PageLoader -->
-        <!-- <PageLoader></PageLoader> -->
-        <!-- Include Header -->
-        <Header></Header>
-        <b-container>
-            <b-row align-h="center" align-v="center" class="mt-md-30 mt-sm-25 mt-20">
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center" style="position: relative;">
-                        <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
-                        <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
-                        <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
-                        <b-col cols="12">
-                            <div class="mb-md-30 mb-sm-20 mb-10">
-                                <h2 class="section-title">About Us</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
-                                        <p class="aboutUs-section-text">At F16s E-Freight Solutions, we are dedicated to transforming logistics management by offering seamless, cost-effective digital solutions tailored to meet the needs of small to medium-sized businesses in the logistics and freight forwarding sectors. With a core focus on accessibility and user-friendliness, we empower businesses by streamlining data transfer, documentation, and tracking processes across air, sea, and road freight modes.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
-                    </b-row>
-                </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
-                        <b-col cols="12" style="position: relative;">
-                            <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
-                            <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div>
-                            <div class="ellipse-6"><img src="/media/custome/circle/ellipse-6.png" alt="circle-image" id="" class="circle-image-6" /></div>
-                            <div class="my-md-30 my-sm-20 my-10">
-                                <h2 class="section-title">Our Vision</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
-                                        <p class="vision-section-text">Our vision is to become the go-to digital partner for logistics businesses worldwide. We aim to empower small and growing companies to achieve greater efficiency and cost savings, enabling them to scale seamlessly. By providing reliable, intuitive tools and affordable service options, we’re making it easier for businesses of all sizes to thrive in today’s competitive landscape.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
-                    </b-row>
-                </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center" class="my-md-30 my-sm-20 my-10">
-                        <b-col cols="12">
-                            <div class="mb-12">
-                                <h2 class="section-title">What We Offer</h2>
-                            </div>
-                        </b-col>
-                        <b-col
-                            v-for="(we_offer_section_card, index) in we_offer_section_cards"
-                            :key="index"
-                            cols="12" sm="12" md="4" lg="4" xl="4" xxl="4"
-                            class="mb-6"
-                        >
-                            <b-card
-                                :style="{
-                                    boxShadow: '-5px 0px 90px 0px #00000012',
-                                    background: 'linear-gradient(180deg, #BBE2FF 0%, #FFFFFF 100%)',
-                                    borderRadius: '18px'
-                                }"
-                            >
-                                <div class="my-5 my-sm-8 my-md-10">
-                                    <div style="padding-bottom: 16%; position: relative">
-                                        <b-img :src="we_offer_section_card.titleImgSrc" :alt="we_offer_section_card.imgAlt" class="mx-auto" style="position: absolute; left: 10%; right: 10%; height: 0; width: 80%; height: 100%" />
-                                    </div>
-                                    <div style="padding-bottom: 42%; position: relative">
-                                        <b-img :src="we_offer_section_card.imgSrc" :alt="we_offer_section_card.imgAlt" class="mx-auto" style="position: absolute; left: 0; height: 0; width: 100%; height: 100%" />
-                                    </div>
-                                </div>
-                                <b-card-text class="text-center offer-section-text">
-                                    {{ we_offer_section_card.text }}
-                                </b-card-text>
-                                <div class="d-flex flex-row justify-content-center my-10">
-                                    <router-link to="#">
-                                        <b-button class="d-flex align-items-center text-center offer-section-btn">
-                                            <span>Get</span>
-                                            <b-icon icon="arrow-right" class="btn-icon ms-2"></b-icon>
-                                        </b-button>
-                                    </router-link>
-                                </div>
-                            </b-card>
-                        </b-col>
-                    </b-row>
-                </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
-                        <div class="ellipse-7"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-7" /></div>
-                        <div class="ellipse-8"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-8" /></div>
-                        <div class="ellipse-9"><img src="/media/custome/circle/ellipse-9.png" alt="circle-image" id="" class="circle-image-9" /></div>
-                        <div class="my-md-30 my-sm-20 my-10">
-                            <b-row align-h="center" align-v="center">
-                                <b-col cols="12" class="text-center mb-14">
-                                    <h2 class="section-title">Why Choose Us?</h2>
-                                </b-col>
-                                <b-col ccols="12" sm="12" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
-                                    <div class="choose-us-item text-center">
-                                        <b-img src="/media/custome/about/choose-us-1.svg" alt="Image 1" class="img-fluid mb-3" />
-                                        <h5>Innovative Technology for Small Businesses</h5>
-                                        <p>Our technology solutions are built with the needs of small enterprises in mind. From database solutions to a basic ERP system, F16s equips you with the tools to track your growth month on month, helping you identify areas for improvement and operational enhancements.</p>
-                                    </div>
-                                </b-col>
-                                <b-col cols="12" sm="12" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
-                                    <div class="choose-us-item text-center">
-                                        <b-img src="/media/custome/about/choose-us-2.svg" alt="Image 2" class="img-fluid mb-3" />
-                                        <h5>Affordable and Scalable</h5>
-                                        <p>We understand the unique challenges small businesses face in logistics. Our pricing options are crafted to be budget-friendly, providing essential tools in our Basic plan like database management and printable documentation, while our Pro plan connects businesses to multiple AWBs and adds advanced features to support growing needs.</p>
-                                    </div>
-                                </b-col>
-                                <b-col cols="12" sm="12" md="4" lg="4" xl="4" xxl="4" class="d-flex justify-content-center mb-4">
-                                    <div class="choose-us-item text-center">
-                                        <b-img src="/media/custome/about/choose-us-3.svg" alt="Image 3" class="img-fluid mb-3" />
-                                        <h5>Commitment to Customer Support</h5>
-                                        <p>Our team is committed to helping you succeed. We offer dedicated support and resources for all our clients, ensuring that each business can leverage our platform to the fullest. We’re here to provide guidance, answer questions, and assist in adapting our solutions to meet your specific needs.</p>
-                                    </div>
-                                </b-col>
-                            </b-row>
-                        </div>
-                    </b-row>
-                </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
-                        <div class="my-md-30 my-sm-20 my-2">
-                            <b-row align-h="center" align-v="center">
-                                <b-col cols="12" class="text-center mb-20">
-                                    <b-card
-                                        overlay
-                                        img-src="/media/custome/about/bottom-img.png"
-                                        img-alt="image"
-                                        title="Our Story"
-                                        class="custom-card"
-                                    >
-                                        <b-card-text class="custom-card-text">
-                                            Founded in Bangalore, F16s E-Freight Solutions emerged from the combined knowledge and expertise of a freight-forwarding genius and a seasoned expert in the airline industry. Together, they envisioned a digital platform that would address the unique challenges faced by small and mid-sized logistics companies, who often lack access to the advanced tools available to larger players.
-                                            <br />
-                                            Recognizing the high cost and complexity of existing logistics solutions, they set out to create an affordable, easy-to-use platform tailored to empower businesses of all sizes. Their shared vision was to streamline logistics processes, enhance efficiency, and make sophisticated freight management accessible to everyone.
-                                        </b-card-text>
-                                    </b-card>
-                                </b-col>
-                            </b-row>
-                        </div>
-                    </b-row>
-                </b-col>
-            </b-row>
-        </b-container>
+  <b-container fluid class="main-wrapper p-0">
+    <!-- DECORATIVE ELLIPSES -->
+    <div class="decorative-ellipses d-none d-lg-block">
+        <div class="ellipse ellipse-tl"></div>
+        <div class="ellipse ellipse-tr"></div>
+        <div class="ellipse ellipse-br"></div>
+    </div>
+
+
+    <b-container class="content-container pb-25">
+      <!-- ABOUT US & VISION SECTION -->
+      <section class="about-hero-section mt-12 mt-lg-20 mb-20">
+        <b-row align-v="stretch">
+          <b-col lg="6" class="mb-12 mb-lg-0 d-flex flex-column justify-content-center">
+            <span class="section-eyebrow">About Us</span>
+            <h1 class="section-title mb-6">Transforming Logistics Management</h1>
+            <p class="section-subtitle mb-8">
+              At F16s E-Freight Solutions, we are dedicated to transforming logistics management by offering seamless, cost-effective digital solutions tailored to meet the needs of small to medium-sized businesses in the logistics and freight forwarding sectors. 
+            </p>
+            <p class="section-subtitle">
+              With a core focus on accessibility and user-friendliness, we empower businesses by streamlining data transfer, documentation, and tracking processes across air, sea, and road freight modes.
+            </p>
+          </b-col>
+          <b-col lg="6" class="d-flex flex-column justify-content-center">
+            <div class="vision-card">
+               <div class="vision-glow"></div>
+               <div class="vision-content">
+                  <span class="section-eyebrow">Our Vision</span>
+                  <h2 class="vision-title mb-4">Empowering Global Trade</h2>
+                  <p class="vision-text">
+                    Our vision is to become the go-to digital partner for logistics businesses worldwide. We aim to empower small and growing companies to achieve greater efficiency and cost savings, enabling them to scale seamlessly. By providing reliable, intuitive tools and affordable service options, we’re making it easier for businesses of all sizes to thrive in today’s competitive landscape.
+                  </p>
+               </div>
+            </div>
+          </b-col>
+        </b-row>
+      </section>
+
+      <!-- WHAT WE OFFER -->
+      <section class="services-carousel-section mb-25">
+        <b-row>
+            <b-col cols="12" class="text-center mb-16">
+                <span class="section-eyebrow">Expertise</span>
+                <h2 class="section-title">Our Specialized Products</h2>
+                <p class="section-subtitle mt-4">High-performance solutions for every freight challenge.</p>
+            </b-col>
+        </b-row>
+        <div class="services-modern-grid">
+            <article 
+                v-for="(offer, index) in we_offer_section_cards" 
+                :key="index" 
+                class="service-product-card"
+            >
+                <div class="service-product-image">
+                    <img :src="offer.imgSrc" :alt="offer.imgAlt">
+                </div>
+                <div class="service-product-info">
+                    <h3 class="service-product-title">{{ offer.imgAlt }}</h3>
+                    <p class="service-product-desc">{{ offer.text }}</p>
+                    <b-button to="/product-description" class="hero-btn">
+                        <span>Explore More</span>
+                        <b-icon icon="arrow-right" class="btn-icon" aria-hidden="true"></b-icon>
+                    </b-button>
+                </div>
+            </article>
+        </div>
+      </section>
+
+      <!-- WHY CHOOSE US -->
+      <section class="mb-25">
+        <b-row class="justify-content-center">
+            <b-col cols="12" class="text-center mb-16">
+                <span class="section-eyebrow">Advantages</span>
+                <h2 class="section-title">Why Choose Us?</h2>
+            </b-col>
+            <b-col lg="4" md="6" class="mb-8" v-for="(item, idx) in chooseUsItems" :key="idx">
+                <div class="choose-us-item text-center">
+                    <div class="choose-us-icon-wrapper mx-auto mb-6">
+                        <img :src="item.icon" :alt="item.title" class="img-fluid" />
+                    </div>
+                    <h3 class="choose-us-title mb-4">{{ item.title }}</h3>
+                    <p class="choose-us-desc">{{ item.desc }}</p>
+                </div>
+            </b-col>
+        </b-row>
+      </section>
+
+      <!-- OUR STORY -->
+      <section class="story-section mb-20">
+        <div class="story-card">
+            <img src="/media/custome/about/bottom-img.png" alt="Our Story Background" class="story-bg-img">
+            <div class="story-overlay">
+                <span class="section-eyebrow text-white opacity-75">Origins</span>
+                <h2 class="section-title text-white mb-6">Our Story</h2>
+                <p class="story-text">
+                    Founded in Bangalore, F16s E-Freight Solutions emerged from the combined knowledge and expertise of a freight-forwarding genius and a seasoned expert in the airline industry. Together, they envisioned a digital platform that would address the unique challenges faced by small and mid-sized logistics companies, who often lack access to the advanced tools available to larger players.
+                </p>
+                <p class="story-text mt-4">
+                    Recognizing the high cost and complexity of existing logistics solutions, they set out to create an affordable, easy-to-use platform tailored to empower businesses of all sizes. Their shared vision was to streamline logistics processes, enhance efficiency, and make sophisticated freight management accessible to everyone.
+                </p>
+            </div>
+        </div>
+      </section>
+
     </b-container>
+  </b-container>
 </template>
+
 <script>
-    import Header from "@/view/layout/Header.vue";
-    // import PageLoader from '../components/PageLoader.vue';
-    export default {
-        data() {
-            return {
-                we_offer_section_cards: [
-                    {
-                        titleImgSrc: "/media/custome/about/focus-air.svg",
-                        imgSrc: "/media/custome/about/plane.png",
-                        imgAlt: "Focus air",
-                        text: "Streamline your air freight data with seamless airline connectivity and real-time insights.",
-                    },
-                    {
-                        titleImgSrc: "/media/custome/about/focus-sea.svg",
-                        imgSrc: "/media/custome/about/boat.png",
-                        imgAlt: "Focus sea",
-                        text: "Simplify sea freight management with efficient stock control and sales analysis.",
-                    },
-                    {
-                        titleImgSrc: "/media/custome/about/focus-road.svg",
-                        imgSrc: "/media/custome/about/truck.png",
-                        imgAlt: "Focus road",
-                        text: "Manage road freight documentation and bookings with ease, complete with secure data transfers.",
-                    },
-                ],
-            };
-        },
-        components: {
-            Header,
-            // PageLoader
-        },
-    };
+
+export default {
+    name: "AboutUs",
+    components: {
+    },
+    data() {
+        return {
+            we_offer_section_cards: [
+                {
+                    titleImgSrc: "/media/custome/about/focus-air.svg",
+                    imgSrc: "/media/custome/about/plane.png",
+                    imgAlt: "FOCUS AIR",
+                    text: "Streamline your air freight data with seamless airline connectivity and real-time insights.",
+                },
+                {
+                    titleImgSrc: "/media/custome/about/focus-sea.svg",
+                    imgSrc: "/media/custome/about/boat.png",
+                    imgAlt: "FOCUS SEA",
+                    text: "Simplify sea freight management with efficient stock control and sales analysis.",
+                },
+                {
+                    titleImgSrc: "/media/custome/about/focus-road.svg",
+                    imgSrc: "/media/custome/about/truck.png",
+                    imgAlt: "FOCUS ROAD",
+                    text: "Manage road freight documentation and bookings with ease, complete with secure data transfers.",
+                },
+            ],
+            chooseUsItems: [
+                {
+                    icon: "/media/custome/about/choose-us-1.svg",
+                    title: "Innovative Technology for Small Businesses",
+                    desc: "Our technology solutions are built with the needs of small enterprises in mind. From database solutions to a basic ERP system, F16s equips you with the tools to track your growth month on month, helping you identify areas for improvement and operational enhancements."
+                },
+                {
+                    icon: "/media/custome/about/choose-us-2.svg",
+                    title: "Affordable and Scalable",
+                    desc: "We understand the unique challenges small businesses face in logistics. Our pricing options are crafted to be budget-friendly, providing essential tools in our Basic plan like database management and printable documentation, while our Pro plan connects businesses to multiple AWBs and adds advanced features to support growing needs."
+                },
+                {
+                    icon: "/media/custome/about/choose-us-3.svg",
+                    title: "Commitment to Customer Support",
+                    desc: "Our team is committed to helping you succeed. We offer dedicated support and resources for all our clients, ensuring that each business can leverage our platform to the fullest. We’re here to provide guidance, answer questions, and assist in adapting our solutions to meet your specific needs."
+                }
+            ]
+        };
+    },
+};
 </script>
+
 <style scoped>
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-html, body, html * {
-  font-family: 'Roboto', sans-serif !important;
+.main-wrapper {
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    overflow-x: hidden;
 }
-.main-container {
-    background: linear-gradient(180deg, #EDF7FF 10%, #FFFFFF 38%);
+
+/* Decorative background elements */
+.decorative-ellipses .ellipse {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.5;
 }
+.ellipse-tl { width: 400px; height: 400px; background: #D0E6F8; top: -100px; left: -100px; }
+.ellipse-tr { width: 300px; height: 300px; background: #E6F0FF; top: 20%; right: -50px; }
+.ellipse-br { width: 500px; height: 500px; background: #F0F7FF; bottom: 10%; left: 20%; }
+
+.content-container {
+    position: relative;
+    z-index: 10;
+    padding-top: 0;
+}
+
+/* Typography */
 .section-title {
-    font-size: 48px !important;
-    font-weight: 500;
-    line-height: 54px !important;
-    text-align: center;
-    color: #355594;
-
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e3a6e;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
 }
-.vision-section-text, .aboutUs-section-text {
-    font-size: 16px;
+.section-subtitle {
+    font-size: 1.15rem;
+    color: #5A6B8A;
     font-weight: 400;
-    line-height: 30px;
-    text-align: center;
-    color:#4C4C4C;
+    line-height: 1.7;
 }
-.offer-section-text {
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 20px;
-    color: #4C4C4C;
-    margin: 0;
-}
-.offer-section-btn {
-    background: linear-gradient(360deg, rgba(119, 128, 177, 0.21) 0%, rgba(34, 50, 138, 0.21) 53.5%);
-    border-radius: 30px;
-    border: 0px;
-    gap: 4px;
-    font-size: 16px;
-    font-weight: 400;
-    padding: 6px;
-
-}
-.offer-section-btn:hover {
-    background: #fff !important;
-}
-.offer-section-btn span {
-    color: #3A3B7B;
-    padding: 0px 10px;
-    font-weight: 400;
-}
-.btn-icon {
-    background: #fff;
-    border-radius: 30px;
-    font-size: 36px !important;
-    font-weight: 600;
-    padding: 4px;
-    color: #355594;
-}
-.choose-us-item {
-    vertical-align: top;
-}
-.choose-us-item h5 {
-    font-size: 20px;
+.section-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
     font-weight: 700;
-    line-height: 25px;
+    color: #355594;
+    opacity: 0.8;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+/* Vision Card */
+.vision-card {
+    position: relative;
+    height: 100%;
+}
+.vision-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #355594, #ABC0FF);
+    border-radius: 32px;
+    opacity: 0.4;
+    filter: blur(15px);
+    z-index: 0;
+}
+.vision-content {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 32px;
+    padding: 3rem;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(53, 85, 148, 0.05);
+}
+.vision-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1e3a6e;
+    letter-spacing: -0.5px;
+}
+.vision-text {
+    font-size: 1.1rem;
+    color: #4A5E80;
+    line-height: 1.8;
+}
+
+/* Specialized Services - Product Card Layout */
+.services-modern-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+}
+
+.service-product-card {
+    background: #fbfbfd;
+    border-radius: 28px;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    color: #4C4C4C;
-    vertical-align: top;
+    position: relative;
+    transition: all 0.4s ease;
+    border: 1px solid transparent;
+}
+.service-product-card:hover {
+    background: #1e3a6e;
+    border-color: #1e3a6e;
+    transform: translateY(-5px);
+    box-shadow: 0 40px 80px rgba(30, 58, 110, 0.3);
+}
+.service-product-card:hover .service-product-title {
+    color: white;
+}
+.service-product-card:hover .service-product-desc {
+    color: rgba(255, 255, 255, 0.85);
+}
+.service-product-card:hover .hero-btn {
+    background: white;
+}
+.service-product-card:hover .hero-btn span {
+    color: #1e3a6e;
+}
+.service-product-card:hover .hero-btn .btn-icon {
+    background: #1e3a6e;
+    color: white;
+}
 
+.service-product-image {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.5rem;
 }
-.choose-us-item p {
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 20px;
-    text-align: center;
-    color: #4C4C4C;
-    vertical-align: top;
-
+.service-product-image img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.05));
+    transition: transform 0.4s ease;
 }
-.choose-us-item img {
-    vertical-align: top;
-
-}
-
-.custom-card {
-    border-radius: 50px;
-}
-.custom-card img {
-    border-radius: 50px;
+.service-product-card:hover .service-product-image img {
+    transform: scale(1.05);
 }
 
-.custom-card .card-title {
-    font-size: 48px;
-    font-weight: 500;
-    line-height: 35px;
-    text-align: center;
-    color: #fff;
-    margin: 8% 0%;
+.service-product-title {
+    color: #1e3a6e;
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
 }
-.custom-card-text {
-    margin: 0% 27%;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 30px;
-    text-align: center;
-    color: #4C4C4C;
-    background: radial-gradient(50% 50% at 50% 50%, #FFFFFF 50%, rgba(255, 255, 255, 0) 100%);
+.is-dark .service-product-title {
+    color: white;
+}
+.service-product-desc {
+    color: #5A6B8A;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    max-width: 280px;
+}
+.is-dark .service-product-desc {
+    color: rgba(255, 255, 255, 0.85);
+}
 
+.service-product-btn {
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: none;
+    background: #E5E7EB;
+    color: #6B7280;
 }
+.service-product-btn.active {
+    background: #355594;
+    color: white;
+}
+.service-product-btn.active:hover {
+    background: #1e3a6e;
+    transform: scale(1.05);
+}
+
+/* Choose Us Grid */
 .choose-us-item {
-    padding: 1rem;
+    padding: 2rem 1.5rem;
+    background: transparent;
+    transition: all 0.3s ease;
+    border-radius: 24px;
+    height: 100%;
 }
-.choose-us-item h5 {
-    padding: 1rem 2rem;
+.choose-us-item:hover {
+    background: rgba(255,255,255,0.6);
+    box-shadow: 0 10px 30px rgba(53,85,148,0.03);
+}
+.choose-us-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.08);
+    transition: transform 0.3s ease;
+}
+.choose-us-item:hover .choose-us-icon-wrapper {
+    transform: translateY(-5px);
+}
+.choose-us-icon-wrapper img {
+    width: 40px;
+    height: 40px;
+}
+.choose-us-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1e3a6e;
+    line-height: 1.4;
+}
+.choose-us-desc {
+    font-size: 1rem;
+    color: #5A6B8A;
+    line-height: 1.7;
+}
 
+/* Our Story */
+.story-card {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    min-height: 400px;
+    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.15);
 }
-.choose-us-item p {
-    padding: 1rem 2rem;
+.story-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+.story-overlay {
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(90deg, rgba(30, 58, 110, 0.95) 0%, rgba(30, 58, 110, 0.7) 100%);
+    padding: 4rem 3rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.story-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.15rem;
+    line-height: 1.8;
+    max-width: 800px;
+}
 
+/* Hero Button */
+.hero-btn {
+    background: #355594;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 10px 10px 22px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
-.ellipse-1 {
-    position: absolute;
-    left: 95%;
-    top: -22%;
+.hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.25);
+    background: #28447a;
 }
-.circle-image-1 {
-    width: 60px;
-    height: auto;
+.is-dark .hero-btn {
+    background: white;
 }
-.ellipse-2 {
-    position: absolute;
-    left: 10%;
-    top: 35%;
+.is-dark .hero-btn:hover {
+    background: #f8faff;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
-.circle-image-2 {
-    width: 10px;
-    height: auto;
+.hero-btn span {
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
 }
-.ellipse-3 {
-    position: absolute;
-    left: 5%;
-    top: 54%;
+.is-dark .hero-btn span {
+    color: #1e3a6e;
 }
-.circle-image-3 {
-    width: 25px;
-    height: auto;
+.hero-btn .btn-icon {
+    background: white;
+    color: #355594;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    margin-left: 14px;
 }
-.ellipse-4 {
-    position: absolute;
-    left: 90%;
-    top: 48%;
+.is-dark .hero-btn .btn-icon {
+    background: #1e3a6e;
+    color: white;
 }
-.circle-image-4 {
-    width: 27px;
-    height: auto;
-}
-.ellipse-5 {
-    position: absolute;
-    left: 12%;
-    top: 42%;
-} 
-.circle-image-5 {
-    width: 45px;
-    height: auto;
-}
-.ellipse-6 {
-    position: absolute;
-    left: 7%;
-    top: 60%;
-}
-.circle-image-6 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-7 {
-    position: absolute;
-    left: 5%;
-    top: 12%;
-}
-.circle-image-7 {
-    width: 60px;
-    height: auto;
-}
-.ellipse-8 {
-    position: absolute;
-    left: 16%;
-    top: 17%;
-}
-.circle-image-8 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-9 {
-    position: absolute;
-    left: 93%;
-    top: 19%;
-}
-.circle-image-9 {
-    width: 18px;
-    height: auto;
-}
-/*  Custom css  */
-@media (max-width: 480px) {
-    .card-body {
-        padding: 1rem !important;
-    }
-    .custom-card .card-title {
-        margin: 2% 0% !important;
-        font-size: 24px !important;
-    }
-    .custom-card-text {
-        margin: 0% 1% !important;
-        font-size: 10px !important;
-        line-height: 14px !important;
-    }
-    .card-img-overlay {
-        padding: 0.7rem !important;
-    }
-}
-/* For Extra Small Screens (xs - <576px) */
-@media (max-width: 575px) {
-    .card-body {
-        padding: 1rem !important;
-    }
+
+/* Media Queries */
+@media (max-width: 991px) {
     .section-title {
-        font-size: 32px !important;
-        font-weight: 500;
-        line-height: 36px !important;
-        text-align: center;
-        color: #355594;
-
+        font-size: 2rem;
     }
-    .choose-us-item {
-        padding: 1rem;
+    .vision-content {
+        padding: 2rem;
+        margin-top: 2rem;
     }
-    .choose-us-item h5 {
-        padding: 1rem;
-
-    }
-    .choose-us-item p {
-        padding: 1rem;
-
-    }
-    .custom-card .card-title {
-        margin: 4% 0%;
-        font-size: 36px;
-    }
-    .custom-card-text {
-        margin: 0% 2%;
-        font-size: 12px;
-        line-height: 18px;
-
-
-    }
-    .ellipse-1 {
-        position: absolute;
-        left: 86%;
-        top: -8%;
-    }
-    .circle-image-1 {
-        width: 35px;
-        height: auto;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 10%;
-        top: 10%;
-    }
-    .circle-image-2 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 5%;
-        top: 26%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 93%;
-        top: 27%;
-    }
-    .circle-image-4 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-5 {
-        position: absolute;
-        left: 4%;
-        top: 25%;
-    } 
-    .circle-image-5 {
-        width: 25px;
-        height: auto;
-    }
-    .ellipse-6 {
-        position: absolute;
-        left: 4%;
-        top: 37%;
-    }
-    .circle-image-6 {
-        width: 8px;
-        height: auto;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 3%;
-        top: 2%;
-    }
-    .circle-image-7 {
-        width: 32px;
-        height: auto;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 17%;
-        top: 5%;
-    }
-    .circle-image-8 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 93%;
-        top: 3%;
-    }
-    .circle-image-9 {
-        width: 18px;
-        height: auto;
+    .story-overlay {
+        padding: 3rem 2rem;
     }
 }
-
-/* For Small Screens (sm - ≥576px) */
-@media (min-width: 576px) and (max-width: 767px) {
-    .card-body {
-        padding: 2rem !important;
-    }
+@media (max-width: 767px) {
     .section-title {
-        font-size: 36px !important;
-        font-weight: 500;
-        line-height: 40px !important;
-        text-align: center;
-        color: #355594;
-
+        font-size: 1.85rem;
     }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem 0;
-
-    }
-    .choose-us-item p {
-        padding: 1rem 0;
-
-    }
-    .custom-card .card-title {
-        margin: 5% 0%;
-        font-size: 40px;
-    }
-    .custom-card-text {
-        margin: 0% 6%;
-        font-size: 14px;
-        line-height: 22px;
-
-    }
-    .ellipse-1 {
-        position: absolute;
-        left: 78%;
-        top: -13%;
-    }
-    .circle-image-1 {
-        width: 35px;
-        height: auto;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 10%;
-        top: 10%;
-    }
-    .circle-image-2 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 5%;
-        top: 25%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 90%;
-        top: 36%;
-    }
-    .circle-image-4 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-5 {
-        position: absolute;
-        left: 11%;
-        top: 33%;
-    } 
-    .circle-image-5 {
-        width: 25px;
-        height: auto;
-    }
-    .ellipse-6 {
-        position: absolute;
-        left: 8%;
-        top: 45%;
-    }
-    .circle-image-6 {
-        width: 8px;
-        height: auto;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 7%;
-        top: 4%;
-    }
-    .circle-image-7 {
-        width: 40px;
-        height: auto;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 22%;
-        top: 6%;
-    }
-    .circle-image-8 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 93%;
-        top:7%;
-    }
-    .circle-image-9 {
-        width: 18px;
-        height: auto;
-    }
-}
-
-/* For Medium Screens (md - ≥768px) */
-@media (min-width: 768px) and (max-width: 991px) {
-    .card-body {
-        padding: 1rem !important;
-    }
-    .section-title {
-        font-size: 40px !important;
-        font-weight: 500;
-        line-height: 44px !important;
-        text-align: center;
-        color: #355594;
-
-    }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem;
-
-    }
-    .choose-us-item p {
-        padding: 1rem;
-
-    }
-    .custom-card .card-title {
-        margin: 5% 0%;
-        font-size: 44px;
-    }
-    .custom-card-text {
-        margin: 0% 15%;
-    }
-    .ellipse-1 {
-        position: absolute;
-        left: 88%;
-        top: -19%;
-    }
-    .circle-image-1 {
-        width: 48px;
-        height: auto;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 10%;
-        top: 12%;
-    }
-    .circle-image-2 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 5%;
-        top: 31%;
-    }
-    .circle-image-3 {
-        width: 25px;
-        height: auto;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 92%;
-        top: 43%;
-    }
-    .circle-image-4 {
-        width: 27px;
-        height: auto;
-    }
-    .ellipse-5 {
-        position: absolute;
-        left: 10%;
-        top: 42%;
-    } 
-    .circle-image-5 {
-        width: 40px;
-        height: auto;
-    }
-    .ellipse-6 {
-        position: absolute;
-        left: 7%;
-        top: 58%;
-    }
-    .circle-image-6 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 5%;
-        top: 10%;
-    }
-    .circle-image-7 {
-        width: 45px;
-        height: auto;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 18%;
-        top: 14%;
-    }
-    .circle-image-8 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 93%;
-        top: 15%;
-    }
-    .circle-image-9 {
-        width: 18px;
-        height: auto;
-    }
-}
-
-/* For Large Screens (lg - ≥992px) */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .section-title {
-        font-size: 44px !important;
-        font-weight: 500;
-        line-height: 48px !important;
-        text-align: center;
-        color: #355594;
-
-    }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem;
-
-    }
-    .choose-us-item p {
-        padding: 1rem;
-
-    }
-    .custom-card .card-title {
-        margin: 10% 0%;
-    }
-    .custom-card-text {
-        margin: 0% 12%;
-
-    }
-}
-
-/* For Extra Large Screens (xl - ≥1200px) */
-@media (min-width: 1200px) {
     
+    /* Mobile Carousel Implementation */
+    .services-modern-grid {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 24px;
+        padding: 20px 20px 40px 20px;
+        margin-left: -20px;
+        margin-right: -20px;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Remove scrollbar visibility while keeping functionality */
+    .services-modern-grid::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .service-product-card {
+        flex: 0 0 85%; /* Larger card size on mobile */
+        scroll-snap-align: center;
+        padding: 4rem 2.5rem;
+        background: white; /* Make cards pop on mobile */
+        box-shadow: 0 15px 35px rgba(53, 85, 148, 0.1);
+    }
+    
+    .service-product-card:hover {
+        transform: none; /* Disable hover lift on mobile to prevent jitter */
+    }
+
+    .story-overlay {
+        padding: 2rem 1.5rem;
+    }
+    .story-text {
+        font-size: 1rem;
+    }
 }
 </style>

@@ -1,34 +1,6 @@
 <template>
     <div class="bg-white" style="height: auto !important">
         <template>
-            <header>
-                <nav id="nav">
-                    <ul style="z-index: 1098">
-                        <li v-for="item in items">
-                            <a :href="item.url" v-if="!item.children">
-                                {{ item.name }}
-                            </a>
-                            <span
-                                v-else
-                                v-on:mouseover="mouseover"
-                                v-on:mouseleave="mouseleave"
-                            >
-                                {{ item.name }}
-
-                                <ul class="dropdown" :class="{ isOpen }">
-                                    <li v-for="child in item.children">
-                                        <a :href="child.url">
-                                            {{ child.name }}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </span>
-                        </li>
-                    </ul>
-                </nav>
-            </header>
-        </template>
-        <template>
             <div
                 class="d-flex justify-content-center align-items-center mt-5 bg-white"
             >

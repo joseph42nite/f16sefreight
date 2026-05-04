@@ -1,699 +1,377 @@
-
 <template>
-    <b-container fluid class="main-container">
-        <!-- Include PageLoader -->
-        <!-- <PageLoader></PageLoader> -->
-        <!-- Include Header -->
-        <Header></Header>
-        <b-container>
-            <b-row align-h="center" align-v="center" class="mt-md-30 mt-sm-25 mt-20">
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center" style="position: relative;">
-                        <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
-                        <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
-                        <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
-                        <b-col cols="12">
-                            <div class="mb-md-30 mb-sm-20 mb-10">
-                                <h2 class="section-title">Our Solutions</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
-                                        <p class="aboutUs-section-text">At F16s E-Freight Solutions, we are more than just a logistics technology provider—we are forward thinkers who understand the evolving landscape of global trade. Logistics, a traditionally manual industry, is now rapidly transforming, and we’re at the forefront of this shift. By focusing on digital literacy and adaptable solutions, we’re equipping businesses with the knowledge and tools they need to keep up with an increasingly digital world.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
-                    </b-row>
+  <b-container fluid class="main-wrapper p-0">
+    <!-- DECORATIVE ELLIPSES -->
+    <div class="decorative-ellipses d-none d-lg-block">
+        <div class="ellipse ellipse-tl"></div>
+        <div class="ellipse ellipse-tr"></div>
+        <div class="ellipse ellipse-br"></div>
+    </div>
+
+
+    <b-container class="content-container pt-12 pb-24">
+      <!-- HERO SECTION -->
+      <section class="solutions-hero text-center mb-20 mt-8">
+        <span class="section-eyebrow">Innovation</span>
+        <h1 class="section-title">Our Solutions</h1>
+        <p class="section-subtitle mt-4 mx-auto" style="max-width: 800px;">
+          At F16s E-Freight Solutions, we are more than just a logistics technology provider—we are forward thinkers who understand the evolving landscape of global trade. We’re equipping businesses with the tools they need to thrive in a digital world.
+        </p>
+        
+        <div class="hero-decoration-wrapper mt-12">
+            <div class="hero-glass-bar">
+                <div class="bar-item">
+                    <b-icon icon="cpu" class="me-2"></b-icon>
+                    <span>Digital Literacy</span>
+                </div>
+                <div class="bar-divider"></div>
+                <div class="bar-item">
+                    <b-icon icon="diagram-3" class="me-2"></b-icon>
+                    <span>Adaptable Tools</span>
+                </div>
+                <div class="bar-divider"></div>
+                <div class="bar-item">
+                    <b-icon icon="shield-check" class="me-2"></b-icon>
+                    <span>Future-Ready</span>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      <!-- MAIN CONTENT PILLARS -->
+      <b-row class="justify-content-center">
+        <!-- PILLAR 1: DIGITAL LITERACY -->
+        <b-col lg="10" class="mb-16">
+          <div class="pillar-card-wrapper">
+            <div class="pillar-card-glow"></div>
+            <div class="pillar-card glass-card">
+              <b-row align-v="center">
+                <b-col md="5" class="mb-8 mb-md-0">
+                  <div class="pillar-image-container">
+                    <div class="pillar-icon-ring">
+                      <img src="/media/custome/real-time.svg" alt="Digital Literacy Icon" class="pillar-icon-svg">
+                    </div>
+                  </div>
                 </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
-                        <b-col cols="12" style="position: relative;">
-                            <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
-                            <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div>
-                            <div class="ellipse-6"><img src="/media/custome/circle/ellipse-6.png" alt="circle-image" id="" class="circle-image-6" /></div>
-                            <div class="mb-md-30 mb-sm-20 mb-10">
-                                <h2 class="section-title">Why Digital Literacy Matters in Logistics</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
-                                        <p class="vision-section-text">The logistics industry has been slower than others to adopt digital practices, but as global commerce becomes increasingly complex, digital literacy is essential for maintaining efficiency and competitiveness. Our solutions are designed to bridge the knowledge gap, making it easy for businesses of all sizes to adopt digital practices without overwhelming them with complexity. We believe that every business, regardless of its size, should understand and leverage digital tools to simplify processes, make better decisions, and achieve operational excellence.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
-                    </b-row>
+                <b-col md="7">
+                  <h2 class="pillar-title">Why Digital Literacy Matters</h2>
+                  <p class="pillar-text">
+                    The logistics industry is transforming rapidly. Digital literacy is essential for maintaining efficiency and competitiveness in global commerce. Our solutions are designed to bridge the knowledge gap, making it easy for businesses of all sizes to adopt digital practices without overwhelming complexity.
+                  </p>
+                  <p class="pillar-text">
+                    We believe every business should leverage digital tools to simplify processes, make better decisions, and achieve operational excellence.
+                  </p>
                 </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center" style="position: relative;">
-                        <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
-                        <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
-                        <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
-                        <b-col cols="12">
-                            <div class="mb-md-30 mb-sm-20 mb-10">
-                                <h2 class="section-title">Future-Ready Solutions for Modern Challenges</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
-                                        <p class="aboutUs-section-text">Our commitment to forward-thinking goes beyond current needs—we design solutions that anticipate the future. We know that the logistics industry must evolve alongside technological advances, and we are constantly innovating to create systems that grow with our clients. From scalable solutions to adaptive digital tools, our offerings are crafted to be as dynamic as the industry itself.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
-                    </b-row>
+              </b-row>
+            </div>
+          </div>
+        </b-col>
+
+        <!-- PILLAR 2: FUTURE-READY -->
+        <b-col lg="10" class="mb-16">
+          <div class="pillar-card-wrapper">
+            <div class="pillar-card-glow alt-glow"></div>
+            <div class="pillar-card glass-card reversed">
+              <b-row align-v="center">
+                <b-col md="7" class="order-2 order-md-1">
+                  <h2 class="pillar-title">Future-Ready Solutions</h2>
+                  <p class="pillar-text">
+                    Our commitment goes beyond current needs—we design solutions that anticipate the future. We know that the logistics industry must evolve alongside technological advances, and we are constantly innovating to create systems that grow with our clients.
+                  </p>
+                  <p class="pillar-text">
+                    From scalable architectures to adaptive digital tools, our offerings are crafted to be as dynamic as the global freight industry itself.
+                  </p>
                 </b-col>
-                <b-col cols="12">
-                    <b-row align-h="center" align-v="center">
-                        <b-col cols="12" style="position: relative;">
-                            <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
-                            <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div>
-                            <div class="ellipse-6"><img src="/media/custome/circle/ellipse-6.png" alt="circle-image" id="" class="circle-image-6" /></div>
-                            <div class="mb-md-30 mb-sm-20 mb-10">
-                                <h2 class="section-title">Building Digital Confidence</h2>
-                                <b-row align-h="center" align-v="center">
-                                    <b-col cols="10" sm="8" md="8" lg="8" xl="8" xxl="8" class="mt-12">
-                                        <p class="vision-section-text">We recognize that digital literacy requires support and a genuine understanding of clients’ specific needs. Our team is dedicated to working closely with each business to guide them through digital adoption, training them in our systems and empowering them to make technology-driven decisions. This approach fosters confidence in the digital tools they use, allowing businesses to make the most of our solutions and position themselves for future growth.
-                                            <br><br>
-                                            At F16s E-Freight Solutions, we are committed to guiding the logistics industry towards a smarter, digitally enabled future, where businesses can thrive and grow with confidence in an increasingly digital landscape.</p>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-col>
-                    </b-row>
+                <b-col md="5" class="order-1 order-md-2 mb-8 mb-md-0">
+                  <div class="pillar-image-container">
+                    <div class="pillar-icon-ring alt-ring">
+                      <img src="/media/custome/automated-workflow.svg" alt="Future-Ready Icon" class="pillar-icon-svg alt-svg">
+                    </div>
+                  </div>
                 </b-col>
-            </b-row>
-        </b-container>
+              </b-row>
+            </div>
+          </div>
+        </b-col>
+
+        <!-- PILLAR 3: CONFIDENCE -->
+        <b-col lg="10" class="mb-16">
+          <div class="pillar-card-wrapper">
+            <div class="pillar-card-glow"></div>
+            <div class="pillar-card glass-card">
+              <b-row align-v="center">
+                <b-col md="5" class="mb-8 mb-md-0">
+                  <div class="pillar-image-container">
+                    <div class="pillar-icon-ring">
+                      <img src="/media/custome/customer-support.svg" alt="Digital Confidence Icon" class="pillar-icon-svg">
+                    </div>
+                  </div>
+                </b-col>
+                <b-col md="7">
+                  <h2 class="pillar-title">Building Digital Confidence</h2>
+                  <p class="pillar-text">
+                    Digital literacy requires support and a genuine understanding of specific needs. Our team works closely with each business to guide them through digital adoption, training them in our systems and empowering them to make technology-driven decisions.
+                  </p>
+                  <p class="pillar-text">
+                    At F16s E-Freight Solutions, we are committed to guiding the logistics industry towards a smarter, digitally enabled future where businesses can thrive with confidence.
+                  </p>
+                </b-col>
+              </b-row>
+            </div>
+          </div>
+        </b-col>
+      </b-row>
+
+      <!-- CTA SECTION -->
+      <section class="solutions-cta mt-8 text-center">
+        <div class="cta-glass-card">
+          <h2 class="cta-title">Ready to modernize your logistics?</h2>
+          <p class="cta-subtitle mb-8">Join the network trusted for over 1,00,000+ AWBs globally.</p>
+          <b-button to="/contact-us" class="hero-btn">
+            <span>Get Started Now</span>
+            <b-icon icon="arrow-right" class="btn-icon ms-2"></b-icon>
+          </b-button>
+        </div>
+      </section>
     </b-container>
-</template>
-<script>
-    import Header from "@/view/layout/Header.vue";
-    // import PageLoader from '../components/PageLoader.vue';
-    export default {
-        data() {
-            return {
-            };
-        },
-        components: {
-            Header,
-            // PageLoader
-        },
-    };
-</script>
-<style scoped>
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
-
-html, body, html * {
-  font-family: 'Roboto', sans-serif !important;
-}
-.main-container {
-    background: linear-gradient(180deg, #EDF7FF 10%, #FFFFFF 38%);
-}
-.section-title {
-    font-size: 48px !important;
-    font-weight: 500;
-    line-height: 54px !important;
-    text-align: center;
-    color: #355594;
-
-}
-.vision-section-text, .aboutUs-section-text {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 30px;
-    text-align: center;
-    color:#4C4C4C;
-}
-.offer-section-text {
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 20px;
-    color: #4C4C4C;
-    margin: 0;
-}
-.offer-section-btn {
-    background: linear-gradient(360deg, rgba(119, 128, 177, 0.21) 0%, rgba(34, 50, 138, 0.21) 53.5%);
-    border-radius: 30px;
-    border: 0px;
-    gap: 4px;
-    font-size: 16px;
-    font-weight: 400;
-    padding: 6px;
-
-}
-.offer-section-btn:hover {
-    background: #fff !important;
-}
-.offer-section-btn span {
-    color: #3A3B7B;
-    padding: 0px 10px;
-    font-weight: 400;
-}
-.btn-icon {
-    background: #fff;
-    border-radius: 30px;
-    font-size: 36px !important;
-    font-weight: 600;
-    padding: 4px;
-    color: #355594;
-}
-.choose-us-item {
-    vertical-align: top;
-}
-.choose-us-item h5 {
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 25px;
-    text-align: center;
-    color: #4C4C4C;
-    vertical-align: top;
-
-}
-.choose-us-item p {
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 20px;
-    text-align: center;
-    color: #4C4C4C;
-    vertical-align: top;
-
-}
-.choose-us-item img {
-    vertical-align: top;
-
-}
-
-.custom-card {
-    border-radius: 50px;
-}
-.custom-card img {
-    border-radius: 50px;
-}
-
-.custom-card .card-title {
-    font-size: 48px;
-    font-weight: 500;
-    line-height: 35px;
-    text-align: center;
-    color: #fff;
-    margin: 8% 0%;
-}
-.custom-card-text {
-    margin: 0% 27%;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 30px;
-    text-align: center;
-    color: #4C4C4C;
-    background: radial-gradient(50% 50% at 50% 50%, #FFFFFF 50%, rgba(255, 255, 255, 0) 100%);
-
-}
-.choose-us-item {
-    padding: 1rem;
-}
-.choose-us-item h5 {
-    padding: 1rem 2rem;
-
-}
-.choose-us-item p {
-    padding: 1rem 2rem;
-
-}
-.ellipse-1 {
-    position: absolute;
-    left: 95%;
-    top: -22%;
-}
-.circle-image-1 {
-    width: 60px;
-    height: auto;
-}
-.ellipse-2 {
-    position: absolute;
-    left: 10%;
-    top: 35%;
-}
-.circle-image-2 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-3 {
-    position: absolute;
-    left: 5%;
-    top: 54%;
-}
-.circle-image-3 {
-    width: 25px;
-    height: auto;
-}
-.ellipse-4 {
-    position: absolute;
-    left: 90%;
-    top: 48%;
-}
-.circle-image-4 {
-    width: 27px;
-    height: auto;
-}
-.ellipse-5 {
-    position: absolute;
-    left: 12%;
-    top: 42%;
-} 
-.circle-image-5 {
-    width: 45px;
-    height: auto;
-}
-.ellipse-6 {
-    position: absolute;
-    left: 7%;
-    top: 60%;
-}
-.circle-image-6 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-7 {
-    position: absolute;
-    left: 5%;
-    top: 12%;
-}
-.circle-image-7 {
-    width: 60px;
-    height: auto;
-}
-.ellipse-8 {
-    position: absolute;
-    left: 16%;
-    top: 17%;
-}
-.circle-image-8 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-9 {
-    position: absolute;
-    left: 93%;
-    top: 19%;
-}
-.circle-image-9 {
-    width: 18px;
-    height: auto;
-}
-/*  Custom css  */
-@media (max-width: 480px) {
-    .card-body {
-        padding: 1rem !important;
-    }
-    .custom-card .card-title {
-        margin: 2% 0% !important;
-        font-size: 24px !important;
-    }
-    .custom-card-text {
-        margin: 0% 1% !important;
-        font-size: 10px !important;
-        line-height: 14px !important;
-    }
-    .card-img-overlay {
-        padding: 0.7rem !important;
-    }
-}
-/* For Extra Small Screens (xs - <576px) */
-@media (max-width: 575px) {
-    .card-body {
-        padding: 1rem !important;
-    }
-    .section-title {
-        font-size: 32px !important;
-        font-weight: 500;
-        line-height: 36px !important;
-        text-align: center;
-        color: #355594;
-
-    }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem;
-
-    }
-    .choose-us-item p {
-        padding: 1rem;
-
-    }
-    .custom-card .card-title {
-        margin: 4% 0%;
-        font-size: 36px;
-    }
-    .custom-card-text {
-        margin: 0% 2%;
-        font-size: 12px;
-        line-height: 18px;
-
-
-    }
-    .ellipse-1 {
-        position: absolute;
-        left: 86%;
-        top: -8%;
-    }
-    .circle-image-1 {
-        width: 35px;
-        height: auto;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 10%;
-        top: 10%;
-    }
-    .circle-image-2 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 5%;
-        top: 26%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 93%;
-        top: 27%;
-    }
-    .circle-image-4 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-5 {
-        position: absolute;
-        left: 4%;
-        top: 25%;
-    } 
-    .circle-image-5 {
-        width: 25px;
-        height: auto;
-    }
-    .ellipse-6 {
-        position: absolute;
-        left: 4%;
-        top: 37%;
-    }
-    .circle-image-6 {
-        width: 8px;
-        height: auto;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 3%;
-        top: 2%;
-    }
-    .circle-image-7 {
-        width: 32px;
-        height: auto;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 17%;
-        top: 5%;
-    }
-    .circle-image-8 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 93%;
-        top: 3%;
-    }
-    .circle-image-9 {
-        width: 18px;
-        height: auto;
-    }
-}
-
-/* For Small Screens (sm - ≥576px) */
-@media (min-width: 576px) and (max-width: 767px) {
-    .card-body {
-        padding: 2rem !important;
-    }
-    .section-title {
-        font-size: 36px !important;
-        font-weight: 500;
-        line-height: 40px !important;
-        text-align: center;
-        color: #355594;
-
-    }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem 0;
-
-    }
-    .choose-us-item p {
-        padding: 1rem 0;
-
-    }
-    .custom-card .card-title {
-        margin: 5% 0%;
-        font-size: 40px;
-    }
-    .custom-card-text {
-        margin: 0% 6%;
-        font-size: 14px;
-        line-height: 22px;
-
-    }
-    .ellipse-1 {
-        position: absolute;
-        left: 78%;
-        top: -13%;
-    }
-    .circle-image-1 {
-        width: 35px;
-        height: auto;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 10%;
-        top: 10%;
-    }
-    .circle-image-2 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 5%;
-        top: 25%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 90%;
-        top: 36%;
-    }
-    .circle-image-4 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-5 {
-        position: absolute;
-        left: 11%;
-        top: 33%;
-    } 
-    .circle-image-5 {
-        width: 25px;
-        height: auto;
-    }
-    .ellipse-6 {
-        position: absolute;
-        left: 8%;
-        top: 45%;
-    }
-    .circle-image-6 {
-        width: 8px;
-        height: auto;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 7%;
-        top: 4%;
-    }
-    .circle-image-7 {
-        width: 40px;
-        height: auto;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 22%;
-        top: 6%;
-    }
-    .circle-image-8 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 93%;
-        top:7%;
-    }
-    .circle-image-9 {
-        width: 18px;
-        height: auto;
-    }
-}
-
-/* For Medium Screens (md - ≥768px) */
-@media (min-width: 768px) and (max-width: 991px) {
-    .card-body {
-        padding: 1rem !important;
-    }
-    .section-title {
-        font-size: 40px !important;
-        font-weight: 500;
-        line-height: 44px !important;
-        text-align: center;
-        color: #355594;
-
-    }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem;
-
-    }
-    .choose-us-item p {
-        padding: 1rem;
-
-    }
-    .custom-card .card-title {
-        margin: 5% 0%;
-        font-size: 44px;
-    }
-    .custom-card-text {
-        margin: 0% 15%;
-    }
-    .ellipse-1 {
-        position: absolute;
-        left: 88%;
-        top: -19%;
-    }
-    .circle-image-1 {
-        width: 48px;
-        height: auto;
-    }
-    .ellipse-2 {
-        position: absolute;
-        left: 10%;
-        top: 12%;
-    }
-    .circle-image-2 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-3 {
-        position: absolute;
-        left: 5%;
-        top: 31%;
-    }
-    .circle-image-3 {
-        width: 25px;
-        height: auto;
-    }
-    .ellipse-4 {
-        position: absolute;
-        left: 92%;
-        top: 43%;
-    }
-    .circle-image-4 {
-        width: 27px;
-        height: auto;
-    }
-    .ellipse-5 {
-        position: absolute;
-        left: 10%;
-        top: 42%;
-    } 
-    .circle-image-5 {
-        width: 40px;
-        height: auto;
-    }
-    .ellipse-6 {
-        position: absolute;
-        left: 7%;
-        top: 58%;
-    }
-    .circle-image-6 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-7 {
-        position: absolute;
-        left: 5%;
-        top: 10%;
-    }
-    .circle-image-7 {
-        width: 45px;
-        height: auto;
-    }
-    .ellipse-8 {
-        position: absolute;
-        left: 18%;
-        top: 14%;
-    }
-    .circle-image-8 {
-        width: 10px;
-        height: auto;
-    }
-    .ellipse-9 {
-        position: absolute;
-        left: 93%;
-        top: 15%;
-    }
-    .circle-image-9 {
-        width: 18px;
-        height: auto;
-    }
-}
-
-/* For Large Screens (lg - ≥992px) */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .section-title {
-        font-size: 44px !important;
-        font-weight: 500;
-        line-height: 48px !important;
-        text-align: center;
-        color: #355594;
-
-    }
-    .choose-us-item {
-        padding: 1rem;
-    }
-    .choose-us-item h5 {
-        padding: 1rem;
-
-    }
-    .choose-us-item p {
-        padding: 1rem;
-
-    }
-    .custom-card .card-title {
-        margin: 10% 0%;
-    }
-    .custom-card-text {
-        margin: 0% 12%;
-
-    }
-}
-
-/* For Extra Large Screens (xl - ≥1200px) */
-@media (min-width: 1200px) {
     
+    </b-container>
+  </b-container>
+</template>
+
+<script>
+
+export default {
+  name: "Solutions",
+  components: { 
+  },
+  data() {
+    return {};
+  }
+};
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+.main-wrapper {
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Decorative background elements */
+.decorative-ellipses .ellipse {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.5;
+}
+.ellipse-tl { width: 400px; height: 400px; background: #D0E6F8; top: -100px; left: -100px; }
+.ellipse-tr { width: 300px; height: 300px; background: #E6F0FF; top: 20%; right: -50px; }
+.ellipse-br { width: 500px; height: 500px; background: #F0F7FF; bottom: 10%; left: 20%; }
+
+.content-container {
+    position: relative;
+    z-index: 10;
+}
+
+/* Typography Standardized */
+.section-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #1e3a8a;
+    letter-spacing: -1.5px;
+    margin-bottom: 0.5rem;
+}
+.section-subtitle {
+    font-size: 1.25rem;
+    color: #4A5E80;
+    line-height: 1.8;
+}
+.section-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #355594;
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+    display: block;
+}
+
+/* Hero Decoration */
+.hero-glass-bar {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    padding: 16px 48px;
+    gap: 48px;
+    box-shadow: 0 10px 25px rgba(53, 85, 148, 0.05);
+}
+.bar-item {
+    display: flex;
+    align-items: center;
+    color: #355594;
+    font-weight: 600;
+    font-size: 1rem;
+}
+.bar-item .b-icon {
+    margin-right: 12px;
+}
+.bar-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(53, 85, 148, 0.2);
+}
+
+/* Pillar Cards */
+.pillar-card-wrapper {
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.pillar-card-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #355594, #ABC0FF);
+    border-radius: 42px;
+    opacity: 0;
+    filter: blur(20px);
+    transition: opacity 0.5s ease;
+}
+.alt-glow {
+    background: linear-gradient(135deg, #1e3a6e, #6366f1);
+}
+.glass-card {
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 40px;
+    padding: 4rem;
+    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.08);
+}
+.pillar-card-wrapper:hover {
+    transform: translateY(-10px);
+}
+.pillar-card-wrapper:hover .pillar-card-glow {
+    opacity: 0.3;
+}
+
+/* Pillar Content */
+.pillar-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pillar-icon-ring {
+    width: 180px;
+    height: 180px;
+    background: #F0F7FF;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(15deg);
+    transition: all 0.5s ease;
+    box-shadow: 0 15px 35px rgba(53, 85, 148, 0.1);
+}
+.alt-ring {
+    background: #EEF2FF;
+    transform: rotate(-15deg);
+}
+.pillar-card-wrapper:hover .pillar-icon-ring {
+    transform: rotate(0deg) scale(1.05);
+    background: #355594;
+}
+.pillar-card-wrapper:hover .pillar-icon-svg {
+    filter: brightness(0) invert(1);
+}
+.pillar-icon-svg {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    transition: all 0.5s ease;
+}
+.pillar-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1e3a6e;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.5px;
+}
+.pillar-text {
+    font-size: 1.1rem;
+    color: #5A6B8A;
+    line-height: 1.8;
+    margin-bottom: 1.25rem;
+}
+
+/* CTA Card */
+.cta-glass-card {
+    background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%);
+    border-radius: 40px;
+    padding: 5rem 2rem;
+    color: white;
+    box-shadow: 0 30px 60px rgba(30, 58, 138, 0.2);
+}
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+.cta-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+/* Global Button Style (Sync with Home) */
+.hero-btn {
+    background: white;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 12px 12px 28px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: #1e3a6e;
+}
+.hero-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    background: #f8faff;
+}
+.hero-btn span {
+    font-weight: 600;
+    margin-right: 18px;
+}
+.hero-btn .btn-icon {
+    background: #1e3a6e;
+    color: white;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+}
+
+/* Responsive Styles */
+@media (max-width: 991px) {
+    .section-title { font-size: 2.8rem; }
+    .glass-card { padding: 3rem 2rem; }
+    .pillar-title { font-size: 1.8rem; }
+    .pillar-icon-ring { width: 140px; height: 140px; }
+}
+
+@media (max-width: 767px) {
+    .section-title { font-size: 2.25rem; }
+    .hero-glass-bar { flex-direction: column; border-radius: 24px; padding: 20px; width: 100%; }
+    .bar-divider { display: none; }
+    .cta-title { font-size: 1.8rem; }
+    .pillar-image-container { margin-bottom: 2rem; }
 }
 </style>

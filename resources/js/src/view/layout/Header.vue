@@ -1,336 +1,516 @@
 <template>
-  <div class="wrap">
-    <b-navbar toggleable="md">
-      <div class="container-fluid">
-        <div class="navbar-header-logo">
-          <b-navbar-brand href="/" style="">
-            <img :src="logoSrc" alt="f16s logo" id="main-logo">
-          </b-navbar-brand>
-        </div>
-        <!-- Profile Avatar for Small Devices < (767px), Visible Before Toggle -->
-        <!-- If loged-in user -->
-        <b-navbar-nav v-if="isAuthenticated" class="d-flex flex-row align-items-center content-gap d-md-none ml-auto">
-          <b-nav-item class="nav-link-custom text-uppercase" style="font-size: 18px;">
-            {{currentUser.origin_airport_code}}
-          </b-nav-item>
-          <b-nav-item-dropdown>
-            <template #button-content>
-              <span><img :src="avatarLogoSrc" alt="avatar logo" id="avatar-logo"></span>
-            </template>
-            <!-- <b-dropdown-item>
-              <span class="text-capitalize" style="font-size: 12px;">{{currentUser.name}}</span>
-            </b-dropdown-item> -->
-            <b-dropdown-item @click="logout()">
-              <span style="font-size: 12px;">Sign out</span>
-            </b-dropdown-item>
-          </b-nav-item-dropdown>
-        </b-navbar-nav>
-
-        <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
-
-        <b-collapse id="nav-collapse" is-nav>
-          <div class="nav-header-menu" style="">
-            <b-navbar-nav class="ml-auto nav-menu text-center">
-              <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
-              <b-nav-item to="/about-us" class="nav-link-custom text-white">About Us</b-nav-item>
-              <b-nav-item to="/services" class="nav-link-custom text-white">Services</b-nav-item>
-              <!-- <b-nav-item to="/faq" class="nav-link-custom text-white">FAQs</b-nav-item> -->
-              <b-nav-item to="/solutions" class="nav-link-custom text-white">Solutions</b-nav-item>
-              <b-nav-item to="/contact-us" class="nav-link-custom text-white">Contact Us</b-nav-item>
-              <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
-              <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
-              <!-- If not loged-in user -->
-              <div  class="head-btn d-md-none">
-                <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
-                  <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
-                </b-nav-item>
-                <b-nav-item v-if="!isAuthenticated" class="nav-link-custom d-md-none">
-                  <button class="whats-new-btn">What's Free?</button>
-                </b-nav-item>
-              </div>
-            </b-navbar-nav>
-          </div>
-          <!-- Profile Avatar and User Info for Larger Devices -->
-          <!-- If loged-in user -->
-          <div v-if="isAuthenticated" class="nav-header-right" style="">
-            <b-navbar-nav class="ml-auto align-items-center content-gap d-none d-md-flex">
-              <b-nav-item class="nav-link-custom text-uppercase" style="font-size: 18px;">
-                {{currentUser.origin_airport_code}}
-              </b-nav-item>
-              <b-nav-item-dropdown>
-                <template #button-content>
-                  <span><img :src="avatarLogoSrc" alt="avatar logo" id="avatar-logo"></span>
-                </template>
-                <!-- <b-dropdown-item>
-                  <span class="text-capitalize" style="font-size: 12px;">{{currentUser.name}}</span>
-                </b-dropdown-item> -->
-                <b-dropdown-item @click="logout()">
-                  <span style="font-size: 12px;">Sign out</span>
-                </b-dropdown-item>
-              </b-nav-item-dropdown>
-            </b-navbar-nav>
-          </div>
-          <!-- If not loged-in user -->
-          <div v-else class="nav-header-right" style="">
-            <b-navbar-nav class="ml-auto align-items-center content-gap d-none d-md-flex">
-              <b-nav-item class="nav-link-custom">
-                <button class="sign-in-btn" @click="firstPopUp('login_signin')">Sign in</button>
-              </b-nav-item>
-              <b-nav-item class="nav-link-custom">
-                <button class="whats-new-btn">What's Free?</button>
-              </b-nav-item>
-            </b-navbar-nav>
-          </div>
-        </b-collapse>
-          
-
-        <!-- Sign In Modal box -->
-        <b-modal id="login-modal" v-model="show_login_modal" :hide-header="true" :hide-footer="true">
-          <div class="d-flex flex-column-fluid flex-center">
-            <!--begin::Signin-->
-            <div class="login-form login-signin w-100">
-              <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="login()">
-                <div class="pb-5 pt-lg-0 pt-5 text-center">
-                  <h1 class="title-text my-6 my-md-12">Sign In to F16s</h1>
+    <div class="wrap">
+        <b-navbar toggleable="lg">
+            <div class="container-fluid">
+                <div class="navbar-header-logo">
+                    <b-navbar-brand href="/" style="">
+                        <img :src="logoSrc" alt="f16s logo" id="main-logo" />
+                    </b-navbar-brand>
                 </div>
-                <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or password</span></div>
-                <div class="p-3 text-center" v-else-if="errors == 'Blocked'"><span class="text-danger h6">Your account is blocked. Contact admin</span></div>
-                <div class="p-3 text-center" v-else-if="errors == 'Daily_Limit'"><span class="text-danger h6">Your daily login limit is exceeded. Login again tomorrow</span></div>
-                <div class="p-3 text-center" v-else-if="errors == 'Expired'"><span class="text-danger h6">Your plan is expired. Please renew the plan</span></div>
-                <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                label-for="input-horizontal"
-                class="align-items-center">
-                <template #label>
-                    <div class="d-flex justify-content-end custom-label" style="width:60px;">
-                      <span>User ID:</span>
-                      <span style="color: red;">*</span>
+                <!-- Profile Avatar for Small Devices < (767px), Visible Before Toggle -->
+                <!-- If loged-in user -->
+                <b-navbar-nav
+                    v-if="isAuthenticated"
+                    class="d-flex flex-row align-items-center content-gap d-lg-none ml-auto"
+                >
+                    <b-nav-item-dropdown right no-caret>
+                        <template #button-content>
+                            <div class="avatar-wrapper">
+                                <img :src="avatarLogoSrc" alt="User profile" id="avatar-logo" />
+                            </div>
+                        </template>
+                        <b-dropdown-item disabled>
+                            <div class="d-flex align-items-center">
+                                <b-icon icon="geo-alt" class="mr-2" variant="primary"></b-icon>
+                                <span style="font-size: 12px; color: #355594;">Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
+                            </div>
+                        </b-dropdown-item>
+                        <b-dropdown-divider></b-dropdown-divider>
+                        <b-dropdown-item @click="logout()">
+                            <div class="d-flex align-items-center">
+                                <b-icon icon="box-arrow-right" class="mr-2" variant="danger"></b-icon>
+                                <span style="font-size: 12px;">Sign out</span>
+                            </div>
+                        </b-dropdown-item>
+                    </b-nav-item-dropdown>
+                </b-navbar-nav>
+
+                <b-navbar-toggle target="nav-collapse" aria-label="Toggle navigation menu"></b-navbar-toggle>
+
+                <b-collapse id="nav-collapse" is-nav>
+                    <div class="nav-header-menu" style="">
+                        <b-navbar-nav class="nav-menu text-center">
+                            <!-- <b-nav-item to="/" class="nav-link-custom text-white">Home</b-nav-item> -->
+                            <b-nav-item to="/about-us" class="nav-link-custom"
+                                >About Us</b-nav-item
+                            >
+                            <b-nav-item to="/services" class="nav-link-custom"
+                                >Services</b-nav-item
+                            >
+                            <!-- <b-nav-item to="/faq" class="nav-link-custom">FAQs</b-nav-item> -->
+                            <b-nav-item to="/solutions" class="nav-link-custom"
+                                >Solutions</b-nav-item
+                            >
+                            <b-nav-item to="/contact-us" class="nav-link-custom"
+                                >Contact Us</b-nav-item
+                            >
+                            <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
+                            <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
+                            <!-- If not loged-in user -->
+                            <div class="head-btn d-lg-none">
+                                <b-nav-item
+                                    v-if="!isAuthenticated"
+                                    class="nav-link-custom d-lg-none"
+                                >
+                                    <button
+                                        class="sign-in-btn"
+                                        @click="firstPopUp('login_signin')"
+                                        aria-label="Sign in to your account"
+                                    >
+                                        Sign in
+                                    </button>
+                                </b-nav-item>
+                                <b-nav-item
+                                    v-if="!isAuthenticated"
+                                    to="/product-description"
+                                    class="nav-link-custom d-lg-none"
+                                >
+                                    <button class="whats-new-btn">
+                                        Learn more
+                                    </button>
+                                </b-nav-item>
+                            </div>
+                        </b-navbar-nav>
                     </div>
-                  </template>
-                  <b-form-input id="login_email" class="form-control form-control-solid h-auto py-4 px-2" type="text" name="email" ref="email" placeholder="Enter Email ID"></b-form-input>
-                </b-form-group>
-               
-                <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                  label-for="input-horizontal"
-                  class="align-items-center">
-                  <template #label>
-                    <div class="d-flex justify-content-end custom-label" style="width:60px;">
-                      <span>Password:</span>
-                      <span style="color: red;">*</span>
+                    <!-- Profile Avatar and User Info for Larger Devices -->
+                    <!-- If loged-in user -->
+                    <div
+                        v-if="isAuthenticated"
+                        class="nav-header-right"
+                        style=""
+                    >
+                        <b-navbar-nav
+                            class="align-items-center content-gap d-none d-lg-flex"
+                        >
+                            <b-nav-item-dropdown right no-caret>
+                                <template #button-content>
+                                    <div class="avatar-wrapper">
+                                        <img :src="avatarLogoSrc" alt="User profile" id="avatar-logo" />
+                                    </div>
+                                </template>
+                                <b-dropdown-item disabled>
+                                    <div class="d-flex align-items-center">
+                                        <b-icon icon="geo-alt" class="mr-2" variant="primary"></b-icon>
+                                        <span style="font-size: 12px; color: #355594;">Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
+                                    </div>
+                                </b-dropdown-item>
+                                <b-dropdown-divider></b-dropdown-divider>
+                                <b-dropdown-item @click="logout()">
+                                    <div class="d-flex align-items-center">
+                                        <b-icon icon="box-arrow-right" class="mr-2" variant="danger"></b-icon>
+                                        <span style="font-size: 12px;">Sign out</span>
+                                    </div>
+                                </b-dropdown-item>
+                            </b-nav-item-dropdown>
+                        </b-navbar-nav>
                     </div>
-                  </template>
-                  <div class="form-group d-flex align-items-center mb-0">
-                    <b-form-input id="login_password" class="form-control form-control-solid h-auto py-4 px-2 login_password" :type="showPass?'password':'text'" name="password" ref="password" autocomplete="off" placeholder="Enter Password"></b-form-input>
-                    <span class="show_pass" @click="showPass=!showPass"><span v-if="showPass">Show</span><span v-else>Hide</span></span>
-                  </div>
-                </b-form-group>
+                    <!-- If not loged-in user -->
+                    <div v-else class="nav-header-right" style="">
+                        <b-navbar-nav
+                            class="align-items-center content-gap d-none d-lg-flex"
+                        >
+                            <b-nav-item class="nav-link-custom">
+                                <button
+                                    class="sign-in-btn"
+                                    @click="firstPopUp('login_signin')"
+                                    aria-label="Sign in to your account"
+                                >
+                                    Sign In
+                                </button>
+                            </b-nav-item>
+                             <b-nav-item to="/product-description" class="nav-link-custom">
+                                <button class="whats-new-btn">
+                                    Learn More
+                                </button>
+                            </b-nav-item>
+                        </b-navbar-nav>
+                    </div>
+                </b-collapse>
 
-                <div class="d-flex justify-content-center">
-                    <b-button class="my-2 my-md-6 sign-in-btn" type="submit"
-                  style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:transparent !important;" 
-                  >Sign in</b-button>
-                  <!-- <button class="my-2 my-md-6 btn-color">Sign in</button> -->
-                </div>
-                <div class="d-flex justify-content-center mb-4 mb-md-8 mt-3 mt-md-6">
-                  <p class="bottom-text">Can’t recall your User ID or Password?<br /> 
-                    <span class="contact-support"><a href="#" style="color: #355594;">Contact Support</a></span></p>
-                </div>
-              </form>
+                <!-- Sign In Modal box -->
+                <b-modal id="login-modal" v-model="show_login_modal" :hide-header="true" :hide-footer="true" centered size="xl" modal-class="ultra-premium-modal">
+                    <div class="modal-split-layout">
+                        <button class="ultra-close-btn" @click="show_login_modal = false">
+                            <b-icon icon="x"></b-icon>
+                        </button>
+                        <div class="modal-left-pane login-pane">
+                            <div class="pane-content">
+                                <div class="pane-icon-wrapper mb-8">
+                                    <b-icon icon="shield-lock" font-scale="2.5"></b-icon>
+                                </div>
+                                <h2 class="pane-title">Welcome Back</h2>
+                                <p class="pane-subtitle">Securely access your F16s dashboard to manage your freight operations, AWBs, and EDI connectivity.</p>
+                                
+                                <div class="pane-footer mt-auto">
+                                    <div class="pane-feature">
+                                        <b-icon icon="lightning" class="me-3"></b-icon>
+                                        <span>Lightning Fast Processing</span>
+                                    </div>
+                                    <div class="pane-feature">
+                                        <b-icon icon="globe2" class="me-3"></b-icon>
+                                        <span>Global Airline Network</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pane-decoration"></div>
+                        </div>
+                        
+                        <div class="modal-right-pane">
+                            <div class="form-scroll-container">
+                                <form @submit.prevent="login" class="ultra-form">
+                                    <h3 class="form-section-title mb-6">Sign In</h3>
+                                    
+                                    <!-- Error Messages -->
+                                    <div v-if="errors && typeof errors === 'string'" class="error-alert mb-5">
+                                        <span v-if="errors === 'Unauthorized'">Invalid email or password</span>
+                                        <span v-else-if="errors === 'Blocked'">Account blocked. Contact admin.</span>
+                                        <span v-else-if="errors === 'Daily_Limit'">Daily login limit exceeded.</span>
+                                        <span v-else-if="errors === 'Expired'">Plan expired. Please renew.</span>
+                                        <span v-else>{{ errors }}</span>
+                                    </div>
+
+                                    <b-row>
+                                        <b-col md="12" class="mb-6">
+                                            <div class="floating-input-group">
+                                                <input type="text" class="floating-input" v-model="user_form.email" placeholder=" " required />
+                                                <label class="floating-label">User ID / Email</label>
+                                            </div>
+                                        </b-col>
+                                        <b-col md="12" class="mb-4">
+                                            <div class="floating-input-group">
+                                                <input :type="showPass ? 'password' : 'text'" class="floating-input pr-5" v-model="user_form.password" autocomplete="off" placeholder=" " required />
+                                                <label class="floating-label">Password</label>
+                                                <button type="button" class="pass-toggle" @click="showPass = !showPass">
+                                                    {{ showPass ? "Show" : "Hide" }}
+                                                </button>
+                                            </div>
+                                            <div class="text-right mt-2" style="text-align: right; width: 100%;">
+                                                <a href="#" class="forgot-pwd">Forgot Password?</a>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
+                                    
+                                    <div class="form-actions mt-6 d-flex flex-column align-items-center w-100">
+                                        <button type="submit" class="ultra-submit-btn" :disabled="loading">
+                                            <span v-if="!loading">Sign In</span>
+                                            <b-spinner v-else small label="Loading..."></b-spinner>
+                                            <b-icon v-if="!loading" icon="arrow-right" class="btn-icon"></b-icon>
+                                        </button>
+                                        <p class="form-note mt-4">
+                                            Need help? <a href="#" class="text-primary font-weight-bold">Contact Support</a>
+                                        </p>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </b-modal>
+
+                <!-- Otp verification Modal box -->
+                <b-modal id="otp-modal" v-model="otp_verification_modal" :hide-header="true" :hide-footer="true" centered size="xl" modal-class="ultra-premium-modal">
+                    <div class="modal-split-layout">
+                        <button class="ultra-close-btn" @click="otp_verification_modal = false">
+                            <b-icon icon="x"></b-icon>
+                        </button>
+                        <div class="modal-left-pane otp-pane">
+                            <div class="pane-content">
+                                <div class="pane-icon-wrapper mb-8">
+                                    <b-icon icon="shield-check" font-scale="2.5"></b-icon>
+                                </div>
+                                <h2 class="pane-title">Verify Identity</h2>
+                                <p class="pane-subtitle">For your security, we've sent a one-time verification code to your registered email address.</p>
+                                
+                                <div class="pane-footer mt-auto">
+                                    <div class="pane-feature">
+                                        <b-icon icon="lock" class="me-3"></b-icon>
+                                        <span>Bank-grade Security</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pane-decoration"></div>
+                        </div>
+                        
+                        <div class="modal-right-pane">
+                            <div class="form-scroll-container">
+                                <form @submit.prevent="login" class="ultra-form">
+                                    <h3 class="form-section-title mb-6">Enter OTP</h3>
+                                    <b-row>
+                                        <b-col md="12" class="mb-6">
+                                            <div class="floating-input-group">
+                                                <input type="text" class="floating-input" v-model="user_form.otp" placeholder=" " required />
+                                                <label class="floating-label">Verification Code (E.g: 801801)</label>
+                                            </div>
+                                        </b-col>
+                                    </b-row>
+                                    
+                                    <div class="form-actions mt-6 d-flex flex-column align-items-center w-100">
+                                        <button type="submit" class="ultra-submit-btn" :disabled="loading">
+                                            <span v-if="!loading">Verify & Proceed</span>
+                                            <b-spinner v-else small label="Verifying..."></b-spinner>
+                                            <b-icon v-if="!loading" icon="arrow-right" class="btn-icon"></b-icon>
+                                        </button>
+                                        <p class="form-note mt-4">
+                                            Problem receiving OTP? <a href="#" class="text-primary font-weight-bold">Resend Email</a>
+                                        </p>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </b-modal>
             </div>
-            <!--END::Signin-->
-          </div>
-        </b-modal>
-        <!-- Otp verification Modal box -->
-        <b-modal id="login-modal" v-model="otp_verification_modal" :hide-header="true" :hide-footer="true">
-          <div class="d-flex flex-column-fluid flex-center">
-            <!--begin::Signin-->
-            <div class="login-form login-signin w-100">
-              <form class="form" novalidate="novalidate" id="kt_login_signin_form" @submit.prevent="login()">
-                <div class="text-center my-6 my-md-12">
-                  <h1 class="title-text">One Time Password</h1>
-                  <p class="">You will receive a verification code on your email at l******@f16s.in</p>
-                </div>
-                <div class="p-3 text-center" v-if="errors == 'Unauthorized'"><span class="text-danger h6">Invalid email or password</span></div>
-                <b-form-group id="fieldset-horizontal" label-cols-md="auto"
-                label-for="input-horizontal"
-                class="align-items-center">
-                <template #label>
-                    <div class="d-flex justify-content-end custom-label" style="width:60px;">
-                      <span>OTP:</span>
-                      <span style="color: red;">*</span>
-                    </div>
-                  </template>
-                  <b-form-input id="otp" class="form-control form-control-solid h-auto py-4 px-2" type="text" name="otp" ref="otp" placeholder="E.g: 801801"></b-form-input>
-                </b-form-group>
-
-                <div class="d-flex justify-content-center">
-                  <button class="my-2 my-md-6 btn-color" type="submit">Sign In</button>
-                </div>
-                <div class="d-flex justify-content-center my-3 my-md-6">
-                  <p class="bottom-text">Problem receiving OTP? 
-                    <span class="contact-support"><a href="#" style="color: #355594;">Resend Email</a></span></p>
-                </div>
-              </form>
-            </div>
-            <!--END::Signin-->
-          </div>
-        </b-modal>
-      </div>
-    </b-navbar>
-  </div>
+        </b-navbar>
+    </div>
 </template>
 
 <script>
 import { mapGetters, mapState } from "vuex";
 import { LOGIN, LOGOUT } from "@/core/services/store/auth.module";
 export default {
-  name: "Header",
-  data(){
-    return{
-      show_login_modal:false,
-      otp_verification_modal: false,
-      user_form:{
-        email: "",
-        password: "",
-        otp: '',
-      },
-      showPass:true,
-      avatarLogoSrc: "/media/custome/user-avatar.png",
-    }
-  },
-  methods: {
-    hasActiveChildren(match) {
-      return this.$route["path"].indexOf(match) !== -1;
+    name: "Header",
+    data() {
+        return {
+            show_login_modal: false,
+            otp_verification_modal: false,
+            user_form: {
+                email: "",
+                password: "",
+                otp: "",
+            },
+            showPass: true,
+            loading: false,
+            avatarLogoSrc: "/media/custome/user-avatar.png",
+        };
     },
-    
-    firstPopUp(show_form){
-      this.show_login_modal=true;
-    },
+    methods: {
+        hasActiveChildren(match) {
+            return this.$route["path"].indexOf(match) !== -1;
+        },
 
-    login(){
-      const email=$('#login_email').val();
-      const password=$('#login_password').val();
-      this.$store.dispatch(LOGIN, {email, password})
-      // this.show_login_modal = false;
-      // this.otp_verification_modal = true;
-    },
+        firstPopUp(show_form) {
+            this.show_login_modal = true;
+        },
 
-    logout() {
-      this.$store.dispatch(LOGOUT).then(() => window.location.href='/' );
-    },
-  },
-  computed: {
-    ...mapState({
-      errors: state => state.auth.errors
-    }),
-    ...mapGetters(["isAuthenticated","currentUser"]),
+        login() {
+            this.loading = true;
+            const { email, password } = this.user_form;
 
-    logoSrc() {
-      const routeLogo = this.$route.meta.logo;
-      
-      // Set the logo based on the meta value
-      if (routeLogo === 'blue') {
-        return "/media/custome/blue-logo.svg";
-      } else if (routeLogo === 'white') {
-        return "/media/custome/white-logo.png";
-      } else {
-        // Default logo (if needed)
-        return "/media/custome/white-logo.png";
-      }
-    },
+            this.$store
+                .dispatch(LOGIN, { email, password })
+                .then(() => {
+                    // Success logic if needed
+                })
+                .catch(() => {
+                    // Error is handled via mapState errors
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+        },
 
-  }
+        logout() {
+            this.$store
+                .dispatch(LOGOUT)
+                .then(() => (window.location.href = "/"));
+        },
+    },
+    computed: {
+        ...mapState({
+            errors: (state) => state.auth.errors,
+        }),
+        ...mapGetters(["isAuthenticated", "currentUser"]),
+
+        logoSrc() {
+            // Use f16s-logo.svg as requested
+            return "/media/custome/f16s-logo.svg";
+        },
+    },
 };
 </script>
 <style scoped>
 @import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
-html, body * {
-  font-family: 'Roboto', sans-serif !important;
+html,
+body * {
+    font-family: "Roboto", sans-serif !important;
 }
 .navbar-header-logo {
-  width: 10%;
+    flex: 0 0 auto;
+    max-width: 250px;
 }
 .nav-header-menu {
-  width: 70%;justify-content: flex-end;display: flex;margin-right:6%;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+@media (min-width: 992px) {
+    .navbar .container {
+        position: relative;
+    }
+    .nav-header-menu {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0 !important;
+        z-index: 5;
+    }
 }
 .nav-header-right {
-  width: 30%;justify-content: flex-end;display: flex;
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    margin-left: auto;
 }
 .navbar {
   height: auto;
-  padding: 54px 0px !important;
+  padding: 30px 40px 40px 40px !important;
+  margin-bottom: 20px;
 }
 .nav-menu {
-  padding: 12px 41px 12px 41px;
-  gap: 50px;
-  border-radius: 39px;
-  background: linear-gradient(360deg, rgba(148, 153, 178, 0.07) 0%, rgba(34, 50, 138, 0.07) 100%);
-  backdrop-filter: blur(90px);
+    padding: 8px 30px;
+    gap: 30px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 .nav-link {
-  padding: 0px !important;
-  color: #355594 !important;
+    padding: 0px !important;
+    color: #355594 !important;
 }
 .content-gap {
-  gap:18px;
+    gap: 18px;
 }
 
 .nav-link-custom:hover {
-  color: red !important;
+    color: #2a4476 !important;
 }
-.nav-link-custom{
-  font-size: 14px;
-  line-height: 30px;
-  font-weight: 400;
+.nav-link-custom {
+    font-size: 15px;
+    line-height: 30px;
+    font-weight: 500;
+    font-family: "Inter", sans-serif !important;
 }
 
-a.menu-link{
-text-decoration: none !important;
-color: black;
+a.menu-link {
+    text-decoration: none !important;
+    color: black;
 }
-.menu-text{
-color: White;
+.menu-text {
+    color: White;
 }
-#main-logo{
-  width: 100%;
+#main-logo {
+    height: 60px;
+    width: auto;
+    transition: transform 0.3s ease;
 }
-#avatar-logo{
-  width: 35px;
-  height: auto;
+#main-logo:hover {
+    transform: scale(1.05);
+}
+#avatar-logo {
+    width: 35px;
+    height: auto;
+    border-radius: 50%;
+    border: 2px solid rgba(53, 85, 148, 0.1);
+}
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.action-btn {
+    background: rgba(53, 85, 148, 0.05);
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    color: #355594;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+.action-btn:hover {
+    background: rgba(53, 85, 148, 0.1);
+    color: #1e3a6e;
+    transform: translateY(-1px);
+}
+.pulse-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+.airport-badge {
+    background: rgba(53, 85, 148, 0.08);
+    color: #355594;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(53, 85, 148, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .show_pass {
-  position: absolute;
-  left: 87%;
+    position: absolute;
+    left: 87%;
 }
 .sign-in-btn {
-  font-size: 14px;
-  line-height: 24px;
-  border: 1px solid #355594;
-  border-radius: 30px;
-  padding: 12px 30px;
-  background: transparent !important;
-  color: #355594;
+    background: transparent !important;
+    border: 1px solid #355594;
+    color: #355594 !important;
+    border-radius: 50px;
+    padding: 10px 25px;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
 }
 .sign-in-btn:hover {
-  /* color:#fff !important; */
-  /* background-color: #355594; */
-  /* background:#355594 !important; */
+    background: rgba(53, 85, 148, 0.05) !important;
 }
 .whats-new-btn {
+  background: #355594 !important;
+  border: none;
+  color: white !important;
+  border-radius: 50px;
+  padding: 10px 25px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
   font-size: 14px;
   line-height: 20px;
-  color:#fff;
-  border: 1px solid #355594;
-  background:#355594;
-  border-radius: 30px;
-  padding: 14px 16px;
+  transition: all 0.3s ease;
 }
 .whats-new-btn:hover {
-  color:#355594 !important;
-  background-color: #35559400;
-  background:#35559400;
+  background: #2a4476 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(53, 85, 148, 0.3);
+}
+.navbar, .wrap {
+    background: transparent !important;
 }
 .form-control {
-  background-color: #f3f6f900 !important;
+    background-color: #f3f6f900 !important;
 }
 .btn-color {
     background: #0000;
@@ -338,169 +518,176 @@ color: White;
     font-weight: 400;
     line-height: 25px;
     text-align: center;
-    color: #A6A6A6;
-    border: 1px solid #A6A6A6;
+    color: #a6a6a6;
+    border: 1px solid #a6a6a6;
     backdrop-filter: blur(90px);
     border-radius: 30px;
     padding: 10px 40px;
 }
 .bottom-text {
-  color: #4C4C4C;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 15px;
-  text-align: center;
-
+    color: #4c4c4c;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    text-align: center;
 }
 .contact-support {
-  color: #355594;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 15px;
-  text-align: center;
-  text-decoration-line: underline;
-  cursor: pointer;
+    color: #355594;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 15px;
+    text-align: center;
+    text-decoration-line: underline;
+    cursor: pointer;
+}
+/* Split Layout */
+.modal-split-layout { display: flex; flex-direction: row; min-height: 500px; position: relative; }
+.ultra-close-btn { position: absolute; top: 25px; right: 25px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.05); border: none; color: #5A6B8A; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 50; transition: all 0.3s ease; }
+.ultra-close-btn:hover { background: #ef4444; color: white; transform: rotate(90deg); }
+.modal-left-pane { flex: 0 0 40%; padding: 4rem 3.5rem; position: relative; overflow: hidden; color: white; display: flex; flex-direction: column; }
+.login-pane { background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%); }
+.otp-pane { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.pane-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
+.pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }
+.pane-title { font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.5px; line-height: 1.1; }
+.pane-subtitle { font-size: 1.1rem; line-height: 1.7; opacity: 0.85; }
+.pane-feature { display: flex; align-items: center; margin-bottom: 1rem; font-size: 1rem; font-weight: 500; }
+.pane-decoration { position: absolute; bottom: -150px; left: -150px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1; }
+.modal-right-pane { flex: 0 0 60%; background: white; position: relative; }
+.form-scroll-container { height: 100%; overflow-y: auto; padding: 4rem; }
+.form-section-title { font-size: 1.8rem; font-weight: 700; color: #1e3a6e; letter-spacing: -0.5px; text-align: center; }
+.floating-input-group { position: relative; width: 100%; }
+.floating-input { width: 100%; background: #f8fafc; border: 1px solid transparent; border-bottom: 2px solid #e2e8f0; border-radius: 12px 12px 0 0; padding: 24px 16px 8px 16px; font-size: 1rem; color: #1e3a6e; font-weight: 500; transition: all 0.3s ease; font-family: 'Inter', sans-serif; }
+.floating-input:focus { background: #f0f7ff; border-bottom-color: #355594; outline: none; }
+.floating-label { position: absolute; left: 16px; top: 16px; font-size: 1rem; color: #64748b; pointer-events: none; transition: all 0.2s ease; font-weight: 500; }
+.floating-input:focus ~ .floating-label, .floating-input:not(:placeholder-shown) ~ .floating-label { top: 6px; font-size: 0.75rem; color: #355594; font-weight: 600; }
+.pass-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #355594; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.forgot-pwd { font-size: 0.85rem; color: #355594; font-weight: 600; text-decoration: none; }
+.ultra-submit-btn { background: #355594; border: none; border-radius: 999px; padding: 10px 10px 10px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(53, 85, 148, 0.25); cursor: pointer; width: auto; max-width: none; }
+.ultra-submit-btn:hover { background: #28447a; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(53, 85, 148, 0.35); }
+.ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }
+.ultra-submit-btn .btn-icon { background: white; color: #355594; border-radius: 50%; width: 32px !important; height: 32px !important; padding: 6px; margin-left: 0 !important; }
+.form-note { font-size: 0.9rem; color: #64748b; }
+.error-alert { background: rgba(239, 68, 68, 0.08); color: #dc2626; padding: 12px; border-radius: 8px; font-size: 0.9rem; text-align: center; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 500; }
+@media (max-width: 991px) { .modal-split-layout { flex-direction: column; min-height: auto; } .modal-left-pane { flex: 0 0 auto; padding: 3rem 2rem; } .pane-title { font-size: 1.8rem; } .pane-icon-wrapper { width: 60px; height: 60px; margin-bottom: 1.5rem !important; } .modal-right-pane { flex: 0 0 auto; } .form-scroll-container { padding: 3rem 2rem; height: auto; max-height: 60vh; } .ultra-close-btn { top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; } }
 
-}
-/* Login Model box css */
-.title-text {
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 22px;
-  text-align: center;
-  color:#355594;
-}
-.form-control, .form-control-solid {
-    background: transparent !important;
-    border: 1px solid #A6A6A6 !important;
-}
-.form-control-solid:active {
-    background-color: #f3f6f9 !important;
+@media (max-width: 1250px) {
+    .nav-menu {
+        gap: 20px;
+        padding: 8px 25px;
+    }
 }
 
 @media (max-width: 1199px) {
-.nav-header-menu {
-    margin-right:0%;
-  }
+    .navbar {
+        padding: 20px 30px !important;
+    }
+    #main-logo {
+        height: 52px;
+    }
+    .nav-menu {
+        gap: 12px;
+        padding: 6px 20px;
+    }
+    .nav-link-custom {
+        font-size: 14px;
+    }
+    .sign-in-btn, .whats-new-btn {
+        padding: 8px 20px;
+        font-size: 13px;
+    }
 }
 
-@media (max-width: 992px) {
-  .navbar-header-logo {
-    width: 12%;
-  }
-  .navbar-collapse, .collapse {
-    width:88%;
-  }
-  .nav-header-menu {
-    margin-right:0%;
-  }
-  .nav-menu {
-    gap: 40px;
-  }
-  .sign-in-btn {
-    padding: 8px 28px; 
-  }
-  .whats-new-btn {
-    padding: 10px 12px;
-  }
-  .show_pass {
-    left: 88%;
-  }
-}
-@media (max-width: 920px) {
-  .nav-header-menu {
-    width:63%;
-  }
-  .nav-header-right {
-    width:37%;
-  }
-  .nav-menu {
-    gap: 15px;
-  }
-  .nav-link-custom {
-    font-size: 13px;
-    line-height: 25px;
-  }
-}
-@media (max-width: 768px) {
-  .navbar-header-logo {
-    width: 18%;
-  }
-  .nav-header-menu {
-    margin-right:0%;
-    width: 100%;
-  }
-  #main-logo{
-    width: 100%;
-    padding-left: 15px;
-  }
-  .nav-menu {
-    gap: 25px;
-    width: 100%;
-  }
-  .head-btn {
-    display: flex;
-    justify-content: center;
-    flex-direction: row;
-    column-gap: 20px;
-  }
-  .content-gap {
-    gap:20px;
-  }
-  .nav-link-custom {
-    font-size: 22px !important;
-    line-height: 28px !important;
-  }
-  .navbar-collapse {
-    padding: 0px 15px;
-    z-index: 999;
-    max-width: 100%;
-    width: 100%;
-    position: absolute;
-    left: 0%;
-    right: 0%;
-    top: 54%;
-    transition: opacity -20s ease,  0.5s ease-in-out;
-  }
-  .navbar {
-    padding: 20px 0px 50px !important;
-  }
-  .custom-label {
-    justify-content: start !important;
-    width: auto !important;
-  }
-}
-@media (max-width: 576px) {
-  .navbar-header-logo {
-    width: 24%;
-  }
-  .nav-header-menu {
-    margin-right:0%;
-  }
+@media (max-width: 1080px) {
+    .navbar {
+        padding: 15px 20px !important;
+    }
+    #main-logo {
+        height: 48px;
+    }
+    .nav-menu {
+        gap: 8px;
+        padding: 6px 15px;
+    }
+    .content-gap {
+        gap: 12px;
+    }
 }
 
-@media (max-width: 480px) {
-  .navbar-header-logo {
-    width: 28%;
-  }
-  .nav-header-menu {
-    margin-right:0%;
-  }
-  .sign-in-btn[data-v-5ab8085e] {
-    padding: 8px 22px;
-  }
+@media (max-width: 991px) {
+    .navbar {
+        padding: 20px 20px !important;
+    }
+    .nav-header-menu {
+        width: 100%;
+        margin-top: 20px;
+        position: relative !important;
+        left: 0 !important;
+        top: 0 !important;
+        transform: none !important;
+    }
+    .head-btn {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .nav-menu {
+        flex-direction: column;
+        border-radius: 20px;
+        padding: 20px;
+        background: #ffffff;
+        backdrop-filter: none;
+        width: 100%;
+        gap: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .nav-header-right {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        align-items: center;
+    }
+    .nav-link-custom {
+        font-size: 16px !important;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .dropdown-menu {
+        position: static !important;
+        float: none;
+        text-align: center;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 767px) {
+    .navbar-header-logo {
+        max-width: 180px;
+    }
+    #main-logo {
+        height: 45px;
+    }
 }
 </style>
 
 <style>
-.navbar-collapse, .collapse {
-  width:90%;
+.navbar-collapse,
+.collapse {
+    width: 90%;
 }
 .nav-link:after {
-  content: none !important;
+    content: none !important;
 }
 .dropdown-menu {
-  position: absolute !important;
+    position: absolute !important;
     left: -85px !important;
     border-radius: 15px !important;
 }
@@ -508,14 +695,29 @@ color: White;
     color: #355594;
     border-color: #0000;
 }
-.modal-content {
-    background-color: #F3F6F9 !important;
-    backdrop-filter: blur(130px) !important;
-    box-shadow: 5px 4px 25px 0px #0000001F !important;
-    border-radius: 40px !important;
-    padding: 2.5rem;
+.ultra-premium-modal .modal-dialog {
+    max-width: 1000px !important;
+    margin: 1.75rem auto;
 }
-.modal-body {
-    padding: 0px !important;
+
+.ultra-premium-modal .modal-content {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 32px !important;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.25) !important;
+    font-family: 'Inter', sans-serif !important;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease;
+}
+
+.ultra-premium-modal .modal-body {
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px);
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 </style>

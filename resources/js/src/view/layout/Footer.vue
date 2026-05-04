@@ -1,186 +1,148 @@
 <template>
-    <b-container fluid class="footer py-14">
+    <footer class="footer-wrapper pt-15 pb-10">
         <b-container>
-            <!-- Footer Logo Row -->
-            <b-row>
-                <b-col md="12" class="p-0 mb-6">
+            <b-row class="mb-10">
+                <!-- LOGO & TAGLINE -->
+                <b-col lg="4" md="12" class="mb-12 mb-lg-0 text-center text-lg-left">
                     <router-link to="/">
-                        <img :src="FooterLogoSrc" alt="f16s Footer Logo" id="main-footer-logo" class="img-fluid">
+                        <img src="/media/custome/blue-logo.svg" alt="f16s logo" class="footer-logo mb-6">
                     </router-link>
+                    <p class="footer-desc mx-auto mx-lg-0">
+                        Providing smart data solutions and seamless freight documentation for the global logistics industry.
+                    </p>
                 </b-col>
-            </b-row>
-    
-            <!-- Footer Links Rows -->
-            <b-row align-h="center" align-v="center" class="border-top-bottom">
-                <b-col cols="11" md="10">
-                    <b-row>
-                        <!-- Column 1 (Company) -->
-                        <b-col cols="6" sm="3" md="3">
-                            <div class="my-sm-14 mt-7 list-group">
-                                <h5 class="mb-sm-8 mb-5">Company</h5>
-                                <ul class="list-unstyled">
-                                    <li class="mb-sm-6 mb-3"><b-link to="/about-us">About</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#faq-section">FAQ</b-link></li>
-                                    <!-- <li class="mb-sm-6 mb-3"><b-link href="/license">License</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="term-and-condition">Terms & Conditions</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="privacy-policy">Privacy Policy</b-link></li> -->
-                                </ul>
-                            </div>
+
+                <!-- LINKS COLUMNS -->
+                <b-col lg="8" md="12">
+                    <b-row class="text-center text-md-left">
+                        <b-col md="4" cols="6" class="mb-10 mb-md-0">
+                            <h5 class="footer-heading">Company</h5>
+                            <ul class="list-unstyled footer-links">
+                                <li><router-link to="/about-us">About Us</router-link></li>
+                                <li><router-link to="/#faq-section">FAQs</router-link></li>
+                                <li><router-link to="/blogs-and-news">News & Insights</router-link></li>
+                                <li><router-link to="/contact-us">Contact</router-link></li>
+                            </ul>
                         </b-col>
-                
-                        <!-- Column 2 (Resources) -->
-                        <b-col cols="6" sm="3" md="3">
-                            <div class="my-sm-14 mt-7 list-group">
-                                <h5 class="mb-sm-8 mb-5">Resources</h5>
-                                <ul class="list-unstyled">
-                                    <!-- <li class="mb-sm-6 mb-3"><b-link href="#">Blogs</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Press</b-link></li> -->
-                                    <li class="mb-sm-6 mb-3"><b-link to="/contact-us">Contact Us</b-link></li>
-                                    <!-- <li class="mb-sm-6 mb-3"><b-link href="#">FAQs</b-link></li> -->
-                                </ul>
-                            </div>
+                        <b-col md="4" cols="6" class="mb-8 mb-md-0">
+                            <h5 class="footer-heading">Services</h5>
+                            <ul class="list-unstyled footer-links">
+                                <li><router-link to="/product-description">Focus Air</router-link></li>
+                                <li><router-link to="/product-description">Focus Sea</router-link></li>
+                                <li><router-link to="/product-description">Focus Road</router-link></li>
+                            </ul>
                         </b-col>
-                
-                        <!-- Column 3 (Services) -->
-                        <b-col cols="6" sm="3" md="3">
-                            <div class="my-sm-14 mt-7 list-group">
-                                <h5 class="mb-sm-8 mb-5">Services</h5>
-                                <ul class="list-unstyled">
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Focus Air</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Focus Sea</b-link></li>
-                                    <li class="mb-sm-6 mb-3"><b-link href="#">Focus Road</b-link></li>
-                                </ul>
-                            </div>
-                        </b-col>
-                
-                        <!-- Column 4 (Contact Info) -->
-                        <b-col cols="6" sm="3" md="3">
-                            <div class="my-sm-14 mt-7 list-group">
-                                <h5 class="mb-sm-8 mb-5">Contact Info</h5>
-                                <ul class="list-unstyled">
-                                    <li class="mb-sm-6 mb-3"><b-link href="tel:+918660320019">Call: +91&nbsp;8660320019</b-link></li>
-                                    <!-- <li class="mb-sm-6 mb-3 contactInfo-phone">
-                                        <a href="tel:+918660320019" style="text-decoration: none; color: inherit;">
-                                            +91 8660320019
-                                        </a>
-                                    </li> -->
-                                    <li class="mb-sm-6 mb-3"><b-link href="mailto:joseph@f16sefreight.com">Email: joseph@f16sefreight.com</b-link></li>
-                                    <!-- <li class="mb-sm-6 mb-3 contactInfo-email">
-                                        <a href="mailto:joseph@f16sefreight.com" style="text-decoration: none; color: inherit;">
-                                            joseph@f16sefreight.com
-                                        </a>
-                                    </li> -->
-                                    <li class="mb-sm-6 mb-3"><b-link>Address: Bengaluru, Karnataka 560064</b-link></li>
-                                    <!-- <li class="mb-sm-6 mb-3 contactInfo-address">
-                                        <a href="#" style="text-decoration: none; color: inherit;">
-                                            www.f16sefreight.com
-                                        </a>
-                                    </li> -->
-                                </ul>
-                            </div>
+                        <b-col md="4" cols="12" class="mb-0">
+                            <h5 class="footer-heading">Support</h5>
+                            <ul class="list-unstyled footer-links">
+                                <li><router-link to="/contact-us">Help Center</router-link></li>
+                                <li><router-link to="/terms-conditions">Terms of Service</router-link></li>
+                                <li><router-link to="/privacy-policy">Privacy Policy</router-link></li>
+                            </ul>
                         </b-col>
                     </b-row>
                 </b-col>
             </b-row>
-            <!-- Footer Bottom Row (Copyright & Social Icons) -->
-            <b-row class="pt-6">
-                <!-- Column 1 (Copyright) -->
-                <b-col xs="6" class="">
-                    <div>© 2024, F16s All Rights Reserved.</div>
-                </b-col>
-                <!-- Column 2 (Social Media Links) -->
-                <b-col xs="6" class="d-flex justify-content-end">
-                    <router-link to="#" class="mx-2">
-                    <img :src="YouTubeLogoSrc" alt="YouTube Logo" id="social-icon" class="" style="margin-top: 18%;">
-                    </router-link>
-                    <router-link to="#" class="mx-2">
-                    <img :src="LinkedInLogoSrc" alt="LinkedIn Logo" id="social-icon" class="">
-                    </router-link>
-                    <router-link to="#" class="mx-2">
-                    <img :src="FaceBookLogoSrc" alt="Facebook Logo" id="social-icon" class="">
-                    </router-link>
-                </b-col>
-            </b-row>
-        </b-container>
-    </b-container>
-</template>
-  
-  <script>
-  export default {
-    name: "Footer",
-    data(){
-        return{
-            FooterLogoSrc: "/media/custome/blue-logo.png",
-            YouTubeLogoSrc: "/media/custome/social-icon/youtube.svg",
-            LinkedInLogoSrc: "/media/custome/social-icon/linkedIn.svg",
-            FaceBookLogoSrc: "/media/custome/social-icon/facebook.svg",
-        }
-    },
-  };
-  </script>
-  
-<style scoped>
-    @import url(http://fonts.googleapis.com/css?family=Inter:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
 
-    /* /////////////////////////////////////////////////////////////////////////////////////////////////////// */
-    html, body, html * {
-        font-family: 'Inter', sans-serif !important;
+            <div class="footer-bottom pt-10 d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <div class="copyright mb-4 mb-md-0">
+                    © 2026 F16s E-Freight Solutions. All rights reserved.
+                </div>
+                <div class="social-links d-flex gap-4">
+                    <a href="#"><b-icon icon="youtube" font-scale="1.5"></b-icon></a>
+                    <a href="#"><b-icon icon="linkedin" font-scale="1.5"></b-icon></a>
+                    <a href="#"><b-icon icon="facebook" font-scale="1.5"></b-icon></a>
+                </div>
+            </div>
+        </b-container>
+    </footer>
+</template>
+
+<script>
+export default {
+    name: "Footer"
+};
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.footer-wrapper {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F0F7FF 100%);
+    border-top: 1px solid #E6F0FF;
+    font-family: 'Inter', sans-serif;
+}
+
+.footer-logo {
+    height: 60px;
+}
+
+.footer-desc {
+    color: #5A6B8A;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 300px;
+}
+
+.footer-heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: #355594;
+    margin-bottom: 25px;
+}
+
+.footer-links li {
+    margin-bottom: 12px;
+}
+
+.footer-links a {
+    color: #5A6B8A;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #355594;
+}
+
+.footer-bottom {
+    border-top: 1px solid #E6F0FF;
+    color: #818498;
+    font-size: 14px;
+    padding-top: 1.5rem;
+}
+
+@media (max-width: 991px) {
+    .footer-wrapper {
+        padding-top: 4rem;
+        padding-bottom: 3rem;
     }
-    #main-footer-logo {
-        width: 80px;
+    .footer-logo {
+        height: 50px;
     }
-    .border-top-bottom {
-        border-top: 1px solid #BABDCE !important;
-        border-bottom: 1px solid #BABDCE !important;
+    .footer-heading {
+        margin-bottom: 15px;
     }
-    .footer {
-        height: auto;
-        background-color: #DAEFFF; /* For browsers that do not support gradients */
-        background-image: linear-gradient(#FFFFFF, #DAEFFF);
+}
+
+@media (max-width: 767px) {
+    .footer-links li {
+        margin-bottom: 8px;
     }
-    .footer h5 {
-        font-size: 14px;
-        line-height: 24px;
-        color: #818498;
-        font-weight: 400;
-    }
-    .footer p,
-    .footer ul {
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 20px;
-        color: #36364A;
-    }
-    .footer a {
-        color: #36364A;
-        text-decoration: none;
-    }
-    .footer a:hover {
-        text-decoration: underline !important;
-    }
-    #social-icon {
-        width: 80%;
-        margin: auto;
-        display: flex;
-    }
-    .linkedin-icon {
-        margin: 0px 25px;
-    }
-    .contactInfo-phone,
-    .contactInfo-email,
-    .contactInfo-address {
-        font-size: 12px;
-    }
-    @media (max-width: 576px) {
-        .list-group {
-            text-align: center;
-        }
-    }
-    @media (max-width: 767px) {
-        .contactInfo-phone,
-        .contactInfo-email,
-        .contactInfo-address {
-            font-size: 12px;
-        }   
-    }
-  </style>
+}
+
+.social-links a {
+    color: #355594;
+    transition: transform 0.3s ease;
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+    color: #2a4476;
+}
+
+.gap-4 {
+    gap: 1.5rem;
+}
+</style>

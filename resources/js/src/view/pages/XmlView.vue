@@ -1,6 +1,6 @@
 <template>
     <b-container fluid class="body-color">
-        <Header></Header>
+
         <div class="d-flex">
             <SideBar></SideBar>
             <div style="background-color: #fff;box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px; padding: 15px;">
@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import Header from "@/view/layout/Header.vue";
+
 import SideBar from "../layout/SideBar.vue";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
@@ -40,7 +40,7 @@ export default {
     },
 
     components: {
-        Header,
+
         SideBar,
     },
 };

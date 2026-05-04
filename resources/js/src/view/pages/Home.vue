@@ -1,1478 +1,1436 @@
-
 <template>
-    <b-container fluid class="main-container">
-        <!-- Loader with Logo and Animated Loading Text -->
-        <!-- <div v-if="isLoading" class="loader-overlay">
-            <div class="logo-container">
-                <img src="/media/custome/loader.png" alt="Logo" class="logo" />
-                <div class="loading-text">
-                    Loading
-                    <span class="dot dot1">.</span>
-                    <span class="dot dot2">.</span>
-                    <span class="dot dot3">.</span>
+  <b-container fluid class="main-wrapper p-0">
+    <!-- DECORATIVE ELLIPSES -->
+    <div class="decorative-ellipses d-none d-lg-block">
+        <div class="ellipse ellipse-tl"></div>
+        <div class="ellipse ellipse-tr"></div>
+        <div class="ellipse ellipse-br"></div>
+    </div>
+
+
+    <b-container class="content-container">
+        <!-- HERO SECTION -->
+        <section class="hero-section" aria-labelledby="hero-heading">
+            <transition name="hero-fade">
+                <div :key="heroServices[currentHeroIndex].title" class="hero-bg-text" aria-hidden="true">{{ heroServices[currentHeroIndex].title }}</div>
+            </transition>
+            <div class="hero-plane-wrapper">
+                <transition name="hero-fade">
+                    <img :key="heroServices[currentHeroIndex].image" 
+                         :src="heroServices[currentHeroIndex].image" 
+                         :style="heroServices[currentHeroIndex].extraStyle" 
+                         alt="Digital freight logistics solutions" 
+                         :class="['hero-plane', { 'is-tilted-plane': heroServices[currentHeroIndex].title === 'FOCUS AIR' }]">
+                </transition>
+            </div>
+            <div class="hero-content">
+                <div class="hero-text-block">
+                    <h1 id="hero-heading" class="hero-title">Smart e-Freight Solutions for Freight Forwarders</h1>
+                    <p class="hero-subtitle">
+                        Eliminate manual entry frustrations. Process <strong>MAWB and HAWB in under 3 seconds</strong>, seamlessly connect with <strong>150+ airlines globally</strong>, and join the network trusted for over <strong>1,00,000+ AWBs</strong>.
+                    </p>
+                    <b-button to="/about-us" class="hero-btn" aria-label="Explore our logistics solutions">
+                        <span>Explore Now</span>
+                        <b-icon icon="arrow-right" class="btn-icon ms-2" aria-hidden="true"></b-icon>
+                    </b-button>
                 </div>
             </div>
-        </div> -->
-        <!-- <PageLoader></PageLoader> -->
-        <!-- Content (will display after page is fully loaded) -->
-        <!-- Include Header -->
-        <Header></Header>
-        <b-container>
-            <div class="ellipse-1"><img src="/media/custome/circle/ellipse-1.png" alt="circle-image" id="" class="circle-image-1" /></div>
-            <div class="ellipse-2"><img src="/media/custome/circle/ellipse-2.png" alt="circle-image" id="" class="circle-image-2" /></div>
-            <div class="ellipse-3"><img src="/media/custome/circle/ellipse-3.png" alt="circle-image" id="" class="circle-image-3" /></div>
-            <div class="ellipse-4"><img src="/media/custome/circle/ellipse-4.png" alt="circle-image" id="" class="circle-image-4" /></div>
-            <!-- <div class="ellipse-5"><img src="/media/custome/circle/ellipse-5.png" alt="circle-image" id="" class="circle-image-5" /></div> -->
-            <!-- Banner Top section start here -->
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12">
-                    <b-row class="d-flex flex-row justify-content-center align-items-center" style="width: 80%;margin: auto; margin-top: 8%;">
-                        <!-- Show in tabs and desktop device only -->
-                        <b-col cols="12" md="8" lg="9" class="px-md-0 d-block d-md-none banner-image-container">
-                            <div class="banner">
-                                <img :src="banner" alt="Banner-image" id="Banner-image" class="banner-image" />
-                            </div>
-                        </b-col>
-                        <!-- Primary Banner Text Image -->
-                        <b-col cols="12" class="px-md-0">
-                            <img :src="banner_primary_text" alt="Banner-primary-text" id="Banner-primary-text" class="" style="width: 100%;display:block;margin:auto" />
-                        </b-col>
-                        <!-- Left Description Column -->
-                        <b-col cols="12" md="4" lg="3" class="px-md-0">
-                            <div class="banner-description-container">
-                                <h4 class="text-left banner-description mb-8">
-                                    Whether you need fast and reliable data flow for airlines or simplified document handling for sea and road transport, we’ve got you covered.
-                                </h4>
-                            </div>
-                            <b-button to="/about-us" class="d-flex align-items-center mb-8 exp-btn">
-                                <span>Explore Now</span>
-                                <b-icon icon="arrow-right" class="btn-icon ms-2"></b-icon>
-                            </b-button>
-                        </b-col>
-                        <!-- Right Banner Image Column -->
-                        <!-- Show in tabs and desktop device only -->
-                        <b-col cols="12" md="8" lg="9" class="px-md-0 d-none d-md-block banner-image-container">
-                            <div class="banner">
-                                <img :src="banner" alt="Banner-image" id="Banner-image" class="banner-image" />
-                            </div>
-                        </b-col>
-                    </b-row>
+        </section>
+
+        <!-- AFFILIATIONS SCROLLER -->
+        <section class="aff-section" aria-label="Our Airline Partners">
+          <div class="aff-label">
+            <span class="aff-eyebrow">Partners</span>
+            <h2 class="aff-heading">Global Airline Affiliations</h2>
+          </div>
+          <div class="aff-divider"></div>
+          <div class="aff-track-wrap">
+            <div class="scroller-track">
+              <div v-for="(img, idx) in affiliateImages" :key="idx" class="aff-logo-wrap">
+                <img :src="img" class="affiliate-logo" :alt="`Partner airline logo ${idx + 1}`">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- WHAT F16S CAN DO (FEATURES) -->
+        <section class="features-container mb-25" aria-labelledby="features-heading">
+            <div class="features-bg-glow"></div>
+            <b-row class="features-section">
+                <b-col cols="12" class="text-center mb-16">
+                    <span class="section-eyebrow">Capabilities</span>
+                    <h2 id="features-heading" class="section-title">Logistics Automation Features</h2>
+                    <p class="section-subtitle mt-4">Discover the powerful features that streamline your global freight operations.</p>
                 </b-col>
-            </b-row>
-            <!-- Affiliations section start here -->
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center">
-                        <b-col cols="4" sm="3" md="3" lg="3" xl="2" class="">
-                           <p class="affiliation m-0">Affiliations:</p> 
-                        </b-col>
-                        <b-col cols="8" sm="9" md="9" lg="9" xl="10" class="parent-scroll-container">
-                            <!-- Child divs that will be displayed horizontally and auto scrollable -->
-                            <div class="child-scroll-container">
-                                <div class="child-div" v-for="(affiliate, index) in affiliates" ><b-img :src="affiliate.imgSrc" :alt="affiliate.imgAlt" class="img-fluid d-block" style="width: 100%;" /></div>
-                            </div>
-                        </b-col>
-                    </b-row>
-                </b-col>
-            </b-row>
-            <!-- What F16s can do for you -->
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center">
-                        <div class="ellipse-6"><img src="/media/custome/circle/ellipse-6.png" alt="circle-image" id="" class="circle-image-6" /></div>
-                        <b-col cols="12" class="mb-15 mb-md-20 mb-lg-25">
-                            <h2 class="section-title">Learn what F16s can do for you</h2>
-                        </b-col>
-                        <b-col
-                            v-for="(serviceCard, index) in serviceCards"
-                            :key="index"
-                            cols="12" sm="6" md="6" lg="3" xl="3" xxl="3"
-                            class="mb-8 mb-sm-8 mb-md-8 mb-lg-0 service-card"
-                            >
-                            <b-card class="text-center">
-                                <div class="card-img">
-                                    <b-img :src="serviceCard.imgSrc" :alt="serviceCard.imgAlt" class="card-img-img d-block" />
+                <b-col lg="3" md="6" sm="12" class="mb-8" v-for="(feature, idx) in features" :key="idx">
+                    <router-link :to="feature.link && feature.link !== '#' ? feature.link : ''" custom v-slot="{ navigate }">
+                        <div class="feature-card-wrapper" @click="feature.link && feature.link !== '#' ? navigate($event) : null" :style="feature.link && feature.link !== '#' ? 'cursor: pointer;' : ''">
+                            <div class="feature-card-glow"></div>
+                            <b-card class="feature-card h-100">
+                                <div class="feature-icon-container mb-8">
+                                    <div class="icon-circle"></div>
+                                    <img :src="feature.icon" :alt="`Icon representing ${feature.title}`" class="feature-icon">
                                 </div>
-                                <div class="service-card-title py-xl-10 py-lg-10 py-md-14 py-sm-10 py-10">
-                                    <p v-html="serviceCard.title"></p>
-                                </div>
-                                <div class="service-card-btn-container">
-                                    <b-button class="service-card-arrow-btn">
-                                        <b-icon icon="arrow-right" font-scale="2" class="service-card-btn-icon ms-2"></b-icon>
-                                    </b-button>
+                                <h3 class="feature-title">{{ feature.title }}</h3>
+                                <p class="feature-desc">{{ feature.description }}</p>
+                                <div class="feature-footer mt-auto pt-6">
+                                    <div class="feature-link">
+                                        <span>Explore Feature</span>
+                                        <b-icon icon="arrow-right" class="ms-2" aria-hidden="true"></b-icon>
+                                    </div>
                                 </div>
                             </b-card>
-                        </b-col>
-                    </b-row>
+                        </div>
+                    </router-link>
                 </b-col>
             </b-row>
-            <!-- CONNECTING GLOBAL FREIGHT -->
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center">
-                        <div class="ellipse-7"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-7" /></div>
-                        <div class="ellipse-8"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-8" /></div>
-                        <div class="ellipse-9"><img src="/media/custome/circle/ellipse-9.png" alt="circle-image" id="" class="circle-image-9" /></div>
-                        <div class="ellipse-10"><img src="/media/custome/circle/ellipse-10.png" alt="circle-image" id="" class="circle-image-10" /></div>
-                        <b-col cols="12">
-                            <div>
-                                <h2 class="section-title mb-8">Connecting global freight networks with smart data solutions</h2>
-                            </div>
-                        </b-col>
-                        <b-col cols="10" md="10" lg="10" xl="8" class="">
-                            <div class="d-flex flex-row justify-content-center text-center">
-                                <h6 class="section-sub-title mb-8">F16s E-Freight Solutions provides seamless data transmission and documentation for air, sea, and road freight.</h6>
-                            </div>
-                            <div class="d-flex flex-row justify-content-center">
-                                <b-button to="/about-us" class="learnMore-btn">Learn More</b-button>
-                            </div>
-                        </b-col>
-                    </b-row>
-                </b-col>
-            </b-row>
-            <!-- Carousel -->
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <div class="mb-10">
-                        <h2 class="section-title">Our Services</h2>
-                    </div>
-                    <HomeCarousel></HomeCarousel>
-                </b-col>
-            </b-row>
-            <!-- end Carousel -->
-            <!-- Business count section start here -->
-            <b-row align-h="center" align-v="center">
-                <b-col cols="12" class="my-15 my-md-20 my-lg-25">
-                    <b-row align-h="center" align-v="center">
-                        <div class="ellipse-11"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-11" /></div>
-                        <div class="ellipse-12"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-12" /></div>
-                        <div class="ellipse-13"><img src="/media/custome/circle/ellipse-10.png" alt="circle-image" id="" class="circle-image-13" /></div>
-                        <b-col cols="12" class="">
-                            <div>
-                                <h2 class="section-title mb-4">Making Best, Even Better.</h2>
-                                <h6 class="section-sub-title mb-16">Your partner for smarter, faster operations and freight solutions.</h6>
-                            </div>
-                        </b-col>
-                        <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count" ref="countSection1">
-                            <h1 class="text-center">{{ count1 }}+</h1>
-                            <p class="text-center">Data transmitted</p>
-                        </b-col>
-                        <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count" ref="countSection2">
-                            <h1 class="text-center">{{ count2 }}+</h1>
-                            <p class="text-center">Cities</p>
-                        </b-col>
-                        <b-col cols="12" sm="4" md="4" lg="4" xl="4" xxl="4" class="mb-14 business-count" ref="countSection3">
-                            <h1 class="text-center">{{ count3 }}+</h1>
-                            <p class="text-center">Airline affiliations</p>
-                        </b-col>`
-                    </b-row>
-                </b-col>
-            </b-row>
-            <!-- Latest News section with flip  -->
-            <b-row align-h="center" align-v="center" style="position: relative;">
-                <div class="ellipse-14"><img src="/media/custome/circle/ellipse-7.png" alt="circle-image" id="" class="circle-image-14" /></div>
-                <div class="ellipse-15"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-15" /></div>
-                <div class="ellipse-16"><img src="/media/custome/circle/ellipse-8.png" alt="circle-image" id="" class="circle-image-16" /></div>
+        </section>
+
+        <!-- THREE MAJOR SERVICES SECTION - Redesigned -->
+        <section class="services-carousel-section mb-25" aria-labelledby="services-heading">
+            <b-row>
                 <b-col cols="12">
-                    <div>
-                        <h2 class="section-title mb-20">Latest Logistics News</h2>
+                    <div class="section-header text-center mb-16">
+                        <span class="section-eyebrow">Expertise</span>
+                        <h2 id="services-heading" class="section-title">Specialized Logistics Services</h2>
+                        <p class="section-subtitle mt-4">High-performance solutions for every freight challenge.</p>
+                    </div>
+                    <div class="services-modern-grid">
+                        <!-- SEA SERVICE -->
+                        <router-link to="/product-description" custom v-slot="{ navigate }">
+                            <article class="service-product-card is-coming-soon order-lg-1 order-2" @click="navigate" style="cursor: pointer;">
+                                <div class="service-product-badge">Upcoming</div>
+                                <div class="service-product-image">
+                                    <img src="/media/custome/about/boat.png" alt="Focus Sea - Digital Ocean Freight Management">
+                                </div>
+                                <div class="service-product-info">
+                                    <h3 class="service-product-title">FOCUS SEA</h3>
+                                    <p class="service-product-desc">Streamlined ocean freight documentation and container tracking. Manage every wave of your sea logistics with one-click efficiency.</p>
+                                    <b-button disabled class="service-product-btn">
+                                        <span>Coming Soon</span>
+                                    </b-button>
+                                </div>
+                            </article>
+                        </router-link>
+
+                        <!-- AIR SERVICE -->
+                        <router-link to="/product-description" custom v-slot="{ navigate }">
+                            <article class="service-product-card order-lg-2 order-1" @click="navigate" style="cursor: pointer;">
+                                <div class="service-product-image">
+                                    <img src="/media/custome/about/plane.png" alt="Focus Air - Automated Air Freight Solutions">
+                                </div>
+                                <div class="service-product-info">
+                                    <h3 class="service-product-title">FOCUS AIR</h3>
+                                    <p class="service-product-desc">The gold standard in air freight automation. Instant AWB generation, real-time EDI connectivity, and automated status updates.</p>
+                                    <b-button to="/product-description" class="hero-btn" aria-label="Start using Focus Air services">
+                                        <span>Explore More</span>
+                                        <b-icon icon="arrow-right" class="btn-icon" aria-hidden="true"></b-icon>
+                                    </b-button>
+                                </div>
+                            </article>
+                        </router-link>
+
+                        <!-- ROAD SERVICE -->
+                        <router-link to="/product-description" custom v-slot="{ navigate }">
+                            <article class="service-product-card is-coming-soon order-lg-3 order-3" @click="navigate" style="cursor: pointer;">
+                                <div class="service-product-badge">Upcoming</div>
+                                <div class="service-product-image">
+                                    <img src="/media/custome/about/truck.png" alt="Focus Road - Road Transportation Management">
+                                </div>
+                                <div class="service-product-info">
+                                    <h3 class="service-product-title">FOCUS ROAD</h3>
+                                    <p class="service-product-desc">Simplified road transportation management. Handle local trucking and cross-border freight with powerful dispatching tools.</p>
+                                    <b-button disabled class="service-product-btn">
+                                        <span>Coming Soon</span>
+                                    </b-button>
+                                </div>
+                            </article>
+                        </router-link>
                     </div>
                 </b-col>
-                <LatestNewsCardFliped></LatestNewsCardFliped>
             </b-row>
-             <!-- end News section with flip  -->
-            <!-- <b-col cols="12" class="mb-8">
-                <div class="d-flex flex-row justify-content-center">
-                    <b-button class="expMore-btn">Explore More</b-button>
-                </div>
-            </b-col> -->
-            <!-- FAQs Accordion section start here -->
-            <b-row align-h="center" align-v="center" id="faq-section">
-                <b-col cols="12" class="my-12 my-md-16 my-lg-20">
-                    <b-row align-h="center" align-v="center">
-                        <b-col cols="12" class="">
-                            <div>
-                                <h2 class="section-title mb-10">FAQs</h2>
+        </section>
+
+        <!-- STATS SECTION -->
+        <section class="stats-container mb-25" aria-labelledby="stats-heading">
+            <b-row align-v="center">
+                <b-col lg="4" class="mb-12 mb-lg-0">
+                    <div class="stats-intro">
+                        <span class="section-eyebrow">Our Impact</span>
+                        <h2 id="stats-heading" class="section-title">Redefining Logistics Standards</h2>
+                        <p class="section-subtitle mt-4">We are driving the future of logistics through advanced automation and global EDI connectivity.</p>
+                        <div class="stats-decoration-line mt-8"></div>
+                    </div>
+                </b-col>
+                <b-col lg="8">
+                    <div class="stats-minimal-grid">
+                        <div v-for="(stat, key) in statsData" :key="key" class="stat-minimal-item" :ref="`statRef-${key}`">
+                            <div class="stat-minimal-icon">
+                                <b-icon :icon="stat.icon" aria-hidden="true"></b-icon>
                             </div>
-                        </b-col>
-                        <b-col cols="12" class="mb-20">
-                            <div class="mb-6 accordion-box"
-                                v-for="(accordion, index) in accordions" :key="index"
-                                :style="{ background: accordion.isOpen ? '#355594' : '#F1F9FF8A'}"
-                                @click="toggleAccordion(index)">
-                                <div class="d-flex flex-row justify-content-between align-items-center cursor-pointer text-left">
-                                    <h5 class="faq-accordion-title" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C' }">
-                                        {{ accordion.title }}
-                                    </h5>
-                                    <!-- Show chevron-down if closed -->
-                                    <b-icon v-if="!accordion.isOpen" icon="chevron-compact-down" scale="2" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C', }"></b-icon>
+                            <div class="stat-minimal-info">
+                                <div class="stat-minimal-number">
+                                    {{ formatStat(animatedStats[key], key) }}{{ stat.suffix }}
                                 </div>
-                                <b-collapse v-model="accordion.isOpen" class="mt-2">
-                                    <b-card class="accordion-card">
-                                        <div class="d-flex flex-row justify-content-between cursor-pointer">
-                                            <p class="" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C' }">
-                                                {{ accordion.content }}
-                                            </p>
-                                            <!-- Show chevron-up if open -->
-                                            <b-icon v-if="accordion.isOpen" icon="chevron-compact-up" scale="2" :style="{ color: accordion.isOpen ? '#ffffff' : '#4C4C4C', }"></b-icon>
-                                        </div>
-                                    </b-card>
-                                </b-collapse>
+                                <h3 class="stat-minimal-label">{{ stat.label }}</h3>
+                                <p class="stat-minimal-desc">{{ stat.description }}</p>
                             </div>
+                        </div>
+                    </div>
+                </b-col>
+            </b-row>
+        </section>
+
+        <!-- NEWS SECTION -->
+        <section class="news-section-container mb-25" aria-labelledby="news-heading">
+            <b-row class="mb-16 align-items-end">
+                <b-col md="8">
+                    <span class="section-eyebrow">Insights</span>
+                    <h2 id="news-heading" class="section-title">Latest Logistics News & Insights</h2>
+                    <p class="section-subtitle mt-4">Stay updated with the evolving landscape of global trade and freight technology.</p>
+                </b-col>
+                <b-col md="4" class="text-md-end d-none d-md-block">
+                    <b-link to="/blogs-and-news" class="view-all-btn" aria-label="View all logistics news articles">
+                        <span>View All News</span>
+                        <b-icon icon="arrow-right" class="ms-2" aria-hidden="true"></b-icon>
+                    </b-link>
+                </b-col>
+            </b-row>
+
+            <b-row>
+                <b-col lg="6" class="mb-8">
+                    <!-- Featured News Card -->
+                    <article class="news-card featured">
+                        <div class="news-image-wrap">
+                            <img src="/media/custome/gallary/img-1.png" class="news-img" alt="Digital data streams representing the future of EDI and logistics connectivity">
+                            <div class="news-category">Featured</div>
+                        </div>
+                        <div class="news-body">
+                            <div class="news-meta">
+                                <time datetime="2026-05-01" class="news-date">May 1, 2026</time>
+                                <span class="meta-dot"></span>
+                                <span class="news-author">F16s Editorial</span>
+                            </div>
+                            <h3 class="news-title">The Future of EDI: How F16s is Redefining Data Connectivity</h3>
+                            <p class="news-excerpt">Explore how next-generation EDI standards are eliminating manual entry and creating a more transparent global supply chain...</p>
+                            <b-link href="#" class="news-read-more" aria-label="Read full article about EDI and data connectivity">
+                                <span>Read Full Article</span>
+                                <b-icon icon="plus" class="ms-1" aria-hidden="true"></b-icon>
+                            </b-link>
+                        </div>
+                    </article>
+                </b-col>
+                <b-col lg="6">
+                    <b-row>
+                        <b-col md="6" v-for="(news, idx) in newsItems" :key="idx" class="mb-8">
+                            <article class="news-card small">
+                                <div class="news-image-wrap small">
+                                    <img :src="news.image" class="news-img" :alt="`News image: ${news.title}`">
+                                    <div class="news-category">{{ news.category }}</div>
+                                </div>
+                                <div class="news-body">
+                                    <div class="news-meta">
+                                        <span class="news-date">{{ news.date }}</span>
+                                    </div>
+                                    <h4 class="news-title-small">{{ news.title }}</h4>
+                                    <b-link href="#" class="news-link-simple" :aria-label="`Read more about ${news.title}`">Read More</b-link>
+                                </div>
+                            </article>
                         </b-col>
                     </b-row>
                 </b-col>
             </b-row>
-        </b-container>
+            <div class="d-md-none text-center mt-4">
+                <b-link href="#" class="view-all-btn" aria-label="View all logistics news articles">View All News</b-link>
+            </div>
+        </section>
+
+        <!-- FAQs SECTION -->
+        <section class="faq-section-container mb-25" id="faq-section" aria-labelledby="faq-heading">
+            <b-row class="justify-content-center">
+                <b-col lg="9">
+                    <div class="text-center mb-16">
+                        <span class="section-eyebrow">Support</span>
+                        <h2 id="faq-heading" class="section-title">Freight Automation FAQs</h2>
+                        <p class="section-subtitle mt-4">Everything you need to know about the F16s freight management platform.</p>
+                    </div>
+
+                    <div class="faq-accordion-list">
+                        <article v-for="(faq, idx) in accordions" :key="idx" 
+                             class="faq-item" :class="{'is-open': faq.isOpen}">
+                            <div class="faq-header" @click="toggleAccordion(idx)" 
+                                 role="button" :aria-expanded="faq.isOpen.toString()"
+                                 :aria-controls="`faq-content-${idx}`">
+                                <h3 class="faq-question">{{ faq.title }}</h3>
+                                <div class="faq-toggle-icon">
+                                    <div class="icon-line horizontal"></div>
+                                    <div class="icon-line vertical" :class="{'is-hidden': faq.isOpen}"></div>
+                                </div>
+                            </div>
+                            <b-collapse v-model="faq.isOpen" :id="`faq-content-${idx}`">
+                                <div class="faq-body">
+                                    <p>{{ faq.content }}</p>
+                                </div>
+                            </b-collapse>
+                        </article>
+                    </div>
+
+                    <!-- Still Have Questions -->
+                    <div class="faq-footer mt-16 text-center">
+                        <div class="faq-footer-card">
+                            <h4 class="mb-2">Still have questions about our logistics tools?</h4>
+                            <p class="mb-6">Can't find the answer you're looking for? Please contact our expert logistics team.</p>
+                            <b-button to="/contact-us" class="faq-contact-btn" aria-label="Contact our support team">Get in Touch</b-button>
+                        </div>
+                    </div>
+                </b-col>
+            </b-row>
+        </section>
     </b-container>
+  </b-container>
 </template>
 
 <script>
-    import Header from "@/view/layout/Header.vue";
-    import HomeCarousel from "../components/HomeCarousel.vue";
-    import LatestNewsCardFliped from "../components/LatestNewsCardFliped.vue";
-    // import PageLoader from '../components/PageLoader.vue';
-    export default {
-        name: "Home",
-        data(){
-            return{
-                banner: "/media/custome/banner-plane.png",
-                banner_primary_text: "/media/custome/banner-primary-text.png",
-                count1: 0,
-                count2: 0,
-                count3: 0,
-                isLoading: true,
-                targetCounts: {
-                    count1: 10000,
-                    count2: 10,
-                    count3: 100,
-                },
-                hasAnimated: {
-                    count1: false,
-                    count2: false,
-                    count3: false,
-                },
-                affiliates: [
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/air-france.png",
-                        imgAlt: "air france"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/emirates.png",
-                        imgAlt: "emirates"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/lufthansa.png",
-                        imgAlt: "lufthansa"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/qatar.png",
-                        imgAlt: "qatar"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/turkish-airlines.png",
-                        imgAlt: "turkish-airlines"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/air-france.png",
-                        imgAlt: "air france"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/emirates.png",
-                        imgAlt: "emirates"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/lufthansa.png",
-                        imgAlt: "lufthansa"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/qatar.png",
-                        imgAlt: "qatar"
-                    },
-                    {
-                        imgSrc: "/media/custome/affiliation-tags/turkish-airlines.png",
-                        imgAlt: "turkish-airlines"
-                    },
-                ],
-                // Array of Services section
-                serviceCards: [
-                    {
-                        imgSrc: "/media/custome/small-business.png",
-                        imgAlt: "business",
-                        title: "Small<br />Business",
-                    },
-                    {
-                        imgSrc: "/media/custome/cloud-storage.png",
-                        imgAlt: "cloud storage",
-                        title: "Cloud<br />Storage",
-                    },
-                    {
-                        imgSrc: "/media/custome/privacy.png",
-                        imgAlt: "privacy",
-                        title: "Privacy<br /> &nbsp;",
-                    },
-                    {
-                        imgSrc: "/media/custome/end-to-end-service.png",
-                        imgAlt: "end to end service",
-                        title: "End to End<br />Service",
-                    }
-                ],
-                isVisible: true,
-                // Array of Faqs Accordion section
-                accordions: [
-                    {
-                        title: "Does F16s support multiple AWB connections?",
-                        content: "Yes, our Pro plan allows users to connect multiple AWBs for seamless data transfer across airlines and logistics partners.",
-                        isOpen: false,
-                    },
-                    {
-                        title: "Can I print my freight documents from F16s?",
-                        content: "Yes, our platform includes a document printing option for MAWB, HAWB and consolidation.",
-                        isOpen: false,
-                    },
-                    {
-                        title: "Can I search for past AWBs?",
-                        content: "Yes, you can view the last 10, 20, 50, or 100 executed AWBs, check their history, and access shipment tracking, HAWB details, and message logs.",
-                        isOpen: false,
-                    },
-                    {
-                        title: "What are the pricing options for F16s?",
-                        content: "We offer a Basic plan for database management and printable documentation, while the Pro plan includes multiple AWB connections and additional feature.",
-                        isOpen: false,
-                    },
-                ],
+
+export default {
+    name: "Home",
+    components: { },
+    data() {
+        return {
+            animatedStats: { awbs: 0, airlines: 0, speed: 0 },
+            statsData: {
+                awbs: { label: "AWBs Processed", target: 100000, suffix: "", icon: "file-earmark-check", description: "Our robust EDI engine has successfully processed over 1,00,000 Air Waybills, providing unmatched reliability for freight forwarders globally." },
+                airlines: { label: "Airlines", target: 150, suffix: "+", icon: "cursor", description: "Seamlessly connect with 150+ airlines via our direct EDI integrations. No more manual entry—just instant, accurate data transmission to any carrier." },
+                speed: { label: "Processing Speed", target: 3, suffix: " sec", icon: "lightning-charge", description: "Experience lightning-fast operations. Our platform automates complex documentation, reducing manual entry time from minutes to just 3 seconds per AWB." }
+            },
+            hasAnimatedStats: { awbs: false, airlines: false, speed: false },
+            currentHeroIndex: 0,
+            heroInterval: null,
+            heroServices: [
+                { title: 'FOCUS AIR', image: '/media/custome/banner-plane.png', extraStyle: {} },
+                { title: 'FOCUS SEA', image: '/media/custome/banner-ship.png', extraStyle: {} },
+                { title: 'FOCUS ROAD', image: '/media/custome/banner-truck.png', extraStyle: { marginTop: '40px' } }
+            ],
+            affiliateImages: [
+                "/media/custome/affiliation-tags/air-france.png",
+                "/media/custome/affiliation-tags/emirates.png",
+                "/media/custome/affiliation-tags/lufthansa.png",
+                "/media/custome/affiliation-tags/qatar.png",
+                "/media/custome/affiliation-tags/turkish-airlines.png"
+            ],
+            features: [
+                { title: "Small Business", description: "Tailored logistics solutions designed to help growing businesses scale efficiently.", icon: "/media/custome/small-business.png", link: "/small-business" },
+                { title: "Cloud Storage", description: "Secure, high-speed access to all your freight documents and history, anywhere, anytime.", icon: "/media/custome/cloud-storage.png", link: "/cloud-storage" },
+                { title: "Privacy", description: "Enterprise-grade encryption ensuring your sensitive data and trade secrets remain confidential.", icon: "/media/custome/privacy.png", link: "/privacy" },
+                { title: "End to End Service", description: "Comprehensive freight management from initial booking to final delivery, fully automated.", icon: "/media/custome/end-to-end-service.png", link: "/end-to-end" }
+            ],
+            newsItems: [
+                { title: "Global Air Freight Trends in 2026", date: "April 28, 2026", category: "Air Freight", image: "/media/custome/gallary/img-2.png" },
+                { title: "Digital Transformation in Warehousing", date: "April 25, 2026", category: "Technology", image: "/media/custome/gallary/img-3.png" },
+                { title: "Sustainable Shipping Solutions", date: "April 22, 2026", category: "Eco", image: "/media/custome/gallary/img-4.png" },
+                { title: "Optimizing Last-Mile Delivery", date: "April 20, 2026", category: "Road", image: "/media/custome/gallary/img-5.png" }
+            ],
+            accordions: [
+                { title: "Does F16s support multiple AWB connections?", content: "Yes, our Pro plan allows users to connect multiple AWBs for seamless data transfer across airlines and logistics partners.", isOpen: false },
+                { title: "Can I print my freight documents from F16s?", content: "Yes, our platform includes a document printing option for MAWB, HAWB and consolidation.", isOpen: false },
+                { title: "Can I search for past AWBs?", content: "Yes, you can view the last 10, 20, 50, or 100 executed AWBs, check their history, and access shipment tracking, HAWB details, and message logs.", isOpen: false },
+                { title: "What are the pricing options for F16s?", content: "We offer a Basic plan for database management and printable documentation, while the Pro plan includes multiple AWB connections and additional feature.", isOpen: false },
+            ]
+        }
+    },
+    methods: {
+        toggleAccordion(index) {
+            this.accordions[index].isOpen = !this.accordions[index].isOpen;
+        },
+        formatStat(value, key) {
+            if (key === 'awbs') {
+                // Format to 1,00,000 (Indian format as requested)
+                return value.toLocaleString('en-IN');
             }
+            return value.toLocaleString();
         },
-        components: {
-            Header,
-            HomeCarousel,
-            LatestNewsCardFliped,
-            // PageLoader
-        },
-        methods: {
-            toggleSlide() {
-                this.isVisible = !this.isVisible; // Toggle visibility on button click
-            },
-            animateCount(target, key) {
-                const duration = 10000; // Animation duration in milliseconds
-                const increment = Math.ceil(target / (duration / 16)); // Calculate increment per frame (16ms per frame)
-
-                const interval = setInterval(() => {
-                    if (this[key] < target) {
-                        this[key] = Math.min(this[key] + increment, target); // Increment count, cap at target
-                    } 
-                    else
-                    {
-                        clearInterval(interval);
-                    }
-                }, 16);
-            },
-
-            toggleAccordion(index) {
-                // Check if the index is valid
-                if (index >= 0 && index < this.accordions.length) {
-                    this.accordions[index].isOpen = !this.accordions[index].isOpen;
+        animateStat(key) {
+            const target = this.statsData[key].target;
+            const duration = 2000;
+            const stepTime = 20;
+            const steps = duration / stepTime;
+            const increment = target / steps;
+            
+            let current = 0;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    this.animatedStats[key] = target;
+                    clearInterval(timer);
                 } else {
-                    // console.error("Accordion index is invalid:", index);
+                    this.animatedStats[key] = Math.floor(current);
                 }
-            },
-
-            // Check if the element is in the viewport
-            isElementInViewport(element) {
-                const rect = element.getBoundingClientRect();
-                return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-            },
-
-            // Method to check visibility periodically
-            checkVisibility() {
-                if (!this.hasAnimated.count1 && this.isElementInViewport(this.$refs.countSection1)) {
-                    // console.log(Intl.NumberFormat('en-US').format(this.targetCounts.count1));
-                    this.animateCount(this.targetCounts.count1, "count1");
-                    this.hasAnimated.count1 = true;
-                }
-                if (!this.hasAnimated.count2 && this.isElementInViewport(this.$refs.countSection2)) {
-                    this.animateCount(this.targetCounts.count2, "count2");
-                    this.hasAnimated.count2 = true;
-                }
-                if (!this.hasAnimated.count3 && this.isElementInViewport(this.$refs.countSection3)) {
-                    this.animateCount(this.targetCounts.count3, "count3");
-                    this.hasAnimated.count3 = true;
-                }
-
-                // If any section has not yet animated, keep checking
-                if (!this.hasAnimated.count1 || !this.hasAnimated.count2 || !this.hasAnimated.count3) {
-                    requestAnimationFrame(this.checkVisibility);
-                }
-            },
+            }, stepTime);
         },
-        mounted() {
-            // Start checking visibility when the component is mounted
-            requestAnimationFrame(this.checkVisibility);
+        isElementInViewport(element) {
+            if(!element) return false;
+            const rect = element.getBoundingClientRect();
+            return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
         },
+        checkVisibility() {
+            Object.keys(this.statsData).forEach(key => {
+                const refName = `statRef-${key}`;
+                const element = this.$refs[refName] ? this.$refs[refName][0] : null;
+                
+                if (element && !this.hasAnimatedStats[key] && this.isElementInViewport(element)) {
+                    this.animateStat(key);
+                    this.hasAnimatedStats[key] = true;
+                }
+            });
 
-    };
+            const allDone = Object.values(this.hasAnimatedStats).every(v => v);
+            if (!allDone) {
+                this.animationFrameId = requestAnimationFrame(this.checkVisibility);
+            }
+        }
+    },
+    mounted() {
+        this.animationFrameId = requestAnimationFrame(this.checkVisibility);
+        
+        this.heroInterval = setInterval(() => {
+            this.currentHeroIndex = (this.currentHeroIndex + 1) % this.heroServices.length;
+        }, 4000);
+
+        // Multiply the 5 logos to create a continuous dense ticker of 150 items
+        const baseLogos = this.affiliateImages;
+        let expandedLogos = [];
+        for(let i = 0; i < 30; i++) {
+            expandedLogos = expandedLogos.concat(baseLogos);
+        }
+        this.affiliateImages = expandedLogos;
+    },
+    beforeDestroy() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        if (this.heroInterval) {
+            clearInterval(this.heroInterval);
+        }
+    }
+}
 </script>
 
 <style scoped>
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-
-/* /////////////////////////////////////////////////////////////////////////////////////////////////////// */
-html {
-  scroll-behavior: smooth !important;
-}
-html, body * {
-  font-family: 'Roboto', sans-serif !important;
-}
-/* Loader Overlay */
-.loader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  flex-direction: column;
+.main-wrapper {
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    overflow-x: hidden;
 }
 
-/* Logo Container */
-.logo-container {
-  text-align: center;
+/* Decorative background elements */
+.decorative-ellipses .ellipse {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.5;
+}
+.ellipse-tl { width: 400px; height: 400px; background: #D0E6F8; top: -100px; left: -100px; }
+.ellipse-tr { width: 300px; height: 300px; background: #E6F0FF; top: 20%; right: -50px; }
+.ellipse-br { width: 500px; height: 500px; background: #F0F7FF; bottom: 10%; left: 20%; }
+
+.content-container {
+    position: relative;
+    z-index: 10;
+    padding-top: 0;
 }
 
-/* Styling the Logo */
-.logo {
-  width: 150px; /* Adjust size of the logo */
-  height: auto;
-  margin-bottom: 20px;
+/* Typography */
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #355594;
+    letter-spacing: -0.5px;
+}
+.section-subtitle {
+    font-size: 1.25rem;
+    color: #5A6B8A;
+    font-weight: 400;
 }
 
-/* Loading Text Style */
-.loading-text {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
-  position: relative;
+.hero-section {
+    position: relative;
+    width: 100%;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 2rem;
+    background: transparent;
 }
 
-/* Dots Animation */
-.dot {
-  display: inline-block;
-  opacity: 0;
-  animation: dot-blink 1.5s infinite step-start;
+/* Title — pinned near the top */
+.hero-bg-text {
+    position: absolute;
+    top: 16%;
+    left: 5%;
+    font-size: clamp(6rem, 16vw, 14rem);
+    font-weight: 900;
+    color: white;
+    opacity: 0.95;
+    letter-spacing: -0.03em;
+    z-index: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    line-height: 1;
+    text-shadow: 0 8px 32px rgba(53, 85, 148, 0.15);
 }
 
-.dot1 {
-  animation-delay: 0s;
+/* Plane — large, anchored bottom-right, overlapping the title */
+.hero-plane {
+    position: absolute;
+    right: -2%;
+    top: 18%;
+    width: 64%;
+    max-width: 780px;
+    z-index: 2;
+    filter: drop-shadow(0 40px 80px rgba(53, 85, 148, 0.18));
+    pointer-events: none;
+}
+.hero-plane.is-tilted-plane {
+    transform: rotate(-5deg);
 }
 
-.dot2 {
-  animation-delay: 0.3s;
+.hero-fade-enter-active, .hero-fade-leave-active {
+    transition: opacity 1s ease-in-out;
+}
+.hero-fade-enter, .hero-fade-leave-to {
+    opacity: 0 !important;
 }
 
-.dot3 {
-  animation-delay: 0.6s;
+/* Content — sits in normal flow, below the title area */
+.hero-content {
+    position: absolute;
+    top: 58%;
+    left: 6.5%;
+    transform: translateY(-50%);
+    z-index: 3;
+    padding: 0;
 }
 
-/* Dot blink animation */
-@keyframes dot-blink {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+.hero-text-block {
+    max-width: 460px;
 }
 
-/* Hide content initially */
-.content {
-  display: none;
+.hero-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #355594;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+    letter-spacing: -1px;
 }
-hr {
-    width: 72%;
-    margin-right: 5rem;
-    margin-left: 4rem;
-    background-color: #fff;
-    border: 2px solid;
-    border-radius: 10px;
+
+.hero-subtitle {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #4A5E80;
     margin-bottom: 2rem;
 }
-.main-container {
-    background: linear-gradient(180deg, #D0E6F8 20%, #FFFFFF 40%);
-    position: relative;
-}
-.ellipse-1 {
-    position: absolute;
-    left: 90%;
-    top: 4%;
-}
-.circle-image-1 {
-    width: 60px;
-    height: auto;
-}
-.ellipse-2 {
-    position: absolute;
-    left: 96%;
-    top: 4.3%;
-}
-.circle-image-2 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-3 {
-    position: absolute;
-    left: 95%;
-    top: 6%;
-}
-.circle-image-3 {
-    width: 25px;
-    height: auto;
-}
-.ellipse-4 {
-    position: absolute;
-    left: 4%;
-    top: 13.8%;
-}
-.circle-image-4 {
-    width: 27px;
-    height: auto;
-}
-.ellipse-5 {
-    position: absolute;
-    left: 96%;
-    top: 100%;
-} 
-.circle-image-5 {
-    width: 90%;
-}
-.ellipse-6 {
-    position: absolute;
-    left: -1%;
-    top: 46%;
-}
-.circle-image-6 {
-    width: 17px;
-    height: auto;
-}
-.ellipse-7 {
-    position: absolute;
-    left: 16%;
-    top: -42%;
-}
-.circle-image-7 {
-    width: 40px;
-    height: auto;
-}
-.ellipse-8 {
-    position: absolute;
-    left: 14%;
-    top: -20%;
-}
-.circle-image-8 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-9 {
-    position: absolute;
-    left: 80%;
-    top: 18%;
-}
-.circle-image-9 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-10 {
-    position: absolute;
-    left: 78%;
-    top: 48%;
-}
-.circle-image-10 {
-    width: 27px;
-    height: auto;
-}
-.ellipse-11 {
-    position: absolute;
-    left: 0%;
-    top: -31%;
-}
-.circle-image-11 {
-    width: 40px;
-    height: auto;
-}
-.ellipse-12 {
-    position: absolute;
-    left: 5%;
-    top: -29%;
-}
-.circle-image-12 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-13 {
-    position: absolute;
-    left: 98%;
-    top: 10%;
-}
-.circle-image-13 {
-    width: 27px;
-    height: auto;
-}
-.ellipse-14 {
-    position: absolute;
-    left: 100%;
-    top: 6%;
-}
-.circle-image-14 {
-    width: 45px;
-    height: auto;
-}
-.ellipse-15 {
-    position: absolute;
-    left: -2%;
-    top: 8%;
-}
-.circle-image-15 {
-    width: 10px;
-    height: auto;
-}
-.ellipse-16 {
-    position: absolute;
-    left: 15%;
-    top: 100%;
-}
-.circle-image-16 {
-    width: 13px;
-    height: auto;
-}
-.banner-description {
-    margin-top: -32%;
-    font-size: 16px;
-    font-weight: 400;
-    font-style: italic;
-    line-height: 25px;
-    color: #4A5568;
-    font-family: 'Inter', sans-serif !important;
-}
-.banner-image {
-    width: 120%;
-    margin-top: -6%;
-    position: relative;
-    z-index: 99;
-}
-
-.banner-image-container {
-    margin-top: -2%;
-}
-.section-title {
-    font-size: 32px !important;
+.hero-subtitle strong {
+    color: #355594;
     font-weight: 600;
-    line-height: 40px !important;
-    text-align: center;
-    color: #355594;
-
-}
-.section-sub-title {
-    font-size: 24px !important;
-    line-height: 28px !important;
-    text-align: center;
-    color: #6D7A8C;
-    font-weight: 400;
-}
-.exp-btn {
-    background: linear-gradient(360deg, rgba(119, 128, 177, 0.21) 0%, rgba(34, 50, 138, 0.21) 53.5%);
-    border-radius: 30px;
-    border: 0px;
-    gap: 45px;
-    padding: 8px 5px;
-    max-width: fit-content;
-}
-.exp-btn:hover {
-    background: #fff !important;
-}
-.exp-btn span {
-    color: #355594;
-    font-size: 16px;
-    line-height: 22px;
-    padding-left: 15px;
-    font-weight: 500;
-}
-.exp-btn .btn-icon {
-    background: #fff;
-    border-radius: 30px;
-    font-size: 36px !important;
-    padding: 0 8px;
-    color: #355594;
-    stroke: #355594;
-}
-.affiliation {
-    font-size: 32px;
-    font-weight: 500;
-    line-height: 60px;
-    color: #355594;
-    text-align: center;
-}
-.parent-scroll-container {
-    overflow: hidden;
-    width: 100%;
 }
 
-/* Apply scroll with animation */
-.child-scroll-container {
-    display: flex;
-    gap: 45px;
-    animation: scrollLeft 15s linear infinite;
-    will-change: transform;
-}
-/* Scroll animation */
-@keyframes scrollLeft {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-55%);
-    }
-}
-.child-div {
-    flex: 0 0 auto;
-    margin-right: 15px; /* Space between images */
-    max-width: 120px;
-    margin: auto;
-}
-
-.service-card {
-    position: relative;
-}
-.service-card .card {
-    border-radius: 18px;
-    border: double 1.5px transparent;
-    /* background-image: linear-gradient(white, white), linear-gradient(152.6deg, #ABC0FF 58.02%, rgba(255, 255, 255, 0) 91.63%); */
-    background-image: linear-gradient(white, white), linear-gradient(151.6deg, #ABC0FF 20%, rgba(255, 255, 255, 0) 100%);
-    background-origin: border-box;
-    background-clip: content-box, border-box;
-    /* height: 400px !important; */
-}
-.service-card .card-body {
-    padding: 0;
-}
-.service-card .card-img {
-    padding: 40px 0px 0px !important;
-    width: 80%;
-    margin: auto;
-    object-fit: contain;
-}
-.service-card .card-img-img {
-    width:100%;
-    margin:auto;
-}
-.service-card-title p {
-    color: #3b3c7c;
-    font-size: 24px !important;
-    line-height: 24px !important;
-    font-weight: 300;
-    padding: 10px 0px;
-    margin: 0;
-}
-.service-card-btn-container {
-    position: absolute;
-    right: -3%;
-    top: 85%;
-}
-.service-card-arrow-btn {
-    background: #e3edff00 !important;
-    border:0px;
-    border-radius: 0px;
-    padding: 0px;
-}
-.service-card-btn-icon {
-    background: #E3EDFF42;
-    backdrop-filter: blur(20px);
-    border-radius: 50px;
-    font-size: 65px !important;
-    padding: 20px;
-    color: #355594;
-    stroke: #355594;
-    stroke-width: 0.6;
-    box-shadow: 3px 1px 10px 3px #00000040;
-}
-.service-card-btn-icon:hover {
+.hero-btn {
     background: #355594;
-    color: #fff;
-    stroke: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 10px 10px 22px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
 }
-.learnMore-btn {
-    background: #00000000;
-    border: 1px solid #355594;
+.hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(53, 85, 148, 0.25);
+}
+.is-dark .hero-btn {
+    background: white;
+}
+.is-dark .hero-btn:hover {
+    background: #f8faff;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.hero-btn span {
+    color: white;
+    font-weight: 500;
+    margin-right: 14px;
+}
+.is-dark .hero-btn span {
+    color: #1e3a6e;
+}
+.hero-btn .btn-icon {
+    background: white;
     color: #355594;
-    border-radius: 30px;
-    padding: 12px 24px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    padding: 8px;
 }
-.learnMore-btn:hover {
-    background: #00000000 !important;
-    border: 1px solid #355594 !important;
-    color: #355594 !important;
-    box-shadow: 1px 0px 10px 0px #00000040;
+.is-dark .hero-btn .btn-icon {
+    background: #1e3a6e;
+    color: white;
 }
-.business-count h1{
-    color:#355594;
-    font-size: 64px;
-    font-weight: 700;
+
+
+
+
+
+/* Affiliations Section */
+.aff-section {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 10;
+  margin-top: 0;
+  top: -8.5rem;
+  width: 90%;
+  max-width: 1100px;
+  left: 5%;
 }
-.business-count p{
-    color:#6D7A8C;
-    font-size: 24px;
-    line-height: 20px;
+.aff-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  display: block;
 }
-.latest-news-card {
-    background: linear-gradient(180deg, #D9EFFF 0%, #F1F9FF 71%);
-    border-radius: 25px;
+.aff-heading {
+  font-size: 15px;
+  font-weight: 600;
+  color: #355594;
+  display: block;
 }
-.latest-news-card .card-body {
-    width:100%;
-    padding: 0px !important;
+.aff-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+.aff-track-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+}
+.aff-track-wrap::before,
+.aff-track-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 48px;
+  z-index: 2;
+  pointer-events: none;
+}
+.aff-track-wrap::before { left: 0; background: linear-gradient(to right, #fff, transparent); }
+.aff-track-wrap::after  { right: 0; background: linear-gradient(to left,  #fff, transparent); }
+.scroller-track {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  animation: scroll 120s linear infinite;
+  width: max-content;
+}
+.scroller-track:hover { animation-play-state: paused; }
+.aff-logo-wrap {
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+.aff-logo-wrap:hover { background: #f3f4f6; }
+.affiliate-logo {
+  height: 32px;
+  object-fit: contain;
+  filter: grayscale(100%) opacity(0.45);
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+.affiliate-logo:hover {
+  filter: grayscale(0%) opacity(1);
+  transform: scale(1.08);
+}
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Features Section */
+.features-container {
     position: relative;
-    z-index: 100;
+    padding: 4rem 0;
 }
-.latest-news-card-img {
-    padding: 10px;
+.features-bg-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(208, 230, 248, 0.4) 0%, transparent 70%);
+    z-index: -1;
+    filter: blur(60px);
 }
-.latest-news-card-title {
-    font-size: 20px;
+.section-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: #355594;
-    padding: 20px 12px;
-    font-weight: 600;
-    line-height: 26px;
+    opacity: 0.6;
+    margin-bottom: 1rem;
+    display: block;
 }
-.expMore-btn {
-    background: #00000000;
-    border: 0px;
-    font-size: 16px !important;
-    color: #3A3B7B;
-    border-radius: 0px;
-    padding: 0px;
-    text-decoration: underline;
+
+.feature-card-wrapper {
+    position: relative;
+    height: 100%;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
-.expMore-btn:hover {
-    background: #00000000 !important;
-    border: 0px !important;
-    font-size: 16px !important;
-    color: #3A3B7B !important;
-    border-radius: 0px !important;
-    padding: 0px !important;
-    text-decoration: underline;
+.feature-card-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #355594, #ABC0FF);
+    border-radius: 24px;
+    opacity: 0;
+    filter: blur(15px);
+    transition: opacity 0.4s ease;
+    z-index: 0;
 }
-.accordion-box {
-    padding: 25px 40px;
-    border-radius: 10px;
+.feature-card {
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    backdrop-filter: blur(20px);
+    padding: 2.5rem;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
-.accordion-box h5 {
-    padding-right: 100px;
-    margin: 0;
-}
-.accordion-box p {
-    padding-right: 100px;
-    margin: 0;
-}
-.accordion-card {
-    background: #ffffff00 !important;
-    border: 0px !important;
-}
-.accordion-box .card-body {
+.feature-card :deep(.card-body) {
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-/* For Extra Large Screens (xl - ≥1200px) */
-@media (min-width: 1200px) and (max-width: 1400px) {
-    .ellipse-7 {
-        left: 10%;
-        top: -42%;
-    }
-    .ellipse-8 {
-        left: 8%;
-        top: -18%;
-    }
-    .ellipse-9 {
-        left: 88%;
-        top: 18%;
-    }
-    .ellipse-10 {
-        left: 85%;
-        top: 48%;
-    }
-    .ellipse-11 {
-        left: 0%;
-        top: -31%;
-    }
-    .ellipse-12 {
-        left: 5%;
-        top: -29%;
-    }
-    .ellipse-13 {
-        left: 97%;
-        top: 10%;
-    }
+.feature-icon-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+.icon-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #F0F7FF;
+    border-radius: 32px;
+    transform: rotate(45deg);
+    transition: all 0.4s ease;
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.05);
+}
+.feature-icon {
+    position: relative;
+    z-index: 2;
+    max-width: 64px;
+    max-height: 64px;
+    transition: all 0.5s ease;
 }
 
-/* For Large Screens (lg - ≥992px) */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .ellipse-1 {
-        left: 86%;
-        top: 4%;
-    }
-    .ellipse-2 {
-        left: 96%;
-        top: 4.5%;
-    }
-    .ellipse-3 {
-        left: 94%;
-        top: 6%;
-    }
-    .ellipse-4 {
-        left: 4%;
-        top: 13%;
-    }
-    .ellipse-7 {
-        left: 3%;
-        top: -44%;
-    }
-    .ellipse-8 {
-        left: 1%;
-        top: -18%;
-    }
-    .ellipse-9 {
-        left: 94%;
-        top: 18%;
-    }
-    .ellipse-10 {
-        left: 91%;
-        top: 46%;
-    }
-    .ellipse-11 {
-        left: 0%;
-        top: -25%;
-    }
-    .ellipse-12 {
-        left: 7%;
-        top: -23%;
-    }
-    .ellipse-13 {
-        left: 97%;
-        top: 11%;
-    }
-    .ellipse-14 {
-        left: 97%;
-        top: 6.3%;
-    }
-    .ellipse-15 {
-        left: 0%;
-        top: 8%;
-    }
-    .banner-description {
-        margin-top: 18%;
-    }
-    .banner-image {
-        margin-top: 11%;
-    }
-    .exp-btn {
-        gap: 27px;
-    }
-    .banner-image-container {
-        margin-top: -15%;
-    }
-    .child-scroll-container {
-        animation: scrollLeft 25s linear infinite;
-    }
-    /* Scroll animation */
-    @keyframes scrollLeft {
-        0% {
-            transform: translateX(0);
-        }
-        100% {
-            transform: translateX(-140%);
-        }
-    }
-    .service-card-btn-container {
-        top: 83%;
-    }
-    .service-card-btn-icon {
-        font-size: 57px !important;
-        padding: 17px;
-    }
-    .latest-news-card-img {
-        padding: 10px;
-    }
-    .latest-news-card-title {
-        font-size: 18px;
-        padding: 14px 12px;
-        line-height: 24px;
-    }
+.feature-title {
+    color: #1e3a6e;
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.5px;
+}
+.feature-desc {
+    color: #5A6B8A;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    opacity: 0.9;
 }
 
-/* For Medium Screens (md - ≥768px) */
-@media (min-width: 768px) and (max-width: 991px) {
-    .banner-description {
-        margin-top: 10%;
-    }
-    .ellipse-1 {
-        left: 90%;
-        top: 4%;
-    }
-    .circle-image-1 {
-        width: 42px;
-        height: auto;
-    }
-    .ellipse-2 {
-        left: 97%;
-        top: 4.2%;
-    }
-    .ellipse-3 {
-        left: 94%;
-        top: 5.7%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        left: 3%;
-        top: 11%;
-    }
-    .circle-image-4 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-6 {
-        left: -1%;
-        top: 21%;
-    }
-    .ellipse-7 {
-        left: 4%;
-        top: -36%;
-    }
-    .ellipse-8 {
-        left: 1%;
-        top: -9%;
-    }
-    .ellipse-9 {
-        left: 92%;
-        top: 20%;
-    }
-    .ellipse-10 {
-        left: 88%;
-        top: 48%;
-    }
-    .ellipse-11 {
-        left: 0%;
-        top: -18%;
-    }
-    .ellipse-12 {
-        left: 8%;
-        top: -15%;
-    }
-    .ellipse-13 {
-        left: 96%;
-        top: 10%;
-    }
-    .ellipse-14 {
-        left: 97%;
-        top: 6.3%;
-    }
-    .circle-image-14 {
-        width: 32px;
-        height: auto;
-    }
-    .ellipse-15 {
-        left: 0%;
-        top: 8%;
-    }
-    .circle-image-15 {
-        width: 10px;
-        height: auto;
-    }
-    .banner-image {
-        margin-top: -6%;
-    }
-    .exp-btn {
-        gap: 37px;
-    }
-    .section-title {
-        font-size: 30px !important;
-        line-height: 36px !important;
+.feature-link {
+    display: inline-flex;
+    align-items: center;
+    color: #355594;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-top: auto;
+}
+.feature-link span {
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
 
+/* Hover States - Simplified */
+.feature-card-wrapper:hover {
+    transform: translateY(-8px);
+}
+.feature-card-wrapper:hover .feature-card-glow {
+    opacity: 0.3;
+}
+.feature-card-wrapper:hover .feature-card {
+    background: white;
+    border-color: #355594;
+    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.1);
+}
+.feature-card-wrapper:hover .icon-circle {
+    background: #355594;
+    transform: rotate(45deg) scale(1.05); /* Keep diamond shape */
+}
+.feature-card-wrapper:hover .feature-icon {
+    filter: brightness(0) invert(1);
+    transform: scale(1.1);
+}
+.feature-card-wrapper:hover .feature-link {
+    color: #1e3a6e;
+}
+.feature-card-wrapper:hover .feature-link .b-icon {
+    transform: translateX(5px);
+}
+
+/* Specialized Services - Product Card Layout */
+.services-modern-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+}
+
+.service-product-card {
+    background: #fbfbfd;
+    border-radius: 28px;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    transition: all 0.4s ease;
+    border: 1px solid transparent;
+}
+.service-product-card:hover {
+    background: #1e3a6e;
+    border-color: #1e3a6e;
+    transform: translateY(-5px);
+    box-shadow: 0 40px 80px rgba(30, 58, 110, 0.3);
+}
+.service-product-card:hover .service-product-title {
+    color: white;
+}
+.service-product-card:hover .service-product-desc {
+    color: rgba(255, 255, 255, 0.85);
+}
+.service-product-card:hover .hero-btn,
+.service-product-card:hover .service-product-btn {
+    background: white;
+    color: #1e3a6e;
+    border-color: white;
+}
+.service-product-card:hover .hero-btn span,
+.service-product-card:hover .service-product-btn span {
+    color: #1e3a6e;
+}
+.service-product-card:hover .hero-btn .btn-icon {
+    background: #1e3a6e;
+    color: white;
+}
+
+.service-product-badge {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #5A6B8A;
+    background: #F0F4F8;
+    padding: 4px 12px;
+    border-radius: 8px;
+}
+
+.service-product-image {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+.service-product-image img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.05));
+    transition: transform 0.4s ease;
+}
+.service-product-card:hover .service-product-image img {
+    transform: scale(1.05);
+}
+
+.service-product-title {
+    color: #1e3a6e;
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+}
+.service-product-desc {
+    color: #5A6B8A;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    max-width: 280px;
+}
+.service-product-btn {
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: none;
+    background: #E5E7EB;
+    color: #6B7280;
+}
+.service-product-btn.active {
+    background: #355594;
+    color: white;
+}
+.service-product-btn.active:hover {
+    background: #1e3a6e;
+    transform: scale(1.05);
+}
+
+@media (max-width: 991px) {
+    .services-modern-grid {
+        grid-template-columns: 1fr;
     }
-    .section-sub-title {
-        font-size: 22px !important;
-        line-height: 24px !important;
-    }
-    .affiliation {
-        font-size: 24px;
-        line-height: 54px;
-    }
-    .child-div {
-        max-width: 110px;
-        margin: auto;
-    }
-    /* Apply scroll with animation */
-    .child-scroll-container {
-        gap: 40px;
-        animation: scrollLeft 20s linear infinite;
-    }
-    /* Scroll animation */
-    @keyframes scrollLeft {
-        0% {
-            transform: translateX(0);
-        }
-        100% {
-            transform: translateX(-140%);
-        }
-    }
-    .service-card-btn-container {
-        top: 88%;
-    }
-    .business-count h1{
-        color:#355594;
-        font-size: 56px;
-        font-weight: 700;
-    }
-    .business-count p{
-        color:#6D7A8C;
-        font-size: 22px;
-        line-height: 26px;
-    }
-    .latest-news-card-img {
-        padding: 10px;
-    }
-    .latest-news-card-title {
-        font-size: 18px;
-        padding: 14px 12px;
-        line-height: 24px;
+    .service-product-card {
+        padding: 4rem 2rem;
     }
 }
 
-@media (min-width: 880px) and (max-width: 922px) {
-.banner-image {
-        margin-top: -10%;
-    }
+/* Stats Section - Minimalist */
+.stats-container {
+    padding: 4rem 0;
 }
-@media (min-width: 840px) and (max-width: 880px) {
-.banner-image {
-        margin-top: -13%;
-    }
+.stats-intro {
+    padding-right: 2rem;
 }
-@media (min-width: 768px) and (max-width: 840px) {
-.banner-image {
-        margin-top: -16%;
+.stats-decoration-line {
+    width: 60px;
+    height: 4px;
+    background: #355594;
+    border-radius: 2px;
+}
+
+.stats-minimal-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+}
+
+.stat-minimal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 2rem;
+    margin: 0 -2rem;
+    border-radius: 24px;
+    border-bottom: 1px solid rgba(53, 85, 148, 0.1);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.stat-minimal-item:last-child {
+    border-bottom: none;
+}
+.stat-minimal-item:hover {
+    background: #355594;
+    transform: translateX(20px);
+    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.15);
+}
+
+.stat-minimal-icon {
+    font-size: 2.2rem;
+    color: #355594;
+    padding-top: 0.5rem;
+    transition: all 0.4s ease;
+}
+.stat-minimal-item:hover .stat-minimal-icon {
+    transform: scale(1.1);
+    color: white;
+}
+
+.stat-minimal-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #1e3a6e;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    letter-spacing: -2px;
+    transition: all 0.4s ease;
+}
+.stat-minimal-item:hover .stat-minimal-number {
+    color: white;
+}
+.stat-minimal-label {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #355594;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.75rem;
+    transition: all 0.4s ease;
+}
+.stat-minimal-item:hover .stat-minimal-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+.stat-minimal-desc {
+    color: #5A6B8A;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 500px;
+    transition: all 0.4s ease;
+}
+.stat-minimal-item:hover .stat-minimal-desc {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+@media (min-width: 992px) {
+    .stats-minimal-grid {
+        grid-template-columns: 1fr;
     }
 }
 
-/* For Small Screens (sm - ≥576px) */
-@media (min-width: 576px) and (max-width: 768px) {
-    .ellipse-1 {
-        left: 88%;
-        top: 3%;
-    }
-    .circle-image-1 {
-        width: 30px;
-        height: auto;
-    }
-    .ellipse-2 {
-        left: 96%;
-        top: 3.1%;
-    }
-    .ellipse-3 {
-        left: 94%;
-        top: 4.4%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        left: 4%;
-        top: 7.5%;
-    }
-    .circle-image-4 {
-        width: 17px;
-        height: auto;
-    }
-    .ellipse-6 {
-        left: -1%;
-        top: 21%;
-    }
-    .ellipse-7 {
-        left: 4%;
-        top: -20%;
-    }
-    .ellipse-8 {
-        left: 2%;
-        top: 1%;
-    }
-    .ellipse-9 {
-        left: 89%;
-        top: 12%;
-    }
-    .ellipse-10 {
-        left: 86%;
-        top: 28%;
-    }
-    .ellipse-11 {
-        left: 0%;
-        top: -16%;
-    }
-    .ellipse-12 {
-        left: 10%;
-        top: -12%;
-    }
-    .ellipse-13 {
-        left: 95%;
-        top: 8%;
-    }
-    .ellipse-14 {
-        left: 97%;
-        top: 4.3%;
-    }
-    .circle-image-14 {
-        width: 24px;
-        height: auto;
-    }
-    .ellipse-15 {
-        left: 0%;
-        top: 5%;
-    }
-    .circle-image-15 {
-        width: 10px;
-        height: auto;
-    }
-    .banner-description {
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 20px;
-        margin-top: 6%;
-    }
-    .banner-image-container {
-        margin-top: 0%;
-        margin-bottom: -65px;
-    }
-    .banner-image {
-        width:100%;
-    }
-    .child-scroll-container {
-        animation: scrollLeft 20s linear infinite;
-    }
-    /* Scroll animation */
-    @keyframes scrollLeft {
-        0% {
-            transform: translateX(0);
-        }
-        100% {
-            transform: translateX(-170%);
-        }
-    }
-    .section-title {
-        font-size: 26px !important;
-        line-height: 32px !important;
-    }
-    .section-sub-title {
-        font-size: 20px !important;
-        line-height: 24px !important;
-    }
-    .affiliation {
-        font-size: 22px;
-        line-height: 54px;
-    }
-    .child-scroll-container {
-        gap:30px;
-    }
-    .child-div {
-        min-width: 100px;
-        margin: auto;
-    }
-    .service-card-btn-container {
-        top: 86%;
-    }
-    .business-count h1{
-        color:#355594;
-        font-size: 52px;
-        font-weight: 700;
-    }
-    .business-count p{
-        color:#6D7A8C;
-        font-size: 20px;
-        line-height: 24px;
-    }
-    .latest-news-card-img {
-        padding: 10px;
-    }
-    .latest-news-card-title {
-        font-size: 14px;
-        padding: 12px 10px;
-        font-weight: 600;
-        line-height: 18px;
-    }
+/* News Section */
+.news-section-container {
+    padding: 2rem 0;
 }
 
-/* For Smaller Screens (xs - <576px) */
-@media (max-width: 576px) {
-    .ellipse-1 {
-        left: 86%;
-        top: 1.5%;
+.view-all-btn {
+    display: inline-flex;
+    align-items: center;
+    background: #F0F7FF;
+    color: #355594;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid #E6F0FF;
+}
+.view-all-btn:hover {
+    background: #355594;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.1);
+}
+
+.news-card {
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    height: 100%;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(230, 240, 255, 0.6);
+    display: flex;
+    flex-direction: column;
+}
+.news-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.05);
+    border-color: #355594;
+}
+
+.news-image-wrap {
+    position: relative;
+    height: 320px;
+    overflow: hidden;
+}
+.news-image-wrap.small {
+    height: 180px;
+}
+.news-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+.news-card:hover .news-img {
+    transform: scale(1.1);
+}
+
+.news-category {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(53, 85, 148, 0.9);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+}
+
+.news-body {
+    padding: 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.news-card.small .news-body {
+    padding: 1.5rem;
+}
+
+.news-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #9CA3AF;
+    font-weight: 600;
+}
+.meta-dot {
+    width: 4px;
+    height: 4px;
+    background: #D1D5DB;
+    border-radius: 50%;
+}
+
+.news-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1e3a6e;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+}
+.news-title-small {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e3a6e;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+}
+
+.news-excerpt {
+    color: #5A6B8A;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.news-read-more {
+    display: inline-flex;
+    align-items: center;
+    color: #355594;
+    font-weight: 800;
+    text-decoration: none;
+    margin-top: auto;
+}
+.news-read-more .b-icon {
+    font-size: 1.4rem;
+}
+
+.news-link-simple {
+    color: #355594;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    margin-top: auto;
+}
+.news-link-simple:hover {
+    color: #1e3a6e;
+}
+
+/* FAQ Section - Modern Redesign */
+.faq-section-container {
+    padding: 2rem 0;
+}
+
+.faq-accordion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.faq-item {
+    background: white;
+    border: 1px solid #E6F0FF;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.faq-item:hover {
+    border-color: #ABC0FF;
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.03);
+}
+.faq-item.is-open {
+    border-color: #355594;
+    box-shadow: 0 15px 30px rgba(53, 85, 148, 0.08);
+}
+
+.faq-header {
+    padding: 1.75rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.faq-question {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e3a6e;
+    margin: 0;
+    padding-right: 2rem;
+}
+
+.faq-toggle-icon {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+.icon-line {
+    position: absolute;
+    background: #355594;
+    transition: all 0.3s ease;
+}
+.icon-line.horizontal {
+    width: 100%;
+    height: 2px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+.icon-line.vertical {
+    width: 2px;
+    height: 100%;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.icon-line.vertical.is-hidden {
+    transform: translateX(-50%) rotate(90deg);
+    opacity: 0;
+}
+
+.faq-body {
+    padding: 0 2rem 2rem;
+}
+.faq-body p {
+    color: #5A6B8A;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.faq-footer-card {
+    background: #F8FBFF;
+    border: 1px solid #E6F0FF;
+    padding: 3rem;
+    border-radius: 32px;
+}
+.faq-footer-card h4 {
+    font-weight: 800;
+    color: #1e3a6e;
+}
+.faq-footer-card p {
+    color: #5A6B8A;
+    font-size: 1.1rem;
+}
+
+.faq-contact-btn {
+    background: #355594;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 32px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+.faq-contact-btn:hover {
+    background: #1e3a6e;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.2);
+}
+
+/* Responsive Overrides */
+@media (max-width: 1199px) {
+    .hero-title { font-size: 3.5rem; }
+    .stat-minimal-number { font-size: 3rem; }
+}
+
+@media (max-width: 991px) {
+    .hero-section { 
+        display: flex; 
+        flex-direction: column; 
+        padding-top: 4rem;
+        min-height: auto;
+        position: relative;
     }
-    .circle-image-1 {
-        width: 30px;
-        height: auto;
-    }
-    .ellipse-2 {
-        left: 95%;
-        top: 1.6%;
-    }
-    .ellipse-3 {
-        left: 91%;
-        top: 2.2%;
-    }
-    .circle-image-3 {
-        width: 20px;
-        height: auto;
-    }
-    .ellipse-4 {
-        left: 5%;
-        top: 3.8%;
-    }
-    .circle-image-4 {
-        width: 17px;
-        height: auto;
-    }
-    .ellipse-5 {
-        left: 96%;
-        top: 100%;
-    }
-    .ellipse-6 {
-        left: -2%;
-        top: 11%;
-    }
-    .ellipse-7 {
-        left: 7%;
-        top: -25%;
-    }
-    .ellipse-8 {
-        left: 2%;
-        top: -13%;
-    }
-    .ellipse-9 {
-        left: 89%;
-        top: 9%;
-    }
-    .ellipse-10 {
-        left: 86%;
-        top: 28%;
-    }
-    .ellipse-11 {
-        left: 0%;
-        top: -7%;
-    }
-    .ellipse-12 {
-        left: 14%;
-        top: -6%;
-    }
-    .ellipse-13 {
-        left: 94%;
-        top: 4%;
-    }
-    .ellipse-14 {
-        left: 96%;
-        top: 1.3%;
-    }
-    .circle-image-14 {
-        width: 24px;
-        height: auto;
-    }
-    .ellipse-15 {
-        left: -1%;
-        top: 2%;
-    }
-    .circle-image-15 {
-        width: 10px;
-        height: auto;
-    }
-    .banner-image-container {
-        margin-top: 0%;
-        margin-bottom: -50px;
-    }
-    .banner-description {
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 18px;
-        margin-top: 6%;
-    }
-    .banner-image {
+    .hero-bg-text { 
+        position: absolute;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: clamp(4rem, 18vw, 8rem); 
+        color: #ffffff;
+        opacity: 0.9;
+        z-index: 1;
+        text-align: center;
         width: 100%;
+        letter-spacing: -2px;
+        line-height: 1;
+        white-space: nowrap;
+        pointer-events: none;
+        text-shadow: 0 10px 40px rgba(53, 85, 148, 0.15);
     }
-    .exp-btn span {
-        font-size: 14px;
-        line-height: 20px;
+    .hero-plane-wrapper {
+        order: 1;
+        position: relative;
+        width: 100%;
+        height: 320px;
+        margin: 0 auto 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2;
     }
-    .child-scroll-container {
-        animation: scrollLeft 25s linear infinite;
+    .hero-plane { 
+        position: relative;
+        top: 0;
+        left: auto;
+        transform: none;
+        width: 85%; 
+        max-width: 600px; 
+        margin: 0; 
+        display: block; 
+        opacity: 1;
+        filter: drop-shadow(0 20px 40px rgba(53, 85, 148, 0.15));
     }
-    /* Scroll animation */
-    @keyframes scrollLeft {
-        0% {
-            transform: translateX(0);
-        }
-        100% {
-            transform: translateX(-340%);
-        }
+    .hero-plane.is-tilted-plane {
+        transform: none;
     }
-    .section-title {
-        font-size: 22px !important;
-        line-height: 26px !important;
-
+    .hero-content { 
+        order: 2;
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        text-align: center; 
+        padding: 0 2rem 4rem;
+        width: 100%;
+        z-index: 3;
+        margin-top: -2rem;
     }
-    .section-sub-title {
-        font-size: 18px !important;
-        line-height: 24px !important;
+    .aff-section { 
+        margin-top: 2rem !important; 
+        top: 0 !important; 
+        left: 5% !important;
+        position: relative !important;
+        margin-bottom: 4rem !important;
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem !important;
+        gap: 1.5rem !important;
     }
-    .service-card .card-img {
-        height: auto;
+    .aff-label {
+        text-align: center;
     }
-    .affiliation {
-        font-size: 18px;
-        line-height: 32px;
+    .aff-divider {
+        display: none;
     }
-    .child-scroll-container {
-        gap:20px;
+    .scroller-track {
+        animation: scroll 40s linear infinite !important;
     }
-    .child-div {
-        max-width: 70px;
-        margin: auto;
+    .hero-text-block { width: 100%; max-width: 800px; margin: 0 auto; }
+    .hero-title { 
+        font-size: clamp(2.2rem, 6vw, 3.2rem); 
+        margin-bottom: 1.5rem; 
+        opacity: 1 !important; 
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
     }
-    .service-card-btn-container {
-        right: -2%;
-        top: 89%;
+    .hero-subtitle { 
+        font-size: 1.15rem; 
+        max-width: 650px; 
+        margin: 0 auto 2.5rem; 
+        opacity: 1 !important; 
     }
-    .accordion-box h5 {
-        padding-right: 40px;
-    }
-    .accordion-box p {
-        padding-right: 40px;
-    }
+    .cta-group { justify-content: center; }
+    
+    .services-modern-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .service-product-card { padding: 3rem 2rem; }
+    
+    .stats-intro { text-align: center; padding-right: 0; margin-bottom: 4rem; display: flex; flex-direction: column; align-items: center; }
+    .stat-minimal-item { gap: 1.5rem; padding: 1.5rem; margin: 0; }
+    .stat-minimal-number { font-size: 2.8rem; }
+    
+    .news-title { font-size: 1.4rem; }
+    .news-image-wrap { height: 240px; }
 }
-@media (max-width: 576px) {
-    .banner-image-container {
-        margin-top: 0%;
-        margin-bottom: -30px;
-    }
+
+@media (max-width: 767px) {
+    .hero-section { padding-top: 3rem; }
+    .hero-bg-text { font-size: clamp(2.5rem, 15vw, 4rem); top: 1.5rem; }
+    .hero-plane-wrapper { height: 180px; margin-bottom: 1rem; }
+    .hero-plane { width: 95%; }
+    .hero-title { font-size: 1.8rem; margin-bottom: 1rem; }
+    .hero-subtitle { font-size: 1rem; margin-bottom: 2rem; }
+    .section-title { font-size: 1.8rem; }
+    .section-subtitle { font-size: 1rem; }
+    
+    .feature-card { padding: 2rem 1.5rem; }
+    .feature-icon-container { width: 80px; height: 80px; }
+    .feature-icon { max-width: 40px; }
+    
+    .stat-minimal-item { flex-direction: column; align-items: center; text-align: center; gap: 1rem; }
+    .stat-minimal-icon { padding-top: 0; }
+    .stat-minimal-number { font-size: 2.5rem; letter-spacing: -1px; }
+    .stat-minimal-item:hover { transform: translateY(-5px); }
+    
+    .news-card.featured .news-image-wrap { height: 200px; }
+    .news-body { padding: 1.5rem; }
+    
+    .faq-question { font-size: 1rem; padding-right: 1rem; }
+    .faq-header { padding: 1.25rem 1.5rem; }
+    .faq-footer-card { padding: 2rem 1.5rem; }
+    
+    .mb-25 { margin-bottom: 4rem !important; }
 }
-
-
-
-
-
-
-
 </style>

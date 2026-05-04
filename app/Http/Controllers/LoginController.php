@@ -44,7 +44,7 @@ class LoginController extends Controller
             //     return response()->json(['error' => 'Expired'], 401);
             // }
 
-        return json_encode(['token' => $token, 'user' => $user_data, 'role' => $role]);
+        return response()->json(['token' => $token, 'user' => $user_data, 'role' => $role]);
     }
 
     public function sendOtp(Request $request)

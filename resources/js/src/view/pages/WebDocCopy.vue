@@ -5,29 +5,41 @@
             <!-- Include PageLoader -->
             <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
-            <Header></Header>
-            <div class="d-flex">
+
+            <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
-                <div style="background-color:#fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
-                    <div class="container">
+                <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; width: 100%;">
+                    <div class="container py-8 px-10">
                         <template>
-                            <b-row class="mt-14 mb-8 px-10">
-                                <b-col cols="6">
-                                    <h6 style="color:#355594;font-size:22px;line-height:30px;font-weight:600;">Documentation</h6>
-                                    <b-form-group id="fieldset-horizontal" class="d-flex align-items-center ">
-                                        <b-form-select  style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
-                                            <option value="/focus-air">Master Airway Bill</option>
-                                            <option value="/house-way-bill">Houseway Bill</option>
-                                            <option value="/consolidation">Consolidation</option>
-                                            <!-- <option value="/message-log">Message Log</option> -->
-                                        </b-form-select>
-                                    </b-form-group>
+                            <b-row class="align-items-center mb-8">
+                                <b-col cols="12" md="6">
+                                    <div class="d-flex flex-column">
+                                        <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
+                                        <h6 style="color:#355594;font-size:26px;line-height:34px;font-weight:800;letter-spacing:-0.5px;margin-bottom:1rem;">Documentation</h6>
+                                        <b-form-group id="fieldset-horizontal" class="mb-0">
+                                            <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
+                                                <b-icon icon="folder2-open" style="color:#355594;font-size:1.2rem;margin-right:12px;"></b-icon>
+                                                <b-form-select style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;background:transparent;cursor:pointer;outline:none;box-shadow:none;padding-left:0;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
+                                                    <option value="/focus-air">Master Airway Bill</option>
+                                                    <option value="/house-way-bill">Houseway Bill</option>
+                                                    <option value="/consolidation">Consolidation</option>
+                                                    <!-- <option value="/message-log">Message Log</option> -->
+                                                </b-form-select>
+                                            </div>
+                                        </b-form-group>
+                                    </div>
                                 </b-col>
-                                <b-col cols="6">
-                                    <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                        <b-button @click.prevent="getAirwayBills('draft')" v-b-modal.modal-draft class="mx-2 show-btn">Draft</b-button>
-                                        <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="ml-2 mx-2 show-btn">10 Latest</b-button>
-                                        <b-button style="background:#355594; color:white;" v-b-modal.upload-file-modal class="ml-2 mx-2 show-btn">Upload</b-button>
+                                <b-col cols="12" md="6" class="mt-6 mt-md-0">
+                                    <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
+                                        <b-button @click.prevent="getAirwayBills('draft')" v-b-modal.modal-draft class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:12px;padding:10px 20px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                            <b-icon icon="file-earmark-text" class="mr-2"></b-icon>Draft
+                                        </b-button>
+                                        <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:12px;padding:10px 20px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                            <b-icon icon="clock-history" class="mr-2"></b-icon>10 Latest
+                                        </b-button>
+                                        <b-button v-b-modal.upload-file-modal class="show-btn" style="background:#355594;color:white;border:none;border-radius:12px;padding:10px 24px;font-weight:600;transition:all 0.3s ease;box-shadow:0 10px 20px rgba(53,85,148,0.15);">
+                                            <b-icon icon="cloud-arrow-up" class="mr-2"></b-icon>Upload
+                                        </b-button>
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
@@ -2533,7 +2545,7 @@ import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
 import "vue2-datepicker/index.css";
 import debounce from 'lodash.debounce';
-import Header from "@/view/layout/Header.vue";
+
 import SideBar from "../layout/SideBar.vue";
 import { mapGetters } from "vuex";
 // import PageLoader from "../components/PageLoader.vue";
@@ -4818,7 +4830,7 @@ export default {
     components: {
         Datepicker,
         DatePicker,
-        Header,
+
         SideBar,
         // PageLoader
     },
@@ -4893,7 +4905,6 @@ export default {
 }
 /* end of file upload css */
 .body-color {
-    background: linear-gradient(180deg, #D0E6F8 3%, #FFFFFF 9%);
 }
 header {
     width: 100%;

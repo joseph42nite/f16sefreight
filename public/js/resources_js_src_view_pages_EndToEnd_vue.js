@@ -13,6 +13,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "EndToEnd",
+  metaInfo: {
+    title: "End-to-End Freight Services | F16s E-Freight Solutions",
+    meta: [{
+      name: 'description',
+      content: 'Comprehensive end-to-end logistics automation. From AWB generation and airline connectivity to real-time tracking and final delivery.'
+    }, {
+      property: 'og:title',
+      content: 'End-to-End Freight Services | F16s E-Freight Solutions'
+    }, {
+      property: 'og:description',
+      content: 'Comprehensive end-to-end logistics automation. From AWB generation and airline connectivity to real-time tracking and final delivery.'
+    }]
+  },
   components: {},
   data: function data() {
     return {

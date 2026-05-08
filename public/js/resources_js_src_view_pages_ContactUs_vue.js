@@ -13,6 +13,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "ContactUs",
+  metaInfo: {
+    title: "Contact F16s | Support, Quotes & Partnerships",
+    meta: [{
+      name: 'description',
+      content: 'Get in touch with the F16s expert team for technical support, customized pricing quotes, or partnership opportunities. We are here to help your logistics business grow.'
+    }, {
+      property: 'og:title',
+      content: 'Contact F16s | Support, Quotes & Partnerships'
+    }, {
+      property: 'og:description',
+      content: 'Get in touch with the F16s expert team for technical support, customized pricing quotes, or partnership opportunities. We are here to help your logistics business grow.'
+    }]
+  },
   components: {},
   data: function data() {
     return {

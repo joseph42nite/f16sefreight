@@ -1925,4 +1925,8 @@ CLEAN_ADDRESS_PATTERNS: List[re.Pattern] = [
     re.compile(r'(?:FAX|Fax)\s*:?\s*[+\d\s()\-]{7,}',                   re.IGNORECASE),
     re.compile(r'(?:EORI|Eori)\s*:\s*[A-Z0-9]+',                         re.IGNORECASE),
     re.compile(r'E-?MAIL\s*:\s*\S+',                                      re.IGNORECASE),
+    re.compile(r"Shipper's\s+Name\s+and\s+Address",                      re.IGNORECASE),
+    re.compile(r"Shipper's\s+Account\s+Number",                        re.IGNORECASE),
+    re.compile(r"Consignee's\s+Name\s+and\s+Address",                    re.IGNORECASE),
+    re.compile(r"Consignee's\s+Account\s+Number",                      re.IGNORECASE),
 ]

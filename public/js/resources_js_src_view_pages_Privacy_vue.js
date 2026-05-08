@@ -13,6 +13,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "Privacy",
+  metaInfo: {
+    title: "Privacy & Data Security | F16s E-Freight Solutions",
+    meta: [{
+      name: 'description',
+      content: 'F16s prioritizes your privacy with strict access controls, global data compliance (GDPR), and enterprise-grade encryption for all your freight documentation.'
+    }, {
+      property: 'og:title',
+      content: 'Privacy & Data Security | F16s E-Freight Solutions'
+    }, {
+      property: 'og:description',
+      content: 'F16s prioritizes your privacy with strict access controls, global data compliance (GDPR), and enterprise-grade encryption for all your freight documentation.'
+    }]
+  },
   components: {},
   data: function data() {
     return {

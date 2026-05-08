@@ -133,8 +133,6 @@
         </div>
       </section>
     </b-container>
-    
-    </b-container>
   </b-container>
 </template>
 

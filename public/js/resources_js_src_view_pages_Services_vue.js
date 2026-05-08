@@ -13,6 +13,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "Services",
+  metaInfo: {
+    title: "Advanced E-Freight & ERP Solutions | F16s Services",
+    meta: [{
+      name: 'description',
+      content: 'Explore F16s\' suite of advanced logistics tools: EDI data transfer (FWB, FHL, FZB), MAWB & HAWB management, and unified logistics ERP.'
+    }, {
+      property: 'og:title',
+      content: 'Advanced E-Freight & ERP Solutions | F16s Services'
+    }, {
+      property: 'og:description',
+      content: 'Explore F16s\' suite of advanced logistics tools: EDI data transfer (FWB, FHL, FZB), MAWB & HAWB management, and unified logistics ERP.'
+    }]
+  },
   components: {},
   data: function data() {
     return {

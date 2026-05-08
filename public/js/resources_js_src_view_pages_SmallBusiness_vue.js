@@ -13,6 +13,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "SmallBusiness",
+  metaInfo: {
+    title: "Logistics Solutions for Small Business | F16s E-Freight",
+    meta: [{
+      name: 'description',
+      content: 'Elevate your small freight forwarding business with F16s. Affordable AWB transfer, secure database management, and EDI tracking tools designed for independent forwarders.'
+    }, {
+      property: 'og:title',
+      content: 'Logistics Solutions for Small Business | F16s E-Freight'
+    }, {
+      property: 'og:description',
+      content: 'Elevate your small freight forwarding business with F16s. Affordable AWB transfer, secure database management, and EDI tracking tools designed for independent forwarders.'
+    }]
+  },
   components: {},
   data: function data() {
     return {

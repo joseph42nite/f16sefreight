@@ -863,6 +863,7 @@ AIRPORT_IATA_MAP = {
     "burgas": "BOJ",
     "ballykelly": "BOL",
     "mumbai": "BOM",
+    "bombay": "BOM",
     "flamingo": "BON",
     "bodo": "BOO",
     "bouar": "BOP",
@@ -5307,6 +5308,7 @@ AIRPORT_IATA_MAP = {
     "o hare": "ORD",
     "o' hare": "ORD",
     "chicago": "ORD",
+    "chicagoohare": "ORD",
     "st. denis de l hotel": "ORE",
     "zorg en hoop": "ORG",
     "worcester": "ORH",
@@ -8820,8 +8822,8 @@ def transform_address_box(text: str) -> Dict[str, Any]:
 def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
     """Transform flight routing data."""
     airport_pattern = r'\b[A-Z]{3}\b'
-    flight_pattern = r'\b[A-Z]{2}[-\s]?\d{1,5}[A-Z]?\b'
-    date_pattern = r'\d{2}-[A-Z]{3}-\d{4}'
+    flight_pattern = r'\b[A-Z]{2,3}[-\s]?\d{1,6}[A-Z]{0,2}\b'
+    date_pattern = r'\d{2}-[A-Z]{3}-\d{4}|\d{2}-[A-Za-z]{3}|\d{1,2}(?:st|nd|rd|th)[A-Za-z]{3,}|\d{2}/\d{2}/\d{4}'
 
     # These words will be blocked from being identified as airports
     LABEL_WORDS = {
@@ -8855,9 +8857,18 @@ def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
         raw_flights = re.findall(flight_pattern, block)
         dates = re.findall(date_pattern, block)
 
+        from datetime import datetime
+        current_year = datetime.now().year
+
+        def normalize_routing_date(d):
+            # If the date doesn't already have a 4-digit year, append the current one
+            if not re.search(r'\d{4}$', d):
+                return f"{d}-{current_year}"
+            return d
+
         # Pair flights with dates
         flights_list = [
-            {"flight_number": re.sub(r'[-\s]', '', f), "date": d}
+            {"flight_number": re.sub(r'[-\s]', '', f), "date": normalize_routing_date(d)}
             for f, d in zip(raw_flights, dates)
         ]
 

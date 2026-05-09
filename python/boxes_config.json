@@ -12,7 +12,7 @@
       "awb_number": [485, 33, 580, 52],
       "chrg_code": [328, 310, 340, 319]
     },
-    "ksr_house": {
+    "ksr_house1": {
       "shipper": [14, 45, 138, 100],
       "consignee": [13, 122, 170, 172],
       "departure": [13, 256, 260, 267],
@@ -23,6 +23,18 @@
       "piece_weight": [13, 392, 376, 405],
       "awb_number": [500, 13, 555, 24],
       "chrg_code": [295, 283, 313, 294]
+    },
+    "ksr_house2": {
+      "shipper": [42, 65, 290, 125],
+      "consignee": [42, 145, 290, 195],
+      "departure": [43, 273, 292, 288],
+      "destination": [42, 275, 290, 285],
+      "transit": [42, 255, 415, 305],
+      "cargo": [415, 390, 720, 480],
+      "weight_charge": [75, 580, 415, 610],
+      "piece_weight": [42, 390, 415, 430],
+      "awb_number": [480, 25, 620, 45],
+      "chrg_code": [320, 280, 355, 295]
     },
     "ksr_apex_house": {
       "shipper": [43, 70, 294, 128],

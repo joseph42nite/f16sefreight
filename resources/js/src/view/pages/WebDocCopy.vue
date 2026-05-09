@@ -114,7 +114,7 @@
                                                      <b-icon icon="cloud-upload" font-scale="2.5"></b-icon>
                                                  </div>
                                                  <h2 class="pane-title">Upload Document</h2>
-                                                 <p class="pane-subtitle">Easily upload and associate your PDF documents with the correct company for streamlined freight processing.</p>
+                                                 <p class="pane-subtitle">Please manually verify each input field extracted by the upload feature. F16s E-freight Solutions is not legally liable for incorrect data sent to the airline. The automated extraction process may contain errors.</p>
                                                  
                                                  <div class="pane-footer mt-auto">
                                                      <div class="pane-feature">
@@ -134,18 +134,20 @@
                                          <div class="modal-right-pane">
                                              <div class="form-scroll-container">
                                                  <div class="ultra-form">
-                                                     <h3 class="form-section-title mb-10">Select Company & File</h3>
-                                                     
+                                                     <h3 class="form-section-title mb-10">Select File</h3>
+
                                                      <div class="mb-8 text-left">
-                                                         <label class="font-weight-bold mb-3" style="color: #5A6B8A;">Target Company</label>
+                                                         <label class="font-weight-bold mb-3" style="color: #5A6B8A;">Document Type</label>
                                                          <b-form-select 
                                                              class="form-control form-control-solid h-auto py-4 px-6 rounded-xl font-size-h6 border-1" 
                                                              style="background: #f8fafc; border: 1px solid #e2e8f0;"
-                                                             v-model="selectedCompanyForUpload">
-                                                             <option :value="null">Choose a company...</option>
-                                                             <option v-for="shipper in filteredShippers" :key="shipper.id" :value="shipper.id">
-                                                                 {{ shipper.name }}
-                                                             </option>
+                                                             v-model="selectedUploadType">
+                                                             <option value="ksr">ksr</option>
+                                                             <option value="ksr_house1">ksr_house1</option>
+                                                             <option value="ksr_house2">ksr_house2</option>
+                                                             <option value="ksr_apex_house">ksr_apex_house</option>
+                                                             <option value="ksr_ligi_house">ksr_ligi_house</option>
+                                                             <option value="ksr_cfglobal_house">ksr_cfglobal_house</option>
                                                          </b-form-select>
                                                      </div>
 
@@ -162,11 +164,13 @@
                                                      </div>
 
                                                      <div class="form-actions mt-6 d-flex flex-column align-items-center w-100">
-                                                         <button class="ultra-submit-btn" :disabled="!selectedCompanyForUpload" @click="triggerFileInput">
-                                                             <span>Start Upload</span>
-                                                             <b-icon icon="arrow-right" class="btn-icon"></b-icon>
-                                                         </button>
-                                                     </div>
+                                                         <div v-if="selectedFile" class="mb-4 text-primary font-weight-bold">Selected: {{ selectedFile.name }}</div>
+                                                         <button class="ultra-submit-btn" :disabled="isUploading" @click="submitUpload">
+                                                             <span v-if="!isUploading">Start Upload</span>
+                                                             <span v-else>Uploading...</span>
+                                                             <b-icon v-if="!isUploading" icon="arrow-right" class="btn-icon"></b-icon>
+                                                             <b-spinner v-else small class="ml-2"></b-spinner>
+                                                         </button>                                                     </div>
                                                  </div>
                                              </div>
                                          </div>
@@ -2953,6 +2957,9 @@ export default {
             is_generate_pdf:0,
             showSpinner: false,
             selectedCompanyForUpload: null,
+            selectedUploadType: 'ksr',
+            selectedFile: null,
+            isUploading: false,
         };
     },
     
@@ -2962,35 +2969,39 @@ export default {
             this.$refs.fileInput.click()
         },
         handleFileSelect(event) {
-            const upload_file = event.target.files[0]
-            if (upload_file) {
-                if (upload_file.type !== 'application/pdf') {
+            const file = event.target.files[0]
+            if (file) {
+                if (file.type !== 'application/pdf') {
                     alert('Please select a PDF file only')
                     this.$refs.fileInput.value = ''
                     return
                 }
-                if (!this.selectedCompanyForUpload) {
-                    alert('Please select a company before uploading')
-                    this.$refs.fileInput.value = ''
-                    return
-                }
-                const formData = new FormData()
-                formData.append('upload_file', upload_file)
-                formData.append('type', 'ksr');
-                formData.append('company_id', this.selectedCompanyForUpload);
-                ApiService.post('/user/upload-awb-file', formData, {
+                this.selectedFile = file
+            }
+        },
+        submitUpload() {
+            if (!this.selectedFile) {
+                alert('Please select a file first')
+                return
+            }
+            this.isUploading = true
+            const formData = new FormData()
+            formData.append('upload_file', this.selectedFile)
+            formData.append('type', this.selectedUploadType);
+            ApiService.post('/user/upload-awb-file', formData, {
                 headers: {
-                'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data'
                 }
-                }).then((response) => {
-                    this.$bvModal.hide('upload-file-modal')
-                    response=response.data?.data;
-                    console.log(response);
-                    var awb_number=response.awb_number.split("-");
-                    this.form.first_box.awb_code=awb_number[0];
-                    this.form.first_box.awb_no=awb_number[1];
-                    //routing
-                    var departure=response.departure;
+            }).then((response) => {
+                this.isUploading = false
+                this.$bvModal.hide('upload-file-modal')
+                response = response.data?.data;
+                console.log(response);
+                var awb_number = response.awb_number.split("-");
+                this.form.first_box.awb_code = awb_number[0];
+                this.form.first_box.awb_no = awb_number[1];
+                //routing
+                var departure = response.departure;
                     var destination=response.destination;
                     var transit=response.transit?.[0];
                     var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
@@ -3102,8 +3113,7 @@ export default {
                 .catch(error => {
                     this.$refs.fileInput.value = ''
                 })
-            }
-        },
+            },
         formatDate(dateStr) {
             if (!dateStr) return this.getCurrentDate();
             const [day, mon, year] = dateStr.split('-');
@@ -4551,7 +4561,7 @@ export default {
             const query = this.form.also_notify_address.also_name.toLowerCase()
             if (!query) return this.alsoNotify;
                 return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
-                also_notify.name.toLowerCase().includes(query)
+                notify.name.toLowerCase().includes(query)
             );
         }
     },

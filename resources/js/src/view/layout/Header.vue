@@ -308,6 +308,7 @@ export default {
             this.$store
                 .dispatch(LOGIN, { email, password })
                 .then(() => {
+                    this.show_login_modal = false;
                     // Success logic if needed
                 })
                 .catch(() => {

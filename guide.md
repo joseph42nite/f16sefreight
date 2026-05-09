@@ -32,6 +32,7 @@ A complete blog ecosystem was integrated:
 - Optimized `Header.vue` and `Footer.vue` for seamless transitions between mobile, tablet, and desktop.
 - Implemented horizontal carousels for service cards on mobile to prevent vertical clutter.
 - Corrected text clipping and icon alignment issues in the "Solutions" section.
+- **WebDoc UI Refresh**: Standardized the document upload modal with premium animations, loading states, and explicit file selection previews.
 
 ---
 
@@ -114,6 +115,32 @@ The platform's core logic revolves around automating IATA messaging standards fo
 - **FHL (Freight House List)**: Detailed manifest for consolidated shipments (House level).
 - **XML / EDI Integration**: The system facilitates the transition from legacy Cargo-IMP to modern **Cargo-XML**, allowing for direct, real-time communication with 100+ global airlines (Emirates, Qatar, Lufthansa, etc.).
 - **e-Freight Roadmap**: All functional pages are designed to move the industry toward paperless, 100% digital e-AWB compliance.
+
+---
+
+## 🧠 Intelligent OCR & Document Processing
+
+The platform features a sophisticated OCR pipeline to automate data entry from PDF Air Waybills:
+
+### 🐍 Python-Powered Extraction (`extract_awb_new.py`)
+- **Enhanced IATA Mapping**: Expanded dictionary to include global airport aliases (e.g., Mumbai/Bombay, Chicago O'Hare, Toronto).
+- **Smart Address Parsing**: Logic to filter out legacy headers (e.g., "SHIPPER'S NAME AND ADDRESS") to extract clean entity names and locations.
+- **Flight & Date Normalization**: 
+    - Improved regex for diverse flight number formats.
+    - Automatic date normalization (e.g., "05-MAY" to "05-MAY-2026") to ensure backend compatibility.
+- **Border Artifact Removal**: Advanced cleaning of PDF-to-text artifacts like pipe characters (`|`) and redundant whitespace.
+
+### 🔌 Backend Hardening (`OcrController.php`)
+- **Robust Process Management**: Implemented fallback paths for Python environments and detailed logging for debugging.
+- **JSON Validation**: Strict validation of OCR script output to prevent frontend crashes on malformed data.
+- **Error Handling**: Graceful error responses with clear messaging for the frontend.
+
+### 📄 WebDoc & WebDocCopy Enhancements
+- **Multi-Type Support**: Added support for various document templates (`ksr`, `ksr_house1`, `ksr_house2`, etc.).
+- **Improved UX**: 
+    - Real-time file selection feedback.
+    - Integrated loading spinners (`b-spinner`) for long-running extraction tasks.
+    - Validation checks to ensure files are selected before processing.
 
 ---
 

@@ -25,33 +25,71 @@
             </header>
         </template>
         <template>
-            <div class="d-flex justify-content-center align-items-center mt-5 bg-white">
-                <b-button id="show-btn" v-b-modal.modal-ss class="mx-2 custom-btn">Activity</b-button>
-                <b-button id="toggle-btn" class="mx-2 custom-btn" v-b-modal.modal-prevent-closing>Search</b-button>
-                <b-button id="show-btn" v-b-modal.modal-s class="mx-2 custom-btn">10 Latest</b-button>
-                <b-button id="toggle-btn" v-b-modal.modal-templates class="mx-2 custom-btn">Templates</b-button>
-                <b-button id="show-btn" v-b-modal.modal-draft class="mx-2 custom-btn">Draft</b-button>
-                <b-button id="toggle-btn" @click="toggleModal" class="mx-2 custom-btn">Related</b-button>
-                <b-button id="show-btn" @click="showModal" class="mx-2 custom-btn">Update Draft</b-button>
+            <div class="d-flex justify-content-center align-items-center mt-8 mb-4 bg-white flex-wrap" style="gap: 12px;">
+                <b-button v-b-modal.modal-ss class="show-btn-alt">
+                    <b-icon icon="activity" class="mr-2"></b-icon>Activity
+                </b-button>
+                <b-button v-b-modal.modal-prevent-closing class="show-btn-alt">
+                    <b-icon icon="search" class="mr-2"></b-icon>Search
+                </b-button>
+                <b-button v-b-modal.modal-s class="show-btn">
+                    <b-icon icon="clock-history" class="mr-2"></b-icon>10 Latest
+                </b-button>
+                <b-button v-b-modal.modal-templates class="show-btn-alt">
+                    <b-icon icon="layers" class="mr-2"></b-icon>Templates
+                </b-button>
+                <b-button v-b-modal.modal-draft class="show-btn-alt">
+                    <b-icon icon="file-earmark-text" class="mr-2"></b-icon>Draft
+                </b-button>
+                <b-button v-b-modal.upload-file-modal class="show-btn" style="background:#355594;color:white;border:none;">
+                    <b-icon icon="cloud-arrow-up" class="mr-2"></b-icon>Upload
+                </b-button>
+                <b-button @click="showModal" class="show-btn-alt">
+                    <b-icon icon="arrow-repeat" class="mr-2"></b-icon>Update Draft
+                </b-button>
 
-                <b-modal id="modal-ss" title="Activity" ok-only>
-                    <div class="d-block">
-                        <h3>Updated:04:49</h3>
+                <b-modal id="modal-ss" title="Activity" ok-only centered size="md" content-class="premium-modal">
+                    <div class="premium-modal-body text-center">
+                        <div class="mb-4">
+                            <b-icon icon="clock" font-scale="3" class="text-primary"></b-icon>
+                        </div>
+                        <h4 class="font-weight-bold mb-2">Last Update</h4>
+                        <p class="text-muted h3">04:49</p>
                     </div>
                 </b-modal>
-                <b-modal id="modal-draft" title="Activity" ok-only>
-                    <div class="d-block">
-                        <b-row class="mt-5">
-                            <b-col cols="auto">
-                                <a href="" class="custom-link">none</a>
-                                <h6>( - )</h6>
-                            </b-col>
-                            <b-col cols="auto">
-                                <a href="" class="custom-link">Edit e-AWB Data</a>
-                                <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
-                            </b-col>
-                        </b-row>
+
+                <b-modal id="modal-draft" title="Draft Airway Bills" :hide-footer="true" centered size="lg" content-class="premium-modal">
+                    <div class="premium-modal-body">
+                        <p class="text-muted mb-6 small text-uppercase fw-bold letter-spacing-1">Your saved drafts</p>
+                        <div class="draft-list">
+                            <div v-if="data_items && data_items.length > 0">
+                                <div v-for="item in data_items" :key="item.id" class="draft-item glass-card mb-4 p-4" @click="selectAndSearchAwb(item)">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="draft-icon mr-4">
+                                                <b-icon icon="file-earmark-text-fill" class="text-primary"></b-icon>
+                                            </div>
+                                            <div class="draft-info">
+                                                <h6 class="mb-1 font-weight-bold text-dark">{{ item.awb_code }}-{{ item.awb_no }}</h6>
+                                                <span class="text-muted small">
+                                                    <b-icon icon="geo-alt" class="mr-1"></b-icon>
+                                                    {{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }} → {{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="draft-action">
+                                            <b-button variant="link" class="p-0 text-primary font-weight-bold">
+                                                Resume <b-icon icon="arrow-right" class="ml-1"></b-icon>
+                                            </b-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-10 glass-card">
+                                <b-icon icon="folder2-open" font-scale="3" class="text-muted mb-4"></b-icon>
+                                <p class="text-muted">No drafts found.</p>
+                            </div>
+                        </div>
                     </div>
                 </b-modal>
 

@@ -1,141 +1,186 @@
 <template>
-    <div class="body-color">
-        <div class="container-fluid">
-            <!-- Include Page Loader -->
-             <!-- <PageLoader></PageLoader> -->
-            <div class="d-flex">
+        <b-container fluid class="body-color">
+            <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
-                <div class="container" style="background-color:#fff; box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
-                    <div class="mt-14 mb-8 px-10">
-                        <b-row>
-                            <b-col cols="6">
-                                <h6 style="color:#355594;font-size:22px !important;line-height:30px !important;font-weight:600 !important;">Documentation</h6>
-                                <b-form-group id="fieldset-horizontal" class="d-flex align-items-center ">
-                                    <b-form-select 
-                                        style="width: 140px;border: 0px !important;color: #355594;font-weight: 600;"
-                                        class="form-control-sm"
-                                        v-model="selectedViewPageOption"
-                                        @change="onSelect">
-                                        <option value="/focus-air">Master Airway Bill</option>
-                                        <option value="/house-way-bill">Houseway Bill</option>
-                                        <option value="/consolidation">Consolidation</option>
-                                        <!-- <option value="/message-log">Message Log</option> -->
-                                    </b-form-select>
-                                </b-form-group>
+                <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; width: 100%;">
+                    <div class="container py-8 px-10">
+                        <b-row class="align-items-center mb-8">
+                            <b-col cols="12" md="6">
+                                <div class="d-flex flex-column">
+                                    <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
+                                    <h6 style="color:#355594;font-size:26px !important;line-height:34px !important;font-weight:800 !important;letter-spacing:-0.5px !important;margin-bottom:1rem;font-family:'Inter', sans-serif !important;">Documentation</h6>
+                                    <b-form-group id="fieldset-horizontal" class="mb-0">
+                                        <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
+                                            <b-icon icon="folder2-open" style="color:#355594;font-size:1.2rem;margin-right:12px;"></b-icon>
+                                            <b-form-select style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;background:transparent;cursor:pointer;outline:none;box-shadow:none;padding-left:0;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
+                                                <option value="/focus-air">Master Airway Bill</option>
+                                                <option value="/house-way-bill">Houseway Bill</option>
+                                                <option value="/consolidation">Consolidation</option>
+                                                <!-- <option value="/message-log">Message Log</option> -->
+                                            </b-form-select>
+                                        </div>
+                                    </b-form-group>
+                                </div>
                             </b-col>
-                            <b-col cols="6">
-                                <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                                    <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="mx-2 show-btn">Draft</b-button>
-                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="ml-2 mx-2 show-btn">10 Latest</b-button>
-                                    <b-button style="background: rgb(53, 85, 148) !important; color:white !important;" v-b-modal.upload-file-modal class="ml-2 mx-2 show-btn">Upload</b-button>
+                            <b-col cols="12" md="6" class="mt-6 mt-md-0">
+                                <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
+                                    <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                        <b-icon icon="file-earmark-text" class="mr-2"></b-icon>Drafts
+                                    </b-button>
+                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                        <b-icon icon="clock-history" class="mr-2"></b-icon>10 Latest
+                                    </b-button>
+                                    <b-button v-b-modal.upload-file-modal class="show-btn" style="background:#355594;color:white;border:none;border-radius:50px;padding:10px 26px;font-weight:600;transition:all 0.3s ease;box-shadow:0 10px 20px rgba(53,85,148,0.15);">
+                                        <b-icon icon="cloud-arrow-up" class="mr-2"></b-icon>Upload
+                                    </b-button>
                                 </div>
                             </b-col>
                             <!-- Draft model code Start here -->
-                            <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
-                                <div class="d-block">
-                                    <b-row>
-                                        <b-col>
-                                            <div v-for="item in data_items" :key="item.id">
-                                                <div v-if="item.awb_no && item.awb_code" class="py-2">
-                                                    <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(String(item.id))">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                            <p @click="navigate" class="mb-0">
-                                                                {{ item.id }}
-                                                                <!-- {{ String(item.awb_code) }}-{{ String(item.awb_no) }}  -->
-                                                                ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
-                                                            </p>
-                                                        </router-link>
-                                                    </a>
-                                                    <div class="d-flex flex-row justify-content-start">
-                                                        <div class="px-2">
-                                                            <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(String(item.id))">
-                                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                                    <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
-                                                                </router-link>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                    <!-- <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p> -->
-                                                </div>
+                            <b-modal id="modal-draft" title="My Drafts" :hide-footer="true" centered size="lg">
+                                <div class="draft-list p-4">
+                                    <div v-if="data_items.length === 0" class="text-center py-10">
+                                        <b-icon icon="inbox" font-scale="3" class="text-muted mb-4"></b-icon>
+                                        <p class="text-muted font-weight-bold">No drafts found.</p>
+                                    </div>
+                                    <div v-for="item in data_items" :key="item.id" class="draft-item d-flex align-items-center justify-content-between p-4 mb-3 rounded-xl border-1" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="mr-4">
+                                                <b-icon icon="file-earmark-text" font-scale="1.5" variant="primary"></b-icon>
                                             </div>
-                                        </b-col>
-                                    </b-row>
+                                            <div>
+                                                <p class="mb-0 font-weight-bolder text-dark">
+                                                    {{ item.awb_code }}-{{ item.awb_no }}
+                                                </p>
+                                                <p class="text-muted font-size-sm mb-0">
+                                                    Route: {{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }} ➔ {{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button @click="handleEditNavigation(item.id)" class="btn btn-sm btn-primary font-weight-bolder px-4 mr-2" style="background: #355594; border: 0; border-radius: 8px; color: white !important;">
+                                                Edit
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </b-modal>
                             <!-- Draft model code Ends here -->
                             <!-- 10 Latest model code start here -->
-                            <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" ok-only>
-                                <div class="d-block">
-                                    <b-row>
-                                        <b-col>
-                                            <div v-for="item in data_items" :key="item.id">
-                                                <div v-if="item.awb_no && item.awb_code" class="py-2">
-                                                    <a href="#" class="custom-link-custom" @click.prevent="handleEditNavigation(String(item.id))">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                            <p @click="navigate" class="mb-0">
-                                                                {{ item.id }}
-                                                                <!-- {{ String(item.awb_code) }}-{{ String(item.awb_no) }}  -->
-                                                                ({{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }})
-                                                            </p>
-                                                        </router-link>
-                                                    </a>
-                                                    <div class="d-flex flex-row justify-content-start">
-                                                        <div class="px-2">
-                                                            <a href="#" class="custom-link mb-0" @click.prevent="handleEditNavigation(String(item.id))">
-                                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                                    <p @click="navigate" class="mb-0 ml-2">Edit e-AWB Data </p>
-                                                                </router-link>
-                                                            </a>
-                                                        </div>
-                                                        <div class="px-2">
-                                                            <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
-                                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                                        <p class="mb-0 ml-2"><a :href="'/download-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">e-AWB Pdf file</a></p>
-                                                                </router-link>
-                                                            </a>
-                                                            <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
-                                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                                        <p class="mb-0 ml-2"><a :href="'/download-multiple-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage e-AWB Pdf</a></p>
-                                                                </router-link>
-                                                            </a>
-                                                            <a href="#" class="custom-link mb-0" @click="getAirWayBill(String(item.id))">
-                                                                <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                                        <p class="mb-0 ml-2"><a :href="'/download-multiple-both-page-awb-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage e-AWB Pdf with back pages</a></p>
-                                                                </router-link>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                    <!-- <p class="mt-5 mb-0" style="border-bottom: 1px solid #CDCDCD;">Issued at: 15 Jun 14:24 By: jgeorgeblr@gln.com</p> -->
+                            <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" centered size="lg">
+                                <div class="message-list p-4">
+                                    <div v-if="data_items.length === 0" class="text-center py-10">
+                                        <b-icon icon="chat-dots" font-scale="3" class="text-muted mb-4"></b-icon>
+                                        <p class="text-muted font-weight-bold">No messages found.</p>
+                                    </div>
+                                    <div v-for="item in data_items" :key="item.id" class="message-item p-4 mb-3 rounded-xl border-1" style="background: #f0f7ff; border: 1px solid #d0e3ff; border-radius: 12px;">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center">
+                                                <div class="mr-4">
+                                                    <b-icon icon="clock-history" font-scale="1.5" style="color: #355594;"></b-icon>
+                                                </div>
+                                                <div>
+                                                    <p class="mb-0 font-weight-bolder text-dark">
+                                                        {{ item.awb_code }}-{{ item.awb_no }}
+                                                    </p>
+                                                    <p class="text-muted font-size-sm mb-0">
+                                                        Route: {{ item.departure_airport ? item.departure_airport.split(',')[0] : '-' }} ➔ {{ item.destination_airport ? item.destination_airport.split(',')[0] : '-' }}
+                                                    </p>
                                                 </div>
                                             </div>
-                                        </b-col>
-                                    </b-row>
+                                            <div class="d-flex">
+                                                <button @click="handleEditNavigation(item.id)" class="btn btn-sm font-weight-bolder px-4" style="background: #355594; color: white !important; border: 0; border-radius: 8px;">
+                                                    View
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- Technical Links (Downloads) preserved and styled -->
+                                        <div class="d-flex flex-wrap mt-3 pt-3 border-top" style="gap: 15px; border-color: rgba(53, 85, 148, 0.1) !important;">
+                                            <a :href="'/download-awb-pdf/' + item.id" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="file-earmark-pdf" class="mr-1"></b-icon> PDF</a>
+                                            <a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="files" class="mr-1"></b-icon> Multi-PDF</a>
+                                            <a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="book" class="mr-1"></b-icon> Multi-PDF (Back)</a>
+                                        </div>
+                                    </div>
                                 </div>
                             </b-modal>
                             <!-- 10 Latest model code Ends here -->
                             <!-- Upload file model code start here -->
-                                <b-modal id="upload-file-modal" title="Uplaod File" :hide-footer="true" ok-only>
-                                    <div class="d-block">
-                                        <b-row>
-                                            <b-col>
-                                                <div class="upload-container">
-                                                    <div class="upload-box" @click="triggerFileInput">
-                                                        <div class="upload-icon">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                            </svg>
-                                                        </div>
-                                                        <div class="upload-text">Drop your file here</div>
-                                                        <div class="upload-divider">Or</div>
-                                                        <div class="upload-link">Select file to be uploaded</div>
-                                                        <input type="file" ref="fileInput" accept=".pdf,application/pdf" @change="handleFileSelect" style="display:none">
-                                                    </div>
-                                                </div>
-                                            </b-col>
-                                        </b-row>
-                                    </div>
-                                </b-modal>
-                                <!-- Upload file model code Ends here -->
+                                 <b-modal id="upload-file-modal" hide-footer hide-header centered size="xl" modal-class="ultra-premium-modal">
+                                     <div class="modal-split-layout">
+                                         <button class="ultra-close-btn" @click="$bvModal.hide('upload-file-modal')">
+                                             <b-icon icon="x"></b-icon>
+                                         </button>
+                                         <div class="modal-left-pane login-pane">
+                                             <div class="pane-content">
+                                                 <div class="pane-icon-wrapper mb-8">
+                                                     <b-icon icon="cloud-upload" font-scale="2.5"></b-icon>
+                                                 </div>
+                                                 <h2 class="pane-title">Upload Document</h2>
+                                                 <p class="pane-subtitle">Please manually verify each input field extracted by the upload feature. F16s E-freight Solutions is not legally liable for incorrect data sent to the airline. The automated extraction process may contain errors.</p>
+                                                 
+                                                 <div class="pane-footer mt-auto">
+                                                     <div class="pane-feature">
+                                                         <b-icon icon="check-circle" class="mr-3"></b-icon>
+                                                         <span>Automated Extraction</span>
+                                                     </div>
+                                                     <div class="pane-feature">
+                                                         <b-icon icon="shield-check" class="mr-3"></b-icon>
+                                                         <span>Secure Processing</span>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                             <div class="pane-decoration"></div>
+                                             <div class="pane-decoration-2"></div>
+                                         </div>
+                                         
+                                         <div class="modal-right-pane">
+                                             <div class="form-scroll-container">
+                                                 <div class="ultra-form">
+                                                     <h3 class="form-section-title mb-10">Select File</h3>
+
+                                                      <div class="mb-8 text-left">
+                                                          <label class="font-weight-bold mb-3" style="color: #5A6B8A;">Document Type</label>
+                                                          <b-form-select 
+                                                              class="form-control form-control-solid h-auto py-4 px-6 rounded-xl font-size-h6 border-1" 
+                                                              style="background: #f8fafc; border: 1px solid #e2e8f0;"
+                                                              v-model="selectedUploadType">
+                                                              <option value="ksr">ksr</option>
+                                                               <option value="ksr_house1">ksr_house1</option>
+                                                              <option value="ksr_house2">ksr_house2</option>
+                                                              <option value="ksr_apex_house">ksr_apex_house</option>
+                                                              <option value="ksr_ligi_house">ksr_ligi_house</option>
+                                                              <option value="ksr_cfglobal_house">ksr_cfglobal_house</option>
+                                                          </b-form-select>
+                                                      </div>
+
+                                                      <div class="upload-dropzone mb-10" @click="triggerFileInput"
+                                                          style="border: 2px dashed #355594; border-radius: 20px; padding: 60px 20px; cursor: pointer; background: rgba(53, 85, 148, 0.02); transition: all 0.3s ease;">
+                                                          <div class="text-center">
+                                                              <div class="mb-4">
+                                                                  <b-icon icon="file-earmark-pdf" font-scale="3" style="color: #355594; opacity: 0.6;"></b-icon>
+                                                              </div>
+                                                              <p class="mb-0 font-weight-bolder font-size-h5" style="color: #1e3a6e;">Click to select PDF</p>
+                                                              <p class="text-muted font-size-sm mt-2">Maximum file size: 10MB</p>
+                                                              <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none;" accept=".pdf">
+                                                          </div>
+                                                      </div>
+
+                                                      <div class="form-actions mt-6 d-flex flex-column align-items-center w-100">
+                                                          <div v-if="selectedFile" class="mb-4 text-primary font-weight-bold">
+                                                              Selected: {{ selectedFile.name }}
+                                                          </div>
+                                                          <button class="ultra-submit-btn" :disabled="isUploading" @click="submitUpload">
+                                                              <span v-if="!isUploading">Start Upload</span>
+                                                              <span v-else>Uploading...</span>
+                                                              <b-icon v-if="!isUploading" icon="arrow-right" class="btn-icon"></b-icon>
+                                                              <b-spinner v-else small class="ml-2"></b-spinner>
+                                                          </button>
+                                                      </div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </b-modal>
+                                 <!-- Upload file model code Ends here -->
                         </b-row>
                     </div>
 
@@ -143,7 +188,7 @@
 
                     <template>
                         <b-form @submit.prevent="onSubmit">
-                            <div class="">
+                            <div class="container py-8 px-10">
                                 <b-row>
                                     <b-col cols="12">
                                         <div class="my-5">
@@ -2641,11 +2686,9 @@
                             </div>
                         </b-form>
                     </template>
-                    
                 </div>
             </div>
-        </div>
-    </div> 
+        </b-container>
 </template> 
 <script>
 import Datepicker from "vuejs-datepicker";
@@ -3011,6 +3054,9 @@ export default {
             main_error_msg: "",
             is_generate_pdf:0,
             showSpinner: false,  // Initially, the progress bar is hidden
+            selectedUploadType: 'ksr_house1',
+            selectedFile: null,
+            isUploading: false,
         };
     },
 
@@ -3020,41 +3066,67 @@ export default {
             this.$refs.fileInput.click()
         },
         handleFileSelect(event) {
-            const upload_file = event.target.files[0]
-            if (upload_file) {
-                if (upload_file.type !== 'application/pdf') {
+            const file = event.target.files[0]
+            if (file) {
+                if (file.type !== 'application/pdf') {
                     alert('Please select a PDF file only')
                     this.$refs.fileInput.value = ''
                     return
                 }
-                const formData = new FormData()
-                formData.append('upload_file', upload_file)
-                formData.append('type', 'ksr_house');
-                ApiService.post('/user/upload-awb-file', formData, {
+                this.selectedFile = file
+            }
+        },
+        submitUpload() {
+            if (!this.selectedFile) {
+                alert('Please select a file first')
+                return
+            }
+            this.isUploading = true
+            const formData = new FormData()
+            formData.append('upload_file', this.selectedFile)
+            formData.append('type', this.selectedUploadType);
+            ApiService.post('/user/upload-awb-file', formData, {
                 headers: {
-                'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data'
                 }
-                }).then((response) => {
-                    this.$bvModal.hide('upload-file-modal')
-                    response=response.data?.data;
-                    console.log(response);
-                    this.form.first_box.hawb_no=response.awb_number;
-                    //routing
-                    var departure=response.departure;
+            }).then((response) => {
+                this.isUploading = false
+                this.$bvModal.hide('upload-file-modal')
+                response = response.data?.data;
+                console.log(response);
+                this.form.first_box.hawb_no = response.awb_number;
+                //routing
+                var departure = response.departure;
                     var destination=response.destination;
                     var transit=response.transit?.[0];
                     var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
                     ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
-                      response2=response2.data?.data;
-                      this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                      this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.to = `${response2[2]?response2[2]['iata_code']:response2[1]['iata_code']}, ${response2[2]?response2[2]['destination']:response2[1]['destination']}`;
-                      if(transit.transit_airports[1]){
-                         this.form.routing_information.to_2 = `${response2[3]?response2[3]['iata_code']:response2[1]['iata_code']}, ${response2[3]?response2[3]['destination']:response2[1]['destination']}`;
+                      response2 = response2.data?.data || [];
+                      if (response2[0]) {
+                          this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                          this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
                       }
-                      if(transit.transit_airports[2]){
-                          this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      if (response2[1]) {
+                          this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      }
+                      
+                      if (response2[2]) {
+                          this.form.routing_information.to = `${response2[2]['iata_code']}, ${response2[2]['destination']}`;
+                      } else if (response2[1]) {
+                          this.form.routing_information.to = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                      }
+
+                      if(transit.transit_airports && transit.transit_airports[1]){
+                         if (response2[3]) {
+                            this.form.routing_information.to_2 = `${response2[3]['iata_code']}, ${response2[3]['destination']}`;
+                         } else if (response2[1]) {
+                            this.form.routing_information.to_2 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                         }
+                      }
+                      if(transit.transit_airports && transit.transit_airports[2]){
+                          if (response2[1]) {
+                              this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                          }
                       }
                     });
                     this.form.routing_information.by =transit.flights[0]?.flight_number?.slice(0,2);
@@ -3152,8 +3224,7 @@ export default {
                 .catch(error => {
                     this.$refs.fileInput.value = ''
                 })
-            }
-        },
+            },
         formatDate(dateStr) {
             if (!dateStr) return this.getCurrentDate();
             const [day, mon, year] = dateStr.split('-');
@@ -4357,7 +4428,7 @@ export default {
             const query = this.form.also_notify_address.also_name.toLowerCase()
             if (!query) return this.alsoNotify;
                 return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
-                also_notify.name.toLowerCase().includes(query)
+                notify.name.toLowerCase().includes(query)
             );
         },
         toggleDropdown_issuing_loc() {
@@ -5004,13 +5075,62 @@ th {
   background-color: #f0f0f0;
 }
 .btn {
-    color: #355594 !important;
-    border-radius: 30px;
-    border: 1px solid #355594 !important;
-    padding: 6px 30px !important;
-    background: #fff !important;
+    /* padding: 0px !important; */
 }
 
+/* Ultra-Premium Modal Styles */
+.ultra-premium-modal .modal-dialog {
+    max-width: 1000px !important;
+    margin: 1.75rem auto;
+}
+.ultra-premium-modal .modal-content {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 32px !important;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.25) !important;
+    font-family: 'Inter', sans-serif !important;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease;
+}
+.ultra-premium-modal .modal-body {
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px);
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-split-layout { display: flex; flex-direction: row; min-height: 600px; position: relative; width: 100%; align-items: stretch; }
+.ultra-close-btn { position: absolute; top: 25px; right: 25px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.05); border: none; color: #5A6B8A; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 50; transition: all 0.3s ease; }
+.ultra-close-btn:hover { background: #ef4444; color: white; transform: rotate(90deg); }
+.modal-left-pane { flex: 0 0 40%; padding: 4rem 3.5rem; position: relative; overflow: hidden; color: white; display: flex; flex-direction: column; background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%); }
+.login-pane { text-align: left; }
+.pane-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
+.pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }
+.pane-title { font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.5px; line-height: 1.1; color: white !important;}
+.pane-subtitle { font-size: 1.1rem; line-height: 1.7; opacity: 0.85; color: white !important;}
+.pane-feature { display: flex; align-items: center; margin-bottom: 1rem; font-size: 1rem; font-weight: 500; color: white !important;}
+.pane-decoration { position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1; }
+.pane-decoration-2 { position: absolute; bottom: -150px; left: -150px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1; }
+.modal-right-pane { flex: 0 0 60%; background: white; position: relative; display: flex; flex-direction: column; }
+.form-scroll-container { height: 100%; overflow-y: auto; padding: 4rem; }
+.form-section-title { font-size: 1.8rem; font-weight: 700; color: #1e3a6e; letter-spacing: -0.5px; text-align: center; }
+.ultra-submit-btn { background: #355594; border: none; border-radius: 999px; padding: 10px 10px 10px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(53, 85, 148, 0.25); cursor: pointer; width: auto; max-width: none; }
+.ultra-submit-btn:hover { background: #28447a; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(53, 85, 148, 0.35); }
+.ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }
+.ultra-submit-btn .btn-icon { background: white; color: #355594; border-radius: 50%; width: 32px !important; height: 32px !important; padding: 6px; margin-left: 0 !important; }
+
+@media (max-width: 991px) { 
+    .modal-split-layout { flex-direction: column; min-height: auto; } 
+    .modal-left-pane { flex: 0 0 auto; padding: 3rem 2rem; } 
+    .pane-title { font-size: 1.8rem; } 
+    .pane-icon-wrapper { width: 60px; height: 60px; margin-bottom: 1.5rem !important; } 
+    .modal-right-pane { flex: 0 0 auto; } 
+    .form-scroll-container { padding: 3rem 2rem; height: auto; max-height: 60vh; } 
+    .ultra-close-btn { top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; } 
+}
 </style>
 <style>
     .modal-content {

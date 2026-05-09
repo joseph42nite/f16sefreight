@@ -8284,6 +8284,7 @@ AIRPORT_IATA_MAP = {
     "armstrong": "YYW",
     "mont joli": "YYY",
     "lester b.pearson": "YYZ",
+    "toronto": "YYZ",
     "ashcroft": "YZA",
     "manitoulin": "YZE",
     "yellowknife": "YZF",
@@ -8744,7 +8745,7 @@ def normalize_text(text: str) -> str:
 def transform_address_box(text: str) -> Dict[str, Any]:
     """Transform address box data."""
     text = re.sub(r'\|', ' ', text) # strip PDF border artifacts at the very start
-    SKIP_PREFIXES = ('ATTN:', 'ATTN :', 'ATTENTION:', 'EORI')
+    SKIP_PREFIXES = ("ATTN:", "ATTN :", "ATTENTION:", "EORI", "SHIPPER'S NAME AND ADDRESS", "SHIPPER'S ACCOUNT NUMBER", "CONSIGNEE'S NAME AND ADDRESS", "CONSIGNEE'S ACCOUNT NUMBER")
 
     raw_lines = [l.strip() for l in text.split('\n') if l.strip()]
 
@@ -8758,7 +8759,7 @@ def transform_address_box(text: str) -> Dict[str, Any]:
         cleaned_lines.append(cl)
 
     country     = extract_country(text)
-    entity_name = raw_lines[0] if raw_lines else ''
+    entity_name = cleaned_lines[0] if cleaned_lines else ''
     address_lines = cleaned_lines[1:] if len(cleaned_lines) > 1 else []
     address_str   = ', '.join(address_lines)
     address_str   = re.sub(r',\s*,', ',', address_str).strip().strip(',').strip()
@@ -8806,7 +8807,7 @@ def transform_address_box(text: str) -> Dict[str, Any]:
     clean_addr = re.sub(r'\s{2,}', ' ', clean_addr).strip()
 
     return {
-        'full_details': normalize_text(text),
+        'full_details': ' '.join(cleaned_lines),
         'name':    entity_name,
         'address': clean_addr,
         'city':    city,

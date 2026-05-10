@@ -1,6 +1,6 @@
 # F16s - Modern Freight Logistics Platform
 
-![F16s Logo](public/media/custome/f16s-logo.svg)
+![F16s Logo](public/media/assets/logos/f16s-logo.svg)
 
 F16s is a high-performance, premium freight logistics platform designed to streamline global supply chain management with a focus on speed, security, and transparency. Built with a modern **Glassmorphism** design language, the platform offers a seamless experience across all devices, from desktop to mobile.
 

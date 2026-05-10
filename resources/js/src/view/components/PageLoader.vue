@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoading" class="loader-overlay">
       <div class="logo-container">
-        <img src="/media/custome/loader.png" alt="Logo" class="logo" />
+        <img src="/media/assets/ui/loader.png" alt="Logo" class="logo" />
         <div class="loading-text">
           Loading
           <span class="dot dot1">.</span>

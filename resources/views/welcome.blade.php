@@ -13,14 +13,14 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="F16s E-Freight Solutions | Smart Logistics Automation">
     <meta property="og:description" content="Revolutionize your freight forwarding with F16s. Instant AWB generation, 150+ airline connections, and lightning-fast digital efficiency.">
-    <meta property="og:image" content="{{ asset('/media/custome/blue-logo.svg') }}">
+    <meta property="og:image" content="{{ asset('/media/assets/logos/blue-logo.svg') }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
     <meta property="twitter:title" content="F16s E-Freight Solutions | Smart Logistics Automation">
     <meta property="twitter:description" content="Revolutionize your freight forwarding with F16s. Instant AWB generation, 150+ airline connections, and lightning-fast digital efficiency.">
-    <meta property="twitter:image" content="{{ asset('/media/custome/blue-logo.svg') }}">
+    <meta property="twitter:image" content="{{ asset('/media/assets/logos/blue-logo.svg') }}">
 
     <link rel="canonical" href="{{ url()->current() }}">
 
@@ -31,7 +31,7 @@
         "@type": "Organization",
         "name": "F16s E-Freight Solutions",
         "url": "https://f16sefreight.com",
-        "logo": "https://f16sefreight.com/media/custome/blue-logo.svg",
+        "logo": "https://f16sefreight.com/media/assets/logos/blue-logo.svg",
         "contactPoint": {
             "@type": "ContactPoint",
             "telephone": "",
@@ -46,8 +46,8 @@
     }
     </script>
     <title>F16s E-Freight Solutions | Smart Freight Forwarding Automation</title>
-    <link rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
-    <link rel="stylesheet" href="{{ asset('/css/app.css') }}">
+    <link rel="icon" href="/media/assets/logos/favicon.jpeg" type="image/x-icon">
+    <link rel="stylesheet" href="{{ mix('/css/app.css') }}">
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-JCFDX15593"></script>
@@ -59,15 +59,42 @@
   gtag('config', 'G-JCFDX15593');
 </script>
 <body>
-    <div id="app">
-        <!-- CUSTOM PRELOADER -->
-        <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #d0e6f8; display: flex; align-items: center; justify-content: center; z-index: 9999; overflow: hidden;">
-            <img src="/media/custome/loading-page.gif" alt="Loading..." style="max-width: 600px; width: 90%; height: auto; object-fit: contain;">
-        </div>
+    <!-- CUSTOM PRELOADER -->
+    <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 10000; overflow: hidden; transition: opacity 0.6s ease-in-out;">
+        <img src="/media/assets/logos/blue-logo.svg" alt="Loading..." style="max-width: 300px; width: 80%; height: auto; object-fit: contain; animation: pulse 2s infinite ease-in-out;">
     </div>
-    <script src="{{ asset('/js/app.js') }}" type="text/javascript"></script>
-    <!-- Add this in your HTML file -->
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+    </style>
+
+    <div id="app"></div>
+    
+    <!-- Build Assets -->
+    <script src="{{ mix('js/manifest.js') }}" defer></script>
+    <script src="{{ mix('vendor.js') }}" defer></script>
+    <script src="{{ mix('js/app.js') }}" defer></script>
+    
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/clipboard.js/2.0.8/clipboard.min.js"></script>
+
+    <script>
+      window.addEventListener('load', function() {
+        var loader = document.getElementById('app-preloader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(function() {
+                loader.style.display = 'none';
+                loader.parentNode.removeChild(loader);
+            }, 600);
+        }
+      });
+    </script>
 </body>
+
 
 </html>

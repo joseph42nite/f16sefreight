@@ -42,6 +42,17 @@ export default {
      * remove this to use config only from static json (@/core/config/layout.config.json)
      */
     this.$store.dispatch(OVERRIDE_LAYOUT_CONFIG);
+    
+    // Explicitly destroy the root preloader once the application is fully hydrated
+    this.$nextTick(() => {
+        const loader = document.getElementById('app-preloader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                if(loader.parentNode) loader.parentNode.removeChild(loader);
+            }, 600);
+        }
+    });
   }
 };
 </script>

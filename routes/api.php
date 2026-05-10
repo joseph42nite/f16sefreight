@@ -1,25 +1,32 @@
 <?php
 
-use App\Http\Controllers\airwayBill\AirwayBill;
-use App\Http\Controllers\OcrController;
-use App\Http\Controllers\airwayBill\ConsolidationController;
-use App\Http\Controllers\airwayBill\HousewayBill;
-use App\Http\Controllers\airwayBill\MessageLog;
-use App\Http\Controllers\airwayBill\GLNResponseController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\user\UserController;
-use App\Http\Controllers\superAdmin\SuperAdminController;
-use App\Http\Controllers\PasswordResetRequestController;
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\RateController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\AmsController;
-use App\Http\Controllers\SettingController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\CurrencyRateController;
-use App\Http\Controllers\ConversionController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\BranchController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetRequestController;
+use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Logistics\AirwayBillController;
+use App\Http\Controllers\Logistics\HousewayBillController;
+use App\Http\Controllers\Logistics\MessageLogController;
+use App\Http\Controllers\Logistics\ConsolidationController;
+use App\Http\Controllers\Logistics\GLNResponseController;
+use App\Http\Controllers\Logistics\ConversionController;
+use App\Http\Controllers\Logistics\IMPConversionController;
+use App\Http\Controllers\Logistics\OcrController;
+use App\Http\Controllers\Data\RateController;
+use App\Http\Controllers\Data\LocationController;
+use App\Http\Controllers\Data\AmsController;
+use App\Http\Controllers\Data\ReportController;
+use App\Http\Controllers\Data\CurrencyRateController;
+use App\Http\Controllers\Generators\GenerateAwbPdfController;
+use App\Http\Controllers\Generators\GenerateHawbPdfController;
+use App\Http\Controllers\Generators\GenerateConsolidationPdfController;
+use App\Http\Controllers\Admin\BlogController;
+
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -38,12 +45,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 // =================user section==========================
 //user register
 Route::post('/register', [UserController::class, 'register']);
 Route::get('/get-location', [LocationController::class, 'getLocation']);
-
 
 Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () {
     Route::post('logout', [UserController::class, 'logout']);
@@ -57,19 +62,19 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
 
     //=========for the airway bill operations====
     //airway bills route
-    Route::post('/create-webdoc', [AirwayBill::class, 'store']);
-    Route::post('/get-consignment-error', [AirwayBill::class, 'getConsignmentError']);
-    Route::get('/agent-info', [AirwayBill::class, 'get_agent']);
+    Route::post('/create-focusair', [AirwayBillController::class, 'store']);
+    Route::post('/get-consignment-error', [AirwayBillController::class, 'getConsignmentError']);
+    Route::get('/agent-info', [AirwayBillController::class, 'get_agent']);
     Route::get('/waybill/{awb_id?}', [ConversionController::class, 'WayBillConversion']);
-    Route::get('/get-shippers', [AirwayBill::class, 'getShippers']);
-    Route::get('/get-shipper-address', [AirwayBill::class, 'getShipperAddress']);
-    Route::get('/get-consignee-address', [AirwayBill::class, 'getConsigneeAddress']);
-    Route::get('/get-alsonotify-address', [AirwayBill::class, 'getAlsoNotifyAddress']);
-    Route::get('/get-airway-bills/{status}', [AirwayBill::class, 'getAirwayBills']);
-    Route::put('/update-airway-bill/{id}', [AirwayBill::class, 'update']);
-    Route::get('/airway-bill/{id}', [AirwayBill::class, 'show']);
-    Route::get('/get-awbcode-prefix/{code}', [AirwayBill::class, 'getAwbPrefixData']);
-    Route::get('/load-awb', [AirwayBill::class, 'loadAWB']);
+    Route::get('/get-shippers', [AirwayBillController::class, 'getShippers']);
+    Route::get('/get-shipper-address', [AirwayBillController::class, 'getShipperAddress']);
+    Route::get('/get-consignee-address', [AirwayBillController::class, 'getConsigneeAddress']);
+    Route::get('/get-alsonotify-address', [AirwayBillController::class, 'getAlsoNotifyAddress']);
+    Route::get('/get-airway-bills/{status}', [AirwayBillController::class, 'getAirwayBills']);
+    Route::put('/update-airway-bill/{id}', [AirwayBillController::class, 'update']);
+    Route::get('/airway-bill/{id}', [AirwayBillController::class, 'show']);
+    Route::get('/get-awbcode-prefix/{code}', [AirwayBillController::class, 'getAwbPrefixData']);
+    Route::get('/load-awb', [AirwayBillController::class, 'loadAWB']);
 
     Route::get('/all-consolidation', [ConsolidationController::class, 'index']);
     Route::put('/update-consolidation/{id}', [ConsolidationController::class, 'update']);
@@ -80,32 +85,31 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-location', [LocationController::class, 'getLocation']);
 
     //-------houseWaybills-----
-    Route::post('/create-houseway-bill', [HousewayBill::class, 'store']);
-    Route::put('/update-houseway-bill/{id}', [HousewayBill::class, 'update']);
-    Route::post('/get-house-consignment-error', [HousewayBill::class, 'getConsignmentError']);
-    Route::get('/get-country', [HousewayBill::class, 'getCountry']);
-    Route::get('/other-charges', [HousewayBill::class, 'getOtherCharges']);
-    Route::get('/get-oci-data', [HousewayBill::class, 'getOCIData']);
-    Route::get('/houseway-bill/{id}', [HousewayBill::class, 'show']);
-    Route::get('/get-houseway-bills/{status}', [HousewayBill::class, 'getAllHawb']);
-    Route::get('/get-shippers', [HousewayBill::class, 'getShippers']);
-    Route::get('/get-shipper-address', [HousewayBill::class, 'getShipperAddress']);
-    Route::get('/get-consignee-address', [HousewayBill::class, 'getConsigneeAddress']);
-    Route::get('/get-alsonotify-address', [HousewayBill::class, 'getAlsoNotifyAddress']);
-
+    Route::post('/create-houseway-bill', [HousewayBillController::class, 'store']);
+    Route::put('/update-houseway-bill/{id}', [HousewayBillController::class, 'update']);
+    Route::post('/get-house-consignment-error', [HousewayBillController::class, 'getConsignmentError']);
+    Route::get('/get-country', [HousewayBillController::class, 'getCountry']);
+    Route::get('/other-charges', [HousewayBillController::class, 'getOtherCharges']);
+    Route::get('/get-oci-data', [HousewayBillController::class, 'getOCIData']);
+    Route::get('/houseway-bill/{id}', [HousewayBillController::class, 'show']);
+    Route::get('/get-houseway-bills/{status}', [HousewayBillController::class, 'getAllHawb']);
+    Route::get('/get-shippers', [HousewayBillController::class, 'getShippers']);
+    Route::get('/get-shipper-address', [HousewayBillController::class, 'getShipperAddress']);
+    Route::get('/get-consignee-address', [HousewayBillController::class, 'getConsigneeAddress']);
+    Route::get('/get-alsonotify-address', [HousewayBillController::class, 'getAlsoNotifyAddress']);
 
     //message Log 
-    Route::get('/house-way-bills/{awb_code}/{awb_no}', [MessageLog::class,'getHouseWayBills']);
-    Route::get('/get-all-airwaybill', [MessageLog::class,'getAllAirwaybills']);
-    Route::get('/get-master-awbs-with-housewaybills', [MessageLog::class,'getMasterAwbsWithHouseWaybills']);
-    Route::delete('/house-way-bills/{id}', [MessageLog::class, 'deleteHouseWayBill']);
-    Route::post('/search-airway-bills', [MessageLog::class, 'searchBills']);
+    Route::get('/house-way-bills/{awb_code}/{awb_no}', [MessageLogController::class,'getHouseWayBills']);
+    Route::get('/get-all-airwaybill', [MessageLogController::class,'getAllAirwaybills']);
+    Route::get('/get-master-awbs-with-housewaybills', [MessageLogController::class,'getMasterAwbsWithHouseWaybills']);
+    Route::delete('/house-way-bills/{id}', [MessageLogController::class, 'deleteHouseWayBill']);
+    Route::post('/search-airway-bills', [MessageLogController::class, 'searchBills']);
     //========end of the  airway bill operation=====
     Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
 
     //File Uplaod API
     Route::post('/upload-awb-file', [OcrController::class, 'extract']);
-    Route::post('/get-airport-by-airport-code', [AirwayBill::class, 'get_airport_by_airport_code']);
+    Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
 });
 
 // =================superAdmin section==========================
@@ -155,6 +159,12 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::get('/all-branch/{id?}', [BranchController::class, 'index']);
     Route::get('/get-company-branch/{company_id?}', [BranchController::class, 'getCompanyBranch']);
     Route::delete('/branch/{id?}', [BranchController::class, 'delete']);
+
+    // Blog dynamic management
+    Route::post('/create-blog', [BlogController::class, 'store']);
+    Route::put('/edit-blog/{id}', [BlogController::class, 'update']);
+    Route::get('/all-blogs-internal', [BlogController::class, 'index']);
+    Route::delete('/delete-blog/{id}', [BlogController::class, 'destroy']);
 });
 
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);
@@ -170,3 +180,7 @@ Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
 //gln response url
 Route::post('/gln-response', [GLNResponseController::class, 'store']);
 Route::get('/check', [GLNResponseController::class, 'check']);
+
+// Public Blog Feed
+Route::get('/get-public-blogs', [BlogController::class, 'index']);
+Route::get('/get-public-blog/{slug}', [BlogController::class, 'show']);

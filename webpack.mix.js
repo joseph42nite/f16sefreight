@@ -5,30 +5,41 @@ mix.alias({
     "@": "resources/js/src/",
 })
     .js("resources/js/app.js", "public/js")
+    .extract(["vue", "vuetify", "bootstrap-vue"], "public/js/vendor.js")
     .css("resources/css/app.css", "public/css")
     .vue();
 
-//disable save notification
 mix.disableSuccessNotifications();
 
-// mix.webpackConfig({
-//     entry: {
-//         chunkFilename: `js/chunk/[name].js?id=[chunkhash]`,
-//     },
-//     output: {
-//         chunkFilename: `js/chunk/[name].js?id=[chunkhash]`,
-//     },
-//     resolve: {
-//         alias: {
-//             vue$: "vue/dist/vue.runtime.esm.js",
-//             "@": path.resolve(__dirname, "resources/js/src/"),
-//         },
-//     },
-//     // plugins: [
-//     //     new BrowserSyncPlugin({
-//     //         proxy: "http://lanceark.website",
-//     //         host: "lanceark.website",
-//     //         open: "external"
-//     //     })
-//     // ]
-// });
+if (mix.inProduction()) {
+    mix.version();
+}
+
+mix.webpackConfig({
+    output: {
+        chunkFilename: "js/chunk/[name].js?id=[chunkhash]",
+    },
+    optimization: {
+        splitChunks: {
+            chunks: "all",
+            maxInitialRequests: 6,
+            cacheGroups: {
+                vendor: {
+                    test: /[\\/]node_modules[\\/](vue|vuetify|bootstrap-vue)[\\/]/,
+                    name: "vendor",
+                    chunks: "initial",
+                    priority: 20,
+                },
+                common: {
+                    name: "common",
+                    minChunks: 2,
+                    chunks: "async",
+                    priority: 10,
+                    reuseExistingChunk: true,
+                },
+            },
+        },
+    },
+});
+
+

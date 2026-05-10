@@ -1,4 +1,7 @@
 {
     "/js/app.js": "/js/app.js",
+    "/js/manifest.js": "/js/manifest.js",
+    "/vendor.js": "/vendor.js",
+    "/js/chunk/common.js": "/js/chunk/common.js?id=b0c898cbd6915ea4",
     "/css/app.css": "/css/app.css"
 }

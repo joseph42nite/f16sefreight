@@ -1,16 +1,32 @@
 <?php
 
-use App\Http\Controllers\airwayBill\AirwayBill;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetRequestController;
+use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Logistics\AirwayBillController;
+use App\Http\Controllers\Logistics\HousewayBillController;
+use App\Http\Controllers\Logistics\MessageLogController;
+use App\Http\Controllers\Logistics\ConsolidationController;
+use App\Http\Controllers\Logistics\GLNResponseController;
+use App\Http\Controllers\Logistics\ConversionController;
+use App\Http\Controllers\Logistics\IMPConversionController;
+use App\Http\Controllers\Logistics\OcrController;
+use App\Http\Controllers\Data\RateController;
+use App\Http\Controllers\Data\LocationController;
+use App\Http\Controllers\Data\AmsController;
+use App\Http\Controllers\Data\ReportController;
+use App\Http\Controllers\Data\CurrencyRateController;
+use App\Http\Controllers\Generators\GenerateAwbPdfController;
+use App\Http\Controllers\Generators\GenerateHawbPdfController;
+use App\Http\Controllers\Generators\GenerateConsolidationPdfController;
+
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ConversionController;
-use App\Http\Controllers\IMPConversionController;
-
-use App\Http\Controllers\GenerateAwbPdfController;
-use App\Http\Controllers\GenerateConsolidationPdfController;
-use App\Http\Controllers\GenerateHawbPdfController;
-use App\Http\Controllers\OcrController;
-
-use App\Http\Controllers\airwayBill\HousewayBill;
 
 // Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
 Route::get('air-waybill', [ConversionController::class, 'WayBillConversion']);
@@ -31,7 +47,7 @@ Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class,
 Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf']);
 Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
 Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf']);
-Route::get('/ocr', fn() => view('ocr.upload'));
+Route::get('/ocr', fn() => view('tools.ocr.upload'));
 Route::post('/ocr-extract', [OcrController::class, 'extract'])->name('ocr.extract');
 Route::get('{any}', function () {
     return view('welcome');

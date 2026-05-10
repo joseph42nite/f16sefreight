@@ -29,7 +29,7 @@
                     <b-card class="feature-card h-100 border-0">
                         <div class="feature-icon-container mb-8 mx-auto">
                             <div class="icon-circle"></div>
-                            <b-icon icon="chat-square-dots" font-scale="2" class="feature-icon-svg" aria-hidden="true"></b-icon>
+                            <img src="/media/assets/vectors/customer-support.svg" class="feature-icon-vector" alt="Support Icon" aria-hidden="true" />
                         </div>
                         <h3 class="feature-title">Have a Dispute or Query?</h3>
                         <p class="feature-desc">Facing any issues or have a query regarding our services? We’re committed to resolving them quickly. A Ticket Number will be generated for tracking.</p>
@@ -50,7 +50,7 @@
                     <b-card class="feature-card h-100 border-0">
                         <div class="feature-icon-container mb-8 mx-auto">
                             <div class="icon-circle"></div>
-                            <b-icon icon="calculator" font-scale="2" class="feature-icon-svg" aria-hidden="true"></b-icon>
+                            <img src="/media/assets/vectors/affordable-awb.svg" class="feature-icon-vector" alt="Quote Icon" aria-hidden="true" />
                         </div>
                         <h3 class="feature-title">Get a Customized Quote</h3>
                         <p class="feature-desc">Looking for the best pricing option for your business? Fill in the details, and we’ll provide a personalized quote tailored exactly to your operational needs.</p>
@@ -71,7 +71,7 @@
                     <b-card class="feature-card h-100 border-0">
                         <div class="feature-icon-container mb-8 mx-auto">
                             <div class="icon-circle"></div>
-                            <b-icon icon="briefcase" font-scale="2" class="feature-icon-svg" aria-hidden="true"></b-icon>
+                            <img src="/media/assets/vectors/scalable-performance.svg" class="feature-icon-vector" alt="Growth Icon" aria-hidden="true" />
                         </div>
                         <h3 class="feature-title">Feedback & Opportunities</h3>
                         <p class="feature-desc">Share your feedback with us or let us know if you’re interested in joining our growing team. We highly appreciate your input and talent!</p>
@@ -415,8 +415,7 @@ export default {
 
 .ultra-premium-modal .modal-body {
     padding: 0 !important;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    background: #ffffff;
 }
 
 /* Split Layout */
@@ -484,8 +483,7 @@ export default {
 .pane-icon-wrapper {
     width: 80px;
     height: 80px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.25);
     border-radius: 24px;
     display: flex;
     align-items: center;

@@ -3,92 +3,91 @@
         <div class="container-fluid">
             <!-- Include Page Loader -->
             <!-- <PageLoader></PageLoader> -->
-            <div class="d-flex">
+            <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
-                <div class="container" style="background-color:#fff;box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px;">
-                    <b-row class="mt-14 mb-8 px-10">
-                        <b-col cols="6">
-                            <h6 style="color:#355594;font-size:22px;line-height:30px;font-weight:600;">Documentation</h6>
-                            <b-form-group id="fieldset-horizontal" class="d-flex align-items-center ">
-                                <b-form-select 
-                                    style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;"
-                                    class="form-control-sm"
-                                    v-model="selectedViewPageOption"
-                                    @change="onSelect">
-                                    <option value="/focus-air">Master Airway Bill</option>
-                                    <option value="/house-way-bill">Houseway Bill</option>
-                                    <option value="/consolidation">Consolidation</option>
-                                    <!-- <option value="/message-log">Message Log</option> -->
-                                </b-form-select>
-                            </b-form-group>
-                        </b-col>
-                        <b-col cols="6">
-                            <div class="d-flex justify-content-end" style="margin-top: 42px !important;">
-                              <!--  <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                id="show-btn" v-b-modal.modal-draft class="mx-2">Draft</b-button> -->
-                                <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                id="show-btn" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
-                            </div>
-                        </b-col>
-                        <!-- Draft model code Start here -->
-                        <b-modal id="modal-draft" title="Drafts" :hide-footer="true" ok-only>
-                            <div class="d-block">
-                                <b-row class="mt-5">
-                                    <b-col cols="auto">
-                                        <a href="" class="custom-link">none</a>
-                                        <h6>( - )</h6>
-                                    </b-col>
-                                    <b-col cols="auto">
-                                        <a href="" class="custom-link">Edit e-AWB Data</a>
-                                        <a href="" class="custom-link">Create House Waybill from e-AWB Data</a>
-                                        <h6>By: jgeorgeblr@gln.com at: 13 Jul 15:03</h6>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-modal>
-                        <!-- Draft model code Ends here -->
-                        <!-- 10 Latest model code start here -->
-                         <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" ok-only>
-                            <div class="d-block">
-                                <div v-if="isFetching" class="text-center py-20">
-                                    <b-spinner label="Fetching messages..." style="width: 3rem; height: 3rem;" variant="primary"></b-spinner>
-                                    <p class="mt-4 text-muted font-weight-bold">Fetching latest messages...</p>
+                <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; width: 100%;">
+                    <div class="container py-8 px-10">
+                        <b-row class="align-items-center mb-8">
+                            <b-col cols="12" md="6">
+                                <div class="d-flex flex-column">
+                                    <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
+                                    <h6 style="color:#355594;font-size:26px !important;line-height:34px !important;font-weight:800 !important;letter-spacing:-0.5px !important;margin-bottom:1rem;font-family:'Inter', sans-serif !important;">Documentation</h6>
+                                    <b-form-group id="fieldset-horizontal" class="mb-0">
+                                        <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
+                                            <b-icon icon="folder2-open" style="color:#355594;font-size:1.2rem;margin-right:12px;"></b-icon>
+                                            <b-form-select 
+                                                style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;background:transparent;cursor:pointer;outline:none;box-shadow:none;padding-left:0;"
+                                                class="form-control-sm"
+                                                v-model="selectedViewPageOption"
+                                                @change="onSelect">
+                                                <option value="/focus-air">Master Airway Bill</option>
+                                                <option value="/house-way-bill">Houseway Bill</option>
+                                                <option value="/consolidation">Consolidation</option>
+                                                <!-- <option value="/message-log">Message Log</option> -->
+                                            </b-form-select>
+                                        </div>
+                                    </b-form-group>
                                 </div>
-                                <b-row v-else class="mt-5">
-                                    <b-col>
-                                        <div v-if="data_items && data_items.length > 0">
-                                            <div v-for="item in data_items" :key="item.id">
-                                                <div class="py-2">
-                                                    <p class="awbcodetitle mb-3" style="cursor: pointer;" @click="selectAndSearchAwb(item)">
-                                                        {{ String(item.awb_code) }}-{{ String(item.awb_no) }} 
-                                                        ({{ item.departure_airport ? item.departure_airport.split(',')[0] : 'N/A' }}-{{ item.destination_airport ? item.destination_airport.split(',')[0] : 'N/A' }})
-                                                    </p>
-                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                            <p class="mb-0 ml-2"><a :href="'/download-consolidation-pdf/' + String(item.awb_code)+'/' + String(item.awb_no)" target="_blank" class="custom-link">Consolidation Pdf file</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <a href="#" class="custom-link mb-0" @click="getHouseWayBill(String(item.id))">
-                                                        <router-link v-slot="{ navigate, href }" :to="'/edit-airway-bill/' + String(item.id)" custom>
-                                                            <p class="mb-0 ml-2"><a :href="'/download-multiple-consolidation-pdf/' + String(item.id)" target="_blank" class="custom-link">Multipage Consolidation Pdf file</a></p>
-                                                        </router-link>
-                                                    </a>
-                                                    <p class="mt-5 mb-0" style="border-bottom: 1px solid #cdcdcd;">
-                                                        Issued at: {{ formatDate(item.updated_at) }} By: {{ getCurrentUser() }}
-                                                    </p>
+                            </b-col>
+                            <b-col cols="12" md="6" class="mt-6 mt-md-0">
+                                <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
+                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                        <b-icon icon="clock-history" class="mr-2"></b-icon>10 Latest
+                                    </b-button>
+                                </div>
+                            </b-col>
+
+                            <!-- 10 Latest model code start here -->
+                            <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" centered size="lg">
+                                <div class="message-list p-4">
+                                    <div v-if="isFetching" class="text-center py-20">
+                                        <b-spinner label="Fetching messages..." style="width: 3rem; height: 3rem;" variant="primary"></b-spinner>
+                                        <p class="mt-4 text-muted font-weight-bold">Fetching latest messages...</p>
+                                    </div>
+                                    <template v-else>
+                                        <div v-if="!data_items || data_items.length === 0" class="text-center py-10">
+                                            <b-icon icon="chat-dots" font-scale="3" class="text-muted mb-4"></b-icon>
+                                            <p class="text-muted font-weight-bold">No messages found.</p>
+                                        </div>
+                                        <div v-for="item in data_items" :key="item.id" class="message-item p-4 mb-3 rounded-xl border-1" style="background: #f0f7ff; border: 1px solid #d0e3ff; border-radius: 12px;">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center" style="cursor: pointer;" @click="selectAndSearchAwb(item)">
+                                                    <div class="mr-4">
+                                                        <b-icon icon="clock-history" font-scale="1.5" style="color: #355594;"></b-icon>
+                                                    </div>
+                                                    <div>
+                                                        <p class="mb-0 font-weight-bolder text-dark">
+                                                            {{ item.awb_code }}-{{ item.awb_no }}
+                                                        </p>
+                                                        <p class="text-muted font-size-sm mb-0">
+                                                            Route: {{ item.departure_airport ? item.departure_airport.split(',')[0] : 'N/A' }} ➔ {{ item.destination_airport ? item.destination_airport.split(',')[0] : 'N/A' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex flex-column align-items-end">
+                                                     <p class="text-muted small mb-1 font-weight-bold">
+                                                         Issued: {{ formatDate(item.updated_at) }}
+                                                     </p>
                                                 </div>
                                             </div>
+                                            <!-- Technical Links Footer Preserved for PDF actions -->
+                                            <div class="d-flex flex-wrap mt-3 pt-3 border-top" style="gap: 15px; border-color: rgba(53, 85, 148, 0.1) !important;">
+                                                <a :href="'/download-consolidation-pdf/' + String(item.awb_code) + '/' + String(item.awb_no)" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;">
+                                                    <b-icon icon="file-earmark-pdf" class="mr-1"></b-icon> Consolidation PDF
+                                                </a>
+                                                <a :href="'/download-multiple-consolidation-pdf/' + String(item.id)" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;">
+                                                    <b-icon icon="files" class="mr-1"></b-icon> Multipage PDF
+                                                </a>
+                                            </div>
                                         </div>
-                                        <div v-else class="text-center py-4">
-                                            <p class="text-muted">No master AWBs with house waybills found.</p>
-                                        </div>
-                                    </b-col>
-                                </b-row>
-                            </div>
-                        </b-modal>
-                        <!-- 10 Latest model code Ends here -->
-                    </b-row>
+                                    </template>
+                                </div>
+                            </b-modal>
+                            <!-- 10 Latest model code Ends here -->
+                        </b-row>
+                    </div>
                     <hr class="hr" />
+                    <div class="container px-10 pb-10">
                     <b-row>
                         <b-col cols="12">
                             <div class="align-items-center">
@@ -574,6 +573,7 @@
                     </div>
                     <div v-else-if="searchPerformed && !hasSearchResults" class="d-flex flex-column align-items-start pt-2 pb-2">
                         <p class="text-danger mt-5">No house waybills found for this master AWB.</p>
+                    </div>
                     </div>
                 </div>
             </div>

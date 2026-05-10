@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoading" class="loader-overlay">
       <div class="logo-container">
-        <img src="/media/assets/ui/loader.png" alt="Logo" class="logo" />
+        <img src="/media/assets/ui/loader.png" alt="Logo" class="logo" style="width: 120px !important; height: auto;" />
         <div class="loading-text">
           Loading
           <span class="dot dot1">.</span>
@@ -67,14 +67,14 @@
   
   /* Styling the Logo */
   .logo {
-    width: 150px; /* Adjust size of the logo */
+    width: 120px; /* Balanced layout footprint */
     height: auto;
     margin-bottom: 20px;
   }
   
   /* Loading Text Style */
   .loading-text {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 600;
     color: #333;
     position: relative;

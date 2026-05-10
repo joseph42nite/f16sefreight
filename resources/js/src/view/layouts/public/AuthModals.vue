@@ -199,7 +199,7 @@ export default {
 .login-pane { background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%); }
 .otp-pane { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 .pane-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
-.pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }
+.pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.25); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }
 .pane-title { font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.5px; line-height: 1.1; }
 .pane-subtitle { font-size: 1.1rem; line-height: 1.7; opacity: 0.85; }
 .pane-feature { display: flex; align-items: center; margin-bottom: 1rem; font-size: 1rem; font-weight: 500; }

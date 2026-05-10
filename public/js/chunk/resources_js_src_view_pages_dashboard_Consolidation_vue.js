@@ -927,40 +927,83 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "container-fluid"
   }, [_c("div", {
-    staticClass: "d-flex"
+    staticClass: "d-flex flex-column flex-lg-row"
   }, [_c("SideBar"), _vm._v(" "), _c("div", {
-    staticClass: "container",
     staticStyle: {
-      "background-color": "#fff",
-      "box-shadow": "3px 3px 10px #d0d0d0",
+      background: "#ffffff",
+      border: "1px solid rgba(255, 255, 255, 0.4)",
+      "box-shadow": "0 10px 30px rgba(53, 85, 148, 0.1)",
       "z-index": "1",
-      "border-radius": "30px"
+      "border-radius": "32px",
+      width: "100%"
     }
+  }, [_c("div", {
+    staticClass: "container py-8 px-10"
   }, [_c("b-row", {
-    staticClass: "mt-14 mb-8 px-10"
+    staticClass: "align-items-center mb-8"
   }, [_c("b-col", {
     attrs: {
-      cols: "6"
+      cols: "12",
+      md: "6"
     }
-  }, [_c("h6", {
+  }, [_c("div", {
+    staticClass: "d-flex flex-column"
+  }, [_c("span", {
+    staticStyle: {
+      "text-transform": "uppercase",
+      "letter-spacing": "2px",
+      "font-size": "0.85rem",
+      "font-weight": "700",
+      color: "#355594",
+      opacity: "0.6",
+      "margin-bottom": "0.5rem",
+      display: "block"
+    }
+  }, [_vm._v("Navigation")]), _vm._v(" "), _c("h6", {
     staticStyle: {
       color: "#355594",
-      "font-size": "22px",
-      "line-height": "30px",
-      "font-weight": "600"
+      "font-size": "26px !important",
+      "line-height": "34px !important",
+      "font-weight": "800 !important",
+      "letter-spacing": "-0.5px !important",
+      "margin-bottom": "1rem",
+      "font-family": "'Inter', sans-serif !important"
     }
   }, [_vm._v("Documentation")]), _vm._v(" "), _c("b-form-group", {
-    staticClass: "d-flex align-items-center",
+    staticClass: "mb-0",
     attrs: {
       id: "fieldset-horizontal"
     }
-  }, [_c("b-form-select", {
+  }, [_c("div", {
+    staticClass: "d-flex align-items-center",
+    staticStyle: {
+      background: "#F0F7FF",
+      "border-radius": "12px",
+      padding: "6px 16px",
+      width: "fit-content",
+      border: "1px solid #E6F0FF"
+    }
+  }, [_c("b-icon", {
+    staticStyle: {
+      color: "#355594",
+      "font-size": "1.2rem",
+      "margin-right": "12px"
+    },
+    attrs: {
+      icon: "folder2-open"
+    }
+  }), _vm._v(" "), _c("b-form-select", {
     staticClass: "form-control-sm",
     staticStyle: {
       width: "180px",
       border: "0px !important",
       color: "#355594",
-      "font-weight": "600"
+      "font-weight": "600",
+      background: "transparent",
+      cursor: "pointer",
+      outline: "none",
+      "box-shadow": "none",
+      "padding-left": "0"
     },
     on: {
       change: _vm.onSelect
@@ -984,14 +1027,17 @@ var render = function render() {
     attrs: {
       value: "/consolidation"
     }
-  }, [_vm._v("Consolidation")])])], 1)], 1), _vm._v(" "), _c("b-col", {
+  }, [_vm._v("Consolidation")])])], 1)])], 1)]), _vm._v(" "), _c("b-col", {
+    staticClass: "mt-6 mt-md-0",
     attrs: {
-      cols: "6"
+      cols: "12",
+      md: "6"
     }
   }, [_c("div", {
-    staticClass: "d-flex justify-content-end",
+    staticClass: "d-flex justify-content-md-end flex-wrap",
     staticStyle: {
-      "margin-top": "42px !important"
+      gap: "12px",
+      "align-items": "center"
     }
   }, [_c("b-button", {
     directives: [{
@@ -1001,60 +1047,38 @@ var render = function render() {
         "modal-s": true
       }
     }],
-    staticClass: "ml-2 mr-10",
+    staticClass: "show-btn",
     staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
+      background: "white",
       color: "#355594",
-      background: "#ffffff !important"
+      border: "1px solid #E6F0FF",
+      "border-radius": "50px",
+      padding: "10px 22px",
+      "font-weight": "600",
+      transition: "all 0.3s ease",
+      "box-shadow": "0 4px 6px rgba(0,0,0,0.02)"
     },
-    attrs: {
-      id: "show-btn"
+    on: {
+      click: function click($event) {
+        $event.preventDefault();
+        return _vm.getHousewayBills("send");
+      }
     }
-  }, [_vm._v("10 Latest")])], 1)]), _vm._v(" "), _c("b-modal", {
+  }, [_c("b-icon", {
+    staticClass: "mr-2",
     attrs: {
-      id: "modal-draft",
-      title: "Drafts",
-      "hide-footer": true,
-      "ok-only": ""
+      icon: "clock-history"
     }
-  }, [_c("div", {
-    staticClass: "d-block"
-  }, [_c("b-row", {
-    staticClass: "mt-5"
-  }, [_c("b-col", {
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("a", {
-    staticClass: "custom-link",
-    attrs: {
-      href: ""
-    }
-  }, [_vm._v("none")]), _vm._v(" "), _c("h6", [_vm._v("( - )")])]), _vm._v(" "), _c("b-col", {
-    attrs: {
-      cols: "auto"
-    }
-  }, [_c("a", {
-    staticClass: "custom-link",
-    attrs: {
-      href: ""
-    }
-  }, [_vm._v("Edit e-AWB Data")]), _vm._v(" "), _c("a", {
-    staticClass: "custom-link",
-    attrs: {
-      href: ""
-    }
-  }, [_vm._v("Create House Waybill from e-AWB Data")]), _vm._v(" "), _c("h6", [_vm._v("By: jgeorgeblr@gln.com at: 13 Jul 15:03")])])], 1)], 1)]), _vm._v(" "), _c("b-modal", {
+  }), _vm._v("10 Latest\n                                ")], 1)], 1)]), _vm._v(" "), _c("b-modal", {
     attrs: {
       id: "modal-s",
       title: "Latest Messages",
       "hide-footer": true,
-      "ok-only": ""
+      centered: "",
+      size: "lg"
     }
   }, [_c("div", {
-    staticClass: "d-block"
+    staticClass: "message-list p-4"
   }, [_vm.isFetching ? _c("div", {
     staticClass: "text-center py-20"
   }, [_c("b-spinner", {
@@ -1068,15 +1092,29 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("p", {
     staticClass: "mt-4 text-muted font-weight-bold"
-  }, [_vm._v("Fetching latest messages...")])], 1) : _c("b-row", {
-    staticClass: "mt-5"
-  }, [_c("b-col", [_vm.data_items && _vm.data_items.length > 0 ? _c("div", _vm._l(_vm.data_items, function (item) {
+  }, [_vm._v("Fetching latest messages...")])], 1) : [!_vm.data_items || _vm.data_items.length === 0 ? _c("div", {
+    staticClass: "text-center py-10"
+  }, [_c("b-icon", {
+    staticClass: "text-muted mb-4",
+    attrs: {
+      icon: "chat-dots",
+      "font-scale": "3"
+    }
+  }), _vm._v(" "), _c("p", {
+    staticClass: "text-muted font-weight-bold"
+  }, [_vm._v("No messages found.")])], 1) : _vm._e(), _vm._v(" "), _vm._l(_vm.data_items, function (item) {
     return _c("div", {
-      key: item.id
+      key: item.id,
+      staticClass: "message-item p-4 mb-3 rounded-xl border-1",
+      staticStyle: {
+        background: "#f0f7ff",
+        border: "1px solid #d0e3ff",
+        "border-radius": "12px"
+      }
     }, [_c("div", {
-      staticClass: "py-2"
-    }, [_c("p", {
-      staticClass: "awbcodetitle mb-3",
+      staticClass: "d-flex align-items-center justify-content-between"
+    }, [_c("div", {
+      staticClass: "d-flex align-items-center",
       staticStyle: {
         cursor: "pointer"
       },
@@ -1085,81 +1123,64 @@ var render = function render() {
           return _vm.selectAndSearchAwb(item);
         }
       }
-    }, [_vm._v("\n                                                    " + _vm._s(String(item.awb_code)) + "-" + _vm._s(String(item.awb_no)) + " \n                                                    (" + _vm._s(item.departure_airport ? item.departure_airport.split(",")[0] : "N/A") + "-" + _vm._s(item.destination_airport ? item.destination_airport.split(",")[0] : "N/A") + ")\n                                                ")]), _vm._v(" "), _c("a", {
-      staticClass: "custom-link mb-0",
-      attrs: {
-        href: "#"
-      },
-      on: {
-        click: function click($event) {
-          _vm.getHouseWayBill(String(item.id));
-        }
-      }
-    }, [_c("router-link", {
-      attrs: {
-        to: "/edit-airway-bill/" + String(item.id),
-        custom: ""
-      },
-      scopedSlots: _vm._u([{
-        key: "default",
-        fn: function fn(_ref) {
-          var navigate = _ref.navigate,
-            href = _ref.href;
-          return [_c("p", {
-            staticClass: "mb-0 ml-2"
-          }, [_c("a", {
-            staticClass: "custom-link",
-            attrs: {
-              href: "/download-consolidation-pdf/" + String(item.awb_code) + "/" + String(item.awb_no),
-              target: "_blank"
-            }
-          }, [_vm._v("Consolidation Pdf file")])])];
-        }
-      }], null, true)
-    })], 1), _vm._v(" "), _c("a", {
-      staticClass: "custom-link mb-0",
-      attrs: {
-        href: "#"
-      },
-      on: {
-        click: function click($event) {
-          _vm.getHouseWayBill(String(item.id));
-        }
-      }
-    }, [_c("router-link", {
-      attrs: {
-        to: "/edit-airway-bill/" + String(item.id),
-        custom: ""
-      },
-      scopedSlots: _vm._u([{
-        key: "default",
-        fn: function fn(_ref2) {
-          var navigate = _ref2.navigate,
-            href = _ref2.href;
-          return [_c("p", {
-            staticClass: "mb-0 ml-2"
-          }, [_c("a", {
-            staticClass: "custom-link",
-            attrs: {
-              href: "/download-multiple-consolidation-pdf/" + String(item.id),
-              target: "_blank"
-            }
-          }, [_vm._v("Multipage Consolidation Pdf file")])])];
-        }
-      }], null, true)
-    })], 1), _vm._v(" "), _c("p", {
-      staticClass: "mt-5 mb-0",
+    }, [_c("div", {
+      staticClass: "mr-4"
+    }, [_c("b-icon", {
       staticStyle: {
-        "border-bottom": "1px solid #cdcdcd"
+        color: "#355594"
+      },
+      attrs: {
+        icon: "clock-history",
+        "font-scale": "1.5"
       }
-    }, [_vm._v("\n                                                    Issued at: " + _vm._s(_vm.formatDate(item.updated_at)) + " By: " + _vm._s(_vm.getCurrentUser()) + "\n                                                ")])])]);
-  }), 0) : _c("div", {
-    staticClass: "text-center py-4"
-  }, [_c("p", {
-    staticClass: "text-muted"
-  }, [_vm._v("No master AWBs with house waybills found.")])])])], 1)], 1)])], 1), _vm._v(" "), _c("hr", {
+    })], 1), _vm._v(" "), _c("div", [_c("p", {
+      staticClass: "mb-0 font-weight-bolder text-dark"
+    }, [_vm._v("\n                                                        " + _vm._s(item.awb_code) + "-" + _vm._s(item.awb_no) + "\n                                                    ")]), _vm._v(" "), _c("p", {
+      staticClass: "text-muted font-size-sm mb-0"
+    }, [_vm._v("\n                                                        Route: " + _vm._s(item.departure_airport ? item.departure_airport.split(",")[0] : "N/A") + " ➔ " + _vm._s(item.destination_airport ? item.destination_airport.split(",")[0] : "N/A") + "\n                                                    ")])])]), _vm._v(" "), _c("div", {
+      staticClass: "d-flex flex-column align-items-end"
+    }, [_c("p", {
+      staticClass: "text-muted small mb-1 font-weight-bold"
+    }, [_vm._v("\n                                                     Issued: " + _vm._s(_vm.formatDate(item.updated_at)) + "\n                                                 ")])])]), _vm._v(" "), _c("div", {
+      staticClass: "d-flex flex-wrap mt-3 pt-3 border-top",
+      staticStyle: {
+        gap: "15px",
+        "border-color": "rgba(53, 85, 148, 0.1) !important"
+      }
+    }, [_c("a", {
+      staticClass: "font-size-sm text-primary font-weight-bold",
+      staticStyle: {
+        "text-decoration": "none"
+      },
+      attrs: {
+        href: "/download-consolidation-pdf/" + String(item.awb_code) + "/" + String(item.awb_no),
+        target: "_blank"
+      }
+    }, [_c("b-icon", {
+      staticClass: "mr-1",
+      attrs: {
+        icon: "file-earmark-pdf"
+      }
+    }), _vm._v(" Consolidation PDF\n                                            ")], 1), _vm._v(" "), _c("a", {
+      staticClass: "font-size-sm text-primary font-weight-bold",
+      staticStyle: {
+        "text-decoration": "none"
+      },
+      attrs: {
+        href: "/download-multiple-consolidation-pdf/" + String(item.id),
+        target: "_blank"
+      }
+    }, [_c("b-icon", {
+      staticClass: "mr-1",
+      attrs: {
+        icon: "files"
+      }
+    }), _vm._v(" Multipage PDF\n                                            ")], 1)])]);
+  })]], 2)])], 1)], 1), _vm._v(" "), _c("hr", {
     staticClass: "hr"
-  }), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }), _vm._v(" "), _c("div", {
+    staticClass: "container px-10 pb-10"
+  }, [_c("b-row", [_c("b-col", {
     attrs: {
       cols: "12"
     }
@@ -1309,9 +1330,9 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref3) {
-        var navigate = _ref3.navigate,
-          href = _ref3.href;
+      fn: function fn(_ref) {
+        var navigate = _ref.navigate,
+          href = _ref.href;
         return [_c("b-button", {
           staticStyle: {
             background: "#A4D3EE"
@@ -2246,8 +2267,8 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref4) {
-        var item = _ref4.item;
+      fn: function fn(_ref2) {
+        var item = _ref2.item;
         return [_c("div", {
           staticClass: "d-flex border-bottom",
           staticStyle: {
@@ -2354,7 +2375,7 @@ var render = function render() {
     staticClass: "d-flex flex-column align-items-start pt-2 pb-2"
   }, [_c("p", {
     staticClass: "text-danger mt-5"
-  }, [_vm._v("No house waybills found for this master AWB.")])]) : _vm._e()], 1)], 1)])]);
+  }, [_vm._v("No house waybills found for this master AWB.")])]) : _vm._e()], 1)])], 1)])]);
 };
 var staticRenderFns = [];
 render._withStripped = true;

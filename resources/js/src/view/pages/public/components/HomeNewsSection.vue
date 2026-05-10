@@ -60,15 +60,48 @@
 </template>
 
 <script>
-import { blogs } from "../blogData";
+import { blogs as fallbackBlogs } from "../blogData";
+import ApiService from "@/core/services/api.service";
 
 export default {
     name: "HomeNewsSection",
     data() {
         return {
-            featuredPost: blogs[0],
-            newsItems: blogs.slice(1, 5),
+            featuredPost: {},
+            newsItems: [],
         };
+    },
+    created() {
+        this.loadLiveNews();
+    },
+    methods: {
+        loadLiveNews() {
+            // Step 1: Immediately fill with fallbacks for high-speed visual loading
+            this.processPostArray(fallbackBlogs);
+
+            // Step 2: Pull the real data from the DB
+            ApiService.get('/get-public-blogs')
+                .then(({ data }) => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        // Format exact mapping
+                        const dynamicPosts = data.data.map(item => ({
+                            ...item,
+                            image: item.image_path,
+                            date: new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                        }));
+                        
+                        // Override with live news
+                        this.processPostArray(dynamicPosts);
+                    }
+                })
+                .catch(() => {
+                    // Handled silently by initial fallback assignment
+                });
+        },
+        processPostArray(arr) {
+            this.featuredPost = arr[0] || {};
+            this.newsItems = arr.slice(1, 5);
+        }
     }
 };
 </script>

@@ -438,8 +438,12 @@ var render = function render() {
   }), _vm._v("\n                            " + _vm._s(_vm.copyMessageStatus) + "\n                        ")], 1)], 1)])])]), _vm._v(" "), _c("section", {
     staticClass: "related-posts mb-20"
   }, [_c("h3", {
-    staticClass: "section-heading mb-8"
-  }, [_vm._v("Related Articles")]), _vm._v(" "), _c("b-row", _vm._l(_vm.relatedPosts, function (related, rIdx) {
+    staticClass: "section-heading mb-10 font-weight-bold text-dark",
+    staticStyle: {
+      "font-size": "2rem",
+      "letter-spacing": "-0.5px"
+    }
+  }, [_vm._v("Continue Reading")]), _vm._v(" "), _c("b-row", _vm._l(_vm.relatedPosts, function (related, rIdx) {
     return _c("b-col", {
       key: rIdx,
       staticClass: "mb-8",
@@ -447,23 +451,54 @@ var render = function render() {
         md: "6"
       }
     }, [_c("div", {
-      staticClass: "related-card",
+      staticClass: "blog-card glass-card h-100",
+      staticStyle: {
+        cursor: "pointer"
+      },
       on: {
         click: function click($event) {
           return _vm.$router.push("/blog/" + related.slug);
         }
       }
     }, [_c("div", {
-      staticClass: "related-img-wrap mb-4"
+      staticClass: "blog-image-wrap"
     }, [_c("img", {
-      staticClass: "img-fluid",
+      staticClass: "blog-card-img",
       attrs: {
         src: related.image,
         alt: related.title
       }
-    })]), _vm._v(" "), _c("h4", {
-      staticClass: "related-title"
-    }, [_vm._v(_vm._s(related.title))])])]);
+    }), _vm._v(" "), _c("span", {
+      staticClass: "card-category-badge"
+    }, [_vm._v(_vm._s(related.category))])]), _vm._v(" "), _c("div", {
+      staticClass: "blog-content p-6"
+    }, [_c("span", {
+      staticClass: "post-date-small mb-3 d-block text-muted small"
+    }, [_vm._v(_vm._s(related.date || "Recent Article"))]), _vm._v(" "), _c("h3", {
+      staticClass: "blog-card-title mb-4",
+      staticStyle: {
+        "font-size": "1.3rem",
+        "font-weight": "800",
+        color: "#1e3a6e"
+      }
+    }, [_vm._v(_vm._s(related.title))]), _vm._v(" "), _c("p", {
+      staticClass: "blog-card-excerpt mb-6 text-muted small"
+    }, [_vm._v(_vm._s(related.excerpt))]), _vm._v(" "), _c("b-button", {
+      staticClass: "read-more-link p-0",
+      staticStyle: {
+        "text-decoration": "none",
+        color: "#355594",
+        "font-weight": "700"
+      },
+      attrs: {
+        variant: "link"
+      }
+    }, [_c("span", [_vm._v("Read Article")]), _vm._v(" "), _c("b-icon", {
+      staticClass: "ms-1",
+      attrs: {
+        icon: "arrow-right-short"
+      }
+    })], 1)], 1)])]);
   }), 1)], 1)], 1)], 1)], 1)], 1);
 };
 var staticRenderFns = [];

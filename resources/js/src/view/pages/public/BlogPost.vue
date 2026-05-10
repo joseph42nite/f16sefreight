@@ -118,14 +118,23 @@
 
           <!-- RELATED POSTS -->
           <section class="related-posts mb-20">
-              <h3 class="section-heading mb-8">Related Articles</h3>
+              <h3 class="section-heading mb-10 font-weight-bold text-dark" style="font-size: 2rem; letter-spacing: -0.5px;">Continue Reading</h3>
               <b-row>
                   <b-col md="6" v-for="(related, rIdx) in relatedPosts" :key="rIdx" class="mb-8">
-                      <div class="related-card" @click="$router.push('/blog/' + related.slug)">
-                          <div class="related-img-wrap mb-4">
-                              <img :src="related.image" :alt="related.title" class="img-fluid">
+                      <div class="blog-card glass-card h-100" @click="$router.push('/blog/' + related.slug)" style="cursor: pointer;">
+                          <div class="blog-image-wrap">
+                              <img :src="related.image" :alt="related.title" class="blog-card-img">
+                              <span class="card-category-badge">{{ related.category }}</span>
                           </div>
-                          <h4 class="related-title">{{ related.title }}</h4>
+                          <div class="blog-content p-6">
+                              <span class="post-date-small mb-3 d-block text-muted small">{{ related.date || 'Recent Article' }}</span>
+                              <h3 class="blog-card-title mb-4" style="font-size: 1.3rem; font-weight: 800; color: #1e3a6e;">{{ related.title }}</h3>
+                              <p class="blog-card-excerpt mb-6 text-muted small">{{ related.excerpt }}</p>
+                              <b-button class="read-more-link p-0" variant="link" style="text-decoration: none; color: #355594; font-weight: 700;">
+                                  <span>Read Article</span>
+                                  <b-icon icon="arrow-right-short" class="ms-1"></b-icon>
+                              </b-button>
+                          </div>
                       </div>
                   </b-col>
               </b-row>

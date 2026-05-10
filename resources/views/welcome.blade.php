@@ -61,7 +61,7 @@
 <body>
     <!-- CUSTOM PRELOADER -->
     <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 10000; overflow: hidden; transition: opacity 0.6s ease-in-out;">
-        <img src="/media/assets/logos/blue-logo.svg" alt="Loading..." style="max-width: 300px; width: 80%; height: auto; object-fit: contain; animation: pulse 2s infinite ease-in-out;">
+        <img src="/media/assets/logos/blue-logo.svg" alt="Loading..." style="width: 150px; height: auto; object-fit: contain; animation: pulse 2s infinite ease-in-out;">
     </div>
 
     <style>

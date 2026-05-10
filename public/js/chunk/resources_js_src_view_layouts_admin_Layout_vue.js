@@ -448,7 +448,7 @@ var render = function render() {
     attrs: {
       alt: "Logo",
       src: _vm.logo,
-      width: "100"
+      width: "35"
     }
   }), _vm._v(" "), _c("div", {
     staticClass: "spinner",

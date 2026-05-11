@@ -2519,7 +2519,6 @@
                                                                                                                 <tr>
                                                                                                                     <td align="center" valign="bottom" width="70px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;" >
                                                                                                                         @php
-                                                                                                                            <!-- echo !empty($houseWayBill->send_created) ? date('d-M-y', strtotime($houseWayBill->send_created)) : ''; -->
                                                                                                                             echo date('d-M-y');
                                                                                                                         @endphp
                                                                                                                     </td>

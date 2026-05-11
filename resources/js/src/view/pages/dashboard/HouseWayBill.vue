@@ -106,9 +106,9 @@
                                             </div>
                                             <!-- Technical Links (Downloads) preserved and styled -->
                                             <div class="d-flex flex-wrap mt-3 pt-3 border-top" style="gap: 15px; border-color: rgba(53, 85, 148, 0.1) !important;">
-                                                <a :href="'/download-awb-pdf/' + item.id" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="file-earmark-pdf" class="mr-1"></b-icon> PDF</a>
-                                                <a :href="'/download-multiple-awb-pdf/' + item.id" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="files" class="mr-1"></b-icon> Multi-PDF</a>
-                                                <a :href="'/download-multiple-both-page-awb-pdf/' + item.id" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="book" class="mr-1"></b-icon> Multi-PDF (Back)</a>
+                                                <a :href="'/download-awb-pdf/' + item.awb_code+item.awb_no" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="file-earmark-pdf" class="mr-1"></b-icon> PDF</a>
+                                                <a :href="'/download-multiple-awb-pdf/' + item.awb_code+item.awb_no" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="files" class="mr-1"></b-icon> Multi-PDF</a>
+                                                <a :href="'/download-multiple-both-page-awb-pdf/' + item.awb_code+item.awb_no" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;"><b-icon icon="book" class="mr-1"></b-icon> Multi-PDF (Back)</a>
                                             </div>
                                         </div>
                                     </template>

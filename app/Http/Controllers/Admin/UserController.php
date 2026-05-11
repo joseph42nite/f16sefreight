@@ -8,6 +8,8 @@ use App\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Company;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
@@ -26,7 +28,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'origin_airport_code' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'max:100'],
-            'branch_name' => ['required', 'max:50'],
+            'branch_name' => ['nullable', 'max:50'],
             'can_send' => ['required'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
@@ -128,7 +130,18 @@ class UserController extends Controller
     {
         $user_data = auth()->guard('user-api')->user();
         if ($request->token == $user_data->latest_token) {
-            return response()->json($user_data);
+            $userPayload = $user_data->toArray();
+            
+            $companyName = $user_data->company_name;
+            $templatesConfig = Cache::remember(
+                "company_templates_{$companyName}",
+                3600,
+                fn() => optional(Company::where('name', $companyName)->first())->templates_config
+            );
+
+            $userPayload['templates_config'] = $templatesConfig;
+
+            return response()->json($userPayload);
         } else {
             auth()->guard('user-api')->logout();
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -154,5 +167,37 @@ class UserController extends Controller
         Role::where(['email' => $user['email'], 'role' => 'user'])->delete();
         $user->delete();
         return "User deleted";
+    }
+
+    public function getCompanyTemplates()
+    {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $companyName = $user->company_name;
+        
+        // TODO: Migrate to company_id FK on users table to eliminate string-match fragility
+        $company = Company::where('name', $companyName)->first();
+        
+        $fallback = [
+            'allowed_templates' => [
+                ['key' => 'ksr', 'label' => 'KSR'],
+                ['key' => 'ksr_house1', 'label' => 'House 1'],
+                ['key' => 'ksr_house2', 'label' => 'House 2'],
+                ['key' => 'ksr_apex_house', 'label' => 'Apex House'],
+                ['key' => 'ksr_ligi_house', 'label' => 'Ligi'],
+                ['key' => 'ksr_cfglobal_house', 'label' => 'CF Global']
+            ],
+            'default_focus_air' => 'ksr',
+            'default_house_air' => 'ksr_house1'
+        ];
+
+        if (!$company || !$company->templates_config) {
+            return response()->json($fallback);
+        }
+
+        return response()->json($company->templates_config ?: $fallback);
     }
 }

@@ -37,9 +37,7 @@
                                         <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
                                             <b-icon icon="clock-history" class="mr-2"></b-icon>10 Latest
                                         </b-button>
-                                        <b-button v-b-modal.upload-file-modal class="show-btn" style="background:#355594;color:white;border:none;border-radius:50px;padding:10px 26px;font-weight:600;transition:all 0.3s ease;box-shadow:0 10px 20px rgba(53,85,148,0.15);">
-                                            <b-icon icon="cloud-arrow-up" class="mr-2"></b-icon>Upload
-                                        </b-button>
+                                        <OcrUploadModal category="focus_air" @extracted="processExtractedData" />
                                     </div>
                                 </b-col>
                                 <!-- Draft model code Start here -->
@@ -102,81 +100,7 @@
                                     </div>
                                 </b-modal>
                                 <!-- 10 Latest model code Ends here -->
-                                <!-- Upload file model code start here -->
-                                 <b-modal id="upload-file-modal" hide-footer hide-header centered size="xl" modal-class="ultra-premium-modal">
-                                     <div class="modal-split-layout">
-                                         <button class="ultra-close-btn" @click="$bvModal.hide('upload-file-modal')">
-                                             <b-icon icon="x"></b-icon>
-                                         </button>
-                                         <div class="modal-left-pane login-pane">
-                                             <div class="pane-content">
-                                                 <div class="pane-icon-wrapper mb-8">
-                                                     <b-icon icon="cloud-upload" font-scale="2.5"></b-icon>
-                                                 </div>
-                                                 <h2 class="pane-title">Upload Document</h2>
-                                                 <p class="pane-subtitle">Please manually verify each input field extracted by the upload feature. F16s E-freight Solutions is not legally liable for incorrect data sent to the airline. The automated extraction process may contain errors.</p>
-                                                 
-                                                 <div class="pane-footer mt-auto">
-                                                     <div class="pane-feature">
-                                                         <b-icon icon="check-circle" class="mr-3"></b-icon>
-                                                         <span>Automated Extraction</span>
-                                                     </div>
-                                                     <div class="pane-feature">
-                                                         <b-icon icon="shield-check" class="mr-3"></b-icon>
-                                                         <span>Secure Processing</span>
-                                                     </div>
-                                                 </div>
-                                             </div>
-                                             <div class="pane-decoration"></div>
-                                             <div class="pane-decoration-2"></div>
-                                         </div>
-                                         
-                                         <div class="modal-right-pane">
-                                             <div class="form-scroll-container">
-                                                 <div class="ultra-form">
-                                                     <h3 class="form-section-title mb-10">Select File</h3>
 
-                                                     <div class="mb-8 text-left">
-                                                         <label class="font-weight-bold mb-3" style="color: #5A6B8A;">Document Type</label>
-                                                         <b-form-select 
-                                                             class="form-control form-control-solid h-auto py-4 px-6 rounded-xl font-size-h6 border-1" 
-                                                             style="background: #f8fafc; border: 1px solid #e2e8f0;"
-                                                             v-model="selectedUploadType">
-                                                             <option value="ksr">ksr</option>
-                                                             <option value="ksr_house1">ksr_house1</option>
-                                                             <option value="ksr_house2">ksr_house2</option>
-                                                             <option value="ksr_apex_house">ksr_apex_house</option>
-                                                             <option value="ksr_ligi_house">ksr_ligi_house</option>
-                                                             <option value="ksr_cfglobal_house">ksr_cfglobal_house</option>
-                                                         </b-form-select>
-                                                     </div>
-
-                                                     <div class="upload-dropzone mb-10" @click="triggerFileInput"
-                                                         style="border: 2px dashed #355594; border-radius: 20px; padding: 60px 20px; cursor: pointer; background: rgba(53, 85, 148, 0.02); transition: all 0.3s ease;">
-                                                         <div class="text-center">
-                                                             <div class="mb-4">
-                                                                 <b-icon icon="file-earmark-pdf" font-scale="3" style="color: #355594; opacity: 0.6;"></b-icon>
-                                                             </div>
-                                                             <p class="mb-0 font-weight-bolder font-size-h5" style="color: #1e3a6e;">Click to select PDF</p>
-                                                             <p class="text-muted font-size-sm mt-2">Maximum file size: 10MB</p>
-                                                             <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none;" accept=".pdf">
-                                                         </div>
-                                                     </div>
-
-                                                     <div class="form-actions mt-6 d-flex flex-column align-items-center w-100">
-                                                         <div v-if="selectedFile" class="mb-4 text-primary font-weight-bold">Selected: {{ selectedFile.name }}</div>
-                                                         <button class="ultra-submit-btn" :disabled="isUploading" @click="submitUpload">
-                                                             <span v-if="!isUploading">Start Upload</span>
-                                                             <span v-else>Uploading...</span>
-                                                             <b-icon v-if="!isUploading" icon="arrow-right" class="btn-icon"></b-icon>
-                                                             <b-spinner v-else small class="ml-2"></b-spinner>
-                                                         </button>                                                     </div>
-                                                 </div>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </b-modal>
-                                <!-- Upload file model code Ends here -->
                             </b-row>
                         </template>
                     </div>
@@ -866,7 +790,6 @@
                                         </b-col>
                                         <b-col cols="6">
                                             <div class="d-flex justify-content-end align-items-center mr-16">
-                                                <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8;">Get Rates</p>
                                                 <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8;">Collect house waybill sum's</p>
                                             </div>
                                         </b-col>
@@ -2579,6 +2502,7 @@ import debounce from 'lodash.debounce';
 
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import { mapGetters } from "vuex";
+import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 // import PageLoader from "../../components/PageLoader.vue";
 export default {
     name: "FocusAir",
@@ -2958,142 +2882,122 @@ export default {
             is_generate_pdf:0,
             showSpinner: false,
             selectedCompanyForUpload: null,
-            selectedUploadType: 'ksr',
-            selectedFile: null,
-            isUploading: false,
         };
     },
     
     methods: {
-        //file upload code
-        triggerFileInput() {
-            this.$refs.fileInput.click()
-        },
-        handleFileSelect(event) {
-            const file = event.target.files[0]
-            if (file) {
-                if (file.type !== 'application/pdf') {
-                    alert('Please select a PDF file only')
-                    this.$refs.fileInput.value = ''
-                    return
+        processExtractedData(response) {
+            // Injected existing extraction pipeline
+            console.log('Processing received payload:', response);
+            var awb_number = response.awb_number ? response.awb_number.split("-") : ['', ''];
+            this.form.first_box.awb_code = awb_number[0] || '';
+            this.form.first_box.awb_no = awb_number[1] || '';
+            
+            // Routing
+            var departure = response.departure;
+            var destination = response.destination;
+            var transit = response.transit?.[0];
+            
+            if (departure && destination && transit) {
+                var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
+                ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
+                  response2=response2.data?.data;
+                  this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                  this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                  this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                  this.form.routing_information.to = `${response2[2]?response2[2]['iata_code']:response2[1]['iata_code']}, ${response2[2]?response2[2]['destination']:response2[1]['destination']}`;
+                  if(transit.transit_airports[1]){
+                     this.form.routing_information.to_2 = `${response2[3]?response2[3]['iata_code']:response2[1]['iata_code']}, ${response2[3]?response2[3]['destination']:response2[1]['destination']}`;
+                  }
+                  if(transit.transit_airports[2]){
+                      this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                  }
+                });
+                this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
+                this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
+                this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                if(transit.flights[1]){
+                    this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
+                    this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
+                    this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
                 }
-                this.selectedFile = file
-            }
-        },
-        submitUpload() {
-            if (!this.selectedFile) {
-                alert('Please select a file first')
-                return
-            }
-            this.isUploading = true
-            const formData = new FormData()
-            formData.append('upload_file', this.selectedFile)
-            formData.append('type', this.selectedUploadType);
-            ApiService.post('/user/upload-awb-file', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
+                if(transit.flights[2]){
+                    this.form.routing_information.by_3 =transit.flights[2]?.flight_number?.slice(0,2);
+                    this.form.routing_information.flight_3 =transit.flights[2]?.flight_number?.slice(2);
+                    this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
                 }
-            }).then((response) => {
-                this.isUploading = false
-                this.$bvModal.hide('upload-file-modal')
-                response = response.data?.data;
-                console.log(response);
-                var awb_number = response.awb_number.split("-");
-                this.form.first_box.awb_code = awb_number[0];
-                this.form.first_box.awb_no = awb_number[1];
-                //routing
-                var departure = response.departure;
-                    var destination=response.destination;
-                    var transit=response.transit?.[0];
-                    var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
-                    ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
-                      response2=response2.data?.data;
-                      this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                      this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                      this.form.routing_information.to = `${response2[2]?response2[2]['iata_code']:response2[1]['iata_code']}, ${response2[2]?response2[2]['destination']:response2[1]['destination']}`;
-                      if(transit.transit_airports[1]){
-                         this.form.routing_information.to_2 = `${response2[3]?response2[3]['iata_code']:response2[1]['iata_code']}, ${response2[3]?response2[3]['destination']:response2[1]['destination']}`;
-                      }
-                      if(transit.transit_airports[2]){
-                          this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                      }
-                    });
-                    this.form.routing_information.by =transit.flights[0]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight =transit.flights[0]?.flight_number?.slice(2);
-                    this.form.routing_information.date = this.formatDate(transit.flights[0].date);
-                    if(transit.flights[1]){
-                        this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
-                        this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
-                        this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
-                    }
-                    if(transit.flights[2]){
-                        this.form.routing_information.by_3 =transit.flights[2]?.flight_number?.slice(0,2);
-                        this.form.routing_information.flight_3 =transit.flights[2]?.flight_number?.slice(2);
-                        this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
-                    }
-                    this.$refs.fileInput.value = ''
-                    //end routing
+            }
+            
 
-                    //shipper
-                    this.showShipper=true;
-                    var shipper=response.shipper;
-                    this.form.shipper_address.ship_name=shipper.name;
-                    this.form.shipper_address.ship_address=shipper.address;
-                    this.form.shipper_address.ship_city=shipper.city;
-                    this.form.shipper_address.ship_post_code=shipper.pin;
-                    this.form.shipper_address.ship_state=shipper.state;
-                    if(shipper.country){
-                        let shipper_country_code='';
-                        for(let c=0;c<252;c++){
-                            if(this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
-                                shipper_country_code=this.countries[c].value;
-                                break;
-                            }
+            // Shipper details
+            this.showShipper=true;
+            var shipper=response.shipper;
+            if (shipper) {
+                this.form.shipper_address.ship_name=shipper.name;
+                this.form.shipper_address.ship_address=shipper.address;
+                this.form.shipper_address.ship_city=shipper.city;
+                this.form.shipper_address.ship_post_code=shipper.pin;
+                this.form.shipper_address.ship_state=shipper.state;
+                if(shipper.country){
+                    let shipper_country_code='';
+                    for(let c=0;c<252;c++){
+                        if(this.countries[c] && this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
+                            shipper_country_code=this.countries[c].value;
+                            break;
                         }
-                        this.form.shipper_address.ship_country=shipper_country_code;
                     }
-                    this.form.shipper_address.ship_phone=shipper.phone;
-                    this.form.shipper_address.ship_fax=shipper.email;
-                    //end shipper
-                    //consignee
-                    this.showConsignee=true;
-                    var consignee=response.consignee; 
-                    this.form.consignee_address.cons_name=consignee.name;
-                    this.form.consignee_address.cons_name_2=consignee.eori;
-                    this.form.consignee_address.cons_address=consignee.address;
-                    this.form.consignee_address.cons_city=consignee.city;
-                    this.form.consignee_address.cons_post_code=consignee.pin;
-                    this.form.consignee_address.cons_state=consignee.state;
-                    if(consignee.country){
-                        let consignee_country_code='';
-                        for(let c=0;c<252;c++){
-                            if(this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
-                                consignee_country_code=this.countries[c].value;
-                                break;
-                            }
+                    this.form.shipper_address.ship_country=shipper_country_code;
+                }
+                this.form.shipper_address.ship_phone=shipper.phone;
+                this.form.shipper_address.ship_fax=shipper.email;
+            }
+            
+            // Consignee details
+            this.showConsignee=true;
+            var consignee=response.consignee; 
+            if (consignee) {
+                this.form.consignee_address.cons_name=consignee.name;
+                this.form.consignee_address.cons_name_2=consignee.eori;
+                this.form.consignee_address.cons_address=consignee.address;
+                this.form.consignee_address.cons_city=consignee.city;
+                this.form.consignee_address.cons_post_code=consignee.pin;
+                this.form.consignee_address.cons_state=consignee.state;
+                if(consignee.country){
+                    let consignee_country_code='';
+                    for(let c=0;c<252;c++){
+                        if(this.countries[c] && this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
+                            consignee_country_code=this.countries[c].value;
+                            break;
                         }
-                        this.form.consignee_address.cons_country=consignee_country_code;
                     }
-                    this.form.consignee_address.cons_phone=consignee.phone;
-                    this.form.consignee_address.cons_fax=consignee.email;
-                    if(consignee.eori){
-                        this.oci_info.supplementary_info=consignee.eori;
-                        this.oci_info.custom_info_identifier="CNE";
-                    }
-                    //end consignee
-                    //Consignment Information
-                    let cargo_data=response.cargo;
-                    let piece_weight=response.piece_weight;
-                    let weight_charge=response.weight_charge;
-                    let rate_class = piece_weight.rate_class? (piece_weight.rate_class.length > 2? piece_weight.rate_class.slice(2): piece_weight.rate_class.slice(0)): null;
-                    this.consignment_list.rate_class=piece_weight.rate_class?.slice(2);
-                    this.consignment_list.pieces=piece_weight.no_of_pieces;
-                    this.consignment_list.rate=piece_weight.rate;
-                    this.consignment_list.hsCodes=cargo_data.hs_codes;
-                    this.consignment_list.gross_weight=piece_weight.gross_weight;
-                    this.consignment_list.chargable_weight=piece_weight.chargeable_weight;
-                    this.consignment_list.description=cargo_data.description;
+                    this.form.consignee_address.cons_country=consignee_country_code;
+                }
+                this.form.consignee_address.cons_phone=consignee.phone;
+                this.form.consignee_address.cons_fax=consignee.email;
+                if(consignee.eori){
+                    this.oci_info.supplementary_info=consignee.eori;
+                    this.oci_info.custom_info_identifier="CNE";
+                }
+            }
+
+            // Consignment Info
+            let cargo_data=response.cargo;
+            let piece_weight=response.piece_weight;
+            let weight_charge=response.weight_charge;
+            
+            if (piece_weight) {
+                let rate_class = piece_weight.rate_class? (piece_weight.rate_class.length > 2? piece_weight.rate_class.slice(2): piece_weight.rate_class.slice(0)): null;
+                this.consignment_list.rate_class=piece_weight.rate_class?.slice(2);
+                this.consignment_list.pieces=piece_weight.no_of_pieces;
+                this.consignment_list.rate=piece_weight.rate;
+                this.consignment_list.gross_weight=piece_weight.gross_weight;
+                this.consignment_list.chargable_weight=piece_weight.chargeable_weight;
+            }
+            
+            if (cargo_data) {
+                this.consignment_list.hsCodes=cargo_data.hs_codes;
+                this.consignment_list.description=cargo_data.description;
+                if (cargo_data.dimensions) {
                     for(let i=0;i<cargo_data.dimensions.length;i++){
                         let dimensions_data=cargo_data.dimensions[i].dimension.split('X');
                         this.consignment_list.itemss.push({
@@ -3105,16 +3009,15 @@ export default {
                             unit: 'CMT'
                         });
                     }
-                    this.$refs.modalConsignment.show();
-                    //end Consignment Information
+                }
+            }
+            this.$refs.modalConsignment.show();
 
-                    //remaining data
-                    this.form.payment_info.type_of_payment=response.chrg_code;
-                })
-                .catch(error => {
-                    this.$refs.fileInput.value = ''
-                })
-            },
+            // Payment Remaining
+            if (response.chrg_code) {
+                this.form.payment_info.type_of_payment=response.chrg_code;
+            }
+        },
         formatDate(dateStr) {
             if (!dateStr) return this.getCurrentDate();
             const [day, mon, year] = dateStr.split('-');
@@ -4913,6 +4816,7 @@ export default {
         // window.removeEventListener('click', this.closeDropdown_departure);
     },
     components: {
+        OcrUploadModal,
         Datepicker,
         DatePicker,
 
@@ -4989,8 +4893,6 @@ export default {
     display: none;
 }
 /* end of file upload css */
-.body-color {
-}
 header {
     width: 100%;
     background-color: #2637a8;
@@ -5105,9 +5007,6 @@ li {
     margin-bottom: 0px !important;
 }
 
-.form-control-sm {
-    /* height: 0px !important; */
-}
 .shipper-toggle-label {
     width: 60px;
     display: inline-block;
@@ -5166,9 +5065,6 @@ li {
     border-color: #5cb3fd;
 }
 
-.mh-100vh {
-    /* min-height: 100vh; */
-}
 
 .table {
     max-width: 400px;
@@ -5374,9 +5270,6 @@ th {
         color: #355594 !important;
         stroke: #355594 !important;
         vertical-align: middle;
-    }
-    .btn {
-        /* padding: 0px !important; */
     }
     /* Spinner Styles */
     .spin {

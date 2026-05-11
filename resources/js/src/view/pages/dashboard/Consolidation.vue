@@ -808,7 +808,7 @@ export default {
         getHousewayBills(status) {
             this.isFetching = true;
             this.data_items = [];
-            ApiService.get(`/user/get-houseway-bills/${status}`)
+            ApiService.get(`/user/get-master-awbs-with-housewaybills`)
                 .then(response => {
                     this.data_items = response.data;
                 })

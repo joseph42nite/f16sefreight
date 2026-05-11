@@ -60,11 +60,11 @@ return [
         ],
 
         'redis' => [
-            'driver' => 'redis',
-            'connection' => 'default',
-            'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => 90,
-            'block_for' => null,
+            'driver'      => 'redis',
+            'connection'  => 'default',
+            'queue'       => env('REDIS_QUEUE', 'pdf_processing'),
+            'retry_after' => 30,        // reduced from 180s — FastAPI is fast, fail quickly
+            'block_for'   => null,
         ],
 
     ],

@@ -43,25 +43,6 @@
                     </li>
                 </router-link>
 
-                <!-- Rate -->
-                <router-link to="/rate" custom v-slot="{ navigate }">
-                    <li
-                        class="sidebar__item"
-                        :class="{ 'sidebar__item--active': isActive('/rate') }"
-                        @click="navigate"
-                        role="link"
-                        title="Rate"
-                    >
-                        <div class="sidebar__icon-wrap">
-                            <img
-                                :src="isActive('/rate')
-                                    ? '/media/assets/ui/side-menu/5-active.png'
-                                    : '/media/assets/ui/side-menu/5.png'"
-                                alt="Rate"
-                            />
-                        </div>
-                    </li>
-                </router-link>
 
                 <!-- Bottom branding -->
                 <li class="sidebar__branding">
@@ -117,13 +98,6 @@ export default {
                     activeIcon: "/media/assets/ui/side-menu/4-active.png",
                     activePaths: ['/message-log']
                 },
-                { 
-                    label: "Rate", 
-                    path: "/rate", 
-                    icon: "/media/assets/ui/side-menu/5.png", 
-                    activeIcon: "/media/assets/ui/side-menu/5-active.png",
-                    activePaths: ['/rate']
-                }
             ]
         };
     },

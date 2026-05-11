@@ -3,9 +3,6 @@
   <div>
   <div class="brand flex-column-auto" id="kt_brand" ref="kt_brand">
     <div class="d-flex align-items-center mt-5 mb-5 ml-5 w-100">
-        <router-link to="/" class="mr-3">
-            <img src="/media/assets/logos/logo_white.png" alt="F16s Logo" width="45" height="45" class="img-fluid object-fit-contain" />
-        </router-link>
         <div>
             <h4 class="text-nowrap font-weight-bolder text-white mb-0">F16s</h4>
             <span class="text-nowrap text-muted font-size-xs font-weight-bold">ADMIN CONSOLE</span>

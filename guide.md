@@ -72,7 +72,6 @@ Showing how the pages are interconnected through the main layout and dashboard s
  ┃   ┗ 📁 /legal/*
  ┃
  ┣ 🔐 User Dashboard (Auth Required)
- ┃ ┣ 📊 Rate Search (/rate)
  ┃ ┣ ✈️ Focus Air (/focus-air)        --> [OCR Document Upload]
  ┃ ┣ 🏠 House Way Bill (/house-way-bill)
  ┃ ┣ 📦 Consolidation (/consolidation)
@@ -83,7 +82,7 @@ Showing how the pages are interconnected through the main layout and dashboard s
    ┗ 📂 Unified Registry (src/view/pages/admin/*)
      ┣ 👥 All Users (/superadmin/all-users)
      ┣ 🏢 All Company (/superadmin/all-company)
-     ┣ 📥 Data Management (Imports, Deletes)
+     ┣ 📋 OCR Templates (/superadmin/all-templates)
      ┣ ⚙️ Global Settings (/superadmin/setting)
      ┗ 📞 Contact Leads (/superadmin/all-contacts)
 ```
@@ -1294,4 +1293,135 @@ This update harmonized visual interaction patterns across the administration das
 - **Native Styling Enforced**: Upgraded critical loader rendering path via direct inline CSS logic which bypasses latency overhead of delayed JS stylesheet injection.
 
 ---
+
+
+## 🚀 IT & DEVOPS PRODUCTION ROLLOUT CHECKLIST
+
+### 1. Server Software Prerequisites
+Ensure your production Ubuntu/Linux server has Redis and Supervisor installed.
+```bash
+sudo apt update
+sudo apt install redis-server supervisor -y
+sudo systemctl enable redis-server.service
+sudo systemctl start redis-server.service
+```
+
+### 2. Database Migration (Apply Table Schema)
+Run standard Artisan migration to generate the new tracking tables:
+```bash
+php artisan migrate
+```
+
+### 3. Setup Dedicated Python Microservice Environment
+Set up isolation and install FastAPI inside the existing `/python` directory:
+```bash
+cd python
+python3 -m venv venv
+./venv/bin/pip install fastapi uvicorn pdfplumber python-multipart
+```
+
+### 4. Environment Configuration (.env)
+Ensure the following keys are present in your production `.env` file:
+```dotenv
+# Switched from 'sync' to 'redis'
+QUEUE_CONNECTION=redis
+
+# Fast API configuration
+OCR_SERVICE_URL=http://127.0.0.1:8001
+
+# Storage configuration
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+```
+
+### 5. Supervisor Configurations (Keep processes alive forever)
+
+**Config A: /etc/supervisor/conf.d/f16s-ocr-fastapi.conf**
+```ini
+[program:f16s-ocr-fastapi]
+command=/var/www/f16s_main/python/venv/bin/uvicorn ocr_server:app --host 127.0.0.1 --port 8001 --workers 2
+directory=/var/www/f16s_main/python
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/www/f16s_main/storage/logs/fastapi.log
+stopwaitsecs=10
+```
+
+**Config B: /etc/supervisor/conf.d/f16s-pdf-worker.conf**
+```ini
+[program:f16s-pdf-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/f16s_main/artisan queue:work redis --queue=pdf_processing --tries=3 --timeout=15 --sleep=1 --max-jobs=500
+autostart=true
+autorestart=true
+user=www-data
+numprocs=3
+redirect_stderr=true
+stdout_logfile=/var/www/f16s_main/storage/logs/worker.log
+stopwaitsecs=20
+```
+
+### 6. Start Operations
+Load and activate the background daemons:
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start f16s-ocr-fastapi:*
+sudo supervisorctl start f16s-pdf-worker:*
+sudo supervisorctl status
+```
+
+### 7. Post-Deployment Validation
+Confirm inner-loop connectivity by pinging the microservice healthcheck:
+```bash
+curl http://127.0.0.1:8001/health
+```
+*(Should respond with: {"status": "ok", "message": "OCR service online"})*
+
+---
+## Finalized Phase: Modular Frontend Architecture
+
+To maintain zero-duplication DRY code practices, we fully extracted the OCR interaction loop into a single autonomous child component.
+
+### Key Component
+- **File**: `resources/js/src/view/components/OcrUploadModal.vue`
+- **Purpose**: Manages dynamic file upload states, triggers background API jobs, and visualizes live analysis loops with high-fidelity Vue animations.
+
+### Usage in Page Modules
+Both `FocusAir.vue` and `HouseWayBill.vue` were refactored to remove custom polling logic and use the declarative hook:
+
+```html
+<!-- Import declaration -->
+import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
+
+<!-- Usage within template -->
+<OcrUploadModal initialType="ksr" @extracted="processExtractedData" />
+```
+
+### Automated Interactions
+- **Null Guard**: Clicking "Extract" automatically fires standard OS file discovery if no payload loaded.
+- **Encapsulated Lifecycle**: All state tracking (interval cleans up in `beforeDestroy`) stays confined, improving parent performance metrics.
+
+---
+## 📊 Finalized Phase: Coordinate Governance & Data Modeling
+
+This final architectural layer shifted the source-of-truth for coordinate mappings from static JSON disk files into direct database relational tables, guaranteeing race-condition immunity and seamless superadmin editing capabilities.
+
+### 1. Database-First Persistence
+- **Model**: `App\SystemTemplate`
+- **Strategy**: On every mutation, the model automatically writes to `boxes_config.json.tmp` and executes an atomic operating-system `rename` command. This supplies the Python parser with absolute consistent read cycles without locking overhead.
+- **Protection**: Deletes are gated behind an Orphan Guardian. You cannot delete a template currently mapped into an active company configuration.
+
+### 2. 🛠 User Creation Integrity Repair
+Historically, certain critical user behaviors lacked physical storage in the relational engine. This was rectified via automatic schema expansion:
+- **New Field `can_send`**: Governs direct XML dispatch authorization directly from user profile records.
+- **New Field `pima_address`**: Formalizes storage for logical PIMA routing, successfully piping values directly into the `ram:PrimaryID` header generated in `ConversionController.php` for the first time.
+
+### 3. Dynamic Coordinate Assignment UX
+- **Component**: `NewCompany.vue`
+- **Visual Injection**: Realized a "Pill Registry" system where Superadmins can instantly inject coordinate row mappings simply by clicking an active matrix tag.
+- **Fallback Logic**: Fully integrated with client side input catchers, automatically converting flat-array legacy datasets into robust schema models seamlessly upon record mount.
 

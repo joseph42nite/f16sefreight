@@ -1067,7 +1067,7 @@ class HousewayBillController extends Controller
         else
             $housewayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
         if ($housewayBill->isEmpty()) {
-            return response()->json(['message' => 'Record not found'], 404);
+            return response()->json([], 200);
         }
         return response()->json($housewayBill, 200);
     }

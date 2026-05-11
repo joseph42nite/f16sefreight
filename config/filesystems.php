@@ -79,6 +79,12 @@ return [
         //     'timeout'  => 30,
         // ],
 
+        'pdf_temp' => [
+            'driver'     => 'local',
+            'root'       => storage_path('app/pdf_temp'),
+            'visibility' => 'private',
+        ],
+
     ],
 
     /*

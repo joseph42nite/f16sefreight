@@ -10,12 +10,12 @@
 
     <b-container class="content-container pt-12 pb-24">
       <!-- HERO -->
-      <section class="sb-hero text-center mb-16 mt-8">
+      <section class="sa-hero text-center mb-16 mt-8">
         <span class="section-eyebrow">For Forwarders</span>
-        <h1 class="section-title">Small Business</h1>
+        <h1 class="section-title">Scalable Architecture</h1>
         <p class="section-subtitle mt-4 mx-auto" style="max-width: 700px;">
-          Streamlined Logistics Solutions For Small Freight Forwarders.<br>
-          We help small and independent freight forwarders elevate their operational efficiency with powerful, affordable automation tools.
+          Streamlined Logistics Solutions for Scalable Operations.<br>
+          We help modern freight forwarders elevate their operational efficiency with powerful automation tools that scale seamlessly as you grow.
         </p>
         
         <!-- VIDEO PLACEHOLDER -->
@@ -30,7 +30,7 @@
       </section>
 
       <!-- FEATURES -->
-      <section class="sb-features mb-25 mt-16">
+      <section class="sa-features mb-25 mt-16">
         <b-row class="justify-content-center text-center">
           <b-col lg="4" md="6" class="mb-8">
             <div class="feature-card-wrapper">
@@ -75,7 +75,7 @@
       </section>
 
       <!-- PLANS -->
-      <section class="sb-plans-section mb-25">
+      <section class="sa-plans-section mb-25">
         <div class="text-center mb-12">
             <span class="section-eyebrow">Pricing</span>
             <h2 class="section-title">Plans</h2>
@@ -145,7 +145,7 @@
       </section>
 
       <!-- CTA -->
-      <section class="sb-cta-section mb-25 text-center">
+      <section class="sa-cta-section mb-25 text-center">
         <div class="feature-card-wrapper cta-wrapper">
             <div class="feature-card-glow"></div>
             <div class="feature-card cta-card align-items-center">
@@ -162,7 +162,7 @@
       </section>
 
       <!-- FAQS -->
-      <section class="sb-faq-section mb-16">
+      <section class="sa-faq-section mb-16">
         <div class="text-center mb-12">
             <span class="section-eyebrow">Support</span>
             <h2 class="section-title">FAQs</h2>
@@ -199,13 +199,13 @@
 <script>
 
 export default {
-  name: "SmallBusiness",
+  name: "ScalableArchitecture",
   metaInfo: {
-    title: "Logistics Solutions for Small Business | F16s E-Freight",
+    title: "Scalable Architecture | F16s E-Freight",
     meta: [
-      { name: 'description', content: 'Elevate your small freight forwarding business with F16s. Affordable AWB transfer, secure database management, and EDI tracking tools designed for independent forwarders.' },
-      { property: 'og:title', content: 'Logistics Solutions for Small Business | F16s E-Freight' },
-      { property: 'og:description', content: 'Elevate your small freight forwarding business with F16s. Affordable AWB transfer, secure database management, and EDI tracking tools designed for independent forwarders.' }
+      { name: 'description', content: 'Elevate your freight forwarding business with F16s scalable architecture. Secure database management and tracking tools designed to grow with you.' },
+      { property: 'og:title', content: 'Scalable Architecture | F16s E-Freight' },
+      { property: 'og:description', content: 'Elevate your freight forwarding business with F16s scalable architecture. Secure database management and tracking tools designed to grow with you.' }
     ]
   },
   components: { },

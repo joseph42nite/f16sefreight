@@ -13,23 +13,6 @@ $font-family-inter: 'Inter', sans-serif;
     overflow-x: hidden;
 }
 
-/* Remove Logo Shadows */
-#main-logo, 
-.footer-logo,
-.navbar-brand img,
-.navbar-header-logo a,
-.footer-wrapper a img,
-.navbar-brand,
-.navbar-brand img::before,
-.navbar-brand img::after,
-.footer-logo::before,
-.footer-logo::after {
-    filter: none !important;
-    box-shadow: none !important;
-    -webkit-filter: none !important;
-    text-shadow: none !important;
-}
-
 /* Decorative background elements */
 .decorative-ellipses .ellipse {
     position: absolute;
@@ -281,12 +264,13 @@ $font-family-inter: 'Inter', sans-serif;
         
         .hero-btn,
         .service-product-btn {
-            background: white;
-            color: $secondary-color;
-            border-color: white;
+            background: white !important;
+            background-color: white !important;
+            color: $secondary-color !important;
+            border-color: white !important;
 
-            span { color: $secondary-color; }
-            .btn-icon { background: $secondary-color; color: white; }
+            span { color: $secondary-color !important; }
+            .btn-icon { background: $secondary-color !important; color: white !important; }
         }
     }
 }
@@ -815,9 +799,6 @@ $font-family-inter: 'Inter', sans-serif;
     background: $secondary-color;
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(53, 85, 148, 0.2);
-}
-
-@media (max-width: 767px) {
 }
 
 /* Hero Section Styles */

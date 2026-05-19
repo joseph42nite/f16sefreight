@@ -29,10 +29,15 @@
                 </div>
 
                 <div class="faq-footer mt-16 text-center">
-                    <div class="faq-footer-card">
-                        <h4 class="mb-2">Still have questions about our logistics tools?</h4>
-                        <p class="mb-6">Can't find the answer you're looking for? Please contact our expert logistics team.</p>
-                        <b-button to="/contact-us" class="faq-contact-btn" aria-label="Contact our support team">Get in Touch</b-button>
+                    <div class="cta-glass-card">
+                        <h2 class="cta-title">Still have questions about our logistics tools?</h2>
+                        <p class="cta-subtitle mb-8">Can't find the answer you're looking for? Please contact our expert logistics team.</p>
+                        <b-button to="/contact-us" class="hero-btn is-white" aria-label="Contact our support team">
+                            <span>Get in Touch</span>
+                            <div class="btn-icon">
+                                <b-icon icon="arrow-right" aria-hidden="true"></b-icon>
+                            </div>
+                        </b-button>
                     </div>
                 </div>
             </b-col>

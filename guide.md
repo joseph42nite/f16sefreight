@@ -521,7 +521,7 @@ PDF_TEMP_PATH=pdf_temp
     'driver'      => 'redis',
     'connection'  => 'default',
     'queue'       => env('REDIS_QUEUE', 'pdf_processing'),
-    'retry_after' => 30,        // reduced from 180s — FastAPI is fast, fail quickly
+    'retry_after' => 110,       // MUST exceed job $timeout (90s) + buffer — prevents duplicate dispatch
     'block_for'   => null,
 ],
 ```
@@ -749,7 +749,7 @@ OCR_SERVICE_URL=http://127.0.0.1:8001
 
 ## Phase 4: Job Class (Updated — HTTP call replaces subprocess)
 
-> **This phase replaces the original Phase 3.** The job logic is identical in structure, but the extraction call is now an HTTP request to FastAPI instead of a subprocess. Timeout drops from 180s to 15s.
+> **This phase replaces the original Phase 3.** The job logic is identical in structure, but the extraction call is now an HTTP request to FastAPI instead of a subprocess. Timeout drops from 180s to 90s.
 
 ### 4.1 Create Job
 
@@ -779,8 +779,8 @@ class ProcessPdfOcrJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries   = 3;
-    public int $timeout = 15;    // FastAPI is fast — fail quickly if something is wrong
-    public int $backoff = 5;     // retry after 5 seconds
+    public int $timeout = 90;   // Must be > Http::timeout below (80s) + safety buffer
+    public int $backoff = 5;    // retry after 5 seconds
 
     public function __construct(
         public readonly int $processingJobId
@@ -809,9 +809,13 @@ class ProcessPdfOcrJob implements ShouldQueue
         try {
             // Call FastAPI microservice — no subprocess, no cold start
             $ocrUrl   = rtrim(config('services.ocr.url'), '/') . '/extract';
-            $response = Http::timeout(12)
+            // Http timeout MUST be less than the job's $timeout property (90s) to ensure
+            // the HTTP error path is hit cleanly before the worker process is force-killed.
+            $response = Http::timeout(80)
                 ->attach('file', file_get_contents($tempPath), basename($tempPath))
-                ->post($ocrUrl);
+                ->post($ocrUrl, [
+                    'document_type' => $job->document_type ?: 'ksr'
+                ]);
 
             if ($response->failed()) {
                 throw new \RuntimeException(

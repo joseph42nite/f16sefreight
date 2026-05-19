@@ -101,7 +101,7 @@
                   <img src="/media/assets/vectors/scalable-performance.svg" alt="Scalable Performance" class="img-fluid feature-icon">
                 </div>
                 <h3 class="feature-title mt-4">Scalable Performance</h3>
-                <p class="feature-desc mt-3">Whether you're a small business just getting started or a rapidly growing operation, our cloud service scales with your needs. As your business expands, F16s ensures your data systems grow seamlessly without compromising performance.</p>
+                <p class="feature-desc mt-3">Whether you're an independent forwarder just getting started or a rapidly growing operation, our cloud service scales with your needs. As your business expands, F16s ensures your data systems grow seamlessly without compromising performance.</p>
               </b-card>
             </div>
           </b-col>

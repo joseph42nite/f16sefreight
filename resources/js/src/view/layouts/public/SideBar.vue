@@ -46,7 +46,7 @@
 
                 <!-- Bottom branding -->
                 <li class="sidebar__branding">
-                    <span class="sidebar__branding-text">FOCUS AIR</span>
+                    <span class="sidebar__branding-text"><b>FOCUS AIR</b></span>
                 </li>
             </ul>
         </div>
@@ -197,11 +197,14 @@ export default {
     transform: rotate(180deg);
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.03em;
     font-size: 18px;
+    line-height: 1;
     color: #355594;
     white-space: nowrap;
-    opacity: 0.9;
+    opacity: 0.95;
+    /* Bulks up character thickness visually to match massive text rendering */
+    -webkit-text-stroke: 1px #355594;
 }
 
 /* ── Mobile Dropdown Styles ───────────────────────────── */
@@ -233,7 +236,7 @@ export default {
 
 .mobile-active-label {
     color: #355594;
-    font-weight: 700;
+    font-weight: 900;
     font-size: 16px;
     margin-right: 20px;
 }

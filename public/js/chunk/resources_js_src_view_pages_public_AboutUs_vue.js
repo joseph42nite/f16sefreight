@@ -57,12 +57,12 @@ __webpack_require__.r(__webpack_exports__);
       }],
       chooseUsItems: [{
         icon: "/media/assets/vectors/choose-us-1.svg",
-        title: "Innovative Technology for Small Businesses",
-        desc: "Our technology solutions are built with the needs of small enterprises in mind. From database solutions to a basic ERP system, F16s equips you with the tools to track your growth month on month, helping you identify areas for improvement and operational enhancements."
+        title: "Innovative Technology for Scalable Operations",
+        desc: "Our technology solutions are built with scalability in mind. From database solutions to a basic ERP system, F16s equips you with the tools to track your growth month on month, helping you identify areas for improvement and operational enhancements as you scale."
       }, {
         icon: "/media/assets/vectors/choose-us-2.svg",
         title: "Affordable and Scalable",
-        desc: "We understand the unique challenges small businesses face in logistics. Our pricing options are crafted to be budget-friendly, providing essential tools in our Basic plan like database management and printable documentation, while our Pro plan connects businesses to multiple AWBs and adds advanced features to support growing needs."
+        desc: "We understand the unique challenges businesses face when scaling operations in logistics. Our pricing options are crafted to be scalable, providing essential tools in our Basic plan like database management and printable documentation, while our Pro plan connects businesses to multiple AWBs and adds advanced features to support expanding needs."
       }, {
         icon: "/media/assets/vectors/choose-us-3.svg",
         title: "Commitment to Customer Support",

@@ -63,7 +63,7 @@ return [
             'driver'      => 'redis',
             'connection'  => 'default',
             'queue'       => env('REDIS_QUEUE', 'pdf_processing'),
-            'retry_after' => 30,        // reduced from 180s — FastAPI is fast, fail quickly
+            'retry_after' => 110,       // MUST exceed job $timeout (90s) + buffer — prevents duplicate dispatch
             'block_for'   => null,
         ],
 

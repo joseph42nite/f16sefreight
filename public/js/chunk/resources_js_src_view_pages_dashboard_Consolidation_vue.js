@@ -14,8 +14,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuejs-datepicker */ "./node_modules/vuejs-datepicker/dist/vuejs-datepicker.esm.js");
 /* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
 /* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
+/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -28,6 +29,7 @@ function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) 
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+
 
 
 
@@ -423,7 +425,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     manifest_send: function manifest_send() {
       // $('#manifest-send-btn').text('Wait...');
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get("/user/manifest-send/".concat(this.form.awb_code).concat(this.form.awb_no)).then(function (response) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/manifest-send/".concat(this.form.awb_code).concat(this.form.awb_no)).then(function (response) {
         console.log(response);
       });
     },
@@ -442,7 +444,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     // location
     getLocation: function getLocation() {
       var _this = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get("/user/get-location").then(function (_ref) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/get-location").then(function (_ref) {
         var data = _ref.data;
         _this.location = data;
       });
@@ -457,7 +459,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       var _this2 = this;
       this.isFetching = true;
       this.data_items = [];
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get("/user/get-master-awbs-with-housewaybills").then(function (response) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/get-master-awbs-with-housewaybills").then(function (response) {
         _this2.data_items = response.data;
       })["catch"](function (error) {
         console.error("Failed to fetch items:", error);
@@ -467,7 +469,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     allHousewayBill: function allHousewayBill() {
       var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-master-awbs-with-housewaybills').then(function (response) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-master-awbs-with-housewaybills').then(function (response) {
         _this3.data_items = response.data;
       })["catch"](function (error) {
         console.error("Failed to fetch master AWBs with house waybills:", error);
@@ -503,7 +505,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getAirWayBill: function getAirWayBill(id) {
       var _this5 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get("/user/airway-bill/".concat(id)).then(function (response) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/airway-bill/".concat(id)).then(function (response) {
         if (response.data && response.data.id == id) {
           _this5.existingData = response.data;
         }
@@ -634,7 +636,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getCountry: function getCountry() {
       var _this7 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-country').then(function (_ref2) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-country').then(function (_ref2) {
         var data = _ref2.data;
         _this7.countries = Object.keys(data).map(function (key) {
           return {
@@ -648,7 +650,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getAgent: function getAgent() {
       var _this8 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get("/user/agent-info/").then(function (_ref3) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/agent-info/").then(function (_ref3) {
         var data = _ref3.data;
         if (Array.isArray(data) && data.length > 0) {
           _this8.agent_information = data[0];
@@ -665,7 +667,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getOCIData: function getOCIData() {
       var _this9 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-oci-data').then(function (_ref4) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-oci-data').then(function (_ref4) {
         var data = _ref4.data;
         if (data && data.oci_custom_info_identifier) {
           _this9.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(function (_ref5) {
@@ -698,7 +700,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getHouseWayBill: function getHouseWayBill(id) {
       var _this0 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get("/user/houseway-bill/".concat(id)).then(function (response) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/houseway-bill/".concat(id)).then(function (response) {
         _this0.existingData = response.data;
         _this0.openForm('update', String(_this0.existingData.id));
         if (_this0.existingData && _this0.existingData.consignment_data) {
@@ -900,6 +902,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     }
   },
   components: {
+    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
     Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__["default"],
     DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"],
     SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
@@ -1069,114 +1072,35 @@ var render = function render() {
     attrs: {
       icon: "clock-history"
     }
-  }), _vm._v("10 Latest\n                                ")], 1)], 1)]), _vm._v(" "), _c("b-modal", {
+  }), _c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("10 Latest")])], 1)], 1)]), _vm._v(" "), _c("DashboardHistoryModal", {
     attrs: {
       id: "modal-s",
       title: "Latest Messages",
-      "hide-footer": true,
-      centered: "",
-      size: "lg"
-    }
-  }, [_c("div", {
-    staticClass: "message-list p-4"
-  }, [_vm.isFetching ? _c("div", {
-    staticClass: "text-center py-20"
-  }, [_c("b-spinner", {
-    staticStyle: {
-      width: "3rem",
-      height: "3rem"
+      mode: "send",
+      docType: "consolidation",
+      items: _vm.data_items,
+      isFetching: _vm.isFetching
     },
-    attrs: {
-      label: "Fetching messages...",
-      variant: "primary"
-    }
-  }), _vm._v(" "), _c("p", {
-    staticClass: "mt-4 text-muted font-weight-bold"
-  }, [_vm._v("Fetching latest messages...")])], 1) : [!_vm.data_items || _vm.data_items.length === 0 ? _c("div", {
-    staticClass: "text-center py-10"
-  }, [_c("b-icon", {
-    staticClass: "text-muted mb-4",
-    attrs: {
-      icon: "chat-dots",
-      "font-scale": "3"
-    }
-  }), _vm._v(" "), _c("p", {
-    staticClass: "text-muted font-weight-bold"
-  }, [_vm._v("No messages found.")])], 1) : _vm._e(), _vm._v(" "), _vm._l(_vm.data_items, function (item) {
-    return _c("div", {
-      key: item.id,
-      staticClass: "message-item p-4 mb-3 rounded-xl border-1",
-      staticStyle: {
-        background: "#f0f7ff",
-        border: "1px solid #d0e3ff",
-        "border-radius": "12px"
+    on: {
+      action: _vm.selectAndSearchAwb
+    },
+    scopedSlots: _vm._u([{
+      key: "actions",
+      fn: function fn(_ref) {
+        var item = _ref.item;
+        return [_c("div", {
+          staticClass: "d-flex flex-column align-items-end"
+        }, [_c("p", {
+          staticClass: "text-muted small mb-1 font-weight-bold"
+        }, [_vm._v("\n                                        Issued: " + _vm._s(_vm.formatDate(item.updated_at)) + "\n                                    ")])])];
       }
-    }, [_c("div", {
-      staticClass: "d-flex align-items-center justify-content-between"
-    }, [_c("div", {
-      staticClass: "d-flex align-items-center",
-      staticStyle: {
-        cursor: "pointer"
-      },
-      on: {
-        click: function click($event) {
-          return _vm.selectAndSearchAwb(item);
-        }
-      }
-    }, [_c("div", {
-      staticClass: "mr-4"
-    }, [_c("b-icon", {
-      staticStyle: {
-        color: "#355594"
-      },
-      attrs: {
-        icon: "clock-history",
-        "font-scale": "1.5"
-      }
-    })], 1), _vm._v(" "), _c("div", [_c("p", {
-      staticClass: "mb-0 font-weight-bolder text-dark"
-    }, [_vm._v("\n                                                        " + _vm._s(item.awb_code) + "-" + _vm._s(item.awb_no) + "\n                                                    ")]), _vm._v(" "), _c("p", {
-      staticClass: "text-muted font-size-sm mb-0"
-    }, [_vm._v("\n                                                        Route: " + _vm._s(item.departure_airport ? item.departure_airport.split(",")[0] : "N/A") + " ➔ " + _vm._s(item.destination_airport ? item.destination_airport.split(",")[0] : "N/A") + "\n                                                    ")])])]), _vm._v(" "), _c("div", {
-      staticClass: "d-flex flex-column align-items-end"
-    }, [_c("p", {
-      staticClass: "text-muted small mb-1 font-weight-bold"
-    }, [_vm._v("\n                                                     Issued: " + _vm._s(_vm.formatDate(item.updated_at)) + "\n                                                 ")])])]), _vm._v(" "), _c("div", {
-      staticClass: "d-flex flex-wrap mt-3 pt-3 border-top",
-      staticStyle: {
-        gap: "15px",
-        "border-color": "rgba(53, 85, 148, 0.1) !important"
-      }
-    }, [_c("a", {
-      staticClass: "font-size-sm text-primary font-weight-bold",
-      staticStyle: {
-        "text-decoration": "none"
-      },
-      attrs: {
-        href: "/download-consolidation-pdf/" + String(item.awb_code) + "/" + String(item.awb_no),
-        target: "_blank"
-      }
-    }, [_c("b-icon", {
-      staticClass: "mr-1",
-      attrs: {
-        icon: "file-earmark-pdf"
-      }
-    }), _vm._v(" Consolidation PDF\n                                            ")], 1), _vm._v(" "), _c("a", {
-      staticClass: "font-size-sm text-primary font-weight-bold",
-      staticStyle: {
-        "text-decoration": "none"
-      },
-      attrs: {
-        href: "/download-multiple-consolidation-pdf/" + String(item.id),
-        target: "_blank"
-      }
-    }, [_c("b-icon", {
-      staticClass: "mr-1",
-      attrs: {
-        icon: "files"
-      }
-    }), _vm._v(" Multipage PDF\n                                            ")], 1)])]);
-  })]], 2)])], 1)], 1), _vm._v(" "), _c("hr", {
+    }])
+  })], 1)], 1), _vm._v(" "), _c("hr", {
     staticClass: "hr"
   }), _vm._v(" "), _c("div", {
     staticClass: "container px-10 pb-10"
@@ -1330,9 +1254,9 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref) {
-        var navigate = _ref.navigate,
-          href = _ref.href;
+      fn: function fn(_ref2) {
+        var navigate = _ref2.navigate,
+          href = _ref2.href;
         return [_c("b-button", {
           staticStyle: {
             background: "#A4D3EE"
@@ -1873,7 +1797,12 @@ var render = function render() {
         return _vm.getHousewayBills("send");
       }
     }
-  }, [_vm._v("10 Latest")]), _vm._v(" "), _c("b-button", {
+  }, [_c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("10 Latest")])]), _vm._v(" "), _c("b-button", {
     staticClass: "ml-4",
     staticStyle: {
       "border-radius": "30px",
@@ -2267,8 +2196,8 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref2) {
-        var item = _ref2.item;
+      fn: function fn(_ref3) {
+        var item = _ref3.item;
         return [_c("div", {
           staticClass: "d-flex border-bottom",
           staticStyle: {

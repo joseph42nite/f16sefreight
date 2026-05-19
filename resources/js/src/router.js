@@ -51,9 +51,9 @@ export default new Router({
           meta: { logo: 'blue' }
         },
         {
-          name: "Small Business",
-          path: "/small-business",
-          component: () => import("@/view/pages/public/services/SmallBusiness"),
+          name: "Scalable Architecture",
+          path: "/scalable-architecture",
+          component: () => import("@/view/pages/public/services/ScalableArchitecture"),
           meta: { logo: 'blue' }
         },
         {

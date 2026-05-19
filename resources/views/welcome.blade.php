@@ -2,25 +2,35 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    @php
+        $meta_title = isset($blog) ? ($blog->meta_title ?? $blog->title) . " | F16s E-Freight" : "F16s E-Freight Solutions | Smart Freight Forwarding Automation";
+        $meta_desc = isset($blog) ? ($blog->meta_description ?? $blog->excerpt) : "F16s E-Freight Solutions (F16s EFS) revolutionizes freight forwarding with instant access to air freight export rates and AWB automation. Empowering forwarders with digital efficiency and 150+ airline connections.";
+        $meta_image = isset($blog) && $blog->image_path ? asset($blog->image_path) : asset('/media/assets/logos/blue-logo.png');
+    @endphp
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="F16s E-Freight Solutions (F16s EFS) revolutionizes freight forwarding with instant access to air freight export rates and AWB automation. Empowering forwarders with digital efficiency and 150+ airline connections.">
+    <meta name="description" content="{{ $meta_desc }}">
     <meta name="keywords" content="e-freight solutions, air freight automation, AWB processing, freight forwarding software, digital logistics, EDI connectivity">
     <meta name="author" content="F16s E-Freight Solutions">
     
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ isset($blog) ? 'article' : 'website' }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="F16s E-Freight Solutions | Smart Logistics Automation">
-    <meta property="og:description" content="Revolutionize your freight forwarding with F16s. Instant AWB generation, 150+ airline connections, and lightning-fast digital efficiency.">
-    <meta property="og:image" content="{{ asset('/media/assets/logos/blue-logo.svg') }}">
+    <meta property="og:title" content="{{ $meta_title }}">
+    <meta property="og:description" content="{{ $meta_desc }}">
+    <meta property="og:image" content="{{ $meta_image }}">
+    <meta property="og:image:secure_url" content="{{ $meta_image }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{{ $meta_title }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
-    <meta property="twitter:title" content="F16s E-Freight Solutions | Smart Logistics Automation">
-    <meta property="twitter:description" content="Revolutionize your freight forwarding with F16s. Instant AWB generation, 150+ airline connections, and lightning-fast digital efficiency.">
-    <meta property="twitter:image" content="{{ asset('/media/assets/logos/blue-logo.svg') }}">
+    <meta property="twitter:title" content="{{ $meta_title }}">
+    <meta property="twitter:description" content="{{ $meta_desc }}">
+    <meta property="twitter:image" content="{{ $meta_image }}">
 
     <link rel="canonical" href="{{ url()->current() }}">
 
@@ -28,25 +38,23 @@
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "F16s E-Freight Solutions",
-        "url": "https://f16sefreight.com",
-        "logo": "https://f16sefreight.com/media/assets/logos/blue-logo.svg",
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "",
-            "contactType": "customer service",
-            "areaServed": "Global",
-            "availableLanguage": "English"
+        "@type": "WebSite",
+        "name": "F16s",
+        "url": "https://f16sefreight.com/",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://f16sefreight.com/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
         },
+        "logo": "https://f16sefreight.com/media/assets/logos/blue-logo.png",
         "sameAs": [
-            "https://www.linkedin.com/company/f16s-efreight-solutions",
-            "https://twitter.com/f16sefreight"
+            "https://www.linkedin.com/company/f16s",
+            "https://twitter.com/f16s"
         ]
     }
     </script>
-    <title>F16s E-Freight Solutions | Smart Freight Forwarding Automation</title>
-    <link rel="icon" href="/media/assets/logos/favicon.jpeg" type="image/x-icon">
+    <title>{{ $meta_title }}</title>
+    <link rel="icon" href="/media/assets/logos/favicon-white-64.png" type="image/png">
     <link rel="stylesheet" href="{{ mix('/css/app.css') }}">
 </head>
 <!-- Google tag (gtag.js) -->
@@ -61,7 +69,7 @@
 <body>
     <!-- CUSTOM PRELOADER -->
     <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 10000; overflow: hidden; transition: opacity 0.6s ease-in-out;">
-        <img src="/media/assets/logos/blue-logo.svg" alt="Loading..." style="width: 150px; height: auto; object-fit: contain; animation: pulse 2s infinite ease-in-out;">
+        <img src="/media/assets/logos/blue-logo.png" alt="Loading..." style="width: 150px; height: auto; object-fit: contain; animation: pulse 2s infinite ease-in-out;">
     </div>
 
     <style>

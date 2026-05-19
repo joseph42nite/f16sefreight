@@ -130,10 +130,10 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       features: [{
-        title: "Small Business",
+        title: "Scalable Architecture",
         description: "Tailored logistics solutions designed to help growing businesses scale efficiently.",
         icon: "/media/assets/illustrations/small-business.png",
-        link: "/small-business"
+        link: "/scalable-architecture"
       }, {
         title: "Cloud Storage",
         description: "Secure, high-speed access to all your freight documents and history, anywhere, anytime.",
@@ -578,18 +578,25 @@ var render = function render() {
   }), 0), _vm._v(" "), _c("div", {
     staticClass: "faq-footer mt-16 text-center"
   }, [_c("div", {
-    staticClass: "faq-footer-card"
-  }, [_c("h4", {
-    staticClass: "mb-2"
+    staticClass: "cta-glass-card"
+  }, [_c("h2", {
+    staticClass: "cta-title"
   }, [_vm._v("Still have questions about our logistics tools?")]), _vm._v(" "), _c("p", {
-    staticClass: "mb-6"
+    staticClass: "cta-subtitle mb-8"
   }, [_vm._v("Can't find the answer you're looking for? Please contact our expert logistics team.")]), _vm._v(" "), _c("b-button", {
-    staticClass: "faq-contact-btn",
+    staticClass: "hero-btn is-white",
     attrs: {
       to: "/contact-us",
       "aria-label": "Contact our support team"
     }
-  }, [_vm._v("Get in Touch")])], 1)])])], 1)], 1);
+  }, [_c("span", [_vm._v("Get in Touch")]), _vm._v(" "), _c("div", {
+    staticClass: "btn-icon"
+  }, [_c("b-icon", {
+    attrs: {
+      icon: "arrow-right",
+      "aria-hidden": "true"
+    }
+  })], 1)])], 1)])])], 1)], 1);
 };
 var staticRenderFns = [];
 render._withStripped = true;

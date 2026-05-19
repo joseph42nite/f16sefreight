@@ -244,7 +244,7 @@ var render = function render() {
     staticClass: "feature-title mt-4"
   }, [_vm._v("Scalable Performance")]), _vm._v(" "), _c("p", {
     staticClass: "feature-desc mt-3"
-  }, [_vm._v("Whether you're a small business just getting started or a rapidly growing operation, our cloud service scales with your needs. As your business expands, F16s ensures your data systems grow seamlessly without compromising performance.")])])], 1)])], 1)], 1), _vm._v(" "), _c("section", {
+  }, [_vm._v("Whether you're an independent forwarder just getting started or a rapidly growing operation, our cloud service scales with your needs. As your business expands, F16s ensures your data systems grow seamlessly without compromising performance.")])])], 1)])], 1)], 1), _vm._v(" "), _c("section", {
     staticClass: "cs-growth-section mb-25 text-center"
   }, [_c("h2", {
     staticClass: "section-title mb-6"

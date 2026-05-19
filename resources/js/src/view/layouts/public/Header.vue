@@ -54,8 +54,8 @@
                             <b-nav-item to="/solutions" class="nav-link-custom"
                                 >Solutions</b-nav-item
                             >
-                            <b-nav-item to="/contact-us" class="nav-link-custom"
-                                >Contact Us</b-nav-item
+                            <b-nav-item to="/product-description" class="nav-link-custom"
+                                >Products</b-nav-item
                             >
                             <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
                             <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
@@ -75,11 +75,11 @@
                                 </b-nav-item>
                                 <b-nav-item
                                     v-if="!isAuthenticated"
-                                    to="/product-description"
+                                    to="/contact-us"
                                     class="nav-link-custom d-lg-none"
                                 >
                                     <button class="whats-new-btn">
-                                        Learn more
+                                        Contact us
                                     </button>
                                 </b-nav-item>
                             </div>
@@ -131,9 +131,9 @@
                                     Sign In
                                 </button>
                             </b-nav-item>
-                             <b-nav-item to="/product-description" class="nav-link-custom">
+                             <b-nav-item to="/contact-us" class="nav-link-custom">
                                 <button class="whats-new-btn">
-                                    Learn More
+                                    Contact Us
                                 </button>
                             </b-nav-item>
                         </b-navbar-nav>
@@ -182,7 +182,7 @@ export default {
         ...mapGetters(["isAuthenticated", "currentUser"]),
 
         logoSrc() {
-            return "/media/assets/logos/f16s-logo.svg";
+            return "/media/assets/logos/white-logo.png";
         },
     },
 };
@@ -263,10 +263,12 @@ a.menu-link {
 #main-logo {
     height: 60px;
     width: auto;
-    transition: transform 0.3s ease;
+    filter: drop-shadow(0 8px 25px rgba(53, 85, 148, 0.45));
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 #main-logo:hover {
     transform: scale(1.05);
+    filter: drop-shadow(0 15px 45px rgba(53, 85, 148, 0.65));
 }
 #avatar-logo {
     width: 35px;

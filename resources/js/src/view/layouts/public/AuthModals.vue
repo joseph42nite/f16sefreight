@@ -58,7 +58,7 @@
                                         </button>
                                     </div>
                                     <div class="text-right mt-2" style="text-align: right; width: 100%;">
-                                        <a href="#" class="forgot-pwd">Forgot Password?</a>
+                                        <router-link to="/contact-us" class="forgot-pwd" @click.native="internal_show_login = false">Forgot Password?</router-link>
                                     </div>
                                 </b-col>
                             </b-row>
@@ -70,7 +70,7 @@
                                     <b-icon v-if="!loading" icon="arrow-right" class="btn-icon"></b-icon>
                                 </button>
                                 <p class="form-note mt-4">
-                                    Need help? <a href="#" class="text-primary font-weight-bold">Contact Support</a>
+                                    Need help? <router-link to="/contact-us?modal=query" class="text-primary font-weight-bold" @click.native="internal_show_login = false">Contact Support</router-link>
                                 </p>
                             </div>
                         </form>

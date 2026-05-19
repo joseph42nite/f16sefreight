@@ -49,6 +49,17 @@ __webpack_require__.r(__webpack_exports__);
   mounted: function mounted() {
     if (this.$route.query.modal === 'quote') {
       this.$bvModal.show('show-quote-modal');
+    } else if (this.$route.query.modal === 'query') {
+      this.$bvModal.show('show-query-modal');
+    }
+  },
+  watch: {
+    '$route.query.modal': function $routeQueryModal(newVal) {
+      if (newVal === 'quote') {
+        this.$bvModal.show('show-quote-modal');
+      } else if (newVal === 'query') {
+        this.$bvModal.show('show-query-modal');
+      }
     }
   }
 });

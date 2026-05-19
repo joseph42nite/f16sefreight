@@ -16,8 +16,15 @@ class LoginController extends Controller
     public function login()
     {
         $credentials = request(['email', 'password']);
-        $role = Role::where('email', $credentials['email'])->select('role')->first()->toArray()['role'];
+        $roleRecord = Role::where('email', $credentials['email'])->select('role')->first();
+        
+        if (!$roleRecord) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        $role = $roleRecord->role;
         $guard = $role . '-api';
+        
         if (!$token = auth()->guard($guard)->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }

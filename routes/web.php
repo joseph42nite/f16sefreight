@@ -49,6 +49,13 @@ Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidat
 Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf']);
 Route::get('/ocr', fn() => view('tools.ocr.upload'));
 Route::post('/ocr-extract', [OcrController::class, 'extract'])->name('ocr.extract');
+use App\Blog;
+
+Route::get('blog/{slug}', function ($slug) {
+    $blog = Blog::where('slug', $slug)->first();
+    return view('welcome', compact('blog'));
+});
+
 Route::get('{any}', function () {
     return view('welcome');
 })->where('any', '(?!ocr)(?!ocr-extract)(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');

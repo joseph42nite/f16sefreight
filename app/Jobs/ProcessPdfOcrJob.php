@@ -17,8 +17,8 @@ class ProcessPdfOcrJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries   = 3;
-    public int $timeout = 50;   // Giving ample time for large, heavy PDFs to process
-    public int $backoff = 5;     // retry after 5 seconds
+    public int $timeout = 90;   // Must be > Http::timeout below (80s) + safety buffer
+    public int $backoff = 5;    // retry after 5 seconds
 
     public function __construct(
         public readonly int $processingJobId
@@ -48,8 +48,9 @@ class ProcessPdfOcrJob implements ShouldQueue
             // Call FastAPI microservice — no subprocess, no cold start
             $ocrUrl   = rtrim(config('services.ocr.url'), '/') . '/extract';
             
-            // Intelligent patch: Extended timeout to 90s to prevent cutoff on large/slow PDFs!
-            $response = Http::timeout(90)
+            // Http timeout MUST be less than the job's $timeout property (90s) to ensure
+            // the HTTP error path is hit cleanly before the worker process is force-killed.
+            $response = Http::timeout(80)
                 ->attach('file', file_get_contents($tempPath), basename($tempPath))
                 ->post($ocrUrl, [
                     'document_type' => $job->document_type ?: 'ksr'

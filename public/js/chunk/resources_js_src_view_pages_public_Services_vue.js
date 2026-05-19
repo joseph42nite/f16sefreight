@@ -150,7 +150,7 @@ var render = function render() {
     }, [_vm._v(_vm._s(service.title))]), _vm._v(" "), _c("p", {
       staticClass: "service-product-desc"
     }, [_vm._v(_vm._s(service.desc))]), _vm._v(" "), _c("ul", {
-      staticClass: "service-feature-list text-start mt-6 ms-4"
+      staticClass: "service-feature-list"
     }, _vm._l(service.features, function (feat, fIdx) {
       return _c("li", {
         key: fIdx,

@@ -40,7 +40,7 @@
                     <div class="service-product-info">
                         <h3 class="service-product-title">{{ service.title }}</h3>
                         <p class="service-product-desc">{{ service.desc }}</p>
-                        <ul class="service-feature-list text-start mt-6 ms-4">
+                        <ul class="service-feature-list">
                             <li v-for="(feat, fIdx) in service.features" :key="fIdx" class="mb-2 text-muted">
                                 <span class="feature-text">{{ feat }}</span>
                             </li>

@@ -251,6 +251,20 @@ $font-family-inter: 'Inter', sans-serif;
             }
         }
     }
+    
+    .service-feature-list {
+        text-align: left;
+        margin-top: 1.5rem;
+        padding-left: 1.5rem;
+        width: 100%;
+        max-width: 280px;
+        margin-left: auto;
+        margin-right: auto;
+        
+        li {
+            list-style-type: disc;
+        }
+    }
 
     &:hover {
         background: $secondary-color;

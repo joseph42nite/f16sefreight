@@ -14,6 +14,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_DecorativeEllipses_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/DecorativeEllipses.vue */ "./resources/js/src/view/pages/public/components/DecorativeEllipses.vue");
 /* harmony import */ var _components_SectionHeader_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/SectionHeader.vue */ "./resources/js/src/view/pages/public/components/SectionHeader.vue");
 /* harmony import */ var _components_HeroButton_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/HeroButton.vue */ "./resources/js/src/view/pages/public/components/HeroButton.vue");
+/* harmony import */ var _components_HomeServicesGrid_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/HomeServicesGrid.vue */ "./resources/js/src/view/pages/public/components/HomeServicesGrid.vue");
+
 
 
 
@@ -35,7 +37,8 @@ __webpack_require__.r(__webpack_exports__);
   components: {
     DecorativeEllipses: _components_DecorativeEllipses_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
     SectionHeader: _components_SectionHeader_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-    HeroButton: _components_HeroButton_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    HeroButton: _components_HeroButton_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    HomeServicesGrid: _components_HomeServicesGrid_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: function data() {
     return {
@@ -146,32 +149,7 @@ var render = function render() {
       title: "Our Specialized Products",
       subtitle: "High-performance solutions for every freight challenge."
     }
-  }), _vm._v(" "), _c("div", {
-    staticClass: "services-modern-grid"
-  }, _vm._l(_vm.we_offer_section_cards, function (offer, index) {
-    return _c("article", {
-      key: index,
-      staticClass: "service-product-card"
-    }, [_c("div", {
-      staticClass: "service-product-image"
-    }, [_c("img", {
-      attrs: {
-        src: offer.imgSrc,
-        alt: offer.imgAlt,
-        loading: "lazy"
-      }
-    })]), _vm._v(" "), _c("div", {
-      staticClass: "service-product-info"
-    }, [_c("h3", {
-      staticClass: "service-product-title"
-    }, [_vm._v(_vm._s(offer.imgAlt))]), _vm._v(" "), _c("p", {
-      staticClass: "service-product-desc"
-    }, [_vm._v(_vm._s(offer.text))]), _vm._v(" "), _c("hero-button", {
-      attrs: {
-        to: "/product-description"
-      }
-    }, [_vm._v("Explore More")])], 1)]);
-  }), 0)], 1), _vm._v(" "), _c("section", {
+  }), _vm._v(" "), _c("home-services-grid")], 1), _vm._v(" "), _c("section", {
     staticClass: "mb-25"
   }, [_c("b-row", {
     staticClass: "justify-content-center"
@@ -257,7 +235,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.content-container[data-v-373472a1] {\n    position: relative;\n    z-index: 10;\n    padding-top: 0;\n}\n\n/* Vision Card */\n.vision-card[data-v-373472a1] {\n    position: relative;\n    height: 100%;\n}\n.vision-glow[data-v-373472a1] {\n    position: absolute;\n    inset: -2px;\n    background: linear-gradient(135deg, #355594, #ABC0FF);\n    border-radius: 32px;\n    opacity: 0.4;\n    filter: blur(15px);\n    z-index: 0;\n}\n.vision-content[data-v-373472a1] {\n    position: relative;\n    z-index: 1;\n    background: rgba(255, 255, 255, 0.85);\n    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);\n    border: 1px solid rgba(255, 255, 255, 0.5);\n    border-radius: 32px;\n    padding: 3rem;\n    height: 100%;\n    box-shadow: 0 10px 30px rgba(53, 85, 148, 0.05);\n}\n.vision-title[data-v-373472a1] {\n    font-size: 2rem;\n    font-weight: 800;\n    color: #1e3a6e;\n    letter-spacing: -0.5px;\n}\n.vision-text[data-v-373472a1] {\n    font-size: 1.1rem;\n    color: #4A5E80;\n    line-height: 1.8;\n}\n\n/* Specialized Services - Product Card Layout */\n.services-modern-grid[data-v-373472a1] {\n    display: grid;\n    grid-template-columns: repeat(3, 1fr);\n    gap: 32px;\n}\n\n/* Choose Us Grid */\n.choose-us-item[data-v-373472a1] {\n    padding: 2rem 1.5rem;\n    background: transparent;\n    transition: all 0.3s ease;\n    border-radius: 24px;\n    height: 100%;\n}\n.choose-us-item[data-v-373472a1]:hover {\n    background: rgba(255,255,255,0.6);\n    box-shadow: 0 10px 30px rgba(53,85,148,0.03);\n}\n.choose-us-icon-wrapper[data-v-373472a1] {\n    width: 80px;\n    height: 80px;\n    background: white;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.08);\n    transition: transform 0.3s ease;\n}\n.choose-us-item:hover .choose-us-icon-wrapper[data-v-373472a1] {\n    transform: translateY(-5px);\n}\n.choose-us-icon-wrapper img[data-v-373472a1] {\n    width: 40px;\n    height: 40px;\n}\n.choose-us-title[data-v-373472a1] {\n    font-size: 1.35rem;\n    font-weight: 700;\n    color: #1e3a6e;\n    line-height: 1.4;\n}\n.choose-us-desc[data-v-373472a1] {\n    font-size: 1rem;\n    color: #5A6B8A;\n    line-height: 1.7;\n}\n\n/* Our Story */\n.story-card[data-v-373472a1] {\n    position: relative;\n    border-radius: 32px;\n    overflow: hidden;\n    min-height: 400px;\n    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.15);\n}\n.story-bg-img[data-v-373472a1] {\n    position: absolute;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    -o-object-fit: cover;\n       object-fit: cover;\n    z-index: 1;\n}\n.story-overlay[data-v-373472a1] {\n    position: relative;\n    z-index: 2;\n    background: linear-gradient(90deg, rgba(30, 58, 110, 0.95) 0%, rgba(30, 58, 110, 0.7) 100%);\n    padding: 4rem 3rem;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n.story-text[data-v-373472a1] {\n    color: rgba(255, 255, 255, 0.9);\n    font-size: 1.15rem;\n    line-height: 1.8;\n    max-width: 800px;\n}\n@media (max-width: 991px) {\n.vision-content[data-v-373472a1] {\n        padding: 2rem;\n        margin-top: 2rem;\n}\n.story-overlay[data-v-373472a1] {\n        padding: 3rem 2rem;\n}\n}\n@media (max-width: 767px) {\n.services-modern-grid[data-v-373472a1] {\n        display: flex;\n        overflow-x: auto;\n        scroll-snap-type: x mandatory;\n        gap: 24px;\n        padding: 20px 20px 40px 20px;\n        margin-left: -20px;\n        margin-right: -20px;\n        scroll-behavior: smooth;\n        -webkit-overflow-scrolling: touch;\n}\n.services-modern-grid[data-v-373472a1]::-webkit-scrollbar { display: none;\n}\n.service-product-card[data-v-373472a1] {\n        flex: 0 0 85%;\n        scroll-snap-align: center;\n        padding: 4rem 2.5rem;\n        background: white;\n        box-shadow: 0 15px 35px rgba(53, 85, 148, 0.1);\n}\n.story-overlay[data-v-373472a1] { padding: 2rem 1.5rem;\n}\n.story-text[data-v-373472a1] { font-size: 1rem;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.content-container[data-v-373472a1] {\n    position: relative;\n    z-index: 10;\n    padding-top: 0;\n}\n\n/* Vision Card */\n.vision-card[data-v-373472a1] {\n    position: relative;\n    height: 100%;\n}\n.vision-glow[data-v-373472a1] {\n    position: absolute;\n    inset: -2px;\n    background: linear-gradient(135deg, #355594, #ABC0FF);\n    border-radius: 32px;\n    opacity: 0.4;\n    filter: blur(15px);\n    z-index: 0;\n}\n.vision-content[data-v-373472a1] {\n    position: relative;\n    z-index: 1;\n    background: rgba(255, 255, 255, 0.85);\n    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);\n    border: 1px solid rgba(255, 255, 255, 0.5);\n    border-radius: 32px;\n    padding: 3rem;\n    height: 100%;\n    box-shadow: 0 10px 30px rgba(53, 85, 148, 0.05);\n}\n.vision-title[data-v-373472a1] {\n    font-size: 2rem;\n    font-weight: 800;\n    color: #1e3a6e;\n    letter-spacing: -0.5px;\n}\n.vision-text[data-v-373472a1] {\n    font-size: 1.1rem;\n    color: #4A5E80;\n    line-height: 1.8;\n}\n\n\n\n/* Choose Us Grid */\n.choose-us-item[data-v-373472a1] {\n    padding: 2rem 1.5rem;\n    background: transparent;\n    transition: all 0.3s ease;\n    border-radius: 24px;\n    height: 100%;\n}\n.choose-us-item[data-v-373472a1]:hover {\n    background: rgba(255,255,255,0.6);\n    box-shadow: 0 10px 30px rgba(53,85,148,0.03);\n}\n.choose-us-icon-wrapper[data-v-373472a1] {\n    width: 80px;\n    height: 80px;\n    background: white;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 10px 20px rgba(53, 85, 148, 0.08);\n    transition: transform 0.3s ease;\n}\n.choose-us-item:hover .choose-us-icon-wrapper[data-v-373472a1] {\n    transform: translateY(-5px);\n}\n.choose-us-icon-wrapper img[data-v-373472a1] {\n    width: 40px;\n    height: 40px;\n}\n.choose-us-title[data-v-373472a1] {\n    font-size: 1.35rem;\n    font-weight: 700;\n    color: #1e3a6e;\n    line-height: 1.4;\n}\n.choose-us-desc[data-v-373472a1] {\n    font-size: 1rem;\n    color: #5A6B8A;\n    line-height: 1.7;\n}\n\n/* Our Story */\n.story-card[data-v-373472a1] {\n    position: relative;\n    border-radius: 32px;\n    overflow: hidden;\n    min-height: 400px;\n    box-shadow: 0 20px 40px rgba(53, 85, 148, 0.15);\n}\n.story-bg-img[data-v-373472a1] {\n    position: absolute;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    -o-object-fit: cover;\n       object-fit: cover;\n    z-index: 1;\n}\n.story-overlay[data-v-373472a1] {\n    position: relative;\n    z-index: 2;\n    background: linear-gradient(90deg, rgba(30, 58, 110, 0.95) 0%, rgba(30, 58, 110, 0.7) 100%);\n    padding: 4rem 3rem;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n.story-text[data-v-373472a1] {\n    color: rgba(255, 255, 255, 0.9);\n    font-size: 1.15rem;\n    line-height: 1.8;\n    max-width: 800px;\n}\n@media (max-width: 991px) {\n.vision-content[data-v-373472a1] {\n        padding: 2rem;\n        margin-top: 2rem;\n}\n.story-overlay[data-v-373472a1] {\n        padding: 3rem 2rem;\n}\n}\n@media (max-width: 767px) {\n.services-modern-grid[data-v-373472a1] {\n        display: flex;\n        overflow-x: auto;\n        scroll-snap-type: x mandatory;\n        gap: 24px;\n        padding: 20px 20px 40px 20px;\n        margin-left: -20px;\n        margin-right: -20px;\n        scroll-behavior: smooth;\n        -webkit-overflow-scrolling: touch;\n}\n.services-modern-grid[data-v-373472a1]::-webkit-scrollbar { display: none;\n}\n.service-product-card[data-v-373472a1] {\n        flex: 0 0 85%;\n        scroll-snap-align: center;\n        padding: 4rem 2.5rem;\n        background: white;\n        box-shadow: 0 15px 35px rgba(53, 85, 148, 0.1);\n}\n.story-overlay[data-v-373472a1] { padding: 2rem 1.5rem;\n}\n.story-text[data-v-373472a1] { font-size: 1rem;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

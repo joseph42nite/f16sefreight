@@ -16,7 +16,7 @@
                                     <div class="d-flex flex-column">
                                         <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
                                         <h6 style="color:#355594;font-size:26px;line-height:34px;font-weight:800;letter-spacing:-0.5px;margin-bottom:1rem;">Documentation</h6>
-                                        <b-form-group id="fieldset-horizontal" class="mb-0">
+                                        <b-form-group id="fieldset-horizontal" class="mb-0 nav-dropdown-group">
                                             <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
                                                 <b-icon icon="folder2-open" style="color:#355594;font-size:1.2rem;margin-right:12px;"></b-icon>
                                                 <b-form-select style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;background:transparent;cursor:pointer;outline:none;box-shadow:none;padding-left:0;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
@@ -31,10 +31,10 @@
                                 </b-col>
                                 <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                     <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
-                                        <b-button @click.prevent="getAirwayBills('draft')" v-b-modal.modal-draft class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                        <b-button @click.prevent="getAirwayBills('draft')" v-b-modal.modal-draft class="show-btn">
                                             <b-icon icon="file-earmark-text" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Drafts</b>
                                         </b-button>
-                                        <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                        <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="show-btn">
                                             <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                         </b-button>
                                         <OcrUploadModal category="focus_air" @extracted="processExtractedData" />
@@ -70,7 +70,7 @@
                                 <div class="ml-8 mr-8">
                                     <b-row class="my-10">
                                         <!-- First column of Three -->
-                                        <b-col cols="5">
+                                        <b-col cols="12" lg="5">
                                             <div>
                                                 <div class="d-flex">
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
@@ -121,7 +121,7 @@
                                             </div>
                                         </b-col>
                                         <!-- Second column of Three -->
-                                        <b-col cols="5">
+                                        <b-col cols="12" md="6" lg="5" class="mt-6 mt-lg-0">
                                             <b-form-group
                                             label-for="name-input">
                                                 <b-form-radio name="radio-size" size="sm" v-model="form.first_box.awb"
@@ -140,7 +140,7 @@
                                             </b-form-group>
                                         </b-col>
                                         <!-- Third column of Three -->
-                                        <b-col cols="2">
+                                        <b-col cols="12" md="6" lg="2" class="mt-6 mt-lg-0">
                                             <b-form-group label-for="name-input">
                                                 <b-form-radio name="radio-size" size="sm">e-CSD AWB</b-form-radio>
                                             </b-form-group>
@@ -151,7 +151,7 @@
                                 <hr class="hr" />
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION START -->
                                 <b-row class="my-10">
-                                    <b-col cols="6">
+                                    <b-col cols="12" lg="6">
                                         <b-col cols="auto">
                                             <h4 class="h-color ml-2">
                                                 Shipper
@@ -308,7 +308,7 @@
                                                 later logins</b-form-checkbox>
                                         </b-form-group>
                                     </b-col>
-                                    <b-col cols="6">
+                                    <b-col cols="12" lg="6" class="mt-6 mt-lg-0">
                                         <b-col cols="auto">
                                             <h4 class="h-color ml-2">
                                                 Consignee
@@ -508,9 +508,10 @@
                                                     <has-error :form="form" field="destination_airport" :class="{ 'd-block': form.errors.has('destination_airport') }"></has-error>
                                                 </b-form-group>
                                             </b-col>
-                                            <b-col cols="7">
+                                            <b-col cols="12" lg="7" class="mt-6 mt-lg-0">
                                                 <!-- <div class="d-flex flex-column align-items-center"> -->
                                                     <!-- <div class="container"> -->
+                                                        <div class="table-responsive">
                                                         <table class="table" style="max-width:100%;width:100%;">
                                                             <thead>
                                                                 <tr class="">
@@ -688,6 +689,7 @@
                                                                 </tr>
                                                             </tbody>
                                                         </table>
+                                                        </div>
                                                     <!-- </div> -->
                                                 <!-- </div> -->
                                             </b-col>
@@ -741,24 +743,24 @@
                                 <!-- CONSIGNMENT RATE DESCRIPTION SECTION START HERE -->
                                 <div class="py-5">
                                     <b-row>
-                                        <b-col cols="6">
+                                        <b-col cols="12" sm="6">
                                             <div class="align-items-center">
                                                 <h6 class="h-color mb-0">Consignment Rate Description</h6>
                                             </div>
                                         </b-col>
-                                        <b-col cols="6">
+                                        <b-col cols="12" sm="6" class="mt-2 mt-sm-0 text-left text-sm-right">
                                             <div class="d-flex justify-content-end align-items-center mr-16">
                                                 <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8;">Collect house waybill sum's</p>
                                             </div>
                                         </b-col>
                                     </b-row>
                                     <!-- CONSIGNMENT MODEL CODE START HERE -->
-                                    <b-button class="mt-5 mb-5 add-cons-btn" v-b-modal.modal-consignment @click="handleAddConsignment" :disabled="isConsignmentAdded">Add Consignment Information</b-button>
+                                    <b-button class="mt-5 mb-5 show-btn" v-b-modal.modal-consignment @click="handleAddConsignment" :disabled="isConsignmentAdded">Add Consignment Information</b-button>
                                     <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
                                         size="xl" ok-only hide-footer @hide="handleModalClose">
                                         <b-row>
                                             <!-- First Column -->
-                                            <b-col cols="6">
+                                            <b-col cols="12" lg="6">
                                                 <h6 style="margin-bottom:15px;">Pieces and Nature and Quantity of Goods</h6>
                                                 <div class="">
                                                     <label for="Pieces" style="margin-bottom:0px;">Pieces</label>
@@ -769,6 +771,7 @@
                                                     <b-form-textarea style="height: 70px;width: 400px;margin-bottom:10px;" id="textarea"
                                                         v-model="consignment_list.description" :class="{ 'is-invalid': consignment_list.errors.has('description') }"></b-form-textarea>
                                                         <has-error :form="consignment_list" field="description"></has-error>
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tbody>
                                                             <tr>
@@ -892,12 +895,14 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
                                                 </div>
                                             </b-col>
                                             <!-- Second Column -->
-                                            <b-col cols="6">
+                                            <b-col cols="12" lg="6" class="mt-6 mt-lg-0">
                                                 <h6 style="margin-bottom:25px;">Weight and Dimensions</h6>
                                                 <div class="">
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tr>
                                                             <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Gross Weight</th>
@@ -929,6 +934,8 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tr>
                                                             <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Pcs</th>
@@ -977,6 +984,8 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tr style="background-color:#F2F9FF">
                                                             <th style="color:#000000;font-weight:500;">Pcs</th>
@@ -1003,6 +1012,8 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
+                                                    <div class="table-responsive">
                                                     <table class="table-sm">
                                                         <tr>
                                                             <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Volume</th>
@@ -1024,9 +1035,11 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
                                                 </div>
                                                 <h5 class="mt-10 mb-2" style="font-size:13px;font-weight: 500;">ULD Information</h5>
                                                 <div class="">
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tbody>
                                                             <tr>
@@ -1058,6 +1071,8 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tbody>
                                                             <tr style="background-color:#F2F9FF;">
@@ -1076,6 +1091,7 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
                                                 </div>
                                             </b-col>
                                         </b-row>
@@ -1223,7 +1239,7 @@
                                                         <div class="ml-3 mt-8">
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Special Service Request:</h6>
                                                             <div class="py-7">
-                                                                <b-form-textarea class="" style="height:80px;width: 60% !important;" id="textarea"
+                                                                <b-form-textarea class="responsive-textarea" style="height:80px;" id="textarea"
                                                                     v-model="form.custom_origin.special_service_request"
                                                                     :class="{ 'is-invalid': form.errors.has('special_service_request') }"></b-form-textarea>
                                                                 <has-error :form="form" field="special_service_request"></has-error>
@@ -1234,8 +1250,8 @@
                                                         <div class="ml-3 mt-8">
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Accounting Information:</h6>
                                                             <div class="py-7">
-                                                                <b-form-textarea class=""
-                                                                style="height:80px;width: 60% !important;" id="textarea"
+                                                                <b-form-textarea class="responsive-textarea"
+                                                                style="height:80px;" id="textarea"
                                                                 v-model="form.custom_origin.accounting_information"
                                                                 :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
                                                                 <has-error :form="form" field="accounting_information"></has-error>
@@ -1313,7 +1329,7 @@
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Agent information:</h6>
                                                             <div class="py-7">
                                                                 <b-row>
-                                                                    <b-col cols="6" class="align-items-center">
+                                                                    <b-col cols="12" lg="6" class="align-items-center mb-6 mb-lg-0">
                                                                         <div style="background-color: #F2F9FF;" class="mb-4">
                                                                             <h6 class="h-color" style="padding:5px 20px;font-size: 15px;font-weight:500">Override Issuing Agent:</h6>
                                                                         </div>
@@ -1432,7 +1448,7 @@
                                                                             <b-form-checkbox size="sm">Save information for later logins</b-form-checkbox>
                                                                         </b-form-group>
                                                                     </b-col>
-                                                                    <b-col cols="6" class="align-items-center">
+                                                                    <b-col cols="12" lg="6" class="align-items-center">
                                                                         <div style="background-color: #F2F9FF;" class="mb-4">
                                                                             <h6 class="h-color" style="padding:5px 20px;font-size: 15px;font-weight:500">Senders Reference:</h6>
                                                                         </div>
@@ -1878,6 +1894,7 @@
                                         <div class="py-7">
                                             <b-row>
                                                 <b-col cols="12">
+                                                    <div class="table-responsive">
                                                     <table class="table table-sm" style="max-width:100%;">
                                                         <thead>
                                                             <tr class="" style="background-color: #F2F9FF;">
@@ -1950,7 +1967,7 @@
                                                                 <td class="pt-5 editable-cell align-items-center" style="vertical-align: middle;">
                                                                     <b-form-group id="fieldset-horizontal"
                                                                         class="align-items-center">
-                                                                        <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="px-5" @click="addCharge">
+                                                                        <b-button class="show-btn px-5" @click="addCharge">
                                                                             {{ editIndex !== null ? 'Update' : 'Add' }}
                                                                         </b-button>
                                                                     </b-form-group>
@@ -1958,10 +1975,12 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+                                                    </div>
                                                 </b-col>
                                                 <b-col cols="12">
                                                     <!-- Calculation Table always visible -->
                                                     <div class="d-flex align-items-start py-8">
+                                                        <div class="table-responsive">
                                                         <table class="table table-sm">
                                                             <thead>
                                                                 <tr style="background-color: #F2F9FF;">
@@ -1985,16 +2004,18 @@
                                                                             v-model="other_charges.charge" />
                                                                     </td>
                                                                     <td class="editable-cell mb-2" style="vertical-align: middle;">
-                                                                        <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="px-5"
+                                                                        <b-button class="show-btn px-5"
                                                                             @click="calculateCharge">Calculate</b-button>
                                                                     </td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
+                                                        </div>
                                                     </div>
                                                 </b-col>
                                                 <b-col cols="12">
                                                     <div class="d-flex align-items-start py-8">
+                                                        <div class="table-responsive">
                                                         <table class="table table-sm" style="max-width: 100%;">
                                                             <thead>
                                                                 <tr style="background-color: #F2F9FF;">
@@ -2030,6 +2051,7 @@
                                                                 </tr>
                                                             </tbody>
                                                         </table>
+                                                        </div>
                                                     </div>
                                                 </b-col>
                                             </b-row>
@@ -2041,7 +2063,7 @@
                                     <b-tabs class="custom-nav">
                                         <b-tab title="Payment Information">
                                             <b-row>
-                                                <b-col cols="6">
+                                                <b-col cols="12" lg="6" class="mb-6 mb-lg-0">
                                                     <div class="d-flex align-items-center ml-3 mt-6" style="justify-content: space-between;margin-bottom:4px !important;">
                                                         <div style="float:left;">
                                                             <b-form-group id="fieldset-horizontal"
@@ -2132,8 +2154,9 @@
                                                             v-model="form.payment_info.declear_value_insurance"></b-form-input>
                                                     </b-form-group>
                                                 </b-col>
-                                                <b-col cols="6">
+                                                <b-col cols="12" lg="6">
                                                     <div class="d-flex justify-content-end">
+                                                        <div class="table-responsive">
                                                         <table class="table table-sm">
                                                             <thead>
                                                                 <tr class="" style="background: #F2F9FF">
@@ -2175,6 +2198,7 @@
                                                                 </tr>
                                                             </tbody>
                                                         </table>
+                                                        </div>
                                                     </div>
                                                 </b-col>
                                             </b-row>
@@ -2211,7 +2235,7 @@
                                                     <b-col cols="auto">
                                                         <b-form-group id="fieldset-horizontal"
                                                             class="">
-                                                            <b-button style="padding:6px 30px;border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" id="input-horizontal" class=""
+                                                            <b-button class="show-btn px-5" id="input-horizontal"
                                                                 type="button" @click="addManualCode">Add</b-button>
                                                         </b-form-group>
                                                     </b-col>
@@ -2319,7 +2343,7 @@
                                                                         <td class="editable-cell">
                                                                             <b-form-group style="display: flex;width: 240px;" id="fieldset-horizontal"
                                                                                 class="form-control-sm col-form-label align-items-end justify-content-end">
-                                                                                <b-button style="border-radius: 30px;color: #355594;background: #ffffff !important;border: 1px solid #355594;padding: 6px 30px;" class="form-control-sm px-5" @click="addOtherCustomInfo">
+                                                                                <b-button class="show-btn px-5" @click="addOtherCustomInfo">
                                                                                     {{ editIndex !== null ? 'Update' : 'Add' }}
                                                                                 </b-button>
                                                                             </b-form-group>
@@ -2338,7 +2362,7 @@
                                                 </b-col>
                                                 <b-col cols="12">
                                                     <div class="ml-3 mt-3 d-flex justify-content-end" style="max-width:1000px;">
-                                                        <b-button class="" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Upload</b-button>
+                                                        <b-button class="show-btn px-5">Upload</b-button>
                                                     </div>
                                                 </b-col>
                                                 <b-col cols="12">
@@ -2377,15 +2401,17 @@
                                     </b-tabs>
                                 </div>
                                 <hr class="hr" />
-                                <div class="py-7">
+                                <div class="py-7 bottom-email-section">
                                     <b-row class="justify-content-end">
-                                        <b-col cols="auto" class="text-right">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA 2:" class="form-control-sm col-form-label"> <b-form-input id="input-horizontal" v-model="form.awb_email" class="form-control-sm" style="width: 300px"></b-form-input>
+                                        <b-col cols="12" md="auto" class="text-right mobile-text-left">
+                                            <div class="d-flex justify-content-end mobile-justify-start mb-2">
+                                                <b-form-checkbox size="sm" class="premium-checkbox">Including Cargo Label</b-form-checkbox>
+                                            </div>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA 2:" class="form-control-sm col-form-label mb-0">
+                                                <b-form-input id="input-horizontal" v-model="form.awb_email" class="form-control-sm" style="width: 300px"></b-form-input>
                                             </b-form-group>
-                                            <div class="d-flex text-left ml-4 mt-4">
-                                                <b-form-checkbox size="sm" class="">Including Cargo
-                                                    Label</b-form-checkbox>
-                                                <p class="pl-18">(separate addresses with a semicolon ';')</p>
+                                            <div class="text-right mobile-text-left mt-1" style="font-size: 11px; color: #777;">
+                                                (separate addresses with a semicolon ';')
                                             </div>
                                         </b-col>
                                     </b-row>
@@ -2432,13 +2458,13 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
-                                        <b-button class="mr-2" type="button" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Generate PDF</b-button>
+                                        <b-button class="show-btn mr-2" type="button" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <div v-if="current_user.can_send">
-                                            <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send</b-button>
-                                            <b-button class="mr-2" type="submit" @click="form.status='send';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Send & Clear</b-button>
+                                            <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send</b-button>
+                                            <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
                                         </div>
                                         <div v-if="form.first_box.status!='send'">
-                                           <b-button type="submit" @click="form.status='draft';" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">{{submitButtonText}}</b-button>
+                                           <b-button class="show-btn" type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
                                         </div>
                                     </div>
                                 </div>
@@ -4951,11 +4977,21 @@ li {
 }
 
 .show-btn {
-  border-radius:30px;
-  border:1px solid #355594;
-  padding:6px 30px;
-  color:#355594;
-  background:#ffffff;
+  background: white !important;
+  color: #355594 !important;
+  border: 1px solid #E6F0FF !important;
+  border-radius: 50px !important;
+  padding: 10px 22px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+}
+
+.show-btn:hover {
+  background: #f0f7ff !important;
+  border-color: #355594 !important;
+  color: #355594 !important;
+  box-shadow: 0 6px 12px rgba(53, 85, 148, 0.1) !important;
 }
 
 .custom-btn:hover {
@@ -5173,6 +5209,95 @@ th {
         .form-scroll-container { padding: 3rem 2rem; height: auto; max-height: 60vh; } 
         .ultra-close-btn { top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; } 
     }
+@media (max-width: 768px) {
+.shipper-form-control, .consignee-form-control {
+max-width: 100% !important;
+}
+.shipper-toggle-label, .routing-info-label {
+width: 100% !important;
+text-align: start !important;
+margin-bottom: 4px;
+}
+.form-row {
+flex-wrap: wrap !important;
+}
+.responsive-width-60 {
+width: 100% !important;
+}
+.responsive-textarea {
+width: 100% !important;
+}
+.oci-table {
+max-width: 100% !important;
+}
+
+/* Targeted overrides for inline widths inside form groups on mobile screens */
+.form-group div[style*="width:150px"],
+.form-group div[style*="width:150px;"],
+.form-group div[style*="width: 90px"],
+.form-group div[style*="width: 90px;"],
+.form-group div[style*="width:100px"],
+.form-group div[style*="width:100px;"] {
+width: 100% !important;
+max-width: 100% !important;
+justify-content: flex-start !important;
+text-align: left !important;
+margin-bottom: 4px !important;
+}
+
+.form-group:not(.nav-dropdown-group) input,
+.form-group:not(.nav-dropdown-group) select,
+.form-group:not(.nav-dropdown-group) textarea,
+.form-group:not(.nav-dropdown-group) .custom-dropdown,
+.form-group:not(.nav-dropdown-group) .mx-datepicker,
+.form-group:not(.nav-dropdown-group) .form-control {
+width: 100% !important;
+max-width: 100% !important;
+}
+
+/* Stack horizontal form-group elements */
+.form-group:not(.nav-dropdown-group) .d-flex {
+    flex-direction: column !important;
+    align-items: stretch !important;
+}
+
+/* Relocate sibling horizontal margins on mobile stacking */
+.form-group .ml-3,
+.form-group .ml-4,
+.form-group .ml-lg-35 {
+    margin-left: 0 !important;
+    margin-top: 8px !important;
+}
+
+    .mobile-justify-start {
+        justify-content: flex-start !important;
+    }
+    .mobile-text-left {
+        text-align: left !important;
+    }
+    .bottom-email-section .col-form-label {
+        text-align: left !important;
+    }
+    .bottom-email-section input {
+        width: 100% !important;
+    }
+    .submit-button {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .submit-button .show-btn,
+    .submit-button div,
+    .submit-button div button {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    .submit-button div {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+}
 </style>
 <style>
     .modal-content {

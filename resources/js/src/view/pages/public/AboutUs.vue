@@ -43,22 +43,7 @@
             title="Our Specialized Products" 
             subtitle="High-performance solutions for every freight challenge."
         />
-        <div class="services-modern-grid">
-            <article 
-                v-for="(offer, index) in we_offer_section_cards" 
-                :key="index" 
-                class="service-product-card"
-            >
-                <div class="service-product-image">
-                    <img :src="offer.imgSrc" :alt="offer.imgAlt" loading="lazy">
-                </div>
-                <div class="service-product-info">
-                    <h3 class="service-product-title">{{ offer.imgAlt }}</h3>
-                    <p class="service-product-desc">{{ offer.text }}</p>
-                    <hero-button to="/product-description">Explore More</hero-button>
-                </div>
-            </article>
-        </div>
+        <home-services-grid />
       </section>
 
       <!-- WHY CHOOSE US -->
@@ -107,6 +92,7 @@
 import DecorativeEllipses from "./components/DecorativeEllipses.vue";
 import SectionHeader from "./components/SectionHeader.vue";
 import HeroButton from "./components/HeroButton.vue";
+import HomeServicesGrid from "./components/HomeServicesGrid.vue";
 
 export default {
     name: "AboutUs",
@@ -121,7 +107,8 @@ export default {
     components: {
         DecorativeEllipses,
         SectionHeader,
-        HeroButton
+        HeroButton,
+        HomeServicesGrid
     },
     data() {
         return {
@@ -211,12 +198,7 @@ export default {
     line-height: 1.8;
 }
 
-/* Specialized Services - Product Card Layout */
-.services-modern-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 32px;
-}
+
 
 /* Choose Us Grid */
 .choose-us-item {

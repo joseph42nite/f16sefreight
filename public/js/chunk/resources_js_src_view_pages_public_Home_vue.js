@@ -338,22 +338,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=script&lang=js":
-/*!********************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=script&lang=js ***!
-  \********************************************************************************************************************************************************************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  name: "HomeServicesGrid"
-});
-
-/***/ }),
-
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeStatsSection.vue?vue&type=script&lang=js":
 /*!********************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeStatsSection.vue?vue&type=script&lang=js ***!
@@ -641,16 +625,15 @@ var render = function render() {
     }
   }, [_vm._v("Logistics Automation Features")]), _vm._v(" "), _c("p", {
     staticClass: "section-subtitle mt-4"
-  }, [_vm._v("Discover the powerful features that streamline your global freight operations.")])]), _vm._v(" "), _vm._l(_vm.features, function (feature, idx) {
-    return _c("b-col", {
+  }, [_vm._v("Discover the powerful features that streamline your global freight operations.")])]), _vm._v(" "), _c("b-col", {
+    attrs: {
+      cols: "12"
+    }
+  }, [_c("div", {
+    staticClass: "features-modern-grid"
+  }, _vm._l(_vm.features, function (feature, idx) {
+    return _c("router-link", {
       key: idx,
-      staticClass: "mb-8",
-      attrs: {
-        lg: "3",
-        md: "6",
-        sm: "12"
-      }
-    }, [_c("router-link", {
       attrs: {
         to: feature.link && feature.link !== "#" ? feature.link : "",
         custom: ""
@@ -698,8 +681,8 @@ var render = function render() {
           })], 1)])])], 1)];
         }
       }], null, true)
-    })], 1);
-  })], 2)], 1);
+    });
+  }), 1)])], 1)], 1);
 };
 var staticRenderFns = [];
 render._withStripped = true;
@@ -754,7 +737,8 @@ var render = function render() {
   }, [_c("img", {
     key: _vm.heroServices[_vm.currentHeroIndex].image,
     "class": ["hero-plane", {
-      "is-tilted-plane": _vm.heroServices[_vm.currentHeroIndex].title === "FOCUS AIR"
+      "is-tilted-plane": _vm.heroServices[_vm.currentHeroIndex].title === "FOCUS AIR",
+      "is-truck-plane": _vm.heroServices[_vm.currentHeroIndex].title === "FOCUS ROAD"
     }],
     style: _vm.heroServices[_vm.currentHeroIndex].extraStyle,
     attrs: {
@@ -820,8 +804,9 @@ var render = function render() {
   }, [_c("b-row", {
     staticClass: "mb-16 align-items-end"
   }, [_c("b-col", {
+    staticClass: "text-center text-lg-left mb-6 mb-lg-0",
     attrs: {
-      md: "8"
+      lg: "8"
     }
   }, [_c("span", {
     staticClass: "section-eyebrow"
@@ -831,11 +816,14 @@ var render = function render() {
       id: "news-heading"
     }
   }, [_vm._v("Latest Logistics News & Insights")]), _vm._v(" "), _c("p", {
-    staticClass: "section-subtitle mt-4"
+    staticClass: "section-subtitle mt-4 mx-auto mx-lg-0",
+    staticStyle: {
+      "max-width": "600px"
+    }
   }, [_vm._v("Stay updated with the evolving landscape of global trade and freight technology.")])]), _vm._v(" "), _c("b-col", {
-    staticClass: "text-md-end d-none d-md-block",
+    staticClass: "text-center text-lg-right",
     attrs: {
-      md: "4"
+      lg: "4"
     }
   }, [_c("b-link", {
     staticClass: "view-all-btn",
@@ -849,11 +837,10 @@ var render = function render() {
       icon: "arrow-right",
       "aria-hidden": "true"
     }
-  })], 1)], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
-    staticClass: "mb-8",
-    attrs: {
-      lg: "6"
-    }
+  })], 1)], 1)], 1), _vm._v(" "), _c("div", {
+    staticClass: "news-modern-grid"
+  }, [_c("div", {
+    staticClass: "news-featured-wrapper"
   }, [_c("article", {
     staticClass: "news-card featured",
     staticStyle: {
@@ -903,17 +890,12 @@ var render = function render() {
       icon: "plus",
       "aria-hidden": "true"
     }
-  })], 1)], 1)])]), _vm._v(" "), _c("b-col", {
-    attrs: {
-      lg: "6"
-    }
-  }, [_c("b-row", _vm._l(_vm.newsItems, function (news, idx) {
-    return _c("b-col", {
+  })], 1)], 1)])]), _vm._v(" "), _c("div", {
+    staticClass: "news-small-cards-wrapper"
+  }, _vm._l(_vm.newsItems, function (news, idx) {
+    return _c("div", {
       key: idx,
-      staticClass: "mb-8",
-      attrs: {
-        md: "6"
-      }
+      staticClass: "news-small-item"
     }, [_c("article", {
       staticClass: "news-card small",
       staticStyle: {
@@ -949,7 +931,7 @@ var render = function render() {
         "aria-label": "Read more about ".concat(news.title)
       }
     }, [_vm._v("Read More")])], 1)])]);
-  }), 1)], 1)], 1)], 1);
+  }), 0)])], 1);
 };
 var staticRenderFns = [];
 render._withStripped = true;
@@ -1007,176 +989,6 @@ var staticRenderFns = [function () {
     staticClass: "aff-heading"
   }, [_vm._v("Global Airline Affiliations")])]);
 }];
-render._withStripped = true;
-
-
-/***/ }),
-
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=template&id=9697751c":
-/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=template&id=9697751c ***!
-  \*******************************************************************************************************************************************************************************************************************************************************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* binding */ render),
-/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
-/* harmony export */ });
-var render = function render() {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("section", {
-    staticClass: "services-carousel-section mb-25",
-    attrs: {
-      "aria-labelledby": "services-heading"
-    }
-  }, [_c("b-row", [_c("b-col", {
-    attrs: {
-      cols: "12"
-    }
-  }, [_c("div", {
-    staticClass: "section-header text-center mb-16"
-  }, [_c("span", {
-    staticClass: "section-eyebrow"
-  }, [_vm._v("Expertise")]), _vm._v(" "), _c("h2", {
-    staticClass: "section-title",
-    attrs: {
-      id: "services-heading"
-    }
-  }, [_vm._v("Specialized Logistics Services")]), _vm._v(" "), _c("p", {
-    staticClass: "section-subtitle mt-4"
-  }, [_vm._v("High-performance solutions for every freight challenge.")])]), _vm._v(" "), _c("div", {
-    staticClass: "services-modern-grid"
-  }, [_c("router-link", {
-    attrs: {
-      to: "/product-description",
-      custom: ""
-    },
-    scopedSlots: _vm._u([{
-      key: "default",
-      fn: function fn(_ref) {
-        var navigate = _ref.navigate;
-        return [_c("article", {
-          staticClass: "service-product-card is-coming-soon order-lg-1 order-2",
-          staticStyle: {
-            cursor: "pointer"
-          },
-          on: {
-            click: navigate
-          }
-        }, [_c("div", {
-          staticClass: "service-product-badge"
-        }, [_vm._v("Upcoming")]), _vm._v(" "), _c("div", {
-          staticClass: "service-product-image"
-        }, [_c("img", {
-          attrs: {
-            src: "/media/assets/banners/banner-ship.webp",
-            alt: "Focus Sea - Digital Ocean Freight Management"
-          }
-        })]), _vm._v(" "), _c("div", {
-          staticClass: "service-product-info"
-        }, [_c("h3", {
-          staticClass: "service-product-title"
-        }, [_vm._v("FOCUS SEA")]), _vm._v(" "), _c("p", {
-          staticClass: "service-product-desc"
-        }, [_vm._v("Streamlined ocean freight documentation and container tracking. Manage every wave of your sea logistics with one-click efficiency.")]), _vm._v(" "), _c("b-button", {
-          staticClass: "service-product-btn",
-          attrs: {
-            disabled: ""
-          }
-        }, [_c("span", [_vm._v("Coming Soon")])])], 1)])];
-      }
-    }])
-  }), _vm._v(" "), _c("router-link", {
-    attrs: {
-      to: "/product-description",
-      custom: ""
-    },
-    scopedSlots: _vm._u([{
-      key: "default",
-      fn: function fn(_ref2) {
-        var navigate = _ref2.navigate;
-        return [_c("article", {
-          staticClass: "service-product-card order-lg-2 order-1",
-          staticStyle: {
-            cursor: "pointer"
-          },
-          on: {
-            click: navigate
-          }
-        }, [_c("div", {
-          staticClass: "service-product-image"
-        }, [_c("img", {
-          attrs: {
-            src: "/media/assets/banners/banner-plane.webp",
-            alt: "Focus Air - Automated Air Freight Solutions"
-          }
-        })]), _vm._v(" "), _c("div", {
-          staticClass: "service-product-info"
-        }, [_c("h3", {
-          staticClass: "service-product-title"
-        }, [_vm._v("FOCUS AIR")]), _vm._v(" "), _c("p", {
-          staticClass: "service-product-desc"
-        }, [_vm._v("The gold standard in air freight automation. Instant AWB generation, real-time EDI connectivity, and automated status updates.")]), _vm._v(" "), _c("b-button", {
-          staticClass: "hero-btn",
-          attrs: {
-            to: "/product-description",
-            "aria-label": "Start using Focus Air services"
-          }
-        }, [_c("span", [_vm._v("Explore More")]), _vm._v(" "), _c("div", {
-          staticClass: "btn-icon"
-        }, [_c("b-icon", {
-          attrs: {
-            icon: "arrow-right",
-            "aria-hidden": "true"
-          }
-        })], 1)])], 1)])];
-      }
-    }])
-  }), _vm._v(" "), _c("router-link", {
-    attrs: {
-      to: "/product-description",
-      custom: ""
-    },
-    scopedSlots: _vm._u([{
-      key: "default",
-      fn: function fn(_ref3) {
-        var navigate = _ref3.navigate;
-        return [_c("article", {
-          staticClass: "service-product-card is-coming-soon order-lg-3 order-3",
-          staticStyle: {
-            cursor: "pointer"
-          },
-          on: {
-            click: navigate
-          }
-        }, [_c("div", {
-          staticClass: "service-product-badge"
-        }, [_vm._v("Upcoming")]), _vm._v(" "), _c("div", {
-          staticClass: "service-product-image"
-        }, [_c("img", {
-          attrs: {
-            src: "/media/assets/banners/banner-truck.webp",
-            alt: "Focus Road - Road Transportation Management"
-          }
-        })]), _vm._v(" "), _c("div", {
-          staticClass: "service-product-info"
-        }, [_c("h3", {
-          staticClass: "service-product-title"
-        }, [_vm._v("FOCUS ROAD")]), _vm._v(" "), _c("p", {
-          staticClass: "service-product-desc"
-        }, [_vm._v("Simplified road transportation management. Handle local trucking and cross-border freight with powerful dispatching tools.")]), _vm._v(" "), _c("b-button", {
-          staticClass: "service-product-btn",
-          attrs: {
-            disabled: ""
-          }
-        }, [_c("span", [_vm._v("Coming Soon")])])], 1)])];
-      }
-    }])
-  })], 1)])], 1)], 1);
-};
-var staticRenderFns = [];
 render._withStripped = true;
 
 
@@ -1595,44 +1407,6 @@ component.options.__file = "resources/js/src/view/pages/public/components/HomePa
 
 /***/ }),
 
-/***/ "./resources/js/src/view/pages/public/components/HomeServicesGrid.vue":
-/*!****************************************************************************!*\
-  !*** ./resources/js/src/view/pages/public/components/HomeServicesGrid.vue ***!
-  \****************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _HomeServicesGrid_vue_vue_type_template_id_9697751c__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./HomeServicesGrid.vue?vue&type=template&id=9697751c */ "./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=template&id=9697751c");
-/* harmony import */ var _HomeServicesGrid_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./HomeServicesGrid.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=script&lang=js");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
-
-
-
-
-
-/* normalize component */
-;
-var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
-  _HomeServicesGrid_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
-  _HomeServicesGrid_vue_vue_type_template_id_9697751c__WEBPACK_IMPORTED_MODULE_0__.render,
-  _HomeServicesGrid_vue_vue_type_template_id_9697751c__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
-  false,
-  null,
-  null,
-  null
-  
-)
-
-/* hot reload */
-if (false) { var api; }
-component.options.__file = "resources/js/src/view/pages/public/components/HomeServicesGrid.vue"
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
-
-/***/ }),
-
 /***/ "./resources/js/src/view/pages/public/components/HomeStatsSection.vue":
 /*!****************************************************************************!*\
   !*** ./resources/js/src/view/pages/public/components/HomeStatsSection.vue ***!
@@ -1761,21 +1535,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=script&lang=js":
-/*!****************************************************************************************************!*\
-  !*** ./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=script&lang=js ***!
-  \****************************************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_HomeServicesGrid_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./HomeServicesGrid.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=script&lang=js");
- /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_HomeServicesGrid_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
-
-/***/ }),
-
 /***/ "./resources/js/src/view/pages/public/components/HomeStatsSection.vue?vue&type=script&lang=js":
 /*!****************************************************************************************************!*\
   !*** ./resources/js/src/view/pages/public/components/HomeStatsSection.vue?vue&type=script&lang=js ***!
@@ -1883,22 +1642,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HomePartnersTicker_vue_vue_type_template_id_50debe43_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HomePartnersTicker_vue_vue_type_template_id_50debe43_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./HomePartnersTicker.vue?vue&type=template&id=50debe43&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomePartnersTicker.vue?vue&type=template&id=50debe43&scoped=true");
-
-
-/***/ }),
-
-/***/ "./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=template&id=9697751c":
-/*!**********************************************************************************************************!*\
-  !*** ./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=template&id=9697751c ***!
-  \**********************************************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HomeServicesGrid_vue_vue_type_template_id_9697751c__WEBPACK_IMPORTED_MODULE_0__.render),
-/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HomeServicesGrid_vue_vue_type_template_id_9697751c__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
-/* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HomeServicesGrid_vue_vue_type_template_id_9697751c__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./HomeServicesGrid.vue?vue&type=template&id=9697751c */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/public/components/HomeServicesGrid.vue?vue&type=template&id=9697751c");
 
 
 /***/ }),

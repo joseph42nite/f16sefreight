@@ -1051,16 +1051,6 @@ var render = function render() {
       }
     }],
     staticClass: "show-btn",
-    staticStyle: {
-      background: "white",
-      color: "#355594",
-      border: "1px solid #E6F0FF",
-      "border-radius": "50px",
-      padding: "10px 22px",
-      "font-weight": "600",
-      transition: "all 0.3s ease",
-      "box-shadow": "0 4px 6px rgba(0,0,0,0.02)"
-    },
     on: {
       click: function click($event) {
         $event.preventDefault();
@@ -1113,27 +1103,33 @@ var render = function render() {
   }, [_c("h6", {
     staticClass: "h-color ml-4 mb-0"
   }, [_vm._v("\n                                " + _vm._s(_vm.form.id ? "Edit House Waybill Details" : "Create Electronic Consolidation (FHL)") + "\n                            ")])]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex ml-4 mt-7"
+    staticClass: "d-flex align-items-center ml-4 mt-7"
   }, [_c("b-form-group", {
-    staticClass: "align-items-center",
+    staticClass: "align-items-center mb-0",
     attrs: {
       id: "fieldset-horizontal",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
+      "label-cols": "auto",
+      "content-cols": "auto",
       "label-for": "input-horizontal"
     },
     scopedSlots: _vm._u([{
       key: "label",
       fn: function fn() {
-        return [_c("span", {}, [_vm._v("Master no:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
+        return [_c("span", {
+          staticClass: "mr-2"
+        }, [_vm._v("Master no:")]), _vm._v(" "), _c("span", {
+          staticClass: "text-danger mr-2"
         }, [_vm._v("*")])];
       },
       proxy: true
     }])
-  }, [_vm._v(" "), _c("b-form-input", {
-    staticClass: "form-control",
+  }, [_vm._v(" "), _c("div", {
+    staticClass: "d-flex align-items-center flex-wrap",
+    staticStyle: {
+      gap: "8px"
+    }
+  }, [_c("b-form-input", {
+    staticClass: "form-control awb-code-input",
     "class": {
       "is-invalid": _vm.form.errors.has("awb_code")
     },
@@ -1155,19 +1151,8 @@ var render = function render() {
       },
       expression: "form.awb_code"
     }
-  })], 1), _vm._v(" "), _c("span", {
-    staticClass: "d-flex align-items-center pl-3"
-  }, [_vm._v("-")]), _vm._v(" "), _c("b-form-group", {
-    staticClass: "align-items-center",
-    attrs: {
-      id: "fieldset-horizontal",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-horizontal"
-    }
-  }, [_c("b-form-input", {
-    staticClass: "form-control",
+  }), _vm._v(" "), _c("span", [_vm._v("-")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "form-control awb-no-input",
     "class": {
       "is-invalid": _vm.form.errors.has("awb_no")
     },
@@ -1175,7 +1160,7 @@ var render = function render() {
       width: "150px"
     },
     attrs: {
-      id: "input-horizontal"
+      id: "input-horizontal-2"
     },
     on: {
       keypress: function keypress($event) {
@@ -1189,19 +1174,12 @@ var render = function render() {
       },
       expression: "form.awb_no"
     }
-  })], 1), _vm._v(" "), _c("b-button", {
-    staticClass: "ml-4",
-    staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
-      color: "#355594",
-      background: "#ffffff !important"
-    },
+  }), _vm._v(" "), _c("b-button", {
+    staticClass: "show-btn ml-2",
     on: {
       click: _vm.searchWayBills
     }
-  }, [_vm._v("Search")])], 1), _vm._v(" "), _c("has-error", {
+  }, [_vm._v("Search")])], 1)])], 1), _vm._v(" "), _c("has-error", {
     "class": {
       "d-block": _vm.form.errors.has("awb_code")
     },
@@ -1225,6 +1203,8 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "d-flex align-items-start py-2"
+  }, [_c("div", {
+    staticClass: "table-responsive-wrapper"
   }, [_vm.existingData ? _c("table", {
     staticStyle: {
       width: "100%"
@@ -1269,7 +1249,7 @@ var render = function render() {
         })], 1)];
       }
     }], null, false, 1069267099)
-  })], 1)]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(String(_vm.existingData.awb_code)) + "-" + _vm._s(String(_vm.existingData.awb_no)) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.departure_airport) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.destination_airport) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                T/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.pieces : "N/A") + "/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.weight_code : "N/A") + "/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.gross_weight : "N/A") + "/\n                                            ")])])])]) : _vm._e()])])], 1), _vm._v(" "), _c("hr", {
+  })], 1)]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(String(_vm.existingData.awb_code)) + "-" + _vm._s(String(_vm.existingData.awb_no)) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.departure_airport) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                " + _vm._s(_vm.existingData.destination_airport) + "\n                                            ")]), _vm._v(" "), _c("td", {}, [_vm._v("\n                                                T/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.pieces : "N/A") + "/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.weight_code : "N/A") + "/" + _vm._s(_vm.existingData.consignment_data ? _vm.existingData.consignment_data.gross_weight : "N/A") + "/\n                                            ")])])])]) : _vm._e()])])])], 1), _vm._v(" "), _c("hr", {
     staticClass: "hr"
   }), _vm._v(" "), _c("b-row", [_c("b-col", {
     attrs: {
@@ -1291,8 +1271,10 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "py-7"
   }, [_c("b-row", [_c("b-col", {
+    staticClass: "mb-4 lg-mb-0",
     attrs: {
-      cols: "4"
+      cols: "12",
+      lg: "4"
     }
   }, [_c("b-form-group", {
     staticStyle: {
@@ -1336,8 +1318,10 @@ var render = function render() {
       expression: "form.id"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 lg-mb-0",
     attrs: {
-      cols: "4"
+      cols: "12",
+      lg: "4"
     }
   }, [_c("b-form-group", {
     staticStyle: {
@@ -1408,8 +1392,10 @@ var render = function render() {
       }
     }, [_vm._v("\n                                                                        " + _vm._s(item.iata_code) + " (" + _vm._s(item.destination) + ")\n                                                                    ")]);
   }), 0) : _vm._e()])])], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 lg-mb-0",
     attrs: {
-      cols: "4"
+      cols: "12",
+      lg: "4"
     }
   }, [_c("b-form-group", {
     staticStyle: {
@@ -1480,8 +1466,10 @@ var render = function render() {
       }
     }, [_vm._v("\n                                                                        " + _vm._s(item.iata_code) + " (" + _vm._s(item.destination) + ")\n                                                                    ")]);
   }), 0) : _vm._e()])])], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+    staticClass: "mb-4 lg-mb-0",
     attrs: {
-      cols: "4"
+      cols: "12",
+      lg: "4"
     }
   }, [_c("b-form-group", {
     staticStyle: {
@@ -1543,8 +1531,10 @@ var render = function render() {
       expression: "form.pieces"
     }
   })], 1)])], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 lg-mb-0",
     attrs: {
-      cols: "4"
+      cols: "12",
+      lg: "4"
     }
   }, [_c("b-form-group", {
     staticStyle: {
@@ -1585,8 +1575,10 @@ var render = function render() {
       expression: "form.gross_weight"
     }
   })], 1)], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 lg-mb-0",
     attrs: {
-      cols: "4"
+      cols: "12",
+      lg: "4"
     }
   }, [_c("div", {
     staticClass: "d-flex"
@@ -1781,14 +1773,7 @@ var render = function render() {
         "modal-s": true
       }
     }],
-    staticClass: "ml-2 mr-10",
-    staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
-      color: "#355594",
-      background: "#ffffff !important"
-    },
+    staticClass: "show-btn ml-2 mr-10",
     attrs: {
       id: "show-btn"
     },
@@ -1803,14 +1788,7 @@ var render = function render() {
       "font-size": "1.05rem"
     }
   }, [_vm._v("10 Latest")])]), _vm._v(" "), _c("b-button", {
-    staticClass: "ml-4",
-    staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
-      color: "#355594",
-      background: "#ffffff !important"
-    },
+    staticClass: "show-btn ml-4",
     on: {
       click: _vm.addManualCode
     }
@@ -1819,6 +1797,8 @@ var render = function render() {
     attrs: {
       cols: "auto"
     }
+  }, [_c("div", {
+    staticClass: "table-responsive-wrapper"
   }, [_c("table", [_c("thead", [_c("tr", {
     staticStyle: {
       "background-color": "#F2F9FF"
@@ -1848,7 +1828,7 @@ var render = function render() {
         }
       }
     })], 1)]);
-  }), 0)])])], 1)], 1)])]), _vm._v(" "), _c("b-tab", {
+  }), 0)])])])], 1)], 1)])]), _vm._v(" "), _c("b-tab", {
     attrs: {
       title: "Other Customs Information"
     }
@@ -1860,6 +1840,8 @@ var render = function render() {
     attrs: {
       cols: "auto"
     }
+  }, [_c("div", {
+    staticClass: "table-responsive-wrapper"
   }, [_c("table", [_c("thead", [_c("tr", {
     staticStyle: {
       "background-color": "#F2F9FF",
@@ -1988,7 +1970,7 @@ var render = function render() {
       form: _vm.form,
       field: "custom_info_identifier"
     }
-  })], 1)], 1)])])]), _vm._v(" "), _c("div", {
+  })], 1)], 1)])])])]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center pt-4"
   }, [_c("div", [_c("b-form-group", {
     staticClass: "d-flex align-items-center",
@@ -2032,13 +2014,7 @@ var render = function render() {
       width: "100%"
     }
   }, [_c("b-button", {
-    staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
-      color: "#355594",
-      background: "#ffffff !important"
-    },
+    staticClass: "show-btn",
     on: {
       click: _vm.addOtherCustomInfo
     }
@@ -2047,6 +2023,8 @@ var render = function render() {
     attrs: {
       cols: "auto"
     }
+  }, [_c("div", {
+    staticClass: "table-responsive-wrapper"
   }, [_c("table", [_c("thead", [_c("tr", {
     staticStyle: {
       "background-color": "#F2F9FF"
@@ -2104,7 +2082,7 @@ var render = function render() {
         }
       }
     })], 1) : _vm._e()])]);
-  }), 0)])])], 1)], 1)])])], 1)], 1)])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }), 0)])])])], 1)], 1)])])], 1)], 1)])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
     attrs: {
       cols: "12"
     }
@@ -2143,6 +2121,8 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "py-6"
+  }, [_c("div", {
+    staticClass: "table-responsive-wrapper"
   }, [_c("table", [_c("tr", {
     staticStyle: {
       "background-color": "#F2F9FF"
@@ -2184,7 +2164,7 @@ var render = function render() {
       "font-weight": "400",
       width: "407px"
     }
-  }, [_vm._v("Nature of Goods")])])])]), _vm._v(" "), _vm.consolidation && _vm.consolidation.length > 0 ? [_c("RecycleScroller", {
+  }, [_vm._v("Nature of Goods")])])])])]), _vm._v(" "), _vm.consolidation && _vm.consolidation.length > 0 ? [_c("RecycleScroller", {
     staticClass: "scroller",
     staticStyle: {
       "max-height": "500px"
@@ -2270,29 +2250,34 @@ var render = function render() {
       cols: "12"
     }
   }, [_c("div", {
-    staticClass: "d-flex justify-content-end align-items-center mr-16 py-8"
-  }, [_c("b-button", {
-    staticClass: "mr-2",
+    staticClass: "d-flex justify-content-end flex-wrap submit-button",
     staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
-      color: "#355594",
-      background: "#ffffff !important"
+      gap: "12px",
+      "align-items": "center",
+      "padding-right": "16px"
+    }
+  }, [_c("b-button", {
+    staticClass: "show-btn",
+    attrs: {
+      type: "button"
     },
     on: {
       click: _vm.generateAwbPDF
     }
-  }, [_vm._v("Generate PDF")]), _vm._v(" "), _c("b-button", {
+  }, [_c("b-icon", {
     staticClass: "mr-2",
-    staticStyle: {
-      "border-radius": "30px",
-      border: "1px solid #355594",
-      padding: "6px 30px",
-      color: "#355594",
-      background: "#ffffff !important"
-    },
     attrs: {
+      icon: "file-earmark-pdf"
+    }
+  }), _c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("Generate PDF")])], 1), _vm._v(" "), _c("b-button", {
+    staticClass: "show-btn",
+    attrs: {
+      type: "button",
       id: "manifest-send-btn"
     },
     on: {
@@ -2300,7 +2285,17 @@ var render = function render() {
         return _vm.manifest_send();
       }
     }
-  }, [_vm._v("Send")])], 1)])], 1)], 1) : _vm.searchPerformed && !_vm.hasSearchResults ? _c("div", {
+  }, [_c("b-icon", {
+    staticClass: "mr-2",
+    attrs: {
+      icon: "cursor"
+    }
+  }), _c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("Send")])], 1)], 1)])], 1)], 1) : _vm.searchPerformed && !_vm.hasSearchResults ? _c("div", {
     staticClass: "d-flex flex-column align-items-start pt-2 pb-2"
   }, [_c("p", {
     staticClass: "text-danger mt-5"
@@ -2328,7 +2323,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_laravel_mix_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.form-row[data-v-2c8fcb25] {\n    flex-wrap: nowrap !important;\n}\nheader[data-v-2c8fcb25] {\n    width: 100%;\n    background-color: #2637a8;\n}\n.h-color[data-v-2c8fcb25] {\n    color: #355594;\n}\n.h_background_color[data-v-2c8fcb25] {\n    background-color: #2637a8;\n    color: white;\n}\n#nav[data-v-2c8fcb25] {\n    display: flex;\n    /* align-items: center;\n    justify-content: center; */\n    width: 100%;\n    max-width: 1280px;\n    /* margin: 0 auto; */\n}\n#nav>ul[data-v-2c8fcb25] {\n    display: flex;\n    margin: 0;\n    padding: 0;\n    list-style-type: none;\n}\n#nav>ul>li[data-v-2c8fcb25]:hover {\n    background-color: gray;\n}\n#nav>ul>li>span[data-v-2c8fcb25]:after {\n    display: inline-block;\n}\n#nav>ul>li>a[data-v-2c8fcb25] {\n    display: block;\n    height: auto;\n    padding: 3px;\n    color: #fff;\n    text-decoration: none;\n}\n#nav>ul>li>span[data-v-2c8fcb25] {\n    position: relative;\n    display: block;\n    height: auto;\n    padding: 3px;\n    color: #fff;\n    text-decoration: none;\n    cursor: pointer;\n}\nli[data-v-2c8fcb25] {\n    border-right: 1px solid white;\n}\n#nav>ul>li>span[data-v-2c8fcb25]:after {\n    /* content: '▼'; */\n    display: inline-block;\n}\n.dropdown[data-v-2c8fcb25] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    display: none;\n    padding: 0;\n    list-style-type: none;\n    background-color: gray;\n}\n.dropdown li[data-v-2c8fcb25] {\n    /* width: 250px; */\n    width: 150px;\n    border-bottom: 1px solid #fff;\n}\n.dropdown li a[data-v-2c8fcb25] {\n    display: block;\n    /* padding: 10px; */\n    padding-left: 5px;\n    color: #fff;\n    text-decoration: none;\n}\n.isOpen[data-v-2c8fcb25] {\n    display: block;\n}\n.custom-btn[data-v-2c8fcb25] {\n    transition: background-color 0.3s;\n}\n\n/* #show-btn:hover {\n  background-color: #007bff;\n} */\n.custom-btn[data-v-2c8fcb25]:hover {\n    background-color: #007bff !important;\n    color: white !important;\n}\n.form-group[data-v-2c8fcb25] {\n    margin-bottom: 0px !important;\n}\n.col-form-label[data-v-2c8fcb25] {\n    padding-top: 0 !important;\n    padding-bottom: 0 !important;\n    margin-bottom: 0 !important;\n    font-size: inherit !important;\n    line-height: 1.5 !important;\n}\n.background-color[data-v-2c8fcb25] {\n    background-color: grey;\n}\n.hr[data-v-2c8fcb25] {\n    border-top: 2px solid #CDCDCD;\n}\n.aselect[data-v-2c8fcb25] {\n    position: relative;\n    width: 200px;\n    /* Adjust the width as needed */\n}\n.selector.box[data-v-2c8fcb25] {\n    position: relative;\n}\n.custom-select[data-v-2c8fcb25] {\n        appearance: none;\n        -webkit-appearance: none;\n        -moz-appearance: none;\n        background: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"34\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"M7 10l5 5 5-5z\"/></svg>') no-repeat right center;\n        background-color: white;\n        font-size: 14px;\n        cursor: pointer;\n        width: 100%;\n}\n.custom-select[data-v-2c8fcb25]:focus {\n        outline: none;\n        border-color: #5cb3fd;\n}\n.nav-tabs .nav-links[data-v-2c8fcb25] {\n    border: 2px solid black;\n}\n.table[data-v-2c8fcb25] {\n    max-width: 400px;\n    border: 0;\n}\ntd.editable-cell1[data-v-2c8fcb25] {\n    border: 1 solid gray !important;\n}\ntd.editable-cell[data-v-2c8fcb25] {\n    border: 0 !important;\n}\nth[data-v-2c8fcb25] {\n    border: 0 !important;\n}\n.form-control[data-v-2c8fcb25] {\n    border: 1px solid #A6A6A6;\n    height: 38px !important;\n    border-radius: 7px !important;\n}\n.form-control1[data-v-2c8fcb25] {\n    border: 2px solid gray;\n    width: 150px;\n    height: 25px;\n}\n.custom-link[data-v-2c8fcb25] {\n    display: block;\n    margin-bottom: 0.5rem;\n    color: #4C4C4C;\n    text-decoration: none;\n}\n.custom-link[data-v-2c8fcb25]:hover {\n    /* color: #2637a8; */\n    -webkit-text-decoration: underline #4C4C4C !important;\n            text-decoration: underline #4C4C4C !important;\n    text-decoration-color: #4C4C4C;\n}\n.custom-link-custom[data-v-2c8fcb25] {\n    display: block;\n    margin-bottom: 0.5rem;\n    color:#355594;\n    text-decoration: none;\n}\n.custom-link-custom[data-v-2c8fcb25]:hover {\n    /* color: #2637a8; */\n    -webkit-text-decoration: underline #355594 !important;\n            text-decoration: underline #355594 !important;\n    text-decoration-color: #355594;\n}\n.column_b[data-v-2c8fcb25] {\n    border: 1px solid #b1b1b1;\n}\n.custom-dropdown[data-v-2c8fcb25] {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  /* border: solid 1px silver; */\n  border-radius: 5px;\n}\n.dropdown-options[data-v-2c8fcb25] {\n  /* position: absolute; */\n  top: 100%;\n  left: 0;\n  width: 100%;\n  background-color: #fff;\n  border: 1px solid #ccc;\n  border-top: none;\n  max-height: 200px;\n  overflow-y: auto;\n  z-index: 1;\n}\n.option[data-v-2c8fcb25] {\n  padding: 5px 10px;\n  cursor: pointer;\n}\n.option[data-v-2c8fcb25]:hover {\n  background-color: #f0f0f0;\n}\n.custom-label-styling label[data-v-2c8fcb25] {\n    font-size: 1rem;\n    font-weight: 400;\n    color: #3F4254;\n    width: 180px;\n}\n.custom-label-styling-two label[data-v-2c8fcb25] {\n    font-size: 1rem;\n    font-weight: 400;\n    color: #3F4254;\n    width: 100px;\n}\n.hwb-details input[data-v-2c8fcb25], .hwb-details select[data-v-2c8fcb25] {\n    border-radius: 0px !important;\n}\n.hwb-details button[data-v-2c8fcb25] {\n    padding: 4px 12px;\n    border: 1px solid #000;\n    border-radius: 4px;\n}\n.custom-dropdown[data-v-2c8fcb25] {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  /* border: solid 1px silver; */\n  border-radius: 5px;\n}\n.dropdown-options[data-v-2c8fcb25] {\n  /* position: absolute; */\n  top: 100%;\n  left: 0;\n  width: 100%;\n  background-color: #fff;\n  border: 1px solid #ccc;\n  border-top: none;\n  max-height: 200px;\n  overflow-y: auto;\n  z-index: 1;\n}\n.option[data-v-2c8fcb25] {\n  padding: 5px 10px;\n  cursor: pointer;\n}\n.option[data-v-2c8fcb25]:hover {\n  background-color: #f0f0f0;\n}\n.awbcodetitle[data-v-2c8fcb25] {\n    color: #355594;\n    transition: color 0.3s ease;\n}\n.awbcodetitle[data-v-2c8fcb25]:hover {\n    color: #2637a8;\n    text-decoration: underline;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.show-btn[data-v-2c8fcb25] {\n  background: white !important;\n  color: #355594 !important;\n  border: 1px solid #E6F0FF !important;\n  border-radius: 50px !important;\n  padding: 10px 22px !important;\n  font-weight: 600 !important;\n  transition: all 0.3s ease !important;\n  box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;\n}\n.show-btn[data-v-2c8fcb25]:hover {\n  background: #355594 !important;\n  color: white !important;\n  border-color: #355594 !important;\n  transform: translateY(-1px);\n  box-shadow: 0 6px 12px rgba(53, 85, 148, 0.15) !important;\n}\n.form-row[data-v-2c8fcb25] {\n    flex-wrap: nowrap !important;\n}\nheader[data-v-2c8fcb25] {\n    width: 100%;\n    background-color: #2637a8;\n}\n.h-color[data-v-2c8fcb25] {\n    color: #355594;\n}\n.h_background_color[data-v-2c8fcb25] {\n    background-color: #2637a8;\n    color: white;\n}\n#nav[data-v-2c8fcb25] {\n    display: flex;\n    /* align-items: center;\n    justify-content: center; */\n    width: 100%;\n    max-width: 1280px;\n    /* margin: 0 auto; */\n}\n#nav>ul[data-v-2c8fcb25] {\n    display: flex;\n    margin: 0;\n    padding: 0;\n    list-style-type: none;\n}\n#nav>ul>li[data-v-2c8fcb25]:hover {\n    background-color: gray;\n}\n#nav>ul>li>span[data-v-2c8fcb25]:after {\n    display: inline-block;\n}\n#nav>ul>li>a[data-v-2c8fcb25] {\n    display: block;\n    height: auto;\n    padding: 3px;\n    color: #fff;\n    text-decoration: none;\n}\n#nav>ul>li>span[data-v-2c8fcb25] {\n    position: relative;\n    display: block;\n    height: auto;\n    padding: 3px;\n    color: #fff;\n    text-decoration: none;\n    cursor: pointer;\n}\nli[data-v-2c8fcb25] {\n    border-right: 1px solid white;\n}\n#nav>ul>li>span[data-v-2c8fcb25]:after {\n    /* content: '▼'; */\n    display: inline-block;\n}\n.dropdown[data-v-2c8fcb25] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    display: none;\n    padding: 0;\n    list-style-type: none;\n    background-color: gray;\n}\n.dropdown li[data-v-2c8fcb25] {\n    /* width: 250px; */\n    width: 150px;\n    border-bottom: 1px solid #fff;\n}\n.dropdown li a[data-v-2c8fcb25] {\n    display: block;\n    /* padding: 10px; */\n    padding-left: 5px;\n    color: #fff;\n    text-decoration: none;\n}\n.isOpen[data-v-2c8fcb25] {\n    display: block;\n}\n.custom-btn[data-v-2c8fcb25] {\n    transition: background-color 0.3s;\n}\n\n/* #show-btn:hover {\n  background-color: #007bff;\n} */\n.custom-btn[data-v-2c8fcb25]:hover {\n    background-color: #007bff !important;\n    color: white !important;\n}\n.form-group[data-v-2c8fcb25] {\n    margin-bottom: 0px !important;\n}\n.col-form-label[data-v-2c8fcb25] {\n    padding-top: 0 !important;\n    padding-bottom: 0 !important;\n    margin-bottom: 0 !important;\n    font-size: inherit !important;\n    line-height: 1.5 !important;\n}\n.background-color[data-v-2c8fcb25] {\n    background-color: grey;\n}\n.hr[data-v-2c8fcb25] {\n    border-top: 2px solid #CDCDCD;\n}\n.aselect[data-v-2c8fcb25] {\n    position: relative;\n    width: 200px;\n    /* Adjust the width as needed */\n}\n.selector.box[data-v-2c8fcb25] {\n    position: relative;\n}\n.custom-select[data-v-2c8fcb25] {\n        appearance: none;\n        -webkit-appearance: none;\n        -moz-appearance: none;\n        background: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"28\" height=\"34\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"M7 10l5 5 5-5z\"/></svg>') no-repeat right center;\n        background-color: white;\n        font-size: 14px;\n        cursor: pointer;\n        width: 100%;\n}\n.custom-select[data-v-2c8fcb25]:focus {\n        outline: none;\n        border-color: #5cb3fd;\n}\n.nav-tabs .nav-links[data-v-2c8fcb25] {\n    border: 2px solid black;\n}\n.table[data-v-2c8fcb25] {\n    max-width: 400px;\n    border: 0;\n}\ntd.editable-cell1[data-v-2c8fcb25] {\n    border: 1 solid gray !important;\n}\ntd.editable-cell[data-v-2c8fcb25] {\n    border: 0 !important;\n}\nth[data-v-2c8fcb25] {\n    border: 0 !important;\n}\n.form-control[data-v-2c8fcb25] {\n    border: 1px solid #A6A6A6;\n    height: 38px !important;\n    border-radius: 7px !important;\n}\n.form-control1[data-v-2c8fcb25] {\n    border: 2px solid gray;\n    width: 150px;\n    height: 25px;\n}\n.custom-link[data-v-2c8fcb25] {\n    display: block;\n    margin-bottom: 0.5rem;\n    color: #4C4C4C;\n    text-decoration: none;\n}\n.custom-link[data-v-2c8fcb25]:hover {\n    /* color: #2637a8; */\n    -webkit-text-decoration: underline #4C4C4C !important;\n            text-decoration: underline #4C4C4C !important;\n    text-decoration-color: #4C4C4C;\n}\n.custom-link-custom[data-v-2c8fcb25] {\n    display: block;\n    margin-bottom: 0.5rem;\n    color:#355594;\n    text-decoration: none;\n}\n.custom-link-custom[data-v-2c8fcb25]:hover {\n    /* color: #2637a8; */\n    -webkit-text-decoration: underline #355594 !important;\n            text-decoration: underline #355594 !important;\n    text-decoration-color: #355594;\n}\n.column_b[data-v-2c8fcb25] {\n    border: 1px solid #b1b1b1;\n}\n.custom-dropdown[data-v-2c8fcb25] {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  /* border: solid 1px silver; */\n  border-radius: 5px;\n}\n.dropdown-options[data-v-2c8fcb25] {\n  /* position: absolute; */\n  top: 100%;\n  left: 0;\n  width: 100%;\n  background-color: #fff;\n  border: 1px solid #ccc;\n  border-top: none;\n  max-height: 200px;\n  overflow-y: auto;\n  z-index: 1;\n}\n.option[data-v-2c8fcb25] {\n  padding: 5px 10px;\n  cursor: pointer;\n}\n.option[data-v-2c8fcb25]:hover {\n  background-color: #f0f0f0;\n}\n.custom-label-styling label[data-v-2c8fcb25] {\n    font-size: 1rem;\n    font-weight: 400;\n    color: #3F4254;\n    width: 180px;\n}\n.custom-label-styling-two label[data-v-2c8fcb25] {\n    font-size: 1rem;\n    font-weight: 400;\n    color: #3F4254;\n    width: 100px;\n}\n.hwb-details input[data-v-2c8fcb25], .hwb-details select[data-v-2c8fcb25] {\n    border-radius: 0px !important;\n}\n.hwb-details button[data-v-2c8fcb25] {\n    padding: 4px 12px;\n    border: 1px solid #000;\n    border-radius: 4px;\n}\n.custom-dropdown[data-v-2c8fcb25] {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  /* border: solid 1px silver; */\n  border-radius: 5px;\n}\n.dropdown-options[data-v-2c8fcb25] {\n  /* position: absolute; */\n  top: 100%;\n  left: 0;\n  width: 100%;\n  background-color: #fff;\n  border: 1px solid #ccc;\n  border-top: none;\n  max-height: 200px;\n  overflow-y: auto;\n  z-index: 1;\n}\n.option[data-v-2c8fcb25] {\n  padding: 5px 10px;\n  cursor: pointer;\n}\n.option[data-v-2c8fcb25]:hover {\n  background-color: #f0f0f0;\n}\n.awbcodetitle[data-v-2c8fcb25] {\n    color: #355594;\n    transition: color 0.3s ease;\n}\n.awbcodetitle[data-v-2c8fcb25]:hover {\n    color: #2637a8;\n    text-decoration: underline;\n}\n\n        /* Responsive overrides for smaller viewports */\n@media (max-width: 991px) {\n\n            /* Ensure AWB input boxes keep their original widths on all viewports */\n.form-control.awb-code-input[data-v-2c8fcb25],\n            .awb-code-input[data-v-2c8fcb25] {\n                width: 62px !important;\n                max-width: 62px !important;\n                flex: 0 0 62px !important;\n}\n.form-control.awb-no-short-input[data-v-2c8fcb25],\n            .awb-no-short-input[data-v-2c8fcb25] {\n                width: 100px !important;\n                max-width: 100px !important;\n                flex: 0 0 100px !important;\n}\n.form-control.awb-no-input[data-v-2c8fcb25],\n            .awb-no-input[data-v-2c8fcb25] {\n                width: 150px !important;\n                max-width: 150px !important;\n                flex: 0 0 150px !important;\n}\n.form-control.hawb-no-input[data-v-2c8fcb25],\n            .hawb-no-input[data-v-2c8fcb25] {\n                width: 210px !important;\n                max-width: 210px !important;\n                flex: 0 0 210px !important;\n}\n\n\n            /* Ensure AWB input boxes keep their original widths on all viewports */\n.form-control.awb-code-input[data-v-2c8fcb25],\n            .awb-code-input[data-v-2c8fcb25] {\n                width: 62px !important;\n                max-width: 62px !important;\n                flex: 0 0 62px !important;\n}\n.form-control.awb-no-short-input[data-v-2c8fcb25],\n            .awb-no-short-input[data-v-2c8fcb25] {\n                width: 100px !important;\n                max-width: 100px !important;\n                flex: 0 0 100px !important;\n}\n.form-control.awb-no-input[data-v-2c8fcb25],\n            .awb-no-input[data-v-2c8fcb25] {\n                width: 150px !important;\n                max-width: 150px !important;\n                flex: 0 0 150px !important;\n}\n.form-control.hawb-no-input[data-v-2c8fcb25],\n            .hawb-no-input[data-v-2c8fcb25] {\n                width: 210px !important;\n                max-width: 210px !important;\n                flex: 0 0 210px !important;\n}\n\n\n            /* Ensure AWB input boxes keep their original widths on all viewports */\n.form-control.awb-code-input[data-v-2c8fcb25],\n            .awb-code-input[data-v-2c8fcb25] {\n                width: 62px !important;\n                max-width: 62px !important;\n                flex: 0 0 62px !important;\n}\n.form-control.awb-no-short-input[data-v-2c8fcb25],\n            .awb-no-short-input[data-v-2c8fcb25] {\n                width: 100px !important;\n                max-width: 100px !important;\n                flex: 0 0 100px !important;\n}\n.form-control.awb-no-input[data-v-2c8fcb25],\n            .awb-no-input[data-v-2c8fcb25] {\n                width: 150px !important;\n                max-width: 150px !important;\n                flex: 0 0 150px !important;\n}\n.form-control.hawb-no-input[data-v-2c8fcb25],\n            .hawb-no-input[data-v-2c8fcb25] {\n                width: 210px !important;\n                max-width: 210px !important;\n                flex: 0 0 210px !important;\n}\n.container[data-v-2c8fcb25], .container-fluid[data-v-2c8fcb25] {\n                padding-left: 10px !important;\n                padding-right: 10px !important;\n}\n.py-8.px-10[data-v-2c8fcb25] {\n                padding: 1.5rem 1rem !important;\n}\n            \n            /* Form fields custom responsiveness */\n.shipper-form-control[data-v-2c8fcb25], .consignee-form-control[data-v-2c8fcb25], .form-control[data-v-2c8fcb25] {\n                width: 100% !important;\n                max-width: 100% !important;\n}\n.custom-dropdown[data-v-2c8fcb25], .custom-dropdown input[data-v-2c8fcb25] {\n                width: 100% !important;\n}\n            \n            /* Keep form groups and siblings aligned inline */\n.d-flex.align-items-center[data-v-2c8fcb25] {\n                display: flex !important;\n                flex-direction: row !important;\n                flex-wrap: nowrap !important;\n                align-items: center !important;\n}\n.d-flex.align-items-center > .form-group[data-v-2c8fcb25] {\n                flex: 1 1 auto !important;\n                margin-bottom: 0 !important;\n}\n            \n            /* Stack labels vertically above their input columns inside form-groups */\n.form-group[data-v-2c8fcb25] {\n                width: 100% !important;\n                margin-bottom: 0.5rem !important;\n}\n.form-row[data-v-2c8fcb25] {\n                flex-direction: column !important;\n                align-items: stretch !important;\n}\n.col-form-label[data-v-2c8fcb25] {\n                text-align: left !important;\n                width: 100% !important;\n                max-width: 100% !important;\n                flex: 0 0 auto !important;\n                padding-bottom: 4px !important;\n}\n.bv-no-focus-ring[data-v-2c8fcb25] {\n                width: 100% !important;\n                max-width: 100% !important;\n                flex: 0 0 auto !important;\n}\n            \n            /* Make form labels left-aligned and full width */\n.shipper-toggle-label[data-v-2c8fcb25], .routing-info-label[data-v-2c8fcb25] {\n                width: auto !important;\n                max-width: 100% !important;\n                text-align: left !important;\n                display: block !important;\n                margin-bottom: 2px !important;\n}\n            \n            /* Adjust alignment & margins for checkboxes */\n.b-form-checkbox[data-v-2c8fcb25] {\n                margin-left: 0 !important;\n                padding-top: 4px !important;\n}\n            \n            /* Table responsiveness */\n.table-responsive-wrapper[data-v-2c8fcb25] {\n                width: 100%;\n                overflow-x: auto;\n                -webkit-overflow-scrolling: touch;\n                margin-bottom: 1rem;\n}\n.table-responsive-wrapper .table[data-v-2c8fcb25] {\n                min-width: 900px !important;\n}\n\n            /* Consignment Modal Specific Responsiveness */\n#modal-consignment table[data-v-2c8fcb25] {\n                display: block !important;\n                width: 100% !important;\n                overflow-x: auto !important;\n                -webkit-overflow-scrolling: touch !important;\n                margin-bottom: 1.5rem !important;\n}\n#modal-consignment textarea[data-v-2c8fcb25], \n            #modal-consignment .b-form-textarea[data-v-2c8fcb25] {\n                width: 100% !important;\n                max-width: 100% !important;\n}\n}\n    \n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

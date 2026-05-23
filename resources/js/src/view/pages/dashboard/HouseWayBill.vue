@@ -9,7 +9,7 @@
                                 <div class="d-flex flex-column">
                                     <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
                                     <h6 style="color:#355594;font-size:26px !important;line-height:34px !important;font-weight:800 !important;letter-spacing:-0.5px !important;margin-bottom:1rem;font-family:'Inter', sans-serif !important;">Documentation</h6>
-                                    <b-form-group id="fieldset-horizontal" class="mb-0">
+                                    <b-form-group id="fieldset-horizontal" class="mb-0 nav-dropdown-group">
                                         <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
                                             <b-icon icon="folder2-open" style="color:#355594;font-size:1.2rem;margin-right:12px;"></b-icon>
                                             <b-form-select style="width: 180px;border: 0px !important;color: #355594;font-weight: 600;background:transparent;cursor:pointer;outline:none;box-shadow:none;padding-left:0;" class="form-control-sm" v-model="selectedViewPageOption" @change="onSelect">
@@ -24,10 +24,10 @@
                             </b-col>
                             <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                 <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
-                                    <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                    <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="show-btn">
                                         <b-icon icon="file-earmark-text" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Drafts</b>
                                     </b-button>
-                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn">
                                         <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                     </b-button>
                                     <OcrUploadModal category="house_air" @extracted="processExtractedData" />
@@ -74,42 +74,35 @@
                                                 <b-col cols="8">
                                                     <b-row>
                                                         <b-col cols="12">
-                                                            <div class="d-flex align-items-center">
-                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                                    label-for="hawbNo-input"
-                                                                    class="">
-                                                                    <template #label>
-                                                                        <div class="d-flex justify-content-end" style="width: 100px;">
-                                                                            <span>HAWB No:</span>
-                                                                            <span class="text-danger"> &nbsp;*</span>
-                                                                        </div>
-                                                                    </template>
-                                                                    <b-form-input id="hawbNo-input" class="form-control" v-model="form.first_box.hawb_no"
-                                                                        style="width:210px;"
-                                                                        :class="{ 'is-invalid': form.errors.has('hawb_no') }"></b-form-input>
-                                                                    <!-- <has-error :form="form" field="hawb_no"></has-error> -->
-                                                                </b-form-group>
-                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                                    label-for="masterno-input" class="">
-                                                                    <template #label>
-                                                                        <div class="d-flex justify-content-end" style="width: 100px;">
-                                                                            <span>Master No:</span>
-                                                                            <span class="text-danger">&nbsp;*</span>
-                                                                        </div>
-                                                                    </template>
-                                                                    <b-form-input id="masterno-input" class="form-control" style="width: 62px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" @input="onAWBInput"></b-form-input>
-                                                                    <!-- <has-error :form="form" field="awb_code"></has-error> -->
-                                                                    <!-- <p v-if="awb_prefix_message" class="mt-2">{{ awb_prefix_message }}</p> -->
-                                                                </b-form-group>
-
-                                                                <div class="d-flex align-items-center pl-2"><p class="">-</p></div>
-
-                                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                                    label-for="masterno-awb-input" class="px-0">
-                                                                    <b-form-input id="masterno-awb-input" class="form-control" style="width: 150px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" @input="onAWBInput"></b-form-input>
-                                                                    <!-- <has-error :form="form" field="awb_no"></has-error> -->
-                                                                </b-form-group>
-                                                            </div>
+                                                             <div class="d-flex align-items-center flex-wrap" style="gap: 16px;">
+                                                                 <b-form-group id="fieldset-horizontal" label-cols="auto" content-cols="auto"
+                                                                     label-for="hawbNo-input"
+                                                                     class="mb-0">
+                                                                     <template #label>
+                                                                         <div class="d-flex justify-content-end align-items-center" style="width: 100px;">
+                                                                             <span>HAWB No:</span>
+                                                                             <span class="text-danger"> &nbsp;*</span>
+                                                                         </div>
+                                                                     </template>
+                                                                     <b-form-input id="hawbNo-input" class="form-control hawb-no-input" v-model="form.first_box.hawb_no"
+                                                                         style="width:210px;"
+                                                                         :class="{ 'is-invalid': form.errors.has('hawb_no') }"></b-form-input>
+                                                                 </b-form-group>
+                                                                 <b-form-group id="fieldset-horizontal" label-cols="auto" content-cols="auto"
+                                                                     label-for="masterno-input" class="mb-0">
+                                                                     <template #label>
+                                                                         <div class="d-flex justify-content-end align-items-center" style="width: 100px;">
+                                                                             <span>Master No:</span>
+                                                                             <span class="text-danger">&nbsp;*</span>
+                                                                         </div>
+                                                                     </template>
+                                                                     <div class="d-flex align-items-center" style="gap: 8px;">
+                                                                         <b-form-input id="masterno-input" class="form-control awb-code-input" style="width: 62px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" @input="onAWBInput"></b-form-input>
+                                                                         <span>-</span>
+                                                                         <b-form-input id="masterno-awb-input" class="form-control awb-no-input" style="width: 150px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" @input="onAWBInput"></b-form-input>
+                                                                     </div>
+                                                                 </b-form-group>
+                                                             </div>
                                                             <div class="d-flex flex-row error-msg-container">
                                                                 <div style="width: 50%;">
                                                                     <div v-if="form.errors.has('hawb_no')" class="d-flex justify-content-end text-danger" style="width: 75%;">
@@ -962,7 +955,7 @@
                                             <div class="d-flex align-items-center mb-6">
                                                 <div class="mr-4"><h6>Consignment Rate Description</h6></div>
                                                 <div class="ml-4">
-                                                    <b-button class="btn" v-b-modal.modal-consignment :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
+                                                    <b-button class="show-btn" v-b-modal.modal-consignment :disabled="isConsignmentAdded" @click="handleAddConsignment">Add Consignment Information</b-button>
                                                 </div>
                                             </div>
                                         </b-col>
@@ -2217,8 +2210,7 @@
                                                                     <td class="pt-5 editable-cell align-items-center" style="vertical-align: middle;">
                                                                         <b-form-group id="fieldset-horizontal"
                                                                             class="align-items-center">
-                                                                            <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;"
-                                                                                class="form-control-sm px-5" @click="addCharge">
+                                                                            <b-button class="show-btn px-5" @click="addCharge">
                                                                                 {{ editIndex !== null ? 'Update' : 'Add' }}
                                                                             </b-button>
                                                                         </b-form-group>
@@ -2253,7 +2245,7 @@
                                                                                 v-model="other_charges.charge" />
                                                                         </td>
                                                                         <td class="editable-cell mb-2" style="vertical-align: middle;">
-                                                                            <b-button style="border: 1px solid #355594;border-radius: 30px;background: #ffffff !important;color: #355594;" class="form-control-sm px-5"
+                                                                            <b-button class="show-btn px-5"
                                                                                 @click="calculateCharge">Calculate</b-button>
                                                                         </td>
                                                                     </tr>
@@ -2332,7 +2324,7 @@
                                                             </b-form-group>
                                                             <b-form-group id="fieldset-horizontal"
                                                                 class="ml-6">
-                                                                <b-button id="input-horizontal" class="form-control-sm"
+                                                                <b-button class="show-btn px-5" id="input-horizontal"
                                                                     type="button" @click="addManualCode">Add</b-button>
                                                             </b-form-group>
                                                         </div>
@@ -2439,7 +2431,7 @@
                                                                         <td class="editable-cell">
                                                                             <b-form-group style="display: flex;width: 240px;" id="fieldset-horizontal"
                                                                                 class="form-control-sm col-form-label align-items-end justify-content-end">
-                                                                                <b-button style="border-radius: 30px;color: #355594;background: #ffffff !important;border: 1px solid #355594;padding: 6px 30px;" class="form-control-sm px-5" @click="addOtherCustomInfo">
+                                                                                <b-button class="show-btn px-5" @click="addOtherCustomInfo">
                                                                                     {{ editIndex !== null ? 'Update' : 'Add' }}
                                                                                 </b-button>
                                                                             </b-form-group>
@@ -2458,7 +2450,7 @@
                                                 </b-col>
                                                 <b-col cols="12">
                                                     <div class="ml-3 mt-3 d-flex justify-content-end" style="max-width:1000px;">
-                                                        <b-button class="" style="border-radius:30px;padding:6px 30px;color:#2637a8;background:#ffffff !important;border:1px solid #2637a8;">Upload</b-button>
+                                                        <b-button class="show-btn px-5">Upload</b-button>
                                                     </div>
                                                 </b-col>
                                                 <b-col cols="12">
@@ -2496,14 +2488,17 @@
                                     </b-tabs>
                                 </div>
                                 <hr class="hr" />
-                                <div class="py-7">
+                                <div class="py-7 bottom-email-section">
                                     <b-row class="justify-content-end">
-                                        <b-col cols="auto" class="text-right">
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-pdf-copy-to" label="Email FNA 2:" class="form-control-sm col-form-label"> <b-form-input id="input-pdf-copy-to" class="form-control-sm" style="width: 300px"></b-form-input>
+                                        <b-col cols="12" md="auto" class="text-right mobile-text-left">
+                                            <div class="d-flex justify-content-end mobile-justify-start mb-2">
+                                                <b-form-checkbox size="sm" class="premium-checkbox">Including Cargo Label</b-form-checkbox>
+                                            </div>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-pdf-copy-to" label="Email FNA 2:" class="form-control-sm col-form-label mb-0">
+                                                <b-form-input id="input-pdf-copy-to" class="form-control-sm" style="width: 300px"></b-form-input>
                                             </b-form-group>
-                                            <div class="d-flex text-left ml-4 mt-4">
-                                                <b-form-checkbox size="sm" class="">Including Cargo Label</b-form-checkbox>
-                                                <p class="pl-18">(separate addresses with a semicolon ';')</p>
+                                            <div class="text-right mobile-text-left mt-1" style="font-size: 11px; color: #777;">
+                                                (separate addresses with a semicolon ';')
                                             </div>
                                         </b-col>
                                     </b-row>
@@ -2546,13 +2541,13 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
-                                        <b-button class="mr-2" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
+                                        <b-button class="show-btn mr-2" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <div v-if="current_user.can_send">
-                                            <b-button class="mr-2" type="submit" @click="form.status='send';">Send</b-button>
-                                            <b-button class="mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
+                                            <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send</b-button>
+                                            <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
                                         </div>
                                         <div v-if="form.first_box.status!='send'">
-                                            <b-button type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
+                                            <b-button class="show-btn" type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
                                         </div>
                                     </div>
                                 </div>
@@ -4987,7 +4982,88 @@ th {
 .ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }
 .ultra-submit-btn .btn-icon { background: white; color: #355594; border-radius: 50%; width: 32px !important; height: 32px !important; padding: 6px; margin-left: 0 !important; }
 
-@media (max-width: 991px) { 
+@media (max-width: 991px) {
+
+            /* Ensure AWB input boxes keep their original widths on all viewports */
+            .form-control.awb-code-input,
+            .awb-code-input {
+                width: 62px !important;
+                max-width: 62px !important;
+                flex: 0 0 62px !important;
+            }
+            .form-control.awb-no-short-input,
+            .awb-no-short-input {
+                width: 100px !important;
+                max-width: 100px !important;
+                flex: 0 0 100px !important;
+            }
+            .form-control.awb-no-input,
+            .awb-no-input {
+                width: 150px !important;
+                max-width: 150px !important;
+                flex: 0 0 150px !important;
+            }
+            .form-control.hawb-no-input,
+            .hawb-no-input {
+                width: 210px !important;
+                max-width: 210px !important;
+                flex: 0 0 210px !important;
+            }
+
+
+            /* Ensure AWB input boxes keep their original widths on all viewports */
+            .form-control.awb-code-input,
+            .awb-code-input {
+                width: 62px !important;
+                max-width: 62px !important;
+                flex: 0 0 62px !important;
+            }
+            .form-control.awb-no-short-input,
+            .awb-no-short-input {
+                width: 100px !important;
+                max-width: 100px !important;
+                flex: 0 0 100px !important;
+            }
+            .form-control.awb-no-input,
+            .awb-no-input {
+                width: 150px !important;
+                max-width: 150px !important;
+                flex: 0 0 150px !important;
+            }
+            .form-control.hawb-no-input,
+            .hawb-no-input {
+                width: 210px !important;
+                max-width: 210px !important;
+                flex: 0 0 210px !important;
+            }
+
+
+            /* Ensure AWB input boxes keep their original widths on all viewports */
+            .form-control.awb-code-input,
+            .awb-code-input {
+                width: 62px !important;
+                max-width: 62px !important;
+                flex: 0 0 62px !important;
+            }
+            .form-control.awb-no-short-input,
+            .awb-no-short-input {
+                width: 100px !important;
+                max-width: 100px !important;
+                flex: 0 0 100px !important;
+            }
+            .form-control.awb-no-input,
+            .awb-no-input {
+                width: 150px !important;
+                max-width: 150px !important;
+                flex: 0 0 150px !important;
+            }
+            .form-control.hawb-no-input,
+            .hawb-no-input {
+                width: 210px !important;
+                max-width: 210px !important;
+                flex: 0 0 210px !important;
+            }
+ 
     .modal-split-layout { flex-direction: column; min-height: auto; } 
     .modal-left-pane { flex: 0 0 auto; padding: 3rem 2rem; } 
     .pane-title { font-size: 1.8rem; } 
@@ -4995,6 +5071,55 @@ th {
     .modal-right-pane { flex: 0 0 auto; } 
     .form-scroll-container { padding: 3rem 2rem; height: auto; max-height: 60vh; } 
     .ultra-close-btn { top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; } 
+}
+
+@media (max-width: 768px) {
+    .mobile-justify-start {
+        justify-content: flex-start !important;
+    }
+    .mobile-text-left {
+        text-align: left !important;
+    }
+    .bottom-email-section .col-form-label {
+        text-align: left !important;
+    }
+    .bottom-email-section input {
+        width: 100% !important;
+    }
+    .submit-button {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .submit-button .show-btn,
+    .submit-button div,
+    .submit-button div button {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    .submit-button div {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.show-btn {
+  background: white !important;
+  color: #355594 !important;
+  border: 1px solid #E6F0FF !important;
+  border-radius: 50px !important;
+  padding: 10px 22px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+}
+
+.show-btn:hover {
+  background: #f0f7ff !important;
+  border-color: #355594 !important;
+  color: #355594 !important;
+  box-shadow: 0 6px 12px rgba(53, 85, 148, 0.1) !important;
 }
 </style>
 <style>

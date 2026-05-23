@@ -17,7 +17,7 @@
                          :src="heroServices[currentHeroIndex].image" 
                          :style="heroServices[currentHeroIndex].extraStyle" 
                          alt="Digital freight logistics solutions" 
-                         :class="['hero-plane', { 'is-tilted-plane': heroServices[currentHeroIndex].title === 'FOCUS AIR' }]"
+                         :class="['hero-plane', { 'is-tilted-plane': heroServices[currentHeroIndex].title === 'FOCUS AIR', 'is-truck-plane': heroServices[currentHeroIndex].title === 'FOCUS ROAD' }]"
                          :fetchpriority="currentHeroIndex === 0 ? 'high' : 'low'">
                 </transition>
             </div>

@@ -127,9 +127,11 @@ class HousewayBillController extends Controller
         //insert address if saved button checked
         if ($is_shipper_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'shipper_address']])->first();
-            if (!empty($hawb_no)) {
+            if (!empty($SavedAddress)) {
+                // Update existing record — fix: agent_id = branch, user_id = real user
                 $SavedAddress->awb_id = $hawb_no;
-                $SavedAddress->user_id = $agent->id ?? null;
+                $SavedAddress->agent_id = $agent->id ?? null;
+                $SavedAddress->user_id = $user->id ?? null;
                 $SavedAddress->address_type = 'shipper_address';
                 $SavedAddress->name = $shipper_address['ship_name'];
                 $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
@@ -144,17 +146,17 @@ class HousewayBillController extends Controller
                 $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
                 $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
                 $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
-                $WayBillAddress->agent_id = $agent->id ?? null;
                 $SavedAddress->save();
                 return response()->json([
                     'message' => 'Shippers Information updated successfully',
                     'data' => $SavedAddress
                 ], 200);
             }
-            if (!isset($SavedAddress))
-                $SavedAddress = new SavedAddress();
+            // Insert new record — fix: agent_id = branch, user_id = real user
+            $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
-            $SavedAddress->user_id = $agent->id ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
+            $SavedAddress->user_id = $user->id ?? null;
             $SavedAddress->address_type = 'shipper_address';
             $SavedAddress->name = $shipper_address['ship_name'];
             $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
@@ -169,7 +171,6 @@ class HousewayBillController extends Controller
             $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
-            $WayBillAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return 'shipper address saved successfull';
@@ -220,13 +221,14 @@ class HousewayBillController extends Controller
         $WayBillAddress->agent_id = $agent->id ?? null;
         $WayBillAddress->save();
 
-        //insert address if saved button checked
+        //insert address if saved button checked — fix: agent_id = branch, user_id = real user
         if ($is_consignee_address_save) {
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'consignee_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
-            $SavedAddress->user_id = $agent->id ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
+            $SavedAddress->user_id = $user->id ?? null;
             $SavedAddress->address_type = 'consignee_address';
             $SavedAddress->name = $consignee_address['cons_name'];
             $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
@@ -241,7 +243,6 @@ class HousewayBillController extends Controller
             $SavedAddress->phone = $consignee_address['cons_phone'] ?? null;
             $SavedAddress->fax = $consignee_address['cons_fax'] ?? null;
             $SavedAddress->telex = $consignee_address['cons_telex'] ?? null;
-            $SavedAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return "consignee address saved successfull";
@@ -289,11 +290,13 @@ class HousewayBillController extends Controller
         $WayBillAddress->save();
 
         if ($is_also_notify_address_save) {
+            // fix: agent_id = branch, user_id = real user
             $SavedAddress = SavedAddress::where([['awb_id', $hawb_no], ['address_type', 'also_notify_address']])->first();
             if (!isset($SavedAddress))
                 $SavedAddress = new SavedAddress();
             $SavedAddress->awb_id = $hawb_no;
-            $SavedAddress->user_id = $agent->id ?? null;
+            $SavedAddress->agent_id = $agent->id ?? null;
+            $SavedAddress->user_id = $user->id ?? null;
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
             $SavedAddress->address = $also_notify_address['also_address'];
@@ -306,7 +309,6 @@ class HousewayBillController extends Controller
             $SavedAddress->phone = $also_notify_address['also_phone'] ?? null;
             $SavedAddress->fax = $also_notify_address['also_fax'] ?? null;
             $SavedAddress->telex = $also_notify_address['also_telex'] ?? null;
-            $WayBillAddress->agent_id = $agent->id ?? null;
             $SavedAddress->save();
         }
         return "Also notify address saved successfull";
@@ -1067,7 +1069,7 @@ class HousewayBillController extends Controller
         else
             $housewayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
         if ($housewayBill->isEmpty()) {
-            return response()->json(['message' => 'Record not found'], 404);
+            return response()->json([], 200);
         }
         return response()->json($housewayBill, 200);
     }

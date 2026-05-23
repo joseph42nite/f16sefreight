@@ -51,9 +51,9 @@ export default new Router({
           meta: { logo: 'blue' }
         },
         {
-          name: "Small Business",
-          path: "/small-business",
-          component: () => import("@/view/pages/public/services/SmallBusiness"),
+          name: "Scalable Architecture",
+          path: "/scalable-architecture",
+          component: () => import("@/view/pages/public/services/ScalableArchitecture"),
           meta: { logo: 'blue' }
         },
         {
@@ -112,12 +112,6 @@ export default new Router({
         },
 
         // User Dashboard Pages
-        {
-          path: "rate",
-          name: "user-rate",
-          component: () => import("@/view/pages/dashboard/Rate.vue"),
-          meta: { userType: 'user' }
-        },
         {
           name: "Focus Air",
           path: "focus-air",
@@ -193,39 +187,9 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
-          path: "rate-import",
-          name: "superadmin-ImportExcel",
-          component: () => import("@/view/pages/admin/ImportRates.vue"),
-          meta: { userType: 'superadmin' }
-        },
-        {
-          path: "location-import",
-          name: "superadmin-ImportLocation",
-          component: () => import("@/view/pages/admin/ImportLocation.vue"),
-          meta: { userType: 'superadmin' }
-        },
-        {
-          path: "ams-import",
-          name: "superadmin-ImportAms",
-          component: () => import("@/view/pages/admin/ImportAms.vue"),
-          meta: { userType: 'superadmin' }
-        },
-        {
           path: "setting",
           name: "superadmin-Setting",
           component: () => import("@/view/pages/admin/Settings.vue"),
-          meta: { userType: 'superadmin' }
-        },
-        {
-          path: "delete-rate",
-          name: "superadmin-DeleteRate",
-          component: () => import("@/view/pages/admin/DeleteRate.vue"),
-          meta: { userType: 'superadmin' }
-        },
-        {
-          path: "delete-ams",
-          name: "superadmin-DeleteAms",
-          component: () => import("@/view/pages/admin/DeleteAms.vue"),
           meta: { userType: 'superadmin' }
         },
         {
@@ -267,6 +231,18 @@ export default new Router({
           path: "new-blog/:id?",
           name: "superadmin-newblog",
           component: () => import("@/view/pages/admin/NewBlog.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "all-templates",
+          name: "superadmin-alltemplates",
+          component: () => import("@/view/pages/admin/AllSystemTemplates.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "edit-template/:key?",
+          name: "superadmin-edittemplate",
+          component: () => import("@/view/pages/admin/EditSystemTemplate.vue"),
           meta: { userType: 'superadmin' }
         },
       ]

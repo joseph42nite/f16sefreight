@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\Logistics\AirwayBillController;
 use App\Http\Controllers\Logistics\HousewayBillController;
 use App\Http\Controllers\Logistics\MessageLogController;
@@ -107,9 +108,12 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     //========end of the  airway bill operation=====
     Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
 
-    //File Uplaod API
-    Route::post('/upload-awb-file', [OcrController::class, 'extract']);
+    //File Upload API
+    Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1');
+    Route::get('/ocr-status/{jobId}', [OcrController::class, 'status']);
+    Route::get('/ocr-history', [OcrController::class, 'history']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
+    Route::get('/company-templates', [UserController::class, 'getCompanyTemplates']);
 });
 
 // =================superAdmin section==========================
@@ -125,23 +129,6 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-user/{id}', [UserController::class, 'update']);
     Route::get('/all-user/{id?}', [UserController::class, 'index']);
     Route::delete('/user/{id?}', [UserController::class, 'delete']);
-    //rate related work by admin
-    Route::post('/import-excel', [RateController::class, 'rateImport']);
-    Route::get('/get-airline-list/{source?}', [RateController::class, 'getAirlineList']);
-    Route::get('/get-source-list', [RateController::class, 'getSourceList']);
-    Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}/{source}', [RateController::class, 'deleteRate']);
-    Route::get('/get-airline-list', [RateController::class, 'getAirlineList']);
-    Route::delete('/delete-rate/{carrier_code}/{carrier_prefix}', [RateController::class, 'deleteRate']);
-
-    //loctaion related work
-    Route::post('/import-loctaion', [LocationController::class, 'importData']);
-    Route::get('/get-location', [LocationController::class, 'getLocation']);
-    Route::delete('/delete-location', [LocationController::class, 'delete']);
-
-    //ams related work
-    Route::post('/import-ams', [AmsController::class, 'importData']);
-    Route::get('/get-ams-list/{source}', [AmsController::class, 'getAmsList']);
-    Route::delete('/delete-ams/{source}', [AmsController::class, 'delete']);
 
     Route::get('get-notice', [SettingController::class, 'getNotice']);
     Route::post('add-notice', [SettingController::class, 'insert']);
@@ -152,6 +139,12 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-company/{id}', [CompanyController::class, 'update']);
     Route::get('/all-company/{id?}', [CompanyController::class, 'index']);
     Route::delete('/company/{id?}', [CompanyController::class, 'delete']);
+    Route::get('/available-templates', [CompanyController::class, 'getAvailableTemplates']);
+
+    // Coordinate System Management
+    Route::get('/system-templates', [TemplateController::class, 'index']);
+    Route::post('/system-templates/save', [TemplateController::class, 'save']);
+    Route::delete('/system-templates/{id}', [TemplateController::class, 'delete']);
 
     //branch related work by admin
     Route::post('/create-branch', [BranchController::class, 'register']);

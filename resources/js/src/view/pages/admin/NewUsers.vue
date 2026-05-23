@@ -178,7 +178,7 @@ export default {
     },
     closeDropdown(event) {
       const dropdownContainer = this.$refs.dropdownContainer;
-      if (!dropdownContainer.contains(event.target)) {
+      if (dropdownContainer && !dropdownContainer.contains(event.target)) {
         this.isDropdownOpen = false;
       }
     },
@@ -187,6 +187,11 @@ export default {
       this.isSubmitting = true;
       this.savedSuccessfully = false;
       
+      if (!this.user_form.origin_airport_code && this.searchQuery) {
+          // AUTO-CAPTURE: If you type 'DXB' but don't click dropdown, intercept the raw text so validation succeeds.
+          this.user_form.origin_airport_code = this.searchQuery.split('(')[0].trim().toUpperCase();
+      }
+
       if(this.action=='Add'){
         this.user_form.post(`/superadmin/create-user`)
         .then(({ data }) => {
@@ -251,7 +256,10 @@ export default {
       this.getData(this.get_item);
       this.action='Edit';
    }
-   window.addEventListener('click', this.closeDropdown);
+    window.addEventListener('click', this.closeDropdown);
+  },
+  beforeDestroy() {
+    window.removeEventListener('click', this.closeDropdown);
   },
   computed: {
     get_item: function(){

@@ -5,7 +5,9 @@ mix.alias({
     "@": "resources/js/src/",
 })
     .js("resources/js/app.js", "public/js")
-    .extract(["vue", "vuetify", "bootstrap-vue"], "public/js/vendor.js")
+    // Core stable dependencies extracted to vendor.js for long-term browser caching.
+    // These rarely change — users download them once and cache them indefinitely.
+    .extract(["vue", "vue-router", "vue-meta", "vuex", "bootstrap-vue"], "public/js/vendor.js")
     .css("resources/css/app.css", "public/css")
     .vue();
 
@@ -25,7 +27,8 @@ mix.webpackConfig({
             maxInitialRequests: 6,
             cacheGroups: {
                 vendor: {
-                    test: /[\\/]node_modules[\\/](vue|vuetify|bootstrap-vue)[\\/]/,
+                    // Matches all stable core libs — vue, vue-router, vue-meta, vuex, bootstrap-vue
+                    test: /[\\/]node_modules[\\/](vue|vue-router|vue-meta|vuex|bootstrap-vue)[\\/]/,
                     name: "vendor",
                     chunks: "initial",
                     priority: 20,
@@ -41,5 +44,6 @@ mix.webpackConfig({
         },
     },
 });
+
 
 

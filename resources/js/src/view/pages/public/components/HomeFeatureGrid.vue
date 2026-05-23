@@ -38,7 +38,7 @@ export default {
     data() {
         return {
             features: [
-                { title: "Small Business", description: "Tailored logistics solutions designed to help growing businesses scale efficiently.", icon: "/media/assets/illustrations/small-business.png", link: "/small-business" },
+                { title: "Scalable Architecture", description: "Tailored logistics solutions designed to help growing businesses scale efficiently.", icon: "/media/assets/illustrations/small-business.png", link: "/scalable-architecture" },
                 { title: "Cloud Storage", description: "Secure, high-speed access to all your freight documents and history, anywhere, anytime.", icon: "/media/assets/illustrations/cloud-storage.png", link: "/cloud-storage" },
                 { title: "Privacy", description: "Enterprise-grade encryption ensuring your sensitive data and trade secrets remain confidential.", icon: "/media/assets/illustrations/privacy.png", link: "/privacy" },
                 { title: "End to End Service", description: "Comprehensive freight management from initial booking to final delivery, fully automated.", icon: "/media/assets/illustrations/end-to-end-service.png", link: "/end-to-end" }

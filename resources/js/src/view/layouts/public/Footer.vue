@@ -5,7 +5,7 @@
                 <!-- LOGO & TAGLINE -->
                 <b-col lg="4" md="12" class="mb-12 mb-lg-0 text-center text-lg-left">
                     <router-link to="/">
-                        <img src="/media/assets/logos/blue-logo.svg" alt="f16s logo" class="footer-logo mb-6">
+                        <img src="/media/assets/logos/blue-logo.png" alt="f16s logo" class="footer-logo mb-6">
                     </router-link>
                     <p class="footer-desc mx-auto mx-lg-0">
                         Providing smart data solutions and seamless freight documentation for the global logistics industry.

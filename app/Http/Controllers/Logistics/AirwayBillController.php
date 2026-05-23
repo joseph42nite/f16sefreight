@@ -962,11 +962,11 @@ class AirwayBillController extends Controller
         $airwayBill=array();
         $query = AirwayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->where('agent_id', $agentId);
         if ($status == 'send')
-            $$airwayBill = $query->whereIn('status', ['send', 'generate_pdf'])->orderBy('created_at', 'desc')->limit(10)->get();
+            $airwayBill = $query->whereIn('status', ['send', 'generate_pdf'])->orderBy('created_at', 'desc')->limit(10)->get();
         else
-            $$airwayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
+            $airwayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
         if ($airwayBill->isEmpty()) {
-            return response()->json(['message' => 'Record not found'], 404);
+            return response()->json([], 200);
         }
         return response()->json($airwayBill, 200);
     }

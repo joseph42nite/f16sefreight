@@ -1,7 +1,9 @@
 /node_modules
 /public/hot
 /public/storage
+/public/media/assets/blog
 /storage/*.key
+/storage/app/pdf_temp/
 /vendor
 /public/xml-conversion-files
 .env

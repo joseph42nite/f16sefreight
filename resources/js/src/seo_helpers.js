@@ -7,7 +7,7 @@ export const organizationSchema = {
     "@type": "Organization",
     "name": "F16s E-Freight Solutions",
     "url": "https://f16sefreight.com",
-    "logo": "https://f16sefreight.com/media/assets/logos/blue-logo.svg",
+    "logo": "https://f16sefreight.com/media/assets/logos/blue-logo.png",
     "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "",

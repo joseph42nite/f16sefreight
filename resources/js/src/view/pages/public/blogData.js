@@ -213,7 +213,7 @@ export const blogs = [
     category: "Industry News",
     date: "May 04, 2026",
     readTime: "12 min",
-    image: "/media/assets/logos/f16s-logo.svg",
+    image: "/media/assets/logos/white-logo.png",
     excerpt: "Discover the vision behind F16s, our roadmap for global logistics automation, and how we're bridging the gap between freight agents and airlines.",
     metaTitle: "F16s Editorial: Digital Transformation in Freight Forwarding",
     metaDescription: "Explore the F16s vision for a connected, paperless, and automated air freight industry. Learn about our EDI integrations and e-AWB compliance solutions.",

@@ -60,11 +60,11 @@ return [
         ],
 
         'redis' => [
-            'driver' => 'redis',
-            'connection' => 'default',
-            'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => 90,
-            'block_for' => null,
+            'driver'      => 'redis',
+            'connection'  => 'default',
+            'queue'       => env('REDIS_QUEUE', 'pdf_processing'),
+            'retry_after' => 110,       // MUST exceed job $timeout (90s) + buffer — prevents duplicate dispatch
+            'block_for'   => null,
         ],
 
     ],

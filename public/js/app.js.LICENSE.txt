@@ -21,12 +21,6 @@
  * https://vue-treeselect.js.org/
  */
 
-/*!
- * vuex v3.6.2
- * (c) 2021 Evan You
- * @license MIT
- */
-
 /**
  * ChildNode.remove() polyfill
  * https://gomakethings.com/removing-an-element-from-the-dom-the-es6-way/

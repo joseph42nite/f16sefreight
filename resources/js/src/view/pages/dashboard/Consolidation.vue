@@ -32,58 +32,30 @@
                             <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                 <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
                                     <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
-                                        <b-icon icon="clock-history" class="mr-2"></b-icon>10 Latest
+                                        <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                     </b-button>
                                 </div>
                             </b-col>
 
                             <!-- 10 Latest model code start here -->
-                            <b-modal id="modal-s" title="Latest Messages" :hide-footer="true" centered size="lg">
-                                <div class="message-list p-4">
-                                    <div v-if="isFetching" class="text-center py-20">
-                                        <b-spinner label="Fetching messages..." style="width: 3rem; height: 3rem;" variant="primary"></b-spinner>
-                                        <p class="mt-4 text-muted font-weight-bold">Fetching latest messages...</p>
+                            <!-- History List Modals from reusable component -->
+                            <DashboardHistoryModal 
+                                id="modal-s" 
+                                title="Latest Messages" 
+                                mode="send" 
+                                docType="consolidation"
+                                :items="data_items" 
+                                :isFetching="isFetching"
+                                @action="selectAndSearchAwb"
+                            >
+                                <template #actions="{ item }">
+                                    <div class="d-flex flex-column align-items-end">
+                                        <p class="text-muted small mb-1 font-weight-bold">
+                                            Issued: {{ formatDate(item.updated_at) }}
+                                        </p>
                                     </div>
-                                    <template v-else>
-                                        <div v-if="!data_items || data_items.length === 0" class="text-center py-10">
-                                            <b-icon icon="chat-dots" font-scale="3" class="text-muted mb-4"></b-icon>
-                                            <p class="text-muted font-weight-bold">No messages found.</p>
-                                        </div>
-                                        <div v-for="item in data_items" :key="item.id" class="message-item p-4 mb-3 rounded-xl border-1" style="background: #f0f7ff; border: 1px solid #d0e3ff; border-radius: 12px;">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center" style="cursor: pointer;" @click="selectAndSearchAwb(item)">
-                                                    <div class="mr-4">
-                                                        <b-icon icon="clock-history" font-scale="1.5" style="color: #355594;"></b-icon>
-                                                    </div>
-                                                    <div>
-                                                        <p class="mb-0 font-weight-bolder text-dark">
-                                                            {{ item.awb_code }}-{{ item.awb_no }}
-                                                        </p>
-                                                        <p class="text-muted font-size-sm mb-0">
-                                                            Route: {{ item.departure_airport ? item.departure_airport.split(',')[0] : 'N/A' }} ➔ {{ item.destination_airport ? item.destination_airport.split(',')[0] : 'N/A' }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div class="d-flex flex-column align-items-end">
-                                                     <p class="text-muted small mb-1 font-weight-bold">
-                                                         Issued: {{ formatDate(item.updated_at) }}
-                                                     </p>
-                                                </div>
-                                            </div>
-                                            <!-- Technical Links Footer Preserved for PDF actions -->
-                                            <div class="d-flex flex-wrap mt-3 pt-3 border-top" style="gap: 15px; border-color: rgba(53, 85, 148, 0.1) !important;">
-                                                <a :href="'/download-consolidation-pdf/' + String(item.awb_code) + '/' + String(item.awb_no)" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;">
-                                                    <b-icon icon="file-earmark-pdf" class="mr-1"></b-icon> Consolidation PDF
-                                                </a>
-                                                <a :href="'/download-multiple-consolidation-pdf/' + String(item.id)" target="_blank" class="font-size-sm text-primary font-weight-bold" style="text-decoration: none;">
-                                                    <b-icon icon="files" class="mr-1"></b-icon> Multipage PDF
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-                            </b-modal>
-                            <!-- 10 Latest model code Ends here -->
+                                </template>
+                            </DashboardHistoryModal>
                         </b-row>
                     </div>
                     <hr class="hr" />
@@ -347,7 +319,7 @@
                                                         <b-col cols="auto">
                                                             <!-- Add button -->
                                                             <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                                                id="show-btn" @click="getHousewayBills('send')" v-b-modal.modal-s class="ml-2 mr-10">10 Latest</b-button>
+                                                                id="show-btn" @click="getHousewayBills('send')" v-b-modal.modal-s class="ml-2 mr-10"><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b></b-button>
                                                             <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
                                                             class="ml-4" @click="addManualCode">Add</b-button>
                                                         </b-col>
@@ -584,6 +556,7 @@
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import SideBar from "@/view/layouts/public/SideBar.vue";
+import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 import ApiService from "@/core/services/api.service";
 import "vue2-datepicker/index.css";
 // import PageLoader from "../../components/PageLoader.vue";
@@ -808,7 +781,7 @@ export default {
         getHousewayBills(status) {
             this.isFetching = true;
             this.data_items = [];
-            ApiService.get(`/user/get-houseway-bills/${status}`)
+            ApiService.get(`/user/get-master-awbs-with-housewaybills`)
                 .then(response => {
                     this.data_items = response.data;
                 })
@@ -1249,6 +1222,7 @@ export default {
         },
     },
     components: {
+        DashboardHistoryModal,
         Datepicker,
         DatePicker,
         SideBar,

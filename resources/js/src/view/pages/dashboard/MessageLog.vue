@@ -21,57 +21,49 @@ td[aria-colindex="5"] {
             <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
 
-            <div class="d-flex">
+            <div class="d-flex flex-column flex-md-row">
                 <SideBar></SideBar>
                 <template>
                     <div
-                        class="table-responsive"
+                        class="w-100 ml-md-4 mt-4 mt-md-0"
                         style="
-                            overflow-x: hidden !important;
-                            background-color: #fff;
-                            box-shadow: 3px 3px 10px #d0d0d0;
+                            background: #ffffff;
+                            border: 1px solid rgba(255, 255, 255, 0.4);
+                            box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1);
                             z-index: 1;
-                            border-radius: 30px;
+                            border-radius: 32px;
+                            overflow: hidden;
                         "
                     >
-                        <b-card class="p-4 mb-5">
-                            <h3 class="mb-3">Search</h3>
+                        <b-card class="p-4 p-md-5 mb-0" border-variant="light" style="border: none;">
+                            <h3 class="mb-4 font-weight-bold" style="color: #355594;">Search</h3>
 
                             <b-form inline class="mb-4">
-                                <label class="mr-2"
+                                <label class="mr-2 font-weight-bold" style="color: #355594; font-size: 0.95rem;"
                                     >Master No:
                                     <span class="text-danger">*</span></label
                                 >
                                 <b-form-input
                                     v-model="form.masterStart"
-                                    class="mr-2" id="awb_code"
-                                    style="width: 100px" maxlength="3" @input="validateAwbCode"
+                                    class="mr-2 form-control-custom" id="awb_code"
+                                    style="width: 120px" maxlength="3" @input="validateAwbCode"
+                                    placeholder="Prefix"
                                 />
                                 <b-form-input
                                     v-model="form.masterEnd" id="awb_no"
-                                    class="mr-2"
-                                    style="width: 100px" maxlength="8" @input="validateAwbNo"
+                                    class="mr-2 form-control-custom"
+                                    style="width: 180px" maxlength="8" @input="validateAwbNo"
+                                    placeholder="AWB Number"
                                 />
                                 <b-button
                                     pill
-                                    style="
-                                        color: #2637a8;
-                                        background: #ffffff !important;
-                                        border: 1px solid #2637a8;
-                                        padding: 6px 25px;
-                                    "
+                                    class="show-btn"
                                     @click="searchAWB"
                                     >Search</b-button
                                 >
                                 <b-button
                                     pill
-                                    class="ml-2"
-                                    style="
-                                        color: #2637a8;
-                                        background: #ffffff !important;
-                                        border: 1px solid #2637a8;
-                                        padding: 6px 25px;
-                                    "
+                                    class="show-btn ml-2"
                                     @click="clearSearch"
                                     >Clear</b-button
                                 >
@@ -547,5 +539,72 @@ export default {
     color: #ffffff;
     background-color: rgb(38, 55, 168) !important;
     border-color: rgb(38, 55, 168);
+}
+
+.show-btn {
+  background: white !important;
+  color: #355594 !important;
+  border: 1px solid #E6F0FF !important;
+  border-radius: 50px !important;
+  padding: 10px 22px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+}
+
+.show-btn:hover {
+  background: #f0f7ff !important;
+  border-color: #355594 !important;
+  color: #355594 !important;
+  box-shadow: 0 6px 12px rgba(53, 85, 148, 0.1) !important;
+}
+
+.form-control-custom {
+    border: 1px solid #E6F0FF !important;
+    border-radius: 8px !important;
+    height: 42px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    color: #355594 !important;
+    font-weight: 500 !important;
+    background-color: #F8FCFF !important;
+    transition: all 0.3s ease !important;
+}
+
+.form-control-custom:focus {
+    border-color: #355594 !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.1) !important;
+    outline: none !important;
+}
+
+@media (max-width: 767.98px) {
+  .mb-4.form-inline {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .mb-4.form-inline label {
+    display: block !important;
+    margin-bottom: 12px !important;
+    margin-right: 0 !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+  .mb-4.form-inline input.form-control-custom {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 12px !important;
+  }
+  .mb-4.form-inline .show-btn {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 12px !important;
+  }
+  .custom-pagination {
+    justify-content: center !important;
+  }
 }
 </style>

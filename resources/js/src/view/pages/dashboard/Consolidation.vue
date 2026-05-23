@@ -31,7 +31,7 @@
                             </b-col>
                             <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                 <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
-                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn" style="background:white;color:#355594;border:1px solid #E6F0FF;border-radius:50px;padding:10px 22px;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn">
                                         <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                     </b-button>
                                 </div>
@@ -67,31 +67,26 @@
                                     {{ form.id ? 'Edit House Waybill Details' : 'Create Electronic Consolidation (FHL)' }}
                                 </h6>
                             </div>
-                            <div class="d-flex ml-4 mt-7">
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                    label-for="input-horizontal"
-                                    class="align-items-center">
-                                    <template #label>
-                                        <span class="">Master no:</span>
-                                        <span class="text-danger">*</span>
-                                    </template>
-                                    <b-form-input id="input-horizontal" class="form-control" style="width: 62px;"
-                                        v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)">
-                                    </b-form-input>
-                                </b-form-group>
-                                <span class="d-flex align-items-center pl-3">-</span>
-                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
-                                    content-cols-lg="auto"
-                                    label-for="input-horizontal"
-                                    class="align-items-center">
-                                    <b-form-input id="input-horizontal" class="form-control" style="width: 150px"
-                                        v-model="form.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)">
-                                    </b-form-input>
-                                    <!-- <has-error :form="form" field="awb_no"></has-error> -->
-                                </b-form-group>
-                                <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                    class="ml-4" @click="searchWayBills">Search</b-button>
-                            </div>
+                            <div class="d-flex align-items-center ml-4 mt-7">
+                                 <b-form-group id="fieldset-horizontal" label-cols="auto" content-cols="auto"
+                                     label-for="input-horizontal"
+                                     class="align-items-center mb-0">
+                                     <template #label>
+                                         <span class="mr-2">Master no:</span>
+                                         <span class="text-danger mr-2">*</span>
+                                     </template>
+                                     <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                                         <b-form-input id="input-horizontal" class="form-control awb-code-input" style="width: 62px;"
+                                             v-model="form.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)">
+                                         </b-form-input>
+                                         <span>-</span>
+                                         <b-form-input id="input-horizontal-2" class="form-control awb-no-input" style="width: 150px"
+                                             v-model="form.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)">
+                                         </b-form-input>
+                                         <b-button class="show-btn ml-2" @click="searchWayBills">Search</b-button>
+                                     </div>
+                                 </b-form-group>
+                             </div>
                             <has-error :form="form" field="awb_code" :class="{ 'd-block': form.errors.has('awb_code') }"></has-error>
                             <has-error :form="form" field="awb_no" :class="{ 'd-block': form.errors.has('awb_no') }"></has-error>
                         </b-col>
@@ -101,7 +96,7 @@
                         <b-row>
                             <b-col cols="12">
                                 <div class="d-flex align-items-start py-2">
-                                    <table v-if="existingData" style="width: 100%;">
+                                    <div class="table-responsive-wrapper"><table v-if="existingData" style="width: 100%;">
                                         <thead>
                                             <tr class="" style="background-color: #F2F9FF;">
                                                 <th class="" style="width:60px !important;">Action</th>
@@ -143,7 +138,7 @@
                                                 </td>
                                             </tr>
                                         </tbody>
-                                    </table>
+                                    </table></div>
                                 </div>
                             </b-col>
                         </b-row>
@@ -156,7 +151,7 @@
                                             <div class="ml-3 mt-8">
                                                 <div class="py-7">
                                                     <b-row>
-                                                        <b-col cols="4">
+                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
                                                             <b-form-group id="fieldset-hwb" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                                 label-for="input-hwb"
                                                                 class="" style="margin-bottom: 7px !important;">
@@ -169,7 +164,7 @@
                                                                 <b-form-input id="input-hwb" class="form-control" style="width:240px;" v-model="form.id" disabled></b-form-input>
                                                             </b-form-group>
                                                         </b-col>
-                                                        <b-col cols="4">
+                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
                                                             <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                                 label-for="input-destination"
                                                                 class=""
@@ -194,7 +189,7 @@
                                                                 </div>
                                                             </b-form-group>
                                                         </b-col>
-                                                        <b-col cols="4">
+                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
                                                             <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                                 label-for="input-destination" class="" style="width:140px;margin-bottom: 7px !important;">
                                                                 <template #label>
@@ -219,7 +214,7 @@
                                                         </b-col>
                                                     </b-row>
                                                     <b-row>
-                                                        <b-col cols="4">
+                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
                                                             <!-- Pieces input -->
                                                             <b-form-group id="fieldset-hwb" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-hwb"
                                                                 class="" style="margin-bottom: 7px !important;">
@@ -236,7 +231,7 @@
                                                                 </div>
                                                             </b-form-group>
                                                         </b-col>
-                                                        <b-col cols="4">
+                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
                                                             <!-- Weight input -->
                                                             <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-destination"
                                                             class=""
@@ -250,7 +245,7 @@
                                                             <b-form-input id="input-destination" class="form-control" v-model="form.gross_weight"></b-form-input>
                                                             </b-form-group>
                                                         </b-col>
-                                                        <b-col cols="4">
+                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
                                                             <!-- Volume input -->
                                                             <div class="d-flex">
                                                             <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-destination"
@@ -318,15 +313,13 @@
                                                         </b-col>
                                                         <b-col cols="auto">
                                                             <!-- Add button -->
-                                                            <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                                                id="show-btn" @click="getHousewayBills('send')" v-b-modal.modal-s class="ml-2 mr-10"><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b></b-button>
-                                                            <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" 
-                                                            class="ml-4" @click="addManualCode">Add</b-button>
+                                                            <b-button id="show-btn" @click="getHousewayBills('send')" v-b-modal.modal-s class="show-btn ml-2 mr-10"><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b></b-button>
+                                                            <b-button class="show-btn ml-4" @click="addManualCode">Add</b-button>
                                                         </b-col>
                                                     </b-row>
                                                     <b-row>
                                                         <b-col cols="auto" class="mt-4">
-                                                            <table>
+                                                            <div class="table-responsive-wrapper"><table>
                                                                 <thead>
                                                                     <tr class="" style="background-color: #F2F9FF;">
                                                                         <th class="" style="width:400px;font-size: 12px;font-weight:400;padding:4px 0px 4px 6px;">Other Customs Information</th>
@@ -341,7 +334,7 @@
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
-                                                            </table>
+                                                            </table></div>
                                                         </b-col>
                                                     </b-row>
                                                 </div>
@@ -352,7 +345,7 @@
                                                 <div class="py-7">
                                                     <b-row>
                                                         <b-col cols="auto">
-                                                            <table>
+                                                            <div class="table-responsive-wrapper"><table>
                                                                 <thead>
                                                                     <tr class="" style="background-color: #F2F9FF;margin-bottom:10px;">
                                                                         <th class="" style="font-size: 12px;font-weight:400;padding:4px 0px 4px 6px;">Country code:</th>
@@ -409,7 +402,7 @@
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
-                                                            </table>
+                                                            </table></div>
                                                             <div class="d-flex align-items-center pt-4">
                                                                 <div>
                                                                     <b-form-group id="fieldset-horizontal"
@@ -423,15 +416,14 @@
                                                                     </b-form-group>
                                                                 </div>
                                                                 <div class="d-flex justify-content-end" style="width: 100%;">
-                                                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;"
-                                                                    class="" @click="addOtherCustomInfo">{{ editIndex !== null ? 'Update' : 'Add' }}</b-button>
+                                                                    <b-button class="show-btn" @click="addOtherCustomInfo">{{ editIndex !== null ? 'Update' : 'Add' }}</b-button>
                                                                 </div>
                                                             </div>
                                                         </b-col>
                                                     </b-row>
                                                     <b-row>
                                                         <b-col cols="auto" class="mt-4">
-                                                            <table>
+                                                            <div class="table-responsive-wrapper"><table>
                                                                 <thead>
                                                                     <tr class="" style="background-color: #F2F9FF;">
                                                                         <th class="" style="width:240px;font-size: 12px;font-weight:400;padding:4px 0px 4px 6px;">Other Customs Information</th>
@@ -453,7 +445,7 @@
                                                                         </p></td>
                                                                     </tr>
                                                                 </tbody>
-                                                            </table>
+                                                            </table></div>
                                                         </b-col>
                                                     </b-row>
                                                 </div>
@@ -475,7 +467,7 @@
                         <b-row>
                             <b-col cols="12">
                                 <div class="py-6">
-                                    <table>
+                                    <div class="table-responsive-wrapper"><table>
                                         <tr class="" style="background-color: #F2F9FF;">
                                             <th class="" style="font-size: 12px;font-weight:400;width: 70px;padding: 4px 0px 4px 10px;">Action</th>
                                             <th class="" style="font-size: 12px;font-weight:400;width: 200px;">House waybill No</th>
@@ -484,7 +476,7 @@
                                             <th class="" style="font-size: 12px;font-weight:400;width: 200px;">Quantity</th>
                                             <th class="" style="font-size: 12px;font-weight:400;width: 407px;">Nature of Goods</th>
                                         </tr>
-                                    </table>
+                                    </table></div>
                                 </div>
                                 <template v-if="consolidation && consolidation.length > 0">
                                     <RecycleScroller
@@ -536,10 +528,14 @@
                         </b-row>
                         <b-row>
                             <b-col cols="12">
-                                <div class="d-flex justify-content-end align-items-center mr-16 py-8">
-                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" class="mr-2" @click="generateAwbPDF">Generate PDF</b-button>
-                                    <b-button style="border-radius:30px;border:1px solid #355594;padding:6px 30px;color:#355594;background:#ffffff !important;" class="mr-2" @click="manifest_send()" id="manifest-send-btn">Send</b-button>
-                                </div>
+                                <div class="d-flex justify-content-end flex-wrap submit-button" style="gap: 12px; align-items: center; padding-right: 16px;">
+                                     <b-button class="show-btn" type="button" @click="generateAwbPDF">
+                                         <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Generate PDF</b>
+                                     </b-button>
+                                     <b-button class="show-btn" type="button" @click="manifest_send()" id="manifest-send-btn">
+                                         <b-icon icon="cursor" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Send</b>
+                                     </b-button>
+                                 </div>
                             </b-col>
                         </b-row>
                     </div>
@@ -1231,6 +1227,26 @@ export default {
 </script>
 
 <style scoped>
+
+.show-btn {
+  background: white !important;
+  color: #355594 !important;
+  border: 1px solid #E6F0FF !important;
+  border-radius: 50px !important;
+  padding: 10px 22px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+}
+
+.show-btn:hover {
+  background: #355594 !important;
+  color: white !important;
+  border-color: #355594 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(53, 85, 148, 0.15) !important;
+}
+
 .form-row {
     flex-wrap: nowrap !important;
 }
@@ -1535,6 +1551,183 @@ th {
     color: #2637a8;
     text-decoration: underline;
 }
+
+        /* Responsive overrides for smaller viewports */
+        @media (max-width: 991px) {
+
+            /* Ensure AWB input boxes keep their original widths on all viewports */
+            .form-control.awb-code-input,
+            .awb-code-input {
+                width: 62px !important;
+                max-width: 62px !important;
+                flex: 0 0 62px !important;
+            }
+            .form-control.awb-no-short-input,
+            .awb-no-short-input {
+                width: 100px !important;
+                max-width: 100px !important;
+                flex: 0 0 100px !important;
+            }
+            .form-control.awb-no-input,
+            .awb-no-input {
+                width: 150px !important;
+                max-width: 150px !important;
+                flex: 0 0 150px !important;
+            }
+            .form-control.hawb-no-input,
+            .hawb-no-input {
+                width: 210px !important;
+                max-width: 210px !important;
+                flex: 0 0 210px !important;
+            }
+
+
+            /* Ensure AWB input boxes keep their original widths on all viewports */
+            .form-control.awb-code-input,
+            .awb-code-input {
+                width: 62px !important;
+                max-width: 62px !important;
+                flex: 0 0 62px !important;
+            }
+            .form-control.awb-no-short-input,
+            .awb-no-short-input {
+                width: 100px !important;
+                max-width: 100px !important;
+                flex: 0 0 100px !important;
+            }
+            .form-control.awb-no-input,
+            .awb-no-input {
+                width: 150px !important;
+                max-width: 150px !important;
+                flex: 0 0 150px !important;
+            }
+            .form-control.hawb-no-input,
+            .hawb-no-input {
+                width: 210px !important;
+                max-width: 210px !important;
+                flex: 0 0 210px !important;
+            }
+
+
+            /* Ensure AWB input boxes keep their original widths on all viewports */
+            .form-control.awb-code-input,
+            .awb-code-input {
+                width: 62px !important;
+                max-width: 62px !important;
+                flex: 0 0 62px !important;
+            }
+            .form-control.awb-no-short-input,
+            .awb-no-short-input {
+                width: 100px !important;
+                max-width: 100px !important;
+                flex: 0 0 100px !important;
+            }
+            .form-control.awb-no-input,
+            .awb-no-input {
+                width: 150px !important;
+                max-width: 150px !important;
+                flex: 0 0 150px !important;
+            }
+            .form-control.hawb-no-input,
+            .hawb-no-input {
+                width: 210px !important;
+                max-width: 210px !important;
+                flex: 0 0 210px !important;
+            }
+
+            .container, .container-fluid {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+            .py-8.px-10 {
+                padding: 1.5rem 1rem !important;
+            }
+            
+            /* Form fields custom responsiveness */
+            .shipper-form-control, .consignee-form-control, .form-control {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .custom-dropdown, .custom-dropdown input {
+                width: 100% !important;
+            }
+            
+            /* Keep form groups and siblings aligned inline */
+            .d-flex.align-items-center {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+            }
+            
+            .d-flex.align-items-center > .form-group {
+                flex: 1 1 auto !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* Stack labels vertically above their input columns inside form-groups */
+            .form-group {
+                width: 100% !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .form-row {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            .col-form-label {
+                text-align: left !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 auto !important;
+                padding-bottom: 4px !important;
+            }
+            .bv-no-focus-ring {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 auto !important;
+            }
+            
+            /* Make form labels left-aligned and full width */
+            .shipper-toggle-label, .routing-info-label {
+                width: auto !important;
+                max-width: 100% !important;
+                text-align: left !important;
+                display: block !important;
+                margin-bottom: 2px !important;
+            }
+            
+            /* Adjust alignment & margins for checkboxes */
+            .b-form-checkbox {
+                margin-left: 0 !important;
+                padding-top: 4px !important;
+            }
+            
+            /* Table responsiveness */
+            .table-responsive-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-bottom: 1rem;
+            }
+            .table-responsive-wrapper .table {
+                min-width: 900px !important;
+            }
+
+            /* Consignment Modal Specific Responsiveness */
+            #modal-consignment table {
+                display: block !important;
+                width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                margin-bottom: 1.5rem !important;
+            }
+            #modal-consignment textarea, 
+            #modal-consignment .b-form-textarea {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+    
 </style>
 <style>
     .modal-content {

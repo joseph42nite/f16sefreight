@@ -7,26 +7,28 @@
                 <h2 id="features-heading" class="section-title">Logistics Automation Features</h2>
                 <p class="section-subtitle mt-4">Discover the powerful features that streamline your global freight operations.</p>
             </b-col>
-            <b-col lg="3" md="6" sm="12" class="mb-8" v-for="(feature, idx) in features" :key="idx">
-                <router-link :to="feature.link && feature.link !== '#' ? feature.link : ''" custom v-slot="{ navigate }">
-                    <div class="feature-card-wrapper" @click="feature.link && feature.link !== '#' ? navigate($event) : null" :style="feature.link && feature.link !== '#' ? 'cursor: pointer;' : ''">
-                        <div class="feature-card-glow"></div>
-                        <b-card class="feature-card h-100">
-                            <div class="feature-icon-container mb-8">
-                                <div class="icon-circle"></div>
-                                <img :src="feature.icon" :alt="`Icon representing ${feature.title}`" class="feature-icon">
-                            </div>
-                            <h3 class="feature-title">{{ feature.title }}</h3>
-                            <p class="feature-desc">{{ feature.description }}</p>
-                            <div class="feature-footer mt-auto pt-6">
-                                <div class="feature-link">
-                                    <span>Explore Feature</span>
-                                    <b-icon icon="arrow-right" class="ms-2" aria-hidden="true"></b-icon>
+            <b-col cols="12">
+                <div class="features-modern-grid">
+                    <router-link v-for="(feature, idx) in features" :key="idx" :to="feature.link && feature.link !== '#' ? feature.link : ''" custom v-slot="{ navigate }">
+                        <div class="feature-card-wrapper" @click="feature.link && feature.link !== '#' ? navigate($event) : null" :style="feature.link && feature.link !== '#' ? 'cursor: pointer;' : ''">
+                            <div class="feature-card-glow"></div>
+                            <b-card class="feature-card h-100">
+                                <div class="feature-icon-container mb-8">
+                                    <div class="icon-circle"></div>
+                                    <img :src="feature.icon" :alt="`Icon representing ${feature.title}`" class="feature-icon">
                                 </div>
-                            </div>
-                        </b-card>
-                    </div>
-                </router-link>
+                                <h3 class="feature-title">{{ feature.title }}</h3>
+                                <p class="feature-desc">{{ feature.description }}</p>
+                                <div class="feature-footer mt-auto pt-6">
+                                    <div class="feature-link">
+                                        <span>Explore Feature</span>
+                                        <b-icon icon="arrow-right" class="ms-2" aria-hidden="true"></b-icon>
+                                    </div>
+                                </div>
+                            </b-card>
+                        </div>
+                    </router-link>
+                </div>
             </b-col>
         </b-row>
     </section>

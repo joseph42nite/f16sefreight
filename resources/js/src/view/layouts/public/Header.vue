@@ -263,12 +263,12 @@ a.menu-link {
 #main-logo {
     height: 60px;
     width: auto;
-    filter: drop-shadow(0 8px 25px rgba(53, 85, 148, 0.45));
+    filter: drop-shadow(-8px -8px 25px rgba(30, 58, 110, 0.8));
     transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 #main-logo:hover {
     transform: scale(1.05);
-    filter: drop-shadow(0 15px 45px rgba(53, 85, 148, 0.65));
+    filter: drop-shadow(-12px -12px 45px rgba(30, 58, 110, 0.95));
 }
 #avatar-logo {
     width: 35px;
@@ -540,8 +540,12 @@ a.menu-link {
 }
 .dropdown-menu {
     position: absolute !important;
-    left: -85px !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    margin-top: 10px !important;
     border-radius: 15px !important;
+    z-index: 9999 !important;
 }
 .navbar-light .navbar-toggler {
     color: #355594;

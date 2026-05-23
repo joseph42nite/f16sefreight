@@ -13,12 +13,7 @@
                         title="Focus Air"
                     >
                         <div class="sidebar__icon-wrap">
-                            <img
-                                :src="isActive(['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill'])
-                                    ? '/media/assets/ui/side-menu/3-active.png'
-                                    : '/media/assets/ui/side-menu/3.png'"
-                                alt="Air Freight"
-                            />
+                            <img src="/media/assets/ui/side-menu/3.png" alt="Air Freight" />
                         </div>
                     </li>
                 </router-link>
@@ -33,12 +28,7 @@
                         title="Message Log"
                     >
                         <div class="sidebar__icon-wrap">
-                            <img
-                                :src="isActive('/message-log')
-                                    ? '/media/assets/ui/side-menu/4-active.png'
-                                    : '/media/assets/ui/side-menu/4.png'"
-                                alt="Message Log"
-                            />
+                            <img src="/media/assets/ui/side-menu/4.png" alt="Message Log" />
                         </div>
                     </li>
                 </router-link>
@@ -56,7 +46,7 @@
             <div class="mobile-nav-trigger" @click="toggleMobileMenu">
                 <img :src="activeItem.icon" class="mobile-active-icon" />
                 <span class="mobile-active-label">{{ activeItem.label }}</span>
-                <b-icon :icon="isMobileMenuOpen ? 'chevron-up' : 'chevron-down'" class="ml-auto"></b-icon>
+                <b-icon icon="chevron-down" class="ml-auto chevron-icon" :class="{ 'rotated': isMobileMenuOpen }"></b-icon>
             </div>
             <transition name="fade-slide">
                 <div v-if="isMobileMenuOpen" class="mobile-nav-options">
@@ -67,7 +57,7 @@
                         :class="{ active: isActive(item.activePaths) }"
                         @click="navigateMobile(item.path)"
                     >
-                        <img :src="isActive(item.activePaths) ? item.activeIcon : item.icon" class="opt-icon" />
+                        <img :src="item.icon" class="opt-icon" />
                         <span class="opt-label">{{ item.label }}</span>
                     </div>
                 </div>
@@ -88,14 +78,12 @@ export default {
                     label: "Focus Air", 
                     path: "/focus-air", 
                     icon: "/media/assets/ui/side-menu/3.png", 
-                    activeIcon: "/media/assets/ui/side-menu/3-active.png",
                     activePaths: ['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']
                 },
                 { 
                     label: "Message Log", 
                     path: "/message-log", 
                     icon: "/media/assets/ui/side-menu/4.png", 
-                    activeIcon: "/media/assets/ui/side-menu/4-active.png",
                     activePaths: ['/message-log']
                 },
             ]
@@ -129,7 +117,14 @@ export default {
 </script>
 
 <style scoped>
-/* ── Container ─────────────────────────────────────────── */
+.sidebar-container a, 
+.sidebar-container a:focus, 
+.sidebar-container a:active {
+    outline: none !important;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .sidebar {
     width: 5%;
     min-width: 80px;
@@ -166,8 +161,14 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 0;
+    padding: 16px 0;
     cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar__item:focus {
+    outline: none;
 }
 
 .sidebar__icon-wrap {
@@ -175,7 +176,17 @@ export default {
     align-items: center;
     justify-content: center;
     width: 100%;
-    transition: transform 0.2s ease;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s ease;
+}
+
+.sidebar__item:hover .sidebar__icon-wrap {
+    transform: scale(1.15);
+}
+
+.sidebar__item--active {
+    background: linear-gradient(90deg, rgba(53, 85, 148, 0.15) 0%, rgba(53, 85, 148, 0.05) 100%);
+    border-right: 3px solid #355594;
+    transition: all 0.3s ease;
 }
 
 .sidebar__icon-wrap img {
@@ -226,12 +237,28 @@ export default {
     padding: 0 20px;
     cursor: pointer;
     box-shadow: 0 8px 32px rgba(53, 85, 148, 0.1);
+    transition: all 0.3s ease;
+}
+
+.mobile-nav-trigger:active {
+    transform: scale(0.97);
+    transition: all 0.1s ease;
+}
+
+.chevron-icon {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.chevron-icon.rotated {
+    transform: rotate(180deg);
 }
 
 .mobile-active-icon {
     width: 28px;
     height: 28px;
     margin-right: 12px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .mobile-active-label {
@@ -273,6 +300,8 @@ export default {
     width: 24px;
     height: 24px;
     margin-right: 14px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .opt-label {
@@ -295,10 +324,10 @@ export default {
 
 /* Transitions */
 .fade-slide-enter-active, .fade-slide-leave-active {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .fade-slide-enter, .fade-slide-leave-to {
     opacity: 0;
-    transform: translateY(-15px);
+    transform: translateY(-20px) scale(0.97);
 }
 </style>

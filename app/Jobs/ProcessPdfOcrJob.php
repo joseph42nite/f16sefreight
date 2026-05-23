@@ -20,9 +20,12 @@ class ProcessPdfOcrJob implements ShouldQueue
     public int $timeout = 90;   // Must be > Http::timeout below (80s) + safety buffer
     public int $backoff = 5;    // retry after 5 seconds
 
-    public function __construct(
-        public readonly int $processingJobId
-    ) {}
+    public int $processingJobId;
+
+    public function __construct(int $processingJobId)
+    {
+        $this->processingJobId = $processingJobId;
+    }
 
     public function handle(): void
     {

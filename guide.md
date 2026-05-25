@@ -349,6 +349,7 @@ The platform features a sophisticated OCR pipeline to automate data entry from P
 ### 📄 FocusAir (Unified Document Interface)
 
 -   **Multi-Type Support**: Added support for various document templates (`ksr`, `ksr_house1`, `ksr_house2`, etc.).
+-   **State Reset Mechanisms**: Explicit resetting of form state and component flags during successive OCR extractions to ensure a clean slate and prevent stale data.
 -   **Improved UX**:
     -   Real-time file selection feedback.
     -   Integrated loading spinners (`b-spinner`) for long-running extraction tasks.

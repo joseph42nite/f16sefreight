@@ -5,7 +5,7 @@
             <!-- <PageLoader></PageLoader> -->
             <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
-                <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; width: 100%;">
+                <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; flex: 1; min-width: 0;">
                     <div class="container py-8 px-10">
                         <b-row class="align-items-center mb-8">
                             <b-col cols="12" md="6">
@@ -63,9 +63,9 @@
                     <b-row>
                         <b-col cols="12">
                             <div class="align-items-center">
-                                <h6 class="h-color ml-4 mb-0">
+                                <h4 class="h-color ml-4 mb-0">
                                     {{ form.id ? 'Edit House Waybill Details' : 'Create Electronic Consolidation (FHL)' }}
-                                </h6>
+                                </h4>
                             </div>
                             <div class="d-flex align-items-center ml-4 mt-7">
                                  <b-form-group id="fieldset-horizontal" label-cols="auto" content-cols="auto"
@@ -1257,6 +1257,10 @@ header {
 
 .h-color {
     color: #355594;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800 !important;
+    font-size: 18px !important;
+    letter-spacing: -0.2px;
 }
 
 .h_background_color {

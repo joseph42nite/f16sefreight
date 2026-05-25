@@ -8,14 +8,14 @@
 
             <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
-                <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; width: 100%;">
-                    <div class="container py-8 px-10">
+                <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; flex: 1; min-width: 0;">
+                    <div class="container py-8 px-6 px-sm-8 px-md-10">
                         <template>
                             <b-row class="align-items-center mb-8">
                                 <b-col cols="12" md="6">
                                     <div class="d-flex flex-column">
                                         <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
-                                        <h6 style="color:#355594;font-size:26px;line-height:34px;font-weight:800;letter-spacing:-0.5px;margin-bottom:1rem;">Documentation</h6>
+                                        <h6 style="color:#355594;font-size:26px !important;line-height:34px !important;font-weight:800 !important;letter-spacing:-0.5px !important;margin-bottom:1rem;font-family:'Inter', sans-serif !important;">Documentation</h6>
                                         <b-form-group id="fieldset-horizontal" class="mb-0 nav-dropdown-group">
                                             <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
                                                 <b-icon icon="folder2-open" style="color:#355594;font-size:1.2rem;margin-right:12px;"></b-icon>
@@ -62,43 +62,36 @@
                             </b-row>
                         </template>
                     </div>
+
+                    <hr class="hr" />
+
                     <template> 
                         <b-form @submit.prevent="onSubmit">
-                            <div class="container">
-                                <hr class="hr" />
+                            <div class="container py-8 px-6 px-sm-8 px-md-10">
                                 <!-- AWB NO & AWB CODE SECTION START -->
-                                <div class="ml-8 mr-8">
-                                    <b-row class="my-10">
+                                <div class="mx-2 mx-sm-8">
+                                    <b-row class="mt-0 mb-4 mt-md-0 mb-md-10">
                                         <!-- First column of Three -->
-                                        <b-col cols="12" lg="5">
+                                        <b-col cols="12" md="6" lg="5">
                                             <div>
-                                                <div class="d-flex">
+                                                <div class="d-flex flex-wrap align-items-center">
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
                                                     label-for="input-horizontal"
-                                                    class="align-items-center pr-3">
+                                                    class="align-items-center mb-0">
                                                     <template #label>
                                                         <span>AWB No:</span>
                                                         <span style="color: red;">*</span>
                                                     </template>
-                                                        <b-form-input id="input-horizontal" class="" style="width: 62px"
-                                                            v-model="form.first_box.awb_code"
-                                                            :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" required></b-form-input>
-                                                    </b-form-group>
-                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                    label-for="input-horizontal"
-                                                    class="align-items-center">
-                                                    <template #label>
-                                                        <span>-</span>
-                                                    </template>
-                                                        <b-form-input id="input-horizontal" class="" style="width: 100px"
-                                                            v-model="form.first_box.awb_no"
-                                                            :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" required></b-form-input>
-                                                    </b-form-group>
-
-                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                    label-for="input-horizontal"
-                                                    class="form-control-sm align-items-center">
-                                                        <b-form-checkbox size="sm" v-model="form.first_box.consolidated_mawb">Consolidate MAWB</b-form-checkbox>
+                                                        <div class="awb-flex-row">
+                                                            <b-form-input id="input-horizontal" class="awb-code-input" style="width: 62px"
+                                                                v-model="form.first_box.awb_code"
+                                                                :class="{ 'is-invalid': form.errors.has('awb_code') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" required></b-form-input>
+                                                            <span style="color: #355594; font-weight: bold;">-</span>
+                                                            <b-form-input id="input-horizontal" class="awb-no-input" style="width: 100px"
+                                                                v-model="form.first_box.awb_no"
+                                                                :class="{ 'is-invalid': form.errors.has('awb_no') }" @input="onAWBInput" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" required></b-form-input>
+                                                            <b-form-checkbox size="sm" v-model="form.first_box.consolidated_mawb" class="ml-3 mb-0">Consolidate MAWB</b-form-checkbox>
+                                                        </div>
                                                     </b-form-group>
                                                 </div>
                                                 <div>
@@ -121,7 +114,7 @@
                                             </div>
                                         </b-col>
                                         <!-- Second column of Three -->
-                                        <b-col cols="12" md="6" lg="5" class="mt-6 mt-lg-0">
+                                        <b-col cols="12" md="4" lg="5" class="mt-6 mt-md-0 mt-lg-0">
                                             <b-form-group
                                             label-for="name-input">
                                                 <b-form-radio name="radio-size" size="sm" v-model="form.first_box.awb"
@@ -140,7 +133,7 @@
                                             </b-form-group>
                                         </b-col>
                                         <!-- Third column of Three -->
-                                        <b-col cols="12" md="6" lg="2" class="mt-6 mt-lg-0">
+                                        <b-col cols="12" md="2" lg="2" class="mt-6 mt-md-0 mt-lg-0">
                                             <b-form-group label-for="name-input">
                                                 <b-form-radio name="radio-size" size="sm">e-CSD AWB</b-form-radio>
                                             </b-form-group>
@@ -150,8 +143,8 @@
                                 <!-- AWB NO & AWB CODE SECTION END -->
                                 <hr class="hr" />
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION START -->
-                                <b-row class="my-10">
-                                    <b-col cols="12" lg="6">
+                                <b-row class="my-4 my-md-10">
+                                    <b-col cols="12" md="6">
                                         <b-col cols="auto">
                                             <h4 class="h-color ml-2">
                                                 Shipper
@@ -303,12 +296,12 @@
                                         </b-col>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label="" label-for="input-horizontal"
-                                            class="form-control-sm col-form-label mt-2">
+                                            class="form-control-sm col-form-label mt-2 d-none d-md-block">
                                             <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default e-AWB shipper for
                                                 later logins</b-form-checkbox>
                                         </b-form-group>
                                     </b-col>
-                                    <b-col cols="12" lg="6" class="mt-6 mt-lg-0">
+                                    <b-col cols="12" md="6" class="mt-6 mt-md-0 mt-lg-0">
                                         <b-col cols="auto">
                                             <h4 class="h-color ml-2">
                                                 Consignee
@@ -456,26 +449,32 @@
                                                 <b-form-checkbox size="sm" class="" style="margin-left: 70px;" v-model="form.is_consignee_address_save"> Save new address to address book</b-form-checkbox>
                                             </div>
                                         </b-col>
+                                        <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
+                                            content-cols-lg="auto" label="" label-for="input-horizontal"
+                                            class="form-control-sm col-form-label mt-2 d-md-none">
+                                            <b-form-checkbox size="sm" class="mt-2 text-bold">Set as default e-AWB shipper for
+                                                later logins</b-form-checkbox>
+                                            </b-form-group>
                                     </b-col>
                                 </b-row>
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION END -->
                                 <hr class="hr" />
                                 <!-- ROUTING INFORMATION TAB SECTION START -->
-                                <b-tabs content-class="mt-7" class="custom-nav">
+                                <b-tabs content-class="mt-7" class="custom-nav-title">
                                     <b-tab title="Routing Information" style="border-bottom:0px !important;">
-                                        <b-row class="mt-5">
-                                            <b-col cols="5">
+                                        <b-row class="mt-8 mb-6">
+                                            <b-col cols="12" lg="4">
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                     label-for="input-departure-airport"
                                                     style="width:100%;"
-                                                    class="align-items-center">
+                                                    class="align-items-center my-4">
                                                     <template #label>
                                                         <div class="routing-info-label">
                                                             <span>Departure Airport:</span>
                                                             <span style="color: red;">*</span>
                                                         </div>
                                                     </template>
-                                                    <div style="width: 60%;" class="custom-dropdown  align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
+                                                    <div style="width: 220px !important;" class="custom-dropdown  align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
                                                         <input style="width:100%" type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
                                                             autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
                                                         <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
@@ -485,17 +484,18 @@
                                                     <has-error :form="form" field="departure_airport" :class="{ 'd-block': form.errors.has('departure_airport') }"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
-                                                    label-for="input-destination-airport"
-                                                    class="align-items-center mt-4">
-                                                    <template #label>
-                                                        <div class="routing-info-label">
-                                                            <span>Destination Airport:</span>
-                                                            <span style="color: red;">*</span>
-                                                        </div>
-                                                    </template>
-                                                        <div style="width: 60%;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
-                                                            <input style="width:100%" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
-                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
+                                                     label-for="input-destination-airport"
+                                                     style="width: 100%;"
+                                                     class="align-items-center my-4">
+                                                     <template #label>
+                                                         <div class="routing-info-label">
+                                                             <span>Destination Airport:</span>
+                                                             <span style="color: red;">*</span>
+                                                         </div>
+                                                     </template>
+                                                         <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
+                                                             <input style="width:100%" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
+                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
                                                             <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
                                                                 <div v-for="(item, index) in filteredLocations_destination" 
                                                                     :key="index" 
@@ -508,26 +508,26 @@
                                                     <has-error :form="form" field="destination_airport" :class="{ 'd-block': form.errors.has('destination_airport') }"></has-error>
                                                 </b-form-group>
                                             </b-col>
-                                            <b-col cols="12" lg="7" class="mt-6 mt-lg-0">
+                                            <b-col cols="12" lg="8" class="mt-6 mt-lg-0">
                                                 <!-- <div class="d-flex flex-column align-items-center"> -->
                                                     <!-- <div class="container"> -->
                                                         <div class="table-responsive">
-                                                        <table class="table" style="max-width:100%;width:100%;">
+                                                        <table class="table" style="max-width:100%;width:100%;min-width:650px !important;">
                                                             <thead>
                                                                 <tr class="">
-                                                                    <th class=""style="color:#355594;">&nbsp;</th>
-                                                                    <th class=""style="color:#355594;">From</th>
-                                                                    <th class=""style="color:#355594;">To</th>
-                                                                    <th class=""style="color:#355594;">By</th>
-                                                                    <th class=""style="color:#355594;">Flight</th>
-                                                                    <th class=""style="color:#355594;">Date</th>
-                                                                    <th class="" style="width:100%;"></th>
+                                                                    <th class="" style="color:#355594; width: 8%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">&nbsp;</th>
+                                                                    <th class="" style="color:#355594; width: 21%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">From</th>
+                                                                    <th class="" style="color:#355594; width: 21%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">To</th>
+                                                                    <th class="" style="color:#355594; width: 11%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">By</th>
+                                                                    <th class="" style="color:#355594; width: 14%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">Flight</th>
+                                                                    <th class="" style="color:#355594; width: 20%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">Date</th>
+                                                                    <th class="" style="color:#355594; width: 5%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;"></th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 <tr>
-                                                                    <td class="editable-cell" style="width: 7%;padding: 2px;">Routing:<span style="color: red;">*</span></td>
-                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 8%; padding: 8px 6px !important; font-weight: 500; color: #475569;">Routing:<span style="color: red;">*</span></td>
+                                                                    <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
                                                                         <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown_from">
                                                                             <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
@@ -541,7 +541,7 @@
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
                                                                         <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown_to">
                                                                             <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
@@ -555,29 +555,29 @@
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 11%; padding: 8px 6px !important;">
                                                                         <input type="text" class="form-control"
-                                                                            style="" v-model="form.routing_information.by"
+                                                                            style="padding: 0.375rem 0.25rem; text-align: center;" v-model="form.routing_information.by"
                                                                             :class="{ 'is-invalid': form.errors.has('by') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 12%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 14%; padding: 8px 6px !important;">
                                                                         <input type="text" class="form-control"
-                                                                            style=" " v-model="form.routing_information.flight"
+                                                                            style="padding: 0.375rem 0.5rem; text-align: center;" v-model="form.routing_information.flight"
                                                                             :class="{ 'is-invalid': form.errors.has('flight') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 20%; padding: 8px 6px !important;">
                                                                         <input type="text" class="form-control"
-                                                                            style="" v-model="form.routing_information.date"
+                                                                            style="text-align: center;" v-model="form.routing_information.date"
                                                                             :class="{ 'is-invalid': form.errors.has('date') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 5%; padding: 8px 6px !important; padding-left: 10px !important;">
                                                                         <date-picker valueType="format"
-                                                                            style="width: 100%;"
+                                                                            style="width: 100%; max-width: 30px;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date')"></date-picker>
                                                                     </td>
-                                                                </tr>
-                                                                <tr v-if="form.errors.has('from') || form.errors.has('to') || form.errors.has('by') || form.errors.has('flight') || form.errors.has('date')">
-                                                                    <td class="editable-cell" style="width: 7%;padding: 2px;">&nbsp;</td>
+                                                                 </tr>
+                                                                 <tr v-if="form.errors.has('from') || form.errors.has('to') || form.errors.has('by') || form.errors.has('flight') || form.errors.has('date')">
+                                                                    <td class="editable-cell" style="width: 8%; padding: 8px 6px !important;">&nbsp;</td>
                                                                     <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="from" :class="{ 'd-block': form.errors.has('from') }"></has-error>
                                                                     </td>
@@ -593,12 +593,12 @@
                                                                     <td valign="top" class="text-danger" style="">
                                                                         <has-error :form="form" field="date" :class="{ 'd-block': form.errors.has('date') }"></has-error>
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">&nbsp;</td>
+                                                                    <td class="editable-cell" style="width: 5%; padding: 8px 6px !important;">&nbsp;</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td style="width: 7%;padding: 2px;" class="editable-cell">&nbsp;</td>
-                                                                    <td style="width: 28%;padding: 2px;" class="editable-cell">&nbsp;</td>
-                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
+                                                                    <td style="width: 8%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
+                                                                    <td style="width: 21%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
+                                                                    <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
                                                                         <!-- <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-to2" class="form-control-sm col-form-label"> -->
                                                                         <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
                                                                             <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" style=""
@@ -615,31 +615,31 @@
                                                                         <has-error :form="form" field="to_2"></has-error>
                                                                         <!-- </b-form-group> -->
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
-                                                                        <input type="text" class="form-control" style=""
+                                                                    <td class="editable-cell" style="width: 11%; padding: 8px 6px !important;">
+                                                                        <input type="text" class="form-control" style="padding: 0.375rem 0.25rem; text-align: center;"
                                                                             v-model="form.routing_information.by_2"
                                                                             :class="{ 'is-invalid': form.errors.has('by_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 12%;padding: 2px;">
-                                                                        <input type="text" class="form-control" style=""
+                                                                    <td class="editable-cell" style="width: 14%; padding: 8px 6px !important;">
+                                                                        <input type="text" class="form-control" style="padding: 0.375rem 0.5rem; text-align: center;"
                                                                             v-model="form.routing_information.flight_2"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
-                                                                        <input type="text" class="form-control" style=""
+                                                                    <td class="editable-cell" style="width: 20%; padding: 8px 6px !important;">
+                                                                        <input type="text" class="form-control" style="text-align: center;"
                                                                             v-model="form.routing_information.date_2"
                                                                             :class="{ 'is-invalid': form.errors.has('date_2') }" />
                                                                     </td>
-                                                                    <td class="editable-cell w-10" style="width: 5%;padding: 2px;">
+                                                                    <td class="editable-cell w-10" style="width: 5%; padding: 8px 6px !important; padding-left: 10px !important;">
                                                                         <date-picker valueType="format"
-                                                                            style="width: 100%;"
+                                                                            style="width: 100%; max-width: 30px;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td style="width: 7%;padding: 2px;" class="editable-cell" >&nbsp;</td>
-                                                                    <td style="width: 28%;padding: 2px;" class="editable-cell">&nbsp;</td>
-                                                                    <td class="editable-cell" style="width: 28%;padding: 2px;">
+                                                                    <td style="width: 8%; padding: 8px 6px !important;" class="editable-cell" >&nbsp;</td>
+                                                                    <td style="width: 21%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
+                                                                    <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
                                                                         <!-- <b-form-select class="form-control" style="width: 150px"
                                                                             v-model="form.routing_information.to_3"
                                                                             :class="{ 'is-invalid': form.errors.has('to_3') }">
@@ -666,24 +666,24 @@
                                                                         <has-error :form="form" field="to_3"></has-error>
                                                                         <!-- </b-form-group> -->
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 10%;padding: 2px;">
-                                                                        <input type="text" class="form-control" style=""
+                                                                    <td class="editable-cell" style="width: 11%; padding: 8px 6px !important;">
+                                                                        <input type="text" class="form-control" style="padding: 0.375rem 0.25rem; text-align: center;"
                                                                             v-model="form.routing_information.by_3"
                                                                             :class="{ 'is-invalid': form.errors.has('by_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 12%;padding: 2px;">
-                                                                        <input type="text" class="form-control" style=""
+                                                                    <td class="editable-cell" style="width: 14%; padding: 8px 6px !important;">
+                                                                        <input type="text" class="form-control" style="padding: 0.375rem 0.5rem; text-align: center;"
                                                                             v-model="form.routing_information.flight_3"
                                                                             :class="{ 'is-invalid': form.errors.has('flight_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 15%;padding: 2px;">
-                                                                        <input type="text" class="form-control" style=""
+                                                                    <td class="editable-cell" style="width: 20%; padding: 8px 6px !important;">
+                                                                        <input type="text" class="form-control" style="text-align: center;"
                                                                             v-model="form.routing_information.date_3"
                                                                             :class="{ 'is-invalid': form.errors.has('date_3') }" />
                                                                     </td>
-                                                                    <td class="editable-cell" style="width: 5%;padding: 2px;">
+                                                                    <td class="editable-cell" style="width: 5%; padding: 8px 6px !important; padding-left: 10px !important;">
                                                                         <date-picker valueType="format"
-                                                                            style=" width: 100%;"
+                                                                            style="width: 100%; max-width: 30px;"
                                                                             @change="handleDateChange($event, 'form.routing_information.date_3')"></date-picker>
                                                                     </td>
                                                                 </tr>
@@ -749,26 +749,27 @@
                                             </div>
                                         </b-col>
                                         <b-col cols="12" sm="6" class="mt-2 mt-sm-0 text-left text-sm-right">
-                                            <div class="d-flex justify-content-end align-items-center mr-16">
-                                                <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8;">Collect house waybill sum's</p>
+                                            <div class="d-flex justify-content-start justify-content-sm-end align-items-center mr-0 mr-sm-16">
+                                                <p class="mb-0 ml-0 ml-sm-4 mr-4" style="border-bottom: 1px solid #355594; color: #355594; font-size: 13px; font-weight: 600; cursor: pointer;">Collect house waybill sum's</p>
                                             </div>
                                         </b-col>
                                     </b-row>
                                     <!-- CONSIGNMENT MODEL CODE START HERE -->
                                     <b-button class="mt-5 mb-5 show-btn" v-b-modal.modal-consignment @click="handleAddConsignment" :disabled="isConsignmentAdded">Add Consignment Information</b-button>
                                     <b-modal id="modal-consignment" ref="modalConsignment" title="Consignment Information"
-                                        size="xl" ok-only hide-footer @hide="handleModalClose">
+                                        size="xl" ok-only hide-footer @hide="handleModalClose"
+                                        centered modal-class="premium-modal" title-class="font-weight-bolder text-dark" header-class="border-bottom-0 pb-0 px-5 pt-5">
                                         <b-row>
                                             <!-- First Column -->
-                                            <b-col cols="12" lg="6">
-                                                <h6 style="margin-bottom:15px;">Pieces and Nature and Quantity of Goods</h6>
+                                            <b-col cols="12" md="6">
+                                                <h6 style="color: #0f2247; font-weight: 700; margin-bottom: 15px; background: #e1e8f5; padding: 10px 14px; border-left: 4px solid #2c4d8c; border-radius: 4px; font-size: 14px; letter-spacing: 0.3px;">Pieces and Nature and Quantity of Goods</h6>
                                                 <div class="">
                                                     <label for="Pieces" style="margin-bottom:0px;">Pieces</label>
-                                                    <b-form-input id="input-departure-airport" class="form-control" style="width:80px !important;margin-bottom:10px;"
+                                                    <b-form-input id="input-departure-airport" class="form-control" style="width:100% !important;margin-bottom:10px;"
                                                         v-model="consignment_list.pieces" :class="{ 'is-invalid': consignment_list.errors.has('pieces') }"></b-form-input>
                                                         <has-error :form="consignment_list" field="pieces"></has-error>
                                                     <label for="Description7"  style="margin-bottom:0px;">Description</label>
-                                                    <b-form-textarea style="height: 70px;width: 400px;margin-bottom:10px;" id="textarea"
+                                                    <b-form-textarea style="height: 70px;width: 100%;margin-bottom:10px;" id="textarea"
                                                         v-model="consignment_list.description" :class="{ 'is-invalid': consignment_list.errors.has('description') }"></b-form-textarea>
                                                         <has-error :form="consignment_list" field="description"></has-error>
                                                     <div class="table-responsive">
@@ -780,7 +781,7 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control" style="width: 250px;margin-bottom:10px;" v-model="consignment_list.rate_class" @change="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate_class') }">
+                                                                    <b-form-select class="form-control w-100" style="margin-bottom:10px;" v-model="consignment_list.rate_class" @change="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate_class') }">
                                                                         <option value="">Select a Rate Class</option>
                                                                         <option value="B">CB - Basic rate</option>
                                                                         <option value="C">CC - Specific commodity rate</option>
@@ -800,7 +801,7 @@
                                                                     <has-error :form="consignment_list" field="rate_class"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style="width: 140px;" v-model="consignment_list.uld_rate_class" :class="{ 'is-invalid': consignment_list.errors.has('uld_rate_class') }"/>
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.uld_rate_class" :class="{ 'is-invalid': consignment_list.errors.has('uld_rate_class') }"/>
                                                                         <has-error :form="consignment_list" field="uld_rate_class"></has-error>
                                                                 </td>
                                                             </tr>
@@ -809,7 +810,7 @@
                                                                     <div
                                                                         class="d-flex justify-content-end align-items-center">
                                                                         <span class="mr-2">Charge:</span>
-                                                                        <input type="text" class="form-control" style="width: 140px;" :value="calculatedCharge" />
+                                                                        <input type="text" class="form-control w-100" :value="calculatedCharge" />
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -819,7 +820,7 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control" style="width: 250px;margin-bottom:10px;" v-model="consignment_list.service_code" :class="{ 'is-invalid': consignment_list.errors.has('service_code') }">
+                                                                    <b-form-select class="form-control w-100" style="margin-bottom:10px;" v-model="consignment_list.service_code" :class="{ 'is-invalid': consignment_list.errors.has('service_code') }">
                                                                         <option value="">Select a Service Code</option>
                                                                         <option value="A">A - Airport to Airport</option>
                                                                         <option value="B">B - Service Cargo</option>
@@ -840,7 +841,7 @@
                                                                     <has-error :form="consignment_list" field="service_code"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width: 140px;" v-model="consignment_list.commodity_item" :class="{ 'is-invalid': consignment_list.errors.has('commodity_item') }"/>
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.commodity_item" :class="{ 'is-invalid': consignment_list.errors.has('commodity_item') }"/>
                                                                     <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                                 </td>
                                                             </tr>
@@ -852,7 +853,7 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control" style=" width: 250px;margin-bottom:10px;" v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
+                                                                    <b-form-select class="form-control w-100" style="margin-bottom:10px;" v-model="consignment_list.country_origin_goods" :class="{ 'is-invalid': consignment_list.errors.has('country_origin_goods') }">
                                                                         <option value=""> Select a Country</option>
                                                                         <option v-for="country in countries" :key="country.value" :value="country.value">
                                                                             {{ country.text }}
@@ -861,7 +862,7 @@
                                                                     <has-error :form="consignment_list" field="country_origin_goods"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style="width: 140px;" v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.slac" :class="{ 'is-invalid': consignment_list.errors.has('slac') }"/>
                                                                     <has-error :form="consignment_list" field="commodity_item"></has-error>
                                                                 </td>
                                                             </tr>
@@ -870,8 +871,8 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="editable-cell" style="display: flex;align-items: center;">
-                                                                    <b-form-input type="text" class="form-control" style="width: 140px;margin-right: 10px;margin-bottom:10px;" v-model="consignment_list.hs_code" :class="{ 'is-invalid': hs_code_error.length > 0 }"></b-form-input>
-                                                                    <button @click="addHsCode" style="margin-bottom:10px;border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">Add</button>
+                                                                    <b-form-input type="text" class="form-control" style="width: 100%;margin-right: 10px;margin-bottom:10px;" v-model="consignment_list.hs_code" :class="{ 'is-invalid': hs_code_error.length > 0 }"></b-form-input>
+                                                                    <button @click="addHsCode" class="show-btn" style="margin-bottom:10px;">Add</button>
                                                                 </td>
                                                                 <div v-if="hs_code_error.length" class="text-danger">
                                                                     <ul  style="list-style-type: none; padding-left: 0;font-size: 10px;">
@@ -880,8 +881,8 @@
                                                                     </ul>
                                                                 </div>
                                                             </tr>
-                                                            <tr style="background-color:#F2F9FF;">
-                                                                <th style="font-family:13px;font-weight: 500;padding-bottom:0px;">HS Codes</th>
+                                                            <tr style="background-color:#F8FAFC;">
+                                                                <th style="color:#8A99AD !important; font-weight:500 !important; font-size:11px !important; text-transform:uppercase !important; letter-spacing:0.5px !important; padding: 6px 2px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.05) !important;">HS Codes</th>
                                                             </tr>
                                                             <tr v-for="(code, index) in consignment_list.hsCodes"
                                                                 :key="index">
@@ -899,10 +900,9 @@
                                                 </div>
                                             </b-col>
                                             <!-- Second Column -->
-                                            <b-col cols="12" lg="6" class="mt-6 mt-lg-0">
-                                                <h6 style="margin-bottom:25px;">Weight and Dimensions</h6>
-                                                <div class="">
-                                                    <div class="table-responsive">
+                                            <b-col cols="12" md="6" class="mt-6 mt-md-0 mt-lg-0">
+                                                <h6 style="color: #0f2247; font-weight: 700; margin-bottom: 25px; background: #e1e8f5; padding: 10px 14px; border-left: 4px solid #2c4d8c; border-radius: 4px; font-size: 14px; letter-spacing: 0.3px;">Weight and Dimensions</h6>
+                                                <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tr>
                                                             <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Gross Weight</th>
@@ -913,29 +913,27 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style="width: 90px;" v-model="consignment_list.gross_weight" :class="{ 'is-invalid': consignment_list.errors.has('gross_weight') }" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.gross_weight" :class="{ 'is-invalid': consignment_list.errors.has('gross_weight') }" />
                                                                     <has-error :form="consignment_list" field="gross_weight"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <b-form-select class="form-control" style=" width: 65px;" v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
+                                                                    <b-form-select class="form-control w-100" v-model="consignment_list.weight_code" :class="{ 'is-invalid': consignment_list.errors.has('weight_code') }">
                                                                         <option value="KGM">Kgs</option>
                                                                         <option value="LBR">Lbs</option>
                                                                     </b-form-select>
                                                                     <has-error :form="consignment_list" field="weight_code"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style="width: 115px;" v-model="consignment_list.chargable_weight" @input="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.chargable_weight" @input="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('chargable_weight') }" />
                                                                     <has-error :form="consignment_list" field="chargable_weight"></has-error>
                                                                 </td>
                                                                 <td class="editable-cell" style="margin-bottom:10px;">
-                                                                    <input type="text" class="form-control" style=" width: 110px;" v-model="consignment_list.rate" @input="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.rate" @input="calculateTotalAmount" :class="{ 'is-invalid': consignment_list.errors.has('rate') }" />
                                                                     <has-error :form="consignment_list" field="rate"></has-error>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    </div>
-                                                    <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tr>
                                                             <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Pcs</th>
@@ -949,31 +947,31 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.pcs" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.pcs" />
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.wgt" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.wgt" />
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.length" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.length" />
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <input type="text" class="form-control" style="width:60px;" v-model="consignment_list.width" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.width" />
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <input class="form-control" style="width:60px;" v-model="consignment_list.height" type="text" />
+                                                                    <input class="form-control w-100" v-model="consignment_list.height" type="text" />
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control" style="width: 65px;background-position-x: right;" v-model="consignment_list.unit">
+                                                                    <b-form-select class="form-control w-100" v-model="consignment_list.unit">
                                                                         <option value="CMT">CMT</option>
                                                                         <option value="INH">INH</option>
                                                                         <option value="FOT">FOT</option>
                                                                     </b-form-select>
                                                                 </td>
-                                                                <td class="editable-cell"><button @click="addPcsInfo" style="border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
+                                                                <td class="editable-cell"><button @click="addPcsInfo" class="show-btn">Add</button></td>
                                                             </tr>
                                                             <tr v-if="validationErrors.length > 0">
-                                                                <td colspan="7" style="border:0px;">
+                                                                <td colspan="7" style="border:0px">
                                                                     <div class="text-danger">
                                                                         <ul style="list-style-type: none; padding-left: 0;font-size: 10px;">
                                                                             <li>Warning:</li>
@@ -984,36 +982,34 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    </div>
-                                                    <div class="table-responsive">
-                                                    <table class="table table-sm">
-                                                        <tr style="background-color:#F2F9FF">
-                                                            <th style="color:#000000;font-weight:500;">Pcs</th>
-                                                            <th style="color:#000000;font-weight:500;">Wgt</th>
-                                                            <th style="color:#000000;font-weight:500;">Length</th>
-                                                            <th style="color:#000000;font-weight:500;">Width</th>
-                                                            <th style="color:#000000;font-weight:500;">Height</th>
-                                                            <th style="color:#000000;font-weight:500;">Unit</th>
-                                                        </tr>
+                                                    <table class="table-lightweight">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Pcs</th>
+                                                                <th>Wgt</th>
+                                                                <th>Length</th>
+                                                                <th>Width</th>
+                                                                <th>Height</th>
+                                                                <th>Unit</th>
+                                                            </tr>
+                                                        </thead>
                                                         <tbody>
                                                             <tr v-for="(row, index) in consignment_list.itemss"
                                                                 :key="index">
-                                                                <td class="editable-cell">{{ row.pcs }}</td>
-                                                                <td class="editable-cell">{{ row.wgt }} {{ consignment_list.weight_code }}</td>
-                                                                <td class="editable-cell">{{ row.length }}</td>
-                                                                <td class="editable-cell">{{ row.width }}</td>
-                                                                <td class="editable-cell">{{ row.height }}</td>
-                                                                <td class="editable-cell"
-                                                                    style="display: flex;align-items: center;justify-content: space-between;width: 100%;">
+                                                                <td>{{ row.pcs }}</td>
+                                                                <td>{{ row.wgt }} {{ consignment_list.weight_code }}</td>
+                                                                <td>{{ row.length }}</td>
+                                                                <td>{{ row.width }}</td>
+                                                                <td>{{ row.height }}</td>
+                                                                <td style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                                                     <span class="mr-3">{{ row.unit }}</span>
                                                                     <b-icon icon="trash" font-scale="1"
-                                                                        @click="deletePcs(index)"></b-icon>
+                                                                        @click="deletePcs(index)"
+                                                                        style="cursor: pointer;"></b-icon>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    </div>
-                                                    <div class="table-responsive">
                                                     <table class="table-sm">
                                                         <tr>
                                                             <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Volume</th>
@@ -1022,10 +1018,10 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="editable-cell">
-                                                                    <b-form-input id="input-horizontal" class="form-control" style="width: 80px" v-model="consignment_list.volume"></b-form-input>
+                                                                    <b-form-input id="input-horizontal" class="form-control w-100" v-model="consignment_list.volume"></b-form-input>
                                                                 </td>
                                                                 <td class="editable-cell">
-                                                                    <b-form-select class="form-control" style="width:70px;background-position-x: right;" v-model="this.form.entries.dimention_unit">
+                                                                    <b-form-select class="form-control w-100" v-model="this.form.entries.dimention_unit">
                                                                         <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
                                                                         <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
                                                                         <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
@@ -1035,11 +1031,9 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    </div>
                                                 </div>
                                                 <h5 class="mt-10 mb-2" style="font-size:13px;font-weight: 500;">ULD Information</h5>
-                                                <div class="">
-                                                    <div class="table-responsive">
+                                                <div class="table-responsive">
                                                     <table class="table table-sm">
                                                         <tbody>
                                                             <tr>
@@ -1050,16 +1044,16 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="editable-cell pr-15">
-                                                                    <input type="text" class="form-control" style="width: 80px;" v-model="consignment_list.uld_type" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.uld_type" />
                                                                 </td>
                                                                 <td class="editable-cell pr-15">
-                                                                    <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.uld_serial" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.uld_serial" />
                                                                     <!-- <has-error :form="form" field="uld_serial"></has-error> -->
                                                                 </td>
                                                                 <td class="editable-cell pr-2">
-                                                                    <input type="text" class="form-control" style="width: 110px;" v-model="consignment_list.owner" />
+                                                                    <input type="text" class="form-control w-100" v-model="consignment_list.owner" />
                                                                 </td>
-                                                                <td class="editable-cell"><button @click="addUldInfo" style="border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">Add</button></td>
+                                                                <td class="editable-cell"><button @click="addUldInfo" class="show-btn">Add</button></td>
                                                             </tr>
                                                             <tr v-if="uld_error.length" style="color: red;">
                                                                 <td colspan="4" style="border:0px;">
@@ -1071,32 +1065,34 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    </div>
-                                                    <div class="table-responsive">
-                                                    <table class="table table-sm">
-                                                        <tbody>
-                                                            <tr style="background-color:#F2F9FF;">
-                                                                <th style="color:000;font-size:13px;font-weight:500;">ULD Type:</th>
-                                                                <th style="color:000;font-size:13px;font-weight:500;">ULD Serial:</th>
-                                                                <th style="color:000;font-size:13px;font-weight:500;">Owner:</th>
+                                                    <table class="table-lightweight">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>ULD Type:</th>
+                                                                <th>ULD Serial:</th>
+                                                                <th>Owner:</th>
                                                                 <th></th>
                                                             </tr>
+                                                        </thead>
+                                                        <tbody>
                                                             <tr v-for="(row, index) in consignment_list.uld_infos" :key="index">
-                                                                <td class="editable-cell">{{ row.uld_type }}</td>
-                                                                <td class="editable-cell">{{ row.uld_serial }}</td>
-                                                                <td class="editable-cell">{{ row.owner }}</td>
-                                                                <td class="editable-cell" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                                                    <b-icon icon="trash" font-scale="1" @click="deleteUldInfo(index)"></b-icon>
+                                                                <td>{{ row.uld_type }}</td>
+                                                                <td>{{ row.uld_serial }}</td>
+                                                                <td>{{ row.owner }}</td>
+                                                                <td style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                                                    <span></span>
+                                                                    <b-icon icon="trash" font-scale="1"
+                                                                        @click="deleteUldInfo(index)"
+                                                                        style="cursor: pointer;"></b-icon>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    </div>
                                                 </div>
                                             </b-col>
                                         </b-row>
                                         <div class="d-flex justify-content-end">
-                                            <button @click="addOrUpdateEntry" style="border-radius: 30px;color: #355594;background: transparent;border: 1px solid #355594;padding: 8px 18px;">
+                                            <button @click="addOrUpdateEntry" class="show-btn">
                                                 {{ edit_entry_index !== null ? 'Update' : 'Add' }}
                                             </button>
                                         </div>
@@ -1104,7 +1100,8 @@
                                     <!-- CONSIGNMENT MODEL CODE END HERE -->
                                     <b-row>
                                         <b-col cols="12">
-                                            <table class="table table-sm" style="max-width:100%">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm" style="max-width:100%">
                                                 <thead>
                                                     <tr class="" style="background-color: #F2F9FF;">
                                                         <th style="font-size: 12px;font-weight: 500 !important;" class="">Pcs.</th>
@@ -1171,6 +1168,7 @@
                                                     </tr>
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </b-col>
                                     </b-row>
                                     <b-row>
@@ -1203,7 +1201,7 @@
                                         <b-col cols="12">
                                             <div class="mt-2 mb-15 ml-4 mr-4">
                                                 <h6 class="h-color mb-6">Customs Origin Code:</h6>
-                                                <b-form-group id="fieldset-horizontal" style="width: 450px">
+                                                <b-form-group id="fieldset-horizontal" style="max-width: 450px; width: 100%;">
                                                     <b-form-select class="form-control" v-model="form.custom_origin.customs_origin_code">
                                                         <option value="">Select another charge code</option>
                                                         <option value="T1">T1 - Goods from outside the EC under Customs Control</option>
@@ -1228,7 +1226,7 @@
                                                         <div class="ml-3 mt-8">
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Service Information:</h6>
                                                             <div class="py-7">
-                                                                <b-form-textarea class="" style="height:80px;width: 60% !important;" id="textarea"
+                                                                <b-form-textarea class="responsive-textarea" style="height:80px;width: 60%;" id="textarea"
                                                                     v-model="form.custom_origin.other_service_information"
                                                                     :class="{ 'is-invalid': form.errors.has('other_service_information') }" @input="validateTextarea"></b-form-textarea>
                                                                 <has-error :form="form" field="other_service_information"></has-error>
@@ -1256,17 +1254,19 @@
                                                                 :class="{ 'is-invalid': form.errors.has('accounting_information') }"></b-form-textarea>
                                                                 <has-error :form="form" field="accounting_information"></has-error>
                                                             </div>
-                                                            <label for="input-horizontal" class="mt-2 mb-0" style="width: 90px">Letter Of Credit</label>
-                                                            <b-form-select class="form-control-sm" v-model="form.custom_origin.letter_credit" style="width: 200px">
-                                                                <option value="CRN">Credit Card Number</option>
-                                                                <option value="CRD">Credit Card Expiry Date</option>
-                                                                <option value="CRI">Credit Card Issuance Name</option>
-                                                                <option value="GEN">General Information</option>
-                                                                <option value="GBL">Government Bill of Lading</option>
-                                                                <option value="STL">Mode of Settlement</option>
-                                                                <option value="RET">Return to Origin</option>
-                                                                <option value="SRN">Shipper's Reference Number</option>
-                                                            </b-form-select>
+                                                            <div class="d-flex align-items-center mt-2 flex-wrap tab-input-group">
+                                                                <label for="input-horizontal" class="mb-0 mr-2" style="width: 90px">Letter Of Credit</label>
+                                                                <b-form-select class="form-control-sm" v-model="form.custom_origin.letter_credit" style="width: 200px">
+                                                                    <option value="CRN">Credit Card Number</option>
+                                                                    <option value="CRD">Credit Card Expiry Date</option>
+                                                                    <option value="CRI">Credit Card Issuance Name</option>
+                                                                    <option value="GEN">General Information</option>
+                                                                    <option value="GBL">Government Bill of Lading</option>
+                                                                    <option value="STL">Mode of Settlement</option>
+                                                                    <option value="RET">Return to Origin</option>
+                                                                    <option value="SRN">Shipper's Reference Number</option>
+                                                                </b-form-select>
+                                                            </div>
                                                         </div>
                                                     </b-tab>
                                                     <b-tab title="Shipment Reference Infomation">
@@ -1329,7 +1329,7 @@
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Agent information:</h6>
                                                             <div class="py-7">
                                                                 <b-row>
-                                                                    <b-col cols="12" lg="6" class="align-items-center mb-6 mb-lg-0">
+                                                                    <b-col cols="12" md="6" class="align-items-center mb-6 mb-md-0 mb-lg-0">
                                                                         <div style="background-color: #F2F9FF;" class="mb-4">
                                                                             <h6 class="h-color" style="padding:5px 20px;font-size: 15px;font-weight:500">Override Issuing Agent:</h6>
                                                                         </div>
@@ -1448,7 +1448,7 @@
                                                                             <b-form-checkbox size="sm">Save information for later logins</b-form-checkbox>
                                                                         </b-form-group>
                                                                     </b-col>
-                                                                    <b-col cols="12" lg="6" class="align-items-center">
+                                                                    <b-col cols="12" md="6" class="align-items-center mt-6 mt-md-0 mt-lg-0">
                                                                         <div style="background-color: #F2F9FF;" class="mb-4">
                                                                             <h6 class="h-color" style="padding:5px 20px;font-size: 15px;font-weight:500">Senders Reference:</h6>
                                                                         </div>
@@ -1890,92 +1890,92 @@
                                 <hr class="hr" />
                                 <div class="py-5">
                                     <div class="ml-3 mt-8">
-                                        <h6 class="h-color" style="font-size: 15px;font-weight:500">Other Charges:</h6>
+                                        <h6 class="h-color">Other Charges:</h6>
                                         <div class="py-7">
                                             <b-row>
                                                 <b-col cols="12">
                                                     <div class="table-responsive">
-                                                    <table class="table table-sm" style="max-width:100%;">
-                                                        <thead>
-                                                            <tr class="" style="background-color: #F2F9FF;">
-                                                                <th class="">Code</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">Amount In INR</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                                <th class="">&nbsp;</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td class="pt-5 editable-cell align-items-center" style="width:300px;vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal" class="d-flex align-items-center">
-                                                                        <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
-                                                                        <option value="">Select an Other Charge Code</option>
-                                                                        <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
-                                                                            {{ charge.text }}
-                                                                        </option>
-                                                                        </b-form-select>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
-                                                                        <template #label>
-                                                                            <div class="d-flex align-items-center">
-                                                                                <span>Or:</span>
-                                                                            </div>
-                                                                        </template>
-                                                                        <b-form-input id="input-horizontal" style="width:40px;" class="form-control-sm" v-model="other_charges.other_code"></b-form-input>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        class="align-items-center">
-                                                                        <b-form-input style="width:80px;" class="form-control-sm"
-                                                                            v-model="other_charges.amount"></b-form-input>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        class="align-items-center">
-                                                                        <b-form-radio name="due" size="sm" v-model="other_charges.due" value="A">Due Agent</b-form-radio>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        class="align-items-center">
-                                                                        <b-form-radio name="due" size="sm" v-model="other_charges.due"
-                                                                            value="C">Due Carrier</b-form-radio>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        class="align-items-center">
-                                                                        <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
-                                                                            value="P">Prepaid</b-form-radio>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        class="align-items-center">
-                                                                        <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
-                                                                            value="C">Collect</b-form-radio>
-                                                                    </b-form-group>
-                                                                </td>
-                                                                <td class="pt-5 editable-cell align-items-center" style="vertical-align: middle;">
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        class="align-items-center">
-                                                                        <b-button class="show-btn px-5" @click="addCharge">
-                                                                            {{ editIndex !== null ? 'Update' : 'Add' }}
-                                                                        </b-button>
-                                                                    </b-form-group>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                    </div>
+                                                     <table class="table table-sm other-charges-entry-table" style="max-width:100%;">
+                                                         <thead>
+                                                             <tr class="" style="background-color: #F2F9FF;">
+                                                                 <th class="">Code</th>
+                                                                 <th class="">&nbsp;</th>
+                                                                 <th class="">Amount In INR</th>
+                                                                 <th class="">&nbsp;</th>
+                                                                 <th class="">&nbsp;</th>
+                                                                 <th class="">&nbsp;</th>
+                                                                 <th class="">&nbsp;</th>
+                                                                 <th class="">&nbsp;</th>
+                                                             </tr>
+                                                         </thead>
+                                                         <tbody>
+                                                             <tr>
+                                                                 <td class="pt-5 editable-cell align-items-center" style="width:300px;vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal" class="d-flex align-items-center">
+                                                                         <b-form-select class="form-control-sm" v-model="other_charges.other_charge_code">
+                                                                         <option value="">Select an Other Charge Code</option>
+                                                                         <option v-for="charge in other_charges_code" :key="charge.value" :value="charge.value">
+                                                                             {{ charge.text }}
+                                                                         </option>
+                                                                         </b-form-select>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
+                                                                         <template #label>
+                                                                             <div class="d-flex align-items-center">
+                                                                                 <span>Or:</span>
+                                                                             </div>
+                                                                         </template>
+                                                                         <b-form-input id="input-horizontal" style="width:40px;" class="form-control-sm" v-model="other_charges.other_code" placeholder="Or code"></b-form-input>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal"
+                                                                         class="align-items-center">
+                                                                         <b-form-input style="width:80px;" class="form-control-sm"
+                                                                             v-model="other_charges.amount" placeholder="Amount"></b-form-input>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell charge-radio-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal"
+                                                                         class="align-items-center">
+                                                                         <b-form-radio name="due" size="sm" v-model="other_charges.due" value="A">Due Agent</b-form-radio>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell charge-radio-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal"
+                                                                         class="align-items-center">
+                                                                         <b-form-radio name="due" size="sm" v-model="other_charges.due"
+                                                                             value="C">Due Carrier</b-form-radio>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell charge-radio-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal"
+                                                                         class="align-items-center">
+                                                                         <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
+                                                                             value="P">Prepaid</b-form-radio>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell charge-radio-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal"
+                                                                         class="align-items-center">
+                                                                         <b-form-radio name="payment_type" size="sm" v-model="other_charges.payment_type"
+                                                                             value="C">Collect</b-form-radio>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                                 <td class="pt-5 editable-cell align-items-center charge-btn-cell" style="vertical-align: middle;">
+                                                                     <b-form-group id="fieldset-horizontal"
+                                                                         class="align-items-center">
+                                                                         <b-button class="show-btn px-5" @click="addCharge">
+                                                                             {{ editIndex !== null ? 'Update' : 'Add' }}
+                                                                         </b-button>
+                                                                     </b-form-group>
+                                                                 </td>
+                                                             </tr>
+                                                         </tbody>
+                                                     </table>
+                                                     </div>
                                                 </b-col>
                                                 <b-col cols="12">
                                                     <!-- Calculation Table always visible -->
@@ -2063,7 +2063,7 @@
                                     <b-tabs class="custom-nav">
                                         <b-tab title="Payment Information">
                                             <b-row>
-                                                <b-col cols="12" lg="6" class="mb-6 mb-lg-0">
+                                                <b-col cols="12" md="6" class="mb-6 mb-md-0 mb-lg-0">
                                                     <div class="d-flex align-items-center ml-3 mt-6" style="justify-content: space-between;margin-bottom:4px !important;">
                                                         <div style="float:left;">
                                                             <b-form-group id="fieldset-horizontal"
@@ -2154,7 +2154,7 @@
                                                             v-model="form.payment_info.declear_value_insurance"></b-form-input>
                                                     </b-form-group>
                                                 </b-col>
-                                                <b-col cols="12" lg="6">
+                                                <b-col cols="12" md="6" class="mt-6 mt-md-0 mt-lg-0">
                                                     <div class="d-flex justify-content-end">
                                                         <div class="table-responsive">
                                                         <table class="table table-sm">
@@ -2407,12 +2407,9 @@
                                             <div class="d-flex justify-content-end mobile-justify-start mb-2">
                                                 <b-form-checkbox size="sm" class="premium-checkbox">Including Cargo Label</b-form-checkbox>
                                             </div>
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA 2:" class="form-control-sm col-form-label mb-0">
-                                                <b-form-input id="input-horizontal" v-model="form.awb_email" class="form-control-sm" style="width: 300px"></b-form-input>
+                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA:" class="form-control-sm col-form-label mb-0">
+                                                <b-form-input id="input-horizontal" v-model="form.awb_email" class="form-control-sm" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
                                             </b-form-group>
-                                            <div class="text-right mobile-text-left mt-1" style="font-size: 11px; color: #777;">
-                                                (separate addresses with a semicolon ';')
-                                            </div>
                                         </b-col>
                                     </b-row>
                                 </div>
@@ -2872,6 +2869,12 @@ export default {
     
     methods: {
         processExtractedData(response) {
+            // Reset the form and UI states to clear any previously populated data
+            this.form.reset();
+            this.showShipper = false;
+            this.showConsignee = false;
+            this.isConsignmentAdded = false;
+
             // Injected existing extraction pipeline
             console.log('Processing received payload:', response);
             var awb_number = response.awb_number ? response.awb_number.split("-") : ['', ''];
@@ -4820,25 +4823,26 @@ export default {
 }
 
 .upload-box {
-    border: 2px dashed #d0d5dd;
-    border-radius: 12px;
+    border: 2px dashed #CBD5E1;
+    border-radius: 16px;
     padding: 60px 40px;
     text-align: center;
     background-color: #ffffff;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
 .upload-box:hover {
-    border-color: #4a5568;
-    background-color: #f8f9fa;
+    border-color: #355594;
+    background-color: #F8FAFC;
+    box-shadow: 0 10px 25px rgba(53, 85, 148, 0.05);
 }
 
 .upload-icon {
     width: 60px;
     height: 60px;
     margin: 0 auto 24px;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f5f9ff 100%);
+    background: linear-gradient(135deg, #F0F7FF 0%, #E6F0FF 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -4848,31 +4852,33 @@ export default {
 .upload-icon svg {
     width: 32px;
     height: 32px;
-    color: #4a6fa5;
+    color: #355594;
 }
 
 .upload-text {
-    color: #4a6fa5;
+    color: #1E293B;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 8px;
 }
 
 .upload-divider {
-    color: #6b7280;
+    color: #64748B;
     font-size: 14px;
     margin: 12px 0;
 }
 
 .upload-link {
-    color: #4a6fa5;
+    color: #355594;
     font-size: 14px;
-    text-decoration: underline;
+    text-decoration: none;
+    font-weight: 600;
     cursor: pointer;
 }
 
 .upload-link:hover {
-    color: #3b5a8a;
+    color: #28447a;
+    text-decoration: underline;
 }
 
 #fileInput {
@@ -4881,25 +4887,26 @@ export default {
 /* end of file upload css */
 header {
     width: 100%;
-    background-color: #2637a8;
+    background-color: #355594;
 }
 
 .h-color {
-    color: #2637a8;
+    color: #355594;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800 !important;
+    font-size: 18px !important;
+    letter-spacing: -0.2px;
 }
 
 .h_background_color {
-    background-color: #2637a8;
+    background-color: #355594;
     color: white;
 }
 
 #nav {
     display: flex;
-    /* align-items: center;
-    justify-content: center; */
     width: 100%;
     max-width: 1280px;
-    /* margin: 0 auto; */
 }
 
 #nav>ul {
@@ -4940,7 +4947,6 @@ li {
 }
 
 #nav>ul>li>span:after {
-    /* content: '▼'; */
     display: inline-block;
 }
 
@@ -4955,14 +4961,12 @@ li {
 }
 
 .dropdown li {
-    /* width: 250px; */
     width: 150px;
     border-bottom: 1px solid #fff;
 }
 
 .dropdown li a {
     display: block;
-    /* padding: 10px; */
     padding-left: 5px;
     color: #fff;
     text-decoration: none;
@@ -4983,7 +4987,7 @@ li {
   border-radius: 50px !important;
   padding: 10px 22px !important;
   font-weight: 600 !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
 }
 
@@ -4991,11 +4995,12 @@ li {
   background: #f0f7ff !important;
   border-color: #355594 !important;
   color: #355594 !important;
+  transform: translateY(-1px) !important;
   box-shadow: 0 6px 12px rgba(53, 85, 148, 0.1) !important;
 }
 
 .custom-btn:hover {
-    background-color: #007bff !important;
+    background-color: #355594 !important;
     color: white !important;
 }
 
@@ -5009,7 +5014,7 @@ li {
     text-align: end;
 }
 .routing-info-label {
-    width :130px;
+    width: 150px;
     display: inline-block;
     text-align: end;
 }
@@ -5029,13 +5034,14 @@ li {
 }
 
 .hr {
-    border-top: 2px solid #CDCDCD;
+    border: 0;
+    border-top: 1px solid rgba(53, 85, 148, 0.12);
+    margin: 2rem 0;
 }
 
 .aselect {
     position: relative;
     width: 200px;
-    /* Adjust the width as needed */
 }
 
 .selector.box {
@@ -5046,29 +5052,67 @@ li {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="34" viewBox="0 0 24 24"><path fill="black" d="M7 10l5 5 5-5z"/></svg>') no-repeat right center;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23355594" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center;
     background-color: white;
-    /* border: 1px solid #ccc; */
-    /* padding: 10px 40px 10px 10px; */
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 10px !important;
     font-size: 14px;
-    /* padding: 2px; */
+    height: 38px !important;
+    padding: 0 32px 0 12px !important;
     cursor: pointer;
     width: 100%;
+    color: #1E293B !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
 }
 
 .custom-select:focus {
-    outline: none;
-    border-color: #5cb3fd;
+    outline: none !important;
+    border-color: #355594 !important;
+    box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.12) !important;
 }
 
 
 .table {
-    max-width: 400px;
-    border: 0;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(53, 85, 148, 0.08) !important;
+    box-shadow: 0 4px 12px rgba(53, 85, 148, 0.02) !important;
+    background: #FFFFFF !important;
+    max-width: 100%;
+}
+
+.table th {
+    background-color: #F8FAFC !important;
+    color: #355594 !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 6px !important;
+    border-bottom: 1px solid rgba(53, 85, 148, 0.1) !important;
+    border-top: none !important;
+}
+
+.table td {
+    padding: 8px 6px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+    border-top: none !important;
+    color: #475569 !important;
+    font-size: 14px !important;
+}
+
+.table tr:last-child td {
+    border-bottom: none !important;
 }
 
 td.editable-cell1 {
-    border: 1 solid gray !important;
+    border: 1px solid rgba(53, 85, 148, 0.2) !important;
+    border-radius: 8px !important;
 }
 
 td.editable-cell {
@@ -5080,52 +5124,101 @@ th {
 }
 
 .shipper-form-control, .consignee-form-control {
-    border: 1px solid #A6A6A6;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 10px !important;
     width: 300px;
     height: 38px;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    color: #1E293B !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: #FFFFFF !important;
 }
+
 .form-control {
-    border: 1px solid #A6A6A6;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 10px !important;
     height: 38px;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    color: #1E293B !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: #FFFFFF !important;
+}
+
+.form-control:focus, .shipper-form-control:focus, .consignee-form-control:focus, select.form-control:focus {
+    border-color: #355594 !important;
+    box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.12) !important;
+    outline: none !important;
+    background-color: #FFFFFF !important;
+}
+
+.awb-code-input, .awb-no-input {
+    text-align: center !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
 }
 
 .form-control1 {
-    border: 2px solid gray;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 8px !important;
     width: 150px;
-    height: 25px;
+    height: 28px;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13px !important;
 }
+.form-control1:focus {
+    border-color: #355594 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(53, 85, 148, 0.1) !important;
+}
+
 .add-cons-btn {
     border: 1px solid #355594 !important;
     border-radius: 30px !important;
     color: #355594 !important;
     background: #fff !important;
+    padding: 8px 20px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 2px 4px rgba(53, 85, 148, 0.05) !important;
 }
+
+.add-cons-btn:hover {
+    background: #355594 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 10px rgba(53, 85, 148, 0.15) !important;
+}
+
 .custom-link {
     display: block;
     margin-bottom: 0.5rem;
-    color: #4C4C4C;
+    color: #64748B;
+    font-weight: 500;
     text-decoration: underline;
+    transition: color 0.2s ease;
 }
 
 .custom-link:hover {
     color: #355594;
     text-decoration: underline #355594 !important;
-    text-decoration-color: #355594;
 }
 .custom-link-custom {
     display: block;
     margin-bottom: 0.5rem;
     color:#355594;
     text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
 }
 .custom-link-custom:hover {
-    /* color: #2637a8; */
     text-decoration: underline #355594 !important;
-    text-decoration-color: #355594;
 }
 
 .column_b {
-    border: 1px solid #b1b1b1;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
 }
 .custom-dropdown {
   position: relative;
@@ -5134,29 +5227,67 @@ th {
 
 .dropdown-options {
     position: absolute;
-    border: 1px solid #E4E6EF;
-    border-radius: 5px;
-    box-shadow: 0px 3px 15px 0px #00000013;
+    border: 1px solid rgba(53, 85, 148, 0.12);
+    border-radius: 12px;
+    box-shadow: 0px 10px 30px rgba(53, 85, 148, 0.08);
     background-color: #fff;
     border-top: none;
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    z-index: 1;
+    z-index: 1000;
     width: 100%;
+    padding: 4px;
 }
 
 .option {
-    padding: 5px 10px;
+    padding: 8px 12px !important;
     cursor: pointer;
-    border-radius: 0px !important;
-    padding: 0px 4px !important;
+    border-radius: 8px !important;
     border: 0px !important;
+    font-weight: 500;
+    color: #475569;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .option:hover {
-  background-color: #f0f0f0;
+  background-color: rgba(53, 85, 148, 0.06) !important;
+  color: #355594 !important;
 }
+
+    .table-lightweight {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        margin-top: 10px !important;
+        margin-bottom: 20px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    .table-lightweight th {
+        color: #8A99AD !important;
+        font-weight: 500 !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        padding: 8px 6px !important;
+        border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;
+        background: transparent !important;
+    }
+    .table-lightweight td {
+        padding: 10px 6px !important;
+        vertical-align: middle !important;
+        border-bottom: 1px solid rgba(53, 85, 148, 0.05) !important;
+        color: #475569 !important;
+        font-size: 13px !important;
+        background: transparent !important;
+    }
+    .table-lightweight tr:last-child td {
+        border-bottom: none !important;
+    }
+
     /* Ultra-Premium Modal Styles from Header */
     .ultra-premium-modal .modal-dialog {
         max-width: 1000px !important;
@@ -5209,6 +5340,14 @@ th {
         .form-scroll-container { padding: 3rem 2rem; height: auto; max-height: 60vh; } 
         .ultra-close-btn { top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; } 
     }
+.awb-flex-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
 @media (max-width: 768px) {
 .shipper-form-control, .consignee-form-control {
 max-width: 100% !important;
@@ -5231,18 +5370,30 @@ width: 100% !important;
 max-width: 100% !important;
 }
 
-/* Targeted overrides for inline widths inside form groups on mobile screens */
-.form-group div[style*="width:150px"],
-.form-group div[style*="width:150px;"],
-.form-group div[style*="width: 90px"],
-.form-group div[style*="width: 90px;"],
-.form-group div[style*="width:100px"],
-.form-group div[style*="width:100px;"] {
+/* Broad overrides for inline/fixed width labels and divs inside form groups */
+.form-group:not(.nav-dropdown-group) div[style*="width:"] {
 width: 100% !important;
 max-width: 100% !important;
 justify-content: flex-start !important;
 text-align: left !important;
 margin-bottom: 4px !important;
+}
+
+/* Ensure fixed-width inputs and textareas scale to fit mobile screens */
+textarea[style*="width:"],
+input[style*="width:1000px"],
+input[style*="width: 1000px"],
+input[style*="width:400px"],
+input[style*="width: 400px"] {
+width: 100% !important;
+max-width: 100% !important;
+}
+
+input[style*="width:"],
+select[style*="width:"],
+textarea[style*="width:"],
+.mx-datepicker[style*="width:"] {
+max-width: 100% !important;
 }
 
 .form-group:not(.nav-dropdown-group) input,
@@ -5253,6 +5404,15 @@ margin-bottom: 4px !important;
 .form-group:not(.nav-dropdown-group) .form-control {
 width: 100% !important;
 max-width: 100% !important;
+}
+
+.form-group:not(.nav-dropdown-group) input.awb-code-input {
+    width: 62px !important;
+    max-width: 62px !important;
+}
+.form-group:not(.nav-dropdown-group) input.awb-no-input {
+    width: 100px !important;
+    max-width: 100% !important;
 }
 
 /* Stack horizontal form-group elements */
@@ -5297,6 +5457,156 @@ max-width: 100% !important;
         flex-direction: column;
         gap: 10px;
     }
+    
+    /* Responsive tables and custom tables constraints */
+    .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin-bottom: 1rem !important;
+    }
+    table[style*="max-width"] {
+        max-width: 100% !important;
+    }
+    
+    /* Make modal tables stack vertically and span full-width on mobile */
+    .modal-body table, 
+    .modal-body tbody, 
+    .modal-body tr, 
+    .modal-body th, 
+    .modal-body td {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    /* Prevent table-responsive tables inside modals from stacking */
+    .modal-body .table-responsive table {
+        display: table !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+    .modal-body .table-responsive tbody {
+        display: table-row-group !important;
+    }
+    .modal-body .table-responsive tr {
+        display: table-row !important;
+    }
+    .modal-body .table-responsive th,
+    .modal-body .table-responsive td {
+        display: table-cell !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+    .modal-body td.editable-cell {
+        padding: 6px 0 !important;
+    }
+    .modal-body textarea,
+    .modal-body select,
+    .modal-body input {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Horizontal scrollable tab container on mobile for a clean native bar feel */
+    .custom-nav ::v-deep .nav-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-bottom: 0px !important;
+        padding-bottom: 8px !important;
+    }
+    .custom-nav ::v-deep .nav-item {
+        flex: 0 0 auto !important;
+    }
+    .custom-nav ::v-deep .nav-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+    .custom-nav ::v-deep .nav-tabs {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+    }
+    
+    /* Stack nested d-flex form containers inside tabs on mobile */
+    .tab-content .d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .tab-content label[style*="width:"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        margin-bottom: 4px !important;
+        padding-right: 0 !important;
+    }
+    .tab-content input[style*="width:"],
+    .tab-content select[style*="width:"],
+    .tab-content textarea[style*="width:"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Letter of Credit & select input group stacking in tabs */
+    .tab-input-group {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .tab-input-group label {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 4px !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+    }
+    .tab-input-group select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Optimize Other Charges entry form on mobile */
+    .other-charges-entry-table thead {
+        display: none !important;
+    }
+    .other-charges-entry-table,
+    .other-charges-entry-table tbody,
+    .other-charges-entry-table tr,
+    .other-charges-entry-table td {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .other-charges-entry-table td {
+        padding: 8px 0 !important;
+        border: none !important;
+    }
+    .other-charges-entry-table td select,
+    .other-charges-entry-table td input,
+    .other-charges-entry-table td .form-group,
+    .other-charges-entry-table td .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    /* Set due and payment radio columns as inline flex/grid on mobile */
+    .other-charges-entry-table td.charge-radio-cell {
+        display: inline-flex !important;
+        width: 50% !important;
+        vertical-align: middle !important;
+        padding: 8px 0 !important;
+        margin: 0 !important;
+    }
+    .other-charges-entry-table td.charge-radio-cell .form-group {
+        margin-bottom: 0 !important;
+    }
+    .other-charges-entry-table td.charge-btn-cell b-button,
+    .other-charges-entry-table td.charge-btn-cell button,
+    .other-charges-entry-table td.charge-btn-cell .show-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+    }
 }
 </style>
 <style>
@@ -5319,30 +5629,86 @@ max-width: 100% !important;
     }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        gap: 4px;
+        background: #F1F5F9;
+        padding: 6px;
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        width: 100% !important;
+    }
+    .custom-nav .nav-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+    .custom-nav .nav-item {
+        flex: 0 0 auto !important;
     }
     .custom-nav .nav-link {
-        color: #355594 !important;
-        font-weight: 400 !important;
-        font-size: 12px !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
         border: none !important;
-        padding: 0px !important;
-        margin: 0px 10px !important;
+        padding: 8px 16px !important;
+        margin: 0px !important;
+        border-radius: 10px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        white-space: nowrap !important;
     }
-    .custom-nav .nav-link:hover,
+    .custom-nav .nav-link:hover {
+        color: #355594 !important;
+        background: rgba(53, 85, 148, 0.05) !important;
+    }
     .custom-nav .nav-link.active {
-        border-bottom: 2px solid #355594 !important;
+        color: #355594 !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(53, 85, 148, 0.08) !important;
+        border-bottom: none !important;
+    }
+    .custom-nav-title .nav-tabs {
+        border-bottom: 0px !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin-bottom: 1.5rem;
+        display: block !important;
+    }
+    .custom-nav-title .nav-link {
+        color: #355594 !important;
+        font-weight: 800 !important;
+        font-size: 18px !important;
+        font-family: 'Inter', sans-serif !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        cursor: default !important;
+        pointer-events: none !important;
+    }
+    .custom-nav-title .nav-link.active {
+        color: #355594 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
     }
     .mx-input {
         display: inline-block;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
         width: 100%;
-        /* height: 34px; */
-        padding: 0px !important;
-        color:  #355594 !important;
+        color: #355594 !important;
         border: 0px !important;
-        -webkit-box-shadow: inset 0 1px 1px #fff;
-        box-shadow: inset 0 1px 1px #fff;
+        background: transparent !important;
+        padding: 0px !important;
+        height: 38px !important;
+        font-family: 'Inter', sans-serif !important;
+        -webkit-box-shadow: none !important;
+        box-shadow: none !important;
     }
     .mx-icon-calendar, .mx-icon-clear {
         position: absolute;
@@ -5355,6 +5721,12 @@ max-width: 100% !important;
         color: #355594 !important;
         stroke: #355594 !important;
         vertical-align: middle;
+        cursor: pointer;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+    .mx-icon-calendar:hover {
+        color: #28447a !important;
+        transform: translateY(-50%) scale(1.15);
     }
     /* Spinner Styles */
     .spin {

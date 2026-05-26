@@ -1430,3 +1430,26 @@ Historically, certain critical user behaviors lacked physical storage in the rel
 - **Visual Injection**: Realized a "Pill Registry" system where Superadmins can instantly inject coordinate row mappings simply by clicking an active matrix tag.
 - **Fallback Logic**: Fully integrated with client side input catchers, automatically converting flat-array legacy datasets into robust schema models seamlessly upon record mount.
 
+---
+## 📑 Finalized Upgrades: Global Error Formatting & PDF Image Stabilization (May 26)
+
+This update addressed two core functional areas: visual image rendering within generated documents, and user-facing error clarity across all data entry forms.
+
+### 1. 📄 PDF Image Stabilization (Base64 Inline Logo Injection)
+- **Templates**: `generate-awb-pdf.blade.php` (Line 2736) and `generate-hawb-pdf.blade.php` (Line 2733)
+- **Problem**: Absolute filesystem paths using `public_path()` were being blocked by DomPDF's internal `chroot` sandboxing restrictions, causing the IATA logo on page 2 of both generated PDFs to fail to load.
+- **Solution**: Refactored both templates to read the raw image bytes from disk and dynamically inject the IATA logo as an inline Base64 data URI:
+  ```html
+  <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('media/assets/logos/iata-logo.png'))) }}" alt="IATA ICON" width="50px" height="auto">
+  ```
+  This eliminates all filesystem, sandbox, or protocol check overhead and guarantees 100% reliable rendering of the logo across all server environments.
+
+### 2. 🛡️ Global Validation Error Optimization & Phrasing
+- **Configuration**: `/resources/lang/en/validation.php`
+- **Re-phrasing**: Cleaned up the raw Laravel validation messages globally. Phrasings have been shortened to a concise and modern standard (e.g., `:attribute is required.`, `:attribute format is invalid.`, and `:attribute cannot exceed :max characters.`), removing redundant prefixes such as "The" or "field".
+- **Attribute Mapping Dictionary**: Populated the `'attributes'` localization block to dynamically map technical database columns into professional human-readable titles:
+  - **AWB Attributes**: `awb_code` ➔ *AWB Prefix*, `awb_no` ➔ *AWB Number*
+  - **Shipper/Consignee Info**: `ship_name` ➔ *Shipper Name*, `cons_address` ➔ *Consignee Address*, etc.
+  - **Houseway specific Info**: `hawb_no` ➔ *House Airway Bill Number*, `master_origin` ➔ *Master Origin*, `master_destination` ➔ *Master Destination*, `master_pcs` ➔ *Master Pieces*, `master_weight` ➔ *Master Weight*.
+- **Safety**: By maintaining identical key structures (retaining raw keys like `ship_name` for error mapping), the front-end inputs continue to dynamically highlight (using `:class="{ 'is-invalid': ... }"`) with zero risk of breaking any logical validation check systems.
+

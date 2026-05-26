@@ -1,7 +1,7 @@
 <template>
     <nav class="sidebar-container">
         <!-- Desktop Sidebar -->
-        <div class="sidebar d-none d-md-block">
+        <div class="sidebar d-none d-lg-block">
             <ul class="sidebar__list">
                 <!-- AWB / Consolidation -->
                 <router-link to="/focus-air" custom v-slot="{ navigate }">
@@ -36,13 +36,13 @@
 
                 <!-- Bottom branding -->
                 <li class="sidebar__branding">
-                    <span class="sidebar__branding-text"><b>FOCUS AIR</b></span>
+                    <span class="sidebar__branding-text">FOCUS AIR</span>
                 </li>
             </ul>
         </div>
 
         <!-- Mobile Dropdown Sidebar -->
-        <div class="sidebar-mobile d-md-none" v-click-outside="closeMobileMenu">
+        <div class="sidebar-mobile d-lg-none" v-click-outside="closeMobileMenu">
             <div class="mobile-nav-trigger" @click="toggleMobileMenu">
                 <img :src="activeItem.icon" class="mobile-active-icon" />
                 <span class="mobile-active-label">{{ activeItem.label }}</span>
@@ -207,15 +207,13 @@ export default {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     font-family: 'Inter', sans-serif;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.03em;
     font-size: 18px;
     line-height: 1;
     color: #355594;
     white-space: nowrap;
     opacity: 0.95;
-    /* Bulks up character thickness visually to match massive text rendering */
-    -webkit-text-stroke: 1px #355594;
 }
 
 /* ── Mobile Dropdown Styles ───────────────────────────── */

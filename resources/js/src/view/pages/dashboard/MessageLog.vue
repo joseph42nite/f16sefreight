@@ -713,7 +713,7 @@ export default {
     font-size: 14px !important;
     color: #355594 !important;
     font-weight: 500 !important;
-    background-color: #F8FCFF !important;
+    background-color: #ffffff !important;
     transition: all 0.3s ease !important;
 }
 

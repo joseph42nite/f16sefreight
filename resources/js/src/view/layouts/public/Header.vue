@@ -188,7 +188,12 @@ export default {
 };
 </script>
 <style scoped>
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900);
+@import "~@fontsource/roboto/100.css";
+@import "~@fontsource/roboto/300.css";
+@import "~@fontsource/roboto/400.css";
+@import "~@fontsource/roboto/500.css";
+@import "~@fontsource/roboto/700.css";
+@import "~@fontsource/roboto/900.css";
 html,
 body * {
     font-family: "Roboto", sans-serif !important;
@@ -263,12 +268,12 @@ a.menu-link {
 #main-logo {
     height: 60px;
     width: auto;
-    filter: drop-shadow(-8px -8px 25px rgba(30, 58, 110, 0.8));
+    filter: drop-shadow(0 4px 12px rgba(30, 58, 110, 0.6));
     transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 #main-logo:hover {
     transform: scale(1.05);
-    filter: drop-shadow(-12px -12px 45px rgba(30, 58, 110, 0.95));
+    filter: drop-shadow(0 8px 25px rgba(30, 58, 110, 0.9));
 }
 #avatar-logo {
     width: 35px;

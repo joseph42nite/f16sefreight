@@ -38,11 +38,7 @@
 
       <!-- WHAT WE OFFER -->
       <section class="services-carousel-section mb-25">
-        <section-header 
-            eyebrow="Expertise" 
-            title="Our Specialized Products" 
-            subtitle="High-performance solutions for every freight challenge."
-        />
+
         <home-services-grid />
       </section>
 

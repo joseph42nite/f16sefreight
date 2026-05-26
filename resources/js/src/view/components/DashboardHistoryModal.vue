@@ -1,6 +1,6 @@
 <template>
     <b-modal :id="id" :title="title" :hide-footer="true" centered size="lg" modal-class="premium-modal" title-class="font-weight-bolder text-dark" header-class="border-bottom-0 pb-0 px-5 pt-5">
-        <div class="history-list p-5">
+        <div class="history-list p-3 p-sm-5">
             <div v-if="isFetching" class="text-center py-20 d-flex flex-column align-items-center">
                 <b-spinner style="width: 3rem; height: 3rem; color: #355594;" label="Loading..."></b-spinner>
                 <p class="mt-4 font-weight-bold" style="color: #355594; font-size: 1.1rem;">Loading your data...</p>
@@ -20,7 +20,7 @@
                      class="history-card mb-4" 
                      :class="mode === 'draft' ? 'draft-card' : 'send-card'">
                     
-                    <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between">
                         <!-- Main Info Group -->
                         <div class="d-flex align-items-center" 
                              :style="docType === 'consolidation' ? 'cursor: pointer;' : ''"
@@ -50,7 +50,7 @@
 
                         <!-- Right Action Area Slot -->
                         <slot name="actions" :item="item">
-                            <div class="d-flex">
+                            <div class="d-flex mt-3 mt-sm-0 justify-content-end action-container">
                                 <button @click="$emit('action', item)" class="premium-btn px-4 py-2 shadow-sm">
                                     {{ mode === 'draft' ? 'Edit Draft' : 'View Details' }}
                                     <b-icon icon="arrow-right" class="ml-2 icon-hover-slide"></b-icon>
@@ -246,5 +246,60 @@ export default {
     align-items: center;
     justify-content: center;
     color: #a0aec0;
+}
+
+@media (max-width: 576px) {
+    /* Responsive card paddings */
+    .history-card {
+        padding: 1rem !important;
+    }
+    
+    .icon-wrapper {
+        width: 44px !important;
+        height: 44px !important;
+        margin-right: 0.75rem !important;
+    }
+    
+    .awb-title {
+        font-size: 1rem !important;
+    }
+    
+    .route-badge {
+        padding: 2px 10px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    /* Make action buttons stretch fully and be touch-friendly */
+    .action-container {
+        width: 100% !important;
+        margin-top: 12px !important;
+        justify-content: flex-start !important;
+    }
+    
+    .premium-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 8px 16px !important;
+    }
+    
+    /* Optimize download strip and links to stack cleanly */
+    .download-strip {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+    }
+    
+    .download-strip span {
+        margin-bottom: 2px !important;
+        margin-right: 0 !important;
+    }
+    
+    .download-link {
+        width: 100% !important;
+        margin-right: 0 !important;
+        margin-bottom: 4px !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
 }
 </style>

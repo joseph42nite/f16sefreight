@@ -8,7 +8,7 @@ import Plugin from '../core/Plugin';
 import FieldStatus from './FieldStatus';
 
 export interface AutoFocusOptions {
-    onPrefocus: (AutoFocusPrefocusEvent) => void;
+    onPrefocus: (e: AutoFocusPrefocusEvent) => void;
 }
 export interface AutoFocusPrefocusEvent {
     field: string;
@@ -53,7 +53,9 @@ export default class AutoFocus extends Plugin<AutoFocusOptions> {
 
                 const e = { firstElement, field: firstInvalidField } as AutoFocusPrefocusEvent;
                 this.core.emit('plugins.autofocus.prefocus', e);
-                this.opts.onPrefocus(e);
+                if (this.opts && this.opts.onPrefocus) {
+                    this.opts.onPrefocus(e);
+                }
 
                 // Focus on the first invalid element
                 firstElement.focus();

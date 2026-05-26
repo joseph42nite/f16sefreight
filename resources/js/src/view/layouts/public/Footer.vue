@@ -3,19 +3,19 @@
         <b-container>
             <b-row class="mb-10">
                 <!-- LOGO & TAGLINE -->
-                <b-col lg="4" md="12" class="mb-12 mb-lg-0 text-center text-lg-left">
+                <b-col md="4" cols="12" class="mb-10 mb-md-0 text-center text-md-left">
                     <router-link to="/">
                         <img src="/media/assets/logos/blue-logo.png" alt="f16s logo" class="footer-logo mb-6">
                     </router-link>
-                    <p class="footer-desc mx-auto mx-lg-0">
+                    <p class="footer-desc mx-auto mx-md-0">
                         Providing smart data solutions and seamless freight documentation for the global logistics industry.
                     </p>
                 </b-col>
 
                 <!-- LINKS COLUMNS -->
-                <b-col lg="8" md="12">
+                <b-col md="8" cols="12">
                     <b-row class="text-center text-md-left">
-                        <b-col md="4" cols="6" class="mb-10 mb-md-0">
+                        <b-col sm="4" cols="6" class="mb-10 mb-sm-0">
                             <h5 class="footer-heading">Company</h5>
                             <ul class="list-unstyled footer-links">
                                 <li><router-link to="/about-us">About Us</router-link></li>
@@ -24,7 +24,7 @@
                                 <li><router-link to="/contact-us">Contact</router-link></li>
                             </ul>
                         </b-col>
-                        <b-col md="4" cols="6" class="mb-8 mb-md-0">
+                        <b-col sm="4" cols="6" class="mb-8 mb-sm-0">
                             <h5 class="footer-heading">Services</h5>
                             <ul class="list-unstyled footer-links">
                                 <li><router-link to="/product-description">Focus Air</router-link></li>
@@ -32,7 +32,7 @@
                                 <li><router-link to="/product-description">Focus Road</router-link></li>
                             </ul>
                         </b-col>
-                        <b-col md="4" cols="12" class="mb-0">
+                        <b-col sm="4" cols="12" class="mb-0">
                             <h5 class="footer-heading">Support</h5>
                             <ul class="list-unstyled footer-links">
                                 <li><router-link to="/contact-us">Help Center</router-link></li>
@@ -65,7 +65,10 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "~@fontsource/inter/400.css";
+@import "~@fontsource/inter/500.css";
+@import "~@fontsource/inter/600.css";
+@import "~@fontsource/inter/700.css";
 
 .footer-wrapper {
     background: linear-gradient(180deg, #FFFFFF 0%, #F0F7FF 100%);

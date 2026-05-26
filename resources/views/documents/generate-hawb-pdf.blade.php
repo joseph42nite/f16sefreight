@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>F16s E-Freight Solutions</title>
-    <link rel="icon" href="/media/custome/favicon.jpeg" type="image/x-icon">
+    <link rel="icon" href="/media/assets/logos/favicon-white-64.png" type="image/png">
     <style>
         .routing-and-destination {
         border-bottom: 1px solid #000;
@@ -2730,7 +2730,7 @@
                     <table cellpadding="0" cellspacing="0" width="100%"> 
                         <tr>
                             <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
-                                <img src="{{ public_path('media/custome/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
+                                <img src="{{ public_path('media/assets/logos/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
                             </td>
                         </tr>
                         <tr>

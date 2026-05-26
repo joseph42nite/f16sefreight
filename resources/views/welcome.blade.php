@@ -68,7 +68,7 @@
 </script>
 <body>
     <!-- CUSTOM PRELOADER -->
-    <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 10000; overflow: hidden; transition: opacity 0.6s ease-in-out;">
+    <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; display: none; opacity: 0; align-items: center; justify-content: center; z-index: 10000; overflow: hidden; transition: opacity 0.3s ease-in-out;">
         <img src="/media/assets/logos/blue-logo.png" alt="Loading..." style="width: 150px; height: auto; object-fit: contain; animation: pulse 2s infinite ease-in-out;">
     </div>
 
@@ -91,14 +91,30 @@
     <script src="https://cdn.jsdelivr.net/clipboard.js/2.0.8/clipboard.min.js"></script>
 
     <script>
+      var loaderTimer = setTimeout(function() {
+          var loader = document.getElementById('app-preloader');
+          if (loader) {
+              loader.style.display = 'flex';
+              // Force reflow to allow transition
+              void loader.offsetWidth;
+              loader.style.opacity = '1';
+          }
+      }, 1000);
+
       window.addEventListener('load', function() {
+        clearTimeout(loaderTimer);
         var loader = document.getElementById('app-preloader');
         if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(function() {
+            if (loader.style.opacity === '1') {
+                loader.style.opacity = '0';
+                setTimeout(function() {
+                    loader.style.display = 'none';
+                    if (loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 300);
+            } else {
                 loader.style.display = 'none';
-                loader.parentNode.removeChild(loader);
-            }, 600);
+                if (loader.parentNode) loader.parentNode.removeChild(loader);
+            }
         }
       });
     </script>

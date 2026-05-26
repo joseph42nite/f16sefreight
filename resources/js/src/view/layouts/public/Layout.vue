@@ -115,6 +115,7 @@ export default {
 }
 .nav-link-custom{
   font-size: medium;
+  font-weight: 500;
 }
 /* .wrap:hover {
   background-color: #923B33;

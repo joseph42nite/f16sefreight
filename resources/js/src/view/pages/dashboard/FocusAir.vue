@@ -5052,25 +5052,18 @@ li {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23355594" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"><path fill="black" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 0px center;
     background-color: white;
-    border: 1px solid #E2E8F0 !important;
-    border-radius: 10px !important;
+    border: 1px solid #ccc;
     font-size: 14px;
-    height: 38px !important;
-    padding: 0 32px 0 12px !important;
+    padding: 2px 26px 2px 8px;
     cursor: pointer;
     width: 100%;
-    color: #1E293B !important;
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
 }
 
 .custom-select:focus {
-    outline: none !important;
-    border-color: #355594 !important;
-    box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.12) !important;
+    outline: none;
+    border-color: #5cb3fd;
 }
 
 

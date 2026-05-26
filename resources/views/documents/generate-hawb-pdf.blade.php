@@ -2730,7 +2730,7 @@
                     <table cellpadding="0" cellspacing="0" width="100%"> 
                         <tr>
                             <td align="center" valign="middle" style="font-size: 10px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px;" >
-                                <img src="{{ public_path('media/assets/logos/iata-logo.png') }}" alt="IATA ICON" width="50px" height="auto">
+                                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('media/assets/logos/iata-logo.png'))) }}" alt="IATA ICON" width="50px" height="auto">
                             </td>
                         </tr>
                         <tr>

@@ -59,7 +59,7 @@
                         </b-row>
                     </div>
                     <hr class="hr" />
-                    <div class="container px-10 pb-10">
+                    <div class="container px-10 pt-6 pb-10">
                     <b-row>
                         <b-col cols="12">
                             <div class="align-items-center">

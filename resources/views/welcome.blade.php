@@ -55,17 +55,19 @@
     </script>
     <title>{{ $meta_title }}</title>
     <link rel="icon" href="/media/assets/logos/favicon-white-64.png" type="image/png">
+
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+
+    <!-- Preload critical above-the-fold assets -->
+    <link rel="preload" as="image" href="/media/assets/banners/banner-plane.webp" type="image/webp">
+    <link rel="preload" as="image" href="/media/assets/logos/white-logo.png">
+
+    <!-- Stylesheets (extracted from JS by webpack) -->
+    <link rel="stylesheet" href="/vendor.css">
+    <link rel="stylesheet" href="/common.css">
     <link rel="stylesheet" href="{{ mix('/css/app.css') }}">
 </head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-JCFDX15593"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-JCFDX15593');
-</script>
 <body>
     <!-- CUSTOM PRELOADER -->
     <div id="app-preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; display: none; opacity: 0; align-items: center; justify-content: center; z-index: 10000; overflow: hidden; transition: opacity 0.3s ease-in-out;">
@@ -86,9 +88,7 @@
     <script src="{{ mix('js/manifest.js') }}" defer></script>
     <script src="{{ mix('vendor.js') }}" defer></script>
     <script src="{{ mix('js/app.js') }}" defer></script>
-    
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/clipboard.js/2.0.8/clipboard.min.js"></script>
+
 
     <script>
       var loaderTimer = setTimeout(function() {
@@ -117,6 +117,15 @@
             }
         }
       });
+    </script>
+
+    <!-- Google Analytics (non-blocking, placed at end of body) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JCFDX15593"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JCFDX15593');
     </script>
 </body>
 

@@ -460,7 +460,7 @@
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION END -->
                                 <hr class="hr" />
                                 <!-- ROUTING INFORMATION TAB SECTION START -->
-                                <b-tabs content-class="mt-7" class="custom-nav-title">
+                                <b-tabs content-class="mt-7" class="custom-nav-title mt-6">
                                     <b-tab title="Routing Information" style="border-bottom:0px !important;">
                                         <b-row class="mt-8 mb-6">
                                             <b-col cols="12" lg="4">
@@ -1199,7 +1199,7 @@
                                 <div>
                                     <b-row>
                                         <b-col cols="12">
-                                            <div class="mt-2 mb-15 ml-4 mr-4">
+                                            <div class="mt-6 mb-15 ml-4 mr-4">
                                                 <h6 class="h-color mb-6">Customs Origin Code:</h6>
                                                 <b-form-group id="fieldset-horizontal" style="max-width: 450px; width: 100%;">
                                                     <b-form-select class="form-control" v-model="form.custom_origin.customs_origin_code">

@@ -1094,7 +1094,7 @@ var render = function render() {
   })], 1)], 1), _vm._v(" "), _c("hr", {
     staticClass: "hr"
   }), _vm._v(" "), _c("div", {
-    staticClass: "container px-10 pb-10"
+    staticClass: "container px-10 pt-6 pb-10"
   }, [_c("b-row", [_c("b-col", {
     attrs: {
       cols: "12"

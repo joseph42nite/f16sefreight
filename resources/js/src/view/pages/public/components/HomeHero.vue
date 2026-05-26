@@ -1,27 +1,19 @@
 <template>
     <section class="hero-section" aria-labelledby="hero-heading">
-        <!-- HERO SKELETON (Shown until first image is ready) -->
-        <div v-if="!imagesReady[0]" class="hero-skeleton-wrapper" aria-hidden="true">
-            <div class="hero-skeleton-text"></div>
-            <div class="hero-skeleton-image"></div>
-        </div>
-
-        <!-- HERO CONTENT (Shown once ready) -->
-        <template v-else>
+        <!-- HERO CONTENT (First slide renders statically for instant LCP) -->
+        <transition name="hero-slide">
+            <div :key="heroServices[currentHeroIndex].title" class="hero-bg-text" aria-hidden="true">{{ heroServices[currentHeroIndex].title }}</div>
+        </transition>
+        <div class="hero-plane-wrapper">
             <transition name="hero-slide">
-                <div :key="heroServices[currentHeroIndex].title" class="hero-bg-text" aria-hidden="true">{{ heroServices[currentHeroIndex].title }}</div>
+                <img :key="heroServices[currentHeroIndex].image"
+                     :src="heroServices[currentHeroIndex].image" 
+                     :style="heroServices[currentHeroIndex].extraStyle" 
+                     alt="Digital freight logistics solutions" 
+                     :class="['hero-plane', { 'is-tilted-plane': heroServices[currentHeroIndex].title === 'FOCUS AIR', 'is-truck-plane': heroServices[currentHeroIndex].title === 'FOCUS ROAD' }]"
+                     :fetchpriority="currentHeroIndex === 0 ? 'high' : 'low'">
             </transition>
-            <div class="hero-plane-wrapper">
-                <transition name="hero-slide">
-                    <img :key="heroServices[currentHeroIndex].image"
-                         :src="heroServices[currentHeroIndex].image" 
-                         :style="heroServices[currentHeroIndex].extraStyle" 
-                         alt="Digital freight logistics solutions" 
-                         :class="['hero-plane', { 'is-tilted-plane': heroServices[currentHeroIndex].title === 'FOCUS AIR', 'is-truck-plane': heroServices[currentHeroIndex].title === 'FOCUS ROAD' }]"
-                         :fetchpriority="currentHeroIndex === 0 ? 'high' : 'low'">
-                </transition>
-            </div>
-        </template>
+        </div>
 
         <div class="hero-content">
             <div class="hero-text-block">
@@ -47,7 +39,7 @@ export default {
         return {
             currentHeroIndex: 0,
             heroInterval: null,
-            imagesReady: [false, false, false],
+            imagesReady: [true, false, false],
             heroServices: [
                 { title: 'FOCUS AIR', image: '/media/assets/banners/banner-plane.webp', extraStyle: {} },
                 { title: 'FOCUS SEA', image: '/media/assets/banners/banner-ship.webp', extraStyle: {} },
@@ -56,18 +48,7 @@ export default {
         };
     },
     mounted() {
-        // First image: inject a real <link rel="preload"> in the <head> for fastest possible load
-        const preloadLink = document.createElement('link');
-        preloadLink.rel = 'preload';
-        preloadLink.as = 'image';
-        preloadLink.href = this.heroServices[0].image;
-        preloadLink.type = 'image/webp';
-        document.head.appendChild(preloadLink);
-
-        // Mark first image ready immediately — don't block on onload
-        this.$set(this.imagesReady, 0, true);
-
-        // Preload remaining slides in background
+        // Preload remaining slides in background (first slide is already in the DOM)
         this.heroServices.slice(1).forEach((service, i) => {
             const img = new Image();
             img.onload = () => {

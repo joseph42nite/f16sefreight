@@ -9,7 +9,7 @@ mix.alias({
     // These rarely change — users download them once and cache them indefinitely.
     .extract(["vue", "vue-router", "vue-meta", "vuex", "bootstrap-vue"], "public/js/vendor.js")
     .css("resources/css/app.css", "public/css")
-    .vue();
+    .vue({ extractStyles: true });
 
 mix.disableSuccessNotifications();
 

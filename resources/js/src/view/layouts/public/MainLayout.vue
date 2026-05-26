@@ -5,7 +5,7 @@
 
     <!-- Content of the page that changes based on routes -->
     <transition name="fade-in-up" mode="out-in" @after-enter="scrollToTop">
-      <keep-alive :include="['Home', 'FocusAir', 'HouseWayBill', 'MessageLog']">
+      <keep-alive :include="['FocusAir', 'HouseWayBill', 'MessageLog']">
         <router-view />
       </keep-alive>
     </transition>

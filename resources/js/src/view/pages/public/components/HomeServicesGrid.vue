@@ -13,7 +13,7 @@
                         <article class="service-product-card is-coming-soon order-lg-1 order-2" @click="navigate" style="cursor: pointer;">
                             <div class="service-product-badge">Upcoming</div>
                             <div class="service-product-image">
-                                <img src="/media/assets/banners/banner-ship.webp" alt="Focus Sea - Digital Ocean Freight Management">
+                                <img src="/media/assets/banners/banner-ship.webp" alt="Focus Sea - Digital Ocean Freight Management" loading="lazy">
                             </div>
                             <div class="service-product-info">
                                 <h3 class="service-product-title">FOCUS SEA</h3>
@@ -29,7 +29,7 @@
                     <router-link to="/product-description" custom v-slot="{ navigate }">
                         <article class="service-product-card order-lg-2 order-1" @click="navigate" style="cursor: pointer;">
                             <div class="service-product-image">
-                                <img src="/media/assets/banners/banner-plane.webp" alt="Focus Air - Automated Air Freight Solutions">
+                                <img src="/media/assets/banners/banner-plane.webp" alt="Focus Air - Automated Air Freight Solutions" loading="lazy">
                             </div>
                             <div class="service-product-info">
                                 <h3 class="service-product-title">FOCUS AIR</h3>
@@ -49,7 +49,7 @@
                         <article class="service-product-card is-coming-soon order-lg-3 order-3" @click="navigate" style="cursor: pointer;">
                             <div class="service-product-badge">Upcoming</div>
                             <div class="service-product-image">
-                                <img src="/media/assets/banners/banner-truck.webp" alt="Focus Road - Road Transportation Management">
+                                <img src="/media/assets/banners/banner-truck.webp" alt="Focus Road - Road Transportation Management" loading="lazy">
                             </div>
                             <div class="service-product-info">
                                 <h3 class="service-product-title">FOCUS ROAD</h3>

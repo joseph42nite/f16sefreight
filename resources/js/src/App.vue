@@ -5,6 +5,18 @@
 </template>
 
 <style lang="scss">
+// Centralized font imports — only the weights actually used across the app
+// Roboto: used by Header and dashboard pages
+@import "~@fontsource/roboto/400.css";
+@import "~@fontsource/roboto/500.css";
+@import "~@fontsource/roboto/700.css";
+
+// Inter: used by nav, footer, blog, public pages
+@import "~@fontsource/inter/400.css";
+@import "~@fontsource/inter/500.css";
+@import "~@fontsource/inter/600.css";
+@import "~@fontsource/inter/700.css";
+
 html {
   scroll-behavior: smooth;
 }

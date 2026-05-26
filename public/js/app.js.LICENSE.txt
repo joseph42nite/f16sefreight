@@ -15,12 +15,6 @@
  * Date: 2023-08-28T13:37Z
  */
 
-/*!
- * vue-treeselect v0.4.0 | (c) 2017-2019 Riophae Lee
- * Released under the MIT License.
- * https://vue-treeselect.js.org/
- */
-
 /**
  * ChildNode.remove() polyfill
  * https://gomakethings.com/removing-an-element-from-the-dom-the-es6-way/
@@ -52,7 +46,3 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-//! moment.js
-
-//! moment.js locale configuration

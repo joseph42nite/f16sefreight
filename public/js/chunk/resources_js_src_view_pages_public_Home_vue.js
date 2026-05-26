@@ -172,7 +172,7 @@ __webpack_require__.r(__webpack_exports__);
     return {
       currentHeroIndex: 0,
       heroInterval: null,
-      imagesReady: [false, false, false],
+      imagesReady: [true, false, false],
       heroServices: [{
         title: 'FOCUS AIR',
         image: '/media/assets/banners/banner-plane.webp',
@@ -192,18 +192,7 @@ __webpack_require__.r(__webpack_exports__);
   },
   mounted: function mounted() {
     var _this = this;
-    // First image: inject a real <link rel="preload"> in the <head> for fastest possible load
-    var preloadLink = document.createElement('link');
-    preloadLink.rel = 'preload';
-    preloadLink.as = 'image';
-    preloadLink.href = this.heroServices[0].image;
-    preloadLink.type = 'image/webp';
-    document.head.appendChild(preloadLink);
-
-    // Mark first image ready immediately — don't block on onload
-    this.$set(this.imagesReady, 0, true);
-
-    // Preload remaining slides in background
+    // Preload remaining slides in background (first slide is already in the DOM)
     this.heroServices.slice(1).forEach(function (service, i) {
       var img = new Image();
       img.onload = function () {
@@ -709,16 +698,7 @@ var render = function render() {
     attrs: {
       "aria-labelledby": "hero-heading"
     }
-  }, [!_vm.imagesReady[0] ? _c("div", {
-    staticClass: "hero-skeleton-wrapper",
-    attrs: {
-      "aria-hidden": "true"
-    }
-  }, [_c("div", {
-    staticClass: "hero-skeleton-text"
-  }), _vm._v(" "), _c("div", {
-    staticClass: "hero-skeleton-image"
-  })]) : [_c("transition", {
+  }, [_c("transition", {
     attrs: {
       name: "hero-slide"
     }
@@ -746,7 +726,7 @@ var render = function render() {
       alt: "Digital freight logistics solutions",
       fetchpriority: _vm.currentHeroIndex === 0 ? "high" : "low"
     }
-  })])], 1)], _vm._v(" "), _c("div", {
+  })])], 1), _vm._v(" "), _c("div", {
     staticClass: "hero-content"
   }, [_c("div", {
     staticClass: "hero-text-block"
@@ -768,7 +748,7 @@ var render = function render() {
       icon: "arrow-right",
       "aria-hidden": "true"
     }
-  })], 1)])], 1)])], 2);
+  })], 1)])], 1)])], 1);
 };
 var staticRenderFns = [function () {
   var _vm = this,
@@ -973,7 +953,8 @@ var render = function render() {
       "class": _vm.getLogoClass(img),
       attrs: {
         src: img,
-        alt: "Partner airline logo ".concat(idx + 1)
+        alt: "Partner airline logo ".concat(idx + 1),
+        loading: "lazy"
       }
     })]);
   }), 0)])]);

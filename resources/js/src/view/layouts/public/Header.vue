@@ -188,16 +188,6 @@ export default {
 };
 </script>
 <style scoped>
-@import "~@fontsource/roboto/100.css";
-@import "~@fontsource/roboto/300.css";
-@import "~@fontsource/roboto/400.css";
-@import "~@fontsource/roboto/500.css";
-@import "~@fontsource/roboto/700.css";
-@import "~@fontsource/roboto/900.css";
-html,
-body * {
-    font-family: "Roboto", sans-serif !important;
-}
 .navbar-header-logo {
     flex: 0 0 auto;
     max-width: 250px;

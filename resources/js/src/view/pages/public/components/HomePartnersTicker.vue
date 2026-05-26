@@ -11,7 +11,8 @@
                     <img :src="img" 
                          class="affiliate-logo" 
                          :class="getLogoClass(img)"
-                         :alt="`Partner airline logo ${idx + 1}`">
+                         :alt="`Partner airline logo ${idx + 1}`"
+                         loading="lazy">
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@ if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 import Vue from "vue";
-import VueExcelXlsx from "vue-excel-xlsx";
+
 import App from "./App.vue";
 import router from "./router";
 window.$ = window.jQuery = require("jquery");
@@ -10,11 +10,11 @@ import store from "@/core/services/store";
 import ApiService from "@/core/services/api.service";
 import { VERIFY_AUTH } from "@/core/services/store/auth.module";
 import { RESET_LAYOUT_CONFIG } from "@/core/services/store/config.module";
-import VueFlip from 'vue-flip';
+
 import VueMeta from 'vue-meta';
 
 Vue.config.productionTip = false;
-Vue.use(VueExcelXlsx);
+
 Vue.use(VueMeta);
 
 // Click Outside Directive
@@ -36,17 +36,13 @@ import { Form, HasError, AlertError } from "vform";
 window.Form = Form;
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
-Vue.component('VueFlip', VueFlip);
-//moment for time formate
-import moment from 'moment';
-Vue.prototype.moment = moment;
+
 
 import "@/core/plugins/bootstrap-vue";
 import "@/core/plugins/perfect-scrollbar";
 import "@/core/plugins/inline-svg";
 import "@/core/plugins/metronic";
-import "@/core/plugins/formvalidation";
-import "@/core/plugins/treeselect";
+
 // API service init
 ApiService.init();
 

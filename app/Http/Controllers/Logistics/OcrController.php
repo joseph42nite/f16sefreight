@@ -34,7 +34,7 @@ class OcrController extends Controller
         try {
             // 1. Safely persist inside designated internal temp disk bucket
             Storage::disk('pdf_temp')->putFileAs('', $file, $tempFilename);
-
+ 
             // 2. Create record entry to track our background microservice job
             $processingJob = PdfProcessingJob::create([
                 'user_id'           => Auth::id(),

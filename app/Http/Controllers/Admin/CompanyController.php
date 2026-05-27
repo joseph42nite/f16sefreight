@@ -46,7 +46,7 @@ class CompanyController extends Controller
         $company->templates_config = $request->templates_config;
         $company->save();
         
-        // Invalidate config cache so users get immediate visibility
+        // Bust the short-lived cache so users see new templates immediately
         Cache::forget("company_templates_{$company->name}");
         
         return response()->json(['status' => 'success', 'company' => $company]);
@@ -79,7 +79,7 @@ class CompanyController extends Controller
         $company->templates_config = $request->templates_config;
         $company->save();
         
-        // Invalidate config cache so users get immediate visibility
+        // Bust the short-lived cache so users see new templates immediately
         Cache::forget("company_templates_{$company->name}");
         
         return response()->json(['status' => 'success']);

@@ -135,7 +135,7 @@ class UserController extends Controller
             $companyName = $user_data->company_name;
             $templatesConfig = Cache::remember(
                 "company_templates_{$companyName}",
-                3600,
+                60,
                 fn() => optional(Company::where('name', $companyName)->first())->templates_config
             );
 

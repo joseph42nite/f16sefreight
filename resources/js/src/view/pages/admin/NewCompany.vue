@@ -203,6 +203,11 @@ export default {
             this.action = "Edit";
         }
     },
+    activated() {
+        // Re-fetch every time the user navigates to this page
+        // so newly added system templates appear immediately
+        this.fetchAvailableTemplates();
+    },
     computed: {
         get_item: function () {
             if (this.$route.params.id) return this.$route.params.id;

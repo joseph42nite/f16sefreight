@@ -658,7 +658,7 @@ class HousewayBillController extends Controller
                     }
                 }
             ],
-            'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
+            // 'weight_charge' => 'required|numeric|min:0.000|max:999999999999',
             'taxes' => 'nullable|integer',
             'total_charges_prepaid' => 'nullable|numeric|min:0.000|max:999999999999',
             'total_charges_collect' => 'nullable|numeric|min:0.000|max:999999999999',

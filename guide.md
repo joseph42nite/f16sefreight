@@ -312,7 +312,19 @@ The platform uses a multi-layered approach to ensure a fast, "instant-feel" expe
     -   Uses a `max-width: 300px` SVG (`blue-logo.svg`) with a CSS `@keyframes pulse` animation.
 -   **Transition**: Dual-guaranteed vanish sequence triggered by raw browser window load event AND explicitly finalized via the `mounted()` hook in `App.vue` once state is hydrated.
 
+### 🗄️ Near-Instant Company Template Cache Invalidation Strategy
+
+To balance extreme performance under high loads with the need for immediate visibility when superadmins make updates, the company templates configuration uses a dual-layer caching strategy:
+
+1. **Short TTL Cache**: The `UserController::me()` endpoint caches the `templates_config` for a brief **60 seconds** (under the key `company_templates_{companyName}`). At high traffic (e.g. 20 req/s), this resolves ~1,199 out of 1,200 database reads from memory.
+2. **Instant Invalidation on Admin Updates**: When a superadmin registers or edits a company in `CompanyController` (`register()` or `update()`), the system automatically invokes:
+   ```php
+   Cache::forget("company_templates_{$company->name}");
+   ```
+   This instantly purges the cache, guaranteeing that users see new templates on their very next request with **zero lag**, while retaining robust load protection.
+
 ---
+
 
 ## ⚙️ Functional Architecture & Connectivity
 
@@ -634,7 +646,7 @@ cd /var/www/f16s_main/python
 python3 -m venv venv
 source venv/bin/activate
 
-pip install fastapi uvicorn pdfplumber python-multipart
+pip install -r requirements.txt
 ```
 
 ### 3.2 Refactor `extract_awb_new.py` to be importable
@@ -1318,11 +1330,11 @@ php artisan migrate
 ```
 
 ### 3. Setup Dedicated Python Microservice Environment
-Set up isolation and install FastAPI inside the existing `/python` directory:
+Set up isolation and install all native dependencies using the requirements profile:
 ```bash
 cd python
 python3 -m venv venv
-./venv/bin/pip install fastapi uvicorn pdfplumber python-multipart
+./venv/bin/pip install -r requirements.txt
 ```
 
 ### 4. Environment Configuration (.env)

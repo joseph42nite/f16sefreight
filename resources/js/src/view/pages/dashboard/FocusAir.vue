@@ -5601,6 +5601,51 @@ max-width: 100% !important;
         display: block !important;
     }
 }
+
+/* Deep custom-nav selectors for modern pill segmented tab selector */
+.custom-nav ::v-deep .nav-tabs {
+    border-bottom: 0px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    gap: 4px !important;
+    background: #F1F5F9 !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    margin-bottom: 1.5rem !important;
+    width: 100% !important;
+}
+.custom-nav ::v-deep .nav-tabs::-webkit-scrollbar {
+    display: none !important;
+}
+.custom-nav ::v-deep .nav-item {
+    flex: 0 0 auto !important;
+}
+.custom-nav ::v-deep .nav-link {
+    color: #64748B !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    margin: 0px !important;
+    border-radius: 10px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap !important;
+}
+.custom-nav ::v-deep .nav-link:hover {
+    color: #355594 !important;
+    background: rgba(53, 85, 148, 0.05) !important;
+}
+.custom-nav ::v-deep .nav-link.active {
+    color: #355594 !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(53, 85, 148, 0.08) !important;
+    border-bottom: none !important;
+}
 </style>
 <style>
     .modal-content {

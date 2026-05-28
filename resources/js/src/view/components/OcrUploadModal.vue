@@ -91,7 +91,7 @@
                                     Selected: {{ selectedFile.name }}
                                 </div>
 
-                                <button class="ultra-submit-btn" :disabled="isUploading" @click="submitUpload">
+                                <button class="ultra-submit-btn" @click="submitUpload">
                                     <span v-if="!isUploading">Extract</span>
                                     <span v-else>Processing...</span>
                                     <b-icon v-if="!isUploading" icon="arrow-right" class="btn-icon"></b-icon>
@@ -208,6 +208,7 @@ export default {
             }
         },
         submitUpload() {
+            if (this.isUploading) return;
             if (!this.selectedFile) {
                 this.triggerFileInput();
                 return
@@ -284,9 +285,9 @@ export default {
 
 <style scoped>
     .ultra-trigger-btn {
-        background: #355594;
-        color: white;
-        border: none;
+        background: #355594 !important;
+        color: white !important;
+        border: none !important;
         border-radius: 50px;
         padding: 10px 26px;
         font-weight: 600;
@@ -294,6 +295,8 @@ export default {
         box-shadow: 0 10px 20px rgba(53, 85, 148, 0.15);
     }
     .ultra-trigger-btn:hover {
+        background: #28447a !important;
+        color: white !important;
         transform: translateY(-2px);
         box-shadow: 0 15px 25px rgba(53, 85, 148, 0.25);
     }
@@ -353,8 +356,8 @@ export default {
     .modal-right-pane { flex: 0 0 60%; background: white; position: relative; display: flex; flex-direction: column; }
     .form-scroll-container { height: 100%; overflow-y: auto; padding: 4rem; }
     .form-section-title { font-size: 1.8rem; font-weight: 700; color: #1e3a6e; letter-spacing: -0.5px; text-align: center; }
-    .ultra-submit-btn { background: #355594; border: none; border-radius: 999px; padding: 10px 10px 10px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(53, 85, 148, 0.25); cursor: pointer; width: auto; max-width: none; }
-    .ultra-submit-btn:hover { background: #28447a; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(53, 85, 148, 0.35); }
+    .ultra-submit-btn { background: #355594 !important; border: none !important; border-radius: 999px; padding: 10px 10px 10px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(53, 85, 148, 0.25); cursor: pointer; width: auto; max-width: none; }
+    .ultra-submit-btn:hover { background: #28447a !important; transform: translateY(-2px) !important; box-shadow: 0 15px 35px rgba(53, 85, 148, 0.35) !important; }
     .ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }
     .ultra-submit-btn .btn-icon { background: white; color: #355594; border-radius: 50%; width: 32px !important; height: 32px !important; padding: 6px; margin-left: 0 !important; }
 

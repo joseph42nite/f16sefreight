@@ -17,57 +17,61 @@
               <span class="current-crumb">{{ post.category }}</span>
           </nav>
 
-          <!-- POST HEADER -->
-          <header class="post-header mb-12">
-            <div class="post-meta mb-4">
-                <span class="post-category-pill">{{ post.category }}</span>
-                <span class="post-read-time ms-4"><b-icon icon="clock" class="me-1"></b-icon> {{ post.readTime }} read</span>
-            </div>
-            <h1 class="post-title mb-6">{{ post.title }}</h1>
-            <div class="author-info d-flex align-items-center">
-                <div class="author-details">
-                    <span class="author-name">F16s Editorial Team</span>
-                    <span class="post-date d-block">{{ post.date }}</span>
+          <!-- BLOG READER CARD -->
+          <div class="blog-reader-card">
+              <!-- POST HEADER -->
+              <header class="post-header mb-12">
+                <div class="post-meta mb-4">
+                    <span class="post-category-pill">{{ post.category }}</span>
+                    <span class="post-read-time ms-4"><b-icon icon="clock" class="me-1"></b-icon> {{ post.readTime }} read</span>
                 </div>
-            </div>
-          </header>
+                <h1 class="post-title mb-6">{{ post.title }}</h1>
+                <div class="author-info d-flex align-items-center">
+                    <div class="author-details">
+                        <span class="author-name">F16s Editorial Team</span>
+                        <span class="post-date d-block">{{ post.date }}</span>
+                    </div>
+                </div>
+              </header>
 
-          <!-- FEATURED IMAGE -->
-          <div class="featured-image-container mb-12">
-              <img :src="post.image" :alt="post.title" class="img-fluid post-featured-img">
-          </div>
-
-          <!-- POST CONTENT -->
-          <article class="post-content mb-20">
-            <p class="lead-text mb-8">{{ post.excerpt }}</p>
-            
-            <div class="article-body" v-html="post.content"></div>
-
-            <!-- KEY TAKEAWAYS BOX -->
-            <div class="takeaways-box glass-card p-8 mt-12 mb-12">
-                <h3 class="mb-6"><b-icon icon="lightbulb" class="me-2 text-warning"></b-icon> Key Takeaways</h3>
-                <ul class="list-unstyled">
-                    <li v-for="(item, i) in post.takeaways" :key="i" class="mb-4 d-flex">
-                        <b-icon icon="check2-circle" class="takeaway-icon-spacing text-primary mt-1"></b-icon>
-                        <span>{{ item }}</span>
-                    </li>
-                </ul>
-            </div>
-          </article>
-
-          <!-- SHARE SECTION -->
-          <div class="share-section py-8 border-top border-bottom mb-20 d-flex align-items-center justify-content-between">
-              <div class="share-info">
-                  <span class="fw-bold text-dark d-block mb-1">Enjoyed this article?</span>
-                  <span class="text-muted small">Share it with your logistics network.</span>
+              <!-- FEATURED IMAGE -->
+              <div class="featured-image-container mb-12">
+                  <img :src="post.image" :alt="post.title" class="img-fluid post-featured-img">
               </div>
-              <b-button @click="showShareModal = true" class="hero-btn share-trigger-btn">
-                  <span>Share Post</span>
-                  <div class="btn-icon">
-                    <b-icon icon="share-fill"></b-icon>
+
+              <!-- POST CONTENT -->
+              <article class="post-content mb-12">
+                <p class="lead-text mb-8">{{ post.excerpt }}</p>
+                
+                <div class="article-body" v-html="post.content"></div>
+
+                <!-- KEY TAKEAWAYS BOX -->
+                <div class="takeaways-box glass-card p-8 mt-12 mb-12">
+                    <h3 class="mb-6"><b-icon icon="lightbulb" class="me-2 text-warning"></b-icon> Key Takeaways</h3>
+                    <ul class="list-unstyled">
+                        <li v-for="(item, i) in post.takeaways" :key="i" class="mb-4 d-flex">
+                            <b-icon icon="check2-circle" class="takeaway-icon-spacing text-primary mt-1"></b-icon>
+                            <span>{{ item }}</span>
+                        </li>
+                    </ul>
+                </div>
+              </article>
+
+              <!-- SHARE SECTION -->
+              <div class="share-section py-8 border-top border-bottom mb-0 d-flex align-items-center justify-content-between">
+                  <div class="share-info">
+                      <span class="fw-bold text-dark d-block mb-1">Enjoyed this article?</span>
+                      <span class="text-muted small">Share it with your logistics network.</span>
                   </div>
-              </b-button>
+                  <b-button @click="showShareModal = true" class="hero-btn share-trigger-btn">
+                      <span>Share Post</span>
+                      <div class="btn-icon">
+                        <b-icon icon="share-fill"></b-icon>
+                      </div>
+                  </b-button>
+              </div>
           </div>
+
 
           <!-- SHARE PREVIEW MODAL -->
           <b-modal v-model="showShareModal" hide-footer centered title="Share this Insight" content-class="premium-share-modal" size="md">
@@ -130,7 +134,7 @@
                               <span class="post-date-small mb-3 d-block text-muted small">{{ related.date || 'Recent Article' }}</span>
                               <h3 class="blog-card-title mb-4" style="font-size: 1.3rem; font-weight: 800; color: #1e3a6e;">{{ related.title }}</h3>
                               <p class="blog-card-excerpt mb-6 text-muted small">{{ related.excerpt }}</p>
-                              <b-button class="read-more-link p-0" variant="link" style="text-decoration: none; color: #355594; font-weight: 700;">
+                              <b-button class="read-more-link">
                                   <span>Read Article</span>
                                   <b-icon icon="arrow-right-short" class="ms-1"></b-icon>
                               </b-button>
@@ -307,6 +311,25 @@ export default {
     position: relative;
     z-index: 10;
 }
+
+/* Premium Blog Reader Card */
+.blog-reader-card {
+    background: #ffffff;
+    border: 1px solid rgba(53, 85, 148, 0.08);
+    border-radius: 32px;
+    padding: 3.5rem;
+    box-shadow: 0 30px 60px rgba(53, 85, 148, 0.05);
+    margin-bottom: 3.5rem;
+}
+
+@media (max-width: 767px) {
+    .blog-reader-card {
+        padding: 2rem 1.5rem;
+        border-radius: 24px;
+        margin-bottom: 2rem;
+    }
+}
+
 
 /* Reading Progress Bar */
 .reading-progress-container {

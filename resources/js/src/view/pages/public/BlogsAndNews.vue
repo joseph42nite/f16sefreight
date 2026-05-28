@@ -74,7 +74,7 @@
                         <span class="post-date-small mb-3 d-block">{{ post.date }}</span>
                         <h3 class="blog-card-title mb-4">{{ post.title }}</h3>
                         <p class="blog-card-excerpt mb-6">{{ post.excerpt }}</p>
-                        <b-button :to="'/blog/' + post.slug" class="read-more-link p-0">
+                        <b-button :to="'/blog/' + post.slug" class="read-more-link">
                             <span>Read More</span>
                             <b-icon icon="arrow-right-short" class="ms-1"></b-icon>
                         </b-button>

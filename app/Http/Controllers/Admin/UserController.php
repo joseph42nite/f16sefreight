@@ -179,7 +179,7 @@ class UserController extends Controller
         $companyName = $user->company_name;
         
         // TODO: Migrate to company_id FK on users table to eliminate string-match fragility
-        $company = Company::where('name', $companyName)->first();
+        $company = Company::where('id', $companyName)->first();
         
         $fallback = [
             'allowed_templates' => [

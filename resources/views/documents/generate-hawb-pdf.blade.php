@@ -214,8 +214,8 @@
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
                                                                                        {{$houseWayBill->ho_name}}<br>
-                                                                                       {{$houseWayBill->ho_address}},{{$houseWayBill->ho_city}}<br>
-                                                                                       {{$houseWayBill->ho_pincode}},{{$houseWayBill->ho_state}},{{$houseWayBill->ho_country}}
+                                                                                       {{$houseWayBill->ho_address}}<br>
+                                                                                       {{$houseWayBill->ho_city}},{{$houseWayBill->ho_pincode}},{{$houseWayBill->ho_state}},{{$houseWayBill->ho_country}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

@@ -1,11 +1,11 @@
 <!doctype html>
-<htm l lang="en">    
+<html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>F16s E-Freight Solutions</title>
     <link rel="icon" href="/media/assets/logos/favicon-white-64.png" type="image/png">
-     <tyle>
+    <style>
         .routing-and-destination {
         border-bottom: 1px solid #000;
         position: relative;
@@ -38,25 +38,25 @@
             position: absolute;
             height: 11px;
             border: 1px solid #000;
-             top: 0px;
+            top: 0px;
         }
         .optional-Shipping-information::before {
-             left: -6px;
+            left: -6px;
             border-left: none;
             transform: skew(40deg);
-         }
+        }
         .optional-Shipping-information::after {
             right: -6px;
-             border-right: none;
+            border-right: none;
             transform: skew(-40deg);
         }
-         @page  {
+        @page  {
             margin: 0mm;
             size: letter; /*or width then height 150mm 50mm*/
-         }
+        }
     </style>
 </head>
-<bod ystyle="word-spacing:normal;margin: 0 auto;">
+<body style="word-spacing:normal;margin: 0 auto;">
     <table align="center" cellpadding="0" cellspacing="0" align="center" width="600px">
         <tr>
             <td align="center" valign="top">
@@ -116,13 +116,13 @@
                                                             <td align="left" valign="top" width="280px" style="padding-left: 5px;">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                       <!-- first column code-->
+                                                                        <!-- first column code-->
                                                                         <td align="left" valign="top" width="140px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
-                                                                               <tr>
+                                                                                <tr>
                                                                                     <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Shipper's Name and Address
-                                                                                   </td>
+                                                                                    </td>
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px;">
@@ -158,76 +158,76 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                            <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
                                                                                         @if ($houseWayBill->ship_phone)
                                                                                             Phone : {{ $houseWayBill->ship_phone ?? ''}} <br/>
-                                                                                                @endif
+                                                                                        @endif
                                                                                         @if ($houseWayBill->ship_fax)
                                                                                             Fax :{{ $houseWayBill->ship_fax ?? ''}} <br/>
-                                                                                                @endif
+                                                                                        @endif
                                                                                         @if ($houseWayBill->ship_telex)
                                                                                             Telex : {{ $houseWayBill->ship_telex ?? ''}}
                                                                                         @endif
                                                                                     </td>
                                                                                 </tr>
-                                                                           </table>
+                                                                            </table>
                                                                         </td>
                                                                         <!-- second column code -->
-                                                                   </tr>
+                                                                    </tr>
                                                                 </table>
                                                             </td>
-                                                       </tr>
+                                                        </tr>
                                                     </table>
                                                  </td>
-                                                <!-- irst column section -->
+                                                <!-- first column section -->
                                                 <!-- second column section -->
                                                 <td align="center" valign="top" width="300px">
-                                                   <table cellpadding="0" cellspacing="0" width="100%">
+                                                    <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td align="left" valign="top" width="280px">
-                                                               <table cellpadding="0" cellspacing="0" width="100%">
+                                                                <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
                                                                         <!-- first column code-->
-                                                                       <td align="left" valign="top" width="60px" style="padding-left: 5px;">
+                                                                        <td align="left" valign="top" width="60px" style="padding-left: 5px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                   <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Not Negotiable
                                                                                     </td>
-                                                                               </tr>
+                                                                                </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-top: 12px;">
-                                                                                       Issued by
+                                                                                        Issued by
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
                                                                         </td>
                                                                         <!-- first column code -->
-                                                                       <!-- second column code-->
+                                                                        <!-- second column code-->
                                                                         <td align="left" valign="top" width="220px">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
-                                                                               <tr>
+                                                                                <tr>
                                                                                     <td align="center" valign="top" style="font-size: 14px;line-height: 21px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;margin: 0;">
                                                                                         House Waybill
-                                                                                   </td>
-                                                                                </tr>
-                                                                                <tr>
-                                                                                   <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                        {{$houseWayBill->ho_name}}<br>
-                                                                                        {{$houseWayBill->ho_address}},{{$houseWayBill->ho_city}}<br>
-                                                                                       {{$houseWayBill->ho_pincode}},{{$houseWayBill->ho_state}},{{$houseWayBill->ho_country}}
                                                                                     </td>
                                                                                 </tr>
-                                                                           </table>
+                                                                                <tr>
+                                                                                    <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
+                                                                                        @if (!empty($houseWayBill->airline_address)) 
+                                                                                            {!! nl2br(str_replace(',', '<br>', $houseWayBill->airline_address ?? '')) !!}
+                                                                                        @endif
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </table>
                                                                         </td>
                                                                         <!-- second column code -->
-                                                                   </tr>
+                                                                    </tr>
                                                                 </table>
                                                             </td>
-                                                       </tr>
+                                                        </tr>
                                                     </table>
                                                 </td>
-                                               <!-- second column section -->
+                                                <!-- second column section -->
                                             </tr>
                                         </table>
                                     </td>
@@ -236,101 +236,79 @@
                                 <!-- Consignee Section Code -->
                                 <tr>
                                     <td align="center" valign="top" style="border:1px solid #000000;">
-                                        <table cellpdding="0" cellspacing="0" width="100%">
+                                        <table cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- first column section -->
-                                                <td lign="center" valign="top" width="300px" style="border-right: 1px solid #000000;">
+                                                <td align="center" valign="top" width="300px" style="border-right: 1px solid #000000;">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                                                           <!-- first column code-->
+                                                            <!-- first column code-->
                                                             <td align="left" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
-                                                                   <tr>
+                                                                    <tr>
                                                                         <td align="left" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding-left:5px;">
                                                                             Consignee's Name and Address
-                                                                       </td>
+                                                                        </td>
                                                                     </tr>
                                                                     <tr>
-                                                                       <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px;">
+                                                                        <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 5px;">
                                                                             {{ $houseWayBill->cons_name ?? ''}}<br/>{{ $houseWayBill->cons_name_2 ?? ''}}<br/>
                                                                             {{ $houseWayBill->cons_address ?? ''}}<br/>{{ $houseWayBill->cons_address_line_2 ?? ''}}<br />
-                                                                           {{ $houseWayBill->cons_city ?? ''}}&nbsp;&nbsp;
+                                                                            {{ $houseWayBill->cons_city ?? ''}}&nbsp;&nbsp;
                                                                             {{ $houseWayBill->cons_state ?? ''}}&nbsp;&nbsp;
                                                                             {{ $houseWayBill->cons_post_code ?? ''}}
-                                                                       </td>
+                                                                        </td>
                                                                     </tr>
                                                                 </table>
-                                                           </td>
+                                                            </td>
                                                             <!-- first column code -->
                                                             <!-- second column code-->
-                                                           <td align="center" valign="top" width="150px">
+                                                            <td align="center" valign="top" width="150px">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                                       <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 15px 0px;">
+                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-left:1px solid #000000;border-bottom:1px solid #000000; padding: 0px 0px 15px 0px;">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
-                                                                                      <td align="center" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                    <td align="center" valign="top" style="font-size: 8px;line-height: 10px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                         Consignee's Account Number
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                              
-     
-                                                         {{ $houseWayBill->cons_account ?? ''}}
+                                                                                       {{ $houseWayBill->cons_account ?? ''}}
                                                                                     </td>
                                                                                 </tr>
-                            
-     
-                                                </table>
+                                                                            </table>
                                                                         </td>
                                                                     </tr>
-                              
-     
-                                      <tr>
+                                                                    <tr>
                                                                         <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
                                                                             @if ($houseWayBill->cons_phone)
-                              
-     
-                                                  Phone : {{ $houseWayBill->cons_phone ?? ''}} <br/>
+                                                                                Phone : {{ $houseWayBill->cons_phone ?? ''}} <br/>
                                                                             @endif
                                                                             @if ($houseWayBill->cons_fax)
-                            
-     
-                                                    Fax :{{ $houseWayBill->cons_fax ?? ''}} <br/>
+                                                                                Fax :{{ $houseWayBill->cons_fax ?? ''}} <br/>
                                                                             @endif
                                                                             @if ($houseWayBill->cons_telex)
-                              
-     
-                                                  Telex : {{ $houseWayBill->cons_telex ?? ''}}
+                                                                                Telex : {{ $houseWayBill->cons_telex ?? ''}}
                                                                             @endif
                                                                         </td>
-                                                     
-     
-               </tr>
+                                                                    </tr>
                                                                 </table>
                                                             </td>
-                                                             <!-- second c
-    l
-umn code -->
+                                                            <!-- second column code -->
                                                         </tr>
                                                     </table>
-                                        
-     
-                                                  <!-- first column section -->
-                                                       <td align
-    "
-center" valign="top" width="300px">
+                                                </td>
+                                                <!-- first column section -->
+                                                <!-- second column section -->
+                                                <td align="center" valign="top" width="300px">
                                                     <table cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
-                 
-     
-                                           <td align="center" valign="top" >
+                                                            <td align="center" valign="top" >
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <tr>
-                                                  
-     
-                      <td align="left" valign="top" style="font-size: 7px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 2px;">
+                                                                        <td align="left" valign="top" style="font-size: 7px;line-height: 8px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding: 0px 5px 2px;">
                                                                             It is agreed that the goods described herein are accepted in apparent good order and condition (except as noted) for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. ALL GOODS MAY BE CARRIED BY ANY OTHER MEANS INCLUDING ROAD OR ANY OTHER CARRIER UNLESS SPECIFIC CONTRARY INSTRUCTIONS ARE GIVEN HEREON BY THE SHIPPER, AND SHIPPER AGREES THAT THE SHIPMENT MAY BE CARRIED VIA INTERMEDIATE STOPPING PLACES WHICH THE CARRIER DEEMS APPROPRIATE. THE SHIPPER'S ATTENTION IS DRAWN TO THE NOTICE CONCERNING CARRIER'S LIMITATION OF LIABILITY. Shipper may increase such limitation of liability by declaring a higher value for carriage and paying a supplemental charge if required.
                                                                         </td>
                                                                     </tr>

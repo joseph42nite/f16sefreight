@@ -213,9 +213,9 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                        @if (!empty($houseWayBill->airline_address)) 
-                                                                                            {!! nl2br(str_replace(',', '<br>', $houseWayBill->airline_address ?? '')) !!}
-                                                                                        @endif
+                                                                                       {{$houseWayBill->ho_name}}<br>
+                                                                                       {{$houseWayBill->ho_address}},{{$houseWayBill->ho_city}}<br>
+                                                                                       {{$houseWayBill->ho_pincode}},{{$houseWayBill->ho_state}},{{$houseWayBill->ho_country}}
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

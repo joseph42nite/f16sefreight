@@ -2901,9 +2901,11 @@ export default {
                       this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
                   }
                 });
-                this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
-                this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
-                this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                if(transit.flights[0]){
+                    this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
+                    this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
+                    this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                }
                 if(transit.flights[1]){
                     this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
                     this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);

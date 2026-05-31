@@ -26,14 +26,9 @@ class HousewayBillController extends Controller
     public function get_agent()
     {
         $user = auth()->guard('user-api')->user();
-        $user_id = $user->id;
-        $company_id = $user->company_id; // Company ID from user table
         $branch_name = $user->branch_name;
-        // $agent = Agent::where('id', $branch_name)->first();
         $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
         return json_encode($data);
-        // $data = Agent::where('user_id', 1)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
-        // return json_encode($data);
     }
     public function getCountry()
     {
@@ -912,7 +907,16 @@ class HousewayBillController extends Controller
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($hawb_id, $request->tableCodes);
         }
         $status = $request->status;
-        HousewayBills::where(['id' => $hawb_id])->update(['status' => $status]);
+        $update_arr = [
+            'status' => $status,
+            'ho_name' => $request->agent_head_office->ho_name,
+            'ho_address' => $request->agent_head_office->ho_address,
+            'ho_city' => $request->agent_head_office->ho_city,
+            'ho_pincode' => $request->agent_head_office->ho_pincode,
+            'ho_state' => $request->agent_head_office->ho_state,
+            'ho_country' => $request->agent_head_office->ho_country
+        ];
+        HousewayBills::where(['id' => $hawb_id])->update($update_arr);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->HouseWayBillConversion($hawb_id);

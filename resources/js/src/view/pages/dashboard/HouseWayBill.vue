@@ -1368,7 +1368,7 @@
                                                                             </div>
                                                                         </template>
                                                                         <b-form-input style="width: 315px;" id="input-name" class="form-control-lg"
-                                                                            v-model="agent_information.ho_name"></b-form-input>
+                                                                            v-model="form.agent_head_office.ho_name"></b-form-input>
                                                                     </b-form-group>
                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                         content-cols-sm content-cols-lg="auto" label-for="input-address"
@@ -1380,7 +1380,7 @@
                                                                             </div>
                                                                         </template>
                                                                         <b-form-input style="width: 315px;" id="input-address" class="form-control-lg"
-                                                                            v-model="agent_information.ho_address"></b-form-input>
+                                                                            v-model="form.agent_head_office.ho_address"></b-form-input>
                                                                     </b-form-group>
                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                         content-cols-sm content-cols-lg="auto" label-for="input-city"
@@ -1393,9 +1393,9 @@
                                                                         </template>
                                                                         <div class="d-flex">
                                                                             <b-form-input style="width: 150px;" id="input-city" class="form-control-sm mr-4"
-                                                                            v-model="agent_information.ho_city"></b-form-input>
+                                                                            v-model="form.agent_head_office.ho_city"></b-form-input>
                                                                             <b-form-input style="width: 150px;" id="input-pincode" class="form-control-sm"
-                                                                                v-model="agent_information.ho_pincode"></b-form-input>
+                                                                                v-model="form.agent_head_office.ho_pincode"></b-form-input>
                                                                         </div>
                                                                     </b-form-group>
                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
@@ -1408,25 +1408,18 @@
                                                                             </div>
                                                                         </template>
                                                                         <b-form-input style="width:315px" id="input-state" class="form-control-sm"
-                                                                            v-model="agent_information.ho_state"></b-form-input>
+                                                                            v-model="form.agent_head_office.ho_state"></b-form-input>
                                                                     </b-form-group>
                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                         content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class=""
                                                                         style="margin-bottom:4px !important;">
                                                                         <template #label>
                                                                             <div style="width:150px;" class="d-flex align-items-center justify-content-end">
-                                                                                <span>Country:</span>
+                                                                                <span>Country: {{form.agent_head_office.ho_country}}</span>
                                                                                 <span class="text-danger">*</span>
                                                                             </div>
                                                                         </template>
-                                                                        <b-form-select class="form-control"
-                                                                            style="width: 315px"
-                                                                            v-model="agent_information.ho_country"  :class="{ 'is-invalid': form.errors.has('ho_country') }">
-                                                                            <option value="">Select a country</option>
-                                                                            <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                                                {{ country.text }}
-                                                                            </option>
-                                                                        </b-form-select>
+                                                                        <b-form-input style="width:315px" id="input-country" class="form-control-sm" v-model="agent_information.ho_country"></b-form-input>
                                                                     </b-form-group>
                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                                         content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class=""
@@ -2448,6 +2441,15 @@ export default {
                 is_shipper_address_save: false,
                 is_also_notify_address_save: false,
                 status:'',
+
+                agent_head_office:{
+                    ho_name: '',
+                    ho_address: '',
+                    ho_city: '',
+                    ho_pincode: '',
+                    ho_state: '',
+                    ho_country: '',
+                }
             }),
             oci_info:{
                 country_code: '',
@@ -2733,9 +2735,11 @@ export default {
                       }
                   }
                 });
-                this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
-                this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
-                this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                if(transit.flights[0]){
+                    this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
+                    this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
+                    this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                }
                 if(transit.flights[1]){
                     this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
                     this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
@@ -3034,22 +3038,11 @@ export default {
             }
         },
         getCurrentDate() {
-            // const today = new Date();
-            // const day = today.getDate().toString().padStart(2, '0');
-            // const month = today.toLocaleString('en-GB', { month: 'short' });
-            // return `${day}${month}`;
             return new Date().toLocaleDateString("en-CA");
         },
         formatDate(date) {
-            // if (!date) return '';
-            // const day = new Date(date).getDate().toString().padStart(2, '0');
-            // const month = new Date(date).toLocaleString('en-GB', { month: 'short' });
-            // return `${day}${month}`;
             return new Date(date).toLocaleDateString("en-CA");
         },
-        // handleDateChange(date) {
-        //     this.form.routing_information.date = this.formatDate(date);
-        // },
         handleDateChange(date, field) {
             const keys = field.split('.');
             let target = this;
@@ -3102,40 +3095,10 @@ export default {
             
             return formData;
         },
-        // onSubmit(evt) {
-        //     evt.preventDefault();
-        //     this.form.post(`/create-houseway-bill`).then(response => {
-        //         console.log(response);
-        //     })
-        // },
-        // onSubmit() {
-        //     if (this.mode === 'add') {
-        //         this.form.post('/create-houseway-bill')
-        //         .then(response => {
-        //             console.log('Add Successful:', response);
-        //         })
-        //         .catch(error => {
-        //             console.error('Add Failed:', error);
-        //         });
-        //     } else if (this.mode === 'update') {
-        //         this.form.put(`/update-houseway-bill/${this.existingData.id}`)
-        //         .then(response => {
-        //             console.log('Update Successful:', response);
-        //             // this.$router.push({ path: '/house-way-bill' });
-        //         })
-        //         .catch(error => {
-        //             console.error('Update Failed:', error);
-        //         });
-        //     }
-        // },
-
         onSubmit() {
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             this.main_error_msg='';
-            
-            // Prepare form data for submission - convert display dates to proper format
-            // const preparedFormData = this.prepareFormDataForSubmission();
-            
+            // this.form.agent_head_office.ho_name=this.agent_information.ho_name;
             if (this.mode === 'add') {
                 // Create a new Form instance with prepared data
                 const form = new Form({ ...this.form });
@@ -3255,7 +3218,7 @@ export default {
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
-                    
+                    this.form.agent_head_office=this.existingData;
                     // this.form.payment_info = this.existingData.payment_info || {};
                     this.form.payment_info = {
                         ...this.defaultPaymentInfo,
@@ -3322,8 +3285,12 @@ export default {
                 .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) {
                     this.agent_information = data[0];
+                    if(!this.form.agent_head_office.ho_name)
+                      this.form.agent_head_office=data[0]
                 } else {
                     this.agent_information = data;
+                    if(!this.form.agent_head_office.ho_name)
+                      this.form.agent_head_office=data;
                 }
                 })
                 .catch(error => {
@@ -4235,7 +4202,6 @@ export default {
         // console.log("Current User:", this.current_user);
         if(this.current_user)
         this.getAgent(this.current_user.company_name,this.current_user.branch_name);
-        // this.getAgent();
     },
     computed: {
         ...mapGetters({ current_user: "currentUser"}),

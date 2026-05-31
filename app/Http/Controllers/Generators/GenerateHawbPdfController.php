@@ -62,6 +62,12 @@ class GenerateHawbPdfController extends Controller
                 'house_way_bills.total_volume as total_volume',
                 'house_way_bills.dimention_unit as dimention_unit',
                 'house_way_bills.customs_origin_code as customs_origin_code',
+                'house_way_bills.ho_name as ho_name',
+                'house_way_bills.ho_address as ho_address',
+                'house_way_bills.ho_city as ho_city',
+                'house_way_bills.ho_pincode as ho_pincode',
+                'house_way_bills.ho_state as ho_state',
+                'house_way_bills.ho_country as ho_country',
 
                 // payment_info column declare here
                 'payment_info.id as payment_info_id',
@@ -203,6 +209,12 @@ class GenerateHawbPdfController extends Controller
                 'house_way_bills.total_volume as total_volume',
                 'house_way_bills.dimention_unit as dimention_unit',
                 'house_way_bills.customs_origin_code as customs_origin_code',
+                'house_way_bills.ho_name as ho_name',
+                'house_way_bills.ho_address as ho_address',
+                'house_way_bills.ho_city as ho_city',
+                'house_way_bills.ho_pincode as ho_pincode',
+                'house_way_bills.ho_state as ho_state',
+                'house_way_bills.ho_country as ho_country',
 
                 // payment_info column declare here
                 'payment_info.id as payment_info_id',
@@ -355,6 +367,12 @@ class GenerateHawbPdfController extends Controller
                 'house_way_bills.total_volume as total_volume',
                 'house_way_bills.dimention_unit as dimention_unit',
                 'house_way_bills.customs_origin_code as customs_origin_code',
+                'house_way_bills.ho_name as ho_name',
+                'house_way_bills.ho_address as ho_address',
+                'house_way_bills.ho_city as ho_city',
+                'house_way_bills.ho_pincode as ho_pincode',
+                'house_way_bills.ho_state as ho_state',
+                'house_way_bills.ho_country as ho_country',
 
                 // payment_info column declare here
                 'payment_info.id as payment_info_id',

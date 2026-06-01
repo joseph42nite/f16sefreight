@@ -54,7 +54,12 @@
     }
     </script>
     <title>{{ $meta_title }}</title>
-    <link rel="icon" href="/media/assets/logos/favicon-white-64.png" type="image/png">
+    <!-- Favicon for Browser Top Tab (White theme, premium against dark/default tabs) -->
+    <link rel="icon" href="/media/assets/logos/favicon-white-64.png" type="image/png" sizes="32x32">
+    
+    <!-- High-Contrast Blue Logo Favicon for Search Engines & Google Search Sitelinks (192x192) -->
+    <link rel="icon" href="/media/assets/logos/blue-logo.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="/media/assets/logos/blue-logo.png">
 
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>

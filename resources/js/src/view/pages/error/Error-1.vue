@@ -24,6 +24,14 @@
 <script>
 export default {
   name: "Error-1",
+  metaInfo() {
+    return {
+      title: "Page Not Found | F16s E-Freight Solutions",
+      meta: [
+        { name: "robots", content: "noindex, nofollow" }
+      ]
+    };
+  },
   mounted() {},
   computed: {
     backgroundImage() {

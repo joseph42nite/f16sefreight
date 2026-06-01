@@ -49,8 +49,8 @@
                     © 2026 F16s E-Freight Solutions. All rights reserved.
                 </div>
                 <div class="social-links d-flex gap-4">
-                    <a href="#"><b-icon icon="youtube" font-scale="1.5"></b-icon></a>
-                    <a href="#"><b-icon icon="linkedin" font-scale="1.5"></b-icon></a>
+                    <a href="https://www.youtube.com/@F16sE-FreightSolutions" target="_blank" rel="noopener noreferrer" title="F16s on YouTube"><b-icon icon="youtube" font-scale="1.5"></b-icon></a>
+                    <a href="https://www.linkedin.com/company/101762356/" target="_blank" rel="noopener noreferrer" title="F16s on LinkedIn"><b-icon icon="linkedin" font-scale="1.5"></b-icon></a>
                     <a href="#"><b-icon icon="facebook" font-scale="1.5"></b-icon></a>
                 </div>
             </div>

@@ -163,7 +163,7 @@
             <!-- VIDEO CARD 2 -->
             <div class="video-card-item" @click="playVideo('air')">
               <div class="video-thumbnail-wrapper">
-                <img src="https://img.youtube.com/vi/6jisKtE_xww/hqdefault.jpg" alt="Focus Air in Action" class="video-thumbnail-img" />
+                <img src="https://img.youtube.com/vi/hIAjV4xNclo/hqdefault.jpg" alt="Focus Air in Action" class="video-thumbnail-img" />
                 <div class="video-play-overlay">
                   <div class="play-btn-circle">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="play-arrow-svg">
@@ -498,7 +498,7 @@ export default {
       } else {
         this.activeVideoTitle = "Focus Air Module Overview";
         this.activeVideoDesc = "Watch F16s Focus Air flagship module in action. See how forwarders book capacity and confirm EDI details in seconds.";
-        this.activeYoutubeEmbedUrl = "https://www.youtube.com/embed/6jisKtE_xww?autoplay=1&rel=0&start=30";
+        this.activeYoutubeEmbedUrl = "https://www.youtube.com/embed/hIAjV4xNclo?autoplay=1&rel=0&start=30";
       }
       this.videoModalOpen = true;
     },

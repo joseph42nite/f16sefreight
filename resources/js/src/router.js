@@ -247,6 +247,18 @@ export default new Router({
         },
       ]
     },
+    {
+      path: "/joseph-ceo-938204719284",
+      name: "Joseph CEO Card",
+      component: () => import("@/view/pages/public/JosephCard.vue"),
+      meta: { logo: 'none' }
+    },
+    {
+      path: "/deepanjan-coo-839204817294",
+      name: "Deepanjan COO Card",
+      component: () => import("@/view/pages/public/DeepanjanCard.vue"),
+      meta: { logo: 'none' }
+    },
 
     {
       path: "*",

@@ -908,7 +908,7 @@ class HousewayBillController extends Controller
         }
         $status = $request->status;
         $update_arr = [
-            'status' => $status,
+            'status' => $status, 
             'ho_name' => $request->agent_head_office['ho_name'],
             'ho_address' => $request->agent_head_office['ho_address'],
             'ho_city' => $request->agent_head_office['ho_city'],

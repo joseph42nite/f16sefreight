@@ -909,12 +909,12 @@ class HousewayBillController extends Controller
         $status = $request->status;
         $update_arr = [
             'status' => $status,
-            'ho_name' => $request->agent_head_office->ho_name,
-            'ho_address' => $request->agent_head_office->ho_address,
-            'ho_city' => $request->agent_head_office->ho_city,
-            'ho_pincode' => $request->agent_head_office->ho_pincode,
-            'ho_state' => $request->agent_head_office->ho_state,
-            'ho_country' => $request->agent_head_office->ho_country
+            'ho_name' => $request->agent_head_office['ho_name'],
+            'ho_address' => $request->agent_head_office['ho_address'],
+            'ho_city' => $request->agent_head_office['ho_city'],
+            'ho_pincode' => $request->agent_head_office['ho_pincode'],
+            'ho_state' => $request->agent_head_office['ho_state'],
+            'ho_country' => $request->agent_head_office['ho_country']
         ];
         HousewayBills::where(['id' => $hawb_id])->update($update_arr);
         $send_response = [];
@@ -1032,8 +1032,17 @@ class HousewayBillController extends Controller
         }
 
         $status = $request->status;
+        $update_arr = [
+            'status' => $status,
+            'ho_name' => $request->agent_head_office['ho_name'],
+            'ho_address' => $request->agent_head_office['ho_address'],
+            'ho_city' => $request->agent_head_office['ho_city'],
+            'ho_pincode' => $request->agent_head_office['ho_pincode'],
+            'ho_state' => $request->agent_head_office['ho_state'],
+            'ho_country' => $request->agent_head_office['ho_country']
+        ];
         if ($status != 'generate_pdf')
-            HousewayBills::where(['id' => $id])->update(['status' => $status]);
+            HousewayBills::where(['id' => $id])->update($update_arr);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->HouseWayBillConversion($id);

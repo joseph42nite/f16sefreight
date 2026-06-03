@@ -9041,7 +9041,7 @@ def process_box(box_name: str, text: str) -> Any:
         return resolve_iata(normalize_text(text))
     else:
         return normalize_text(text)
-
+# hello
 def extract_all_boxes(pdf_path: str, template_name: str,
                      config_path: str = "boxes_config.json",
                      page_num: int = 0) -> Dict[str, Any]:

@@ -461,7 +461,7 @@ export default {
         "FN:Joseph CEO F16s",
         "ORG:F16s E-Freight Solutions",
         "TITLE:CEO & Founder",
-        "TEL;TYPE=CELL,VOICE;VALUE=uri:tel:+917011363516",
+        "TEL;TYPE=CELL,VOICE:+917011363516",
         "EMAIL;TYPE=PREF,INTERNET:joseph@f16sefreight.com",
         "URL:https://f16sefreight.com",
         "URL;type=LinkedIn:https://www.linkedin.com/in/joseph-george-b99616147/",
@@ -862,8 +862,8 @@ button, input {
   padding: 0 0.2rem;
 }
 .circle-action-item {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -874,12 +874,12 @@ button, input {
   border: 1px solid transparent;
 }
 .circle-icon {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
 }
 .circle-icon-stroke {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
 }
 
 /* Custom visual accenting for interactive floating rings */
@@ -970,8 +970,8 @@ button, input {
   transform: translateY(1px);
 }
 .btn-save-icon {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
 }
 
 /* Video Insights Section */
@@ -980,7 +980,7 @@ button, input {
   text-align: left;
 }
 .section-subtitle-mini {
-  font-size: 0.85rem;
+  font-size: 0.93rem;
   color: #5A6B8A;
   margin-top: 0.25rem;
   margin-bottom: 1.2rem;
@@ -1232,14 +1232,14 @@ button, input {
   text-align: left;
 }
 .widget-eyebrow {
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
   color: #5A6B8A;
   letter-spacing: 1px;
 }
 .widget-title {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #355594;
 }
@@ -1250,7 +1250,7 @@ button, input {
   padding-top: 1rem;
 }
 .footer-tagline {
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1.5px;

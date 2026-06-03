@@ -8436,18 +8436,18 @@ def resolve_iata(text: str) -> str:
     return text.strip().upper()
 
 
-def load_boxes_config(config_path: str = "boxes_config.json") -> Dict[str, Any]:
-    """Load boxes configuration from JSON file"""
+def load_boxes_config(config_path = "boxes_config.json") -> Dict[str, Any]:
+    """Load boxes configuration from JSON file or dictionary"""
+    if isinstance(config_path, dict):
+        return config_path
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
             return config.get('templates', {})
     except FileNotFoundError:
-        print(f"Error: Configuration file '{config_path}' not found.")
-        sys.exit(1)
+        raise FileNotFoundError(f"Configuration file '{config_path}' not found.")
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in configuration file: {e}")
-        sys.exit(1)
+        raise ValueError(f"Invalid JSON in configuration file: {e}")
 
 def extract_email(text: str) -> Optional[str]:
     """Extract email address from text"""
@@ -9043,15 +9043,22 @@ def process_box(box_name: str, text: str) -> Any:
         return normalize_text(text)
 # hello
 def extract_all_boxes(pdf_path: str, template_name: str,
-                     config_path: str = "boxes_config.json",
+                     config_path = "boxes_config.json",
                      page_num: int = 0) -> Dict[str, Any]:
     """Extract and process all boxes from PDF for a given template."""
-    templates = load_boxes_config(config_path)
+    if isinstance(config_path, dict):
+        if template_name in config_path:
+            templates = config_path
+        else:
+            templates = {template_name: config_path}
+    else:
+        templates = load_boxes_config(config_path)
 
     if template_name not in templates:
-        print(f"Error: Template '{template_name}' not found in configuration.")
-        print(f"Available templates: {', '.join(templates.keys())}")
-        sys.exit(1)
+        raise ValueError(
+            f"Template '{template_name}' not found in configuration. "
+            f"Available templates: {', '.join(templates.keys()) if isinstance(templates, dict) else ''}"
+        )
 
     template = templates[template_name]
     result = {}

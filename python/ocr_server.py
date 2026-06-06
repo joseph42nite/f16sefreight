@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse
 import tempfile
 import os
 import logging
+import json
+from typing import Optional
 from pathlib import Path
 
 # Load absolute paths to guarantee loading regardless of execution directory
@@ -33,7 +35,8 @@ def health():
 @app.post("/extract")
 async def extract(
     file: UploadFile = File(...), 
-    document_type: str = Form("ksr") # Defaults to standard 'ksr' template
+    document_type: str = Form("ksr"),
+    coordinates: Optional[str] = Form(None)
 ):
     """
     Receives PDF via FastAPI endpoint and invokes pre-loaded pdfplumber instantly.
@@ -50,13 +53,26 @@ async def extract(
             tmp_path = tmp.name
 
         logger.info(f"Received '{file.filename}' | Template: '{document_type}' | Size: {len(contents)} bytes")
-        
-        # 2. Execute instantaneous pre-loaded extraction
+
+        # 2. Determine coordinates configuration source
+        config_source = CONFIG_FILE_PATH
+        if coordinates:
+            try:
+                parsed_coords = json.loads(coordinates)
+                if isinstance(parsed_coords, dict):
+                    config_source = parsed_coords
+                    logger.info(f"Using database-provided coordinates for template: '{document_type}'")
+                else:
+                    logger.warning("Coordinates parameter is not a dictionary/object. Falling back to boxes_config.json")
+            except Exception as e:
+                logger.error(f"Failed to parse custom coordinates JSON: {e}. Falling back to boxes_config.json")
+
+        # 3. Execute instantaneous pre-loaded extraction
         # No subprocess creation overhead here!
         result = extract_all_boxes(
             pdf_path=tmp_path, 
             template_name=document_type, 
-            config_path=CONFIG_FILE_PATH,
+            config_path=config_source,
             page_num=0
         )
         

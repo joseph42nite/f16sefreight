@@ -46,18 +46,26 @@ class ProcessPdfOcrJob implements ShouldQueue
             ]);
             return;
         }
-
         try {
             // Call FastAPI microservice — no subprocess, no cold start
             $ocrUrl   = rtrim(config('services.ocr.url'), '/') . '/extract';
             
+            $documentType = $job->document_type ?: 'ksr';
+            $params = [
+                'document_type' => $documentType,
+            ];
+
+            // Pull coordinates from database directly
+            $template = \App\SystemTemplate::where('key', $documentType)->first();
+            if ($template && !empty($template->coordinates)) {
+                $params['coordinates'] = json_encode($template->coordinates);
+            }
+
             // Http timeout MUST be less than the job's $timeout property (90s) to ensure
             // the HTTP error path is hit cleanly before the worker process is force-killed.
             $response = Http::timeout(80)
                 ->attach('file', file_get_contents($tempPath), basename($tempPath))
-                ->post($ocrUrl, [
-                    'document_type' => $job->document_type ?: 'ksr'
-                ]);
+                ->post($ocrUrl, $params);
 
             if ($response->failed()) {
                 throw new \RuntimeException(

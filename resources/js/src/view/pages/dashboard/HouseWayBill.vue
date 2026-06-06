@@ -24,10 +24,10 @@
                             </b-col>
                             <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                 <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
-                                    <b-button @click.prevent="getHousewayBills('draft')" v-b-modal.modal-draft class="show-btn">
+                                    <b-button @click="getHousewayBills('draft')" class="show-btn">
                                         <b-icon icon="file-earmark-text" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Drafts</b>
                                     </b-button>
-                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn">
+                                    <b-button @click="getHousewayBills('send')" class="show-btn">
                                         <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                     </b-button>
                                     <OcrUploadModal category="house_air" @extracted="processExtractedData" />
@@ -3167,6 +3167,9 @@ export default {
         getHousewayBills(status) {
             this.isFetching = true;
             this.data_items = []; // Clear current items to avoid stale data flicker
+            // Open the correct modal immediately (spinner shows while fetching)
+            const modalId = status === 'draft' ? 'modal-draft' : 'modal-s';
+            this.$bvModal.show(modalId);
             ApiService.get(`/user/get-houseway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;

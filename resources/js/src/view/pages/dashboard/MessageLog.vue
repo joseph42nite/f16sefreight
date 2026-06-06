@@ -150,7 +150,7 @@ td[aria-colindex="5"] {
                             <template #cell(houseway)="row">
                                 <div v-if="getHouseWayBills(row.item).length" class="mb-3">
                                     <div v-for="(bill, i) in getHouseWayBills(row.item)" :key="i" class="d-flex py-2 house-row border-bottom align-items-center">
-                                        <div class="w-25 font-weight-bold text-muted">{{ bill.id }}</div>
+                                        <div class="w-25 font-weight-bold" style="color: #1e3a6e;">{{ bill.id }}</div>
                                         <div class="w-25 d-flex align-items-center">
                                             <b-icon icon="pencil" class="text-primary mr-3" style="cursor: pointer; font-size: 1.1rem;" @click="$router.push('/edit-houseway-bill/' + bill.id)"/>
                                             <b-icon icon="trash" class="text-danger" style="cursor: pointer; font-size: 1.1rem;" @click="handleDeleteHouseBill(bill.id)"/>
@@ -551,7 +551,7 @@ export default {
 
 .custom-table >>> td {
     padding: 14px 8px !important;
-    vertical-align: middle !important;
+    vertical-align: top !important;
     border-bottom: 1px solid rgba(53, 85, 148, 0.05) !important;
     color: #475569 !important;
     font-size: 13px !important;

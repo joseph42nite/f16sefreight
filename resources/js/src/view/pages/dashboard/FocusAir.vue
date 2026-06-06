@@ -31,10 +31,10 @@
                                 </b-col>
                                 <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                     <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
-                                        <b-button @click.prevent="getAirwayBills('draft')" v-b-modal.modal-draft class="show-btn">
+                                        <b-button @click="getAirwayBills('draft')" class="show-btn">
                                             <b-icon icon="file-earmark-text" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Drafts</b>
                                         </b-button>
-                                        <b-button @click.prevent="getAirwayBills('send')" v-b-modal.modal-s class="show-btn">
+                                        <b-button @click="getAirwayBills('send')" class="show-btn">
                                             <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                         </b-button>
                                         <OcrUploadModal category="focus_air" @extracted="processExtractedData" />
@@ -47,6 +47,7 @@
                                     mode="draft" 
                                     docType="master"
                                     :items="data_items" 
+                                    :isFetching="isFetching"
                                     @action="item => handleEditNavigation(item.id)"
                                 />
 
@@ -56,6 +57,7 @@
                                     mode="send" 
                                     docType="master"
                                     :items="data_items" 
+                                    :isFetching="isFetching"
                                     @action="item => handleEditNavigation(item.id)"
                                 />
 
@@ -2741,6 +2743,7 @@ export default {
             other_charges_code: [],
             existingData: {},
             data_items: [],
+            isFetching: false,
             mode: 'add',
             awbDetails: false,
             awbError: null,
@@ -2886,35 +2889,48 @@ export default {
             var destination = response.destination;
             var transit = response.transit?.[0];
             
-            if (departure && destination && transit) {
-                var all_airport_short_code=[departure,destination,transit.transit_airports?.[0],transit.transit_airports?.[1],transit.transit_airports?.[2]];
-                ApiService.post(`/user/get-airport-by-airport-code`,{"airport_code":all_airport_short_code}).then((response2) => {
-                  response2=response2.data?.data;
-                  this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                  this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                  this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                  this.form.routing_information.to = `${response2[2]?response2[2]['iata_code']:response2[1]['iata_code']}, ${response2[2]?response2[2]['destination']:response2[1]['destination']}`;
-                  if(transit.transit_airports[1]){
-                     this.form.routing_information.to_2 = `${response2[3]?response2[3]['iata_code']:response2[1]['iata_code']}, ${response2[3]?response2[3]['destination']:response2[1]['destination']}`;
-                  }
-                  if(transit.transit_airports[2]){
-                      this.form.routing_information.to_3 = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                  }
+            // Departure + destination are populated independently of transit
+            if (departure && destination) {
+                var all_airport_short_code = [
+                    departure,
+                    destination,
+                    transit?.transit_airports?.[0],
+                    transit?.transit_airports?.[1],
+                    transit?.transit_airports?.[2]
+                ];
+                ApiService.post(`/user/get-airport-by-airport-code`, {"airport_code": all_airport_short_code}).then((response2) => {
+                    response2 = response2.data?.data;
+                    this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                    this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
+                    this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                    // Transit hops only filled when transit data is present
+                    if (transit) {
+                        this.form.routing_information.to = `${response2[2] ? response2[2]['iata_code'] : response2[1]['iata_code']}, ${response2[2] ? response2[2]['destination'] : response2[1]['destination']}`;
+                        if (transit.transit_airports[1]) {
+                            this.form.routing_information.to_2 = `${response2[3] ? response2[3]['iata_code'] : response2[1]['iata_code']}, ${response2[3] ? response2[3]['destination'] : response2[1]['destination']}`;
+                        }
+                        if (transit.transit_airports[2]) {
+                            this.form.routing_information.to_3 = `${response2[4] ? response2[4]['iata_code'] : response2[1]['iata_code']}, ${response2[4] ? response2[4]['destination'] : response2[1]['destination']}`;
+                        }
+                    }
                 });
-                if(transit.flights[0]){
-                    this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
-                    this.form.routing_information.date = this.formatDate(transit.flights[0].date);
-                }
-                if(transit.flights[1]){
-                    this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
-                    this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
-                }
-                if(transit.flights[2]){
-                    this.form.routing_information.by_3 =transit.flights[2]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight_3 =transit.flights[2]?.flight_number?.slice(2);
-                    this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
+                // Flight numbers and dates only when transit is available
+                if (transit) {
+                    if (transit.flights[0]) {
+                        this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0, 2);
+                        this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
+                        this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                    }
+                    if (transit.flights[1]) {
+                        this.form.routing_information.by_2 = transit.flights[1]?.flight_number?.slice(0, 2);
+                        this.form.routing_information.flight_2 = transit.flights[1]?.flight_number?.slice(2);
+                        this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
+                    }
+                    if (transit.flights[2]) {
+                        this.form.routing_information.by_3 = transit.flights[2]?.flight_number?.slice(0, 2);
+                        this.form.routing_information.flight_3 = transit.flights[2]?.flight_number?.slice(2);
+                        this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
+                    }
                 }
             }
             
@@ -2976,12 +2992,15 @@ export default {
             let weight_charge=response.weight_charge;
             
             if (piece_weight) {
-                let rate_class = piece_weight.rate_class? (piece_weight.rate_class.length > 2? piece_weight.rate_class.slice(2): piece_weight.rate_class.slice(0)): null;
-                this.consignment_list.rate_class=piece_weight.rate_class?.slice(2);
-                this.consignment_list.pieces=piece_weight.no_of_pieces;
-                this.consignment_list.rate=piece_weight.rate;
-                this.consignment_list.gross_weight=piece_weight.gross_weight;
-                this.consignment_list.chargable_weight=piece_weight.chargeable_weight;
+                // Safely slice the rate class — fall back to '' so the select shows "Select a Rate Class"
+                let rate_class = piece_weight.rate_class
+                    ? (piece_weight.rate_class.length > 2 ? piece_weight.rate_class.slice(2) : piece_weight.rate_class)
+                    : '';
+                this.consignment_list.rate_class = rate_class;
+                this.consignment_list.pieces = piece_weight.no_of_pieces;
+                this.consignment_list.rate = piece_weight.rate;
+                this.consignment_list.gross_weight = piece_weight.gross_weight;
+                this.consignment_list.chargable_weight = piece_weight.chargeable_weight;
             }
             
             if (cargo_data) {
@@ -3509,13 +3528,20 @@ export default {
             }
         },
         getAirwayBills(status) {
+            this.isFetching = true;
+            this.data_items = []; // Clear stale data before fetch
+            // Open the correct modal immediately — spinner shows while loading
+            const modalId = status === 'draft' ? 'modal-draft' : 'modal-s';
+            this.$bvModal.show(modalId);
             ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
                     this.data_items = response.data;
-                    // console.log('Data items:', this.data_items);
                 })
                 .catch(error => {
                     // console.error("Failed to fetch items:", error);
+                })
+                .finally(() => {
+                    this.isFetching = false;
                 });
         },
         getAirWayBill(id) { 

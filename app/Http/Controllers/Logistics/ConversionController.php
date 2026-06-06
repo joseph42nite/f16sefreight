@@ -398,7 +398,7 @@ class ConversionController extends Controller
             // ===========End Third route info=============
         }
 
-        $special_handling_info = json_decode($waybill_data['special_handling_info'], true);
+        $special_handling_info = $waybill_data['special_handling_info']?json_decode($waybill_data['special_handling_info'], true):[];
         // Handling SPH Instructions
         for ($i = 0; $i < sizeof($special_handling_info); $i++) {
             $handlingSPHInstructions = $xml->createElement('ram:HandlingSPHInstructions');

@@ -309,7 +309,28 @@ class MessageLogController extends Controller
 
             $airwayBills = $query->get();
 
-            return response()->json($airwayBills);
+            // Eager-load house waybills for all master AWBs in one query
+            $awbCodes = $airwayBills->pluck('awb_code')->toArray();
+            $awbNos   = $airwayBills->pluck('awb_no')->toArray();
+
+            $houseWayBillsAll = HousewayBills::where('agent_id', $agentId)
+                ->where('status', 'send')
+                ->whereIn('awb_code', $awbCodes)
+                ->get(['id', 'awb_code', 'awb_no', 'destination_airport', 'created_at']);
+
+            // Group by awb_code-awb_no composite key
+            $hwbGrouped = $houseWayBillsAll->groupBy(function ($hwb) {
+                return $hwb->awb_code . '-' . $hwb->awb_no;
+            });
+
+            // Attach house_way_bills array to each master AWB
+            $result = $airwayBills->map(function ($awb) use ($hwbGrouped) {
+                $key = $awb->awb_code . '-' . $awb->awb_no;
+                $awb->house_way_bills = $hwbGrouped->get($key, collect())->values();
+                return $awb;
+            });
+
+            return response()->json($result);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

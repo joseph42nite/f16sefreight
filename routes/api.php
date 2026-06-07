@@ -100,6 +100,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-alsonotify-address', [HousewayBillController::class, 'getAlsoNotifyAddress']);
 
     //message Log 
+    Route::get('/all-airway-bill', [MessageLogController::class,'getAllAirwayBill']);
     Route::get('/house-way-bills/{awb_code}/{awb_no}', [MessageLogController::class,'getHouseWayBills']);
     Route::get('/get-all-airwaybill', [MessageLogController::class,'getAllAirwaybills']);
     Route::get('/get-master-awbs-with-housewaybills', [MessageLogController::class,'getMasterAwbsWithHouseWaybills']);

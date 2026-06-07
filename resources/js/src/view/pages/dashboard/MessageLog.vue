@@ -148,8 +148,8 @@ td[aria-colindex="5"] {
 
                             <!-- Houseway Details in Same Row -->
                             <template #cell(houseway)="row">
-                                <div v-if="getHouseWayBills(row.item).length" class="mb-3">
-                                    <div v-for="(bill, i) in getHouseWayBills(row.item)" :key="i" class="d-flex py-2 house-row border-bottom align-items-center">
+                                <div v-if="row.item.house_way_bills && row.item.house_way_bills.length" class="mb-3">
+                                    <div v-for="(bill, i) in row.item.house_way_bills" :key="i" class="d-flex py-2 house-row border-bottom align-items-center">
                                         <div class="w-25 font-weight-bold" style="color: #1e3a6e;">{{ bill.id }}</div>
                                         <div class="w-25 d-flex align-items-center">
                                             <b-icon icon="pencil" class="text-primary mr-3" style="cursor: pointer; font-size: 1.1rem;" @click="$router.push('/edit-houseway-bill/' + bill.id)"/>
@@ -219,7 +219,6 @@ export default {
             totalRows: 0,
             pageOptions: [10, 20, 50, 100],
             data_items: [],
-            house_way_bills: {},
             filteredData: [],
             isSearchValid: false,
             searchPerformed: false,
@@ -345,27 +344,6 @@ export default {
                 window.location.href = value;
             }
         },
-        getHouseWayBills(item) {
-            if (!item.awb_code || !item.awb_no) return [];
-            const key = `${String(item.awb_code)}-${String(item.awb_no)}`;
-            if (!this.house_way_bills[key]) {
-                ApiService.get(
-                    `/user/house-way-bills/${String(item.awb_code)}/${String(item.awb_no)}`
-                )
-                    .then((response) => {
-                        this.$set(this.house_way_bills, key, response.data);
-                    })
-                    .catch((error) => {
-                        console.error(
-                            "Failed to fetch house way bills:",
-                            error
-                        );
-                        this.$set(this.house_way_bills, key, []);
-                    });
-                return [];
-            }
-            return this.house_way_bills[key];
-        },
         getHouseWayBill(id) {
             ApiService.get(`/user/houseway-bill/${id}`)
                 .then((response) => {
@@ -440,10 +418,7 @@ export default {
                         this.allAirwayBill();
                     })
                     .catch((error) => {
-                        console.error(
-                            "Failed to delete house way bill:",
-                            error
-                        );
+                        console.error("Failed to delete house way bill:", error);
                     });
             }
         },

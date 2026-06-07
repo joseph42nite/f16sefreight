@@ -38,7 +38,6 @@
                                         <img :src="avatarLogoSrc" alt="User profile" class="mobile-avatar" />
                                     </div>
                                     <div class="profile-meta">
-                                        <h6 class="profile-name">Hi, {{ currentUser.name || 'User' }}</h6>
                                         <div class="origin-badge">
                                             <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
                                             <span>Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>

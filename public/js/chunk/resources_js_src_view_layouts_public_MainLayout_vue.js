@@ -801,64 +801,7 @@ var render = function render() {
     }
   })])], 1), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center ml-auto order-lg-3"
-  }, [_vm.isAuthenticated ? _c("b-navbar-nav", {
-    staticClass: "d-flex flex-row align-items-center content-gap d-lg-none mr-4"
-  }, [_c("b-nav-item-dropdown", {
-    attrs: {
-      right: "",
-      "no-caret": ""
-    },
-    scopedSlots: _vm._u([{
-      key: "button-content",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "avatar-wrapper"
-        }, [_c("img", {
-          attrs: {
-            src: _vm.avatarLogoSrc,
-            alt: "User profile",
-            id: "avatar-logo"
-          }
-        })])];
-      },
-      proxy: true
-    }], null, false, 267970355)
-  }, [_vm._v(" "), _c("b-dropdown-item", {
-    attrs: {
-      disabled: ""
-    }
-  }, [_c("div", {
-    staticClass: "d-flex align-items-center"
-  }, [_c("b-icon", {
-    staticClass: "mr-2",
-    attrs: {
-      icon: "geo-alt",
-      variant: "primary"
-    }
-  }), _vm._v(" "), _c("span", {
-    staticStyle: {
-      "font-size": "12px",
-      color: "#355594"
-    }
-  }, [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1)]), _vm._v(" "), _c("b-dropdown-divider"), _vm._v(" "), _c("b-dropdown-item", {
-    on: {
-      click: function click($event) {
-        return _vm.logout();
-      }
-    }
-  }, [_c("div", {
-    staticClass: "d-flex align-items-center"
-  }, [_c("b-icon", {
-    staticClass: "mr-2",
-    attrs: {
-      icon: "box-arrow-right",
-      variant: "danger"
-    }
-  }), _vm._v(" "), _c("span", {
-    staticStyle: {
-      "font-size": "12px"
-    }
-  }, [_vm._v("Sign out")])], 1)])], 1)], 1) : _vm._e(), _vm._v(" "), _c("b-navbar-toggle", {
+  }, [_c("b-navbar-toggle", {
     attrs: {
       target: "nav-collapse",
       "aria-label": "Toggle navigation menu"
@@ -892,7 +835,28 @@ var render = function render() {
     attrs: {
       to: "/product-description"
     }
-  }, [_vm._v("Products")]), _vm._v(" "), _c("div", {
+  }, [_vm._v("Products")]), _vm._v(" "), _vm.isAuthenticated ? _c("div", {
+    staticClass: "d-lg-none mobile-profile-card"
+  }, [_c("div", {
+    staticClass: "origin-badge mb-3"
+  }, [_c("b-icon", {
+    staticClass: "mr-1",
+    attrs: {
+      icon: "geo-alt-fill"
+    }
+  }), _vm._v(" "), _c("span", [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1), _vm._v(" "), _c("button", {
+    staticClass: "sign-out-btn-premium",
+    on: {
+      click: function click($event) {
+        return _vm.logout();
+      }
+    }
+  }, [_c("b-icon", {
+    staticClass: "mr-2",
+    attrs: {
+      icon: "box-arrow-right"
+    }
+  }), _vm._v("Sign out\n                            ")], 1)]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "head-btn d-lg-none"
   }, [!_vm.isAuthenticated ? _c("b-nav-item", {
     staticClass: "nav-link-custom d-lg-none"

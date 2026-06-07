@@ -33,16 +33,9 @@
                             
                             <!-- Profile Card & Sign Out inside hamburger menu for Mobile -->
                             <div v-if="isAuthenticated" class="d-lg-none mobile-profile-card">
-                                <div class="profile-card-header">
-                                    <div class="avatar-glow">
-                                        <img :src="avatarLogoSrc" alt="User profile" class="mobile-avatar" />
-                                    </div>
-                                    <div class="profile-meta">
-                                        <div class="origin-badge">
-                                            <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
-                                            <span>Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
-                                        </div>
-                                    </div>
+                                <div class="origin-badge mb-3">
+                                    <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
+                                    <span>Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
                                 </div>
                                 <button class="sign-out-btn-premium" @click="logout()">
                                     <b-icon icon="box-arrow-right" class="mr-2"></b-icon>Sign out

@@ -9,34 +9,6 @@
                 </div>
                 <!-- Group Avatar & Toggler for reliable right-aligned stack -->
                 <div class="d-flex align-items-center ml-auto order-lg-3">
-                    <!-- Profile Avatar for Small Devices < (767px), Visible Before Toggle -->
-                    <!-- If loged-in user -->
-                    <b-navbar-nav
-                        v-if="isAuthenticated"
-                        class="d-flex flex-row align-items-center content-gap d-lg-none mr-4"
-                    >
-                        <b-nav-item-dropdown right no-caret>
-                            <template #button-content>
-                                <div class="avatar-wrapper">
-                                    <img :src="avatarLogoSrc" alt="User profile" id="avatar-logo" />
-                                </div>
-                            </template>
-                            <b-dropdown-item disabled>
-                                <div class="d-flex align-items-center">
-                                    <b-icon icon="geo-alt" class="mr-2" variant="primary"></b-icon>
-                                    <span style="font-size: 12px; color: #355594;">Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
-                                </div>
-                            </b-dropdown-item>
-                            <b-dropdown-divider></b-dropdown-divider>
-                            <b-dropdown-item @click="logout()">
-                                <div class="d-flex align-items-center">
-                                    <b-icon icon="box-arrow-right" class="mr-2" variant="danger"></b-icon>
-                                    <span style="font-size: 12px;">Sign out</span>
-                                </div>
-                            </b-dropdown-item>
-                        </b-nav-item-dropdown>
-                    </b-navbar-nav>
-
                     <b-navbar-toggle target="nav-collapse" aria-label="Toggle navigation menu"></b-navbar-toggle>
                 </div>
 
@@ -58,6 +30,20 @@
                                 >Products</b-nav-item
                             >
                             <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
+                            
+                            <!-- Profile Icon & Sign Out inside hamburger menu for Mobile -->
+                            <div v-if="isAuthenticated" class="d-lg-none mt-2 pt-3 border-top w-100">
+                                <div class="d-flex align-items-center justify-content-center mb-3">
+                                    <div class="avatar-wrapper mr-2">
+                                        <img :src="avatarLogoSrc" alt="User profile" id="avatar-logo" style="width: 35px; height: 35px; border-radius: 50%;" />
+                                    </div>
+                                    <span style="font-size: 14px; color: #355594; font-weight: 600;">Origin: {{ currentUser.origin_airport_code }}</span>
+                                </div>
+                                <button class="sign-in-btn" @click="logout()" style="border-color: #ef4444; color: #ef4444 !important; background: transparent !important; padding: 8px 20px;">
+                                    <b-icon icon="box-arrow-right" class="mr-2"></b-icon>Sign out
+                                </button>
+                            </div>
+
                             <!-- SignIn and what's free button for Small Devices < (767px), Visible here -->
                             <!-- If not loged-in user -->
                             <div class="head-btn d-lg-none">

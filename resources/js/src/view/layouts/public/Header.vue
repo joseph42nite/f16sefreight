@@ -31,15 +31,21 @@
                             >
                             <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
                             
-                            <!-- Profile Icon & Sign Out inside hamburger menu for Mobile -->
-                            <div v-if="isAuthenticated" class="d-lg-none mt-2 pt-3 border-top w-100">
-                                <div class="d-flex align-items-center justify-content-center mb-3">
-                                    <div class="avatar-wrapper mr-2">
-                                        <img :src="avatarLogoSrc" alt="User profile" id="avatar-logo" style="width: 35px; height: 35px; border-radius: 50%;" />
+                            <!-- Profile Card & Sign Out inside hamburger menu for Mobile -->
+                            <div v-if="isAuthenticated" class="d-lg-none mobile-profile-card">
+                                <div class="profile-card-header">
+                                    <div class="avatar-glow">
+                                        <img :src="avatarLogoSrc" alt="User profile" class="mobile-avatar" />
                                     </div>
-                                    <span style="font-size: 14px; color: #355594; font-weight: 600;">Origin: {{ currentUser.origin_airport_code }}</span>
+                                    <div class="profile-meta">
+                                        <h6 class="profile-name">Hi, {{ currentUser.name || 'User' }}</h6>
+                                        <div class="origin-badge">
+                                            <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
+                                            <span>Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button class="sign-in-btn" @click="logout()" style="border-color: #ef4444; color: #ef4444 !important; background: transparent !important; padding: 8px 20px;">
+                                <button class="sign-out-btn-premium" @click="logout()">
                                     <b-icon icon="box-arrow-right" class="mr-2"></b-icon>Sign out
                                 </button>
                             </div>
@@ -508,6 +514,98 @@ a.menu-link {
     #main-logo {
         height: 45px;
     }
+}
+
+.mobile-profile-card {
+    background: linear-gradient(135deg, rgba(240, 247, 255, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border: 1px solid rgba(53, 85, 148, 0.12);
+    box-shadow: 0 10px 30px rgba(53, 85, 148, 0.04);
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    backdrop-filter: blur(8px);
+}
+
+.profile-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(53, 85, 148, 0.06);
+    padding-bottom: 12px;
+}
+
+.avatar-glow {
+    position: relative;
+    border-radius: 50%;
+    padding: 2px;
+    background: linear-gradient(135deg, #355594, #2a4476);
+    box-shadow: 0 4px 10px rgba(53, 85, 148, 0.2);
+}
+
+.mobile-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: block;
+}
+
+.profile-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.profile-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e3a6e;
+    margin-bottom: 4px !important;
+}
+
+.origin-badge {
+    background: #F0F7FF;
+    border: 1px solid #E6F0FF;
+    color: #355594;
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.sign-out-btn-premium {
+    background: rgba(239, 68, 68, 0.06) !important;
+    border: 1px solid rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 20px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.sign-out-btn-premium:hover {
+    background: #ef4444 !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
 }
 </style>
 

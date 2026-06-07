@@ -111,10 +111,10 @@ td[aria-colindex="5"] {
                         
                         <SkeletonTable v-if="isLoading" :rows="10" :columns="5" />
                         <template v-else>
-                            <b-table :items="normalizedItems" :fields="fields" small responsive class="w-100 custom-table" :per-page="perPage" :current-page="currentPage" @filtered="onFiltered" >
+                            <b-table :items="normalizedItems" :fields="fields" small responsive class="w-100 custom-table">
                             <!-- Index -->
                             <template #cell(index)="row">
-                                <span class="font-weight-bold text-muted">{{ row.index + 1 }}</span>
+                                <span class="font-weight-bold text-muted">{{ (currentPage - 1) * perPage + row.index + 1 }}</span>
                             </template>
 
                             <!-- AWB No. -->
@@ -127,13 +127,13 @@ td[aria-colindex="5"] {
                             <!-- Destination -->
                             <template #cell(destination_airport)="row">
                                 <span class="badge badge-light px-2 py-1" style="color: #355594; background: #F0F7FF; border: 1px solid #E6F0FF; font-weight: 600; border-radius: 6px;">
-                                    {{ getAirportCode(row.item.destination_airport) }}
+                                    {{ row.item.destination_airport }}
                                 </span>
                             </template>
 
                             <!-- Created At -->
-                            <template #cell(send_created)="row">
-                                <span class="text-muted">{{ formatDate(row.item.send_created) }}</span>
+                            <template #cell(created_at)="row">
+                                <span class="text-muted">{{ row.item.created_at }}</span>
                             </template>
 
                             <!-- Custom Header for Houseway Column -->
@@ -157,32 +157,34 @@ td[aria-colindex="5"] {
                                         </div>
                                         <div class="w-25">
                                             <span class="badge badge-light px-2 py-1" style="color: #475569; background: #F8FCFF; border: 1px solid #E2E8F0; font-weight: 500; border-radius: 6px;">
-                                                {{ getAirportCode(bill.destination_airport) }}
+                                                {{ bill.destination_airport_code }}
                                             </span>
                                         </div>
                                         <div class="w-25 text-muted" style="font-size: 0.8rem;">
-                                            {{ formatDate(bill.created_at) }}
+                                            {{ bill.formatted_created_at }}
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="d-flex font-weight-bold waybill-status-header">
-                                    <div class="w-25">FNA and FMAs</div>
-                                    <div class="w-25 text-right pr-3">Date</div>
-                                </div>
-                                
-                                <div class="status-response-container">
-                                    <div v-for="(status,i) in data_items.status_reponse" :key="i" class="status-log-item py-2 px-3 mb-2 rounded" style="background: #F8FCFF; border: 1px solid #E6F0FF;">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center">
-                                                <span class="status-badge mr-2">{{ i + 1 }}</span>
-                                                <span class="font-weight-bold" style="color: #355594; font-size: 0.9rem;">{{ status.business_status_code }}</span>
+                                <div v-if="statusResponses && statusResponses.length">
+                                    <div class="d-flex font-weight-bold waybill-status-header">
+                                        <div class="w-25">FNA and FMAs</div>
+                                        <div class="w-25 text-right pr-3">Date</div>
+                                    </div>
+                                    
+                                    <div class="status-response-container">
+                                        <div v-for="(status,i) in statusResponses" :key="i" class="status-log-item py-2 px-3 mb-2 rounded" style="background: #F8FCFF; border: 1px solid #E6F0FF;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="status-badge mr-2">{{ i + 1 }}</span>
+                                                    <span class="font-weight-bold" style="color: #355594; font-size: 0.9rem;">{{ status.business_status_code }}</span>
+                                                </div>
+                                                <span class="text-muted" style="font-size: 0.75rem;">{{ status.formatted_created_at }}</span>
                                             </div>
-                                            <span class="text-muted" style="font-size: 0.75rem;">{{ formatDate(status.created_at) }}</span>
-                                        </div>
-                                        <div v-if="status.reason" class="pl-7 mt-1 text-muted" style="font-size: 0.8rem;">
-                                            <b-icon icon="info-circle" class="mr-1" style="color: #355594; opacity: 0.7;"></b-icon>
-                                            <strong>{{ status.condition_code }}:</strong> {{ status.reason }}
+                                            <div v-if="status.reason" class="pl-7 mt-1 text-muted" style="font-size: 0.8rem;">
+                                                <b-icon icon="info-circle" class="mr-1" style="color: #355594; opacity: 0.7;"></b-icon>
+                                                <strong>{{ status.condition_code }}:</strong> {{ status.reason }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -213,7 +215,6 @@ export default {
                 masterEnd: "",
             }),
             selectedViewPageOption: '/message-log',
-            filter: "",
             currentPage: 1,
             perPage: 10,
             totalRows: 0,
@@ -237,91 +238,76 @@ export default {
     },
     computed: {
         ...mapGetters({ current_user: "currentUser" }),
-        filteredItems() {
-        if (!this.filter) return this.data_items;
+        normalizedItems() {
+            if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
+                const awb = this.data_items.airway_bill;
+                if (!awb.destination_airport) return [];
+                
+                const hwbs = Array.isArray(this.data_items.house_way_bills) 
+                    ? this.data_items.house_way_bills 
+                    : [];
 
-        const search = this.filter.toLowerCase();
-        return this.data_items.filter(
-            (item) =>
-            (item.awb_code || "")
-                    .toString()
-                    .toLowerCase()
-                    .includes(search) ||
-                (item.awb_no || "")
-                    .toString()
-                    .toLowerCase()
-                    .includes(search) ||
-                (item.destination_airport || "")
-                    .toLowerCase()
-                    .includes(search) ||
-                (item.place || "").toLowerCase().includes(search)
-        );
-    },
-    normalizedItems() {
-        if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
-            if (!this.data_items.airway_bill.destination_airport) return [];
-            
-            return [{
-                id: this.data_items.airway_bill.id,
-                awb_no: this.data_items.airway_bill.awb_no,
-                awb_code: this.data_items.airway_bill.awb_code,
-                destination_airport: this.getAirportCode(this.data_items.airway_bill.destination_airport),
-                created_at: this.formatDate(this.data_items.airway_bill.created_at),
-                house_way_bills: this.data_items.house_way_bills
-                    .filter(hwb => hwb.destination_airport)
-                    .map(hwb => ({
-                        ...hwb,
-                        destination_airport: this.getAirportCode(hwb.destination_airport),
-                        created_at: this.formatDate(hwb.created_at),
-                    }))
-            }];
-        } else if (Array.isArray(this.data_items)) {
-            return this.data_items.filter(item => item.destination_airport);
+                return [{
+                    id: awb.id,
+                    awb_no: awb.awb_no,
+                    awb_code: awb.awb_code,
+                    destination_airport: this.getAirportCode(awb.destination_airport),
+                    created_at: this.formatDate(awb.created_at),
+                    house_way_bills: hwbs
+                        .filter(hwb => hwb.destination_airport)
+                        .map(hwb => ({
+                            ...hwb,
+                            destination_airport_code: this.getAirportCode(hwb.destination_airport),
+                            formatted_created_at: this.formatDate(hwb.created_at),
+                        }))
+                }];
+            } else if (Array.isArray(this.data_items)) {
+                return this.data_items
+                    .filter(item => item.destination_airport)
+                    .map(item => {
+                        const hwbs = Array.isArray(item.house_way_bills) ? item.house_way_bills : [];
+                        return {
+                            ...item,
+                            destination_airport: this.getAirportCode(item.destination_airport),
+                            created_at: this.formatDate(item.created_at),
+                            house_way_bills: hwbs
+                                .filter(hwb => hwb.destination_airport)
+                                .map(hwb => ({
+                                    ...hwb,
+                                    destination_airport_code: this.getAirportCode(hwb.destination_airport),
+                                    formatted_created_at: this.formatDate(hwb.created_at),
+                                }))
+                        };
+                    });
+            }
+            return [];
+        },
+        statusResponses() {
+            if (this.data_items && Array.isArray(this.data_items.status_reponse)) {
+                return this.data_items.status_reponse.map(status => ({
+                    ...status,
+                    formatted_created_at: this.formatDate(status.created_at)
+                }));
+            }
+            return [];
         }
-        return [];
-    }
-        // filteredItems() {
-        //     if (!this.filter) return this.data_items;
-
-        //     const search = this.filter.toLowerCase();
-        //     return this.data_items.filter(
-        //         (item) =>
-        //         (item.awb_code || "")
-        //                 .toString()
-        //                 .toLowerCase()
-        //                 .includes(search) ||
-        //             (item.awb_no || "")
-        //                 .toString()
-        //                 .toLowerCase()
-        //                 .includes(search) ||
-        //             (item.destination_airport || "")
-        //                 .toLowerCase()
-        //                 .includes(search) ||
-        //             (item.place || "").toLowerCase().includes(search)
-        //     );
-        // },
-        // normalizedItems() {
-        //     if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
-        //     return [{
-        //         awb_no: this.data_items.airway_bill.awb_no,
-        //         awb_code: this.data_items.airway_bill.awb_code,
-        //         destination_airport: this.getAirportCode(this.data_items.airway_bill.destination_airport),
-        //         created_at: this.formatDate(this.data_items.airway_bill.created_at),
-        //         house_way_bills: this.data_items.house_way_bills.map(hwb => ({
-        //         ...hwb,
-        //         destination_airport: this.getAirportCode(hwb.destination_airport),
-        //         created_at: this.formatDate(hwb.created_at),
-        //         }))
-        //     }];
-        //     } else if (Array.isArray(this.data_items)) {
-        //     return this.data_items;
-        //     }
-        //     return [];
-        // }
     },
     watch: {
-        filteredItems(val) {
-            this.totalRows = val.length;
+        currentPage(newPage) {
+            if (!this.searchPerformed) {
+                this.allAirwayBill(newPage);
+            }
+        },
+        perPage(newPerPage) {
+            if (!this.searchPerformed) {
+                this.currentPage = 1;
+                this.allAirwayBill(1);
+            }
+        },
+        normalizedItems(val) {
+            if (this.searchPerformed) {
+                this.totalRows = val.length;
+            }
         },
         "$route.params.id"(newId) {
             if (newId) {
@@ -331,8 +317,7 @@ export default {
         },
     },
     mounted() {
-        this.totalRows = this.data_items.length;
-        this.allAirwayBill();
+        this.allAirwayBill(1);
     },
     methods: {
         onFiltered(filteredItems) {
@@ -377,18 +362,30 @@ export default {
             if (!airport) return "";
             return airport.split(",")[0].trim();
         },
-        allAirwayBill() {
+        allAirwayBill(page = 1) {
             this.isLoading = true;
-            ApiService.get("/user/all-airway-bill")
+            ApiService.get("/user/all-airway-bill", {
+                params: {
+                    page: page,
+                    perPage: this.perPage
+                }
+            })
                 .then((response) => {
-                    this.data_items = response.data;
-                    this.filteredData = response.data;
-                    this.totalRows = response.data.length;
+                    if (response.data && response.data.data) {
+                        this.data_items = response.data.data;
+                        this.totalRows = response.data.total;
+                        this.currentPage = response.data.current_page;
+                    } else {
+                        this.data_items = response.data || [];
+                        this.totalRows = this.data_items.length;
+                    }
+                    this.filteredData = this.data_items;
                 })
                 .catch((error) => {
                     console.error("Failed to fetch items:", error);
                     this.data_items = [];
                     this.filteredData = [];
+                    this.totalRows = 0;
                 })
                 .finally(() => {
                     this.isLoading = false;
@@ -480,7 +477,8 @@ export default {
             if (this.form.masterStart === "" && this.form.masterEnd === "") {
                 this.searchPerformed = false;
                 this.errorMessage = '';
-                this.allAirwayBill();
+                this.currentPage = 1;
+                this.allAirwayBill(1);
             }
         },
 
@@ -490,7 +488,8 @@ export default {
             this.form.masterEnd = "";
             this.searchPerformed = false;
             this.errorMessage = '';
-            this.allAirwayBill();
+            this.currentPage = 1;
+            this.allAirwayBill(1);
         },
     },
     components: {

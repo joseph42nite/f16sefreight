@@ -299,7 +299,7 @@ class MessageLogController extends Controller
             $agent = Agent::where('id', $branch_name)->first();
             $agentId = $agent->id;
 
-            $query = AirwayBills::where('agent_id', $agentId);
+            $query = AirwayBills::where('agent_id', $agentId)->orderBy('created_at', 'desc');
 
             // Apply search filters if provided
             if ($request->filled('awb_code') && $request->filled('awb_no')) {
@@ -307,9 +307,10 @@ class MessageLogController extends Controller
                     ->where('awb_no', $request->awb_no);
             }
 
-            $airwayBills = $query->get();
+            $perPage = (int) $request->input('perPage', 10);
+            $airwayBills = $query->paginate($perPage);
 
-            // Eager-load house waybills for all master AWBs in one query
+            // Eager-load house waybills only for the page items in one query
             $awbCodes = $airwayBills->pluck('awb_code')->toArray();
             $awbNos   = $airwayBills->pluck('awb_no')->toArray();
 
@@ -323,14 +324,14 @@ class MessageLogController extends Controller
                 return $hwb->awb_code . '-' . $hwb->awb_no;
             });
 
-            // Attach house_way_bills array to each master AWB
-            $result = $airwayBills->map(function ($awb) use ($hwbGrouped) {
+            // Attach house_way_bills array to each master AWB in the current page collection
+            $airwayBills->getCollection()->transform(function ($awb) use ($hwbGrouped) {
                 $key = $awb->awb_code . '-' . $awb->awb_no;
                 $awb->house_way_bills = $hwbGrouped->get($key, collect())->values();
                 return $awb;
             });
 
-            return response()->json($result);
+            return response()->json($airwayBills);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

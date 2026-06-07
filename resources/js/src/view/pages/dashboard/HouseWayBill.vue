@@ -155,12 +155,12 @@
                                                          <span class="text-danger"> &nbsp;*</span>
                                                      </div>
                                                 </template>
-                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown_shipper">
+                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
                                                      <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control shipper-form-control" autocomplete="off"
                                                      :class="{ 'is-invalid': form.errors.has('ship_name') }"
-                                                     @input="filterShippers" @focus="toggleDropdown_shipper(true)" @blur="closeDropdown_shipper" />
+                                                     @input="filterShippers" @focus="toggleDropdown('shipper', true)" />
 
-                                                     <div v-if="isDropdownOpen_shipper && filteredShippers.length" class="dropdown-options align-items-center">
+                                                     <div v-if="activeDropdown === 'shipper' && filteredShippers.length" class="dropdown-options align-items-center">
                                                          <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
                                                              {{ shipper.name }}
                                                          </div>
@@ -311,12 +311,12 @@
                                                          <span class="text-danger"> &nbsp;*</span>
                                                      </div>
                                                 </template>
-                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_consignee" @click="toggleDropdown_consignee">
+                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_consignee" @click="toggleDropdown('consignee')">
                                                      <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control consignee-form-control" autocomplete="off"
                                                      :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                     @input="filterConsignee" @focus="toggleDropdown_consignee(true)" @blur="closeDropdown_consignee" />
+                                                     @input="filterConsignee" @focus="toggleDropdown('consignee', true)" />
 
-                                                     <div v-if="isDropdownOpen_consignee && filteredConsignees.length" class="dropdown-options align-items-center">
+                                                     <div v-if="activeDropdown === 'consignee' && filteredConsignees.length" class="dropdown-options align-items-center">
                                                          <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
                                                              {{ consignee.name }}
                                                          </div>
@@ -468,13 +468,13 @@
                                                                 <span class="text-danger"> &nbsp;*</span>
                                                             </div>
                                                         </template>
-                                                        <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
-                                                            <input style="width:100%" type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
-                                                                autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
-                                                            <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
-                                                                <div v-for="(item, index) in filteredLocations_departure" :key="index" @click.stop="selectOption_departure(item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
-                                                            </div>
-                                                        </div>
+                                                         <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown('departure')">
+                                                             <input style="width:100%" type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
+                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
+                                                             <div v-if="activeDropdown === 'departure' && getFilteredLocations(form.routing_information.departure_airport).length" class="dropdown-options">
+                                                                 <div v-for="(item, index) in getFilteredLocations(form.routing_information.departure_airport)" :key="index" @click.stop="selectLocation('departure_airport', item)" class="option">{{ item.iata_code }} ({{ item.destination }})</div>
+                                                             </div>
+                                                         </div>
                                                         <has-error :form="form" field="departure_airport" :class="{ 'd-block': form.errors.has('departure_airport') }"></has-error>
                                                     </b-form-group>
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
@@ -487,18 +487,18 @@
                                                                  <span class="text-danger"> &nbsp;*</span>
                                                              </div>
                                                          </template>
-                                                             <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
-                                                                 <input style="width:100%" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
-                                                                     autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
-                                                                <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
-                                                                    <div v-for="(item, index) in filteredLocations_destination" 
-                                                                        :key="index" 
-                                                                        @click.stop="selectOption_destination(item)" 
-                                                                        class="option">
-                                                                        {{ item.iata_code }} ({{ item.destination }})
-                                                                    </div>
-                                                                </div>
-                                                             </div>
+                                                              <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown('destination')">
+                                                                  <input style="width:100%" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
+                                                                      autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
+                                                                 <div v-if="activeDropdown === 'destination' && getFilteredLocations(form.routing_information.destination_airport).length" class="dropdown-options">
+                                                                     <div v-for="(item, index) in getFilteredLocations(form.routing_information.destination_airport)" 
+                                                                         :key="index" 
+                                                                         @click.stop="selectLocation('destination_airport', item)" 
+                                                                         class="option">
+                                                                         {{ item.iata_code }} ({{ item.destination }})
+                                                                     </div>
+                                                                 </div>
+                                                              </div>
                                                          <has-error :form="form" field="destination_airport" :class="{ 'd-block': form.errors.has('destination_airport') }"></has-error>
                                                     </b-form-group>
 
@@ -554,13 +554,13 @@
                                                                 <tr>
                                                                     <td class="editable-cell" style="width: 8%; padding: 8px 6px !important; font-weight: 500; color: #475569;">Routing:<span style="color: red;">*</span></td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown_from">
+                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown('from')">
                                                                             <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
-                                                                            <div v-if="isDropdownOpen_from && filteredLocations_from.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_from" 
+                                                                            <div v-if="activeDropdown === 'from' && getFilteredLocations(form.routing_information.from).length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in getFilteredLocations(form.routing_information.from)" 
                                                                                     :key="index" 
-                                                                                    @click.stop="selectOption_from(item)" 
+                                                                                    @click.stop="selectLocation('from', item)" 
                                                                                     class="option">
                                                                                     {{ item.iata_code }} ({{ item.destination }})
                                                                                 </div>
@@ -568,13 +568,13 @@
                                                                         </div>
                                                                     </td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown_to">
+                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown('to')">
                                                                             <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
-                                                                            <div v-if="isDropdownOpen_to && filteredLocations_to.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_to" 
+                                                                            <div v-if="activeDropdown === 'to' && getFilteredLocations(form.routing_information.to).length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in getFilteredLocations(form.routing_information.to)" 
                                                                                     :key="index" 
-                                                                                    @click.stop="selectOption_to(item)" 
+                                                                                    @click.stop="selectLocation('to', item)" 
                                                                                     class="option">
                                                                                     {{ item.iata_code }} ({{ item.destination }})
                                                                                 </div>
@@ -625,13 +625,13 @@
                                                                     <td style="width: 8%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
                                                                     <td style="width: 21%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown_to2">
+                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown('to2')">
                                                                             <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" style=""
                                                                             class="form-control" autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_2') }">
-                                                                            <div v-if="isDropdownOpen_to2 && filteredLocations_to2.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_to2" 
+                                                                            <div v-if="activeDropdown === 'to2' && getFilteredLocations(form.routing_information.to_2).length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in getFilteredLocations(form.routing_information.to_2)" 
                                                                                     :key="index" 
-                                                                                    @click.stop="selectOption_to2(item)" 
+                                                                                    @click.stop="selectLocation('to_2', item)" 
                                                                                     class="option">
                                                                                     {{ item.iata_code }} ({{ item.destination }})
                                                                                 </div>
@@ -664,13 +664,13 @@
                                                                     <td style="width: 8%; padding: 8px 6px !important;" class="editable-cell" >&nbsp;</td>
                                                                     <td style="width: 21%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown_to3">
+                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown('to3')">
                                                                             <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_3') }">
-                                                                            <div v-if="isDropdownOpen_to3 && filteredLocations_to3.length" class="dropdown-options">
-                                                                                <div v-for="(item, index) in filteredLocations_to3" 
+                                                                            <div v-if="activeDropdown === 'to3' && getFilteredLocations(form.routing_information.to_3).length" class="dropdown-options">
+                                                                                <div v-for="(item, index) in getFilteredLocations(form.routing_information.to_3)" 
                                                                                     :key="index" 
-                                                                                    @click.stop="selectOption_to3(item)" 
+                                                                                    @click.stop="selectLocation('to_3', item)" 
                                                                                     class="option">
                                                                                     {{ item.iata_code }} ({{ item.destination }})
                                                                                 </div>
@@ -1532,14 +1532,14 @@
                                                                                     <span class="text-danger">*</span>
                                                                                 </div>
                                                                             </template>
-                                                                            <div class="custom-dropdown" ref="dropdownContainer_issue" @click="toggleDropdown_issuing_loc">
+                                                                            <div class="custom-dropdown" ref="dropdownContainer_issue" @click="toggleDropdown('issue')">
                                                                                 <input type="text" v-model="agent_information.agent_issue_loc_code" placeholder="Search location" id="agent_issue_loc_code" class="form-control" 
                                                                                     style="width:315px;"
                                                                                     autocomplete="off" :class="{ 'is-invalid': form.errors.has('agent_issue_loc_code') }">
-                                                                                <div v-if="isDropdownOpen_issuing_loc && filteredLocations_issuing.length" class="dropdown-options">
-                                                                                    <div v-for="(item, index) in filteredLocations_issuing" 
+                                                                                <div v-if="activeDropdown === 'issue' && getFilteredLocations(agent_information.agent_issue_loc_code).length" class="dropdown-options">
+                                                                                    <div v-for="(item, index) in getFilteredLocations(agent_information.agent_issue_loc_code)" 
                                                                                         :key="index" 
-                                                                                        @click.stop="selectOption_issuing_loc(item)" 
+                                                                                        @click.stop="selectLocation('agent_issue_loc_code', item, 'agent_information')" 
                                                                                         class="option">
                                                                                         {{ item.iata_code }} ({{ item.destination }})
                                                                                     </div>
@@ -1593,12 +1593,12 @@
                                                                                     <span>Name:</span>
                                                                                 </div>
                                                                             </template>
-                                                                            <div class="align-items-center custom-dropdown mr-4" ref="dropdownContainer_alsoNotify" @click="toggleDropdown_alsoNotify">
+                                                                            <div class="align-items-center custom-dropdown mr-4" ref="dropdownContainer_alsoNotify" @click="toggleDropdown('alsoNotify')">
                                                                                 <input style="width: 315px" type="text" v-model="form.also_notify_address.also_name" placeholder="Search name" id="also_notify" class="form-control" autocomplete="off"
                                                                                 :class="{ 'is-invalid': form.errors.has('also_name') }"
-                                                                                @input="filteralsoNotify" @focus="toggleDropdown_alsoNotify(true)" @blur="closeDropdown_alsoNotify" />
+                                                                                @input="filteralsoNotify" @focus="toggleDropdown('alsoNotify', true)" />
 
-                                                                                <div v-if="isDropdownOpen_alsoNotify && filteredAlsoNotify.length" class="dropdown-options">
+                                                                                <div v-if="activeDropdown === 'alsoNotify' && filteredAlsoNotify.length" class="dropdown-options">
                                                                                     <div v-for="(also_notify, index) in filteredAlsoNotify" :key="also_notify.id" @click.stop="selectAlsoNotifyA(also_notify)" class="option">
                                                                                         {{ also_notify.name }}
                                                                                     </div>
@@ -2310,7 +2310,10 @@ import { mapGetters } from "vuex";
 import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 // import PageLoader from "../../components/PageLoader.vue";
+import airWayBillMixin from "@/core/mixins/airWayBillMixin";
+
 export default {
+    mixins: [airWayBillMixin],
     data() {
         return {
             mode: 'add',
@@ -2451,45 +2454,7 @@ export default {
                     ho_country: '',
                 }
             }),
-            oci_info:{
-                country_code: '',
-                info_identifier: '',
-                custom_info_identifier: '',
-                supplementary_info: '',
-            },
-            consignment_list: new Form({
-                pieces: null,
-                description: '',
-                rate_class: '',
-                uld_rate_class: '',
-                service_code: '',
-                commodity_item: '',
-                country_origin_goods: '',
-                slac: '',
-                hs_code: '',
-
-                gross_weight: '',
-                weight_code: 'KGM', //kgs/lbs
-                chargable_weight: '',
-                other_charge: '',
-                rate: '',
-                pcs: '',
-                wgt: '',
-                length: '',
-                width: '',
-                height: '',
-                unit: 'CMT',
-                volume: '',
-                // dimention_unit: 'MTQ', //cm3,m3,ft3
-
-                uld_type: '',
-                uld_serial: '',
-                owner: '',
-
-                itemss: [],
-                hsCodes: [],
-                uld_infos: [],
-            }),
+            consignmentUrl: '/user/get-house-consignment-error',
             agent_information:{
                 agent_name: '',
                 agent_address: '',
@@ -2510,15 +2475,6 @@ export default {
                 iata_agent_code: null,
                 iata_agent_cass: null,
             },
-            other_charges:{
-                other_charge_code: '',
-                other_code: '',
-                amount: '',
-                due: "C",
-                payment_type: "P",
-                charge: '',
-                chargable_weight1: '',
-            },
             defaultPaymentInfo: {
                 declear_value_carriage: 'NVD',
                 declear_value_customs: 'NCV',
@@ -2527,31 +2483,15 @@ export default {
             },
             selectedViewPageOption: '/house-way-bill',
             searchQuery_to: '',
-            isDropdownOpen_to: false,
-            isDropdownOpen_departure: false,
-            isDropdownOpen_destination: false,
-            isDropdownOpen_to2: false,
-            isDropdownOpen_to3: false,
-            isDropdownOpen_from: false,
-            isDropdownOpen_shipper: false,
-            isDropdownOpen_consignee: false,
-            isDropdownOpen_alsoNotify: false,
-            isDropdownOpen_issuing_loc: false,
-            isDropdownOpen_participant: false,
             generatePDFAfterSave: false,
             selectedCode: '',
             custom_special_handling_code: '',
             manualCode: '',
-            validationErrors: [],
-            hs_code_error: [],
-            uld_error: [],
             newHsCode: '',
             isOpen: false,
             showShipper: false,
             showConsignee: false,
             showCalculationTable: false,
-            editIndex: null,
-            edit_entry_index: null,
             existingData: [],
             data_items:[],
             isFetching: false,
@@ -2564,8 +2504,6 @@ export default {
             filteredShippers: [],
             filteredConsignees: [],
             filteredAlsoNotify: [],
-            isConsignmentAdded: false,
-            successMessage: '',
             awb_prefix_message: '',
             codes: [
                 { value: 'ACT', text: 'ACT - Active Temperature Controlled System' },
@@ -2842,16 +2780,6 @@ export default {
                 this.form.payment_info.type_of_payment=response.chrg_code;
             }
         },
-        formatDate(dateStr) {
-            if (!dateStr) return this.getCurrentDate();
-            const [day, mon, year] = dateStr.split('-');
-            const months = {
-                JAN: '01', FEB: '02', MAR: '03', APR: '04',
-                MAY: '05', JUN: '06', JUL: '07', AUG: '08',
-                SEP: '09', OCT: '10', NOV: '11', DEC: '12'
-            };
-            return `${year}-${months[mon]}-${day.padStart(2, '0')}`;
-        },
         //end of file upload code
 
         limitInput(event, fieldPath, maxLength) {
@@ -2887,25 +2815,7 @@ export default {
             }
             obj[fields[fields.length - 1]] = input.substring(0, maxLength);
         },
-        validateTextarea() {
-            let text = this.form.custom_origin.other_service_information || '';
-            let lines = text.split(/\r?\n/);
 
-            if (text.length > 195) this.form.custom_origin.other_service_information = text.slice(0, 195);
-            if (lines.length > 3) {
-                alert("You can add a maximum of three lines.");
-                this.form.custom_origin.other_service_information = lines.slice(0, 3).join("\n");
-            }
-
-            this.charCount = this.form.custom_origin.other_service_information.length;
-            this.lineCount = this.form.custom_origin.other_service_information.split(/\r?\n/).length;
-        },
-        onSelect(value) {
-            // Redirect to the selected page
-            if (value) {
-                window.location.href = value;  // This will navigate to the selected page
-            }
-        },
         isGeneratePdf(generateButton) {
             // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
             
@@ -3025,24 +2935,7 @@ export default {
         handleOk(bvModalEvent) {
             bvModalEvent.preventDefault();
         },
-        handleAddConsignment() {
-            if (this.isConsignmentAdded) {
-                this.$bvToast.toast('Consignment Information is already added.', {
-                title: 'Information',
-                variant: 'warning',
-                solid: true,
-                });
-            } else {
-                this.$refs.modalConsignment.show();
-                this.isConsignmentAdded = true;
-            }
-        },
-        getCurrentDate() {
-            return new Date().toLocaleDateString("en-CA");
-        },
-        formatDate(date) {
-            return new Date(date).toLocaleDateString("en-CA");
-        },
+
         handleDateChange(date, field) {
             const keys = field.split('.');
             let target = this;
@@ -3300,29 +3193,15 @@ export default {
                     console.error("Error fetching agent information:", error);
                 });
         },
-        fetchShippers() {
-            ApiService.get(`/user/get-shippers`).then(response => {
-                this.shippers = response.data;
-                this.filteredShippers = this.shippers.filter(shipper => shipper.address_type === 'shipper_address');
-                // this.filteredShippers = this.shippers;
-                // console.log('Shipper', response.data);
-            });
-        },
-        fetchConsignee() {
-            ApiService.get(`/user/get-shippers`).then(response => {
-                this.consignees = response.data;
-                this.filteredConsignees = this.consignees.filter(consignee => consignee.address_type === 'consignee_address');
-                // this.filteredConsignees = this.consignees;
-                // console.log('Shipper', response.data);
-            });
-        },
-        fetchAlsoNotify() {
-            ApiService.get(`/user/get-shippers`).then(response => {
-                this.alsoNotify = response.data;
-                // console.log("fgweuf", response.data);
-                this.filteredAlsoNotify = this.alsoNotify.filter(also_notify => also_notify.address_type === 'also_notify_address');
-                // this.filteredConsignees = this.consignees;
-                // console.log('Shipper', response.data);
+        fetchAllAddressBook() {
+            ApiService.get('/user/get-shippers').then(response => {
+                const all = response.data;
+                this.shippers = all.filter(s => s.address_type === 'shipper_address');
+                this.consignees = all.filter(s => s.address_type === 'consignee_address');
+                this.alsoNotify = all.filter(s => s.address_type === 'also_notify_address');
+                this.filteredShippers = this.shippers;
+                this.filteredConsignees = this.consignees;
+                this.filteredAlsoNotify = this.alsoNotify;
             });
         },
         fillShipperDetails() {
@@ -3451,591 +3330,6 @@ export default {
             }
             return '';
         },
-        calculateCharge() {
-            let chargeRate = parseFloat(this.other_charges.charge);
-            let weight = parseFloat(this.other_charges.chargable_weight1);
-            if (!isNaN(weight) && this.other_charges.charge > 0 && !isNaN(chargeRate) && chargeRate > 0) {
-                let calculatedAmount = weight * chargeRate;
-                this.other_charges.amount = calculatedAmount.toFixed(2);
-            } else {
-                alert('Please enter valid numeric values for chargeable weight and charge rate.');
-            }
-        },
-        editCharge(index) {
-            this.editIndex = index;
-            this.other_charges = { ...this.form.charges[index] };
-            // this.editIndex = null;
-        },
-        removeCharge(index) {
-            this.form.charges.splice(index, 1);
-        },
-        editEntry(index) {
-            // this.edit_entry_index = index;
-            // this.consignment_list = { ...this.form.entries[index] };
-            // this.$refs.modalConsignment.show();
-            this.edit_entry_index = index;
-            let consignment_data=this.form.entries[index];
-            this.consignment_list.pieces = consignment_data.pieces;
-            this.consignment_list.description = consignment_data.description;
-            this.consignment_list.rate_class = consignment_data.rate_class;
-            this.consignment_list.uld_rate_class = consignment_data.uld_rate_class;
-            this.consignment_list.service_code = consignment_data.service_code;
-            this.consignment_list.commodity_item = consignment_data.commodity_item;
-            this.consignment_list.country_origin_goods = consignment_data.country_origin_goods;
-            this.consignment_list.slac = consignment_data.slac;
-            // this.consignment_list.hs_code = consignment_data.hs_code;
-            this.consignment_list.gross_weight = consignment_data.gross_weight;
-            this.consignment_list.weight_code = consignment_data.weight_code;
-            this.consignment_list.chargable_weight = consignment_data.chargable_weight;
-            this.consignment_list.rate = consignment_data.rate;
-            // this.consignment_list.itemss = JSON.parse(consignment_data.pieces_info);
-            // this.consignment_list.hsCodes = JSON.parse(consignment_data.hs_code);
-            // this.consignment_list.uld_infos = JSON.parse(consignment_data.uld_info);
-            this.consignment_list.itemss = consignment_data.pieces_info ? JSON.parse(consignment_data.pieces_info) : [];
-            this.consignment_list.hsCodes = consignment_data.hs_code ? JSON.parse(consignment_data.hs_code) : [];
-            this.consignment_list.uld_infos = consignment_data.uld_info ? JSON.parse(consignment_data.uld_info) : [];
-
-            this.$refs.modalConsignment.show();
-            this.isConsignmentAdded = true;
-            this.calculateTotalAmount();
-        },
-        deleteEntry(index) {
-            this.form.entries.splice(index, 1);
-            this.calculateTotalVolume();
-            this.calculateTotalAmount();
-            if (this.form.entries.length === 0) {
-                this.isConsignmentAdded = false;
-            }
-        },
-        addOrUpdateEntry(evt) {
-            evt.preventDefault();
-            if (!(this.consignment_list instanceof Form)) {
-                this.consignment_list = new Form(this.consignment_list);
-            }
-            this.consignment_list.post(`/user/get-house-consignment-error`)
-            .then(response => {
-                const updatedEntry = { 
-                    ...this.consignment_list,
-                    uld_info: JSON.stringify(this.consignment_list.uld_infos),
-                    pieces_info: JSON.stringify(this.consignment_list.itemss),
-                    hs_code: JSON.stringify(this.consignment_list.hsCodes)
-                };
-                if (this.edit_entry_index !== null) {
-                    this.form.entries[this.edit_entry_index] = updatedEntry;
-                    // this.form.entries[this.edit_entry_index] = { ...this.consignment_list };
-                    // this.$set(this.form.entries, this.edit_entry_index, { ...this.consignment_list });
-                    this.edit_entry_index = null;
-                } else {
-                    this.form.entries.push(updatedEntry);
-                    // this.form.entries.push({ ...this.consignment_list });
-                }
-                this.calculateTotalVolume();
-                this.calculateTotalAmount();
-                this.isConsignmentAdded = this.form.entries.length > 0;
-                this.closeModal();
-                //clear consignment_list data
-                for (let key in this.consignment_list) {
-                    if(key !='busy' && key !='successful' && key !='errors' && key !='originalData'){
-                        if (typeof this.consignment_list[key] === 'object') {
-                            this.consignment_list[key] = [];
-                        } else {
-                            this.consignment_list[key] = '';
-                        }
-                    }
-                }
-                this.isConsignmentAdded = this.form.entries.length > 0;
-            })
-            .catch(error => {
-                // console.error("There was an error with the consignment request:", error);
-            });
-        },
-        // calculateTotalVolume() {
-        //     let totalVolume = this.form.entries.reduce((total, entry) => {
-        //         return total + entry.itemss.reduce((entryTotal, item) => {
-        //             let volumePerPiece = (item.length * item.width * item.height) / 1e6;
-        //             return entryTotal + (volumePerPiece * (parseFloat(item.pcs) || 0));
-        //         }, 0);
-        //     }, 0);
-        //     return this.form.totals.total_volume = totalVolume;
-        // },
-       
-        calculateTotalVolume() {
-            let totalVolume = this.form.entries.reduce((total, entry) => {
-                return total + entry.itemss.reduce((entryTotal, item) => {
-                    // Parse dimensions and pcs
-                    let length = parseFloat(item.length) || 0; // Length
-                    let width = parseFloat(item.width) || 0;   // Width
-                    let height = parseFloat(item.height) || 0; // Height
-                    let pcs = parseFloat(item.pcs) || 0;        // Pieces
-                    let dimensionUnit = item.unit;             // Get the dimension unit (CMT, INH, FOT)
-                    let volumeInCMT = (length * width * height * pcs) / 1_000_000;
-                    let volumeInCM3, volumeInFt3, volumeInIn3, volumeInM3;
-                    if (dimensionUnit === 'CMT') {
-                        volumeInCM3 = volumeInCM3;
-                        volumeInCM3 = volumeInCMT * 1_000_000; // m³ to cm³
-                        volumeInFt3 = volumeInCMT * 35.3147; // m³ to ft³
-                        volumeInIn3 = volumeInCMT * 61_023.7441; // m³ to in³
-                    } else if (dimensionUnit === 'INH') {
-                        let volumeInInch = length * width * height * pcs; // in³
-                        volumeInIn3 = volumeInInch; // Already in in³
-                        volumeInCM3 = volumeInInch * 16.387; // in³ to cm³
-                        volumeInFt3 = volumeInInch * 0.0005787037; // in³ to ft³
-                        volumeInM3 = volumeInInch * 0.000016387064; // in³ to m³
-                    } else if (dimensionUnit === 'FOT') {
-                        let volumeInFoot = length * width * height * pcs; // in ft³
-                        volumeInFt3 = volumeInFoot;
-                        volumeInCM3 = volumeInFoot * 28_316.8466; // ft³ to cm³
-                        volumeInM3 = volumeInFoot * 0.0283168466; // ft³ to m³
-                        volumeInIn3 = volumeInFoot * 1_728; // ft³ to in³
-                    }
-                    // let selectedUnit = this.form.entries.dimention_unit; 
-                    // let selectedUnit = this.consignment_list.dimention_unit; form.totals.
-                    let selectedUnit = this.form.totals.dimention_unit;
-                    let finalVolume = 0;
-
-                    switch (selectedUnit) {
-                        case 'CMQ': // cm³
-                            finalVolume = volumeInCM3;
-                            break;
-                        case 'MTQ': // m³
-                            finalVolume = volumeInM3 || (volumeInCMT); // Use volumeInCMT directly if in m³
-                            break;
-                        case 'FTQ': // ft³
-                            finalVolume = volumeInFt3;
-                            break;
-                        case 'INQ': // in³
-                            finalVolume = volumeInIn3;
-                            break;
-                        default:
-                            finalVolume = volumeInCM3; // Default case
-                    }
-                    return entryTotal + finalVolume;
-                }, 0);
-            }, 0);
-
-            // Set total volume in the form
-            this.form.totals.total_volume = totalVolume.toFixed(2);
-        },
-        calculateTotalAmount() {
-            // const chargeableWeight = this.form.entries.reduce((total, entry) => {
-            //     let weight = parseFloat(entry.chargable_weight) || 0;
-            //     return total + weight;
-            // }, 0);
-
-            const chargeableWeight = this.consignment_list.chargable_weight;
-            
-            const { rate_class } = this.consignment_list;
-            let rates = 0;
-            this.form.totals.total_amount = 0;
-            if (rate_class === "B" || rate_class === "M") {
-                this.form.totals.total_amount = parseFloat(this.consignment_list.rate) || 0;
-                // this.form.totals.total_amount = this.consignment_list.rate || 0;
-            } else if (rate_class === "P" || rate_class === "X") {
-                this.form.totals.total_amount = 0;
-            } else {
-                // rates = parseFloat(this.form.entries.reduce((total, entry) => {
-                //     return total + (parseFloat(entry.rate) || 0);
-                // }, 0)) || 0;
-                // this.form.totals.total_amount = chargeableWeight * rates;
-                // console.log("test", this.form.totals.total_amount);
-                this.form.totals.total_amount = chargeableWeight * this.consignment_list.rate;
-            }
-        },
-        addHsCode() {
-            this.hs_code_error = [];
-            const hsCodeRegex = /^[a-zA-Z0-9]+$/;
-            if (!this.consignment_list.hs_code) {
-                this.hs_code_error.push("This field is empty.");
-            } else if (!hsCodeRegex.test(this.consignment_list.hs_code)) {
-                this.hs_code_error.push("HS Code can only contain letters,numbers");
-            } else if (this.consignment_list.hs_code.length < 6 || this.consignment_list.hs_code.length > 18) {
-                this.hs_code_error.push("HS Code must be between 6 to 18 characters/digits.");
-            } else {
-                this.consignment_list.hsCodes.push(this.consignment_list.hs_code);
-                this.consignment_list.hs_code = "";
-            }
-        },
-        removeHsCode(index) {
-            this.consignment_list.hs_code = '';
-            if (confirm('Are you sure you want to delete this HS Code?')) {
-                this.consignment_list.hsCodes.splice(index, 1);
-            }
-        },
-        displayModal() {
-            this.$refs.modalConsignment.show();
-        },
-        closeModal() {
-            this.$refs.modalConsignment.hide();
-        },
-        handleModalClose() {
-            // if (this.form.entries.length === 0) {
-            //     this.isConsignmentAdded = false;
-            // }
-            this.isConsignmentAdded = this.form.entries.length > 0;
-        },
-        addUldInfo() {
-            this.uld_error = [];
-            const { uld_type, uld_serial, owner } = this.consignment_list;
-            const regex = {
-                uldType: /^[a-zA-Z][A-Za-z0-9]{2}$/, // ULD Type
-                uldSerial: /^[A-Za-z0-9]\d{3,4}$/,   // ULD Serial
-                owner: /^[a-zA-Z0-9]{2}$/          // Owner
-            };
-            if (!uld_type) this.uld_error.push("ULD Type is required.");
-            else if (!regex.uldType.test(uld_type)) this.uld_error.push("ULD Type must be 3 characters: 1 alphabetic and 2 alphanumeric.");
-
-            if (!uld_serial) this.uld_error.push("ULD Serial is required.");
-            else if (!regex.uldSerial.test(uld_serial)) this.uld_error.push("ULD Serial must be in the format 'mnnn(n)' where 'm' is an alpha character and 'n' is a digit.");
-
-            if (!owner) this.uld_error.push("Owner is required.");
-            else if (!regex.owner.test(owner)) this.uld_error.push("Owner must be exactly 2 characters long and can only contain letters and digits.");
-            if (this.uld_error.length>0) {
-                return;
-            }
-            // Push validated data to uld_info
-            this.consignment_list.uld_infos.push({ uld_type, uld_serial, owner });
-            this.consignment_list.uld_type = this.consignment_list.uld_serial = this.consignment_list.owner = "";
-        },
-        deleteUldInfo(index) {
-            if (this.consignment_list.uld_infos && this.consignment_list.uld_infos.length > index) {
-                this.consignment_list.uld_infos.splice(index, 1);
-            }
-        },
-        editOciInfo(index) {
-            this.editIndex = index;
-            this.oci_info = { ...this.form.oci_entries[index] };
-        },
-        addOtherCustomInfo() {
-            if (!this.oci_info.info_identifier || !this.oci_info.supplementary_info) {
-                alert('Please fill in all fields');
-                return;
-            }
-            if(!this.oci_info.info_identifier){}
-            if (this.editIndex !== null) {
-                this.form.oci_entries[this.editIndex] = { ...this.oci_info };
-                this.editIndex = null;
-            } else {
-                this.form.oci_entries.push({ ...this.oci_info });
-            }
-            for (let key in this.oci_info) {
-                if (this.oci_info.hasOwnProperty(key)) {
-                    this.oci_info[key] = '';
-                }
-            }
-        },
-        addCharge() {
-            const { other_charge_code, other_code, amount, due, payment_type } = this.other_charges;
-            const finalOtherChargeCode = other_code || other_charge_code;
-            const finalOtherCode = other_code || null;
-            if (!finalOtherChargeCode) {
-                alert("Other charge code is mandatory.");
-                return;
-            }
-            const parsedAmount = parseFloat(amount);
-            if (isNaN(parsedAmount) || parsedAmount <= 0) {
-                alert("Amount is mandatory and must be a valid number greater than 0.");
-                return;
-            }
-            // const amount = parseFloat(this.other_charges.amount);
-            // if (isNaN(amount) || amount <= 0) {
-            //     alert("Amount is mandatory and must be a valid number greater than 0.");
-            //     return;
-            // }
-
-            const chargeData = {
-                // other_charge_code: this.other_charges.other_charge_code,
-                // other_code: this.other_charges.other_code,
-                // amount: parseFloat(this.other_charges.amount) || 0,
-                other_charge_code: finalOtherChargeCode, 
-                amount: parsedAmount,
-                due: this.other_charges.due,
-                payment_type: this.other_charges.payment_type,
-            };
-
-            if (this.editIndex !== null) {
-                this.$set(this.form.charges, this.editIndex, chargeData);
-                this.editIndex = null;
-            } else {
-                this.form.charges.push(chargeData);
-                // console.log('Added new charge:', chargeData);
-            }
-            for (let key in this.other_charges) {
-                if (this.other_charges.hasOwnProperty(key) && key !== 'due' && key !== 'payment_type') {
-                    this.other_charges[key] = '';
-                }
-            }
-        },
-        deleteOciInfo(index) {
-            // this.oci_entries.splice(index, 1);
-            if (this.form.oci_entries.length > index) {
-                this.form.oci_entries.splice(index, 1);
-            }
-        },
-        addPcsInfo() {
-            this.validationErrors = [];
-            const rules = {
-                pcs: { type: 'numeric', message: "PCS must be a valid number." },
-                wgt: { type: 'numeric', min: 0.1, max: 9999999, message: "Weight must be between 0.1 and 9999999." },
-                length: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Length must be a numeric value with a maximum of 5 digits." },
-                width: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Width must be a numeric value with a maximum of 5 digits." },
-                height: { type: 'regex', regex: /^[0-9]+$/, maxLength: 5, message: "Height must be a numeric value with a maximum of 5 digits." },
-            };
-            let { pcs, wgt, length, width, height,unit } = this.consignment_list;
-            if (this.remainingPieces <= 0) {
-                this.validationErrors.push('All pieces are already added.');
-                return;
-            }
-            if (pcs > this.remainingPieces) {
-                this.validationErrors.push(`You only need ${this.remainingPieces} more pieces to complete the total.`);
-                return;
-            }
-            if (!pcs) {
-                this.validationErrors.push("When using dimensions or weight - pieces cannot be empty.");
-            }
-            // If any one dimension is added, all other dimensions are required
-            if (length || width || height) {
-                if (!length) {
-                    this.validationErrors.push("Please add length to the dimension");
-                }
-                if (!width) {
-                    this.validationErrors.push("Please add width to the dimension");
-                }
-                if (!height) {
-                    this.validationErrors.push("Please add height to the dimension");
-                }
-            }
-            if (!length && !width && !height && !wgt) {
-                this.validationErrors.push("Only pieces filled in, please add also weight (WGT) and/or dimensions.");
-            }
-            // Validate individual fields based on their rules
-            Object.keys(rules).forEach(field => {
-                const rule = rules[field];
-                const value = this.consignment_list[field];
-                if (value) {
-                    if (rule.type === 'numeric' && (isNaN(value) || value < rule.min || value > rule.max)) {
-                        this.validationErrors.push(rule.message);
-                    } else if (rule.type === 'regex' && (!rule.regex.test(value) || value.length > rule.maxLength)) {
-                        this.validationErrors.push(rule.message);
-                    }
-                }
-            });
-            if (this.validationErrors.length > 0) {
-                return;
-            }
-            this.consignment_list.itemss.push({
-                pcs: pcs,
-                wgt: wgt,
-                length: length,
-                width: width,
-                height: height,
-                unit: unit
-            });
-            // this.calculateTotalAmount();
-            this.consignment_list.pcs = '';
-            this.consignment_list.wgt = '';
-            this.consignment_list.length = '';
-            this.consignment_list.width = '';
-            this.consignment_list.height = '';
-            this.consignment_list.unit = 'CMT';
-        },
-        deletePcs(index) {
-            if (this.consignment_list.itemss.length > index) {
-                this.consignment_list.itemss.splice(index, 1);
-            }
-        },
-        calculateTotalCharges() {
-            this.form.totals.total_amount = this.calculateTotalAmount();
-        },
-        toggleDropdown_departure() {
-            this.isDropdownOpen_departure = !this.isDropdownOpen_departure;
-        },
-       
-        selectOption_departure(item) {
-            this.form.routing_information.departure_airport = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.routing_information.departure_airport = final_set;
-            this.isDropdownOpen_departure = false;
-        },
-        toggleDropdown_destination() {
-            this.isDropdownOpen_destination = !this.isDropdownOpen_destination;
-        },
-        selectOption_destination(item) {
-            this.form.routing_information.destination_airport = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.routing_information.destination_airport = final_set;
-            this.isDropdownOpen_destination = false;
-        },
-        toggleDropdown_to() {
-            this.isDropdownOpen_to = !this.isDropdownOpen_to;
-        },
-        selectOption_to(item) {
-            this.form.routing_information.to = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.routing_information.to = final_set;
-            this.isDropdownOpen_to = false;
-        },
-        toggleDropdown_to2() {
-            this.isDropdownOpen_to2 = !this.isDropdownOpen_to2;
-        },
-        selectOption_to2(item) {
-            this.form.routing_information.to_2 = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.routing_information.to_2 = final_set;
-            this.isDropdownOpen_to2 = false;
-        },
-        toggleDropdown_to3() {
-            this.isDropdownOpen_to3 = !this.isDropdownOpen_to3;
-        },
-        selectOption_to3(item) {
-            this.form.routing_information.to_3 = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.routing_information.to_3 = final_set;
-            this.isDropdownOpen_to3 = false;
-        },
-        toggleDropdown_from() {
-            this.isDropdownOpen_from = !this.isDropdownOpen_from;
-        },
-        selectOption_from(item) {
-            this.form.routing_information.from = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.routing_information.from = final_set;
-            this.isDropdownOpen_from = false;
-        },
-        closeDropdown_to(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_to;
-            if (!dropdownContainer_to.contains(event.target)) {
-                this.isDropdownOpen_to = false;
-            }
-        },
-        closeDropdown_to2(event) {
-            const dropdownContainer_to2 = this.$refs.dropdownContainer_to2;
-            if (!dropdownContainer_to2.contains(event.target)) {
-                this.isDropdownOpen_to2 = false;
-            }
-        },
-        closeDropdown_to3(event) {
-            const dropdownContainer_to3 = this.$refs.dropdownContainer_to3;
-            if (!dropdownContainer_to3.contains(event.target)) {
-                this.isDropdownOpen_to3 = false;
-            }
-        },
-        closeDropdown_departure(event) {
-            const dropdownContainer_de = this.$refs.dropdownContainer_departure;
-            if (!dropdownContainer_de.contains(event.target)) {
-                this.isDropdownOpen_departure = false;
-            }
-        },
-        closeDropdown_destination(event) {
-            const dropdownContainer_des = this.$refs.dropdownContainer_destination;
-            if (!dropdownContainer_des.contains(event.target)) {
-                this.isDropdownOpen_destination = false;
-            }
-        },
-        closeDropdown_from(event) {
-            const dropdownContainer_from = this.$refs.dropdownContainer_from;
-            if (!dropdownContainer_from.contains(event.target)) {
-                this.isDropdownOpen_from = false;
-            }
-        },
-        selectShipper(shipper) {
-            this.selectedShipper = shipper.id;
-            this.form.shipper_address = shipper.name;
-            // this.form.shipper_name = shipper.name;
-            this.fillShipperDetails(shipper.id);
-            this.isDropdownOpen_shipper = false;
-        },
-        toggleDropdown_shipper(event) {
-             this.isDropdownOpen_shipper = event;
-        },
-        closeDropdown_shipper(event) {
-            const dropdownContainer_shipper = this.$refs.dropdownContainer_shipper;
-            if (!dropdownContainer_shipper.contains(event.target)) {
-                this.isDropdownOpen_shipper = false;
-            }
-        },
-        filterShippers() {
-            // const query = this.form.shipper_name.toLowerCase();
-            const query = this.form.shipper_address.ship_name.toLowerCase()
-            if (!query) return this.shippers;
-            return this.filteredShippers = this.shippers.filter(shipper =>
-                shipper.name.toLowerCase().includes(query)
-            );
-        },
-        selectConsignee(consignee) {
-            this.selectedConsignee = consignee.id;
-            this.form.consignee_address = consignee.name;
-            this.fillConsigneeDetails(consignee.id);
-            this.isDropdownOpen_consignee = false;
-        },
-        toggleDropdown_consignee(event) {
-             this.isDropdownOpen_consignee = event;
-        },
-        closeDropdown_consignee(event) {
-            const dropdownContainer_consignee = this.$refs.dropdownContainer_consignee;
-            if (!dropdownContainer_consignee.contains(event.target)) {
-                this.isDropdownOpen_consignee = false;
-            }
-        },
-        filterConsignee() {
-            const query = this.form.consignee_address.cons_name.toLowerCase()
-            if (!query) return this.consignees;
-            return this.filteredConsignees = this.consignees.filter(consignee =>
-            consignee.name.toLowerCase().includes(query)
-            );
-        },
-
-        selectAlsoNotifyA(also_notify) {
-            this.selectAlsoNotify = also_notify.id;
-            this.form.also_notify_address = also_notify.name;
-            // this.form.shipper_name = shipper.name;
-            this.fillAlsoNotifyDetails(also_notify.id);
-            this.isDropdownOpen_alsoNotify = false;
-        },
-        toggleDropdown_alsoNotify(event) {
-             this.isDropdownOpen_alsoNotify = event;
-        },
-        closeDropdown_alsoNotify(event) {
-            const dropdownContainer_alsoNotify = this.$refs.dropdownContainer_alsoNotify;
-            if (!dropdownContainer_alsoNotify.contains(event.target)) {
-                this.isDropdownOpen_alsoNotify = false;
-            }
-        },
-        filteralsoNotify() {
-            const query = this.form.also_notify_address.also_name.toLowerCase()
-            if (!query) return this.alsoNotify;
-                return this.filteredAlsoNotify = this.alsoNotify.filter(notify =>
-                notify.name.toLowerCase().includes(query)
-            );
-        },
-        toggleDropdown_issuing_loc() {
-            this.isDropdownOpen_issuing_loc = !this.isDropdownOpen_issuing_loc;
-        },
-        selectOption_issuing_loc(item) {
-            this.agent_information.agent_issue_loc_code = item.iata_code;
-            let source_name= item.destination;
-            let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.agent_information.agent_issue_loc_code = final_set;
-            this.isDropdownOpen_issuing_loc = false;
-        },
-        closeDropdown_issue_location(event) {
-            const dropdownContainer_to = this.$refs.dropdownContainer_issue;
-            if (!dropdownContainer_to.contains(event.target)) {
-                this.isDropdownOpen_issuing_loc = false;
-            }
-        },
         validateNumericInput(evt,field, maxLength) {
             evt = evt || window.event;
             const charCode = evt.which || evt.keyCode;
@@ -4072,23 +3366,11 @@ export default {
     mounted(){
         this.calculateTotalVolume();
         this.getCountry();
-        window.addEventListener('click', this.closeDropdown_to);
-        window.addEventListener('click', this.closeDropdown_to2);
-        window.addEventListener('click', this.closeDropdown_to3);
-        window.addEventListener('click', this.closeDropdown_from);
-        window.addEventListener('click', this.closeDropdown_destination);
-        window.addEventListener('click', this.closeDropdown_departure);
-        window.addEventListener('click', this.closeDropdown_shipper);
-        window.addEventListener('click', this.closeDropdown_consignee);
-        window.addEventListener('click', this.closeDropdown_alsoNotify);
-        window.addEventListener('click', this.closeDropdown_issue_location);
         this.getLocation(); 
-        this.fetchShippers();
-        this.fetchAlsoNotify();
+        this.fetchAllAddressBook();
         this.fillShipperDetails();
         this.fillConsigneeDetails();
         this.fillAlsoNotifyDetails();
-        this.fetchConsignee();
         this.getOtherChargesCode();
         this.getOCIData();
         // const id = this.$route.params.id;
@@ -4103,83 +3385,7 @@ export default {
         // 'consignment_list.dimention_unit': function() {
         //     this.calculateTotalVolume();
         // },
-        'form.totals.dimention_unit': function() {
-            this.calculateTotalVolume();
-        },
-        'form.charges': {
-            handler(newVal) {
-                this.totalChargesPrepaid;
-                this.totalChargesCollect;
-                this.weightCharge;
-                this.taxes;
-                this.totalCharges;
-                this.totalDueAgentPrepaid;
-                this.totalDueAgentCollect;
-                this.totalDueCarrierPrepaid;
-                this.totalDueCarrierCollect;
-            },
-            deep: true,
-        },
-        // 'form.payment_info.type_of_payment'(newVal) {
-        //     this.calculateTotalCharges();
-        // },
-        totalChargesPrepaid(newVal) {
-            this.form.payment_info.total_charges_prepaid = newVal;
-        },
-        totalChargesCollect(newVal) {
-            this.form.payment_info.total_charges_collect = newVal;
-        },
-        weightCharge(newVal) {
-            this.form.payment_info.weight_charge = newVal;
-        },
-        taxes(newVal) {
-            this.form.payment_info.taxes = newVal;
-        },
-        totalCharges(newVal) {
-            this.form.payment_info.total_charges = newVal;
-        },
-        totalDueAgentPrepaid(newVal) {
-            this.form.payment_info.other_charges_due_agent_prepaid = newVal;
-        },
-        totalDueAgentCollect(newVal) {
-            this.form.payment_info.other_charges_due_agent_collect = newVal;
-        },
-        totalDueCarrierPrepaid(newVal) {
-            this.form.payment_info.other_charges_due_carrier_prepaid = newVal;
-        },
-        totalDueCarrierCollect(newVal) {
-            this.form.payment_info.other_charges_due_carrier_collect = newVal;
-        },
-        // 'agent_information.participate': function(newValue) {
-        //     console.log('Participate value changed to:', newValue);
-        // },
-        "form.shipper_address.ship_name"(newVal) {
-            if (!newVal) {
-                this.selectedShipper = null;
-                this.form.shipper_address = {
-                    ship_name: "",
-                };
-                this.filteredShippers = this.shippers;
-            }
-        },
-        "form.consignee_address.cons_name"(newVal) {
-            if (!newVal) {
-                this.selectedConsignee = null;
-                this.form.consignee_address = {
-                    cons_name: "",
-                };
-                this.filteredConsignees = this.consignees;
-            }
-        },
-        "form.also_notify_address.also_name"(newVal) {
-            if (!newVal) {
-                this.selectAlsoNotify = null;
-                this.form.also_notify_address = {
-                    also_name: "",
-                };
-                this.filteredAlsoNotify = this.alsoNotify;
-            }
-        },
+
         '$route.params.id'(newId) {
             if (newId) {
                 this.getHouseWayBill(newId);
@@ -4208,134 +3414,12 @@ export default {
     },
     computed: {
         ...mapGetters({ current_user: "currentUser"}),
-        isPrepaid() {
-            const prepaidTypes = ['PP'];
-            return prepaidTypes.includes(this.form.payment_info.type_of_payment);
-        },
-        weightCharge() {
-            return parseFloat(this.form.totals.total_amount || 0);
-        },
-        taxes() {
-            return 0.00;
-        },
-        totalDueAgentPrepaid() {
-            return this.form.charges
-                .filter(charge => charge.due === 'A' && charge.payment_type === 'P')
-                .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
-                .toFixed(2);
-        },
-        totalDueAgentCollect() {
-            return this.form.charges
-                .filter(charge => charge.due === 'A' && charge.payment_type === 'C')
-                .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
-                .toFixed(2);
-        },
-        totalDueCarrierPrepaid() {
-            return this.form.charges
-                .filter(charge => charge.due === 'C' && charge.payment_type === 'P')
-                .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
-                .toFixed(2);
-        },
-        totalDueCarrierCollect() {
-            return this.form.charges
-                .filter(charge => charge.due === 'C' && charge.payment_type === 'C')
-                .reduce((sum, charge) => sum + parseFloat(charge.amount), 0)
-                .toFixed(2);
-        },
-        totalChargesPrepaid() {
-            return (
-                (this.isPrepaid ? this.weightCharge : 0) +
-                parseFloat(this.totalDueAgentPrepaid) +
-                parseFloat(this.totalDueCarrierPrepaid)
-            ).toFixed(2);
-        },
-        totalChargesCollect() {
-            return (
-                (this.isPrepaid ? 0 : this.weightCharge) +
-                parseFloat(this.totalDueAgentCollect) +
-                parseFloat(this.totalDueCarrierCollect)
-            ).toFixed(2);
-        },
-        totalChrage() {
-            return (
-                this.weightCharge +
-                parseFloat(this.totalDueAgentCollect) +
-                parseFloat(this.totalDueCarrierCollect)
-            ).toFixed(2);
-        },
-        totalCharges() {
-            return {
-                prepaid: this.isPrepaid ? this.weightCharge.toFixed(2) : '0.00',
-                collect: this.isPrepaid ? '0.00' : this.weightCharge.toFixed(2),
-            };
-        },
-        calculatedCharge() {
-            // return this.form.totals.total_amount.toFixed(2);
-            return this.form.totals.total_amount;
-        },
+
         submitButtonText() {
             return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
         },
-        filteredLocations_to() {
-            const query = this.form.routing_information.to.toLowerCase().trim();
-            if (!query) return this.location;
-
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        filteredLocations_to2() {
-            const query = this.form.routing_information.to_2.toLowerCase().trim();
-            if (!query) return this.location;
-
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        filteredLocations_to3() {
-            const query = this.form.routing_information.to_3.toLowerCase().trim();
-            if (!query) return this.location;
-
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        filteredLocations_from() {
-            const query = this.form.routing_information.from.toLowerCase().trim();
-            if (!query) return this.location;
-
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        filteredLocations_destination() {
-            const query = this.form.routing_information.destination_airport.toLowerCase().trim();
-            if (!query) return this.location;
-
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        filteredLocations_departure() {
-            const query = this.form.routing_information.departure_airport.toLowerCase().trim();
-            if (!query) return this.location;
-
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        filteredLocations_issuing() {
-            const query = this.agent_information.agent_issue_loc_code.toLowerCase().trim();
-            if (!query) return this.location;
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(query)
-            );
-        },
-        remainingPieces() {
-            const totalAddedPieces = this.consignment_list.itemss.reduce((sum, item) => sum + parseInt(item.pcs || 0), 0);
-            return this.consignment_list.pieces - totalAddedPieces;
-        }
     },
+
 
     name: "HouseWayBill",
     components: {

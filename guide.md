@@ -1044,7 +1044,7 @@ stdout_logfile=/var/www/f16s_main/storage/logs/worker.log
 stopwaitsecs=20
 ```
 
-Key changes from original: `--timeout=15` (down from 180 — FastAPI is fast), `--sleep=1` (down from 3 — reduces polling lag).
+Key changes from original: `--timeout=15` (down from 180 — FastAPI is fast), `--sleep=1` (reduces idle delay to at most 1s, while keeping workers from spinning continuously on an empty queue).
 
 ### 6.3 Start Everything
 

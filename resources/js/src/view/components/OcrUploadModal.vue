@@ -271,7 +271,7 @@ export default {
                     this.isUploading = false;
                     this.ocrStatusMessage = '';
                 });
-            }, 1200);
+            }, 800);
         },
         stopOcrPolling() {
             if (this.ocrPollInterval) {

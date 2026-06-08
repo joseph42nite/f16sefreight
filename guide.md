@@ -1465,3 +1465,32 @@ This update addressed two core functional areas: visual image rendering within g
   - **Houseway specific Info**: `hawb_no` ➔ *House Airway Bill Number*, `master_origin` ➔ *Master Origin*, `master_destination` ➔ *Master Destination*, `master_pcs` ➔ *Master Pieces*, `master_weight` ➔ *Master Weight*.
 - **Safety**: By maintaining identical key structures (retaining raw keys like `ship_name` for error mapping), the front-end inputs continue to dynamically highlight (using `:class="{ 'is-invalid': ... }"`) with zero risk of breaking any logical validation check systems.
 
+---
+
+## 📑 Finalized Upgrades: High-Performance Message Log, VCard Formats, Mobile Navigation & Memory Leak Protections (June 2026)
+
+This update details backend optimization for logistics queries, layout synchronization for native mobile devices, card schema enhancements, and JavaScript-level resource lifecycle guards.
+
+### 1. 📜 High-Performance Message Log & Server Pagination
+- **Query Optimization & Eager Loading**: Eager-loads the nested `houseWaybills` relationship under paginated scopes in `MessageLogController@getAllAirwayBill`, preventing the $O(N)$ query loops (N+1 query issue) and eliminating the **Too Many Attempts** (Rate Limit) errors under high database loads.
+- **Client-Side Rendering Speedup**: Moved computationally heavy data formatting mapping (e.g. moment parsing, status translations, and airport text mappings) out of the HTML render loop into Vue computed properties (`normalizedItems`) inside [MessageLog.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/pages/dashboard/MessageLog.vue). This reduces CPU utilization by preventing redraw re-evaluations.
+- **Server Pagination Integration**: Re-wired the table container to bind directly to Laravel's native paginator pages, updating on watcher callbacks dynamically on user clicks rather than pulling thousands of raw entries into client memory at once.
+
+### 2. 🎴 Digital CEO Card Fixes & Enhancements
+- **Components**: [JosephCard.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/pages/public/JosephCard.vue) and [DeepanjanCard.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/pages/public/DeepanjanCard.vue)
+- **vCard RFC Compliance**: Cleaned up the phone number serialization array to output raw parameters (`TEL;TYPE=CELL,VOICE:+917011363516`) rather than the URI-wrapped syntax `VALUE=uri:tel:+917011363516`. This guarantees that contact records import correctly across all native iOS and Android contact managers without string truncation or formatting failures.
+- **Visual Design Scale**: Increased the primary action button icon dimensions to `30px` (circles to `58px`) and adjusted sub-taglines and label spacing to ensure premium readability on mobile screens.
+
+### 3. 📱 Mobile Navigation Overhaul
+- **Component**: [Header.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/layouts/public/Header.vue)
+- **Hamburger Menu profile card**: Relocated the profile details from the top bar into the mobile hamburger menu.
+- **Premium Card UI**: Styled the layout as a modern user profile card containing:
+  - An origin badge pill using a soft blue background and `geo-alt-fill` icon (centered, middle-aligned, with greeting "Hi" and profile image removed to keep it sleek).
+  - A red-themed premium **Sign out** button with a hover scaling effect.
+
+### 4. 🧹 JavaScript Memory Leak Resolution
+- **Component**: [HomeStatsSection.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/pages/public/components/HomeStatsSection.vue)
+- **Lifecycle Cleanups**: Configured the statistical counter animation intervals to store their handles within a mapped `this.activeTimers` object. Every active timer is cleared inside the `beforeDestroy()` hook. This prevents garbage collection blocks and reactivity updates on destroyed component scopes if the user navigates away before the counter finishes.
+
+---
+

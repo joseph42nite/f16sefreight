@@ -43,6 +43,9 @@ export default {
             },
         };
     },
+    created() {
+        this.activeTimers = {};
+    },
     methods: {
         formatStat(value, key) {
             if (key === 'awbs') {
@@ -56,11 +59,14 @@ export default {
             const steps = duration / 20;
             const increment = target / steps;
             let current = 0;
-            const timer = setInterval(() => {
+            this.activeTimers[key] = setInterval(() => {
                 current += increment;
                 if (current >= target) {
                     this.animatedStats[key] = target;
-                    clearInterval(timer);
+                    if (this.activeTimers[key]) {
+                        clearInterval(this.activeTimers[key]);
+                        delete this.activeTimers[key];
+                    }
                 } else {
                     this.animatedStats[key] = Math.floor(current);
                 }
@@ -89,6 +95,9 @@ export default {
     },
     beforeDestroy() {
         if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+        if (this.activeTimers) {
+            Object.values(this.activeTimers).forEach(timer => clearInterval(timer));
+        }
     }
 };
 </script>

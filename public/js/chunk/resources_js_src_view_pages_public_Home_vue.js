@@ -376,6 +376,9 @@ __webpack_require__.r(__webpack_exports__);
       }
     };
   },
+  created: function created() {
+    this.activeTimers = {};
+  },
   methods: {
     formatStat: function formatStat(value, key) {
       if (key === 'awbs') {
@@ -390,11 +393,14 @@ __webpack_require__.r(__webpack_exports__);
       var steps = duration / 20;
       var increment = target / steps;
       var current = 0;
-      var timer = setInterval(function () {
+      this.activeTimers[key] = setInterval(function () {
         current += increment;
         if (current >= target) {
           _this.animatedStats[key] = target;
-          clearInterval(timer);
+          if (_this.activeTimers[key]) {
+            clearInterval(_this.activeTimers[key]);
+            delete _this.activeTimers[key];
+          }
         } else {
           _this.animatedStats[key] = Math.floor(current);
         }
@@ -431,6 +437,11 @@ __webpack_require__.r(__webpack_exports__);
   },
   beforeDestroy: function beforeDestroy() {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+    if (this.activeTimers) {
+      Object.values(this.activeTimers).forEach(function (timer) {
+        return clearInterval(timer);
+      });
+    }
   }
 });
 

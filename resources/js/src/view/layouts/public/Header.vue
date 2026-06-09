@@ -3,7 +3,7 @@
         <b-navbar toggleable="lg">
             <div class="container-fluid d-flex align-items-center justify-content-between">
                 <div class="navbar-header-logo">
-                    <b-navbar-brand href="/" style="">
+                    <b-navbar-brand :to="isAuthenticated ? '/focus-air' : '/'" style="">
                         <img :src="logoSrc" alt="f16s logo" id="main-logo" />
                     </b-navbar-brand>
                 </div>

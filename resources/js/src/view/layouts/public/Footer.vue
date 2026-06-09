@@ -4,7 +4,7 @@
             <b-row class="mb-10">
                 <!-- LOGO & TAGLINE -->
                 <b-col md="4" cols="12" class="mb-10 mb-md-0 text-center text-md-left">
-                    <router-link to="/">
+                    <router-link :to="isAuthenticated ? '/focus-air' : '/'">
                         <img src="/media/assets/logos/blue-logo.png" alt="f16s logo" class="footer-logo mb-6">
                     </router-link>
                     <p class="footer-desc mx-auto mx-md-0">
@@ -59,8 +59,13 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
-    name: "Footer"
+    name: "Footer",
+    computed: {
+        ...mapGetters(["isAuthenticated"])
+    }
 };
 </script>
 

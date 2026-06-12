@@ -956,7 +956,7 @@ class AirwayBillController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $agentId = $user->branch_name;
-        $airwayBill=array();
+        $airwayBill = array();
         $query = AirwayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->where('agent_id', $agentId);
         if ($status == 'send')
             $airwayBill = $query->whereIn('status', ['send', 'generate_pdf'])->orderBy('created_at', 'desc')->limit(10)->get();
@@ -1174,9 +1174,10 @@ class AirwayBillController extends Controller
         foreach ($airport_code as $code) {
             if (isset($data[$code])) {
                 $result[] = $data[$code];
+            } else {
+                $result[] = "";
             }
         }
         return response()->json(['status' => true, 'data' => $result, 'msg' => '']);
     }
-
 }

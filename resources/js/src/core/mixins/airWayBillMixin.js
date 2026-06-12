@@ -214,6 +214,10 @@ export default {
             return new Date().toLocaleDateString("en-CA");
         },
         formatDate(date) {
+            if (typeof date === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(date.trim())) {
+                const [day, month, year] = date.trim().split("/");
+                return `${year}-${month}-${day}`;
+            }
             return new Date(date).toLocaleDateString("en-CA");
         },
         addHsCode() {

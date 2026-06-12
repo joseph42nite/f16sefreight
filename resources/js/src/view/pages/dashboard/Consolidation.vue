@@ -710,6 +710,8 @@ export default {
             oci_identifiers:{},
             tableData: [],
             existingData: {},
+            isEdit: false,
+            mode: '',
             options: [
                 { text: "Me", value: "1" },
                 { text: "Participant Group", value: "1" },
@@ -958,6 +960,33 @@ export default {
         deleteConsolidation(index) {
             this.form.tableCodes.splice(index, 1);
         },
+        openForm(mode, id = null) {
+            this.mode = mode;
+            if (mode === 'update' && id && this.existingData) {
+                this.form.id = String(this.existingData.id);
+                this.form.master_origin = this.existingData.master_origin || '';
+                this.form.master_destination = this.existingData.master_destination || '';
+                this.form.other_service_information = this.existingData.other_service_information || '';
+                this.form.oci_entries = this.existingData.other_custom_information || this.existingData.custom_info || [];
+                
+                if (this.existingData.special_handling_info && typeof this.existingData.special_handling_info === 'string') {
+                    try {
+                        this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
+                    } catch (error) {
+                        console.error("Error parsing special_handling_info:", error);
+                        this.form.tableCodes = [];
+                    }
+                } else {
+                    this.form.tableCodes = [];
+                }
+
+                if (this.existingData.consignment_data) {
+                    this.form.description = this.existingData.consignment_data.description || '';
+                    this.form.pieces = this.existingData.consignment_data.pieces || '';
+                    this.form.gross_weight = this.existingData.consignment_data.gross_weight || '';
+                }
+            }
+        },
         getCountry(){
             ApiService.get('/user/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({
@@ -1087,21 +1116,17 @@ export default {
         },
        
         selectOption_departure(item) {
-            this.form.master_origin = item.iata_code;
-            let source_name= item.destination;
+            let source_name = item.destination;
             let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.master_origin.departure_airport = final_set;
+            this.form.master_origin = final_set;
             this.isDropdownOpen_departure = false;
         },
         toggleDropdown_destination() {
             this.isDropdownOpen_destination = !this.isDropdownOpen_destination;
         },
         selectOption_destination(item) {
-            this.form.master_destination = item.iata_code;
-            let source_name= item.destination;
+            let source_name = item.destination;
             let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
             this.form.master_destination = final_set;
             this.isDropdownOpen_destination = false;
         },
@@ -1177,10 +1202,6 @@ export default {
         '$route.params.id'(newId) {
             if (newId) {
                 this.getAirWayBill(newId);
-            }
-        },
-        '$route.params.id'(newId) {
-            if (newId) {
                 this.getHouseWayBill(newId);
             }
         },
@@ -1190,9 +1211,6 @@ export default {
         if (id) {
             this.isEdit = true;
             this.getAirWayBill(id);
-        }
-        if (id) {
-            this.isEdit = true;
             this.getHouseWayBill(id);
         }
         this.getOCIData();

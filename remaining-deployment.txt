@@ -1,0 +1,39 @@
+sudo supervisorctl start f16s-ocr-fastapi:*
+sudo supervisorctl start f16s-pdf-worker:*
+
+# Validate Connectivity  ==========>clerity
+curl http://127.0.0.1:8001/health
+```
+
+---
+
+
+
+### 2. Critical Data Bootstrap ===========>clerity
+Perform this **ONE-TIME** runtime execution to copy existing configuration JSON state seamlessly into the newly built database table:
+```bash
+php artisan tinker --execute="\$path = base_path('python/boxes_config.json'); if (file_exists(\$path)) { \$data = json_decode(file_get_contents(\$path), true); if (isset(\$data['templates'])) { foreach (\$data['templates'] as \$k => \$v) { \App\SystemTemplate::updateOrCreate(['key' => \$k], ['coordinates' => \$v]); echo \"Imported \$k\n\"; } } }"
+```
+
+### 3. Application Cache Flush
+Wipe the internal Laravel cache to bind available-templates routing logic to the updated DB cache Pluck system:
+```bash
+php artisan optimize:clear
+```
+
+
+### 3. SuperAdmin Login Controller Hotfix Verification =======>clerity
+Ensure `app/Http/Controllers/Auth/LoginController.php` is securely deployed on the production cluster to prevent critical runtime exit (Status 500) on login mismatches.
+
+
+# 🌐 PART 4: FINAL PRODUCTION BROADCAST & SEO FLUSH
+Execute these Final Commands once all above code deployments are complete to unlock dynamic meta tags and optimized loading.
+
+### 1. Final Production Cache Flush
+Ensures all newly registered backend routes (`/blog/{slug}`) are cached and exposed to the server immediately for crawlers to index dynamic meta tags:
+```bash
+php artisan route:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan optimize:clear
+```

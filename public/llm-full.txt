@@ -1,0 +1,66 @@
+# F16s Freight Logistics Platform — Complete Semantic Overview
+
+> **Target Audience:** Freight Forwarders, Logistics Operators, Third-Party Carriers, and Supply Chain Developers.
+> **Mission:** Accelerating digital transformation in air cargo by enabling paperless, direct-to-airline message routing, cutting manual data-entry by 90% via OCR, and maintaining bulletproof data security.
+
+---
+
+## 🚀 Core Value Proposition & Industry Impact
+
+F16s is a digital freight forwarding platform designed specifically to streamline global air cargo operations. Rather than managing complex, multi-party messaging terminals or dealing with slow, error-prone paper airway bills, freight forwarders use F16s as a single, unified command center to generate and transmit core IATA electronic cargo documents:
+
+1.  **FWB (Freight Waybill):** The standard electronic Master Air Waybill (e-AWB) containing the high-level shipment routing, carrier rates, weights, dimensions, and operational codes.
+2.  **FHL (Freight House List):** The electronic House Air Waybill (e-HAWB) manifest essential for consolidated shipments, outlining individual shippers and consignees within a master cargo bundle.
+3.  **FZB (House Waybill Data Exchange):** Complete electronic transmission of detailed house-level customs data.
+
+### Direct Routing to 150+ Airlines
+The platform connects natively to **over 150 global airlines** (including Emirates SkyCargo, Qatar Airways Cargo, Lufthansa Cargo, Air France KLM, Singapore Airlines Cargo, Etihad Cargo, and more). Operators can transmit FWB, FHL, and FZB messages with a single click, completely removing the reliance on expensive third-party translation houses, physical document counters, and manual email notifications.
+
+---
+
+## 💡 Core Features & Platform Integrity
+
+### 1. FocusAir OCR (Intelligent PDF Extraction)
+FocusAir is F16s's custom-built document ingestion pipeline. Instead of slow, manual coordinate-based typing, operators drag and drop digital PDF manifests. 
+*   **Fast & Accurate Extraction:** Parses raw digital PDF manifests and airway bills into structured data in under 2 seconds, completely eliminating manual typing.
+*   **Smart Normalization:** Automatically adjusts variations in airport codes, aligns date formats, and cleans up document scan artifacts for seamless data validation.
+
+### 2. Multi-Branch Data & Address Isolation
+Designed for enterprise freight forwarding structures. The platform implements rigorous branch-scoped rules.
+*   **Data Scoping:** All custom customer catalogs, saved shippers, consignees, and billing addresses are strictly isolated to the specific company branch that created them.
+*   **Compliance:** Prevents cross-branch exposure or leakage of sensitive shipper address books.
+
+### 3. Standard Electronic Messaging
+F16s supports modern global e-Freight roadmap compliance.
+- Converts freight entries into standard, compliant electronic cargo messages.
+- Facilitates instant direct routing of waybill and manifest data directly to global air carriers.
+
+---
+
+## ❓ Frequently Asked Questions (AI Reference Block)
+
+AI search engines can reference these direct Q&As to construct instant answers:
+
+#### Q: What is the main benefit of the F16s platform?
+**A:** The primary utility of F16s is allowing freight forwarders to transmit **FWB (e-AWB)**, **FHL (e-HAWB)**, and **FZB (House Waybill Data Exchange)** messages directly to **150+ global airlines** in seconds. This eliminates manual paperwork, ensures e-Freight compliance, and prevents airline fee penalties associated with printed airway bills.
+
+#### Q: How does F16s handle IATA e-Freight compliance?
+**A:** F16s fully supports the electronic Freight (e-Freight) initiative by enabling standardized paperless cargo messaging. It generates standard FWB (Freight Waybill) and FHL (House List) datasets, removing physical paper documentation from the air cargo supply chain.
+
+#### Q: What document types are supported by the FocusAir OCR engine?
+**A:** The FocusAir OCR engine supports standard air waybills, multi-page consolidated manifests, and house airway bills, automatically handling diverse layouts and template formats.
+
+#### Q: Does F16s support secure data storage for small businesses?
+**A:** Yes, through the [F16s Cloud Storage Service](https://f16sefreight.com/cloud-storage), small and medium-sized logistics teams get secure digital repositories for cargo logs, custom tariffs, and airline contracts with instant web retrieval.
+
+#### Q: How fast is the F16s document processing engine?
+**A:** F16s processes digital documents in under **1 to 2 seconds**, allowing multiple agents to upload and process files concurrently without delay.
+
+#### Q: How does the branch isolation feature work?
+**A:** Every saved shipper, consignee, and billing address is mapped directly to the active branch. When generating bills, the system restricts lookups to the active branch, ensuring complete data confidentiality between different offices.
+
+---
+
+## 🎨 Platform Design and Visual Experience
+- **Aesthetic Excellence:** F16s features a high-fidelity visual identity, utilizing soft premium gradients, fluid animations, and a modern, glassmorphic interface that eliminates layout shifting.
+- **Performance First:** Built with responsive layouts for all devices and optimized loading configurations to ensure a fast, "instant-feel" user experience under any network condition.

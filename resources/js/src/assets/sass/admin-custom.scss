@@ -1,0 +1,230 @@
+// Superadmin & Data Management Custom Styles
+// Reusing brand color palettes defined in initial config
+$brand-blue: #355594;
+$hover-blue: #2a4476;
+$brand-cyan: #00a1e4;
+$text-gray: #5E6278;
+$text-light-gray: #A1A5B7;
+$bg-surface: #F0F2F5;
+
+/* Admin Shared Component Containers */
+.admin-glass-card {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid #E4E6EF !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    padding: 2rem !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05) !important;
+    }
+}
+
+/* Premium Listing Controls */
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+    
+    h2 {
+        font-weight: 700;
+        color: #181C32;
+        font-size: 1.75rem;
+        margin-bottom: 0;
+    }
+}
+
+.admin-pill-btn {
+    background-color: $brand-blue !important;
+    border-color: $brand-blue !important;
+    border-radius: 50px !important;
+    padding: 10px 28px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(53, 85, 148, 0.15) !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        background-color: $hover-blue !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(53, 85, 148, 0.25) !important;
+    }
+}
+
+.admin-table-wrapper {
+    .b-table {
+        background: transparent;
+        
+        thead th {
+            background: #F9FAFB;
+            color: $text-light-gray;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid #EFF2F5;
+            vertical-align: middle;
+        }
+
+        tbody td {
+            padding: 1.25rem 1rem;
+            color: #3F4254;
+            font-weight: 500;
+            vertical-align: middle;
+            border-bottom: 1px solid #EFF2F5;
+        }
+        
+        tr:hover td {
+            background-color: #FBFBFC;
+        }
+    }
+}
+
+/* Advanced Filter Bar */
+.admin-filter-row {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #EFF2F5;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    .form-control {
+        border-color: #E4E6EF;
+        background-color: #F9FAFB;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #5E6278;
+
+        &:focus {
+            background-color: white;
+            border-color: $brand-blue;
+            box-shadow: none;
+        }
+    }
+}
+
+/* Form Aesthetics */
+.admin-form-group {
+    margin-bottom: 1.5rem;
+    
+    .form-control, .custom-select {
+        min-height: calc(1.5em + 1.5rem + 2px);
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1px solid #E4E6EF;
+        background: #F9FAFB;
+        font-weight: 500;
+        
+        &:focus {
+            border-color: $brand-blue;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.1);
+        }
+    }
+
+    label {
+        font-weight: 600;
+        color: #3F4254;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Dropzone / File Manager Styling */
+.admin-upload-zone {
+    border: 2px dashed #E4E6EF;
+    border-radius: 16px;
+    background: #F9FAFB;
+    padding: 4rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+
+    .upload-icon-wrap {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: white;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem auto;
+        color: $brand-blue;
+        font-size: 2.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    h4 { font-weight: 700; color: #3F4254; margin-bottom: 0.5rem; }
+    p { color: $text-light-gray; font-weight: 500; margin-bottom: 1.5rem; }
+
+    input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    &:hover {
+        border-color: $brand-blue;
+        background: #f1f4f9;
+        .upload-icon-wrap { transform: scale(1.08); }
+    }
+
+    &.has-file {
+        background: #E8FFF3;
+        border-color: #50CD89;
+        .upload-icon-wrap { color: #50CD89; }
+    }
+}
+
+/* Utilities */
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+
+    &.status-active { background: #E8FFF3; color: #50CD89; }
+    &.status-inactive { background: #FFF5F8; color: #F1416C; }
+    &.status-expired { background: #FFF5F8; color: #F1416C; }
+}
+
+.admin-pagination-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    
+    .page-link {
+        border-radius: 8px !important;
+        margin: 0 3px;
+        font-weight: 600;
+        color: #3F4254;
+        border-color: transparent;
+        background: #F5F8FA;
+        
+        &:hover { background: #EFF2F5; }
+    }
+    .page-item.active .page-link {
+        background-color: $brand-blue;
+        color: white;
+    }
+}

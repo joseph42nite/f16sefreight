@@ -908,13 +908,14 @@ class HousewayBillController extends Controller
         }
         $status = $request->status;
         $update_arr = [
-            'status' => $status, 
+            'status' => $status,
             'ho_name' => $request->agent_head_office['ho_name'],
             'ho_address' => $request->agent_head_office['ho_address'],
             'ho_city' => $request->agent_head_office['ho_city'],
             'ho_pincode' => $request->agent_head_office['ho_pincode'],
             'ho_state' => $request->agent_head_office['ho_state'],
-            'ho_country' => $request->agent_head_office['ho_country']
+            'ho_country' => $request->agent_head_office['ho_country'],
+            'as_agreed' => $request->as_agreed,
         ];
         HousewayBills::where(['id' => $hawb_id])->update($update_arr);
         $send_response = [];
@@ -1039,7 +1040,8 @@ class HousewayBillController extends Controller
             'ho_city' => $request->agent_head_office['ho_city'],
             'ho_pincode' => $request->agent_head_office['ho_pincode'],
             'ho_state' => $request->agent_head_office['ho_state'],
-            'ho_country' => $request->agent_head_office['ho_country']
+            'ho_country' => $request->agent_head_office['ho_country'],
+            'as_agreed' => $request->as_agreed,
         ];
         if ($status != 'generate_pdf')
             HousewayBills::where(['id' => $id])->update($update_arr);

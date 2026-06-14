@@ -1104,75 +1104,97 @@
                                     </b-modal>
                                     <b-row>
                                         <b-col cols="12">
-                                            <div class="table-responsive">
-                                                <table class="table table-sm" style="max-width:100%">
-                                                    <thead>
-                                                        <tr class="" style="background-color: #F2F9FF;">
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Pcs.</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Description</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;">Srv. Code</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Com. Itm.</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Gross Wgt.</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Chrg. Wgt.</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Rate</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Detailed Pcs. Info</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Vol.</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Rate Class</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">UID Rate Class</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Charge</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">HS Code</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Origin Country</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">UID information</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class="">Slac</th>
-                                                            <th style="font-size: 12px;font-weight: 500 !important;" class=""></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(entry, index) in form.entries" :key="index">
-                                                            <!-- Table data -->
-                                                            <td>{{ entry.pieces }}</td>
-                                                            <td>{{ entry.description }}</td>
-                                                            <td>{{ entry.service_code }}</td>
-                                                            <td>{{ entry.commodity_item }}</td>
-                                                            <td>{{ entry.gross_weight }}, {{ entry.weight_code }}</td>
-                                                            <td>{{ entry.chargable_weight }}</td>
-                                                            <td>{{ entry.rate }}</td>
-                                                            <td>
-                                                                <div v-for="(pcs, pcsIndex) in entry.itemss" :key="pcsIndex"
-                                                                    class="mb-1">
-                                                                    {{ pcs.pcs }}-{{ pcs.wgt }}-{{ pcs.weight_code }}-{{
-                                                                        pcs.length }}x{{ pcs.width }}x{{ pcs.height }}-{{ pcs.unit }}
-                                                                </div>
-                                                            </td>
-                                                            <!-- <td>{{ entry.pcs }}-{{ entry.gross_weight }}-{{ entry.weight_code }}-{{ entry.length }}x{{ entry.width }}x{{ entry.height }}-{{ entry.unit }}</td> -->
-                                                            <td>{{ entry.volume }}</td>
-                                                            <td>{{ entry.rate_class }}</td>
-                                                            <td>{{ entry.uld_rate_class }}</td>
-                                                            <td>{{ form.totals.total_amount }}</td>
-                                                            <td>
-                                                                <div v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
-                                                                    class="mb-1">
-                                                                    {{ hs }}
-                                                                </div>
-                                                            </td>
-                                                            <td>{{ entry.country_origin_goods }}</td>
-                                                            <td>
-                                                                <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex"
-                                                                    class="mb-1">
-                                                                    {{ uld.uld_type }}-{{ uld.uld_serial }}-{{ uld.owner }}
-                                                                </div>
-                                                            </td>
-                                                            <td>{{ entry.slac }}</td>
-                                                            <td class="d-flex align-items-center">
-                                                                <b-icon icon="pencil" font-scale="1" style="cursor: pointer;"
-                                                                    @click="editEntry(index)" class="mr-2"></b-icon>
-                                                                <b-icon icon="trash" font-scale="1"
-                                                                    @click="deleteEntry(index)"></b-icon>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                             <div class="table-responsive">
+                                                 <table class="table table-hover table-sm align-middle" style="max-width:100%">
+                                                     <thead>
+                                                         <tr class="text-nowrap" style="background-color: #F2F9FF;">
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 60px; padding: 10px 8px;" class="">Pcs.</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 250px; padding: 10px 8px;" class="">Description</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 90px; padding: 10px 8px;">Srv. Code</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 95px; padding: 10px 8px;" class="">Com. Itm.</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 110px; padding: 10px 8px;" class="">Gross Wgt.</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 110px; padding: 10px 8px;" class="">Chrg. Wgt.</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Rate</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 260px; padding: 10px 8px;" class="">Detailed Pcs. Info</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Vol.</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 100px; padding: 10px 8px;" class="">Rate Class</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 120px; padding: 10px 8px;" class="">UID Rate Class</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 90px; padding: 10px 8px;" class="">Charge</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 115px; padding: 10px 8px;" class="">HS Code</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 120px; padding: 10px 8px;" class="">Origin Country</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 160px; padding: 10px 8px;" class="">UID information</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Slac</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class=""></th>
+                                                         </tr>
+                                                     </thead>
+                                                     <tbody>
+                                                         <tr v-for="(entry, index) in form.entries" :key="index">
+                                                             <!-- Table data -->
+                                                             <td class="align-middle"><strong>{{ entry.pieces }}</strong></td>
+                                                             <td class="align-middle text-wrap" style="max-width: 300px; line-height: 1.4;">
+                                                                 <div v-if="entry.description">
+                                                                     <div v-for="(line, lineIdx) in entry.description.split('\n')" :key="lineIdx"
+                                                                         :class="lineIdx === 0 ? 'font-weight-bold text-dark' : 'text-muted small mt-1'">
+                                                                         {{ line }}
+                                                                     </div>
+                                                                 </div>
+                                                             </td>
+                                                             <td class="align-middle">{{ entry.service_code }}</td>
+                                                             <td class="align-middle">{{ entry.commodity_item }}</td>
+                                                             <td class="align-middle">
+                                                                 <div class="text-nowrap">
+                                                                     <strong>{{ entry.gross_weight }}</strong> <span class="text-muted small">{{ entry.weight_code }}</span>
+                                                                 </div>
+                                                             </td>
+                                                             <td class="align-middle">
+                                                                 <div class="text-nowrap">
+                                                                     <strong>{{ entry.chargable_weight }}</strong> <span class="text-muted small">{{ entry.weight_code || 'KGM' }}</span>
+                                                                 </div>
+                                                             </td>
+                                                             <td class="align-middle"><strong>{{ entry.rate }}</strong></td>
+                                                             <td class="align-middle">
+                                                                 <div v-for="(pcs, pcsIndex) in entry.itemss" :key="pcsIndex" class="mb-1">
+                                                                     <span class="badge badge-light border text-dark px-2 py-1 d-inline-block" style="font-size: 11px; white-space: nowrap;">
+                                                                         <strong>{{ pcs.pcs }}</strong> pcs
+                                                                         <span v-if="pcs.wgt" class="text-muted"> ({{ pcs.wgt }} {{ pcs.weight_code }})</span>
+                                                                         <span v-if="pcs.length || pcs.width || pcs.height" class="text-muted font-weight-normal ml-1">
+                                                                             • {{ pcs.length }}×{{ pcs.width }}×{{ pcs.height }} {{ pcs.unit }}
+                                                                         </span>
+                                                                     </span>
+                                                                 </div>
+                                                             </td>
+                                                             <td class="align-middle">{{ entry.volume }}</td>
+                                                             <td class="align-middle"><span class="badge badge-secondary" v-if="entry.rate_class">{{ entry.rate_class }}</span></td>
+                                                             <td class="align-middle">{{ entry.uld_rate_class }}</td>
+                                                             <td class="align-middle"><strong>{{ form.totals.total_amount }}</strong></td>
+                                                             <td class="align-middle">
+                                                                 <div class="d-flex flex-wrap">
+                                                                     <span v-for="(hs, hsIndex) in entry.hsCodes" :key="hsIndex"
+                                                                         class="badge mr-1 mb-1 px-2 py-1" style="font-size: 11px; background-color: #e1e8f5; color: #2c4d8c; border: 1px solid #c9d6ec; font-weight: 600;">
+                                                                         {{ hs }}
+                                                                     </span>
+                                                                 </div>
+                                                             </td>
+                                                             <td class="align-middle">{{ entry.country_origin_goods }}</td>
+                                                             <td class="align-middle">
+                                                                 <div v-for="(uld, uldIndex) in entry.uld_infos" :key="uldIndex" class="mb-1">
+                                                                     <span class="badge badge-light border text-dark px-2 py-1 d-inline-block" style="font-size: 11px; white-space: nowrap;">
+                                                                         <strong>{{ uld.uld_type }}</strong>
+                                                                         <span class="text-muted">#{{ uld.uld_serial }} ({{ uld.owner }})</span>
+                                                                     </span>
+                                                                 </div>
+                                                             </td>
+                                                             <td class="align-middle">{{ entry.slac }}</td>
+                                                             <td class="align-middle text-nowrap">
+                                                                 <b-icon icon="pencil" font-scale="1" style="cursor: pointer;"
+                                                                     @click="editEntry(index)" class="mr-2 text-primary"></b-icon>
+                                                                 <b-icon icon="trash" font-scale="1" style="cursor: pointer;"
+                                                                     @click="deleteEntry(index)" class="text-danger"></b-icon>
+                                                             </td>
+                                                         </tr>
+                                                     </tbody>
+                                                 </table>
+                                             </div>
                                         </b-col>
                                     </b-row>
                                     <b-row>
@@ -1247,7 +1269,8 @@
                                             </div>
                                         </b-col>
                                     </b-row>
-                                    <b-form-checkbox size="lg" class="mt-2 text-bold justify-content-lg-start" id="agreed" style="font-size: 16px; font-weight: 600;">As Agreed</b-form-checkbox>
+                                    {{form.as_agreed}}
+                                    <b-form-checkbox size="lg" class="mt-2 text-bold justify-content-lg-start" v-model="form.as_agreed" :value="1" :unchecked-value="0" id="agreed" style="font-size: 16px; font-weight: 600;">As Agreed</b-form-checkbox>
                                 </div>
                                 <hr class="hr" />
                                 <div>
@@ -2444,6 +2467,7 @@ export default {
                 is_shipper_address_save: false,
                 is_also_notify_address_save: false,
                 status:'',
+                as_agreed:0,
 
                 agent_head_office:{
                     ho_name: '',
@@ -2695,8 +2719,8 @@ export default {
             this.showShipper=true;
             var shipper=response.shipper;
             if (shipper) {
-                this.form.shipper_address.ship_name=shipper.name;
-                this.form.shipper_address.ship_address=shipper.address;
+                this.form.shipper_address.ship_name=shipper.name.replace(/[&/=]/g, ' ');
+                this.form.shipper_address.ship_address=shipper.address.replace(/[&/=]/g, ' ');
                 this.form.shipper_address.ship_city=shipper.city;
                 this.form.shipper_address.ship_post_code=shipper.pin;
                 this.form.shipper_address.ship_state=shipper.state;
@@ -2718,9 +2742,9 @@ export default {
             this.showConsignee=true;
             var consignee=response.consignee; 
             if (consignee) {
-                this.form.consignee_address.cons_name=consignee.name;
+                this.form.consignee_address.cons_name=consignee.name.replace(/[&/=]/g, ' ');
                 this.form.consignee_address.cons_name_2=consignee.eori;
-                this.form.consignee_address.cons_address=consignee.address;
+                this.form.consignee_address.cons_address=consignee.address.replace(/[&/=]/g, ' ');
                 this.form.consignee_address.cons_city=consignee.city;
                 this.form.consignee_address.cons_post_code=consignee.pin;
                 this.form.consignee_address.cons_state=consignee.state;
@@ -2758,7 +2782,7 @@ export default {
             
             if (cargo_data) {
                 this.consignment_list.hsCodes=cargo_data.hs_codes;
-                this.consignment_list.description=cargo_data.description;
+                this.consignment_list.description=cargo_data.description.replace(/[&/=]/g, ' ');
                 if (cargo_data.dimensions) {
                     for(let i=0;i<cargo_data.dimensions.length;i++){
                         let dimensions_data=cargo_data.dimensions[i].dimension.split('X');
@@ -3114,7 +3138,13 @@ export default {
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
-                    this.form.agent_head_office=this.existingData;
+                    this.form.agent_head_office.ho_name=this.existingData.ho_name;
+                    this.form.agent_head_office.ho_address=this.existingData.ho_address;
+                    this.form.agent_head_office.ho_city=this.existingData.ho_city;
+                    this.form.agent_head_office.ho_pincode=this.existingData.ho_pincode;
+                    this.form.agent_head_office.ho_state=this.existingData.ho_state;
+                    this.form.agent_head_office.ho_country=this.existingData.ho_country;
+                    this.form.as_agreed=this.existingData.as_agreed;
                     // this.form.payment_info = this.existingData.payment_info || {};
                     this.form.payment_info = {
                         ...this.defaultPaymentInfo,

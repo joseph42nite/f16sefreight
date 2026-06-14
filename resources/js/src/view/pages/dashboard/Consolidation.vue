@@ -478,7 +478,7 @@
                                         </tr>
                                     </table></div>
                                 </div>
-                                <template v-if="consolidation && consolidation.length > 0">
+                                <!-- <template v-if="consolidation && consolidation.length > 0">
                                     <RecycleScroller
                                         class="scroller"
                                         :items="consolidation"
@@ -512,6 +512,32 @@
                                             </div>
                                         </div>
                                     </RecycleScroller>
+                                </template> -->
+                                <template v-if="consolidation && consolidation.length > 0">
+                                    <div v-for="item in consolidation" :key="item.id" class="d-flex border-bottom" style="background-color: #E6EBFF; height: 50px; align-items: center;">
+                                        <div class="d-flex justify-content-center" style="width: 70px; background: #A4D3EE; height: 100%; align-items: center; white-space: nowrap;">
+                                            <div>
+                                                <b-icon icon="pencil" font-scale="1" style="cursor: pointer;" @click="editConsolidation(item.id)"></b-icon>
+                                                &nbsp;
+                                                <b-icon icon="trash" font-scale="1" style="cursor: pointer;" @click="deleteConsolidation(item.id)"></b-icon>
+                                            </div>
+                                        </div>
+                                        <div class="pl-2" style="width: 200px;">
+                                            <router-link :to="`/edit-houseway-bill/${item.id}`">{{ item.id }}</router-link>
+                                        </div>
+                                        <div style="width: 200px;">
+                                            {{ item.master_origin }}
+                                        </div>
+                                        <div style="width: 200px;">
+                                            {{ item.master_destination }}
+                                        </div>
+                                        <div style="width: 200px;">
+                                            T/{{ item.pieces }}/K/{{ item.gross_weight }}
+                                        </div>
+                                        <div style="width: 407px;">
+                                            {{ item.description }}
+                                        </div>
+                                    </div>
                                 </template>
                                 <div v-else class="d-flex justify-content-center text-muted mt-2">
                                     <p>No house waybills found for this master AWB.</p>
@@ -710,6 +736,8 @@ export default {
             oci_identifiers:{},
             tableData: [],
             existingData: {},
+            isEdit: false,
+            mode: '',
             options: [
                 { text: "Me", value: "1" },
                 { text: "Participant Group", value: "1" },
@@ -958,6 +986,33 @@ export default {
         deleteConsolidation(index) {
             this.form.tableCodes.splice(index, 1);
         },
+        openForm(mode, id = null) {
+            this.mode = mode;
+            if (mode === 'update' && id && this.existingData) {
+                this.form.id = String(this.existingData.id);
+                this.form.master_origin = this.existingData.master_origin || '';
+                this.form.master_destination = this.existingData.master_destination || '';
+                this.form.other_service_information = this.existingData.other_service_information || '';
+                this.form.oci_entries = this.existingData.other_custom_information || this.existingData.custom_info || [];
+                
+                if (this.existingData.special_handling_info && typeof this.existingData.special_handling_info === 'string') {
+                    try {
+                        this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
+                    } catch (error) {
+                        console.error("Error parsing special_handling_info:", error);
+                        this.form.tableCodes = [];
+                    }
+                } else {
+                    this.form.tableCodes = [];
+                }
+
+                if (this.existingData.consignment_data) {
+                    this.form.description = this.existingData.consignment_data.description || '';
+                    this.form.pieces = this.existingData.consignment_data.pieces || '';
+                    this.form.gross_weight = this.existingData.consignment_data.gross_weight || '';
+                }
+            }
+        },
         getCountry(){
             ApiService.get('/user/get-country').then(({ data }) => {
                 this.countries = Object.keys(data).map(key => ({
@@ -1087,21 +1142,17 @@ export default {
         },
        
         selectOption_departure(item) {
-            this.form.master_origin = item.iata_code;
-            let source_name= item.destination;
+            let source_name = item.destination;
             let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
-            this.form.master_origin.departure_airport = final_set;
+            this.form.master_origin = final_set;
             this.isDropdownOpen_departure = false;
         },
         toggleDropdown_destination() {
             this.isDropdownOpen_destination = !this.isDropdownOpen_destination;
         },
         selectOption_destination(item) {
-            this.form.master_destination = item.iata_code;
-            let source_name= item.destination;
+            let source_name = item.destination;
             let final_set = `${item.iata_code}, ${source_name}`;
-            // this.searchQuery_to = final_set;
             this.form.master_destination = final_set;
             this.isDropdownOpen_destination = false;
         },
@@ -1177,10 +1228,6 @@ export default {
         '$route.params.id'(newId) {
             if (newId) {
                 this.getAirWayBill(newId);
-            }
-        },
-        '$route.params.id'(newId) {
-            if (newId) {
                 this.getHouseWayBill(newId);
             }
         },
@@ -1190,9 +1237,6 @@ export default {
         if (id) {
             this.isEdit = true;
             this.getAirWayBill(id);
-        }
-        if (id) {
-            this.isEdit = true;
             this.getHouseWayBill(id);
         }
         this.getOCIData();

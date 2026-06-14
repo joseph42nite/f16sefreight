@@ -1839,7 +1839,7 @@
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
-                                                                                                            echo $houseWayBill->as_agreed==1:'AS AGREED'?$houseWayBill->total_charges_prepaid;
+                                                                                                            echo $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_charges_prepaid;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>

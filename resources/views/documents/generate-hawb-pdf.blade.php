@@ -1847,7 +1847,7 @@
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
-                                                                                                            echo $houseWayBill->as_agreed==1:'AS AGREED'?$houseWayBill->total_charges_collect;
+                                                                                                            echo $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_charges_collect;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>

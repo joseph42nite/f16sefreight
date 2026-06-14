@@ -1269,7 +1269,6 @@
                                             </div>
                                         </b-col>
                                     </b-row>
-                                    {{form.as_agreed}}
                                     <b-form-checkbox size="lg" class="mt-2 text-bold justify-content-lg-start" v-model="form.as_agreed" :value="1" :unchecked-value="0" id="agreed" style="font-size: 16px; font-weight: 600;">As Agreed</b-form-checkbox>
                                 </div>
                                 <hr class="hr" />
@@ -2645,7 +2644,9 @@ export default {
 
         processExtractedData(response) {
             // Reset the form and UI states to clear any previously populated data
+            const agentHeadOffice = { ...this.form.agent_head_office };
             this.form.reset();
+            this.form.agent_head_office = agentHeadOffice;
             this.showShipper = false;
             this.showConsignee = false;
             this.isConsignmentAdded = false;
@@ -3211,12 +3212,25 @@ export default {
                 .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) {
                     this.agent_information = data[0];
-                    if(!this.form.agent_head_office.ho_name)
-                      this.form.agent_head_office=data[0]
+                    if(!this.form.agent_head_office.ho_name){
+                        this.form.agent_head_office.ho_name=data[0].ho_name;
+                        this.form.agent_head_office.ho_address=data[0].ho_address;
+                        this.form.agent_head_office.ho_city=data[0].ho_city;
+                        this.form.agent_head_office.ho_pincode=data[0].ho_pincode;
+                        this.form.agent_head_office.ho_state=data[0].ho_state;
+                        this.form.agent_head_office.ho_country=data[0].ho_country;
+                    }
                 } else {
                     this.agent_information = data;
-                    if(!this.form.agent_head_office.ho_name)
+                    if(!this.form.agent_head_office.ho_name){
                       this.form.agent_head_office=data;
+                      this.form.agent_head_office.ho_name=data.ho_name;
+                        this.form.agent_head_office.ho_address=data.ho_address;
+                        this.form.agent_head_office.ho_city=data.ho_city;
+                        this.form.agent_head_office.ho_pincode=data.ho_pincode;
+                        this.form.agent_head_office.ho_state=data.ho_state;
+                        this.form.agent_head_office.ho_country=data.ho_country;
+                    }
                 }
                 })
                 .catch(error => {

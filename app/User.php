@@ -26,6 +26,14 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'company_name',
+        'branch_name',
+        'origin_airport_code',
+        'is_active',
+        'can_send',
+        'pima_address',
+        'default_port_id',
+        'designation',
     ];
 
     /**
@@ -53,5 +61,11 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims(){
         return [];
+    }
+
+    public function getCompanyIdAttribute()
+    {
+        $company = Company::where('name', $this->company_name)->first();
+        return $company ? $company->id : null;
     }
 }

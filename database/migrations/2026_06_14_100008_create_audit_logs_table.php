@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     public function up() {
+        Schema::dropIfExists('audit_logs');
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('agent_id');
@@ -23,17 +24,45 @@ return new class extends Migration {
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
         });
 
-        DB::unprepared("
-            CREATE TRIGGER audit_logs_prevent_update_delete
-            BEFORE UPDATE OR DELETE ON audit_logs
-            FOR EACH ROW
-            BEGIN
-                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_logs is append-only';
-            END;
-        ");
+        if (config('database.default') === 'sqlite') {
+            DB::unprepared("
+                CREATE TRIGGER audit_logs_prevent_update
+                BEFORE UPDATE ON audit_logs
+                FOR EACH ROW
+                BEGIN
+                    SELECT RAISE(ABORT, 'audit_logs is append-only');
+                END;
+            ");
+            DB::unprepared("
+                CREATE TRIGGER audit_logs_prevent_delete
+                BEFORE DELETE ON audit_logs
+                FOR EACH ROW
+                BEGIN
+                    SELECT RAISE(ABORT, 'audit_logs is append-only');
+                END;
+            ");
+        } else {
+            DB::unprepared("
+                CREATE TRIGGER audit_logs_prevent_update
+                BEFORE UPDATE ON audit_logs
+                FOR EACH ROW
+                BEGIN
+                    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_logs is append-only';
+                END;
+            ");
+            DB::unprepared("
+                CREATE TRIGGER audit_logs_prevent_delete
+                BEFORE DELETE ON audit_logs
+                FOR EACH ROW
+                BEGIN
+                    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_logs is append-only';
+                END;
+            ");
+        }
     }
     public function down() {
-        DB::unprepared("DROP TRIGGER IF EXISTS audit_logs_prevent_update_delete");
+        DB::unprepared("DROP TRIGGER IF EXISTS audit_logs_prevent_update");
+        DB::unprepared("DROP TRIGGER IF EXISTS audit_logs_prevent_delete");
         Schema::dropIfExists('audit_logs');
     }
 };

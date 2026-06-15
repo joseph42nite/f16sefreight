@@ -144,16 +144,29 @@ export default {
             return this.fetchedConfig || (this.currentUser ? this.currentUser.templates_config : null);
         },
         allowedTemplates() {
+            let list = [];
             if (this.templatesConfig && this.templatesConfig.allowed_templates && this.templatesConfig.allowed_templates.length > 0) {
-                return this.templatesConfig.allowed_templates;
+                list = [...this.templatesConfig.allowed_templates];
+            } else {
+                // Core fallback safety array
+                list = [
+                    { key: 'ksr', label: 'Standard (ksr)' },
+                    { key: 'ksr_house1', label: 'House 1' },
+                    { key: 'ksr_house2', label: 'House 2' },
+                    { key: 'ksr_apex_house', label: 'Apex House' }
+                ];
             }
-            // Core fallback safety array
-            return [
-                { key: 'ksr', label: 'Standard (ksr)' },
-                { key: 'ksr_house1', label: 'House 1' },
-                { key: 'ksr_house2', label: 'House 2' },
-                { key: 'ksr_apex_house', label: 'Apex House' }
-            ];
+
+            const tier = this.currentUser && this.currentUser.company ? this.currentUser.company.tier : null;
+            if (tier === 'viper_tactical' || tier === 'viper_command') {
+                if (!list.some(tpl => tpl.key === 'commercial_invoice')) {
+                    list.push({ key: 'commercial_invoice', label: 'Commercial Invoice' });
+                }
+                if (!list.some(tpl => tpl.key === 'packing_list')) {
+                    list.push({ key: 'packing_list', label: 'Packing List' });
+                }
+            }
+            return list;
         }
     },
     mounted() {

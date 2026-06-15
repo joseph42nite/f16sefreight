@@ -87,6 +87,16 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="admin-form-group">
+                    <label>Designated Port <span class="text-danger">*</span></label>
+                    <b-form-select v-model="user_form.default_port_id" :options="ports" class="custom-select" required></b-form-select>
+                    <has-error :form="user_form" field="default_port_id"></has-error>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="admin-form-group">
                   <label>Access Password</label>
                   <b-input-group>
                      <b-form-input v-model="user_form.password" :type="showpass ? 'password' : 'text'" placeholder="••••••••" :class="{ 'is-invalid': user_form.errors.has('password') }"></b-form-input>
@@ -153,10 +163,12 @@ export default {
         is_active:"",
         can_send:1,
         plan_expiry_date:'',
+        default_port_id: null,
       }),
       action: 'Add',
       all_company:[{ value: null, text: 'Select Company' }],
       all_branch:[{ value: null, text: 'Select Branch' }],
+      ports: [{ value: null, text: 'Select Origin Port' }],
       location:[],
       searchQuery: '',
       isDropdownOpen: false,
@@ -242,6 +254,14 @@ export default {
             }
         });
     },
+    fetchPorts() {
+      ApiService.get("/ports")
+        .then(({ data }) => {
+          data.forEach(port => {
+            this.ports.push({ value: port.id, text: `${port.locode} - ${port.port_name}` });
+          });
+        });
+    },
     normalizer(node) {
       return {
         id: node.value,
@@ -250,6 +270,7 @@ export default {
     },
   },
   mounted(){
+   this.fetchPorts();
    this.getLocation();
    this.getCompany();
    if(this.get_item){

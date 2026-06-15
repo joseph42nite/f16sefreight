@@ -10,6 +10,7 @@
     "require": {
         "php": "^7.2.5|^8.0",
         "barryvdh/laravel-dompdf": "^2.2",
+        "ezyang/htmlpurifier": "^4.19",
         "fruitcake/laravel-cors": "2.2",
         "guzzlehttp/guzzle": "^7.0",
         "laravel/framework": "^9.52",

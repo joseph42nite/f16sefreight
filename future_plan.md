@@ -3455,3 +3455,11 @@ Run in this exact order — earlier timestamps = earlier execution:
 2026_06_14_100102  create_air_shipment_details_table            ← operational air details
 2026_06_14_100103  create_llm_usage_logs_table                  ← operational LLM logs
 ```
+
+---
+
+## ⏳ Pending Modules
+
+The following modules have been deferred/marked as pending:
+- **C.2 Direct Carrier & Airline Booking Integration**
+- **Focus Sea Transport Mode Portal (Focus Sea Master, House, and Consolidation)**

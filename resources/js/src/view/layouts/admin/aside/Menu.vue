@@ -1,6 +1,32 @@
 <template>
   <ul class="menu-nav">
     <router-link
+      to="/superadmin/boss-dashboard"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/assets/ui/menu-icons/list.svg"
+            alt="boss-dashboard"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">Boss Dashboard</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link
       to="/superadmin/all-company"
       v-slot="{ href, navigate, isActive, isExactActive }"
      >
@@ -152,6 +178,32 @@
           <img src="/media/assets/ui/menu-icons/list.svg" alt="Manage Blogs icon" class="img-fluid" width="18" height="18"/>
           &nbsp;&nbsp;&nbsp;
           <span class="menu-text">Manage Blogs</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link
+      to="/superadmin/client-awb-tracking"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+    >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/assets/ui/menu-icons/list.svg"
+            alt="AWB tracking icon"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">AWB Tracking</span>
         </a>
       </li>
     </router-link>

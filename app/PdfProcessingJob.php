@@ -6,11 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class PdfProcessingJob extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope(new \App\Scopes\PortalScope());
+
+        static::creating(function ($model) {
+            if (empty($model->transport_mode)) {
+                $model->transport_mode = session('active_portal_scope', 'air');
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id', 'original_filename', 'temp_file_path',
         'document_type', 'status', 'queue_job_id',
         'extracted_data', 'error_message',
-        'started_at', 'completed_at',
+        'started_at', 'completed_at', 'transport_mode',
     ];
 
     protected $casts = [

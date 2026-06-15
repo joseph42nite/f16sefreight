@@ -162,6 +162,11 @@ export default {
                 .then(() => (window.location.href = "/"));
         },
     },
+    mounted() {
+        if (this.$route.query.trigger_login === "true") {
+            this.show_login_modal = true;
+        }
+    },
     computed: {
         ...mapGetters(["isAuthenticated", "currentUser"]),
 

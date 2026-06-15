@@ -32,6 +32,7 @@ class UserController extends Controller
             'can_send' => ['required'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
+            'default_port_id' => ['required', 'integer', 'exists:ports,id'],
         ]);
 
         if ($validator->fails()) {
@@ -49,6 +50,7 @@ class UserController extends Controller
         $user->password = Hash::make($request->password);
         $user->plan_expiry_date = $current_date;
         $user->pima_address = $request->pima_address;
+        $user->default_port_id = $request->default_port_id;
         $user->save();
 
         $role = new Role();
@@ -69,12 +71,17 @@ class UserController extends Controller
             'company_name' => ['required', 'string', 'max:100'],
             'plan_expiry_date' => ['required'],
             'can_send' => ['required'],
+            'default_port_id' => ['required', 'integer', 'exists:ports,id'],
+            'pima_address' => ['nullable', 'string', 'max:20'],
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
         $user = User::find($id);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
         $user->name = $request->name;
         $user->company_name = $request->company_name;
         $user->origin_airport_code = $request->origin_airport_code;
@@ -83,6 +90,7 @@ class UserController extends Controller
         $user->is_active = $request->is_active;
         $user->can_send = $request->can_send;
         $user->pima_address = $request->pima_address;
+        $user->default_port_id = $request->default_port_id;
         if (!empty($request->password))
             $user->password = Hash::make($request->password);
         $user->save();
@@ -91,6 +99,38 @@ class UserController extends Controller
         } else {
             return response()->json(['status' => false]);
         }
+    }
+
+    public function getCompaniesPublic()
+    {
+        $companies = Company::select('id', 'name')->orderBy('name', 'asc')->get();
+        return response()->json($companies, 200);
+    }
+
+    public function setSessionContext(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'active_portal_scope' => ['required', 'string', 'in:air,sea'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        session([
+            'company_id' => $request->company_id,
+            'active_portal_scope' => $request->active_portal_scope,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Session context configured successfully',
+            'session' => [
+                'company_id' => session('company_id'),
+                'active_portal_scope' => session('active_portal_scope')
+            ]
+        ], 200);
     }
 
 
@@ -133,10 +173,13 @@ class UserController extends Controller
             $userPayload = $user_data->toArray();
             
             $companyName = $user_data->company_name;
+            $company = Company::where('name', $companyName)->first();
+            $userPayload['company'] = $company ? $company->toArray() : null;
+
             $templatesConfig = Cache::remember(
                 "company_templates_{$companyName}",
                 60,
-                fn() => optional(Company::where('name', $companyName)->first())->templates_config
+                fn() => $company ? $company->templates_config : null
             );
 
             $userPayload['templates_config'] = $templatesConfig;
@@ -199,5 +242,78 @@ class UserController extends Controller
         }
 
         return response()->json($company->templates_config ?: $fallback);
+    }
+
+    public function getPorts()
+    {
+        $ports = \App\Port::where('is_active', true)->orderBy('port_name', 'asc')->get();
+        return response()->json($ports, 200);
+    }
+
+    public function registerOnboarding(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'company_name' => ['required', 'string', 'max:100', 'unique:companies,name'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'string', 'email', 'max:100', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:4'],
+            'origin_airport_code' => ['required', 'string', 'max:100'],
+            'pima_address' => ['required', 'string', 'max:100'],
+            'default_port_id' => ['required', 'integer', 'exists:ports,id'],
+            'tier' => ['nullable', 'string', 'in:viper_core,viper_tactical,viper_command'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        return \DB::transaction(function () use ($request) {
+            // 1. Create Company
+            $company = new Company();
+            $company->name = $request->input('company_name');
+            $company->tier = $request->input('tier', 'viper_command');
+            $company->templates_config = [
+                'allowed_templates' => [
+                    ['key' => 'ksr', 'label' => 'KSR'],
+                    ['key' => 'ksr_house1', 'label' => 'House 1'],
+                    ['key' => 'ksr_house2', 'label' => 'House 2'],
+                ],
+                'default_focus_air' => 'ksr',
+                'default_house_air' => 'ksr_house1'
+            ];
+            $company->save();
+
+            // 2. Create User
+            $current_date = date("Y-m-d");
+            $current_date = date("Y-m-d", strtotime($current_date . " +1 week"));
+            
+            $user = new User();
+            $user->name = $request->input('name');
+            $user->email = $request->input('email');
+            $user->password = Hash::make($request->input('password'));
+            $user->company_name = $company->name;
+            $user->origin_airport_code = $request->input('origin_airport_code');
+            $user->pima_address = $request->input('pima_address');
+            $user->default_port_id = $request->input('default_port_id');
+            $user->can_send = 1;
+            $user->is_active = true;
+            $user->designation = 'pricing'; // Onboarding admin defaults to pricing designation
+            $user->plan_expiry_date = $current_date;
+            $user->save();
+
+            // 3. Create Role
+            $role = new Role();
+            $role->email = $user->email;
+            $role->role = 'user';
+            $role->save();
+
+            // 4. Return success
+            return response()->json([
+                'status' => true,
+                'message' => 'Onboarding successful!',
+                'company' => $company,
+                'user' => $user
+            ], 200);
+        });
     }
 }

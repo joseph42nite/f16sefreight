@@ -53,11 +53,20 @@ router.beforeEach((to, from, next) => {
   // Ensure we checked auth before each page load.
   if (!to.matched.some((record) => record.meta.userType)) {
     next();
- }
- else{
-  let userType=to.meta.userType;
-  Promise.all([store.dispatch(VERIFY_AUTH,{userType})]).then(next);
- }
+  }
+  else {
+    let userType=to.meta.userType;
+    Promise.all([store.dispatch(VERIFY_AUTH,{userType})]).then(() => {
+      const user = store.getters.currentUser;
+      if (to.path === '/analytics' || to.path === 'analytics') {
+        if (user && (user.designation === 'operations' || user.designation === 'pricing')) {
+          next('/inbox');
+          return;
+        }
+      }
+      next();
+    });
+  }
   // reset config to initial state
   store.dispatch(RESET_LAYOUT_CONFIG);
 });

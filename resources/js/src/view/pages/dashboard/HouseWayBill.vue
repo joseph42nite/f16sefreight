@@ -157,7 +157,7 @@
                                                 </template>
                                                 <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
                                                      <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control shipper-form-control" autocomplete="off"
-                                                     :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                     :class="[{ 'is-invalid': form.errors.has('ship_name') }, getConfidenceClass('shipper_name')]"
                                                      @input="filterShippers" @focus="toggleDropdown('shipper', true)" />
 
                                                      <div v-if="activeDropdown === 'shipper' && filteredShippers.length" class="dropdown-options align-items-center">
@@ -197,7 +197,7 @@
                                                              <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="ship-address-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }" @keydown="limitInput($event, 'shipper_address.ship_address', 40)"></b-form-input>
+                                                     <b-form-input id="ship-address-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="[{ 'is-invalid': form.errors.has('ship_address') }, getConfidenceClass('shipper_address')]" @keydown="limitInput($event, 'shipper_address.ship_address', 40)"></b-form-input>
                                                      <has-error :form="form" field="ship_address"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-address-line-2-input" class="pb-2 align-items-center">
@@ -218,7 +218,7 @@
                                                          </div>
                                                      </template>
                                                      <div class="d-flex align-items-center pb-2">
-                                                         <b-form-input id="ship-city-input" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                                         <b-form-input id="ship-city-input" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="[{ 'is-invalid': form.errors.has('ship_city') }, getConfidenceClass('shipper_city')]"></b-form-input>
                                                          <b-form-input id="ship-airport-input" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
                                                      </div>
                                                      <div>
@@ -232,7 +232,7 @@
                                                              <span>Post Code:</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="shipper-postcode-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
+                                                     <b-form-input id="shipper-postcode-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="[{ 'is-invalid': form.errors.has('ship_post_code') }, getConfidenceClass('shipper_post_code')]"></b-form-input>
                                                      <has-error :form="form" field="ship_post_code"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-state-input" class="pb-2 align-items-center">
@@ -241,7 +241,7 @@
                                                              <span>State:</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="shipper-state-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
+                                                     <b-form-input id="shipper-state-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="[{ 'is-invalid': form.errors.has('ship_state') }, getConfidenceClass('shipper_state')]"></b-form-input>
                                                      <has-error :form="form" field="ship_state"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-country-input" class="pb-2 align-items-center">
@@ -251,7 +251,7 @@
                                                              <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-select id="shipper-country-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_country" :class="{ 'is-invalid': form.errors.has('ship_country') }">
+                                                     <b-form-select id="shipper-country-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_country" :class="[{ 'is-invalid': form.errors.has('ship_country') }, getConfidenceClass('shipper_country')]">
                                                          <option disabled value=""> Please select one</option>
                                                          <option v-for="country in countries" :key="country.value" :value="country.value">
                                                              {{ country.text }}
@@ -265,7 +265,7 @@
                                                              <span>Phone:</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="shipper-phone-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_phone" :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
+                                                     <b-form-input id="shipper-phone-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_phone" :class="[{ 'is-invalid': form.errors.has('ship_phone') }, getConfidenceClass('shipper_phone')]"></b-form-input>
                                                      <has-error :form="form" field="ship_phone"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-fax-input" class="pb-2 align-items-center">
@@ -353,7 +353,7 @@
                                                              <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="cons-address-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }" @keydown="limitInput($event, 'consignee_address.cons_address', 40)"></b-form-input>
+                                                     <b-form-input id="cons-address-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="[{ 'is-invalid': form.errors.has('cons_address') }, getConfidenceClass('consignee_address')]" @keydown="limitInput($event, 'consignee_address.cons_address', 40)"></b-form-input>
                                                      <has-error :form="form" field="cons_address"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-address-line-2-input" class="pb-2 align-items-center">
@@ -374,7 +374,7 @@
                                                          </div>
                                                      </template>
                                                      <div class="d-flex align-items-center pb-2">
-                                                         <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                                         <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="[{ 'is-invalid': form.errors.has('cons_city') }, getConfidenceClass('consignee_city')]"></b-form-input>
                                                          <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.cons_airport_code" :class="{ 'is-invalid': form.errors.has('cons_airport_code') }"></b-form-input>
                                                      </div>
                                                      <div>
@@ -389,7 +389,7 @@
                                                              <span>Post Code:</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="cons-post-code" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
+                                                     <b-form-input id="cons-post-code" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="[{ 'is-invalid': form.errors.has('cons_post_code') }, getConfidenceClass('consignee_post_code')]"></b-form-input>
                                                      <has-error :form="form" field="cons_post_code"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-state-input" class="pb-2 align-items-center">
@@ -398,7 +398,7 @@
                                                              <span>State:</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="cons-state-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
+                                                     <b-form-input id="cons-state-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="[{ 'is-invalid': form.errors.has('cons_state') }, getConfidenceClass('consignee_state')]"></b-form-input>
                                                      <has-error :form="form" field="cons_state"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-country-input" class="pb-2 align-items-center">
@@ -408,7 +408,7 @@
                                                              <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-select class="form-control consignee-form-control" v-model="form.consignee_address.cons_country" :class="{ 'is-invalid': form.errors.has('cons_country') }">
+                                                     <b-form-select class="form-control consignee-form-control" v-model="form.consignee_address.cons_country" :class="[{ 'is-invalid': form.errors.has('cons_country') }, getConfidenceClass('consignee_country')]">
                                                          <option value="Please select one"> Please select one</option>
                                                          <option v-for="country in countries" :key="country.value" :value="country.value">
                                                              {{ country.text }}
@@ -422,7 +422,7 @@
                                                              <span>Phone:</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="cons-phone-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_phone"></b-form-input>
+                                                     <b-form-input id="cons-phone-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_phone" :class="[{ 'is-invalid': form.errors.has('cons_phone') }, getConfidenceClass('consignee_phone')]"></b-form-input>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-fax-input" class="pb-2 align-items-center">
                                                      <template #label>
@@ -2636,10 +2636,18 @@ export default {
             main_error_msg: "",
             is_generate_pdf:0,
             showSpinner: false,  // Initially, the progress bar is hidden
+            confidenceScores: {},
         };
     },
 
     methods: {
+        getConfidenceClass(fieldKey) {
+            const conf = this.confidenceScores[fieldKey];
+            if (conf === 'low' || conf === 'medium') {
+                return 'orange-highlight-border';
+            }
+            return '';
+        },
 
         processExtractedData(response) {
             // Reset the form and UI states to clear any previously populated data
@@ -2647,8 +2655,102 @@ export default {
             this.showShipper = false;
             this.showConsignee = false;
             this.isConsignmentAdded = false;
+            this.confidenceScores = {};
 
             console.log('Processing payload:', response);
+
+            const isUnstructured = (response.shipper_name && typeof response.shipper_name === 'object') || 
+                                   (response.consignee_name && typeof response.consignee_name === 'object') || 
+                                   response.invoice_no || 
+                                   response.packing_list_no;
+
+            if (isUnstructured) {
+                const mapField = (fieldKey, targetObj, targetKey) => {
+                    const field = response[fieldKey];
+                    if (field && typeof field === 'object') {
+                        targetObj[targetKey] = field.value !== null && field.value !== undefined ? String(field.value) : '';
+                        this.$set(this.confidenceScores, fieldKey, field.confidence || 'low');
+                    }
+                };
+
+                this.showShipper = true;
+                mapField('shipper_name', this.form.shipper_address, 'ship_name');
+                mapField('shipper_address', this.form.shipper_address, 'ship_address');
+                mapField('shipper_city', this.form.shipper_address, 'ship_city');
+                mapField('shipper_post_code', this.form.shipper_address, 'ship_post_code');
+                mapField('shipper_state', this.form.shipper_address, 'ship_state');
+                mapField('shipper_phone', this.form.shipper_address, 'ship_phone');
+
+                if (response.shipper_country && typeof response.shipper_country === 'object') {
+                    const countryVal = response.shipper_country.value;
+                    this.$set(this.confidenceScores, 'shipper_country', response.shipper_country.confidence || 'low');
+                    if (countryVal) {
+                        let shipper_country_code = '';
+                        for (let c = 0; c < 252; c++) {
+                            if (this.countries[c] && this.countries[c].text.toLowerCase() === String(countryVal).toLowerCase()) {
+                                shipper_country_code = this.countries[c].value;
+                                break;
+                            }
+                        }
+                        this.form.shipper_address.ship_country = shipper_country_code;
+                    }
+                }
+
+                this.showConsignee = true;
+                mapField('consignee_name', this.form.consignee_address, 'cons_name');
+                mapField('consignee_address', this.form.consignee_address, 'cons_address');
+                mapField('consignee_city', this.form.consignee_address, 'cons_city');
+                mapField('consignee_post_code', this.form.consignee_address, 'cons_post_code');
+                mapField('consignee_state', this.form.consignee_address, 'cons_state');
+                mapField('consignee_phone', this.form.consignee_address, 'cons_phone');
+
+                if (response.consignee_country && typeof response.consignee_country === 'object') {
+                    const countryVal = response.consignee_country.value;
+                    this.$set(this.confidenceScores, 'consignee_country', response.consignee_country.confidence || 'low');
+                    if (countryVal) {
+                        let consignee_country_code = '';
+                        for (let c = 0; c < 252; c++) {
+                            if (this.countries[c] && this.countries[c].text.toLowerCase() === String(countryVal).toLowerCase()) {
+                                consignee_country_code = this.countries[c].value;
+                                break;
+                            }
+                        }
+                        this.form.consignee_address.cons_country = consignee_country_code;
+                    }
+                }
+
+                let desc = '';
+                if (response.items && Array.isArray(response.items)) {
+                    desc = response.items.map(item => {
+                        if (item.description && typeof item.description === 'object') {
+                            return item.description.value;
+                        }
+                        return '';
+                    }).filter(Boolean).join(', ');
+                }
+                this.consignment_list.description = desc;
+
+                if (response.grand_total && typeof response.grand_total === 'object') {
+                    this.consignment_list.rate = response.grand_total.value;
+                    this.$set(this.confidenceScores, 'grand_total', response.grand_total.confidence || 'low');
+                }
+                if (response.total_packages && typeof response.total_packages === 'object') {
+                    this.consignment_list.pieces = response.total_packages.value;
+                    this.$set(this.confidenceScores, 'total_packages', response.total_packages.confidence || 'low');
+                }
+                if (response.total_gross_weight && typeof response.total_gross_weight === 'object') {
+                    this.consignment_list.gross_weight = response.total_gross_weight.value;
+                    this.consignment_list.chargable_weight = response.total_gross_weight.value;
+                    this.$set(this.confidenceScores, 'total_gross_weight', response.total_gross_weight.confidence || 'low');
+                }
+                if (response.total_volume && typeof response.total_volume === 'object') {
+                    this.form.totals.total_volume = response.total_volume.value;
+                    this.$set(this.confidenceScores, 'total_volume', response.total_volume.confidence || 'low');
+                }
+
+                this.$refs.modalConsignment.show();
+                return;
+            }
             this.form.first_box.hawb_no = response.awb_number;
             
             // Routing Block
@@ -4308,5 +4410,9 @@ th {
             text-align: start !important;
             margin-bottom: 4px;
         }
+    }
+    .orange-highlight-border {
+        border-color: #ff9800 !important;
+        box-shadow: 0 0 0 0.2rem rgba(255, 152, 0, 0.25) !important;
     }
 </style>

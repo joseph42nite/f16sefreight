@@ -1,26 +1,28 @@
 <template>
     <div>
-        <!-- Sign In Modal box -->
+        <!-- Sign In & Onboarding Modal box -->
         <b-modal id="login-modal" v-model="internal_show_login" :hide-header="true" :hide-footer="true" centered size="xl" modal-class="ultra-premium-modal">
             <div class="modal-split-layout">
                 <button class="ultra-close-btn" @click="internal_show_login = false">
                     <b-icon icon="x"></b-icon>
                 </button>
-                <div class="modal-left-pane login-pane">
+                <div class="modal-left-pane" :class="authMode === 'login' ? 'login-pane' : 'onboard-pane'">
                     <div class="pane-content">
                         <div class="pane-icon-wrapper mb-8">
-                            <b-icon icon="shield-lock" font-scale="2.5"></b-icon>
+                            <b-icon :icon="authMode === 'login' ? 'shield-lock' : 'building'" font-scale="2.5"></b-icon>
                         </div>
-                        <h2 class="pane-title">Welcome Back</h2>
-                        <p class="pane-subtitle">Securely access your F16s dashboard to manage your freight operations, AWBs, and EDI connectivity.</p>
+                        <h2 class="pane-title">{{ authMode === 'login' ? 'Welcome Back' : 'Get Started' }}</h2>
+                        <p class="pane-subtitle">
+                            {{ authMode === 'login' ? 'Securely access your F16s dashboard to manage your freight operations, AWBs, and EDI connectivity.' : 'Create your company profile and register your admin credentials to start managing global shipments.' }}
+                        </p>
                         
                         <div class="pane-footer mt-auto">
                             <div class="pane-feature">
-                                <b-icon icon="lightning" class="me-3"></b-icon>
+                                <b-icon icon="lightning" class="mr-3"></b-icon>
                                 <span>Lightning Fast Processing</span>
                             </div>
                             <div class="pane-feature">
-                                <b-icon icon="globe2" class="me-3"></b-icon>
+                                <b-icon icon="globe2" class="mr-3"></b-icon>
                                 <span>Global Airline Network</span>
                             </div>
                         </div>
@@ -30,7 +32,8 @@
                 
                 <div class="modal-right-pane">
                     <div class="form-scroll-container">
-                        <form @submit.prevent="login" class="ultra-form">
+                        <!-- LOGIN FORM -->
+                        <form v-if="authMode === 'login'" @submit.prevent="login" class="ultra-form">
                             <h3 class="form-section-title mb-6">Sign In</h3>
                             
                             <!-- Error Messages -->
@@ -40,6 +43,42 @@
                                 <span v-else-if="errors === 'Daily_Limit'">Daily login limit exceeded.</span>
                                 <span v-else-if="errors === 'Expired'">Plan expired. Please renew.</span>
                                 <span v-else>{{ errors }}</span>
+                            </div>
+
+                            <!-- Quick Demo Logins -->
+                            <div class="demo-logins-section mb-6 text-center">
+                                <label class="small text-muted font-weight-bold d-block mb-3">QUICK DEMO ACCESSIBILITY PILLS</label>
+                                
+                                <!-- Core Section -->
+                                <div class="demo-group mb-3 d-flex align-items-center justify-content-center" style="gap: 8px;">
+                                    <span class="badge badge-secondary px-2 py-1" style="font-size: 10px; width: 68px; display: inline-block;">Core</span>
+                                    <b-button size="sm" variant="outline-primary" class="demo-pill py-0 px-3 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('core@f16s.com')">
+                                        Core Operator
+                                    </b-button>
+                                </div>
+                                
+                                <!-- Tactical Section -->
+                                <div class="demo-group mb-3 d-flex align-items-center justify-content-center" style="gap: 8px;">
+                                    <span class="badge badge-success px-2 py-1" style="font-size: 10px; width: 68px; display: inline-block;">Tactical</span>
+                                    <div class="d-inline-flex flex-wrap" style="gap: 6px;">
+                                        <b-button size="sm" variant="outline-success" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('tactical.ops@f16s.com')">Ops</b-button>
+                                        <b-button size="sm" variant="outline-success" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('tactical.pricing@f16s.com')">Pricing</b-button>
+                                        <b-button size="sm" variant="outline-success" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('tactical.sales@f16s.com')">Sales</b-button>
+                                        <b-button size="sm" variant="outline-success" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('tactical.boss@f16s.com')">Boss</b-button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Command Section -->
+                                <div class="demo-group d-flex align-items-center justify-content-center" style="gap: 8px;">
+                                    <span class="badge badge-info px-2 py-1 text-white" style="font-size: 10px; width: 68px; display: inline-block;">Command</span>
+                                    <div class="d-inline-flex flex-wrap" style="gap: 6px;">
+                                        <b-button size="sm" variant="outline-info" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('command.ops@f16s.com')">Ops</b-button>
+                                        <b-button size="sm" variant="outline-info" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('command.pricing@f16s.com')">Pricing</b-button>
+                                        <b-button size="sm" variant="outline-info" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('command.sales@f16s.com')">Sales</b-button>
+                                        <b-button size="sm" variant="outline-info" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('command.accounts@f16s.com')">Accounts</b-button>
+                                        <b-button size="sm" variant="outline-info" class="demo-pill py-0 px-2 font-weight-bold" style="font-size: 11px; border-radius: 12px; height: 24px;" @click="autoFillDemo('command.boss@f16s.com')">Boss</b-button>
+                                    </div>
+                                </div>
                             </div>
 
                             <b-row>
@@ -57,7 +96,8 @@
                                             {{ showPass ? "Show" : "Hide" }}
                                         </button>
                                     </div>
-                                    <div class="text-right mt-2" style="text-align: right; width: 100%;">
+                                    <div class="text-right mt-2 d-flex justify-content-between" style="width: 100%;">
+                                        <a href="#" @click.prevent="authMode = 'signup'" class="forgot-pwd">Create an Account</a>
                                         <router-link to="/contact-us" class="forgot-pwd" @click.native="internal_show_login = false">Forgot Password?</router-link>
                                     </div>
                                 </b-col>
@@ -71,6 +111,85 @@
                                 </button>
                                 <p class="form-note mt-4">
                                     Need help? <router-link to="/contact-us?modal=query" class="text-primary font-weight-bold" @click.native="internal_show_login = false">Contact Support</router-link>
+                                </p>
+                            </div>
+                        </form>
+
+                        <!-- REGISTRATION/ONBOARDING FORM -->
+                        <form v-else @submit.prevent="onboard" class="ultra-form">
+                            <h3 class="form-section-title mb-6">Register Company</h3>
+                            
+                            <!-- Error Messages -->
+                            <div v-if="signupErrors" class="error-alert mb-5">
+                                <span>{{ signupErrors }}</span>
+                            </div>
+
+                            <b-row>
+                                <b-col md="6" class="mb-4">
+                                    <div class="floating-input-group">
+                                        <input type="text" class="floating-input" v-model="signup_form.company_name" placeholder=" " required />
+                                        <label class="floating-label">Company Name</label>
+                                    </div>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <b-form-group label="Plan Tier" label-class="small text-muted font-weight-bold mb-1">
+                                        <b-form-select v-model="signup_form.tier" size="sm" style="height: 42px; border-radius: 8px;">
+                                            <option value="viper_core">Viper Core (Free)</option>
+                                            <option value="viper_tactical">Viper Tactical</option>
+                                            <option value="viper_command">Viper Command</option>
+                                        </b-form-select>
+                                    </b-form-group>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <div class="floating-input-group">
+                                        <input type="text" class="floating-input" v-model="signup_form.name" placeholder=" " required />
+                                        <label class="floating-label">Admin Full Name</label>
+                                    </div>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <div class="floating-input-group">
+                                        <input type="email" class="floating-input" v-model="signup_form.email" placeholder=" " required />
+                                        <label class="floating-label">Admin Email Address</label>
+                                    </div>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <div class="floating-input-group">
+                                        <input type="password" class="floating-input" v-model="signup_form.password" placeholder=" " required />
+                                        <label class="floating-label">Password</label>
+                                    </div>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <div class="floating-input-group">
+                                        <input type="text" class="floating-input" v-model="signup_form.pima_address" placeholder=" " required />
+                                        <label class="floating-label">Pima Routing Address</label>
+                                    </div>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <div class="floating-input-group">
+                                        <input type="text" class="floating-input" v-model="signup_form.origin_airport_code" placeholder=" " required />
+                                        <label class="floating-label">Origin Airport Code (e.g. DXB)</label>
+                                    </div>
+                                </b-col>
+                                <b-col md="6" class="mb-4">
+                                    <b-form-group label="Designated Origin Port" label-class="small text-muted font-weight-bold mb-1">
+                                        <b-form-select v-model="signup_form.default_port_id" size="sm" style="height: 42px; border-radius: 8px;" required>
+                                            <option :value="null">-- Select Origin Port --</option>
+                                            <option v-for="port in ports" :key="port.id" :value="port.id">
+                                                {{ port.locode }} - {{ port.port_name }}
+                                            </option>
+                                        </b-form-select>
+                                    </b-form-group>
+                                </b-col>
+                            </b-row>
+                            
+                            <div class="form-actions mt-4 d-flex flex-column align-items-center w-100">
+                                <button type="submit" class="ultra-submit-btn" :disabled="signupLoading">
+                                    <span v-if="!signupLoading">Onboard Company</span>
+                                    <b-spinner v-else small label="Processing..."></b-spinner>
+                                    <b-icon v-if="!signupLoading" icon="arrow-right" class="btn-icon"></b-icon>
+                                </button>
+                                <p class="form-note mt-4">
+                                    Already have an account? <a href="#" @click.prevent="authMode = 'login'" class="text-primary font-weight-bold">Sign In</a>
                                 </p>
                             </div>
                         </form>
@@ -95,7 +214,7 @@
                         
                         <div class="pane-footer mt-auto">
                             <div class="pane-feature">
-                                <b-icon icon="lock" class="me-3"></b-icon>
+                                <b-icon icon="lock" class="mr-3"></b-icon>
                                 <span>Bank-grade Security</span>
                             </div>
                         </div>
@@ -137,6 +256,7 @@
 <script>
 import { mapState } from "vuex";
 import { LOGIN } from "@/core/services/store/auth.module";
+import ApiService from "@/core/services/api.service";
 
 export default {
     name: "AuthModals",
@@ -146,6 +266,20 @@ export default {
     },
     data() {
         return {
+            authMode: "login", // "login" or "signup"
+            ports: [],
+            signupLoading: false,
+            signupErrors: null,
+            signup_form: {
+                company_name: "",
+                tier: "viper_command",
+                name: "",
+                email: "",
+                password: "",
+                pima_address: "",
+                origin_airport_code: "",
+                default_port_id: null
+            },
             user_form: {
                 email: "",
                 password: "",
@@ -168,7 +302,22 @@ export default {
             set(val) { this.$emit('update:showOtp', val); }
         }
     },
+    mounted() {
+        this.fetchPorts();
+    },
     methods: {
+        autoFillDemo(email) {
+            this.user_form.email = email;
+            this.user_form.password = "password";
+            this.login();
+        },
+        fetchPorts() {
+            ApiService.get("/ports")
+                .then(res => {
+                    this.ports = res.data;
+                })
+                .catch(err => console.error("Failed to load ports:", err));
+        },
         login() {
             this.loading = true;
             const { email, password, otp } = this.user_form;
@@ -185,18 +334,54 @@ export default {
                 .finally(() => {
                     this.loading = false;
                 });
+        },
+        onboard() {
+            if (!this.signup_form.default_port_id) {
+                this.signupErrors = "Please select a designated origin port.";
+                return;
+            }
+            this.signupLoading = true;
+            this.signupErrors = null;
+            ApiService.post("/register-onboarding", this.signup_form)
+                .then(res => {
+                    this.$bvToast.toast("Company registered and admin user created successfully!", {
+                        title: "Success",
+                        variant: "success",
+                        solid: true
+                    });
+                    
+                    // Auto-login after successful onboarding
+                    const { email, password } = this.signup_form;
+                    this.user_form.email = email;
+                    this.user_form.password = password;
+                    this.authMode = 'login';
+                    this.login();
+                })
+                .catch(err => {
+                    console.error("Onboarding failed:", err);
+                    const errorsObj = err.response?.data?.errors;
+                    if (errorsObj) {
+                        this.signupErrors = Object.values(errorsObj).flat().join(" ");
+                    } else {
+                        this.signupErrors = err.response?.data?.error || "Registration failed. Check your inputs.";
+                    }
+                })
+                .finally(() => {
+                    this.signupLoading = false;
+                });
         }
     }
 };
 </script>
 
 <style scoped>
-/* Modal specific local styles that are not yet in public-custom.scss */
+/* Modal specific local styles */
 .modal-split-layout { display: flex; flex-direction: row; min-height: 500px; position: relative; }
 .ultra-close-btn { position: absolute; top: 25px; right: 25px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.05); border: none; color: #5A6B8A; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 50; transition: all 0.3s ease; }
 .ultra-close-btn:hover { background: #ef4444; color: white; transform: rotate(90deg); }
-.modal-left-pane { flex: 0 0 40%; padding: 4rem 3.5rem; position: relative; overflow: hidden; color: white; display: flex; flex-direction: column; }
+.modal-left-pane { flex: 0 0 40%; padding: 4rem 3.5rem; position: relative; overflow: hidden; color: white; display: flex; flex-direction: column; transition: all 0.3s ease; }
 .login-pane { background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%); }
+.onboard-pane { background: linear-gradient(135deg, #1e3a6e 0%, #0d9488 100%); }
 .otp-pane { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 .pane-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
 .pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.25); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }

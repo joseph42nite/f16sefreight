@@ -11,8 +11,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(SuperSeeder::class);
-        $this->call(UserSeeder::class);
-        $this->call(CurrencyRateSeeder::class);
+        try {
+            $this->call(SuperSeeder::class);
+        } catch (\Exception $e) {}
+        try {
+            $this->call(UserSeeder::class);
+        } catch (\Exception $e) {}
+        try {
+            $this->call(CurrencyRateSeeder::class);
+        } catch (\Exception $e) {}
+
+        $this->call(PortSeeder::class);
     }
 }

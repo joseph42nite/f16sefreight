@@ -26,6 +26,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('mailboxes:poll')->everyMinute();
+        $schedule->command('bank:poll')->cron('0 0 */3 * *');
         // $schedule->command('inspire')->hourly();
         $schedule->call('App\Http\Controllers\CurrencyRateController@getCurrencyRate')->dailyAt('02:00');
 

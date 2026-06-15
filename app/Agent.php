@@ -20,6 +20,7 @@ class Agent extends Model
     protected $fillable = [
         'agent_name',
         'agent_address',
+        'agent_state',
         'agent_issue_sign',
         'agent_issue_loc_code',
         'agent_issue_date',

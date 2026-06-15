@@ -1,41 +1,35 @@
 <template>
     <nav class="sidebar-container">
         <!-- Desktop Sidebar -->
-        <div class="sidebar d-none d-lg-block">
+        <div class="sidebar d-none d-lg-block" :class="{ 'sidebar-mini': collapsed }">
             <ul class="sidebar__list">
-                <!-- AWB / Consolidation -->
-                <router-link to="/focus-air" custom v-slot="{ navigate }">
+                <router-link 
+                    v-for="item in menuItems" 
+                    :key="item.label" 
+                    :to="item.path" 
+                    custom 
+                    v-slot="{ navigate }"
+                >
                     <li
                         class="sidebar__item"
-                        :class="{ 'sidebar__item--active': isActive(['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']) }"
+                        :class="{ 'sidebar__item--active': isActive(item.activePaths) }"
                         @click="navigate"
                         role="link"
-                        title="Focus Air"
+                        :title="item.label"
                     >
                         <div class="sidebar__icon-wrap">
-                            <img src="/media/assets/ui/side-menu/3.png" alt="Air Freight" />
+                            <b-icon 
+                                :icon="item.icon" 
+                                font-scale="1.8" 
+                                :style="{ color: isActive(item.activePaths) ? '#355594' : '#64748B' }"
+                                class="nav-icon"
+                            ></b-icon>
                         </div>
                     </li>
                 </router-link>
-
-                <!-- Message Log -->
-                <router-link to="/message-log" custom v-slot="{ navigate }">
-                    <li
-                        class="sidebar__item"
-                        :class="{ 'sidebar__item--active': isActive('/message-log') }"
-                        @click="navigate"
-                        role="link"
-                        title="Message Log"
-                    >
-                        <div class="sidebar__icon-wrap">
-                            <img src="/media/assets/ui/side-menu/4.png" alt="Message Log" />
-                        </div>
-                    </li>
-                </router-link>
-
 
                 <!-- Bottom branding -->
-                <li class="sidebar__branding">
+                <li v-if="!collapsed" class="sidebar__branding">
                     <span class="sidebar__branding-text">FOCUS AIR</span>
                 </li>
             </ul>
@@ -44,7 +38,7 @@
         <!-- Mobile Dropdown Sidebar -->
         <div class="sidebar-mobile d-lg-none" v-click-outside="closeMobileMenu">
             <div class="mobile-nav-trigger" @click="toggleMobileMenu">
-                <img :src="activeItem.icon" class="mobile-active-icon" />
+                <b-icon :icon="activeItem.icon" class="mobile-active-icon text-primary font-scale-1.3"></b-icon>
                 <span class="mobile-active-label">{{ activeItem.label }}</span>
                 <b-icon icon="chevron-down" class="ml-auto chevron-icon" :class="{ 'rotated': isMobileMenuOpen }"></b-icon>
             </div>
@@ -57,7 +51,7 @@
                         :class="{ active: isActive(item.activePaths) }"
                         @click="navigateMobile(item.path)"
                     >
-                        <img :src="item.icon" class="opt-icon" />
+                        <b-icon :icon="item.icon" class="opt-icon mr-3" :style="{ color: isActive(item.activePaths) ? '#355594' : '#64748B' }"></b-icon>
                         <span class="opt-label">{{ item.label }}</span>
                     </div>
                 </div>
@@ -69,27 +63,83 @@
 <script>
 export default {
     name: "SideBar",
+    props: {
+        collapsed: {
+            type: Boolean,
+            default: false
+        }
+    },
     data() {
         return {
             primaryText: "/media/assets/ui/side-menu/H1-primary-text.svg",
-            isMobileMenuOpen: false,
-            menuItems: [
-                { 
-                    label: "Focus Air", 
-                    path: "/focus-air", 
-                    icon: "/media/assets/ui/side-menu/3.png", 
-                    activePaths: ['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']
-                },
-                { 
-                    label: "Message Log", 
-                    path: "/message-log", 
-                    icon: "/media/assets/ui/side-menu/4.png", 
-                    activePaths: ['/message-log']
-                },
-            ]
+            isMobileMenuOpen: false
         };
     },
     computed: {
+        currentUser() {
+            return this.$store.getters.currentUser;
+        },
+        companyTier() {
+            return this.currentUser && this.currentUser.company ? this.currentUser.company.tier : 'viper_core';
+        },
+        menuItems() {
+            const list = [
+                {
+                    label: "Mail/Inbox",
+                    path: "/inbox",
+                    icon: "mailbox",
+                    activePaths: ['/inbox']
+                },
+                {
+                    label: "Kanban Board",
+                    path: "/kanban",
+                    icon: "grid-3x3-gap",
+                    activePaths: ['/kanban']
+                },
+                { 
+                    label: "Focus Air Export", 
+                    path: "/focus-air", 
+                    icon: "file-earmark-text", 
+                    activePaths: ['/focus-air', '/consolidation', '/edit-airway-bill']
+                },
+                { 
+                    label: "Focus Air Import", 
+                    path: "/focus-air-import", 
+                    icon: "file-earmark-check", 
+                    activePaths: ['/focus-air-import']
+                },
+            ];
+
+            // Hide Financials for viper_core and viper_tactical (only show for viper_command)
+            if (this.companyTier === 'viper_command') {
+                list.push({
+                    label: "Financials",
+                    path: "/financials",
+                    icon: "cash",
+                    activePaths: ['/financials']
+                });
+            }
+
+            // Hide Analytics for operations & pricing designations
+            const isExcludedRole = this.currentUser && (this.currentUser.designation === 'operations' || this.currentUser.designation === 'pricing');
+            if (!isExcludedRole) {
+                list.push({
+                    label: "Analytics",
+                    path: "/analytics",
+                    icon: "bar-chart",
+                    activePaths: ['/analytics']
+                });
+            }
+
+            list.push({
+                label: "Settings",
+                path: "/settings",
+                icon: "gear",
+                activePaths: ['/settings']
+            });
+
+            return list;
+        },
         activeItem() {
             return this.menuItems.find(item => this.isActive(item.activePaths)) || this.menuItems[0];
         }
@@ -134,12 +184,19 @@ export default {
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.sidebar.sidebar-mini {
+    min-width: 60px;
+    width: 60px;
+    margin-right: 15px;
 }
 
 .sidebar__list {
     list-style: none;
     margin: 0;
-    padding: 20px 0;
+    padding: 24px 0;
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, 0.7);
@@ -151,7 +208,7 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     overflow: hidden;
     box-sizing: border-box;
 }
@@ -161,7 +218,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px 0;
+    padding: 14px 0;
     cursor: pointer;
     outline: none;
     -webkit-tap-highlight-color: transparent;
@@ -176,31 +233,24 @@ export default {
     align-items: center;
     justify-content: center;
     width: 100%;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s ease;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .sidebar__item:hover .sidebar__icon-wrap {
-    transform: scale(1.15);
+    transform: scale(1.2);
 }
 
 .sidebar__item--active {
-    background: linear-gradient(90deg, rgba(53, 85, 148, 0.15) 0%, rgba(53, 85, 148, 0.05) 100%);
+    background: linear-gradient(90deg, rgba(53, 85, 148, 0.12) 0%, rgba(53, 85, 148, 0.03) 100%);
     border-right: 3px solid #355594;
     transition: all 0.3s ease;
-}
-
-.sidebar__icon-wrap img {
-    width: 32px;
-    height: 32px;
-    display: block;
-    object-fit: contain;
 }
 
 .sidebar__branding {
     margin-top: auto;
     display: flex;
     justify-content: center;
-    padding: 24px 0 20px;
+    padding: 24px 0 10px;
 }
 
 .sidebar__branding-text {
@@ -209,7 +259,7 @@ export default {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
     letter-spacing: 0.03em;
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
     color: #355594;
     white-space: nowrap;
@@ -252,10 +302,7 @@ export default {
 }
 
 .mobile-active-icon {
-    width: 28px;
-    height: 28px;
     margin-right: 12px;
-    object-fit: contain;
     flex-shrink: 0;
 }
 
@@ -295,10 +342,7 @@ export default {
 }
 
 .opt-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 14px;
-    object-fit: contain;
+    font-size: 1.25rem;
     flex-shrink: 0;
 }
 

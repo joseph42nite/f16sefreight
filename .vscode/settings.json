@@ -4,5 +4,7 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/python",
         "${workspaceFolder}/python/venv/lib/python3.10/site-packages"
-    ]
+    ],
+    "workbench.colorTheme": "Quiet Light",
+    "workbench.preferredDarkColorTheme": "Abyss"
 }

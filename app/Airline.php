@@ -13,5 +13,6 @@ class Airline extends Model
         'code',
         'prefix',
         'country',
+        'email_domain',
     ];
 }

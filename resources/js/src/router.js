@@ -110,8 +110,44 @@ export default new Router({
           component: () => import("@/view/pages/public/PasswordForgotForm"),
           meta: { logo: 'blue' }
         },
+        {
+          path: '/company-selection',
+          name: "CompanySelection",
+          component: () => import("@/view/pages/public/CompanySelection"),
+          meta: { logo: 'blue' }
+        },
 
         // User Dashboard Pages
+        {
+          name: "Mail/Inbox",
+          path: "inbox",
+          component: () => import("@/view/pages/dashboard/JobInbox"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Kanban Board",
+          path: "kanban",
+          component: () => import("@/view/pages/dashboard/KanbanBoard"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Financials",
+          path: "financials",
+          component: () => import("@/view/pages/dashboard/Financials"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Analytics",
+          path: "analytics",
+          component: () => import("@/view/pages/dashboard/AnalyticsDashboard"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Settings",
+          path: "settings",
+          component: () => import("@/view/pages/dashboard/Settings"),
+          meta: { userType: 'user' }
+        },
         {
           name: "Focus Air",
           path: "focus-air",
@@ -154,6 +190,30 @@ export default new Router({
           component: () => import("@/view/pages/dashboard/XmlView"),
           meta: { userType: 'user' }
         },
+        {
+          name: "Focus Sea Master",
+          path: "focus-sea-master",
+          component: () => import("@/view/pages/dashboard/FocusSeaMaster"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Focus Sea House",
+          path: "focus-sea-house",
+          component: () => import("@/view/pages/dashboard/FocusSeaHouse"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Focus Sea Consol",
+          path: "focus-sea-consol",
+          component: () => import("@/view/pages/dashboard/FocusSeaConsol"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Focus Air Import",
+          path: "focus-air-import",
+          component: () => import("@/view/pages/dashboard/FocusAirImport"),
+          meta: { userType: 'user' }
+        },
       ]
     },
 
@@ -162,6 +222,12 @@ export default new Router({
       path: "/superadmin/",
       component: () => import("@/view/layouts/admin/Layout"),
       children: [
+        {
+          path: "boss-dashboard",
+          name: "superadmin-boss-dashboard",
+          component: () => import("@/view/pages/admin/BossDashboard.vue"),
+          meta: { userType: 'superadmin' }
+        },
         {
           path: "all-users",
           name: "superadmin-allusers",
@@ -243,6 +309,12 @@ export default new Router({
           path: "edit-template/:key?",
           name: "superadmin-edittemplate",
           component: () => import("@/view/pages/admin/EditSystemTemplate.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "client-awb-tracking",
+          name: "superadmin-client-awb-tracking",
+          component: () => import("@/view/pages/admin/ClientAwbTracking.vue"),
           meta: { userType: 'superadmin' }
         },
       ]

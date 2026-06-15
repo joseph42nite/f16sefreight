@@ -26,6 +26,13 @@ use App\Http\Controllers\Generators\GenerateAwbPdfController;
 use App\Http\Controllers\Generators\GenerateHawbPdfController;
 use App\Http\Controllers\Generators\GenerateConsolidationPdfController;
 use App\Http\Controllers\Admin\BlogController;
+use App\Http\Controllers\Logistics\MailboxOAuthController;
+use App\Http\Controllers\Logistics\EmailInboxController;
+use App\Http\Controllers\Logistics\InvoiceController;
+use App\Http\Controllers\Logistics\PurchaseVoucherController;
+use App\Http\Controllers\Logistics\ReconciliationController;
+use App\Http\Controllers\Logistics\FinancialStatementsController;
+
 
 
 use Illuminate\Http\Request;
@@ -109,11 +116,72 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
 
     //File Upload API
-    Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1');
+    Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware(['tier', 'throttle:60,1']);
     Route::get('/ocr-status/{jobId}', [OcrController::class, 'status']);
     Route::get('/ocr-history', [OcrController::class, 'history']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
     Route::get('/company-templates', [UserController::class, 'getCompanyTemplates']);
+    
+    // Mailbox Connections
+    Route::post('/mailbox-connections/connect', [MailboxOAuthController::class, 'connect'])->middleware('tier:viper_tactical,viper_command');
+    Route::get('/mailbox-connections', [MailboxOAuthController::class, 'index'])->middleware('tier:viper_tactical,viper_command');
+    Route::delete('/mailbox-connections/{id}', [MailboxOAuthController::class, 'disconnect'])->middleware('tier:viper_tactical,viper_command');
+
+    // Email Inbox Workspace
+    Route::group(['middleware' => 'tier:viper_tactical,viper_command'], function () {
+        Route::get('/inbox/folders', [EmailInboxController::class, 'getFolders']);
+        Route::get('/inbox/operators', [EmailInboxController::class, 'getOperators']);
+        Route::get('/inbox/threads', [EmailInboxController::class, 'getThreads']);
+        Route::get('/inbox/threads/{thread_key}', [EmailInboxController::class, 'getThreadDetails']);
+        Route::post('/inbox/threads/{thread_key}/assign', [EmailInboxController::class, 'assignOperator']);
+        Route::post('/inbox/threads/{thread_key}/reply', [EmailInboxController::class, 'sendReply']);
+        Route::post('/inbox/threads/{thread_key}/triage', [EmailInboxController::class, 'triageThread']);
+        Route::post('/inbox/threads/{thread_key}/confirm', [EmailInboxController::class, 'confirmShipment']);
+        Route::post('/inbox/threads/{thread_key}/lost', [EmailInboxController::class, 'markLost']);
+        Route::get('/inbox/staff-workloads', [EmailInboxController::class, 'getStaffWorkloads']);
+        Route::get('/inbox/active-jobs', [EmailInboxController::class, 'getActiveJobs']);
+        Route::get('/inbox/jobs/{job_id}/cost-sheet', [EmailInboxController::class, 'getJobCostSheet']);
+        Route::post('/inbox/jobs/{job_id}/cost-sheet', [EmailInboxController::class, 'saveJobCostSheet']);
+        Route::post('/inbox/jobs/{job_id}/update-status', [EmailInboxController::class, 'updateJobStatus']);
+        Route::post('/inbox/threads/{master_id}/link-hbl', [EmailInboxController::class, 'linkHblToMbl']);
+
+        // Air Import Shipments Backend APIs
+        Route::post('/import-shipments/{id}/send-arrival-notice', [\App\Http\Controllers\Logistics\ImportShipmentController::class, 'sendArrivalNotice']);
+        Route::post('/import-shipments/{id}/issue-delivery-order', [\App\Http\Controllers\Logistics\ImportShipmentController::class, 'issueDeliveryOrder']);
+        Route::post('/import-shipments/{id}/submit-cgm', [\App\Http\Controllers\Logistics\ImportShipmentController::class, 'submitCgm']);
+
+        // Analytics Dashboard
+        Route::get('/analytics/funnel', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getFunnelMetrics']);
+        Route::get('/analytics/lost-reasons', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getLostReasons']);
+        Route::get('/analytics/response-times', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getResponseTimes']);
+        Route::get('/analytics/staff-load', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getStaffLoad']);
+        Route::get('/analytics/client-summary', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getClientSummary']);
+    });
+
+    // Financial and Reconciliation Routes
+    Route::get('/invoices', [InvoiceController::class, 'index']);
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
+    Route::post('/invoices', [InvoiceController::class, 'store']);
+    Route::put('/invoices/{id}', [InvoiceController::class, 'update']);
+    Route::post('/invoices/{id}/finalize', [InvoiceController::class, 'finalize']);
+
+    Route::get('/purchase-vouchers', [PurchaseVoucherController::class, 'index']);
+    Route::get('/purchase-vouchers/{id}', [PurchaseVoucherController::class, 'show']);
+    Route::post('/purchase-vouchers', [PurchaseVoucherController::class, 'store']);
+    Route::post('/purchase-vouchers/{id}/finalize', [PurchaseVoucherController::class, 'finalize']);
+
+    Route::get('/reconciliation/cass', [ReconciliationController::class, 'index']);
+    Route::post('/reconciliation/cass/upload', [ReconciliationController::class, 'uploadCASSStatement']);
+    Route::post('/reconciliation/cass/match', [ReconciliationController::class, 'reconcileCASS']);
+
+    Route::get('/reconciliation/bank', [ReconciliationController::class, 'getBankStatements']);
+    Route::post('/reconciliation/bank/poll', [ReconciliationController::class, 'pollBankStatements']);
+    Route::post('/reconciliation/bank/match', [ReconciliationController::class, 'matchBankPayments']);
+    Route::get('/reconciliation/bank/ai-risk', [ReconciliationController::class, 'getAiRiskAnalysis']);
+
+    Route::get('/financial-statements/trial-balance', [FinancialStatementsController::class, 'getTrialBalance']);
+    Route::get('/financial-statements/profit-and-loss', [FinancialStatementsController::class, 'getProfitAndLoss']);
+    Route::get('/financial-statements/balance-sheet', [FinancialStatementsController::class, 'getBalanceSheet']);
 });
 
 // =================superAdmin section==========================
@@ -122,6 +190,7 @@ Route::post('superadmin/register', [SuperAdminController::class, 'register']);
 Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], function () {
     Route::post('logout', [SuperAdminController::class, 'logout']);
     Route::post('verify', [SuperAdminController::class, 'me']);
+    Route::get('/client-awbs', [SuperAdminController::class, 'clientAwbs']);
     Route::put('upadte-detail', [SuperAdminController::class, 'update']);
     Route::put('update-password', [SuperAdminController::class, 'update_password']);
     //user related work by admin
@@ -158,6 +227,14 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-blog/{id}', [BlogController::class, 'update']);
     Route::get('/all-blogs-internal', [BlogController::class, 'index']);
     Route::delete('/delete-blog/{id}', [BlogController::class, 'destroy']);
+
+    // Boss Dashboard Analytics
+    Route::get('/analytics/funnel', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getFunnelMetrics']);
+    Route::get('/analytics/weekly-brief', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getWeeklyBrief']);
+    Route::get('/analytics/sales-targets', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getSalesTargets']);
+    Route::post('/analytics/sales-targets', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'saveSalesTarget']);
+    Route::get('/analytics/staff-load', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getStaffLoad']);
+    Route::get('/analytics/cash-flow-risk', [ReconciliationController::class, 'getAiRiskAnalysis']);
 });
 
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);
@@ -169,6 +246,11 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/contact', [ContactController::class, 'store']);
 Route::get('/all-contacts', [ContactController::class, 'index']);
 Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
+
+Route::get('/ports', [UserController::class, 'getPorts']);
+Route::post('/register-onboarding', [UserController::class, 'registerOnboarding']);
+Route::get('/companies', [UserController::class, 'getCompaniesPublic']);
+Route::post('/set-session-context', [UserController::class, 'setSessionContext']);
 
 //gln response url
 Route::post('/gln-response', [GLNResponseController::class, 'store']);

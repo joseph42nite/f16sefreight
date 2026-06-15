@@ -13,9 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('saved_addresses', function (Blueprint $table) {
-            $table->integer('agent_id')->nullable()->after('user_id');
-        });
+        if (!Schema::hasColumn('saved_addresses', 'agent_id')) {
+            Schema::table('saved_addresses', function (Blueprint $table) {
+                $table->integer('agent_id')->nullable()->after('user_id');
+            });
+        }
     }
 
     /**

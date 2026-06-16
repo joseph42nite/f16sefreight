@@ -5,6 +5,126 @@ This document outlines the step-by-step roadmap for upgrading the F16s platform 
 *   **Segment B: Automated Financials & Reconciliation** — Payment tracking, bank statement/CASS reconciliation, ledger accounts, and anonymized AI analysis.
 *   **Segment C: Future Expansion Modules** — Import management and direct carrier/airline bookings integrations.
 
+> [!IMPORTANT]
+> **Implementation Methodology (Small Increments & Testing)**: To maintain the stability of the platform, the code changes for each phase/segment must be kept small and incremental. Verify and check for errors at each step before moving to the next.
+
+
+## 📖 Table of Contents
+
+- [📈 Business Value & Optimization Strategy](#business-value-optimization-strategy)
+  - [💰 Expected Client Financial Savings (Segment A ROI)](#expected-client-financial-savings-segment-a-roi)
+  - [⚡ PDF Parsing Hybrid Engine Strategy](#pdf-parsing-hybrid-engine-strategy)
+- [🗺️ Core Operations OS Roadmap (Segment A)](#core-operations-os-roadmap-segment-a)
+- [🌲 Implementation Tree (Phase-by-Phase Component Roadmap)](#implementation-tree-phase-by-phase-component-roadmap)
+- [🗄️ Database Schema Design (Segment A)](#database-schema-design-segment-a)
+  - [Reused/Modified Existing Tables](#reusedmodified-existing-tables)
+  - [New Segment A Tables to Create](#new-segment-a-tables-to-create)
+  - [Database Views for Analytics](#database-views-for-analytics)
+- [🎖️ Subscription Tier Feature Gates](#subscription-tier-feature-gates)
+  - [Tier definitions:](#tier-definitions)
+  - [Implementation Strategy:](#implementation-strategy)
+- [🌲 Segment A: Component & Function Breakdown](#segment-a-component-function-breakdown)
+  - [Phase 1: Document Processing, Database & AI Ingestion](#phase-1-document-processing-database-ai-ingestion)
+  - [Phase 2: Gmail & Outlook Account Integration](#phase-2-gmail-outlook-account-integration)
+  - [Phase 3: Operations & Pricing Workflows](#phase-3-operations-pricing-workflows)
+  - [Phase 4: Executive dashboards, Target Metrics & Sales AI](#phase-4-executive-dashboards-target-metrics-sales-ai)
+- [🎨 System Mockup: Toggled Drawer Workspace](#system-mockup-toggled-drawer-workspace)
+- [🛠️ Phase 1: Document Processing, Database & AI Ingestion](#phase-1-document-processing-database-ai-ingestion)
+  - [Phase 1a: Complete Database Foundation & Eloquent Models](#phase-1a-complete-database-foundation-eloquent-models)
+  - [Phase 1b: FastAPI Parsing Engine](#phase-1b-fastapi-parsing-engine)
+  - [Phase 1c: Laravel Integration & Vue Ingestion Modal](#phase-1c-laravel-integration-vue-ingestion-modal)
+- [📧 Phase 2: Unified Gmail & Outlook Sync](#phase-2-unified-gmail-outlook-sync)
+  - [2.1 Database & OAuth Schema](#21-database-oauth-schema)
+  - [2.2 Background Polling Service](#22-background-polling-service)
+  - [2.3 The Airline Exclusion Engine](#23-the-airline-exclusion-engine)
+  - [2.4 Global Sidebar & Gmail-Inspired Workspace UI](#24-global-sidebar-gmail-inspired-workspace-ui)
+  - [2.5 Quick Replies](#25-quick-replies)
+  - [2.6 Vue 2 Frontend Drawer Workspace & Split-Pane Column Hiding](#26-vue-2-frontend-drawer-workspace-split-pane-column-hiding)
+- [🗂️ Phase 3: Operations & Pricing Workflows](#phase-3-operations-pricing-workflows)
+  - [3.0 Job Lifecycle & Transition Flow](#30-job-lifecycle-transition-flow)
+  - [3.1 Kanban Board (OPS View)](#31-kanban-board-ops-view)
+  - [3.2 Pricing / Triage Dashboard](#32-pricing-triage-dashboard)
+- [📊 Phase 4: Executive Sales & Admin Dashboard](#phase-4-executive-sales-admin-dashboard)
+  - [4.1 Aggregations & Status Reporting (DSR/MSR/YSR)](#41-aggregations-status-reporting-dsrmsrysr)
+  - [4.2 Sales Dashboard & AI Client Insights](#42-sales-dashboard-ai-client-insights)
+  - [4.3 Boss / Director Dashboard](#43-boss-director-dashboard)
+  - [B.1 Accounts Database Schema & Isolation](#b1-accounts-database-schema-isolation)
+  - [B.2 Bank Statement Ingestion (Plaid / Setu APIs)](#b2-bank-statement-ingestion-plaid-setu-apis)
+  - [B.3 Automated Payment Reconciliation (Tallying Matching Engine)](#b3-automated-payment-reconciliation-tallying-matching-engine)
+  - [B.4 Privacy-Masked AI Analytics (Anonymization Engine)](#b4-privacy-masked-ai-analytics-anonymization-engine)
+  - [B.5 Financial Reports Engine (P&L, Balance Sheet, Trial Balance)](#b5-financial-reports-engine-pl-balance-sheet-trial-balance)
+  - [B.6 Import DO & Airline Cost Auto-Calculation Rules](#b6-import-do-airline-cost-auto-calculation-rules)
+  - [B.7 Decoupled Job Cost Sheet Workflow (Operational vs Financial Data)](#b7-decoupled-job-cost-sheet-workflow-operational-vs-financial-data)
+  - [B.8 Logistics Invoicing, Reporting & Queue Specifications (Sea and Air)](#b8-logistics-invoicing-reporting-queue-specifications-sea-and-air)
+  - [C.1 Air Import Documentation & Transmission](#c1-air-import-documentation-transmission)
+  - [C.2 Direct Carrier & Airline Booking Integration](#c2-direct-carrier-airline-booking-integration)
+- [🌐 Multi-Portal Scope Segregation (Air vs Sea)](#multi-portal-scope-segregation-air-vs-sea)
+  - [1. Pre-Login Company Selection & Unified Authentication](#1-pre-login-company-selection-unified-authentication)
+  - [2. Database Partitioning (`transport_mode`)](#2-database-partitioning-transport_mode)
+  - [3. Contextual Drawer Workspace Forms](#3-contextual-drawer-workspace-forms)
+- [🌊 Focus Sea: Database Schema Definitions](#focus-sea-database-schema-definitions)
+  - [`sea_shipment_details` (Maritime Voyage & Cargo Metadata)](#sea_shipment_details-maritime-voyage-cargo-metadata)
+  - [`job_entities` (Operational Party Contacts)](#job_entities-operational-party-contacts)
+  - [`sea_containers` (ISO Container Grid)](#sea_containers-iso-container-grid)
+  - [`sea_container_items` (Container Stuffing — HBL Allocation)](#sea_container_items-container-stuffing-hbl-allocation)
+  - [`cargo_arrival_notices` (Pre-Arrival Notice Records) (New)](#cargo_arrival_notices-pre-arrival-notice-records-new)
+  - [`ports` (UN/LOCODE Reference Directory)](#ports-unlocode-reference-directory)
+- [🌊 Focus Sea: Export Form Sheet & Architectural Mapping](#focus-sea-export-form-sheet-architectural-mapping)
+  - [1. Architectural Data Flow Overview](#1-architectural-data-flow-overview)
+  - [2. Global Header Fields Architectural Mapping](#2-global-header-fields-architectural-mapping)
+  - [3. Tab-by-Tab Functional & Database Breakdown](#3-tab-by-tab-functional-database-breakdown)
+  - [4. Form Footer State Actions & Commit Workflows](#4-form-footer-state-actions-commit-workflows)
+  - [5. Detailed Seeder & Dropdown Options Specification](#5-detailed-seeder-dropdown-options-specification)
+  - [6. Field Validation & Character Limitations](#6-field-validation-character-limitations)
+  - [7. Cargo Type Conditional UI & Field Locking Logic](#7-cargo-type-conditional-ui-field-locking-logic)
+  - [8. Supplementary Field Locking Rules](#8-supplementary-field-locking-rules)
+  - [9. Header UI Utilities & Session Control](#9-header-ui-utilities-session-control)
+  - [10. Toolbar Utilities & Right-Side Shortcut Controls](#10-toolbar-utilities-right-side-shortcut-controls)
+  - [11. Comprehensive Data Field Matrix](#11-comprehensive-data-field-matrix)
+  - [12. HBL & MBL Data Mapping & Consolidation Workflow](#12-hbl-mbl-data-mapping-consolidation-workflow)
+  - [13. Focus Sea Consolidation Page Design (`FocusSeaConsol.vue`)](#13-focus-sea-consolidation-page-design-focusseaconsolvue)
+- [🌊 Focus Sea: Import Specifications](#focus-sea-import-specifications)
+  - [1. Form Specification: Sea Import Consol](#1-form-specification-sea-import-consol)
+  - [2. Form Specification: Delivery Order [Sea]](#2-form-specification-delivery-order-sea)
+  - [3. Form Specification: CGM Filing (Sea)](#3-form-specification-cgm-filing-sea)
+- [📊 Backend Analytical Tables & Business Intelligence Formulas](#backend-analytical-tables-business-intelligence-formulas)
+  - [1. New Analytical Tables (Backend Reporting Targets)](#1-new-analytical-tables-backend-reporting-targets)
+  - [2. Business Intelligence Formulas (Backend Metrics Engines)](#2-business-intelligence-formulas-backend-metrics-engines)
+  - [3. Business Intelligence Dashboards: Knowing the Business (Sales vs. Admin Roles)](#3-business-intelligence-dashboards-knowing-the-business-sales-vs-admin-roles)
+- [🗺️ Step-by-Step Implementation Roadmap](#step-by-step-implementation-roadmap)
+  - [Phase 1: Core Document Parsing & Frontend Verification Form](#phase-1-core-document-parsing-frontend-verification-form)
+  - [Phase 2: Inbox Sync & Split-Screen Workspace UI](#phase-2-inbox-sync-split-screen-workspace-ui)
+  - [Phase 3: Workflow Automation, Kanban & Job Cost Sheets](#phase-3-workflow-automation-kanban-job-cost-sheets)
+  - [Phase 4: Multi-Portal Access Scoping (Air, Sea)](#phase-4-multi-portal-access-scoping-air-sea)
+  - [Phase 5: Automated Ledgers, CASS Reconciliations & Reports](#phase-5-automated-ledgers-cass-reconciliations-reports)
+- [⚡ Speed & Efficiency Optimization Plan](#speed-efficiency-optimization-plan)
+  - [1. In-Memory PDF Processing (FastAPI)](#1-in-memory-pdf-processing-fastapi)
+  - [2. LLM Prompt Caching (Gemini API)](#2-llm-prompt-caching-gemini-api)
+  - [3. Delta Email Syncing & Lazy-Loading Attachments](#3-delta-email-syncing-lazy-loading-attachments)
+  - [4. Database Indexing & Query Optimizations](#4-database-indexing-query-optimizations)
+  - [5. Eager Loading Optimization (N+1 Query Prevention)](#5-eager-loading-optimization-n1-query-prevention)
+  - [6. Database Partitioning for Large Log & Ledger Tables](#6-database-partitioning-for-large-log-ledger-tables)
+  - [7. Distributed Locks & Asynchronous Queue Workers](#7-distributed-locks-asynchronous-queue-workers)
+- [🔒 Security, Integrity & Infrastructure Strategies](#security-integrity-infrastructure-strategies)
+  - [1. Soft Deletes Policy](#1-soft-deletes-policy)
+  - [2. API Resilience & Gateway Error Handling](#2-api-resilience-gateway-error-handling)
+  - [3. Data Backup, Archival & Retention Strategy](#3-data-backup-archival-retention-strategy)
+  - [4. Invoice Sequence Generation per Billing Type](#4-invoice-sequence-generation-per-billing-type)
+- [📝 Technical Implementation Checklist](#technical-implementation-checklist)
+  - [🏗️ Architectural Prerequisites & Decisions](#architectural-prerequisites-decisions)
+  - [Phase 1a: Complete Database Foundation & Eloquent Models](#phase-1a-complete-database-foundation-eloquent-models)
+  - [Phase 1b: FastAPI Parsing Engine (In-Memory Unstructured Extraction)](#phase-1b-fastapi-parsing-engine-in-memory-unstructured-extraction)
+  - [Phase 1c: Laravel Integration & Vue Ingestion Modal](#phase-1c-laravel-integration-vue-ingestion-modal)
+  - [🧪 Automated Testing Strategy](#automated-testing-strategy)
+
+---
+
+
+
+
+
+
+
 ---
 
 ## 📈 Business Value & Optimization Strategy
@@ -26,7 +146,9 @@ To maximize processing speed and server efficiency under concurrent loads, we im
 
 ```mermaid
 graph TD
-    P1[Phase 1: Document Processing Foundation & AI Extraction] --> P2[Phase 2: Gmail & Outlook OAuth Sync & Drawer Workspace]
+    P1a[Phase 1a: Complete Database Foundation & Eloquent Models] --> P1b[Phase 1b: FastAPI Parsing Engine]
+    P1b --> P1c[Phase 1c: Laravel Integration & Vue Ingestion Modal]
+    P1c --> P2[Phase 2: Gmail & Outlook OAuth Sync & Drawer Workspace]
     P2 --> P3[Phase 3: Role Workflows: OPS & Pricing Kanban]
     P3 --> P4[Phase 4: Executive dashboards, DSR/MSR/YSR, Sales AI]
 ```
@@ -103,7 +225,8 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
 3.  **`agents_info` & `companies` (Existing Tables):**
     *   *Usage:* Tenant management, branch isolation, and customer alignment. All lists, metrics, and actions are filtered by `agent_id` and `company_id`.
     *   *New Columns to Add to `companies`:*
-        *   `tier` (String, default: `'basic'`): Controls feature access levels (`basic`, `professional`, or `enterprise`).
+        *   `tier` (String, default: `'viper_core'`): Controls feature access levels (`basic`, `professional`, or `enterprise`).
+        *   `email_domain` (String, Nullable): The authorized corporate email domain (e.g., `'xyzcompany.com'`) used to restrict OAuth mailbox connections for Tier 2 and Tier 3.
         *   `credit_limit` (Decimal(15,2), default: 0.00): Maximum outstanding receivable balance allowed.
         *   `credit_currency` (String, 3 chars, default: `'INR'`): Currency of the credit limit.
         *   `default_payment_terms` (String, max 20, Nullable): Default billing terms (e.g., `'Net 30'`, `'COD'`).
@@ -112,8 +235,15 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         *   `state_code` (String, max 5, Nullable): GST state code prefix (e.g., `'33-TN'` for Tamil Nadu).
 4.  **`airlines` (Existing Table):**
     *   *Usage:* Used by the exclusion engine to block standard system/airline notice emails.
+5.  **`users` (Existing Table):**
+    *   *Usage:* Stores operational user accounts, roles, and profiles.
+    *   *New Columns to Add:*
+        *   `origin_port_id` (BigInteger, Nullable, FK referencing `ports.id`): Stores the user's designated default origin port (airport or seaport).
+        *   `pima_address` (String, max 20, Nullable): Printer / Messaging Routing Address for SITA/IATA Type B messaging (e.g. `'MAAF16S'`). Configurable by administrative backend when editing user profiles.
 
 ### New Segment A Tables to Create
+
+All core tables (operational, side-details, and financial chart tables) are migrated early during **Phase 1a** to ensure database schema integrity from the start.
 
 1.  **`mailbox_connections`**:
     *   *Purpose:* Manages connected mailboxes (Gmail/Outlook) and their OAuth token state.
@@ -122,14 +252,16 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         *   `user_id` (BigInteger, FK referencing `users.id`): Connects a mailbox connection to a specific operator/user.
         *   `provider` (String): Indicates the email provider (`gmail`, `outlook`).
         *   `email_address` (String, Unique): The synced email address.
-        *   `access_token` (Text): Active OAuth access token.
-        *   `refresh_token` (Text): Refresh token to fetch new access tokens.
+        *   `access_token` (Text): OAuth access token (encrypted at rest).
+        *   `refresh_token` (Text): Refresh token to fetch new access tokens (encrypted at rest).
         *   `expires_at` (Timestamp, Nullable): Expiration time of the current access token.
+        *   `is_active` (Boolean, default: true): Active status flag (gating tier downgrades).
         *   `created_at`, `updated_at` (Timestamps)
 2.  **`inbound_emails`**:
     *   *Purpose:* Local database cache for messages pulled from mail servers, forming the basis of the inbox thread reader.
     *   *Columns:*
         *   `id` (BigInteger, PK, Auto-increment)
+        *   `agent_id` (BigInteger, FK referencing `agents_info.id`): Branch-level isolation.
         *   `mailbox_connection_id` (BigInteger, FK referencing `mailbox_connections.id` on delete cascade)
         *   `message_id` (String, Unique): Unique provider message identifier.
         *   `thread_key` (String, Index): Unique hash matching back-and-forth messages in the same conversation thread.
@@ -137,7 +269,7 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         *   `to` (String): Recipient address.
         *   `subject` (String, Nullable): Email subject.
         *   `body_text` (LongText, Nullable): Plain text email content.
-        *   `body_html` (LongText, Nullable): Rich HTML email content.
+        *   `body_html` (LongText, Nullable): Rich HTML email content (sanitized server-side using HTMLPurifier before storage to prevent stored XSS).
         *   `received_at` (Timestamp): Timestamp when the email was received.
         *   `created_at`, `updated_at` (Timestamps)
 3.  **`email_threads`** (New):
@@ -152,6 +284,8 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         *   `status` (Enum: `'unread'`, `'read'`, `'replied'`, `'archived'`, default: `'unread'`)
         *   `assigned_operator_id` (BigInteger, Nullable, FK referencing `users.id`): Syncs operator queue assignment.
         *   `job_id` (BigInteger, Nullable, FK referencing `jobs.id` on delete set null): Operational link.
+        *   `first_reply_at` (Timestamp, Nullable): Tracks the timestamp of the first outbound email reply sent by staff (immutable once set; protected from updates).
+        *   `first_triage_at` (Timestamp, Nullable): Tracks the timestamp when the email thread was first triaged (assigned an enquiry number) (immutable once set; protected from updates).
         *   `created_at`, `updated_at` (Timestamps)
     *   *Indexes:* Composite index on `(agent_id, status, latest_message_received_at)` to load scoped operator folders in milliseconds.
 4.  **`inbound_attachments`**:
@@ -174,33 +308,78 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         *   `enquiry_no` (String, Unique): Auto-generated unique enquiry number assigned at intake.
             *   *Air Sequence:* `ENQA-26-0001` (Incremented separately from Sea)
             *   *Sea Sequence:* `ENQS-26-0001` (Incremented separately from Air)
-        *   `execution_job_no` (String, Unique, Nullable): Auto-generated unique execution job number assigned only when the shipment is actually confirmed/executed.
+        *   `execution_job_no` (String, Unique, Nullable): Auto-generated unique execution job number assigned only when the shipment is confirmed/executed.
             *   *Air Sequence:* `JOBA-26-0001` (Incremented separately from Sea)
             *   *Sea Sequence:* `JOBS-26-0001` (Incremented separately from Air)
         *   `awb_number` (String, Nullable): Reference to the assigned Air Waybill (for Air) or Bill of Lading (for Sea) identifier.
-        *   `client_id` (BigInteger, Nullable, FK referencing `companies.id`): Canonical billing debtor for this job. Set when Customer entity is selected on the Entity tab.
-        *   `operator_id` (BigInteger, Nullable, FK referencing `users.id` on delete set null): The user (operator) assigned to manage the job.
-        *   `job_owner_id` (BigInteger, Nullable, FK referencing `users.id`): Ownership assignee for visibility filtering.
+        *   `client_id` (BigInteger, Nullable, FK referencing `companies.id`): Canonical billing debtor for this job.
+        *   `operator_id` (BigInteger, Nullable, FK referencing `users.id` on delete set null): The user (operator) assigned to manage the job (enforced at the DB level via a trigger ensuring the user holds an operator/execution role).
+        *   `job_owner_id` (BigInteger, Nullable, FK referencing `users.id`): Ownership assignee for visibility filtering (enforced at the DB level via a trigger ensuring the user holds a sales/agent/owner role).
         *   `doc_user_id` (BigInteger, Nullable, FK referencing `users.id`): Document validation owner.
         *   `planned_clearance_date` (Date, Nullable): Targeted date for customs clearance.
         *   `completed_at` (Timestamp, Nullable): Date/time when the job reached `Completed` status.
-        *   `parent_job_id` (BigInteger, Nullable, FK referencing `jobs.id`, self-referencing): Links House shipments (HBL/HAWB) to their Master (MBL/MAWB) parent for consolidation.
-        *   `is_sub_shipment` (Boolean, default: false): Indicates this is a child House record under a consolidation Master.
-        *   `is_consolidation` (Boolean, default: false): Indicates this is a parent Master record accepting child Houses.
-        *   `consol_type` (Enum: `'agent_consol'`, `'buyers_consol'`, `'direct'`, `'back_to_back'`, `'none'`, Nullable): Governs downstream financial cost splitting.
-        *   `cargo_type` (String, max 20, Nullable): e.g., `'fcl'`, `'lcl'`, `'break_bulk'` (strictly for Sea/Focus Sea) or `'loose'`, `'uld'` (strictly for Air/Focus Air; no container modes like LCL or FCL/HCL apply to Air). Controls UI tab visibility and validation rules.
-        *   `delivery_mode` (Enum: `'fcl'`, `'lcl'`, Nullable): Only applicable when transport_mode = 'sea' (locked conditionally based on cargo_type; not used in Air/Focus Air).
-        *   `booking_thru` (Enum: `'self'`, `'agent'`, Nullable): Dictates commission routing.
-        *   `job_order_no` (String, max 30, Nullable): External booking reference.
-        *   `quotation_no` (String, max 30, Nullable): CRM/Quotation system cross-reference.
-        *   `status` (String): Tracks the active operational stage. Valid values:
-            *   `Intake`: Job created (Enquiry state); no documents uploaded or processed.
-            *   `AI Extraction`: Document upload triggered; file is being sent to the AI.
-            *   `Verification`: Extraction finished; raw JSON is loaded into the form in the side panel for review.
-            *   `Generation`: Operator reviewed and verified details; draft AWB generated.
-            *   `PDF Generated`: The official AWB PDF has been compiled and saved.
-            *   `Completed`: Shipment finalized and dispatched to carrier (Shipment executed state).
+        *   `parent_job_id` (BigInteger, Nullable, FK referencing `jobs.id`, self-referencing): Links House shipments to Master parent.
+        *   `is_sub_shipment` (Boolean, default: false): Indicates child House record under consolidation.
+        *   `is_consolidation` (Boolean, default: false): Indicates parent Master record accepting child Houses.
+        *   `status` (String): Tracks the active operational stage (e.g. `Intake`, `AI Extraction`, `Verification`, `Generation`, `PDF Generated`, `Sent to Airline`, `Airline Confirmed`, `Completed`, `Lost`).
+        *   `lost_reason` (Enum: `'rates_high'`, `'delay_in_response'`, `'client_cancelled'`, `'capacity_issue'`, `'other'`, Nullable): Reason why the enquiry/job was lost.
+        *   `lost_reason_custom` (String, max 255, Nullable): Custom reason details when `lost_reason` is set to `'other'`.
+        *   `lost_at` (Timestamp, Nullable): Timestamp when the job was marked as lost.
         *   `created_at`, `updated_at`, `deleted_at` (Timestamps) — Uses Laravel `SoftDeletes`.
+    *   *Note:* Mode-specific columns like `cargo_type`, `delivery_mode`, `vessel_name`, and `flight_number` are split into polymorphic details tables: `sea_shipment_details` and `air_shipment_details`.
+
+5.  **`sea_shipment_details`** (New):
+    *   *Purpose:* Holds maritime-specific voyage and container details associated with a Job.
+    *   *Columns:*
+        *   `id` (BigInteger, PK, Auto-increment)
+        *   `job_id` (BigInteger, FK referencing `jobs.id` on delete cascade, Unique)
+        *   `consol_type` (Enum: `'agent_consol'`, `'buyers_consol'`, `'direct'`, `'back_to_back'`, `'none'`, Nullable)
+        *   `cargo_type` (String, max 20, Nullable): e.g., `'fcl'`, `'lcl'`, `'break_bulk'`
+        *   `delivery_mode` (Enum: `'fcl'`, `'lcl'`, Nullable)
+        *   `vessel_name` (String, max 100, Nullable)
+        *   `voyage_no` (String, max 30, Nullable)
+        *   `vessel_flag` (String, max 50, Nullable)
+        *   `imo_number` (String, max 7, Nullable)
+        *   `por_code` (String, max 6, Nullable)
+        *   `pol_code` (String, max 6, Nullable)
+        *   `pod_code` (String, max 6, Nullable)
+        *   `del_code` (String, max 6, Nullable)
+        *   `empty_depot` (String, max 100, Nullable)
+        *   `delivery_address` (String, max 500, Nullable)
+        *   `do_given_to` (String, max 100, Nullable)
+        *   `piece_count` (Integer, default: 0)
+        *   `gross_weight` (Decimal(10,3), default: 0.000)
+        *   `net_weight` (Decimal(10,3), default: 0.000)
+        *   `volume_cbm` (Decimal(8,3), default: 0.000)
+        *   `created_at`, `updated_at` (Timestamps)
+
+6.  **`air_shipment_details`** (New):
+    *   *Purpose:* Holds flight and air cargo details associated with a Job.
+    *   *Columns:*
+        *   `id` (BigInteger, PK, Auto-increment)
+        *   `job_id` (BigInteger, FK referencing `jobs.id` on delete cascade, Unique)
+        *   `flight_number` (String, max 20, Nullable)
+        *   `flight_date` (Timestamp, Nullable)
+        *   `carrier_name` (String, max 100, Nullable)
+        *   `pol_code` (String, max 6, Nullable)
+        *   `pod_code` (String, max 6, Nullable)
+        *   `do_given_to` (String, max 100, Nullable)
+        *   `piece_count` (Integer, default: 0)
+        *   `gross_weight` (Decimal(10,3), default: 0.000)
+        *   `chargeable_weight` (Decimal(10,3), default: 0.000)
+        *   `volume_cbm` (Decimal(8,3), default: 0.000)
+        *   `created_at`, `updated_at` (Timestamps)
+
+7.  **`llm_usage_logs`** (New):
+    *   *Purpose:* Records Gemini API request token counts and cost auditing details.
+    *   *Columns:*
+        *   `id` (BigInteger, PK, Auto-increment)
+        *   `job_id` (BigInteger, FK referencing `jobs.id` on delete set null, Nullable)
+        *   `model` (String, max 50)
+        *   `tokens_in` (Integer, default: 0)
+        *   `tokens_out` (Integer, default: 0)
+        *   `cost_usd` (Decimal(8,6), default: 0.000000)
+        *   `created_at`, `updated_at` (Timestamps)
 6.  **`chart_of_accounts`** (New):
     *   *Purpose:* Master table defining the chart of accounts for double-entry bookkeeping. All `account_code` references in `accounts_ledger_entries` are validated against this table.
     *   *Columns:*
@@ -226,7 +405,7 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         *   `closed_at` (Timestamp, Nullable)
         *   `created_at`, `updated_at` (Timestamps)
 8.  **`audit_logs`** (New):
-    *   *Purpose:* Immutable activity trail for compliance tracking. Records all create/update/delete operations on business-critical models.
+    *   *Purpose:* Immutable activity trail for compliance tracking (enforced append-only via a database-level `BEFORE UPDATE OR DELETE` trigger that halts operations). Records all create/update/delete operations on business-critical models.
     *   *Columns:*
         *   `id` (BigInteger, PK, Auto-increment)
         *   `agent_id` (BigInteger, FK referencing `agents_info.id`)
@@ -284,23 +463,24 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
 To monetize the platform and segregate capabilities based on the customer's selected tier, features will be restricted at the Database, Middleware, Background Job, and Frontend layers.
 
 ### Tier definitions:
-*   **Tier 1 (`basic`):** Access to local coordinate-based PDF extraction (`pdfplumber` templates). No AI parsing, no email integrations, and no automated financials.
-*   **Tier 2 (`professional`):** Access to AI-powered unstructured parsing (Gemini/PyMuPDF) via the upload button + Unified Gmail/Outlook email sync, automated operational workflows, and basic analytics widgets.
-*   **Tier 3 (`enterprise`):** Access to all Tier 2 features + accounts tracking, bank statement reconciliation ledger, privacy-masked AI cashflow analytics, and Director/Boss dashboards.
+*   **Tier 1 (`viper_core`):** Access to local coordinate-based PDF extraction (`pdfplumber` templates). No AI parsing, no email integrations, and no automated financials.
+*   **Tier 2 (`viper_tactical`):** Access to AI-powered unstructured parsing (Gemini/PyMuPDF) via the upload button + Unified Gmail/Outlook email sync, automated operational workflows, and basic analytics widgets.
+*   **Tier 3 (`viper_command`):** Access to all Tier 2 features + accounts tracking, bank statement reconciliation ledger, privacy-masked AI cashflow analytics, and Director/Boss dashboards.
 
 ### Implementation Strategy:
 
-1.  **Database Migration:**
-    *   Add a `tier` column (String, default: `basic`) to the `companies` table.
+1.  **Database Migration & Configuration:**
+    *   Add a `tier` column (String, default: `viper_core`) and `email_domain` column (String, Nullable) to the `companies` table.
+    *   In the F16s Admin Portal, provide administrative options during company creation and editing to select the subscription tier and register the corporate email domain.
 2.  **Laravel Route Middleware (`CheckCompanyTier`):**
     *   Protects APIs from unauthorized cross-tier calls. Registered in `app/Http/Kernel.php` as `'tier'`.
     *   *Examples:*
-        *   `Route::group(['middleware' => 'tier:professional,enterprise'], ...)` handles mailbox sync and AI extraction endpoints.
-        *   `Route::group(['middleware' => 'tier:enterprise'], ...)` handles Plaid reconciliation and accounts ledger endpoints.
+        *   `Route::group(['middleware' => 'tier:viper_tactical,viper_command'], ...)` handles mailbox sync and AI extraction endpoints.
+        *   `Route::group(['middleware' => 'tier:viper_command'], ...)` handles Plaid reconciliation and accounts ledger endpoints.
 3.  **Background Job Sync Filtering:**
-    *   The `mailboxes:poll` daemon only queries refresh tokens and pulls new emails for connections whose company is flagged as `professional` or `enterprise`.
+    *   The `mailboxes:poll` daemon only queries refresh tokens and pulls new emails for connections whose company is flagged as `viper_tactical` or `viper_command`.
 4.  **OCR Processing Branching (`ProcessPdfOcrJob.php`):**
-    *   Before sending the file to the FastAPI model parser, the job checks the uploading user's company tier. If it is `basic`, it restricts extraction strictly to `pdfplumber` cell coordinates. If `professional` or `enterprise`, the full Gemini unstructured prompt extraction is unlocked.
+    *   Before processing any uploaded document, the job executes strict server-side MIME-type sniffing using PHP's `finfo_file` (not just checking file extensions) to reject HTML, SVG, or other non-supported formats. It then checks the uploading user's company tier. If it is `viper_core`, it restricts extraction strictly to template-based `pdfplumber` cell coordinates. If `viper_tactical` or `viper_command`, the full Gemini unstructured prompt extraction is unlocked.
 5.  **Frontend State & UI Teasers:**
     *   The user object returned on login (`currentUser`) includes `user.company.tier`.
     *   The Vue routing system blocks the `/inbox` (Unified Sync) and `/accounts` (Reconciliation) pages for disallowed tiers, rendering high-conversion "Upgrade Required" teaser panels instead.
@@ -311,19 +491,28 @@ To monetize the platform and segregate capabilities based on the customer's sele
 
 Below is the functional specification for each database schema, backend service, and frontend view introduced in Segment A.
 
-### Phase 1: Document Processing Foundation (Core MVP)
+### Phase 1: Document Processing, Database & AI Ingestion
+
+#### Phase 1a: Complete Database Foundation & Eloquent Models
+*   **Schema Migration:** Migrates modified `companies` and `waybill` schemas, new operational structures (`jobs`, `sea_shipment_details`, `air_shipment_details`, `llm_usage_logs`), mailbox queues, and all Phase 6 accounting/ledger views early.
+*   **Eloquent Models:** Creates PSR-4 standard models mapped directly in the `app/` root namespace (e.g., `Job`, `SeaShipmentDetail`, `AirShipmentDetail`, `LlmUsageLog`).
+*   **Job Observers:** Tracks milestone timings automatically via the `JobObserver`.
+
+#### Phase 1b: FastAPI Parsing Engine (In-Memory Unstructured Extraction)
 *   **FastAPI `/extract-unstructured` Endpoint (`ocr_server.py`):**
     *   *Purpose:* Ingests uploaded PDF/image documents (Invoices and Packing Lists).
-    *   *Function:* Uses `PyMuPDF` (`fitz`) to extract raw text blocks instantly. Feeds the extracted text into Gemini/OpenAI with a structured prompt layout to map metadata into JSON. Falls back to a vision LLM for scanned or photographed documents.
+    *   *Function:* Uses `PyMuPDF` (`fitz`) to extract raw text blocks instantly. Feeds the extracted text into Gemini/OpenAI with a structured prompt layout to map metadata into JSON, returning confidence scores (high/medium/low) for each parsed field. Falls back to a vision LLM for scanned or photographed documents.
 *   **FastAPI Pydantic Schemas:**
     *   *Purpose:* Declares data schemas for Invoices and Packing Lists.
-    *   *Function:* Validates the structure and data types of LLM outputs before returning them to Laravel, ensuring consistency in field mapping.
+    *   *Function:* Validates the structure, data types, and confidence metadata of LLM outputs before returning them to Laravel, ensuring consistency in field mapping.
+
+#### Phase 1c: Laravel Integration & Vue Ingestion Modal
 *   **Database Schema Reuse (`pdf_processing_jobs`):**
     *   *Purpose:* Reuses existing schema to store unstructured document categories.
     *   *Function:* Utilizes `document_type` to store document categories (MAWB, HAWB, Invoice, Packing List) and the `extracted_data` JSON column to cache parsed drafts before final generation.
 *   **`ProcessPdfOcrJob.php`:**
     *   *Purpose:* Handles document extraction in Laravel's background queue.
-    *   *Function:* Checks the company's tier before processing: If the company is Tier 1 (Basic), it bypasses the LLM and runs the fast coordinate-based extraction via `pdfplumber`. For Tier 2 & 3, it dispatches to the FastAPI OCR server for PyMuPDF + Gemini AI extraction. Saves the structured JSON results inside `pdf_processing_jobs.extracted_data` and dispatches real-time WebSocket alerts to the frontend upon completion.
+    *   *Function:* Checks the company's tier before processing: If the company is Tier 1 (Viper Core), it bypasses the LLM and runs the fast coordinate-based extraction via `pdfplumber`. For Tier 2 & 3, it validates the file via strict server-side MIME sniffing (rejecting HTML, SVG, etc.) and dispatches to the FastAPI OCR server for PyMuPDF + Gemini AI extraction. Saves the structured JSON results (including confidence metadata) inside `pdf_processing_jobs.extracted_data` and dispatches real-time WebSocket alerts to the frontend upon completion. The Vue frontend workspace automatically highlights medium/low confidence fields in orange to force operator manual review. Calculates actual tokens utilized and logs cost and metadata into the `llm_usage_logs` table.
 *   **F16s Admin Portal - Client AWB Tracking Tab:**
     *   *Purpose:* Provides global oversight of processed Air Waybills for administrative staff.
     *   *Function:* A dedicated UI tab in the admin dashboard to list all extracted/processed client AWBs. Includes date range filters (From/Till) and a data extraction/export button (e.g., CSV/Excel).
@@ -341,7 +530,7 @@ Below is the functional specification for each database schema, backend service,
     *   *Function:* Runs Regex subject-matching and checks sender domains against an airline exclusion blocklist. Uses a cheap LLM call to classify ambiguous mail as either an automated system notification (ignored) or a customer inquiry (triaged).
 *   **OAuth Controllers:**
     *   *Purpose:* Handles secure mailbox registration.
-    *   *Function:* Manages OAuth redirect endpoints, exchange processes for code tokens, and connection validation scopes.
+    *   *Function:* Manages OAuth redirect endpoints, exchange processes for code tokens, and connection validation scopes. For Tier 2 and Tier 3 companies, the controllers strictly enforce that the mailbox email address being connected contains the registered corporate email domain suffix (e.g. `@xyzcompany.com`) configured for the company. Connection is aborted with an error if the domains do not match.
 *   **`MailboxSettings.vue`:**
     *   *Purpose:* Settings UI for connecting mailboxes.
     *   *Function:* Displays connected mailboxes, OAuth connection buttons for Google/Microsoft, and connection status alerts.
@@ -411,25 +600,25 @@ Below is a visual mockup of the drawer workspace, showing the email thread in th
 
 ---
 
-## 🛠️ Phase 1: Document Processing Foundation (Core MVP)
-*Goal: Build the FastAPI AI extraction engine and Laravel background queue processing endpoints. The system parses uploaded files on-demand directly from the Vue form upload modal inside the split workspace drawer.*
+## 🛠️ Phase 1: Document Processing, Database & AI Ingestion
+*Goal: Build the multi-phased database schemas (both operational and financial), isolate flight/voyage specifics, establish model mappings, and run the FastAPI OCR engine in isolation before integration.*
 
-### 1.1 Python FastAPI Upgrade (`python/`)
-*   Add **PyMuPDF (`fitz`)** as a dependency in `requirements.txt` to extract raw text blocks from digital PDFs instantly.
-*   Modify [ocr_server.py](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/python/ocr_server.py) to expose a new endpoint `/extract-unstructured`.
-*   Implement a **Pydantic Schema** (`InvoicePackingSchema`) outlining every database-friendly field for Invoices and Packing Lists.
-*   Set up a **Gemini/OpenAI API Client** within Python to handle unstructured extraction in a single AI call with prompt caching.
-*   Add a visual OCR fallback route (using a multimodal vision LLM) to process scanned PDFs or photos of documents.
+### Phase 1a: Complete Database Foundation & Eloquent Models
+*   **Database Schema Ingestion:** Run migrations for `jobs`, `sea_shipment_details`, `air_shipment_details`, `llm_usage_logs`, mailbox sync, and all accounts/financial ledgers early.
+*   **Eloquent Model Scaffolding:** Create PSR-4 compliant Eloquent models directly in the `app/` root folder matching the namespace of the existing project.
+*   **Sequence counters:** Set up `EnquirySequenceService` with database row-level `FOR UPDATE` locking and caching. This service must act as the single, centralized transaction path for all sequence generation across the application to prevent duplicates/gaps (enforced and verified via parallel-process concurrency testing).
 
-### 1.2 Laravel Document Processing & Persistence
-*   Extend the route `POST /api/user/upload-awb-file` which dispatches to [ProcessPdfOcrJob.php](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/app/Jobs/ProcessPdfOcrJob.php).
-*   FastAPI processes the document using the high-speed `PyMuPDF` + Gemini pipeline (utilizing prompt caching for sub-2s latency).
-*   Laravel receives the returned structured JSON and **saves it directly in the backend database** under `pdf_processing_jobs.extracted_data`.
-*   The Vue frontend (using the existing `OcrUploadModal.vue` and `processExtractedData` handlers) polls for status completion, retrieves the saved JSON from the database, and maps the keys directly to the active form input fields in the workspace panel in real-time. Validation highlights (e.g. invalid IATA codes) display in orange immediately.
+### Phase 1b: FastAPI Parsing Engine
+*   **Dependency Addition:** Add `PyMuPDF` and `google-generativeai` package versions in python requirements.
+*   **Pydantic Schema Validation:** Declare structured schemas (`schemas.py`) for Invoices and Packing Lists.
+*   **In-Memory PDF Parsing:** Implement the `/extract-unstructured` endpoint in [ocr_server.py](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/python/ocr_server.py) utilizing Gemini API prompts.
 
-### 1.3 F16s Admin AWB Tracking Module
+### Phase 1c: Laravel Integration & Vue Ingestion Modal
+*   **Tier Check Middleware:** Add Route middleware (`CheckCompanyTier`) blocking unstructured APIs on Tier 1 (Viper Core) companies.
+*   **ProcessPdfOcrJob.php Routing:** Add tier-based extraction branching and log actual input/output token cost in `llm_usage_logs`.
+*   **Vue Workspace dropzone:** Mount the file dropzone in the workspace drawer for uploading unstructured invoices and packing lists.
 *   **Admin UI Tab:** Create a new Vue component in the F16s Admin Portal dedicated to tracking client AWBs.
-*   **Filtering & Export:** Implement server-side filtering by date range (`from_date` / `till_date`) and add an "Export" functionality to extract the AWB logs to CSV/Excel.
+*   **Filtering & Export:** Implement server-side filtering by date range and add an "Export" functionality to extract the AWB logs to CSV/Excel.
 
 ---
 
@@ -438,6 +627,7 @@ Below is a visual mockup of the drawer workspace, showing the email thread in th
 
 ### 2.1 Database & OAuth Schema
 *   Create `mailbox_connections` table to store `provider` (`gmail`, `outlook`), `email_address`, `access_token`, `refresh_token`, and token expiry dates.
+*   Enforce domain checks: during the OAuth connection flow for Tier 2 and Tier 3 companies, the backend validates that the connected email matches the `@` domain pattern of the company (`email_domain` field) to prevent connecting unauthorized/personal email IDs.
 *   Create `inbound_emails` and `inbound_attachments` tables to serve as our local cache.
 *   Define a unique `thread_key` linking back-and-forth messages into single readable conversations.
 
@@ -452,6 +642,7 @@ Before creating a "Pricing/Operations Job" from a parsed email, run it through t
 1.  **Blocklist Filter:** Check if the sender's domain matches standard airline domains stored in the database.
 2.  **Subject Keywords:** Run regex searches to filter out automated airline notices (e.g., status updates, booking logs, flight changes).
 3.  **LLM Classifier (Fallback):** Run a cheap Gemini Flash check for ambiguous addresses: *"Is this email a freight rate query from a customer or an automated system log? Reply only with 'customer' or 'system'."* If it is a system log, archive it and bypass job creation.
+    *   *LLM API Unavailability Fallback:* If the Gemini API rate limit is hit, or the service is otherwise offline, the thread is gracefully kept in the inbox queue as `unread` and marked `unclassified` for manual operator triage, ensuring no business emails are dropped.
     *   *Cost & Execution Logic:* This classification **only runs once on the first email** of a new thread. It does not run on subsequent replies. At approximately 100 tokens per check, running a lightweight model like Gemini Flash costs less than **$0.10 per 10,000 incoming threads**, making it practically free.
     *   *Backend Workflow & Real-Time Sync:* Once the AI returns a classification (`job`, `airline`, or `clearance`), the **Laravel Background Queue** immediately updates the database. If it's a `job`, it creates a new entry in the `jobs` table. If it's an `airline` or `clearance` log, it updates the thread category and flags it as archived. Laravel then broadcasts a **WebSocket event** (via Laravel Echo/Pusher). The **Vue.js frontend** listens for this event and instantly moves the email into the correct category dropdown or Kanban column in real-time, without requiring the user to refresh the page.
 
@@ -465,7 +656,7 @@ To support global navigation and day-to-day operations, the layout is divided in
         *   `[Kanban Board]` (Icon: `kanban` - routes to the execution/schedule Kanban board)
         *   `[Focus Air]` (Icon: `file-earmark-text` - Standalone Master AWB generation)
         *   `[House Waybill]` (Icon: `file-earmark` - Standalone House AWB generation)
-        *   `[Financials]` (Icon: `cash` - routes to ledger, reconciliation, and reports; hidden on Basic tier)
+        *   `[Financials]` (Icon: `cash` - routes to ledger, reconciliation, and reports; hidden on Viper Core tier)
         *   `[Settings]` (Icon: `gear` - Mailbox OAuth connections and templates configurations)
 *   **Gmail-Inspired Workspace UI (Contextual 3-Column Layout inside Mail/Inbox):**
     *   **Column 1 (Inbox Folders):** Folder navigation (`Inbox`, `Assigned`, `Unassigned`, `Processing`, `Awaiting Client`, `Completed`).
@@ -476,7 +667,8 @@ To support global navigation and day-to-day operations, the layout is divided in
 
 ### 2.5 Quick Replies
 *   When a user clicks `[Send Reply]` in the conversation window, hit `POST /api/jobs/{id}/reply`.
-*   The backend retrieves the credentials for that mailbox, compiles the HTML content, and uses the respective API (Gmail API or Graph API) to send the mail as a reply to the original thread.
+*   The backend performs an explicit Policy authorization check (`$this->authorize('reply', $job)`) to verify that the authenticated operator owns or is authorized to send from the mailbox connected to that job thread.
+*   Once authorized, the backend retrieves the credentials for that mailbox connection, compiles the HTML content, and uses the respective API (Gmail API or Graph API) to send the mail as a reply to the original thread.
 
 ---
 
@@ -533,7 +725,19 @@ To prevent screen clutter on standard monitors when editing documents, the inter
         3.  **`[Verification]` (Draft Stage):** AI extraction is complete. The structured draft JSON payload is saved and awaits verification (Maps to `pdf_processing_jobs.status = 'completed'` and `pdf_processing_jobs.draft_payload` stored).
         4.  **`[Generation]` (Ready to Print):** The operator has reviewed, verified, and saved the draft (Maps to `air_way_bills.status = 'draft'` or `house_way_bills.status = 'draft'`).
         5.  **`[PDF Generated]`:** The PDF document is officially compiled and generated.
-        6.  **`[Completed]` (Dispatched):** The AWB has been sent (triggered when the operator clicks **`[Sent]`**, which updates the existing `air_way_bills.status = 'send'` / `house_way_bills.status = 'send'` and populates the `t_id`, `send_created`, and `send_status` transmission columns).
+        6.  **`[Sent to Airline]`:** The compiled AWB/draft has been transmitted to the carrier/airline via EDI/XML or email.
+        7.  **`[Airline Confirmed]`:** The carrier/airline has officially confirmed booking space/flight details for the AWB.
+        8.  **`[Completed]` (Dispatched):** Shipment finalized and dispatched to carrier (Shipment executed state / cargo departure).
+        9.  **`[Lost]` (Cancelled/Dropped):** The enquiry was marked as lost before confirmation/execution, recording the explicit reason (rates, delay, client, space, etc.).
+3.  **Lost Enquiry State & Drop-off Reason Capture:**
+    *   **Top-Right Trigger:** If the enquiry fails to convert (e.g. client rejects quotes, does not reply, or rate is uncompetitive), the operator clicks the **`[Mark as Lost]`** button next to `[Confirm Shipment]` in the workspace header.
+    *   **Reason Selection Popover:** A compact popover requires selecting the primary reason for loss:
+        *   `Rates High`: Quote rejected due to high pricing.
+        *   `Delay in Response`: Enquiry was lost due to delayed response by internal staff.
+        *   `Client Cancelled`: Client cancelled their shipping requirements entirely.
+        *   `Space/Capacity Issue`: Unable to secure carrier/airline space.
+        *   `Other`: Displays a text box to write a custom reason (saved to `lost_reason_custom`).
+    *   **SLA & Transition Execution:** Submitting the form changes `jobs.status` to `Lost`, saves the reason codes, sets the `lost_at` timestamp, and halts all pending SLA timers for that thread. The card is removed from active Kanban workflow columns and placed into the "Lost/Archived" section for Boss Dashboard aggregations.
 3.  **Role-Based Workspace Permissions:**
     *   **Pricing Staff View:** Pricing managers have dual capabilities. They see the **`[Confirm Shipment]`** trigger in the top-right header (which opens the compact floating popover to allocate AWB, assign task, and set the Planned Clearance Date) **and** have full access to the **`[Analyze PDF / Extract PDF]`** right sidebar drop zone. This allows pricing staff in smaller operations to act as operators and handle document parsing directly.
     *   **Operations (OPS) Staff View:** Operations staff have a restricted, action-oriented workspace:
@@ -572,7 +776,7 @@ To prevent screen clutter on standard monitors when editing documents, the inter
     *   **Pending Jobs Count:** Number of jobs awaiting staff action or customer replies.
     *   **Idle Duration (Pending Age Tracker):** A list of all pending cards showing exactly how long they have been in a pending state (e.g. `Job #10234: Pending for 2h 15m`, `Job #10238: Pending for 45m`) so the pricing manager can immediately see who is stuck or lagging.
 *   **Visual Board Mockup:** Below is a visual representation of the Kanban layout:
-    *   **Basic Kanban Layout:**
+    *   **Viper Core Kanban Layout:**
         ![Freight OS Kanban Mockup](/Users/jomygeorge/.gemini/antigravity-ide/brain/a3b44097-17aa-4ad3-ad33-c4b8023da6b2/freight_os_kanban_view_1780996594858.png)
     *   **Active Cargo Tracking & Staff Load Filters View:**
         ![Freight OS Kanban Tracking Mockup](/Users/jomygeorge/.gemini/antigravity-ide/brain/a3b44097-17aa-4ad3-ad33-c4b8023da6b2/freight_os_kanban_tracking_view_1780996896520.png)
@@ -622,7 +826,7 @@ To prevent screen clutter on standard monitors when editing documents, the inter
 ---
 
 # 💰 Segment B: Automated Financials & Statement Reconciliation
-*Goal: Build an independent accounting tracking framework that links sent Air Waybills (AWBs), imports, Delivery Orders (DOs), and local services with unique job numbers, reconciles bank statements via Plaid/Yodlee APIs, and runs privacy-masked AI cashflow analytics.*
+*Goal: Build an independent accounting tracking framework that links sent Air Waybills (AWBs), imports, Delivery Orders (DOs), and local services with unique job numbers, reconciles bank statements via Plaid/Setu APIs (keeping other Indian and international alternative services), and runs privacy-masked AI cashflow analytics.*
 
 ### B.1 Accounts Database Schema & Isolation
 
@@ -640,7 +844,12 @@ To handle complex logistics transactions (where one operational job contains bot
     *   `invoice_no` (String, max 30, Unique per agent): Sequential formatted document number.
     *   `document_date` (Date): Issuance date. Validated against `accounting_periods` to block postings in closed months.
     *   `job_id` (BigInteger, FK referencing `jobs.id` on delete cascade): Anchor link to the operational job.
-    *   `client_id` (BigInteger, FK referencing `companies.id`): The client being billed (debtor).
+    *   `client_id` (BigInteger, FK referencing `companies.id`): The entity ID being billed (debtor). Maps to customer, agent, or carrier.
+    *   `billed_party_role` (String, max 20, default: `'client'`): Discriminates role of billed entity. Valid values: `'client'`, `'carrier'`, `'agent'`.
+        *   *Semantic Rules:*
+            *   `type = 'invoice'` → `billed_party_role = 'client'`
+            *   `type = 'brokerage'` → `billed_party_role = 'carrier'` or `'agent'`
+            *   `type = 'consol_invoice'` → `billed_party_role = 'agent'`
     *   `parent_invoice_id` (BigInteger, Nullable, FK referencing `accounts_invoices.id`): Self-referencing link used by Debit/Credit Notes to trace back to the original Invoice.
     *   `currency` (String, 3 chars): Active currency code (e.g. `USD`, `INR`, `EUR`).
     *   `exchange_rate` (Decimal(12,6), default: 1.000000): Conversion factor to base currency.
@@ -655,13 +864,26 @@ To handle complex logistics transactions (where one operational job contains bot
     *   `due_date` (Date)
     *   `created_by` (BigInteger, FK referencing `users.id`): Initiating user.
     *   `created_at`, `updated_at`, `deleted_at` (Timestamps) — Uses Laravel `SoftDeletes`.
-*   *Brokerage-Specific Columns (populated only when `type = 'brokerage'`):*
-    *   `brokerage_basis` (Enum: `'percentage_of_freight'`, `'flat_rate'`, `'per_kg'`, `'per_container'`, Nullable)
-    *   `commission_rate` (Decimal(8,4), Nullable): Percentage or unit rate.
-    *   `base_freight_cost` (Decimal(15,2), Nullable): The freight amount the commission is computed against.
-*   *Consol-Specific Columns (populated only when `type = 'consol_invoice'`):*
-    *   `profit_share_ratio` (Decimal(5,2), Nullable): % share for the agent in a co-loaded consolidation.
-    *   `partner_agent_id` (BigInteger, Nullable, FK referencing `companies.id`): The counterpart co-loading agent.
+*   *Note:* Brokerage-specific and consolidation-specific billing columns are decoupled from the main invoice table into dedicated 1-to-1 extension tables to ensure database normalization and avoid sparse NULLs on high volume transactions:
+
+#### 1a. `accounts_invoice_brokerage_details` (New):
+*   *Purpose:* Extension table to hold carrier/agent brokerage details.
+*   *Columns:*
+    *   `id` (BigInteger, PK, Auto-increment)
+    *   `invoice_id` (BigInteger, FK referencing `accounts_invoices.id` on delete cascade, Unique)
+    *   `brokerage_basis` (Enum: `'percentage_of_freight'`, `'flat_rate'`, `'per_kg'`, `'per_container'`)
+    *   `commission_rate` (Decimal(8,4)): Percentage or unit rate.
+    *   `base_freight_cost` (Decimal(15,2)): The freight amount the commission is computed against.
+    *   `created_at`, `updated_at` (Timestamps)
+
+#### 1b. `accounts_invoice_consol_details` (New):
+*   *Purpose:* Extension table to hold consolidation profit sharing details.
+*   *Columns:*
+    *   `id` (BigInteger, PK, Auto-increment)
+    *   `invoice_id` (BigInteger, FK referencing `accounts_invoices.id` on delete cascade, Unique)
+    *   `profit_share_ratio` (Decimal(5,2)): Percentage share for the agent in a co-loaded consolidation.
+    *   `partner_agent_id` (BigInteger, FK referencing `companies.id`): The counterpart co-loading agent.
+    *   `created_at`, `updated_at` (Timestamps)
 
 #### 2. `accounts_invoice_items` (Invoice Line Items — Sell Rates):
 *   *Purpose:* Details individual service, freight, and administrative charges billed to the client.
@@ -790,10 +1012,10 @@ To handle complex logistics transactions (where one operational job contains bot
 
 ---
 
-### B.2 Bank Statement Ingestion (Plaid API)
-*   **Connector Integration:** Connects with Plaid read-only endpoints.
+### B.2 Bank Statement Ingestion (Plaid / Setu APIs)
+*   **Connector Integration:** Connects with Plaid (international) and Setu (Indian) read-only endpoints, keeping other Indian/international alternatives customizable.
 *   **Polling Frequency:** Laravel scheduler command runs every 3 days, polling new statements and populating the `bank_statements` table:
-    *   **`bank_statements` Table Columns:** `id`, `plaid_transaction_id` (unique), `booking_date`, `value_date`, `amount` (credit/debit), `sender_reference` (memo text), `status` (`unreconciled`, `reconciled`, `flagged`).
+    *   **`bank_statements` Table Columns:** `id`, `plaid_transaction_id` (unique, representing provider transaction ID), `booking_date`, `value_date`, `amount` (credit/debit), `sender_reference` (memo text), `status` (`unreconciled`, `reconciled`, `flagged`).
 
 ---
 
@@ -957,14 +1179,15 @@ erDiagram
 #### 4. Brokerage Invoice
 
 *   **Purpose:** Billed to carriers (shipping lines or airlines) or overseas agents to collect sales commission, booking brokerage, or handling commissions.
-*   **Database Mapping:** Stored in `accounts_invoices` where `type = 'brokerage'`. Uses brokerage-specific columns: `brokerage_basis`, `commission_rate`, and `base_freight_cost` (as defined in B.1).
+*   **Database Mapping:** Stored in `accounts_invoices` where `type = 'brokerage'`. Relational data is linked 1-to-1 in `accounts_invoice_brokerage_details` storing `brokerage_basis`, `commission_rate`, and `base_freight_cost`.
 *   **Eloquent Relationships:**
     *   `BrokerageInvoice` belongsTo `Company` as `carrierAgent` via `client_id` (where the company's role is `'carrier'` or `'agent'`)
     *   `BrokerageInvoice` belongsTo `Job` via `job_id` (links to the master operational carrier booking)
+    *   `BrokerageInvoice` hasOne `AccountsInvoiceBrokerageDetail` as `brokerageDetails` via `invoice_id`
     *   `BrokerageInvoice` hasMany `InvoiceItem` via `invoice_id`
 *   **Validation Rules:**
     *   `client_id` (representing the carrier/agent debtor) is required and must reference a company where `role` matches `'carrier'` or `'agent'`.
-    *   `brokerage_basis` and `commission_rate` are required.
+    *   `brokerageDetails.brokerage_basis` and `brokerageDetails.commission_rate` are required.
     *   `job_id` must represent a valid operational shipment containing a carrier.
 *   **General Ledger Postings (On Finalization):**
     *   *Debit:* Accounts Receivable - Commission Accrued (`1210-Commission-Receivable`) for brokerage `grand_total`.
@@ -974,10 +1197,11 @@ erDiagram
 #### 5. Consol Invoice
 
 *   **Purpose:** Issued to an overseas agent, co-loader, or counterpart office to settle charges, local handling splits, and profit shares across *multiple* House shipments (HBLs/HAWBs) bundled under a single Consol Job.
-*   **Database Mapping:** Stored in `accounts_invoices` where `type = 'consol_invoice'`. Uses consol-specific columns: `profit_share_ratio` and `partner_agent_id` (representing the counterpart agent co-loader, mapped to `client_id`).
+*   **Database Mapping:** Stored in `accounts_invoices` where `type = 'consol_invoice'`. Relational profit sharing parameters are stored in `accounts_invoice_consol_details` mapping `profit_share_ratio` and `partner_agent_id` (linked to `accounts_invoices.id`).
 *   **Eloquent Relationships:**
     *   `ConsolInvoice` belongsTo `Company` as `agent` via `client_id` (where role is `'agent'`)
     *   `ConsolInvoice` belongsTo `Job` via `job_id` (must reference a Master Job where `is_consolidation = true`)
+    *   `ConsolInvoice` hasOne `AccountsInvoiceConsolDetail` as `consolDetails` via `invoice_id`
     *   `ConsolInvoice` hasMany `InvoiceItem` via `invoice_id`
     *   `InvoiceItem` belongsTo `Job` as `houseJob` via `house_job_id` (maps charges to individual HAWBs/HBLs)
 *   **Validation Rules:**
@@ -1067,7 +1291,7 @@ erDiagram
     *   `CoverLetter` belongsTo `Company` as `recipient` via `recipient_company_id`
     *   `CoverLetter` belongsTo `User` as `author` via `prepared_by`
 *   **Business Integration:**
-    *   Submitting a cover letter triggers a background worker that fetches the checked document PDF templates, grabs files from `job_documents` (E-Docket) associated with `job_id`, merges them, and emails the complete packet to the recipient contact.
+    *   Submitting a cover letter triggers a background worker that fetches the checked document PDF templates, grabs files from `job_documents` (E-Docket) associated with `job_id` (verifying that they belong to the same `agent_id` tenant to prevent cross-tenant data leakage), merges them, and emails the complete packet to the recipient contact.
 
 #### 9. Approved Drafts Queue
 
@@ -1398,9 +1622,20 @@ sequenceDiagram
 
 To isolate operational dashboards, document feeds, and financial ledgers between the different modes of transport, the system applies strict portal-level session partitioning:
 
-### 1. Unified Authentication with Scoped Session Routing
-*   **Scoped Entry Points:** Users log in through scoped portals (either subdomains like `air.f16s.com`, `sea.f16s.com` or route groups like `/focus-air/login`).
-*   **Session Binding:** Upon successful authentication, the backend binds the `active_portal_scope` (Enum: `'air'`, `'sea'`) to the user's session state.
+### 1. Pre-Login Company Selection & Unified Authentication with Scoped Session Routing
+*   **Pre-Login Company Selection:** Before logging in, the user must select their company from a secure list of registered tenant companies.
+*   **Scoped Entry Points & Tenant Subdomain Resolution:**
+    *   **Scope-Specific Subdomains:** The platform defines dedicated subdomains for the main entry points:
+        *   `focusair.f16sefreight.com`: Routes users directly to the **Focus Air** dashboard/portal. Upon entry/login, the system binds `active_portal_scope = 'air'` to the user session.
+        *   `focussea.f16sefreight.com`: Routes users directly to the **Focus Sea** dashboard/portal. Upon entry/login, the system binds `active_portal_scope = 'sea'` to the user session.
+        *   `admin.f16sefreight.com`: Routes administrative staff to the global **Admin Portal**. Serves administrative configuration panels (managing companies, selecting subscription tiers, registering email domains, and editing user settings to assign PIMA addresses).
+*   **Session Binding:** Upon successful authentication, the backend binds the `active_portal_scope` (Enum: `'air'`, `'sea'`) and the `company_id` to the user's session state.
+
+### 1.1 Company Registration & User Onboarding Flow
+*   **Company Registration & Domain Setup:** Companies can register their corporate details on the platform, defining their official corporate `@` email domain used for routing.
+*   **User Self-Registration:** Once the parent company is registered, individual users (employees) can register and create their own user IDs under that company context.
+*   **Origin Port Designation:** During the user registration/onboarding process, users are required to select their default designated **origin port** (airport or seaport, which matches to `ports.id` or UN/LOCODE directory). This value is stored in `users.origin_port_id`.
+*   **Admin PIMA Configuration:** In the backend administrative dashboard, when editing user profiles, the administrator can assign or modify the **PIMA address** (Printer / Messaging Routing Address, max 20 characters) stored in `users.pima_address` to facilitate automated transmission routing.
 
 ### 2. Database Partitioning (`transport_mode`)
 *   **Database Tagging:** We introduce a `transport_mode` column (String/Enum: `'air'`, `'sea'`) to the `jobs`, `pdf_processing_jobs`, `accounts_invoices`, and `accounts_purchase_vouchers` tables.
@@ -1481,7 +1716,7 @@ Before mapping UI fields to database columns, we define the core Sea-specific ta
     *   `address` (Text, Nullable): Snapshot of the company address at the time of selection (read-only until entity is selected).
     *   `contact_person` (String, max 100, Nullable)
     *   `created_at`, `updated_at` (Timestamps)
-*   *Unique Constraint:* `(job_id, role)` — one entity per role per job (except for `notify_party` which may have multiples).
+*   *Unique Constraint:* Conditional unique index: `(job_id, role)` excluding `role = 'notify_party'` (which may have multiples per job).
 
 ### `sea_containers` (ISO Container Grid)
 *   *Purpose:* Stores container records for FCL/containerized sea shipments. One-to-many relationship with `jobs`.
@@ -1500,6 +1735,7 @@ Before mapping UI fields to database columns, we define the core Sea-specific ta
 *   *Purpose:* Maps individual House shipments (HBLs) to containers for consolidation stuffing tracking.
 *   *Columns:*
     *   `id` (BigInteger, PK, Auto-increment)
+    *   `agent_id` (BigInteger, FK referencing `agents_info.id`): Branch-level isolation.
     *   `container_id` (BigInteger, FK referencing `sea_containers.id` on delete cascade)
     *   `job_id` (BigInteger, FK referencing `jobs.id` on delete cascade): The child HBL job.
     *   `stuffed_pieces` (Integer, default: 0)
@@ -2155,27 +2391,14 @@ class SeaShipmentDetailObserver
     public function saved(SeaShipmentDetail $detail)
     {
         if ($detail->job->is_sub_shipment && $detail->job->parent_job_id) {
-            $this->rollUpToMaster($detail->job->parent_job_id);
+            $parentJobId = $detail->job->parent_job_id;
+            $lockKey = "job_rollup_lock:{$parentJobId}";
+            
+            // Debouncing: only dispatch a job if one wasn't queued in the last 2 seconds
+            if (Cache::add($lockKey, true, 2)) {
+                ProcessConsolRollupJob::dispatch($parentJobId)->delay(now()->addSeconds(2));
+            }
         }
-    }
-
-    protected function rollUpToMaster($parentJobId)
-    {
-        $subJobIds = Job::where('parent_job_id', $parentJobId)->pluck('id');
-        
-        $totals = SeaShipmentDetail::whereIn('job_id', $subJobIds)
-            ->selectRaw('SUM(piece_count) as total_pieces')
-            ->selectRaw('SUM(gross_weight) as total_gross')
-            ->selectRaw('SUM(net_weight) as total_net')
-            ->selectRaw('SUM(volume_cbm) as total_cbm')
-            ->first();
-
-        SeaShipmentDetail::where('job_id', $parentJobId)->update([
-            'piece_count' => $totals->total_pieces ?? 0,
-            'gross_weight' => $totals->total_gross ?? 0.000,
-            'net_weight' => $totals->total_net ?? 0.000,
-            'volume_cbm' => $totals->total_cbm ?? 0.000,
-        ]);
     }
 }
 ```
@@ -2422,28 +2645,41 @@ To power the executive metrics dashboards (DSR/MSR/YSR), provide direct client m
 
 ### 1. New Analytical Tables (Backend Reporting Targets)
 
-#### A. `financial_snapshots` (Tenant-Level Financial Performance Snapshot) (New)
+#### A. `llm_usage_logs` (Gemini API usage logging) (New)
+*   *Purpose:* Records detailed prompt inputs, outputs, models, and costs for API auditing.
+*   *Columns:*
+    *   `id` (BigInteger, PK, Auto-increment)
+    *   `job_id` (BigInteger, FK referencing `jobs.id` on delete set null, Nullable)
+    *   `model` (String, max 50)
+    *   `tokens_in` (Integer)
+    *   `tokens_out` (Integer)
+    *   `cost_usd` (Decimal(8,6))
+    *   `created_at`, `updated_at` (Timestamps)
+
+#### B. `financial_snapshots` (Tenant-Level Financial Performance Snapshot) (New)
 *   *Purpose:* Pre-aggregates daily financial indicators to speed up high-level Executive Dashboards (Tier 3) without scanning heavy transaction ledgers on request.
 *   *Columns:*
     *   `id` (BigInteger, PK, Auto-increment)
     *   `agent_id` (BigInteger, FK referencing `agents_info.id`): Tenant isolation.
     *   `snapshot_date` (Date, Index): Snapshot logging date.
+    *   `accounting_period_id` (BigInteger, Nullable, FK referencing `accounting_periods.id` on delete set null): Links snapshot to active accounting period to verify locks.
     *   `total_receivables` (Decimal(15,2)): Total outstanding client invoices (`accounts_invoices` where status != paid).
     *   `total_payables` (Decimal(15,2)): Total outstanding vendor vouchers (`accounts_purchase_vouchers` where status != paid).
     *   `net_cash_flow` (Decimal(15,2)): Net changes in cash balances on this date.
     *   `cash_on_hand` (Decimal(15,2)): Sum of matched reconciled deposits.
     *   `unbilled_revenue` (Decimal(15,2)): Sum of estimated sell charges for operational jobs that have reached "Completed" status but have not had standard client invoices issued yet.
     *   `accrued_expenses` (Decimal(15,2)): Sum of estimated buy rates for jobs where vendor purchase vouchers are still pending.
+    *   `last_computed_at` (Timestamp): Date/time the snapshot values were last computed (used for staleness alerts on frontend dashboards if data is older than 1 hour).
     *   `created_at`, `updated_at` (Timestamps)
 *   *Unique Index:* `(agent_id, snapshot_date)`
 
 #### B. `milestone_performance_logs` (SLA & Latency Tracker) (New)
-*   *Purpose:* Records chronological transitions of jobs through milestones, feeding the ApexCharts staff capacity and milestone duration widgets.
+*   *Purpose:* Records chronological transitions of jobs through milestones, feeding the ApexCharts staff capacity, milestone duration widgets, and document generation speed reports.
 *   *Columns:*
     *   `id` (BigInteger, PK, Auto-increment)
     *   `agent_id` (BigInteger, FK referencing `agents_info.id`)
     *   `job_id` (BigInteger, FK referencing `jobs.id` on delete cascade, Index)
-    *   `stage` (Enum: `'Intake'`, `'AI Extraction'`, `'Verification'`, `'Generation'`, `'PDF Generated'`, `'Completed'`): The active operational stage.
+    *   `stage` (Enum: `'Intake'`, `'AI Extraction'`, `'Verification'`, `'Generation'`, `'PDF Generated'`, `'Sent to Airline'`, `'Airline Confirmed'`, `'Completed'`, `'Lost'`): The active operational stage.
     *   `operator_id` (BigInteger, Nullable, FK to `users.id`): Operating agent assigned during this milestone.
     *   `entered_at` (Timestamp): Stage entry time.
     *   `left_at` (Timestamp, Nullable): Stage exit time.
@@ -2451,6 +2687,12 @@ To power the executive metrics dashboards (DSR/MSR/YSR), provide direct client m
     *   `sla_limit_seconds` (Integer): The target SLA limit for this milestone.
     *   `is_sla_breached` (Boolean, default: false)
     *   `created_at`, `updated_at` (Timestamps)
+*   *Telemetry Logic for OPS Document Generation & Airline Speed:*
+    *   **Start of Verification/Generation:** Logged when the operator opens the validated draft.
+    *   **Document Generation Time:** Logged as the duration in the `'Generation'` stage (from when the operator verified the data until the PDF compiled state `'PDF Generated'` is achieved). Measures how fast the operations staff is compiling AWB/HAWB files.
+    *   **Airline Transmission Latency:** Logged as the duration in the `'PDF Generated'` stage (from file compilation until the operator transmits/sends the file to the airline/carrier: transition to `'Sent to Airline'`).
+    *   **Airline Confirmation Latency:** Logged as the duration in the `'Sent to Airline'` stage (from transmission until the airline replies and booking/space is officially confirmed: transition to `'Airline Confirmed'`).
+    *   **Completed Dispatch Latency:** Logged as the duration in the `'Airline Confirmed'` stage (from confirmation until cargo departure and job marks as `'Completed'`).
 
 ---
 
@@ -2513,33 +2755,42 @@ Branch directors, pricing managers, and operations leads use this cockpit to bal
 
 ## 🗺️ Step-by-Step Implementation Roadmap
 
-### Phase 1: Core Document Parsing & Frontend Verification Form
-*   **Step 1.1:** Upgrade FastAPI server to support `PyMuPDF` (`fitz`) and Pydantic validation schemas. Implement Gemini model integrations with cached prompts for unstructured invoices/packing lists.
-*   **Step 1.2:** Add `tier` and `transport_mode` column migrations to `companies` and `pdf_processing_jobs` tables.
-*   **Step 1.3:** Create the drag-and-drop file upload handler inside `OcrUploadModal.vue`. The modal hits the backend, triggers the extraction task, saves the result to `pdf_processing_jobs.extracted_data`, and returns the JSON payload to pre-populate form fields in `FocusAir.vue` and `HouseWayBill.vue` inline.
+### Phase 1: Core Document Ingestion, Database Foundation & Models
+*   **Step 1.1:** Upgrade FastAPI server to support `PyMuPDF` (`fitz`) and Pydantic validation schemas. Implement Gemini model integrations with cached prompts for unstructured invoices/packing lists. Check for Python microservice errors.
+*   **Step 1.2:** Run database migrations to add `tier`, `email_domain`, and `transport_mode` columns to `companies` and `pdf_processing_jobs` tables.
+*   **Step 1.3:** Run database migrations to add `origin_port_id` (referencing `ports.id`) and `pima_address` columns to the `users` table. Check for schema mapping errors.
+*   **Step 1.4:** Create the drag-and-drop file upload handler inside `OcrUploadModal.vue`. The modal hits the backend, triggers the extraction task, saves the result to `pdf_processing_jobs.extracted_data`, and returns the JSON payload to pre-populate form fields in `FocusAir.vue` and `HouseWayBill.vue` inline.
+*   **Step 1.5:** Run validation tests and sanity check each model and endpoint for errors before moving to Phase 2.
 
-### Phase 2: Inbox Sync & Split-Screen Workspace UI
-*   **Step 2.1:** Run migration tasks for `mailbox_connections`, `inbound_emails`, and `inbound_attachments`.
+### Phase 2: Inbox Sync, OAuth Validation & Split-Screen Workspace UI
+*   **Step 2.1:** Run migration tasks for `mailbox_connections`, `inbound_emails`, and `inbound_attachments`. Ensure constraints are verified.
 *   **Step 2.2:** Build the scheduled `mailboxes:poll` Artisan command to sync Google/Microsoft accounts, extract attachments, and classify threads (utilizing domain exclusions and regex filters).
-*   **Step 2.3:** Build `JobInbox.vue` (3-column inbox layout).
-*   **Step 2.4:** Implement the **Split-Pane Column Hiding Logic**: opening the drawer slides the sidebar/thread list off-screen and presents a 50/50 split of the email timeline on the left and form verification (Focus Air / HAWB) on the right.
+*   **Step 2.3:** Build `MailboxOAuthController` callbacks. Enforce corporate email domain verification: verify that the domain of the connected mailbox exactly matches the selected company's `email_domain` for Tier 2 and 3 connections. Reject and return `403` on mismatch. Test this restriction in isolation for errors.
+*   **Step 2.4:** Build `JobInbox.vue` (3-column inbox layout) and check routing endpoints.
+*   **Step 2.5:** Implement the **Split-Pane Column Hiding Logic**: opening the drawer slides the sidebar/thread list off-screen and presents a 50/50 split of the email timeline on the left and form verification (Focus Air / HAWB) on the right.
+*   **Step 2.6:** Execute verification tests for inbox sync and OAuth callbacks, ensuring domain verification behaves correctly, checking for errors after each step.
 
 ### Phase 3: Workflow Automation, Kanban & Job Cost Sheets
-*   **Step 3.1:** Create `jobs` table migration. Implement triage actions (e.g. converting email thread to Job) and assign task dialog (clearance dates, assigned operator, AWB association).
-*   **Step 3.2:** Build `OpsDashboard.vue` (Kanban cards workflow supporting both Process View and Schedule clearance-date View).
+*   **Step 3.1:** Create `jobs` table migration. Implement triage actions (e.g. converting email thread to Job) and assign task dialog (clearance dates, assigned operator, AWB association). Verify relationships for errors.
+*   **Step 3.2:** Build `OpsDashboard.vue` (Kanban cards workflow supporting both Process View and Schedule clearance-date View) and test component drag-and-drop behavior.
 *   **Step 3.3:** Run migrations for `accounts_invoices`, `accounts_invoice_items`, `accounts_purchase_vouchers`, and `accounts_purchase_items`.
 *   **Step 3.4:** Build the **Job Cost Sheet UI** inside the workspace drawer tab. Auto-populate charging quantities from AWB weight and DO details, allowing reps to manually adjust Buy/Sell rates.
+*   **Step 3.5:** Validate the integrity of database status logs, task allocations, and accounting ledger inputs, checking for errors.
 
-### Phase 4: Multi-Portal Access Scoping (Air, Sea)
-*   **Step 4.1:** Bind `active_portal_scope` dynamically to user sessions based on login entry subdomains or route prefixes.
-*   **Step 4.2:** Apply Global Laravel Query Scopes to filter `jobs`, `pdf_processing_jobs`, and accounting tables by `transport_mode` in real-time.
-*   **Step 4.3:** Build sea templates (`FocusSeaMaster.vue` / `FocusSeaHouse.vue` / `FocusSeaConsol.vue`) to load dynamically inside the drawer workspace depending on the active portal. Register route navigation paths in `router.js` contextually.
+### Phase 4: Multi-Portal Access Scoping & User Onboarding
+*   **Step 4.1:** Build company registration and user self-registration/onboarding flows. Mandate selection of the designated origin port (`origin_port_id`) referencing `ports.id` during user registration. Verify input constraints for errors.
+*   **Step 4.2:** Build the pre-login company selection dropdown page. Bind the selected `company_id` and the scoped `active_portal_scope` dynamically to user sessions. Check session storage operations for errors.
+*   **Step 4.3:** Create user profile editing forms in the admin portal backend to allow administrators to assign/edit the `pima_address` for routing.
+*   **Step 4.4:** Apply Global Laravel Query Scopes to filter `jobs`, `pdf_processing_jobs`, and accounting tables by `transport_mode` in real-time.
+*   **Step 4.5:** Build sea templates (`FocusSeaMaster.vue` / `FocusSeaHouse.vue` / `FocusSeaConsol.vue`) to load dynamically inside the drawer workspace depending on the active portal. Register route navigation paths in `router.js` contextually.
+*   **Step 4.6:** Verify session scoping, onboarding port selections, and admin edits, checking for errors in each step.
 
 ### Phase 5: Automated Ledgers, CASS Reconciliations & Reports
-*   **Step 5.1:** Run migrations for `accounts_ledger_entries` and `accounts_cass_statements`.
-*   **Step 5.2:** Build Plaid sync service to poll raw bank statements every 3 days. Implement matching engines to reconcile receipts against invoice balances.
+*   **Step 5.1:** Run migrations for `accounts_ledger_entries` and `accounts_cass_statements` and audit triggers.
+*   **Step 5.2:** Build Plaid/Setu sync service to poll raw bank statements every 3 days. Implement matching engines to reconcile receipts against invoice balances. Check connection endpoints for errors.
 *   **Step 5.3:** Build CASS file upload portal. Reconcile reported AWB charges with estimated cost vouchers, flagging weight/rate mismatches.
 *   **Step 5.4:** Compile financial balance sheets, trial balance sheets, and Profit & Loss reports from the ledger.
+*   **Step 5.5:** Run reconciliation runs and report computations, validating results and checking for errors at each point.
 
 ---
 
@@ -2636,3 +2887,571 @@ To prevent duplicate invoice numbers under concurrent request spikes, billing se
     ```
     This blocks concurrent invoice saves from generating overlapping numbers. Once the incremented number is retrieved and committed to the invoice header, the transaction releases.
 *   **Fiscal Boundary Rollover:** Fiscal years roll over based on regional compliance (e.g., April 1st for Indian GSTIN operations), resetting increment counters to `00001` automatically.
+
+---
+
+---
+
+---
+
+## 📝 Technical Implementation Checklist
+
+> *Below is the precise, step-by-step checklist converting the blueprint above into database migrations, models, services, controllers, and frontend views.*
+
+This plan converts the conceptual [future_plan.md](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/future_plan.md) blueprint into a precise, step-by-step execution checklist. Every step references exact file paths, database schemas, Pydantic/Eloquent models, and testing protocols.
+
+---
+
+## 🏗️ Architectural Prerequisites & Decisions
+
+These decisions represent core architectural gates that must be resolved before writing functional logic.
+
+> [!IMPORTANT]
+> **1. Queue Connection & Lock Driver:**
+> - **Configuration:** Verified `.env` contains `QUEUE_CONNECTION=redis`.
+> - **Architecture:** Redis is the official driver for queues, cache, and distributed locking. Redis locks (`Cache::lock`) will be used for sequence generators and database concurrency controls.
+
+> [!IMPORTANT]
+> **2. Broadcasting & WebSockets:**
+> - **Driver Configuration:** `.env` should set `BROADCAST_DRIVER=pusher`.
+> - **Server:** Use a Pusher-compatible server (e.g. self-hosted Node-based **Soketi** or standard **Pusher SaaS**).
+> - **Frontend Echo Setup:** Set up `laravel-echo` and `pusher-js` in `package.json` to listen on custom Soketi host/port configurations.
+
+> [!IMPORTANT]
+> **3. Model Namespacing:**
+> - **Standard:** Match the existing codebase where models are placed in the `app/` root directory (e.g. `app/AirwayBills.php`, `app/PdfProcessingJob.php`).
+> - **Rule:** Place all new models (`app/Job.php`, `app/EmailThread.php`, etc.) in the root `app/` directory under namespace `App`.
+
+> [!IMPORTANT]
+> **4. Morph Map Registration:**
+> - **Rule:** Register short-string polymorphic source types in `AppServiceProvider::boot()` via `Relation::morphMap` to ensure clean lookups on `approved_drafts_queue`, `unposted_transactions_queue`, and `gst_ledger_entries`.
+
+> [!IMPORTANT]
+> **5. Third-Party Credentials:**
+> - **Environment Variables:** Configure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, and `GEMINI_API_KEY` in `.env`.
+
+> [!IMPORTANT]
+> **6. Granular Phase Execution & Verification:**
+> - **Rule:** The changes for each phase must be kept small and incremental.
+> - **Validation:** Test and check for errors at every single step before moving to the next.
+
+---
+
+## Existing Codebase Inventory
+
+| Layer | What Exists Today | Key Files |
+|---|---|---|
+| **Framework** | Laravel 7+ / Vue 2.7.16 / Laravel Mix | [package.json](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/package.json) |
+| **FastAPI** | `/extract` endpoint using `pdfplumber` | [ocr_server.py](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/python/ocr_server.py) |
+| **Models** | In `app/` root: `AirwayBills.php`, `HousewayBills.php`, `PdfProcessingJob.php` | [app/AirwayBills.php](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/app/AirwayBills.php) |
+
+---
+
+## Phase 1a: Complete Database Foundation & Eloquent Models
+
+> **Goal:** Run all database migrations (Operational, Mode-Specific details, LLM usage logging, and Financial ledgers) first to build a solid schema foundation. Add matching Eloquent models and sequence counters.
+
+### Step 1a.1 — Modify Existing Tables (3 Migrations)
+- Add `tier` and credit columns to `companies`.
+- Add `uuid` and `job_id` to `air_way_bills` and `houseway_bills` tables.
+- Add `direction` to `pdf_processing_jobs`.
+
+### Step 1a.2 — Create New Operational Tables
+- **Migration 1: `sequence_counters` table (Timestamp: `2026_06_14_000000_create_sequence_counters_table.php`)**
+  ```php
+  Schema::create('sequence_counters', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->string('prefix', 10);
+      $table->string('fiscal_year', 4);
+      $table->unsignedInteger('current_value')->default(0);
+      $table->timestamps();
+      $table->unique(['agent_id', 'prefix', 'fiscal_year']);
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+  });
+  ```
+- **Migration 2: `ports` (Timestamp: `2026_06_14_000004_create_ports_table.php` — UN/LOCODE Reference)**
+  ```php
+  Schema::create('ports', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->string('locode', 5)->unique()->index();
+      $table->string('port_name', 100);
+      $table->string('country_code', 2);
+      $table->enum('port_type', ['sea', 'air', 'inland', 'multi']);
+      $table->boolean('is_active')->default(true);
+      $table->timestamps();
+  });
+  ```
+- **Migration 3: `jobs` (Core operational card — uses status enum constraint and DB-level role triggers)**
+  ```php
+  Schema::create('jobs', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->enum('transport_mode', ['air', 'sea']);
+      $table->enum('direction', ['export', 'import'])->default('export');
+      $table->string('enquiry_no')->unique();
+      $table->string('execution_job_no')->unique()->nullable();
+      $table->unsignedBigInteger('client_id')->nullable();
+      $table->unsignedBigInteger('operator_id')->nullable();
+      $table->unsignedBigInteger('job_owner_id')->nullable();
+      $table->unsignedBigInteger('doc_user_id')->nullable();
+      $table->enum('status', ['Intake', 'AI Extraction', 'Verification', 'Generation', 'PDF Generated', 'Sent to Airline', 'Airline Confirmed', 'Completed', 'Lost'])->default('Intake');
+      $table->enum('lost_reason', ['rates_high', 'delay_in_response', 'client_cancelled', 'capacity_issue', 'other'])->nullable();
+      $table->string('lost_reason_custom')->nullable();
+      $table->timestamp('lost_at')->nullable();
+      $table->unsignedBigInteger('parent_job_id')->nullable();
+      $table->boolean('is_sub_shipment')->default(false);
+      $table->boolean('is_consolidation')->default(false);
+      $table->timestamps();
+      $table->softDeletes();
+
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+      $table->foreign('client_id')->references('id')->on('companies');
+      $table->foreign('operator_id')->references('id')->on('users')->onDelete('set null');
+      $table->foreign('job_owner_id')->references('id')->on('users');
+      $table->foreign('doc_user_id')->references('id')->on('users');
+      $table->foreign('parent_job_id')->references('id')->on('jobs');
+  });
+
+  // DB-level triggers to validate user roles on operator_id and job_owner_id to prevent database mismatch
+  DB::unprepared("
+      CREATE TRIGGER validate_job_roles_before_insert
+      BEFORE INSERT ON jobs
+      FOR EACH ROW
+      BEGIN
+          -- DB check trigger validates user roles from user_roles/permissions table
+      END;
+  ");
+  ```
+- **Migration 4: `mailbox_connections` (Timestamp: `2026_06_14_100002_create_mailbox_connections_table.php` — includes `is_active` column)**
+  ```php
+  Schema::create('mailbox_connections', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('user_id');
+      $table->string('provider');
+      $table->string('email_address')->unique();
+      $table->text('access_token'); // Encrypted at rest in Model
+      $table->text('refresh_token'); // Encrypted at rest in Model
+      $table->timestamp('expires_at')->nullable();
+      $table->boolean('is_active')->default(true); // Gating downgrades
+      $table->timestamps();
+      $table->foreign('user_id')->references('id')->on('users');
+  });
+  ```
+- **Migration 5: `inbound_emails` (Timestamp: `2026_06_14_100003_create_inbound_emails_table.php` — includes `agent_id` column and FK)**
+  ```php
+  Schema::create('inbound_emails', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id')->after('id');
+      $table->unsignedBigInteger('mailbox_connection_id');
+      $table->string('message_id')->unique();
+      $table->string('thread_key')->index();
+      $table->string('from');
+      $table->string('to');
+      $table->string('subject')->nullable();
+      $table->longText('body_text')->nullable();
+      $table->longText('body_html')->nullable(); // HTML content is sanitized using HTMLPurifier before storage to prevent XSS
+      $table->timestamp('received_at');
+      $table->timestamps();
+
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+      $table->foreign('mailbox_connection_id')->references('id')->on('mailbox_connections')->onDelete('cascade');
+  });
+  ```
+- **Migration 6: `email_threads`**
+- **Migration 7: `inbound_attachments`**
+- **Migration 8: `job_documents`**
+- **Migration 9: `milestone_performance_logs`**
+- **Migration 10: `audit_logs` (Timestamp: `2026_06_14_100008_create_audit_logs_table.php` — Append-Only Trigger enforced)**
+  An append-only database constraint trigger is registered during migration:
+  ```sql
+  DB::unprepared("
+      CREATE TRIGGER audit_logs_prevent_update_delete
+      BEFORE UPDATE OR DELETE ON audit_logs
+      FOR EACH ROW
+      BEGIN
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_logs is append-only';
+      END;
+  ");
+  ```
+- **Migration 11: `sea_containers` (Timestamp: `2026_06_14_100010_create_sea_containers_table.php` — ISO Containers Header)**
+  ```php
+  Schema::create('sea_containers', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('job_id')->index();
+      $table->string('container_number', 11);
+      $table->string('seal_number', 30)->nullable();
+      $table->enum('size_type', ['20GP', '40GP', '40HC', '20RF', '40RF', '20TK', '40OT']);
+      $table->decimal('tare_weight', 10, 3)->nullable();
+      $table->decimal('payload_weight', 10, 3)->nullable();
+      $table->decimal('vgm_weight', 10, 3)->nullable();
+      $table->timestamps();
+      $table->softDeletes();
+      $table->foreign('job_id')->references('id')->on('jobs')->onDelete('cascade');
+  });
+  ```
+- **Migration 12: `sea_container_items` (Timestamp: `2026_06_14_100011_create_sea_container_items_table.php` — Canonical Single Definition)**
+  ```php
+  Schema::create('sea_container_items', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->unsignedBigInteger('container_id');
+      $table->unsignedBigInteger('job_id');
+      $table->integer('stuffed_pieces')->default(0);
+      $table->decimal('stuffed_weight', 10, 3)->default(0.000);
+      $table->decimal('stuffed_volume', 8, 3)->default(0.000);
+      $table->timestamps();
+
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+      $table->foreign('container_id')->references('id')->on('sea_containers')->onDelete('cascade');
+      $table->foreign('job_id')->references('id')->on('jobs')->onDelete('cascade');
+  });
+  ```
+- **Migration 13: `cargo_arrival_notices` (Timestamp: `2026_06_14_100013_create_cargo_arrival_notices_table.php` — CAN pre-arrival notices)**
+  ```php
+  Schema::create('cargo_arrival_notices', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->unsignedBigInteger('job_id')->unique();
+      $table->string('can_no', 30)->unique()->index();
+      $table->date('document_date');
+      $table->integer('free_storage_days')->default(2);
+      $table->date('storage_charges_start_date')->nullable();
+      $table->timestamp('sent_to_consignee_at')->nullable();
+      $table->timestamps();
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+      $table->foreign('job_id')->references('id')->on('jobs')->onDelete('cascade');
+  });
+  ```
+- **Migration 14: `job_entities` (Timestamp: `2026_06_14_100014_create_job_entities_table.php` — Party contacts)**
+  ```php
+  Schema::create('job_entities', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('job_id');
+      $table->unsignedBigInteger('company_id');
+      $table->enum('role', ['shipper', 'consignee', 'customer', 'origin_agent', 'dest_agent', 'selling_agent', 'notify_party', 'customs_broker', 'consigned_order', 'transporter', 'high_sea_buyer']);
+      $table->text('address')->nullable();
+      $table->string('contact_person', 100)->nullable();
+      $table->timestamps();
+
+      $table->foreign('job_id')->references('id')->on('jobs')->onDelete('cascade');
+      $table->foreign('company_id')->references('id')->on('companies');
+  });
+  ```
+
+### Step 1a.3 — Create Financial Tables (Early Schema Ingestion)
+- **Migration 15: `chart_of_accounts`**
+- **Migration 16: `accounting_periods`**
+- **Migration 17: `accounts_invoices` (Timestamp: `2026_06_14_300001_create_accounts_invoices_table.php` — includes `billed_party_role` column)**
+  ```php
+  Schema::create('accounts_invoices', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->enum('transport_mode', ['air', 'sea']);
+      $table->enum('type', ['invoice', 'debit_note', 'credit_note', 'brokerage', 'consol_invoice']);
+      $table->string('invoice_no')->unique();
+      $table->date('document_date');
+      $table->unsignedBigInteger('job_id');
+      $table->unsignedBigInteger('client_id');
+      $table->string('billed_party_role', 20)->default('client');
+      $table->string('currency', 3);
+      $table->decimal('exchange_rate', 12, 6)->default(1.000000);
+      $table->text('billing_address')->nullable();
+      $table->string('tax_registration_no', 20)->nullable();
+      $table->string('payment_terms', 20)->nullable();
+      $table->decimal('subtotal', 15, 2);
+      $table->decimal('tax_amount', 15, 2);
+      $table->decimal('grand_total', 15, 2);
+      $table->string('status')->default('draft');
+      $table->boolean('is_posted')->default(false);
+      $table->date('due_date');
+      $table->unsignedBigInteger('created_by');
+      $table->timestamps();
+      $table->softDeletes();
+  });
+  ```
+- **Migration 18: `accounts_invoice_brokerage_details` (Timestamp: `2026_06_14_300014_create_accounts_invoice_brokerage_details_table.php` — 1-to-1 Decoupled details)**
+  ```php
+  Schema::create('accounts_invoice_brokerage_details', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('invoice_id')->unique();
+      $table->enum('brokerage_basis', ['percentage_of_freight', 'flat_rate', 'per_kg', 'per_container']);
+      $table->decimal('commission_rate', 8, 4)->default(0.0000);
+      $table->decimal('base_freight_cost', 15, 2)->default(0.00);
+      $table->timestamps();
+      $table->foreign('invoice_id')->references('id')->on('accounts_invoices')->onDelete('cascade');
+  });
+  ```
+- **Migration 19: `accounts_invoice_consol_details` (Timestamp: `2026_06_14_300015_create_accounts_invoice_consol_details_table.php` — 1-to-1 Decoupled details)**
+  ```php
+  Schema::create('accounts_invoice_consol_details', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('invoice_id')->unique();
+      $table->decimal('profit_share_ratio', 5, 2)->default(0.00);
+      $table->unsignedBigInteger('partner_agent_id');
+      $table->timestamps();
+      $table->foreign('invoice_id')->references('id')->on('accounts_invoices')->onDelete('cascade');
+      $table->foreign('partner_agent_id')->references('id')->on('companies');
+  });
+  ```
+- **Migration 20: `accounts_invoice_items`**
+- **Migration 21: `accounts_purchase_vouchers`**
+- **Migration 22: `accounts_purchase_items`**
+- **Migration 23: `accounts_ledger_entries`**
+- **Migration 24: `invoice_sequences`**
+- **Migration 25: `gst_ledger_entries`**
+- **Migration 26: `financial_snapshots` (Timestamp: `2026_06_14_300012_create_financial_snapshots_table.php` — includes `accounting_period_id` column, `last_computed_at` indicator, and FK)**
+  ```php
+  Schema::create('financial_snapshots', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->date('snapshot_date')->index();
+      $table->unsignedBigInteger('accounting_period_id')->nullable();
+      // ... financial totals ...
+      $table->timestamp('last_computed_at')->useCurrent();
+      $table->timestamps();
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+      $table->foreign('accounting_period_id')->references('id')->on('accounting_periods')->onDelete('set null');
+  });
+  ```
+- **Migration 27: `manifest_filings`**
+- **Migration 28: `accounts_cass_statements` (Timestamp: `2026_06_14_300013_create_accounts_cass_statements_table.php` — Tenant isolated & FK to standard airlines.id)**
+  ```php
+  Schema::create('accounts_cass_statements', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->unsignedBigInteger('agent_id');
+      $table->unsignedBigInteger('airline_id');
+      $table->string('awb_number')->index();
+      $table->string('billing_period');
+      $table->decimal('cass_gross_weight', 10, 3)->default(0.000);
+      $table->decimal('cass_rate', 10, 4)->default(0.0000);
+      $table->decimal('cass_freight_charges', 15, 2)->default(0.00);
+      $table->decimal('cass_other_charges', 15, 2)->default(0.00);
+      $table->decimal('grand_total', 15, 2)->default(0.00);
+      $table->enum('reconciliation_status', ['unmatched', 'matched', 'rate_mismatch', 'weight_mismatch'])->default('unmatched');
+      $table->unsignedBigInteger('matched_voucher_id')->nullable();
+      $table->timestamps();
+
+      $table->foreign('agent_id')->references('id')->on('agents_info');
+      $table->foreign('airline_id')->references('id')->on('airlines');
+      $table->foreign('matched_voucher_id')->references('id')->on('accounts_purchase_vouchers')->onDelete('set null');
+  });
+  ```
+
+### Step 1a.4 — Create Eloquent Models
+Create all PHP models in `app/` namespace `App`:
+- `Job.php`, `SeaShipmentDetail.php`, `AirShipmentDetail.php`, `LlmUsageLog.php`, `MailboxConnection.php`, `InboundEmail.php`, `EmailThread.php`, `InboundAttachment.php`, `JobDocument.php`, `MilestonePerformanceLog.php`, `AuditLog.php`, `ChartOfAccount.php`, `AccountingPeriod.php`, `SequenceCounter.php`, `AccountsInvoiceBrokerageDetail.php`, `AccountsInvoiceConsolDetail.php`, `AccountsCassStatement.php`, `Port.php`, `SeaContainer.php`, `CargoArrivalNotice.php`, `JobEntity.php`.
+
+**Model Token Encryption & Enums:**
+In `app/MailboxConnection.php`, encrypt OAuth credentials at rest.
+In `app/Job.php`, cast status to a PHP-backed Enum to prevent debug issues:
+```php
+// In app/MailboxConnection.php
+protected $casts = [
+    'access_token' => 'encrypted',
+    'refresh_token' => 'encrypted',
+    'is_active' => 'boolean',
+    'expires_at' => 'datetime',
+];
+
+// In app/Job.php
+protected $casts = [
+    'status' => \App\Enums\JobStatus::class,
+];
+```
+
+### Step 1a.5 — Observers and AppServiceProvider Map
+- Register `app/Observers/JobObserver.php` in `AppServiceProvider`.
+- Add polymorphic morph maps in `AppServiceProvider::boot()` to resolve source types:
+  ```php
+  use Illuminate\Database\Eloquent\Relations\Relation;
+
+  Relation::morphMap([
+      'AWB'              => \App\AirwayBills::class,
+      'HAWB'             => \App\HousewayBills::class,
+      'Invoice'          => \App\AccountsInvoice::class,
+      'DebitNote'        => \App\AccountsInvoice::class,
+      'CreditNote'       => \App\AccountsInvoice::class,
+      'PurchaseVoucher'  => \App\AccountsPurchaseVoucher::class,
+  ]);
+  ```
+- **Debounced Observer Roll-ups:**
+  The `SeaShipmentDetailObserver` roll-up triggers a deferred and debounced queue job `QueueRollupJob` using a unique cache lock key `job_rollup:{job_id}`:
+  ```php
+  // Debouncing algorithm:
+  $lockKey = "job_rollup_lock:{$parentJobId}";
+  if (!Cache::add($lockKey, true, 2)) {
+      // Debounced: skip if triggered within 2 seconds
+      return;
+  }
+  ProcessConsolRollupJob::dispatch($parentJobId)->delay(now()->addSeconds(2));
+  ```
+- **Immutability of SLA Timestamps:**
+  `EmailThreadObserver@updating` checks `$thread->isDirty()` and locks `first_triage_at` and `first_reply_at` once populated, preventing silent tampering.
+
+---
+
+## Phase 1b: FastAPI Parsing Engine (In-Memory Unstructured Extraction)
+
+- **Step 1b.1:** Add python dependencies (`PyMuPDF`, `google-generativeai`).
+- **Step 1b.2:** Create Pydantic schemas in `python/schemas.py`.
+  *   **Confidence Scores:** Every parsed field includes extraction confidence metadata (`confidence`: high/medium/low based on whether the string matched exact coordinates vs structure extrapolation).
+- **Step 1b.3:** Expose `/extract-unstructured` in `ocr_server.py`. Process PDF text in-memory via `fitz.open(stream=...)` and send it to Gemini using prompt caching. Return confidence score fields.
+
+---
+
+## Phase 1c: Laravel Integration & Vue Ingestion Modal
+
+- **Step 1c.1:** Add route tier check middleware `CheckCompanyTier`.
+- **Step 1c.2:** Ingest `ProcessPdfOcrJob.php` tier branching logic, write execution cost to `llm_usage_logs`.
+  *   **MIME Validation:** Validate that the uploaded document is a genuine PDF or image before queue ingestion. Run strict server-side MIME-type sniffing using php's `finfo_file` (not just file extension checking). SVG/HTML and other non-supported formats must be rejected immediately to block injection/parser exploits.
+  *   **XSS Sanitization:** All inbound HTML email contents (`body_html` in `inbound_emails`) are sanitized using server-side HTMLPurifier before persistence to mitigate stored XSS payloads before rendering.
+- **Step 1c.3:** Add the dropzone verification modal in `OcrUploadModal.vue`.
+  *   **Confidence UI Highlights:** The Vue UI displays extraction fields and automatically highlights any medium/low confidence fields in orange, forcing operator manual review even if the string format is valid.
+
+---
+
+## Phase 2: Gmail & Outlook Account Inbound Ingestion
+
+- **Step 2.1:** Build `PollMailboxes` sync daemon command. If a mailbox connection is set to `is_active = false` (tier downgrade flag), it is immediately bypassed.
+- **Step 2.2:** Build `AirlineExclusionService` matching exclusions.
+  *   **API Classification Fallback:** If the Gemini API rate limit is breached or the endpoint returns a status error, classification fails gracefully by keeping the email thread `unread` and marked as `unclassified` in the operator inbox, instead of silently dropping it.
+- **Step 2.3:** Build `MailboxOAuthController` callbacks. Enforce corporate email domain verification: parse the authenticated mailbox address and verify that its domain (the suffix after `@`) exactly matches the selected company's `email_domain` (e.g. `@xyzcompany.com`) for Tier 2 and Tier 3 connections. Return a `403` validation error on mismatch.
+
+---
+
+## Phase 3: Operations & Pricing Workflows & Kanban Board
+
+- **Step 3.1:** Create `JobController.php` containing store triage, confirmTask, and markLost.
+  *   **Policy Authorization Checks:** The mail reply endpoint `POST /api/jobs/{id}/reply` performs explicit Policy checks `$this->authorize('reply', $job)` verifying the authenticated operator has permissions and matches the mailbox connection associated with the job thread.
+  *   **Tenant Sandboxing on Document Merging:** The cover letter merges files from `job_documents` only after executing an explicit `agent_id` scope verification check on both job and documents to block cross-tenant leakage.
+- **Step 3.2:** Build `JobInbox.vue` 3-column email feed.
+- **Step 3.3:** Add the **Split-Pane Column Hiding Logic** in `JobInbox.vue` to slide inbox feeds and mini-size side navigation when the drawer workspace expands to 50%.
+- **Step 3.4:** Build `OpsDashboard.vue` Kanban board.
+- **Step 3.5:** Create **Job Cost Sheet UI** writing directly to Phase 1a accounts tables.
+
+---
+
+## Phase 4: Multi-Portal Scoping & Air-Sea Segregation
+
+- **Step 4.1:** Apply global Laravel scopes on `Job` model to filter records by `transport_mode`.
+- **Step 4.2:** Build contextual Vue pages inside the drawer workspace (`FocusSeaMaster.vue`, `FocusSeaHouse.vue`, `FocusSeaConsol.vue`, `FocusAirImport.vue`) loaded based on active portal context.
+- **Step 4.3:** Build and execute `PortSeeder.php` to seed the `ports` table with standard UN/LOCODE reference data.
+
+---
+
+## Phase 5: Dashboards, Target Metrics & Analytics
+
+- **Step 5.1:** Set up `AnalyticsDashboard.vue` plotting Enquiry Funnel, Lost Reason, and response times using `vue-apexcharts`.
+- **Step 5.2:** Create `BossDashboard.vue` with cross-branch metrics. The dashboard performs staleness checking comparing the financial snapshot's `last_computed_at` timestamp with current time, displaying an alert banner if data is older than 1 hour.
+
+---
+
+## Phase 6: Financial Ledgers & Reconciliation Engine
+
+- **Step 6.1:** Build `InvoiceController` and `PurchaseVoucherController`.
+- **Step 6.2:** Create `InvoiceObserver` triggering double-entry ledger postings (`accounts_ledger_entries`) and CGST/SGST/IGST tax splits (`gst_ledger_entries`).
+- **Step 6.3:** Build `ReconciliationController` with Plaid/Setu transaction matching engines.
+- **Step 6.4:** Implement financial statements (Trial Balance, P&L, Balance Sheet).
+
+---
+
+## 🧪 Automated Testing Strategy
+
+To guarantee accounting integrity, concurrency safety, and layout reliability, we implement targeted test coverages.
+
+### 1. Laravel Backend Feature Tests
+
+#### A. Job Triage & Milestones
+- **File:** `tests/Feature/JobTriageTest.php`
+- **Actions Verified:**
+  - `POST /api/jobs` creates an Intake Job.
+  - Enquiry number sequence auto-generation matches `ENQA-26-0001` (Air) or `ENQS-26-0001` (Sea).
+  - Observer fires successfully and seeds the initial "Intake" record in `milestone_performance_logs`.
+
+#### B. Invoicing & Ledger Posting
+- **File:** `tests/Feature/InvoiceFinalizeTest.php`
+- **Actions Verified:**
+  - `POST /api/invoices/{id}/finalize` marks invoice as finalized.
+  - Concurrency sequence locks prevent duplicate invoice numbers.
+  - Double-entry logs successfully post matching assets and revenue debits/credits to `accounts_ledger_entries`.
+  - GST split matches 9% CGST + 9% SGST for intrastate, and 18% IGST for interstate.
+  - Postings to locked/closed `accounting_periods` return a `403 Forbidden` response.
+
+#### C. OCR Pipeline Tier Routing
+- **File:** `tests/Feature/PdfOcrTierBranchingTest.php`
+- **Actions Verified:**
+  - Triggering `ProcessPdfOcrJob` for a Viper Core Tier company executes coordinate-based template parsing.
+  - Triggering for a Viper Tactical Tier company routes HTTP requests to FastAPI `/extract-unstructured` and successfully inserts usage metadata in `llm_usage_logs`.
+
+#### D. Concurrency & Integrity Safety
+- **File:** `tests/Feature/EnquirySequenceConcurrencyTest.php`
+- **Actions Verified:**
+  - **Single Entry-point Sequence Constraint:** Enquiry/Invoice sequence generation strictly routes through `EnquirySequenceService` (documented on service).
+  - **Locking Concurrency:** Multi-process requests made in parallel to sequential numbers generate non-overlapping sequential numbers without race conditions or gap duplicates.
+
+### 2. Frontend Vue / Jest Unit Tests
+
+#### A. Split-Pane Drawer & Column Collapse
+- **File:** `tests/Unit/JobInboxDrawer.spec.js`
+- **Actions Verified:**
+  - Initial `isDrawerOpen` state is `false`.
+  - Triggering column split-toggle method changes `isDrawerOpen` to `true`.
+  - Side navigation class transitions to `sidebar-collapsed` (60px).
+  - Columns 1 & 2 are hidden from DOM, and Column 3 width matches exactly `50%`.
+
+---
+
+## Proposed Changes Summary
+
+| Phase | Files to Create | Files to Modify | Verification Commands |
+|---|---|---|---|
+| **Phase 1a** | 26 Migrations, 21 Models, `JobObserver`, `EnquirySequenceService` | `AppServiceProvider.php`, `Company.php` | `php artisan migrate`, `php artisan tinker` |
+| **Phase 1b** | `python/schemas.py` | `python/requirements.txt`, `python/ocr_server.py` | `uvicorn python.ocr_server:app`, `curl` |
+| **Phase 1c** | `CheckCompanyTier.php` | `ProcessPdfOcrJob.php`, `OcrUploadModal.vue` | `php artisan test` |
+| **Phase 2** | `PollMailboxes.php`, `AirlineExclusionService.php`, `MailboxOAuthController.php` | `Kernel.php` | `php artisan mailboxes:poll` |
+| **Phase 3** | `JobController.php`, `JobInbox.vue`, `OpsDashboard.vue`, `JobCostSheet.vue` | `routes/api.php` | `npm run dev`, `php artisan test` |
+| **Phase 4** | `FocusSeaMaster.vue`, `FocusSeaHouse.vue`, `FocusSeaConsol.vue`, `FocusAirImport.vue`, `PortSeeder.php` | `router.js` | `npm run dev` |
+| **Phase 5** | `AnalyticsDashboard.vue`, `BossDashboard.vue` | `router.js`, `Aside.vue` | `npm run dev` |
+| **Phase 6** | `InvoiceController.php`, `ReconciliationController.php`, `InvoiceObserver.php` | `routes/api.php` | `php artisan test` |
+
+---
+
+## Execution Priority Order (Migration Order Checklist)
+
+Run in this exact order — earlier timestamps = earlier execution:
+```
+2026_06_14_000000  create_sequence_counters_table               ← NEW, must be first
+2026_06_14_000001  add_tier_domain_and_credit_columns_to_companies
+2026_06_14_000004  create_ports_table                           ← NEW, ports UN/LOCODE master
+2026_06_14_000005  add_port_and_pima_columns_to_users           ← references ports table
+2026_06_14_100001  create_jobs_table
+2026_06_14_100002  create_mailbox_connections_table             ← includes is_active column
+2026_06_14_100003  create_inbound_emails_table                  ← includes agent_id column
+2026_06_14_100004  create_email_threads_table
+2026_06_14_100005  create_inbound_attachments_table
+2026_06_14_100006  create_job_documents_table
+2026_06_14_100007  create_milestone_performance_logs_table
+2026_06_14_100008  create_audit_logs_table                      ← triggers append-only constraint
+2026_06_14_100009  create_chart_of_accounts_table
+2026_06_14_100010  create_accounting_periods_table
+2026_06_14_100011  create_sea_containers_table                  ← NEW, ISO container headers
+2026_06_14_100012  create_sea_container_items_table             ← single canonical definition
+2026_06_14_100013  create_cargo_arrival_notices_table           ← NEW, arrival CAN notices
+2026_06_14_100014  create_job_entities_table                    ← NEW, polymorphic party contacts
+2026_06_14_000002  add_uuid_and_job_id_to_waybill_tables        ← needs jobs table to exist first
+2026_06_14_300001  create_accounts_invoices_table               ← add billed_party_role column
+2026_06_14_300002  create_accounts_invoice_items_table
+2026_06_14_300003  create_accounts_purchase_vouchers_table
+2026_06_14_300004  create_accounts_purchase_items_table
+2026_06_14_300005  create_accounts_ledger_entries_table
+2026_06_14_300006  create_invoice_sequences_table
+2026_06_14_300007  create_gst_ledger_entries_table              ← GST splits entries
+2026_06_14_300012  create_financial_snapshots_table             ← add accounting_period_id & last_computed_at
+2026_06_14_300013  create_accounts_cass_statements_table        ← includes agent_id column
+2026_06_14_300014  create_accounts_invoice_brokerage_details    ← brokerage 1-to-1 decoupling
+2026_06_14_300015  create_accounts_invoice_consol_details       ← consol 1-to-1 decoupling
+2026_06_14_100101  create_sea_shipment_details_table            ← operational sea details
+2026_06_14_100102  create_air_shipment_details_table            ← operational air details
+2026_06_14_100103  create_llm_usage_logs_table                  ← operational LLM logs
+```

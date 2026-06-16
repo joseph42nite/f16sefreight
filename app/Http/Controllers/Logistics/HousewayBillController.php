@@ -954,6 +954,9 @@ class HousewayBillController extends Controller
 
     public function update(Request $request, $id)
     {
+        $data['request']=$request->all();
+        $data['id']=$id;
+        return $data;
         $main_return_data = [];
         $error_data = '';
         if (!empty($id)) {

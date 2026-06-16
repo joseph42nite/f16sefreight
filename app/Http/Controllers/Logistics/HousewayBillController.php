@@ -739,9 +739,9 @@ class HousewayBillController extends Controller
         $agent = Agent::where('id', $branch_name)->first();
 
         $validator = Validator::make($totals, [
-            'total_volume' => 'required|numeric|min:0|max:999999999',
+            // 'total_volume' => 'required|numeric|min:0|max:999999999',
             //'required|regex:/^[0-9]+$/|max:9',
-            'total_amount' => 'required|numeric|min:0.01|max:999999999',
+            // 'total_amount' => 'required|numeric|min:0.01|max:999999999',
             'master_pcs' => 'required|regex:/^[0-9]+$/|max:4',
             'master_weight' => 'required|numeric|min:0.1|max:9999999|regex:/^\d{1,7}(\.\d{1,3})?$/',
             'dimention_unit' => 'nullable|string|max:3',
@@ -753,6 +753,7 @@ class HousewayBillController extends Controller
         $HousewayBills = HousewayBills::find($hawb_no);
         if (!empty($hawb_no)) {
             $HousewayBills->id = $hawb_no;
+            if(!empty($totals['total_volume']) && $totals['total_volume']!='0.00')
             $HousewayBills->total_volume = $totals['total_volume'];
             $HousewayBills->total_amount = $totals['total_amount'];
             $HousewayBills->master_pcs = $totals['master_pcs'];
@@ -896,7 +897,7 @@ class HousewayBillController extends Controller
                 $main_return_data['oci_entries'] = $error_data;
         }
         //for Total Consignee Amount and Total Volume
-        if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+        if (!empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])) {
             $error_data = $this->totalAmountValume($hawb_id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -954,9 +955,6 @@ class HousewayBillController extends Controller
 
     public function update(Request $request, $id)
     {
-        $data['request']=$request->all();
-        $data['id']=$id;
-        return $data;
         $main_return_data = [];
         $error_data = '';
         if (!empty($id)) {
@@ -974,7 +972,7 @@ class HousewayBillController extends Controller
             else
                 $main_return_data['routing_information'] = $error_data;
         }
-        if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
+        if (!empty($id) && !empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])) {
             $error_data = $this->totalAmountValume($id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;

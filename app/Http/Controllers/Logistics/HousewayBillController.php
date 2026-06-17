@@ -674,7 +674,7 @@ class HousewayBillController extends Controller
         $HousewayBills->declear_value_carriage = $payment_info['declear_value_carriage'] ?? null;
         $HousewayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? null;
         $HousewayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? null;
-        $HousewayBills->weight_charge = $payment_info['weight_charge'];
+        $HousewayBills->weight_charge = $payment_info['weight_charge']??null;
         $HousewayBills->taxes = $payment_info['taxes'] ?? null;
         $HousewayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'] ?? null;
         $HousewayBills->total_charges_collect = $payment_info['total_charges_collect'] ?? null;

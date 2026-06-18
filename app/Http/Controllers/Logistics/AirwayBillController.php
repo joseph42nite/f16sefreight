@@ -619,7 +619,7 @@ class AirwayBillController extends Controller
         $AirwayBills->declear_value_carriage = $payment_info['declear_value_carriage'] ?? 'NVD';
         $AirwayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? 'NCV';
         $AirwayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? 'XXX';
-        $AirwayBills->weight_charge = $payment_info['weight_charge'];
+        $AirwayBills->weight_charge = $payment_info['weight_charge'] ?? null;
         $AirwayBills->taxes = $payment_info['taxes'] ?? 0;
         $AirwayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'] ?? 0;
         $AirwayBills->total_charges_collect = $payment_info['total_charges_collect'] ?? 0;

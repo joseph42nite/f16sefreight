@@ -14,6 +14,7 @@ use App\OtherCharge;
 use App\OtherCustomInformation;
 use App\Ams;
 use App\Airline;
+use App\Company;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
@@ -398,7 +399,7 @@ class ConversionController extends Controller
             // ===========End Third route info=============
         }
 
-        $special_handling_info = $waybill_data['special_handling_info']?json_decode($waybill_data['special_handling_info'], true):[];
+        $special_handling_info = $waybill_data['special_handling_info'] ? json_decode($waybill_data['special_handling_info'], true) : [];
         // Handling SPH Instructions
         for ($i = 0; $i < sizeof($special_handling_info); $i++) {
             $handlingSPHInstructions = $xml->createElement('ram:HandlingSPHInstructions');
@@ -721,7 +722,7 @@ class ConversionController extends Controller
         $ident = $xml->createElement('ram:SummaryDescription');
         $ident->appendChild($xml->createTextNode($consignment_data['description']));
         $IncludedHouseConsignment->appendChild($ident);
-        
+
         // Consignor Party
         $consignor_street_name = $house_address['ship_address'] . (!empty($house_address['ship_address_line_2']) ? ',' . $house_address['ship_address_line_2'] : '');
         $consignorParty = $xml->createElement('ram:ConsignorParty');
@@ -1790,12 +1791,15 @@ class ConversionController extends Controller
         $fullPath = Storage::path("xml-conversion-files/$xml_file_name");
         $username = config('common-data.descartes_username');
         $password = config('common-data.descartes_password');
-
+        $user_data = auth()->guard('user-api')->user();
+        $company_id = $user_data->company_name;
+        $is_testing = Company::where('id', $company_id)->value('in_testing_mode');
+        $api_url = $is_testing ? config('common-data.descartes_upload_url_testing') : config('common-data.descartes_upload_url');
         $response = Http::attach(
             'file',
             file_get_contents($fullPath),
             basename($fullPath)
-        )->withBasicAuth($username, $password)->post(config('common-data.descartes_upload_url'));
+        )->withBasicAuth($username, $password)->post($api_url);
         if (!$response->successful()) {
             return response()->json(['error' => 'Upload failed.', 'status' => $response->status(), 'data' => $response->body()]);
         } else {

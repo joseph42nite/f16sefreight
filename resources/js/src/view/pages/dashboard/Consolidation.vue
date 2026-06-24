@@ -368,9 +368,9 @@
                         <b-row>
                             <b-col cols="12">
                                 <div class="d-flex justify-content-end align-items-center mr-16 pb-5">
-                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer;" @click="cancelUpdate">Cancel</p>
-                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer;" @click="updateHouseWayBill">Update</p>
-                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer;" @click="addDetailsRow">Add details row</p>
+                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer; font-size: 14px;" @click="cancelUpdate">Cancel</p>
+                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer; font-size: 14px;" @click="updateHouseWayBill">Update</p>
+                                    <p class="mb-0 ml-4 mr-4 h-color" style="border-bottom: 1px solid #2637a8; cursor: pointer; font-size: 14px;" @click="addDetailsRow">Add details row</p>
                                 </div>
                             </b-col>
                         </b-row>
@@ -464,7 +464,7 @@
                         </b-row>
                         <b-row>
                             <b-col cols="12">
-                                <div class="d-flex justify-content-end flex-wrap submit-button" style="gap: 12px; align-items: center; padding-right: 16px;">
+                                <div class="d-flex justify-content-end flex-wrap submit-button mt-6" style="gap: 12px; align-items: center; padding-right: 16px;">
                                      <b-button class="show-btn" type="button" @click="generateAwbPDF">
                                          <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Generate PDF</b>
                                      </b-button>

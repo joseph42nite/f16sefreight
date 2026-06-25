@@ -237,6 +237,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>Pin code:</span>
+                                                            <span class="text-danger"> &nbsp;*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
@@ -246,6 +247,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>State:</span>
+                                                            <span class="text-danger"> &nbsp;*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
@@ -393,6 +395,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>Pin code:</span>
+                                                            <span class="text-danger"> &nbsp;*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
@@ -402,6 +405,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>State:</span>
+                                                            <span class="text-danger"> &nbsp;*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>

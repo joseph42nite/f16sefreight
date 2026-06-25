@@ -230,6 +230,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Post Code:</span>
+                                                             <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="shipper-postcode-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
@@ -239,6 +240,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>State:</span>
+                                                             <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="shipper-state-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
@@ -387,6 +389,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Post Code:</span>
+                                                             <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="cons-post-code" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
@@ -396,6 +399,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>State:</span>
+                                                             <span class="text-danger"> &nbsp;*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="cons-state-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
@@ -513,10 +517,7 @@
                                                                 <span class="text-danger"> &nbsp;*</span>
                                                             </div>
                                                         </template>
-                                                        <b-form-input id="input-master-origin"
-                                                            style="width: 220px !important;"
-                                                            class="form-control" v-model="form.routing_information.master_origin"
-                                                            :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
+                                                        <b-form-input id="input-master-origin" style="width: 220px !important;" class="form-control" v-model="form.routing_information.master_origin" :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
                                                         <has-error :form="form" field="master_origin" :class="{ 'd-block': form.errors.has('master_origin') }"></has-error>
                                                     </b-form-group>
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
@@ -1242,7 +1243,7 @@
                                                             class="">
                                                             <template #label>
                                                                 <div class="d-flex align-items-center justify-content-end" style="width:92px;">
-                                                                    <span>Master Pcs:</span>
+                                                                    <span>Master Pcs:</span> <span class="text-danger"> &nbsp;*</span>
                                                                 </div>
                                                             </template>
                                                             <b-form-input id="input-master-pcs" class="form-control"
@@ -1255,7 +1256,7 @@
                                                             class="">
                                                             <template #label>
                                                                 <div class="d-flex align-items-center justify-content-end" style="width:92px;">
-                                                                    <span>Master Weight:</span>
+                                                                    <span style="white-space: nowrap;">Master Weight:</span> <span class="text-danger"> &nbsp;*</span>
                                                                     <span class="text-danger">&nbsp;</span>
                                                                 </div>
                                                             </template>

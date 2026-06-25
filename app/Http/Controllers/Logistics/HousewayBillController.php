@@ -65,8 +65,8 @@ class HousewayBillController extends Controller
             'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'ship_post_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:15',
-            'ship_state' => 'nullable|string|max:9',
+            'ship_post_code' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:15',
+            'ship_state' => 'required|string|max:9',
             'ship_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'ship_phone' => 'nullable|max:20',
             'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
@@ -185,8 +185,8 @@ class HousewayBillController extends Controller
             'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
-            'cons_post_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:15',
-            'cons_state' => 'nullable|string|max:9',
+            'cons_post_code' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:15',
+            'cons_state' => 'required|string|max:9',
             'cons_country' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:2',
             'cons_phone' => 'nullable|max:20',
             'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
@@ -674,7 +674,7 @@ class HousewayBillController extends Controller
         $HousewayBills->declear_value_carriage = $payment_info['declear_value_carriage'] ?? null;
         $HousewayBills->declear_value_customs = $payment_info['declear_value_customs'] ?? null;
         $HousewayBills->declear_value_insurance = $payment_info['declear_value_insurance'] ?? null;
-        $HousewayBills->weight_charge = $payment_info['weight_charge']??null;
+        $HousewayBills->weight_charge = $payment_info['weight_charge'] ?? null;
         $HousewayBills->taxes = $payment_info['taxes'] ?? null;
         $HousewayBills->total_charges_prepaid = $payment_info['total_charges_prepaid'] ?? null;
         $HousewayBills->total_charges_collect = $payment_info['total_charges_collect'] ?? null;
@@ -734,7 +734,6 @@ class HousewayBillController extends Controller
     private function totalAmountValume($hawb_no, $totals)
     {
         $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
         $branch_name = $user->branch_name;
         $agent = Agent::where('id', $branch_name)->first();
 
@@ -753,8 +752,8 @@ class HousewayBillController extends Controller
         $HousewayBills = HousewayBills::find($hawb_no);
         if (!empty($hawb_no)) {
             $HousewayBills->id = $hawb_no;
-            if(!empty($totals['total_volume']) && $totals['total_volume']!='0.00')
-            $HousewayBills->total_volume = $totals['total_volume'];
+            if (!empty($totals['total_volume']) && $totals['total_volume'] != '0.00')
+                $HousewayBills->total_volume = $totals['total_volume'];
             $HousewayBills->total_amount = $totals['total_amount'];
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
@@ -897,7 +896,8 @@ class HousewayBillController extends Controller
                 $main_return_data['oci_entries'] = $error_data;
         }
         //for Total Consignee Amount and Total Volume
-        if (!empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])) {
+        // !empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])
+        if (1) {
             $error_data = $this->totalAmountValume($hawb_id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -916,7 +916,7 @@ class HousewayBillController extends Controller
             'ho_pincode' => $request->agent_head_office['ho_pincode'],
             'ho_state' => $request->agent_head_office['ho_state'],
             'ho_country' => $request->agent_head_office['ho_country'],
-            'as_agreed' => $request->as_agreed,
+            'as_agreed' => $request->as_agreed ?? 0,
         ];
         HousewayBills::where(['id' => $hawb_id])->update($update_arr);
         $send_response = [];
@@ -972,7 +972,8 @@ class HousewayBillController extends Controller
             else
                 $main_return_data['routing_information'] = $error_data;
         }
-        if (!empty($id) && !empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])) {
+        // && !empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])
+        if (!empty($id)) {
             $error_data = $this->totalAmountValume($id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -1042,7 +1043,7 @@ class HousewayBillController extends Controller
             'ho_pincode' => $request->agent_head_office['ho_pincode'],
             'ho_state' => $request->agent_head_office['ho_state'],
             'ho_country' => $request->agent_head_office['ho_country'],
-            'as_agreed' => $request->as_agreed,
+            'as_agreed' => $request->as_agreed ?? 0,
         ];
         if ($status != 'generate_pdf')
             HousewayBills::where(['id' => $id])->update($update_arr);

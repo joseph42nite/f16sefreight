@@ -717,7 +717,7 @@ class ConversionController extends Controller
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] ?? '' == 'P' ? 'true' : 'false'));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         if (!empty($waybill_data['total_volume']))
-            $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($house_data['total_volume'], 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
+            $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr(($house_data['total_volume'] ?? 0), 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
         $ident = $xml->createElement('ram:SummaryDescription');
         $ident->appendChild($xml->createTextNode($consignment_data['description']));
@@ -1023,7 +1023,7 @@ class ConversionController extends Controller
         $TypeCode->setAttribute('listAgencyID', 1);
         $IncludedHouseConsignmentItem->appendChild($TypeCode);
         $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
-        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($house_data['total_volume'], 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
+        $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr(($house_data['total_volume'] ?? 0), 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $totalChargeAmount = $xml->createElement('ram:TotalChargeAmount', $house_data['total_amount']);
         $totalChargeAmount->setAttribute('currencyID', $payment_details['currency']);
         $IncludedHouseConsignmentItem->appendChild($totalChargeAmount);

@@ -2721,8 +2721,8 @@ export default {
             this.showShipper=true;
             var shipper=response.shipper;
             if (shipper) {
-                this.form.shipper_address.ship_name=shipper.name.replace(/[&/=]/g, ' ');
-                this.form.shipper_address.ship_address=shipper.address.replace(/[&/=]/g, ' ');
+                this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+                this.form.shipper_address.ship_address = shipper.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
                 this.form.shipper_address.ship_city=shipper.city;
                 this.form.shipper_address.ship_post_code=shipper.pin;
                 this.form.shipper_address.ship_state=shipper.state;
@@ -2744,9 +2744,9 @@ export default {
             this.showConsignee=true;
             var consignee=response.consignee; 
             if (consignee) {
-                this.form.consignee_address.cons_name=consignee.name.replace(/[&/=]/g, ' ');
+                this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
                 this.form.consignee_address.cons_name_2=consignee.eori;
-                this.form.consignee_address.cons_address=consignee.address.replace(/[&/=]/g, ' ');
+                this.form.consignee_address.cons_address = consignee.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
                 this.form.consignee_address.cons_city=consignee.city;
                 this.form.consignee_address.cons_post_code=consignee.pin;
                 this.form.consignee_address.cons_state=consignee.state;

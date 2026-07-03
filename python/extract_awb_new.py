@@ -5551,7 +5551,7 @@ AIRPORT_IATA_MAP = {
     "phillip": "PHP",
     "pacific harbour": "PHR",
     "phitsanulok": "PHS",
-    "paris": "PRX",
+    "paris": "CDG",
     "phuoc long": "VSO",
     "hendrik van eck": "PHW",
     "phetchabun": "PHY",
@@ -8806,9 +8806,16 @@ def transform_address_box(text: str) -> Dict[str, Any]:
     clean_addr = re.sub(r'[,\s–\-]+$|^[,\s–\-]+', '', clean_addr)
     clean_addr = re.sub(r'\s{2,}', ' ', clean_addr).strip()
 
+    # Remove any special characters (keep only alphanumeric and spaces)
+    clean_name = re.sub(r'[^a-zA-Z0-9\s]', ' ', entity_name)
+    clean_name = re.sub(r'\s+', ' ', clean_name).strip()
+
+    clean_addr = re.sub(r'[^a-zA-Z0-9\s]', ' ', clean_addr)
+    clean_addr = re.sub(r'\s+', ' ', clean_addr).strip()
+
     return {
         'full_details': ' '.join(cleaned_lines),
-        'name':    entity_name,
+        'name':    clean_name,
         'address': clean_addr,
         'city':    city,
         'state':   state,

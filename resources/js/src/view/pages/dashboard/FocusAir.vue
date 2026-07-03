@@ -2967,7 +2967,7 @@ export default {
             
             if (cargo_data) {
                 this.consignment_list.hsCodes=cargo_data.hs_codes;
-                this.consignment_list.description=cargo_data.description.replace(/[&/=]/g, ' ');
+                this.consignment_list.description = cargo_data.description.replace(/[&/=]/g, ' ').slice(0, 70).trim();
                 if (cargo_data.dimensions) {
                     for(let i=0;i<cargo_data.dimensions.length;i++){
                         let dimensions_data=cargo_data.dimensions[i].dimension.split('X');

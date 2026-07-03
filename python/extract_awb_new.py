@@ -8977,6 +8977,9 @@ def transform_description(text: str) -> Dict[str, Any]:
     description = re.sub(r'^[\s,:\-]+|[\s,:\-]+$', '', description)
     description = re.sub(r'\s{2,}', ' ', description).strip()
 
+    # Limit to 70 characters
+    description = description[:70].strip()
+
     return {
         'description': description,
         'hs_codes':    hs_codes,

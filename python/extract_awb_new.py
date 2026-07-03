@@ -8809,9 +8809,11 @@ def transform_address_box(text: str) -> Dict[str, Any]:
     # Remove any special characters (keep only alphanumeric and spaces)
     clean_name = re.sub(r'[^a-zA-Z0-9\s]', ' ', entity_name)
     clean_name = re.sub(r'\s+', ' ', clean_name).strip()
+    clean_name = clean_name[:30].strip()
 
     clean_addr = re.sub(r'[^a-zA-Z0-9\s]', ' ', clean_addr)
     clean_addr = re.sub(r'\s+', ' ', clean_addr).strip()
+    clean_addr = clean_addr[:30].strip()
 
     return {
         'full_details': ' '.join(cleaned_lines),

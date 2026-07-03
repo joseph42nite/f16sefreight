@@ -2721,50 +2721,62 @@ export default {
             this.showShipper=true;
             var shipper=response.shipper;
             if (shipper) {
-                this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-                this.form.shipper_address.ship_address = shipper.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
-                this.form.shipper_address.ship_city=shipper.city;
-                this.form.shipper_address.ship_post_code=shipper.pin;
-                this.form.shipper_address.ship_state=shipper.state;
-                if(shipper.country){
-                    let shipper_country_code='';
-                    for(let c=0;c<252;c++){
-                        if(this.countries[c] && this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
-                            shipper_country_code=this.countries[c].value;
-                            break;
+                const matchedShipper = this.findMatchingAddress(shipper, this.shippers);
+                if (matchedShipper) {
+                    console.log('Auto-matched shipper (90%+ similarity):', matchedShipper.name);
+                    this.selectShipper(matchedShipper);
+                } else {
+                    this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+                    this.form.shipper_address.ship_address = shipper.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
+                    this.form.shipper_address.ship_city=shipper.city;
+                    this.form.shipper_address.ship_post_code=shipper.pin;
+                    this.form.shipper_address.ship_state=shipper.state;
+                    if(shipper.country){
+                        let shipper_country_code='';
+                        for(let c=0;c<252;c++){
+                            if(this.countries[c] && this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
+                                shipper_country_code=this.countries[c].value;
+                                break;
+                            }
                         }
+                        this.form.shipper_address.ship_country=shipper_country_code;
                     }
-                    this.form.shipper_address.ship_country=shipper_country_code;
+                    this.form.shipper_address.ship_phone=shipper.phone;
+                    this.form.shipper_address.ship_fax=shipper.email;
                 }
-                this.form.shipper_address.ship_phone=shipper.phone;
-                this.form.shipper_address.ship_fax=shipper.email;
             }
             
             // Consignee details
             this.showConsignee=true;
             var consignee=response.consignee; 
             if (consignee) {
-                this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-                this.form.consignee_address.cons_name_2=consignee.eori;
-                this.form.consignee_address.cons_address = consignee.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
-                this.form.consignee_address.cons_city=consignee.city;
-                this.form.consignee_address.cons_post_code=consignee.pin;
-                this.form.consignee_address.cons_state=consignee.state;
-                if(consignee.country){
-                    let consignee_country_code='';
-                    for(let c=0;c<252;c++){
-                        if(this.countries[c] && this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
-                            consignee_country_code=this.countries[c].value;
-                            break;
+                const matchedConsignee = this.findMatchingAddress(consignee, this.consignees);
+                if (matchedConsignee) {
+                    console.log('Auto-matched consignee (90%+ similarity):', matchedConsignee.name);
+                    this.selectConsignee(matchedConsignee);
+                } else {
+                    this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+                    this.form.consignee_address.cons_name_2=consignee.eori;
+                    this.form.consignee_address.cons_address = consignee.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
+                    this.form.consignee_address.cons_city=consignee.city;
+                    this.form.consignee_address.cons_post_code=consignee.pin;
+                    this.form.consignee_address.cons_state=consignee.state;
+                    if(consignee.country){
+                        let consignee_country_code='';
+                        for(let c=0;c<252;c++){
+                            if(this.countries[c] && this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
+                                consignee_country_code=this.countries[c].value;
+                                break;
+                            }
                         }
+                        this.form.consignee_address.cons_country=consignee_country_code;
                     }
-                    this.form.consignee_address.cons_country=consignee_country_code;
-                }
-                this.form.consignee_address.cons_phone=consignee.phone;
-                this.form.consignee_address.cons_fax=consignee.email;
-                if(consignee.eori){
-                    this.oci_info.supplementary_info=consignee.eori;
-                    this.oci_info.custom_info_identifier="CNE";
+                    this.form.consignee_address.cons_phone=consignee.phone;
+                    this.form.consignee_address.cons_fax=consignee.email;
+                    if(consignee.eori){
+                        this.oci_info.supplementary_info=consignee.eori;
+                        this.oci_info.custom_info_identifier="CNE";
+                    }
                 }
             }
 

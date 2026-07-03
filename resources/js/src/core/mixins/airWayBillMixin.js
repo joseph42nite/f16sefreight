@@ -683,5 +683,82 @@ export default {
             this.fillAlsoNotifyDetails(also_notify.id);
             this.activeDropdown = null;
         },
+        normalizeText(str) {
+            if (!str) return '';
+            return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        },
+        calculateSimilarity(str1, str2) {
+            if (!str1 || !str2) return 0;
+            const s1 = this.normalizeText(str1);
+            const s2 = this.normalizeText(str2);
+            if (!s1 || !s2) return 0;
+            if (s1 === s2) return 1.0;
+            if (s1.includes(s2) || s2.includes(s1)) return 0.95;
+
+            const longer = s1.length >= s2.length ? s1 : s2;
+            const shorter = s1.length < s2.length ? s1 : s2;
+            const longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+
+            const costs = [];
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else if (j > 0) {
+                        let newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return (longerLength - costs[s2.length]) / parseFloat(longerLength);
+        },
+        findMatchingAddress(ocrEntity, savedList) {
+            if (!ocrEntity || !ocrEntity.name || !savedList || !savedList.length) {
+                return null;
+            }
+
+            let bestMatch = null;
+            let highestScore = 0;
+
+            for (let i = 0; i < savedList.length; i++) {
+                const savedItem = savedList[i];
+
+                // 1. Name Similarity (Target >= 90% / 0.90)
+                const nameScore = this.calculateSimilarity(ocrEntity.name, savedItem.name);
+                if (nameScore < 0.90) continue;
+
+                // 2. Address Check
+                let addressPass = false;
+                if (!savedItem.address) {
+                    addressPass = true;
+                } else {
+                    const normSavedAddr = this.normalizeText(savedItem.address);
+                    const normOcrFull = this.normalizeText(ocrEntity.full_details || ocrEntity.address);
+                    
+                    if (normOcrFull && normSavedAddr && normOcrFull.includes(normSavedAddr)) {
+                        addressPass = true;
+                    } else {
+                        const addrScore = this.calculateSimilarity(savedItem.address, ocrEntity.address);
+                        if (addrScore >= 0.85) {
+                            addressPass = true;
+                        }
+                    }
+                }
+
+                if (addressPass && nameScore > highestScore) {
+                    highestScore = nameScore;
+                    bestMatch = savedItem;
+                }
+            }
+
+            return bestMatch;
+        },
     }
 };

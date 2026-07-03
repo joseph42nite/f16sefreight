@@ -367,14 +367,11 @@ The platform features a sophisticated OCR pipeline to automate data entry from P
     -   Integrated loading spinners (`b-spinner`) for long-running extraction tasks.
     -   Validation checks to ensure files are selected before processing.
 
-### 🔍 Unified Address Book Auto-Matching (`airWayBillMixin.js`)
+### 🔍 Address Book Auto-Matching (`resources/js/src/core/mixins/airWayBillMixin.js`)
 
--   **90% Fuzzy Similarity Algorithm**: Uses the Levenshtein Distance algorithm (`calculateSimilarity`) to compare OCR-extracted company names and addresses against saved database records in `this.shippers` and `this.consignees`.
--   **Tolerant of OCR Scans & Typos**:
-    -   Ignores minor OCR scanning errors or missing letters if name similarity is $\ge 90\%$.
-    -   Cross-verifies that the saved address appears within the raw OCR `full_details` text block or achieves $\ge 85\%$ address similarity.
--   **Centralized Architecture**: Centralized inside `airWayBillMixin.js` so all Air Waybill forms (`HouseWayBill.vue`, `FocusAir.vue`) inherit single-source matching logic automatically.
--   **Seamless Fallback**: If no saved record meets the 90% threshold, fields fall back to populating raw OCR data with the 30-character address boundary limit applied.
+- `normalizeText(str)`: Strips punctuation/spaces and converts text to lowercase alphanumeric.
+- `calculateSimilarity(str1, str2)`: Calculates 90% Levenshtein fuzzy similarity ratio between strings.
+- `findMatchingAddress(ocrEntity, savedList)`: Auto-matches OCR shipper/consignee against saved address book records before falling back to raw OCR text (used in `HouseWayBill.vue` & `FocusAir.vue`).
 
 ---
 

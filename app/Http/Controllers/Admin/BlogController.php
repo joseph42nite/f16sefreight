@@ -13,9 +13,15 @@ class BlogController extends Controller
     /**
      * Display a listing of the resource for public view.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $blogs = Blog::orderBy('created_at', 'desc')->get();
+        $query = Blog::orderBy('created_at', 'desc');
+        
+        if (!$request->is('api/superadmin/*')) {
+            $query->whereNotNull('published_at');
+        }
+        
+        $blogs = $query->get();
         return response()->json([
             'success' => true,
             'data' => $blogs
@@ -27,7 +33,7 @@ class BlogController extends Controller
      */
     public function show($slug)
     {
-        $blog = Blog::where('slug', $slug)->first();
+        $blog = Blog::where('slug', $slug)->whereNotNull('published_at')->first();
 
         if (!$blog) {
             return response()->json([
@@ -84,6 +90,8 @@ class BlogController extends Controller
             $imagePath = '/media/assets/blog/' . $filename;
         }
 
+        $publishedAt = filter_var($request->input('is_draft'), FILTER_VALIDATE_BOOLEAN) ? null : now();
+
         $blog = Blog::create([
             'title' => $request->title,
             'slug' => $slug,
@@ -95,7 +103,7 @@ class BlogController extends Controller
             'meta_description' => $request->meta_description ?: $request->excerpt,
             'takeaways' => $request->takeaways,
             'image_path' => $imagePath,
-            'published_at' => now()
+            'published_at' => $publishedAt
         ]);
 
         return response()->json([
@@ -125,6 +133,11 @@ class BlogController extends Controller
             'title', 'category', 'read_time', 'excerpt', 'content', 
             'meta_title', 'meta_description', 'takeaways'
         ]);
+
+        if ($request->has('is_draft')) {
+            $isDraft = filter_var($request->input('is_draft'), FILTER_VALIDATE_BOOLEAN);
+            $data['published_at'] = $isDraft ? null : ($blog->published_at ?: now());
+        }
 
         // Re-slug if title changed
         if ($request->title !== $blog->title) {

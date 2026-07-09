@@ -999,32 +999,33 @@ class AirwayBillController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $agentId = $user->branch_name;
-        // $shippers = SavedAddress::all();
-        $shippers = SavedAddress::where('agent_id', $agentId)->get();
-        // dd($shippers);
+        $shippers = SavedAddress::where(function($q) use ($agentId) {
+            if ($agentId) {
+                $q->where('agent_id', $agentId)->orWhereNull('agent_id');
+            }
+        })->get();
+
+        if ($shippers->isEmpty()) {
+            $shippers = SavedAddress::all();
+        }
         return response()->json($shippers);
     }
     public function getShipperAddress(Request $request)
     {
         $addressId = $request->id;
         $addressType = $request->address_type ?? 'shipper_address';
-        $agenData = SavedAddress::where('id', $addressId)->first();
-        if (!$agenData) {
-            return response()->json(['error' => 'Address not found'], 404);
-        }
-        $userId = $agenData->id;
 
-        $query = SavedAddress::where('id', $userId);
+        $address = null;
         if ($addressId) {
-            $query->where('id', $addressId);
+            $address = SavedAddress::where('id', $addressId)->first();
         } else {
-            $query->where('address_type', $addressType);
+            $address = SavedAddress::where('address_type', $addressType)->first();
         }
-        $address = $query->first();
 
         if ($address) {
             return response()->json([
                 'ship_name' => $address->name,
+                'ship_name_2' => $address->name_2,
                 'ship_account' => $address->account,
                 'ship_address' => $address->address,
                 'ship_address_line_2' => $address->address_line_2,
@@ -1044,10 +1045,16 @@ class AirwayBillController extends Controller
     {
         $addressId = $request->query('id');
         $address_type = $request->query('address_type', 'consignee_address');
-        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+        $address = null;
+        if ($addressId) {
+            $address = SavedAddress::where('id', $addressId)->first();
+        } else {
+            $address = SavedAddress::where('address_type', $address_type)->first();
+        }
         if ($address) {
             return response()->json([
                 'cons_name' => $address->name,
+                'cons_name_2' => $address->name_2,
                 'cons_account' => $address->account,
                 'cons_address' => $address->address,
                 'cons_address_line_2' => $address->address_line_2,
@@ -1067,10 +1074,16 @@ class AirwayBillController extends Controller
     {
         $addressId = $request->query('id');
         $address_type = $request->query('address_type', 'also_notify_address');
-        $address = SavedAddress::where('id', $addressId)->where('address_type', $address_type)->first();
+        $address = null;
+        if ($addressId) {
+            $address = SavedAddress::where('id', $addressId)->first();
+        } else {
+            $address = SavedAddress::where('address_type', $address_type)->first();
+        }
         if ($address) {
             return response()->json([
                 'also_name' => $address->name,
+                'also_name_2' => $address->name_2,
                 'also_account' => $address->account,
                 'also_address' => $address->address,
                 'also_address_line_2' => $address->address_line_2,

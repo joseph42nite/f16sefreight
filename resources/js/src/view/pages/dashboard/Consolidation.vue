@@ -31,7 +31,7 @@
                             </b-col>
                             <b-col cols="12" md="6" class="mt-6 mt-md-0">
                                 <div class="d-flex justify-content-md-end flex-wrap" style="gap: 12px; align-items: center;">
-                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="show-btn">
+                                    <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s-consolidation class="show-btn">
                                         <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                     </b-button>
                                 </div>
@@ -40,7 +40,7 @@
                             <!-- 10 Latest model code start here -->
                             <!-- History List Modals from reusable component -->
                             <DashboardHistoryModal 
-                                id="modal-s" 
+                                id="modal-s-consolidation" 
                                 title="Latest Messages" 
                                 mode="send" 
                                 docType="consolidation"
@@ -237,7 +237,7 @@
                                                              <b-button class="show-btn" @click="addManualCode">
                                                                  <b-icon icon="plus-circle" class="mr-1"></b-icon> Add Code
                                                              </b-button>
-                                                             <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="btn btn-outline-secondary" style="border-radius: 10px; height: 38px; font-weight: 500;">
+                                                             <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s-consolidation class="btn btn-outline-secondary" style="border-radius: 10px; height: 38px; font-weight: 500;">
                                                                  <b-icon icon="clock-history" class="mr-1"></b-icon> 10 Latest
                                                              </b-button>
                                                          </b-col>
@@ -1110,7 +1110,7 @@ export default {
             this.form.awb_no = String(item.awb_no);
             
             // Close the modal
-            this.$bvModal.hide('modal-s');
+            this.$bvModal.hide('modal-s-consolidation');
             
             // Perform the search automatically
             this.searchWayBills();

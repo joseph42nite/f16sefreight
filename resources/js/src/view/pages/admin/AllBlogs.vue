@@ -56,8 +56,15 @@
                         </div>
                     </template>
 
+                    <template #cell(status)="data">
+                        <b-badge :variant="data.item.published_at ? 'light-success' : 'light-warning'">
+                            {{ data.item.published_at ? 'Published' : 'Draft' }}
+                        </b-badge>
+                    </template>
+
                     <template #cell(date)="data">
-                        <span class="text-muted">{{ formatDate(data.item.created_at) }}</span>
+                        <span class="text-muted" v-if="data.item.published_at">{{ formatDate(data.item.published_at) }}</span>
+                        <span class="text-muted italic" v-else>—</span>
                     </template>
 
                     <template #cell(action)="data">
@@ -96,6 +103,7 @@ export default {
             fields: [
                 { label: "Cover", key: "image", thClass: "pl-4", tdClass: "pl-4" },
                 { label: "Content / Title", key: "title" },
+                { label: "Status", key: "status" },
                 { label: "Published Date", key: "date" },
                 { label: "Actions", key: "action", tdClass: "text-right", thClass: "text-right pr-4" },
             ],

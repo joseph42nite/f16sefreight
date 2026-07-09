@@ -666,22 +666,149 @@ export default {
             }
         },
         selectShipper(shipper) {
+            if (!shipper) return;
             this.selectedShipper = shipper.id;
-            this.form.shipper_address = shipper.name;
+            this.form.shipper_address = {
+                ship_name: shipper.name || '',
+                ship_name_2: shipper.name_2 || '',
+                ship_account: shipper.account || '',
+                ship_address: shipper.address || '',
+                ship_address_line_2: shipper.address_line_2 || '',
+                ship_city: shipper.city || '',
+                ship_airport_code: shipper.airport_code || '',
+                ship_post_code: shipper.post_code || '',
+                ship_state: shipper.state || '',
+                ship_country: shipper.country || '',
+                ship_phone: shipper.phone || '',
+                ship_fax: shipper.fax || '',
+                ship_telex: shipper.telex || ''
+            };
             this.fillShipperDetails(shipper.id);
             this.activeDropdown = null;
         },
         selectConsignee(consignee) {
+            if (!consignee) return;
             this.selectedConsignee = consignee.id;
-            this.form.consignee_address = consignee.name;
+            this.form.consignee_address = {
+                cons_name: consignee.name || '',
+                cons_name_2: consignee.name_2 || '',
+                cons_account: consignee.account || '',
+                cons_address: consignee.address || '',
+                cons_address_line_2: consignee.address_line_2 || '',
+                cons_city: consignee.city || '',
+                cons_airport_code: consignee.airport_code || '',
+                cons_post_code: consignee.post_code || '',
+                cons_state: consignee.state || '',
+                cons_country: consignee.country || '',
+                cons_phone: consignee.phone || '',
+                cons_fax: consignee.fax || '',
+                cons_telex: consignee.telex || ''
+            };
             this.fillConsigneeDetails(consignee.id);
             this.activeDropdown = null;
         },
         selectAlsoNotifyA(also_notify) {
+            if (!also_notify) return;
             this.selectAlsoNotify = also_notify.id;
-            this.form.also_notify_address = also_notify.name;
+            this.form.also_notify_address = {
+                also_name: also_notify.name || '',
+                also_name_2: also_notify.name_2 || '',
+                also_account: also_notify.account || '',
+                also_address: also_notify.address || '',
+                also_address_line_2: also_notify.address_line_2 || '',
+                also_city: also_notify.city || '',
+                also_airport_code: also_notify.airport_code || '',
+                also_post_code: also_notify.post_code || '',
+                also_state: also_notify.state || '',
+                also_country: also_notify.country || '',
+                also_phone: also_notify.phone || '',
+                also_fax: also_notify.fax || '',
+                also_telex: also_notify.telex || ''
+            };
             this.fillAlsoNotifyDetails(also_notify.id);
             this.activeDropdown = null;
+        },
+        normalizeText(str) {
+            if (!str) return '';
+            return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        },
+        calculateSimilarity(str1, str2) {
+            if (!str1 || !str2) return 0;
+            const s1 = this.normalizeText(str1);
+            const s2 = this.normalizeText(str2);
+            if (!s1 || !s2) return 0;
+            if (s1 === s2) return 1.0;
+            
+            const minLen = Math.min(s1.length, s2.length);
+            const maxLen = Math.max(s1.length, s2.length);
+            if ((s1.includes(s2) || s2.includes(s1)) && (minLen / maxLen >= 0.65)) {
+                return 0.95;
+            }
+
+            const longer = s1.length >= s2.length ? s1 : s2;
+            const shorter = s1.length < s2.length ? s1 : s2;
+            const longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+
+            const costs = [];
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else if (j > 0) {
+                        let newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return (longerLength - costs[s2.length]) / parseFloat(longerLength);
+        },
+        findMatchingAddress(ocrEntity, savedList) {
+            if (!ocrEntity || !ocrEntity.name || !savedList || !savedList.length) {
+                return null;
+            }
+
+            let bestMatch = null;
+            let highestScore = 0;
+
+            for (let i = 0; i < savedList.length; i++) {
+                const savedItem = savedList[i];
+
+                // 1. Name Similarity (Target >= 90% / 0.90)
+                const nameScore = this.calculateSimilarity(ocrEntity.name, savedItem.name);
+                if (nameScore < 0.90) continue;
+
+                // 2. Address Check
+                let addressPass = false;
+                if (!savedItem.address || !ocrEntity.address || !ocrEntity.address.trim()) {
+                    addressPass = true;
+                } else {
+                    const normSavedAddr = this.normalizeText(savedItem.address);
+                    const normOcrFull = this.normalizeText(ocrEntity.full_details || ocrEntity.address);
+                    
+                    if (normOcrFull && normSavedAddr && (normOcrFull.includes(normSavedAddr) || normSavedAddr.includes(normOcrFull))) {
+                        addressPass = true;
+                    } else {
+                        const addrScore = this.calculateSimilarity(savedItem.address, ocrEntity.address);
+                        if (addrScore >= 0.85) {
+                            addressPass = true;
+                        }
+                    }
+                }
+
+                if (addressPass && nameScore > highestScore) {
+                    highestScore = nameScore;
+                    bestMatch = savedItem;
+                }
+            }
+
+            return bestMatch;
         },
     }
 };

@@ -3,12 +3,23 @@
         <div class="d-flex align-items-center justify-content-between mb-6">
             <div>
                 <router-link to="/superadmin/all-blogs" class="text-muted font-weight-bold mb-2 d-inline-block"><i class="fas fa-arrow-left mr-2"></i> Back to All Blogs</router-link>
-                <h2 class="font-weight-bolder text-dark">{{ actionLabel }} Editorial Post</h2>
+                <div class="d-flex align-items-center">
+                    <h2 class="font-weight-bolder text-dark mb-0 mr-4">{{ actionLabel }} Editorial Post</h2>
+                    <b-badge :variant="blogData.published_at ? 'success' : 'warning'" class="px-3 py-2 font-weight-bold" style="font-size: 0.85rem;" v-if="blogId">
+                        {{ blogData.published_at ? 'Published' : 'Draft' }}
+                    </b-badge>
+                </div>
             </div>
-            <b-button variant="primary" @click="submitPost" class="px-8 font-weight-bolder" :disabled="submitting">
-                <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
-                {{ actionLabel }} Blog
-            </b-button>
+            <div class="d-flex" style="gap: 12px;">
+                <b-button variant="outline-primary" @click="submitPost(true)" class="px-6 font-weight-bolder" :disabled="submitting">
+                    <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
+                    Save as Draft
+                </b-button>
+                <b-button variant="primary" @click="submitPost(false)" class="px-8 font-weight-bolder" :disabled="submitting">
+                    <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
+                    {{ blogId ? 'Update' : 'Publish' }} Blog
+                </b-button>
+            </div>
         </div>
 
         <div class="row">
@@ -225,7 +236,7 @@ export default {
                     }
                 });
         },
-        submitPost() {
+        submitPost(isDraft = false) {
             if (!this.blogData.title || !this.blogData.content) {
                 Swal.fire('Hold up', 'Title and Content are mandatory fields.', 'warning');
                 return;
@@ -242,6 +253,7 @@ export default {
             fd.append('content', this.blogData.content);
             fd.append('meta_title', this.blogData.meta_title || '');
             fd.append('meta_description', this.blogData.meta_description || '');
+            fd.append('is_draft', isDraft ? '1' : '0');
             
             // Format takeaways to drop empties and append each element correctly
             const filteredTakeaways = this.blogData.takeaways.filter(t => t.trim().length > 0);

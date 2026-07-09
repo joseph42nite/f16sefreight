@@ -35,7 +35,7 @@
                             </b-col>
                             <!-- History List Modals from reusable component -->
                             <DashboardHistoryModal 
-                                id="modal-draft" 
+                                id="modal-draft-house" 
                                 title="My Drafts" 
                                 mode="draft" 
                                 docType="house"
@@ -45,7 +45,7 @@
                             />
 
                             <DashboardHistoryModal 
-                                id="modal-s" 
+                                id="modal-s-house" 
                                 title="Latest Messages" 
                                 mode="send" 
                                 docType="house"
@@ -2945,7 +2945,7 @@ export default {
             return true;
         },
         handleEditNavigation(id) {
-            this.$bvModal.hide('modal-s');
+            this.$bvModal.hide('modal-s-house');
             const targetPath = `/edit-houseway-bill/${id}`;
             if (this.$route.path !== targetPath) {
                 this.$router.push(targetPath).then(() => {
@@ -3095,11 +3095,16 @@ export default {
                 });
             }
         },
+        onSelect(value) {
+            if (value) {
+                window.location.href = value;
+            }
+        },
         getHousewayBills(status) {
             this.isFetching = true;
             this.data_items = []; // Clear current items to avoid stale data flicker
             // Open the correct modal immediately (spinner shows while fetching)
-            const modalId = status === 'draft' ? 'modal-draft' : 'modal-s';
+            const modalId = status === 'draft' ? 'modal-draft-house' : 'modal-s-house';
             this.$bvModal.show(modalId);
             ApiService.get(`/user/get-houseway-bills/${status}`)
                 .then(response => {

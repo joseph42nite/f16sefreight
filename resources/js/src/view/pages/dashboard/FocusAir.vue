@@ -42,7 +42,7 @@
                                 </b-col>
                                 <!-- History List Modals injected from reusable component -->
                                 <DashboardHistoryModal 
-                                    id="modal-draft" 
+                                    id="modal-draft-air" 
                                     title="My Drafts" 
                                     mode="draft" 
                                     docType="master"
@@ -52,7 +52,7 @@
                                 />
 
                                 <DashboardHistoryModal 
-                                    id="modal-s" 
+                                    id="modal-s-air" 
                                     title="Latest Messages" 
                                     mode="send" 
                                     docType="master"
@@ -3436,11 +3436,16 @@ export default {
                 });
             }
         },
+        onSelect(value) {
+            if (value) {
+                window.location.href = value;
+            }
+        },
         getAirwayBills(status) {
             this.isFetching = true;
             this.data_items = []; // Clear stale data before fetch
             // Open the correct modal immediately — spinner shows while loading
-            const modalId = status === 'draft' ? 'modal-draft' : 'modal-s';
+            const modalId = status === 'draft' ? 'modal-draft-air' : 'modal-s-air';
             this.$bvModal.show(modalId);
             ApiService.get(`/user/get-airway-bills/${status}`)
                 .then(response => {
@@ -3593,7 +3598,7 @@ export default {
                 }
         },
         handleEditNavigation(id) {
-            this.$bvModal.hide('modal-s');
+            this.$bvModal.hide('modal-s-air');
             const targetPath = `/edit-airway-bill/${String(id)}`;
             if (this.$route.path !== targetPath) {
                 this.$router.push(targetPath).then(() => {

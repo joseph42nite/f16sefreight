@@ -162,6 +162,7 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     // Shipments per client
     Route::get('/client-shipments', [SuperAdminController::class, 'getClientShipments']);
     Route::get('/shipment-xml/{awb_id}', [SuperAdminController::class, 'getShipmentXml']);
+    Route::get('/get-location', [LocationController::class, 'getLocation']);
 });
 
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);

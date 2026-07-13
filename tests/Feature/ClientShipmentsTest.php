@@ -110,5 +110,10 @@ class ClientShipmentsTest extends TestCase
         $this->assertStringContainsString('111-22223333', $response->getContent());
         $this->assertStringContainsString('JFK', $response->getContent());
         $this->assertStringContainsString('LHR', $response->getContent());
+
+        // 8. Test superadmin location endpoint
+        $response = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/get-location');
+        $response->assertStatus(200);
     }
 }

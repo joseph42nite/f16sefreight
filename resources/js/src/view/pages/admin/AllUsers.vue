@@ -10,10 +10,17 @@
 
     <div class="admin-glass-card">
       <!-- Filtering and Pagination Size Bar -->
-      <div class="admin-filter-row">
-        <div class="d-flex align-items-center">
-          <span class="mr-3 font-weight-bold text-muted">Show:</span>
-          <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" class="form-control-sm" style="max-width: 120px;"></b-form-select>
+      <div class="admin-filter-row d-flex flex-wrap align-items-center justify-content-between">
+        <div class="d-flex align-items-center flex-wrap">
+          <div class="d-flex align-items-center mr-6">
+            <span class="mr-3 font-weight-bold text-muted">Show:</span>
+            <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" class="form-control-sm" style="max-width: 120px;"></b-form-select>
+          </div>
+          
+          <div class="d-flex align-items-center">
+            <span class="mr-3 font-weight-bold text-muted">Company:</span>
+            <b-form-select id="company-filter" v-model="selectedCompany" :options="companyOptions" class="form-control-sm" style="min-width: 180px; max-width: 250px;"></b-form-select>
+          </div>
         </div>
         
         <div class="w-md-25">
@@ -30,7 +37,7 @@
           v-else 
           responsive 
           hover 
-          :items="items" 
+          :items="filteredUsers" 
           :fields="fields" 
           primary-key="id" 
           :filter="filter" 
@@ -50,6 +57,10 @@
                </div>
                <span class="font-weight-bolder text-dark">{{ data.item.name }}</span>
              </div>
+          </template>
+
+          <template #cell(company_name)="data">
+            <span class="font-weight-bold text-dark">{{ getCompanyDisplayName(data.item.company_name) }}</span>
           </template>
 
           <template #cell(is_active)="data">
@@ -101,6 +112,8 @@ export default {
         {label:"Action",key:"action"}
         ],
       items: [],
+      companies: [],
+      selectedCompany: null,
       isLoading: false,
       current_date:'',
       filter: null,
@@ -109,6 +122,42 @@ export default {
       perPage: 10,
       pageOptions: [10, 15, 20,{ value: 100, text: "Show a lot" }],
     };
+  },
+  computed: {
+    filteredUsers() {
+      if (!this.selectedCompany) {
+        return this.items;
+      }
+      return this.items.filter(item => {
+        const companyObj = this.companies.find(c => c.id == this.selectedCompany);
+        const companyName = companyObj ? companyObj.name : null;
+        
+        return item.company_name == this.selectedCompany || 
+               (companyName && item.company_name === companyName);
+      });
+    },
+    companyOptions() {
+      const options = [{ value: null, text: "All Companies" }];
+      this.companies.forEach(company => {
+        options.push({ value: company.id, text: company.name });
+      });
+      return options;
+    }
+  },
+  watch: {
+    selectedCompany() {
+      this.currentPage = 1;
+      this.$nextTick(() => {
+        if (!this.filter) {
+          this.totalRows = this.filteredUsers.length;
+        }
+      });
+    },
+    filter(newVal) {
+      if (!newVal) {
+        this.totalRows = this.filteredUsers.length;
+      }
+    }
   },
   methods: {
     delete_user(id){
@@ -126,11 +175,28 @@ export default {
       ApiService.get(`/superadmin/all-user/0`)
         .then(({ data }) => {
           this.items=data;
-          this.totalRows=data.length;
+          this.totalRows=this.filteredUsers.length;
         })
         .finally(() => {
           this.isLoading = false;
         })
+    },
+    get_companies() {
+      ApiService.get(`/superadmin/all-company`)
+        .then(({ data }) => {
+          this.companies = data;
+        })
+        .catch(err => {
+          console.error("Failed to load companies", err);
+        });
+    },
+    getCompanyDisplayName(val) {
+      if (!val) return "—";
+      const company = this.companies.find(c => c.id == val);
+      if (company) return company.name;
+      const companyByName = this.companies.find(c => c.name === val);
+      if (companyByName) return companyByName.name;
+      return val;
     },
      onFiltered(filteredItems) {
       this.totalRows = filteredItems.length;
@@ -142,6 +208,7 @@ export default {
   },
   mounted(){
      this.get_users();
+     this.get_companies();
      this.current_date = new Date().toISOString().slice(0, 10);
   },
 };

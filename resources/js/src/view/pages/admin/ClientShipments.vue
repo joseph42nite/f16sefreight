@@ -1,9 +1,14 @@
 <template>
   <div class="py-5">
-    <div class="admin-page-header">
+    <div class="admin-page-header d-flex flex-wrap justify-content-between align-items-center mb-6">
       <div class="d-flex flex-column">
-        <h2>Client Shipments Tracker</h2>
+        <h2 class="font-weight-bold text-dark mb-1">Client Shipments Tracker</h2>
         <span class="text-muted font-size-sm">Monitor all airway bills (AWB) and house airway bills (HAWB) executed per client</span>
+      </div>
+      <div class="d-flex align-items-center mt-3 mt-md-0" v-if="lastUpdated">
+        <b-badge variant="light-primary" class="font-weight-bold px-3 py-2">
+          <i class="fas fa-sync-alt fa-spin mr-1 text-primary"></i> Live: Updated at {{ lastUpdated }}
+        </b-badge>
       </div>
     </div>
 
@@ -127,6 +132,7 @@
           thead-class="text-uppercase text-muted font-size-xs"
           empty-text="No shipments found for this client matching the filters."
           show-empty
+          :tbody-tr-class="rowClass"
         >
           <template #cell(index)="data">
             <span class="font-weight-bold">#{{ (currentPage - 1) * perPage + data.index + 1 }}</span>
@@ -264,7 +270,8 @@ export default {
       pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
       xmlContent: "",
       selectedAwbId: "",
-      pollTimer: null
+      pollTimer: null,
+      lastUpdated: ""
     };
   },
   components: {
@@ -299,6 +306,14 @@ export default {
           this.totalAwb = data.total_awb;
           this.totalHawb = data.total_hawb;
           this.totalRows = data.shipments.length;
+
+          const now = new Date();
+          this.lastUpdated = now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          });
         })
         .catch(err => {
           console.error("Failed to load shipments", err);
@@ -357,6 +372,10 @@ export default {
     onFiltered(filteredItems) {
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
+    },
+    rowClass(item, type) {
+      if (!item || type !== 'row') return '';
+      return item.fna_received ? 'table-row-fna' : '';
     },
     formatDate(dateString) {
       if (!dateString) return '—';
@@ -476,5 +495,12 @@ export default {
 .btn-icon-sm {
   border-radius: 6px;
   padding: 4px 10px;
+}
+.table-row-fna {
+  background-color: rgba(246, 78, 96, 0.04) !important;
+  border-left: 4px solid #f64e60 !important;
+}
+.table-row-fna:hover {
+  background-color: rgba(246, 78, 96, 0.08) !important;
 }
 </style>

@@ -84,16 +84,40 @@ class SuperAdminController extends Controller
             $query->whereDate('created_at', '=', $request->date);
         }
 
+        // Database-level filtering for FNA Status
+        if ($request->filled('fna_status')) {
+            $driver = \Illuminate\Support\Facades\DB::getDriverName();
+            $concatSql = $driver === 'sqlite' 
+                ? "awb_code || '-' || awb_no" 
+                : "CONCAT(awb_code, '-', awb_no)";
+
+            if ($request->fna_status === 'yes') {
+                $query->whereExists(function ($q) use ($concatSql) {
+                    $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                      ->from('status_response')
+                      ->whereRaw("status_response.business_id = {$concatSql}")
+                      ->where('status_response.business_status_code', 'Rejected');
+                });
+            } elseif ($request->fna_status === 'no') {
+                $query->whereNotExists(function ($q) use ($concatSql) {
+                    $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                      ->from('status_response')
+                      ->whereRaw("status_response.business_id = {$concatSql}")
+                      ->where('status_response.business_status_code', 'Rejected');
+                });
+            }
+        }
+
         $shipments = $query->get();
 
-        // Fetch all status responses for these shipments
+        // Fetch status responses only for the retrieved shipments list
         $awbIdsWithHyphen = $shipments->map(function ($awb) {
             return $awb->awb_code . '-' . $awb->awb_no;
         })->toArray();
 
         $statusResponses = \App\StatusReponse::whereIn('business_id', $awbIdsWithHyphen)->get();
 
-        // Map status responses to shipments
+        // Map status responses details back to models
         $shipments->each(function ($awb) use ($statusResponses) {
             $key = $awb->awb_code . '-' . $awb->awb_no;
             $fnaResponse = $statusResponses->first(function ($res) use ($key) {
@@ -102,19 +126,6 @@ class SuperAdminController extends Controller
             $awb->fna_received = $fnaResponse ? true : false;
             $awb->fna_reason = $fnaResponse ? $fnaResponse->reason : null;
         });
-
-        // Filter by FNA Status if specified
-        if ($request->filled('fna_status')) {
-            if ($request->fna_status === 'yes') {
-                $shipments = $shipments->filter(function ($awb) {
-                    return $awb->fna_received === true;
-                })->values();
-            } elseif ($request->fna_status === 'no') {
-                $shipments = $shipments->filter(function ($awb) {
-                    return $awb->fna_received === false;
-                })->values();
-            }
-        }
 
         // Calculate counts
         $totalAwb = $shipments->count();

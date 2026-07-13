@@ -466,6 +466,11 @@ export default {
         },
         addOrUpdateEntry(evt) {
             evt.preventDefault();
+            this.validationErrors = [];
+            if (this.consignment_list.itemss.length <= 0) {
+                this.validationErrors.push('Add at least 1 entry');
+                return;
+            }
             if (!(this.consignment_list instanceof Form)) {
                 this.consignment_list = new Form(this.consignment_list);
             }

@@ -158,6 +158,10 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-blog/{id}', [BlogController::class, 'update']);
     Route::get('/all-blogs-internal', [BlogController::class, 'index']);
     Route::delete('/delete-blog/{id}', [BlogController::class, 'destroy']);
+
+    // Shipments per client
+    Route::get('/client-shipments', [SuperAdminController::class, 'getClientShipments']);
+    Route::get('/shipment-xml/{awb_id}', [SuperAdminController::class, 'getShipmentXml']);
 });
 
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);
@@ -177,3 +181,8 @@ Route::get('/check', [GLNResponseController::class, 'check']);
 // Public Blog Feed
 Route::get('/get-public-blogs', [BlogController::class, 'index']);
 Route::get('/get-public-blog/{slug}', [BlogController::class, 'show']);
+
+// OpenClaw Integration Routes
+Route::post('/openclaw/webhook', [\App\Http\Controllers\OpenClawController::class, 'webhook'])->middleware('openclaw.verify');
+Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
+Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);

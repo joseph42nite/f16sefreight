@@ -79,6 +79,32 @@
       </li>
     </router-link>
     <router-link
+      to="/superadmin/client-shipments"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <img
+            src="/media/assets/ui/menu-icons/customer.svg"
+            alt="shipments icon"
+            class="img-fluid"
+            width="18"
+            height="18"
+          />
+          &nbsp;&nbsp;&nbsp;
+          <span class="menu-text">Shipments</span>
+        </a>
+      </li>
+    </router-link>
+    <router-link
       to="/superadmin/all-templates"
       v-slot="{ href, navigate, isActive, isExactActive }"
      >

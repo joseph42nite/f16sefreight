@@ -175,6 +175,12 @@ export default new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          path: "client-shipments",
+          name: "superadmin-clientshipments",
+          component: () => import("@/view/pages/admin/ClientShipments.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "all-branch",
           name: "superadmin-allbranch",
           component: () => import("@/view/pages/admin/AllBranch.vue"),

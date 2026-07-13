@@ -458,10 +458,6 @@ export default {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease;
-}
-.stats-card:hover {
-  transform: translateY(-5px);
 }
 .stats-label {
   font-size: 0.8rem;

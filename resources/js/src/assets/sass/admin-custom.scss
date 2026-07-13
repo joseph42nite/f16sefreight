@@ -30,11 +30,6 @@ label {
     border-radius: 16px !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
     padding: 2rem !important;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-    &:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05) !important;
-    }
 }
 
 /* Premium Listing Controls */
@@ -68,7 +63,6 @@ label {
 
     &:hover {
         background-color: $hover-blue !important;
-        transform: translateY(-1px);
         box-shadow: 0 6px 15px rgba(53, 85, 148, 0.25) !important;
     }
 }
@@ -95,10 +89,6 @@ label {
             font-weight: 500;
             vertical-align: middle;
             border-bottom: 1px solid #EFF2F5;
-        }
-        
-        tr {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         tr:hover td {

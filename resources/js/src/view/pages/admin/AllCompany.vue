@@ -50,25 +50,6 @@
                         </div>
                     </template>
 
-                    <template #cell(tier)="data">
-                        <b-badge :variant="getTierBadgeVariant(data.item.tier)" class="text-uppercase font-weight-bold px-3 py-2">
-                            {{ formatTierName(data.item.tier) }}
-                        </b-badge>
-                    </template>
-
-                    <template #cell(credit_limit)="data">
-                        <span class="font-weight-bold text-dark">{{ formatCurrency(data.item.credit_limit) }}</span>
-                    </template>
-
-                    <template #cell(credit_balance)="data">
-                        <span class="font-weight-bold text-success" v-if="data.item.credit_balance > 0">
-                            {{ formatCurrency(data.item.credit_balance) }}
-                        </span>
-                        <span class="text-muted" v-else>
-                            $0.00
-                        </span>
-                    </template>
-
                     <template #cell(action)="data">
                         <router-link :to="'/superadmin/new-company/' + data.item['id']" class="btn btn-icon btn-light-primary btn-sm">
                             <i class="fas fa-pen font-size-sm"></i>
@@ -97,10 +78,7 @@ export default {
         return {
             fields: [
                 { label: "Sl", key: "index" },
-                { label: "Company Name", key: "name" },
-                { label: "Service Tier", key: "tier" },
-                { label: "Credit Limit", key: "credit_limit" },
-                { label: "Available Balance", key: "credit_balance" },
+                { label: "Name", key: "name" },
                 { label: "Action", key: "action" },
             ],
             items: [],
@@ -132,21 +110,6 @@ export default {
         onFiltered(filteredItems) {
             this.totalRows = filteredItems.length;
             this.currentPage = 1;
-        },
-        getTierBadgeVariant(tier) {
-            switch(tier) {
-                case 'viper_core': return 'light-primary';
-                case 'premium': return 'light-success';
-                case 'enterprise': return 'light-warning';
-                default: return 'light-info';
-            }
-        },
-        formatTierName(tier) {
-            if (!tier) return 'Core';
-            return tier.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
-        },
-        formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
         },
     },
     mounted() {

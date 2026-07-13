@@ -17,29 +17,6 @@
                         <has-error :form="company_form" field="name"></has-error>
                     </b-form-group>
                 </div>
-
-                <h5 class="mb-4 text-dark font-weight-bold">Service & Credit Settings</h5>
-                <div class="row mb-7">
-                    <div class="col-md-4">
-                        <b-form-group label="Service Tier">
-                            <b-form-select v-model="company_form.tier" :options="tierOptions" class="form-control"></b-form-select>
-                            <has-error :form="company_form" field="tier"></has-error>
-                        </b-form-group>
-                    </div>
-                    <div class="col-md-4">
-                        <b-form-group label="Credit Limit ($)">
-                            <b-form-input v-model="company_form.credit_limit" type="number" step="0.01" class="form-control" placeholder="0.00"></b-form-input>
-                            <has-error :form="company_form" field="credit_limit"></has-error>
-                        </b-form-group>
-                    </div>
-                    <div class="col-md-4">
-                        <b-form-group label="Available Credit Balance ($)">
-                            <b-form-input v-model="company_form.credit_balance" type="number" step="0.01" class="form-control" placeholder="0.00"></b-form-input>
-                            <has-error :form="company_form" field="credit_balance"></has-error>
-                        </b-form-group>
-                    </div>
-                </div>
-
                 <hr class="mb-7" />
                 <h5 class="mb-4 text-dark font-weight-bold">Document Templates Configuration</h5>
                 
@@ -122,9 +99,6 @@ export default {
             company_form: new Form({
                 id: "",
                 name: "",
-                tier: "viper_core",
-                credit_limit: 0.00,
-                credit_balance: 0.00,
                 templates_config: {
                     allowed_templates: [],
                     default_focus_air: "",
@@ -136,12 +110,7 @@ export default {
             searchQuery: "",
             isDropdownOpen: false,
             showpass: true,
-            availableTemplates: [],
-            tierOptions: [
-                { value: "viper_core", text: "Viper Core" },
-                { value: "premium", text: "Premium" },
-                { value: "enterprise", text: "Enterprise" }
-            ]
+            availableTemplates: []
         };
     },
     methods: {

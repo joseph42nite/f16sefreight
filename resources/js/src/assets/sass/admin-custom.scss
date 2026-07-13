@@ -1,11 +1,27 @@
 // Superadmin & Data Management Custom Styles
 // Reusing brand color palettes defined in initial config
+
 $brand-blue: #355594;
 $hover-blue: #2a4476;
 $brand-cyan: #00a1e4;
 $text-gray: #5E6278;
 $text-light-gray: #A1A5B7;
 $bg-surface: #F0F2F5;
+$font-family-inter: 'Inter', sans-serif;
+
+body,
+.admin-page-header,
+.admin-glass-card,
+.admin-table-wrapper,
+.admin-filter-row,
+.admin-pagination-wrap,
+.admin-form-group,
+input,
+select,
+button,
+label {
+    font-family: $font-family-inter !important;
+}
 
 /* Admin Shared Component Containers */
 .admin-glass-card {

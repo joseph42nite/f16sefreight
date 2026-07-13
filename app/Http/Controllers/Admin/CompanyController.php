@@ -13,7 +13,7 @@ class CompanyController extends Controller
 {
     public function index($id = 0)
     {
-        $columns = ['id', 'name', 'templates_config', 'tier', 'credit_limit', 'credit_balance'];
+        $columns = ['id', 'name', 'templates_config'];
         if ($id) {
             $data = Company::where([['id', $id]])->limit(1)->get($columns);
         } else {
@@ -31,9 +31,6 @@ class CompanyController extends Controller
             'templates_config.allowed_templates' => ['nullable', 'array'],
             'templates_config.default_focus_air' => ['nullable', 'string'],
             'templates_config.default_house_air' => ['nullable', 'string'],
-            'tier' => ['nullable', 'string', 'max:20'],
-            'credit_limit' => ['nullable', 'numeric', 'min:0'],
-            'credit_balance' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         if ($validator->fails()) {
@@ -47,9 +44,6 @@ class CompanyController extends Controller
         $company = new Company();
         $company->name = $request->name;
         $company->templates_config = $request->templates_config;
-        $company->tier = $request->input('tier', 'viper_core');
-        $company->credit_limit = $request->input('credit_limit', 0.00);
-        $company->credit_balance = $request->input('credit_balance', 0.00);
         $company->save();
         
         // Bust the short-lived cache so users see new templates immediately
@@ -66,9 +60,6 @@ class CompanyController extends Controller
             'templates_config.allowed_templates' => ['nullable', 'array'],
             'templates_config.default_focus_air' => ['nullable', 'string'],
             'templates_config.default_house_air' => ['nullable', 'string'],
-            'tier' => ['nullable', 'string', 'max:20'],
-            'credit_limit' => ['nullable', 'numeric', 'min:0'],
-            'credit_balance' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         if ($validator->fails()) {
@@ -86,9 +77,6 @@ class CompanyController extends Controller
 
         $company->name = $request->name;
         $company->templates_config = $request->templates_config;
-        $company->tier = $request->input('tier', 'viper_core');
-        $company->credit_limit = $request->input('credit_limit', 0.00);
-        $company->credit_balance = $request->input('credit_balance', 0.00);
         $company->save();
         
         // Bust the short-lived cache so users see new templates immediately

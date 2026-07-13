@@ -97,8 +97,12 @@ label {
             border-bottom: 1px solid #EFF2F5;
         }
         
+        tr {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
         tr:hover td {
-            background-color: #FBFBFC;
+            background-color: #F8FAFC !important;
         }
     }
 }
@@ -120,11 +124,12 @@ label {
         border-radius: 8px;
         font-weight: 500;
         color: #5E6278;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
         &:focus {
             background-color: white;
             border-color: $brand-blue;
-            box-shadow: none;
+            box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.12) !important;
         }
     }
 }
@@ -140,11 +145,12 @@ label {
         border: 1px solid #E4E6EF;
         background: #F9FAFB;
         font-weight: 500;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         
         &:focus {
             border-color: $brand-blue;
             background-color: white;
-            box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.1);
+            box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.15) !important;
         }
     }
 

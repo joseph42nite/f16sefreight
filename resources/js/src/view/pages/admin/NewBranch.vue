@@ -40,8 +40,7 @@
                             <div v-if="isDropdownOpen" class="dropdown-options">
                                 <div v-for="(item, index) in filteredLocations" :key="index" @click="selectOption(item)" class="option">{{ item.iata_code }}, {{ item.destination }} ({{ item.iata_code }})</div>
                             </div>
-                            </div>
-                        </b-input-group>
+                        </div>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
                         <b-form-input id="input-1" v-model="branch_form.agent_issue_date" type="date" required placeholder="Agent Issue Date" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_date'),}"></b-form-input>

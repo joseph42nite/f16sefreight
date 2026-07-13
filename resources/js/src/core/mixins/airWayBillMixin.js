@@ -620,10 +620,14 @@ export default {
         },
         getFilteredLocations(query) {
             const q = (query || '').toLowerCase().trim();
-            if (!q) return this.location;
-            return this.location.filter(item =>
-                item.iata_code.toLowerCase().includes(q)
+            if (!q) {
+                return this.location.slice(0, 20); // Limit to top 20 to avoid browser lag with 20k records
+            }
+            const filtered = this.location.filter(item =>
+                item.iata_code.toLowerCase().includes(q) ||
+                (item.destination && item.destination.toLowerCase().includes(q))
             );
+            return filtered.slice(0, 20);
         },
         filterShippers() {
             const query = (this.form.shipper_address.ship_name || '').toLowerCase();

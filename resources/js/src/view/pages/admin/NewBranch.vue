@@ -264,17 +264,17 @@ export default {
         },
         filteredLocations() {
             if (!this.searchQuery) {
-                return this.location;
+                return this.location.slice(0, 20); // Limit to top 20 to avoid browser lag with 20k records
             }
             const query = this.searchQuery.toLowerCase();
-            return this.location.filter(item => {
+            const filtered = this.location.filter(item => {
                 return (
-                    item.iata_code.toLowerCase().includes(query)
+                    item.iata_code.toLowerCase().includes(query) ||
+                    (item.destination && item.destination.toLowerCase().includes(query))
                 );
             });
+            return filtered.slice(0, 20);
         }
-        // item.iata_code.toLowerCase().includes(query) ||
-        // item.destination.toLowerCase().includes(query)
     },
 };
 </script>

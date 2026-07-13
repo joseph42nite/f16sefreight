@@ -171,6 +171,7 @@ Route::post('ForgotpasswordActual', [PasswordResetRequestController::class, 'for
 
 //common login
 Route::post('/login', [LoginController::class, 'login']);
+Route::post('/auth/login', [LoginController::class, 'login']);
 Route::post('/contact', [ContactController::class, 'store']);
 Route::get('/all-contacts', [ContactController::class, 'index']);
 Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);

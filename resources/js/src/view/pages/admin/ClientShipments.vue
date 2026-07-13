@@ -263,7 +263,8 @@ export default {
       perPage: 10,
       pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
       xmlContent: "",
-      selectedAwbId: ""
+      selectedAwbId: "",
+      pollTimer: null
     };
   },
   components: {
@@ -288,8 +289,10 @@ export default {
           console.error("Failed to load companies", err);
         });
     },
-    fetchShipments() {
-      this.isLoading = true;
+    fetchShipments(showLoading = true) {
+      if (showLoading) {
+        this.isLoading = true;
+      }
       ApiService.query(`/superadmin/client-shipments`, { params: this.filters })
         .then(({ data }) => {
           this.items = data.shipments;
@@ -299,11 +302,47 @@ export default {
         })
         .catch(err => {
           console.error("Failed to load shipments", err);
-          Swal.fire("Error", "Could not retrieve shipments data.", "error");
+          if (showLoading) {
+            Swal.fire("Error", "Could not retrieve shipments data.", "error");
+          }
         })
         .finally(() => {
           this.isLoading = false;
+          this.scheduleNextPoll();
         });
+    },
+    scheduleNextPoll() {
+      this.clearPollTimer();
+
+      // Check Operating Hours (10:00 AM to 10:00 PM)
+      const now = new Date();
+      const hour = now.getHours();
+      const isOperatingHours = hour >= 10 && hour < 22;
+
+      // Only poll if tab is active/visible and within operating hours
+      if (isOperatingHours && document.visibilityState === "visible") {
+        this.pollTimer = setTimeout(() => {
+          this.fetchShipments(false); // Fetch silently in background
+        }, 60000); // 60 seconds
+      } else {
+        // Check again in 60 seconds even if suspended, to resume when time/visibility changes
+        this.pollTimer = setTimeout(() => {
+          this.scheduleNextPoll();
+        }, 60000);
+      }
+    },
+    clearPollTimer() {
+      if (this.pollTimer) {
+        clearTimeout(this.pollTimer);
+        this.pollTimer = null;
+      }
+    },
+    handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        this.fetchShipments(false); // Fetch immediately upon window focus & resume schedule
+      } else {
+        this.clearPollTimer(); // Stop timers when invisible
+      }
     },
     resetFilters() {
       this.filters = {
@@ -378,6 +417,12 @@ export default {
   mounted() {
     this.fetchCompanies();
     this.fetchShipments();
+    this.scheduleNextPoll();
+    document.addEventListener("visibilitychange", this.handleVisibilityChange);
+  },
+  beforeDestroy() {
+    this.clearPollTimer();
+    document.removeEventListener("visibilitychange", this.handleVisibilityChange);
   }
 };
 </script>

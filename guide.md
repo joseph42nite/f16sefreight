@@ -563,3 +563,26 @@ This update details backend optimization for logistics queries, layout synchroni
 - **Lifecycle Cleanups**: Configured the statistical counter animation intervals to store their handles within a mapped `this.activeTimers` object. Every active timer is cleared inside the `beforeDestroy()` hook. This prevents garbage collection blocks and reactivity updates on destroyed component scopes if the user navigates away before the counter finishes.
 
 ---
+
+## 📑 Finalized Upgrades: Descartes Status Tracking & OpenClaw Webhook Integration (July 2026)
+
+This update details the integration of real-time Descartes status response logging, client notification email automation, OpenClaw security, and a UX convenience toggle in Focus Air.
+
+### 1. 📡 Descartes Status Response Tracking (`status_response`)
+* **Database Table**: `status_response` (model [StatusReponse.php](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/app/StatusReponse.php)) logs callback notifications from Descartes (such as flight rejections, updates, or checks).
+* **Ingress Handler**: [GLNResponseController.php](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/app/Http/Controllers/Logistics/GLNResponseController.php) parses incoming Cargo XML. If a status of `Rejected` is received:
+  - It records the status update details into the `status_response` table.
+  - It pulls the client routing email address (`awb_email`) from the corresponding AWB record in the `air_way_bills` table.
+  - It automatically dispatches a rejection notification email (`emails.awb-reject-status`) to the client.
+* **Admin Visualization**: [ClientShipments.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/pages/admin/ClientShipments.vue) queries this table through `SuperAdminController@getClientShipments` to display **FNA Received** status badges (including hoverable rejections tooltips) dynamically in the shipments logs.
+
+### 2. 🔐 OpenClaw API Webhook Integration
+* **Non-Replay Authentication**: The `openclaw_nonces` table stores unique transaction nonces. The middleware [VerifyOpenClawSignature.php](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/app/Http/Middleware/VerifyOpenClawSignature.php) validates incoming webhook signatures and discards repeat nonces to block replay attempts.
+* **Action queue**: Incoming external requests (e.g., publishing article updates via automated bots) are temporarily saved in the `openclaw_pending_actions` table, awaiting admin confirmation before database committing.
+
+### 3. 📧 Default User Email Selection in Focus Air
+* **Component**: [FocusAir.vue](file:///Users/jomygeorge/.gemini/antigravity/scratch/f16s_main_ssh/resources/js/src/view/pages/dashboard/FocusAir.vue)
+* **Features**:
+  - Adds a dynamic checkbox option `"Default to my email (user@email.com)"` below the **Email FNA** input field.
+  - Toggling it populates the field with the currently authenticated user's email address from the Vuex store (`current_user.email`).
+  - Implements an automated watcher to keep the checkbox synced: manually updating the email input to match the user's email automatically checks the box, and editing it otherwise automatically unchecks it.

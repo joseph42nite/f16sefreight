@@ -80,8 +80,30 @@ class SuperAdminController extends Controller
             $query->where('destination_airport', 'like', '%' . $request->destination . '%');
         }
 
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', '=', $request->date);
+        if ($request->has('dates') && is_array($request->dates) && count($request->dates) > 0) {
+            $query->where(function($q) use ($request) {
+                foreach ($request->dates as $date) {
+                    if (!empty($date)) {
+                        $q->orWhereDate('created_at', '=', $date);
+                    }
+                }
+            });
+        }
+
+        if ($request->has('months') && is_array($request->months) && count($request->months) > 0) {
+            $query->where(function($q) use ($request) {
+                foreach ($request->months as $month) {
+                    if (!empty($month)) {
+                        $parts = explode('-', $month);
+                        if (count($parts) === 2) {
+                            $q->orWhere(function($sub) use ($parts) {
+                                $sub->whereYear('created_at', $parts[0])
+                                    ->whereMonth('created_at', $parts[1]);
+                            });
+                        }
+                    }
+                }
+            });
         }
 
         // Database-level filtering for FNA Status

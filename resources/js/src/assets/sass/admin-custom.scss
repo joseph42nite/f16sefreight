@@ -240,3 +240,71 @@ label {
         color: white;
     }
 }
+
+/* Premium Sidebar (Aside) Styling - Dark Theme */
+.aside {
+    background-color: #1e2b4d !important; /* Slightly darker than brand-blue for better contrast */
+    border-right: none !important;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.1) !important;
+}
+
+.aside-menu {
+    background-color: transparent !important;
+    
+    .menu-nav {
+        > .menu-item {
+            margin-bottom: 0.25rem;
+            
+            > .menu-link {
+                border-radius: 8px !important;
+                margin: 0 1rem;
+                padding: 10px 15px !important;
+                transition: all 0.3s ease;
+
+                .menu-icon {
+                    color: rgba(255, 255, 255, 0.7) !important;
+                    font-size: 1.1rem;
+                    width: 28px;
+                    transition: all 0.3s ease;
+                }
+                
+                .menu-text {
+                    color: rgba(255, 255, 255, 0.85) !important;
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                    letter-spacing: 0.02em;
+                }
+
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.08) !important;
+                    
+                    .menu-icon, .menu-text {
+                        color: #ffffff !important;
+                    }
+                }
+            }
+
+            &.menu-item-active {
+                > .menu-link {
+                    background-color: rgba(255, 255, 255, 0.12) !important;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    
+                    .menu-icon {
+                        color: #00a1e4 !important; /* Brand cyan highlight */
+                    }
+                    
+                    .menu-text {
+                        color: #ffffff !important;
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* Brand/Logo Area inside Aside */
+.brand {
+    background-color: #1a2542 !important; /* Even darker for logo area */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}

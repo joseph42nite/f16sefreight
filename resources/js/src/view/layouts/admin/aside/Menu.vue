@@ -14,14 +14,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/customer.svg"
-            alt="company"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-building"></i>
           <span class="menu-text">Company</span>
         </a>
       </li>
@@ -40,14 +33,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/customer.svg"
-            alt="branch"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-map-marked-alt"></i>
           <span class="menu-text">Branch</span>
         </a>
       </li>
@@ -66,14 +52,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/customer.svg"
-            alt="branch users icon"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-users"></i>
           <span class="menu-text">Users</span>
         </a>
       </li>
@@ -92,14 +71,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/customer.svg"
-            alt="shipments icon"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-shipping-fast"></i>
           <span class="menu-text">Shipments</span>
         </a>
       </li>
@@ -118,14 +90,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/customer.svg"
-            alt="template icon"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-file-code"></i>
           <span class="menu-text">OCR Templates</span>
         </a>
       </li>
@@ -141,8 +106,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img src="/media/assets/ui/menu-icons/customer.svg" alt="Contact users icon" class="img-fluid" width="18" height="18"/>
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-address-book"></i>
           <span class="menu-text">Contact</span>
         </a>
       </li>
@@ -158,8 +122,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img src="/media/assets/ui/menu-icons/list.svg" alt="branch users icon" class="img-fluid" width="18" height="18"/>
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-cog"></i>
           <span class="menu-text">Setting</span>
         </a>
       </li>
@@ -175,8 +138,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img src="/media/assets/ui/menu-icons/list.svg" alt="Manage Blogs icon" class="img-fluid" width="18" height="18"/>
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-blog"></i>
           <span class="menu-text">Manage Blogs</span>
         </a>
       </li>
@@ -195,14 +157,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/user.svg"
-            alt="account icon"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-user-circle"></i>
           <span class="menu-text">Account</span>
         </a>
       </li>
@@ -222,14 +177,7 @@
         ]"
       >
         <a :href="href" class="menu-link" @click="navigate">
-          <img
-            src="/media/assets/ui/menu-icons/logout.svg"
-            alt="logout icon"
-            class="img-fluid"
-            width="18"
-            height="18"
-          />
-          &nbsp;&nbsp;&nbsp;
+          <i class="menu-icon fas fa-sign-out-alt"></i>
           <span class="menu-text">Logout</span>
         </a>
       </li>

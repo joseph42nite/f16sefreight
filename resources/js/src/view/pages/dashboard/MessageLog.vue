@@ -1,4 +1,4 @@
-<style>
+<style scoped>
 .waybill-status-header{
         background: #3b6fb6;
         color: #fff;
@@ -6,11 +6,11 @@
         padding: 6px 8px;
         justify-content: space-between;
 }
-hr{
+::v-deep hr{
     margin-top: 0px !important;
     margin-bottom: 0px !important;
 }
-td[aria-colindex="5"] {
+::v-deep td[aria-colindex="5"] {
   width: 50% !important;
 }
 </style>

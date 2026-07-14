@@ -56,6 +56,10 @@ Route::get('blog/{slug}', function ($slug) {
     return view('welcome', compact('blog'));
 });
 
+Route::get('/login', function () {
+    return view('welcome');
+})->name('login');
+
 Route::get('{any}', function () {
     return view('welcome');
 })->where('any', '(?!ocr)(?!ocr-extract)(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');

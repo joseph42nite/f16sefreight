@@ -27,33 +27,53 @@ When instructed to create or update a blog post, you must use **Kimi** (your int
 
 ---
 
-## 3. Telegram Confirmation Protocol (MANDATORY)
+## 3. User Confirmation Protocol (MANDATORY — Run Before Every Write)
 
-Before executing any write operations on the F16S backend, you must stage the event and send an approval card to the administrator (Deepanjan) via Telegram.
+Before sending any webhook to the F16S backend, you MUST display a structured preview card to the user in the chat interface and wait for explicit approval. Never POST to the webhook without this step.
 
-### Staged Message Card Format:
+### Step 1 — Display the Preview Card
+
+Show the following card in your response:
+
 ```
-🤖 *OpenClaw — Confirmation Required*
+🤖 OpenClaw — Blog Post Preview
 
-*Action:* {Create/Update} Blog Post
-*Title:* {Blog Title}
-*Category:* {Category Name}
+Action: {Create / Update} Blog Post
+Title: {Blog Title}
+Category: {Category Name}
+Reading Time: {read_time}
 
-📋 *Proposed Content:*
-• Excerpt: {Excerpt text}
-• Takeaways: {Bullet points}
+📋 Content Summary:
+• Excerpt: {excerpt}
+• Takeaways:
+  {Bullet list of takeaways}
 • SEO Title: {meta_title}
 • SEO Desc: {meta_description}
 
-🎨 *Image Generation Prompt (For Manual Posting):*
-"{Detailed text-to-image prompt based on the blog's subject. Example: 'A sleek isometric illustration of cargo planes loading freight under glowing cyan lines, digital logistics flow concept, 3d render, modern tech aesthetic.'}"
+🎨 Image Generation Prompt (copy & use manually after posting):
+"{Detailed text-to-image prompt — e.g., 'Isometric cargo planes with glowing cyan data streams, modern logistics tech, dark background, 3D render.'}"
 
----
-⚠️ Note: No cover image is attached to this action. You must copy the prompt above to generate the image and upload it manually via the admin panel.
-
-Tap a button below to proceed:
+⚠️ No cover image is included in the submission. Upload the generated image manually via the admin panel after the blog is live.
 ```
-*(Inline buttons: `[✅ Accept & Save]` and `[❌ Reject]`)*
+
+### Step 2 — Show Approval Option
+
+At the bottom of the preview, prompt the user for approval (the user's interface will display approval buttons for you to proceed).
+
+### Step 3 — Wait for User Input
+- If user approves (triggers execution): proceed to Step 4.
+- If user cancels: abort the action.
+
+### Step 4 — Send the Webhook (Only After Approval)
+
+POST to `POST /api/openclaw/webhook` with the webhook payload. The backend will execute the event immediately and save/update the blog post.
+
+### Step 5 — Report Status
+
+After receiving the success response, report back:
+- Blog ID
+- URL slug
+- Status (Published / Draft)
 
 ---
 

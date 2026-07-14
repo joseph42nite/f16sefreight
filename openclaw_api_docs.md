@@ -30,9 +30,13 @@ All webhook events must be wrapped in this envelope:
 ### Success Response
 ```json
 {
-  "status": "accepted",
+  "status": "success",
   "event_type": "<event_name>",
-  "message": "Action staged for admin confirmation via Telegram"
+  "message": "Action executed successfully.",
+  "details": "Created Blog Post #15: ...",
+  "blog_id": 15,
+  "slug": "some-blog-post-slug",
+  "blog_status": "Published"
 }
 ```
 
@@ -120,15 +124,13 @@ Updates an existing blog post. To identify the target post, you must provide eit
 ```mermaid
 sequenceDiagram
     autonumber
+    Note over User, OpenClaw: User requests blog post creation or update
+    OpenClaw->>User: Displays Preview Card & Prompts for Approval
+    User->>OpenClaw: Click / Approve Action
     OpenClaw->>F16S Webhook: POST /api/openclaw/webhook (signed with HMAC)
     F16S Webhook->>F16S Webhook: Verify Signature, Timestamp & Nonce
-    F16S Webhook->>Database: Save pending action (status = 'pending')
-    F16S Webhook->>Telegram Bot API: Send approval card to Deepanjan
-    F16S Webhook-->>OpenClaw: Return status 'accepted'
-    Note over Deepanjan: Deepanjan receives message card on Telegram
-    Deepanjan->>Telegram Bot API: Click [✅ Accept & Save]
-    Telegram Bot API->>F16S Telegram Callback: POST /api/openclaw/telegram-callback
-    F16S Telegram Callback->>Database: Retrieve pending action & execute DB operation
-    F16S Telegram Callback->>Database: Update pending action status to 'accepted'
-    F16S Telegram Callback->>Telegram Bot API: Edit original message (Status: Approved)
+    F16S Webhook->>Database: Execute action immediately (Insert/Update blog)
+    F16S Webhook->>Database: Save executed action (status = 'accepted')
+    F16S Webhook-->>OpenClaw: Return status 'success' (blog_id, slug, status)
+    OpenClaw->>User: Confirm successful execution in chat
 ```

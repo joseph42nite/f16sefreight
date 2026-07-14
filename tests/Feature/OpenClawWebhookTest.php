@@ -96,10 +96,6 @@ class OpenClawWebhookTest extends TestCase
         $headers = $this->generateHeaders($payload, 'nonce-dup');
 
         // First request is accepted
-        Http::fake([
-            'https://api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 123]], 200)
-        ]);
-
         $response1 = $this->postJson('/api/openclaw/webhook', $payload, $headers);
         $response1->assertStatus(200);
 
@@ -123,7 +119,7 @@ class OpenClawWebhookTest extends TestCase
         $this->assertStringContainsString('OpenClaw is only authorized for blog management', $response->json('error'));
     }
 
-    public function test_webhook_stages_create_blog_post_and_sends_telegram_approval()
+    public function test_webhook_directly_creates_blog_post()
     {
         $payload = [
             'event_type' => 'create_blog_post',
@@ -138,25 +134,21 @@ class OpenClawWebhookTest extends TestCase
 
         $headers = $this->generateHeaders($payload, 'nonce-ok');
 
-        Http::fake([
-            'https://api.telegram.org/botdummy-bot-token/sendMessage' => Http::response([
-                'ok' => true,
-                'result' => ['message_id' => 999]
-            ], 200)
-        ]);
-
         $response = $this->postJson('/api/openclaw/webhook', $payload, $headers);
         $response->assertStatus(200);
-        $response->assertJsonPath('status', 'accepted');
+        $response->assertJsonPath('status', 'success');
+        $response->assertJsonStructure(['status', 'event_type', 'message', 'details', 'blog_id', 'slug', 'blog_status']);
 
-        // Verify action is stored in database as pending
+        // Verify action is stored in database as accepted
         $pending = DB::table('openclaw_pending_actions')->where('event_type', 'create_blog_post')->first();
         $this->assertNotNull($pending);
-        $this->assertEquals('pending', $pending->status);
+        $this->assertEquals('accepted', $pending->status);
         $this->assertStringContainsString('Test Webhook Post', $pending->payload);
 
-        // Verify Telegram message ID is stored
-        $this->assertEquals('[999]', $pending->telegram_message_id);
+        // Verify blog post was created in blogs table immediately
+        $blog = Blog::where('title', 'Test Webhook Post')->first();
+        $this->assertNotNull($blog);
+        $this->assertEquals('test-webhook-post', $blog->slug);
     }
 
     public function test_telegram_callback_unauthorized_user_is_ignored()

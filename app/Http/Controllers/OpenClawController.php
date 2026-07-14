@@ -30,65 +30,32 @@ class OpenClawController extends Controller
                 return response()->json(['error' => 'Access denied: OpenClaw is only authorized for blog management.'], 403);
             }
 
-            // Stage the action for Telegram approval
+            // Execute Event immediately
+            $result = $this->executeEvent($eventType, $payload);
+
+            if (!$result['success']) {
+                return response()->json(['error' => $result['summary']], 400);
+            }
+
+            // Store executed action in history
             $actionId = Str::uuid()->toString();
-            $adminChatId = env('TELEGRAM_ADMIN_CHAT_ID');
-
-            if (!$adminChatId) {
-                Log::error('[OPENCLAW] TELEGRAM_ADMIN_CHAT_ID is not configured in .env');
-                return response()->json(['error' => 'Telegram Admin Chat ID is not configured'], 500);
-            }
-
-            // Build detailed summary text for Telegram message
-            $actionVerb = ($eventType === 'create_blog_post') ? 'Create' : 'Update';
-            $details = "";
-            foreach ($payload as $key => $value) {
-                if (is_array($value)) {
-                    $details .= "• *{$key}:* " . json_encode($value) . "\n";
-                } elseif ($value !== null && $value !== '') {
-                    $valStr = (strlen($value) > 200) ? substr($value, 0, 197) . '...' : $value;
-                    $details .= "• *{$key}:* {$valStr}\n";
-                }
-            }
-
-            $messageText = "🤖 *OpenClaw — Confirmation Required*\n\n" .
-                "*Action:* {$actionVerb} Blog Post\n\n" .
-                "📋 *Proposed Changes:*\n{$details}\n" .
-                "---\nTap a button below to proceed:";
-
-            // Build Inline Keyboard
-            $replyMarkup = [
-                'inline_keyboard' => [
-                    [
-                        ['text' => '✅ Accept & Save', 'callback_data' => "openclaw_accept:{$actionId}"],
-                        ['text' => '❌ Reject', 'callback_data' => "openclaw_reject:{$actionId}"]
-                    ]
-                ]
-            ];
-
-            // Store pending action
             DB::table('openclaw_pending_actions')->insert([
                 'action_id' => $actionId,
                 'event_type' => $eventType,
                 'payload' => json_encode($payload),
-                'status' => 'pending',
-                'telegram_chat_id' => $adminChatId,
+                'status' => 'accepted',
                 'created_at' => now(),
+                'resolved_at' => now(),
             ]);
 
-            // Send Telegram message to admin
-            $tgResult = TelegramService::sendMessage($adminChatId, $messageText, $replyMarkup);
-
-            if ($tgResult && isset($tgResult['message_id'])) {
-                DB::table('openclaw_pending_actions')
-                    ->where('action_id', $actionId)
-                    ->update(['telegram_message_id' => json_encode([$tgResult['message_id']])]);
-            }
-
             return response()->json([
-                'status' => 'accepted',
+                'status' => 'success',
                 'event_type' => $eventType,
-                'message' => 'Action staged for admin confirmation via Telegram'
+                'message' => 'Action executed successfully.',
+                'details' => $result['summary'],
+                'blog_id' => $result['blog_id'] ?? null,
+                'slug' => $result['slug'] ?? null,
+                'blog_status' => $result['blog_status'] ?? null
             ]);
         } catch (\Exception $e) {
             Log::error('[OPENCLAW] Webhook error: ' . $e->getMessage());
@@ -273,7 +240,10 @@ class OpenClawController extends Controller
 
         return [
             'success' => true,
-            'summary' => "Created Blog Post #{$blog->id}: \"{$blog->title}\" (Slug: /blog/{$blog->slug}, Status: " . ($isDraft ? 'Draft' : 'Published') . ")"
+            'summary' => "Created Blog Post #{$blog->id}: \"{$blog->title}\" (Slug: /blog/{$blog->slug}, Status: " . ($isDraft ? 'Draft' : 'Published') . ")",
+            'blog_id' => $blog->id,
+            'slug' => $blog->slug,
+            'blog_status' => $isDraft ? 'Draft' : 'Published'
         ];
     }
 
@@ -319,7 +289,10 @@ class OpenClawController extends Controller
 
         return [
             'success' => true,
-            'summary' => "Updated Blog Post #{$blog->id}: \"{$blog->title}\" (Status: " . ($blog->published_at ? 'Published' : 'Draft') . ")"
+            'summary' => "Updated Blog Post #{$blog->id}: \"{$blog->title}\" (Status: " . ($blog->published_at ? 'Published' : 'Draft') . ")",
+            'blog_id' => $blog->id,
+            'slug' => $blog->slug,
+            'blog_status' => $blog->published_at ? 'Published' : 'Draft'
         ];
     }
 }

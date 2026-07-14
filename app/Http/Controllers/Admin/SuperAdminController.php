@@ -137,14 +137,15 @@ class SuperAdminController extends Controller
             return $awb->awb_code . '-' . $awb->awb_no;
         })->toArray();
 
-        $statusResponses = \App\StatusReponse::whereIn('business_id', $awbIdsWithHyphen)->get();
+        $statusResponses = \App\StatusReponse::whereIn('business_id', $awbIdsWithHyphen)
+            ->where('business_status_code', 'Rejected')
+            ->get()
+            ->keyBy('business_id');
 
         // Map status responses details back to models
         $shipments->each(function ($awb) use ($statusResponses) {
             $key = $awb->awb_code . '-' . $awb->awb_no;
-            $fnaResponse = $statusResponses->first(function ($res) use ($key) {
-                return $res->business_id == $key && $res->business_status_code == 'Rejected';
-            });
+            $fnaResponse = $statusResponses->get($key);
             $awb->fna_received = $fnaResponse ? true : false;
             $awb->fna_reason = $fnaResponse ? $fnaResponse->reason : null;
         });

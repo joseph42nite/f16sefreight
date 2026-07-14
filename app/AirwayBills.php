@@ -54,7 +54,11 @@ class AirwayBills extends Model
 
     public function houseWayBills()
     {
-        return $this->hasMany(HousewayBills::class, 'awb_code', 'awb_code')->whereColumn('house_way_bills.awb_no', 'air_way_bills.awb_no');
+        $relation = $this->hasMany(HousewayBills::class, 'awb_code', 'awb_code');
+        if (! $this->exists) {
+            return $relation->whereColumn('house_way_bills.awb_no', 'air_way_bills.awb_no');
+        }
+        return $relation->where('house_way_bills.awb_no', $this->awb_no);
     }
     // protected $fillable = [
     //     'awb_code',

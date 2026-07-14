@@ -232,11 +232,11 @@
           </template>
 
           <template #cell(fna_status)="data">
-            <b-badge v-if="data.item.fna_received" variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" v-b-tooltip.hover :title="data.item.fna_reason || 'Rejection reason not specified'">
+            <b-badge v-if="data.item.fna_received" variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" style="cursor: pointer;" v-b-tooltip.hover :title="(data.item.fna_reason || 'Rejection reason not specified') + ' — Click to copy'" @click="copyFnaReason(data.item.fna_reason)">
               <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
             </b-badge>
             <b-badge v-else variant="light-success" class="text-uppercase font-weight-bold px-3 py-2">
-              <i class="fas fa-check-circle mr-1 text-success"></i> No FNA
+              <i class="fas fa-check-circle mr-1 text-success"></i> FMA
             </b-badge>
           </template>
 
@@ -352,7 +352,7 @@ export default {
       fnaOptions: [
         { value: null, text: "All Shipments" },
         { value: "yes", text: "FNA Received" },
-        { value: "no", text: "No FNA" }
+        { value: "no", text: "FMA" }
       ],
       totalAwb: 0,
       totalHawb: 0,
@@ -591,7 +591,7 @@ export default {
           : "";
         const dateSent = this.formatDate(item.created_at);
         const timeSent = this.formatTime(item.created_at);
-        const fnaStatus = item.fna_received ? "FNA Received" : "No FNA";
+        const fnaStatus = item.fna_received ? "FNA Received" : "FMA";
 
         return [
           awb,
@@ -692,6 +692,25 @@ export default {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    },
+    copyFnaReason(reason) {
+      const text = reason || 'Rejection reason not specified';
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          this.$bvToast.toast('FNA reason copied to clipboard', {
+            title: 'Copied!',
+            variant: 'success',
+            solid: true,
+            autoHideDelay: 2000
+          });
+        })
+        .catch(() => {
+          this.$bvToast.toast('Failed to copy text', {
+            title: 'Error',
+            variant: 'danger',
+            solid: true
+          });
+        });
     }
   },
   mounted() {

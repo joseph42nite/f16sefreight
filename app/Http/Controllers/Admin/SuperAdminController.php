@@ -131,14 +131,22 @@ class SuperAdminController extends Controller
                     $q->select(\Illuminate\Support\Facades\DB::raw(1))
                       ->from('status_response')
                       ->whereRaw("status_response.business_id = {$concatSql}")
-                      ->where('status_response.business_status_code', 'Rejected');
+                      ->where('status_response.business_status_code', 'Rejected')
+                      ->whereRaw("status_response.id = (SELECT MAX(sr2.id) FROM status_response sr2 WHERE sr2.business_id = {$concatSql})");
                 });
             } elseif ($request->fna_status === 'no') {
-                $query->whereNotExists(function ($q) use ($concatSql) {
-                    $q->select(\Illuminate\Support\Facades\DB::raw(1))
-                      ->from('status_response')
-                      ->whereRaw("status_response.business_id = {$concatSql}")
-                      ->where('status_response.business_status_code', 'Rejected');
+                $query->where(function ($outer) use ($concatSql) {
+                    $outer->whereNotExists(function ($q) use ($concatSql) {
+                        $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                          ->from('status_response')
+                          ->whereRaw("status_response.business_id = {$concatSql}");
+                    })->orWhereExists(function ($q) use ($concatSql) {
+                        $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                          ->from('status_response')
+                          ->whereRaw("status_response.business_id = {$concatSql}")
+                          ->where('status_response.business_status_code', '!=', 'Rejected')
+                          ->whereRaw("status_response.id = (SELECT MAX(sr2.id) FROM status_response sr2 WHERE sr2.business_id = {$concatSql})");
+                    });
                 });
             }
         }
@@ -171,17 +179,20 @@ class SuperAdminController extends Controller
             return $awb->awb_code . '-' . $awb->awb_no;
         })->toArray();
 
-        $statusResponses = \App\StatusReponse::whereIn('business_id', $awbIdsWithHyphen)
-            ->where('business_status_code', 'Rejected')
-            ->get()
-            ->keyBy('business_id');
+        // Fetch the latest status response per AWB (by highest id)
+        $allResponses = \App\StatusReponse::whereIn('business_id', $awbIdsWithHyphen)
+            ->orderBy('id', 'desc')
+            ->get();
+        $statusResponses = $allResponses->unique('business_id')->keyBy('business_id');
 
         // Map status responses details back to models
         $shipments->each(function ($awb) use ($statusResponses) {
             $key = $awb->awb_code . '-' . $awb->awb_no;
-            $fnaResponse = $statusResponses->get($key);
-            $awb->fna_received = $fnaResponse ? true : false;
-            $awb->fna_reason = $fnaResponse ? $fnaResponse->reason : null;
+            $latestResponse = $statusResponses->get($key);
+            // Only mark as FNA if the LATEST response is Rejected
+            $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
+            $awb->fna_received = $isFna;
+            $awb->fna_reason = $isFna ? $latestResponse->reason : null;
         });
 
         $responseData = [

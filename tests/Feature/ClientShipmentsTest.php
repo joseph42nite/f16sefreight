@@ -149,4 +149,116 @@ class ClientShipmentsTest extends TestCase
             ->getJson('/api/superadmin/get-location');
         $response->assertStatus(200);
     }
+
+    public function test_fna_status_resolution_to_fma()
+    {
+        // 1. Create a SuperAdmin
+        $superAdmin = SuperAdmin::create([
+            'name' => 'Test SuperAdmin 2',
+            'email' => 'testadmin@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        // 2. Create Company & Agent
+        $company = Company::create([
+            'name' => 'Acme Test Logistics',
+        ]);
+
+        $agent = Agent::create([
+            'company_id' => $company->id,
+            'agent_name' => 'Acme Test Branch',
+        ]);
+
+        // 3. Create three AWB shipments
+        // AWB 1: No status response (Should be No FNA / FMA)
+        $awb1 = AirwayBills::create([
+            'id' => '11122223334',
+            'awb_code' => '111',
+            'awb_no' => '22223334',
+            'departure_airport' => 'JFK',
+            'destination_airport' => 'LHR',
+            'agent_id' => $agent->id,
+        ]);
+
+        // AWB 2: Only a Rejected status response (Should be FNA Received)
+        $awb2 = AirwayBills::create([
+            'id' => '11122223335',
+            'awb_code' => '111',
+            'awb_no' => '22223335',
+            'departure_airport' => 'JFK',
+            'destination_airport' => 'LHR',
+            'agent_id' => $agent->id,
+        ]);
+        \App\StatusReponse::create([
+            'business_id' => '111-22223335',
+            'business_status_code' => 'Rejected',
+            'reason' => 'Bad pieces',
+        ]);
+
+        // AWB 3: Rejected status response, then a newer Acknowledged response (Should be No FNA / FMA)
+        $awb3 = AirwayBills::create([
+            'id' => '11122223336',
+            'awb_code' => '111',
+            'awb_no' => '22223336',
+            'departure_airport' => 'JFK',
+            'destination_airport' => 'LHR',
+            'agent_id' => $agent->id,
+        ]);
+        // Old Rejected response
+        \App\StatusReponse::create([
+            'business_id' => '111-22223336',
+            'business_status_code' => 'Rejected',
+            'reason' => 'Bad weight',
+        ]);
+        // New Acknowledged response
+        \App\StatusReponse::create([
+            'business_id' => '111-22223336',
+            'business_status_code' => 'Acknowledged',
+            'reason' => 'Accepted successfully',
+        ]);
+
+        // 4. Send request to get shipments
+        $response = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments');
+
+        $response->assertStatus(200);
+        $shipments = collect($response->json('shipments'));
+
+        $s1 = $shipments->where('awb_no', '22223334')->first();
+        $s2 = $shipments->where('awb_no', '22223335')->first();
+        $s3 = $shipments->where('awb_no', '22223336')->first();
+
+        $this->assertNotNull($s1);
+        $this->assertNotNull($s2);
+        $this->assertNotNull($s3);
+
+        $this->assertFalse($s1['fna_received']);
+        $this->assertTrue($s2['fna_received']);
+        $this->assertFalse($s3['fna_received']); // Successfully resolved!
+
+        // 5. Test filtering by fna_status=yes (only AWB 2 should match)
+        $responseYes = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?fna_status=yes');
+        $responseYes->assertStatus(200);
+        $yesShipments = collect($responseYes->json('shipments'));
+        $this->assertTrue($yesShipments->contains('awb_no', '22223335'));
+        $this->assertFalse($yesShipments->contains('awb_no', '22223336'));
+        $this->assertFalse($yesShipments->contains('awb_no', '22223334'));
+
+        // 6. Test filtering by fna_status=no (AWB 1 and AWB 3 should match)
+        $responseNo = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?fna_status=no');
+        $responseNo->assertStatus(200);
+        $noShipments = collect($responseNo->json('shipments'));
+        $this->assertFalse($noShipments->contains('awb_no', '22223335'));
+        $this->assertTrue($noShipments->contains('awb_no', '22223336'));
+        $this->assertTrue($noShipments->contains('awb_no', '22223334'));
+
+        // Clean up
+        \App\StatusReponse::whereIn('business_id', ['111-22223335', '111-22223336'])->delete();
+        AirwayBills::whereIn('id', ['11122223334', '11122223335', '11122223336'])->delete();
+        $superAdmin->delete();
+        $agent->delete();
+        $company->delete();
+    }
 }

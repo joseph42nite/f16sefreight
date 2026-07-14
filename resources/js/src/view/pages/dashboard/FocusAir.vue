@@ -2435,10 +2435,10 @@
                                                 <b-form-checkbox size="sm" class="premium-checkbox">Including Cargo Label</b-form-checkbox>
                                             </div>
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA:" class="form-control-sm col-form-label mb-0">
-                                                <b-form-input id="input-horizontal" v-model="form.awb_email" class="form-control-sm" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
-                                                <div class="d-flex justify-content-end mt-1" v-if="current_user && current_user.email">
+                                                <b-form-input id="input-horizontal" v-model="form.awb_email" @input="handleAwbEmailInput" class="form-control-sm" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
+                                                <div class="d-flex justify-content-end mt-1">
                                                     <b-form-checkbox size="sm" v-model="use_my_email" @change="handleUseMyEmailChange" class="premium-checkbox font-size-xs text-muted">
-                                                        Default to my email ({{ current_user.email }})
+                                                        Use my default FNA email
                                                     </b-form-checkbox>
                                                 </div>
                                             </b-form-group>
@@ -2840,10 +2840,15 @@ export default {
     
     methods: {
         handleUseMyEmailChange(checked) {
-            if (checked && this.current_user && this.current_user.email) {
-                this.form.awb_email = this.current_user.email;
+            if (checked) {
+                this.form.awb_email = localStorage.getItem('fna_default_email') || '';
             } else {
                 this.form.awb_email = '';
+            }
+        },
+        handleAwbEmailInput(val) {
+            if (val) {
+                localStorage.setItem('fna_default_email', val);
             }
         },
         processExtractedData(response) {
@@ -3847,9 +3852,8 @@ export default {
     },
     watch: {
         'form.awb_email'(val) {
-            if (this.current_user && this.current_user.email) {
-                this.use_my_email = (val === this.current_user.email);
-            }
+            const savedEmail = localStorage.getItem('fna_default_email');
+            this.use_my_email = !!(savedEmail && val === savedEmail);
         },
         // 'consignment_list': function () {
         //     this.form.totals.total_amount = this.calculateTotalAmount();

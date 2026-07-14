@@ -2262,7 +2262,12 @@
                                                 <b-form-checkbox size="sm" class="premium-checkbox">Including Cargo Label</b-form-checkbox>
                                             </div>
                                             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-pdf-copy-to" label="Email FNA:" class="form-control-sm col-form-label mb-0">
-                                                <b-form-input id="input-pdf-copy-to" class="form-control-sm" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
+                                                <b-form-input id="input-pdf-copy-to" v-model="form.awb_email" @input="handleAwbEmailInput" class="form-control-sm" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
+                                                <div class="d-flex justify-content-end mt-1">
+                                                    <b-form-checkbox size="sm" v-model="use_my_email" @change="handleUseMyEmailChange" class="premium-checkbox font-size-xs text-muted">
+                                                        Use my default FNA email
+                                                    </b-form-checkbox>
+                                                </div>
                                             </b-form-group>
                                         </b-col>
                                     </b-row>
@@ -2341,6 +2346,7 @@ export default {
         return {
             mode: 'add',
             form: new Form({
+                awb_email: '',
                 first_box:{
                     hawb_no: '',
                     awb_code: '',
@@ -2518,6 +2524,7 @@ export default {
             showCalculationTable: false,
             existingData: [],
             data_items:[],
+            use_my_email: false,
             isFetching: false,
             isUploading: false,
             oci_data:{}, ///get-oci-data
@@ -2642,6 +2649,18 @@ export default {
     },
 
     methods: {
+        handleUseMyEmailChange(checked) {
+            if (checked) {
+                this.form.awb_email = localStorage.getItem('fna_default_email') || '';
+            } else {
+                this.form.awb_email = '';
+            }
+        },
+        handleAwbEmailInput(val) {
+            if (val) {
+                localStorage.setItem('fna_default_email', val);
+            }
+        },
 
         processExtractedData(response) {
             // Reset the form and UI states to clear any previously populated data
@@ -3441,6 +3460,10 @@ export default {
         // }
     },
     watch: {
+        'form.awb_email'(val) {
+            const savedEmail = localStorage.getItem('fna_default_email');
+            this.use_my_email = !!(savedEmail && val === savedEmail);
+        },
         // 'consignment_list': function () {
         //     this.form.totals.total_amount = this.calculateTotalAmount();
         // },

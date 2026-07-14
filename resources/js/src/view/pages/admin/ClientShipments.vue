@@ -52,7 +52,7 @@
               v-model="filters.company_id" 
               :options="companyOptions" 
               class="form-control"
-              @change="fetchShipments"
+              @change="applyFilters"
             ></b-form-select>
           </div>
           <div class="col-md-1 mb-3 mb-md-0 px-1">
@@ -62,7 +62,7 @@
               type="text" 
               placeholder="Origin" 
               class="form-control"
-              @keyup.enter="fetchShipments"
+              @keyup.enter="applyFilters"
             ></b-form-input>
           </div>
           <div class="col-md-1 mb-3 mb-md-0 px-1">
@@ -72,7 +72,7 @@
               type="text" 
               placeholder="Dest" 
               class="form-control"
-              @keyup.enter="fetchShipments"
+              @keyup.enter="applyFilters"
             ></b-form-input>
           </div>
           <div class="col-md-3 mb-3 mb-md-0">
@@ -106,7 +106,7 @@
                   valueType="format" 
                   format="YYYY-MM-DD"
                   class="w-100 mx-datepicker-custom"
-                  @change="fetchShipments"
+                  @change="applyFilters"
                 ></date-picker>
                 <date-picker 
                   v-else
@@ -117,7 +117,7 @@
                   valueType="format" 
                   format="YYYY-MM"
                   class="w-100 mx-datepicker-custom"
-                  @change="fetchShipments"
+                  @change="applyFilters"
                 ></date-picker>
               </div>
             </div>
@@ -128,11 +128,11 @@
               v-model="filters.fna_status" 
               :options="fnaOptions" 
               class="form-control"
-              @change="fetchShipments"
+              @change="applyFilters"
             ></b-form-select>
           </div>
           <div class="col-md-3 d-flex">
-            <b-button variant="primary" class="w-100 mr-2 d-flex align-items-center justify-content-center" @click="fetchShipments" v-b-tooltip.hover title="Apply Filters">
+            <b-button variant="primary" class="w-100 mr-2 d-flex align-items-center justify-content-center" @click="applyFilters" v-b-tooltip.hover title="Apply Filters">
               <i class="fas fa-search mr-1"></i> Search
             </b-button>
             <b-button variant="outline-secondary" class="w-100 d-flex align-items-center justify-content-center" @click="resetFilters" v-b-tooltip.hover title="Reset Filters & Show Live Count">
@@ -153,7 +153,7 @@
         </div>
         <div class="w-md-25">
           <b-input-group size="sm">
-            <b-form-input id="filter-input" v-model="searchText" type="search" placeholder="Search filtered table..."></b-form-input>
+            <b-form-input id="filter-input" v-model="searchText" type="search" placeholder="Search AWB... (Enter)" @keyup.enter="handleAwbSearch" @search="handleAwbSearch"></b-form-input>
           </b-input-group>
         </div>
       </div>
@@ -166,15 +166,11 @@
           v-else
           responsive
           hover
-          :items="items"
+          :items="localFilteredItems !== null ? localFilteredItems : items"
           :fields="fields"
           primary-key="id"
-          :filter="searchText"
-          :current-page="currentPage"
-          :per-page="perPage"
-          @filtered="onFiltered"
           thead-class="text-uppercase text-muted font-size-xs"
-          empty-text="No shipments found for this client matching the filters."
+          empty-text="No shipments found matching the filters."
           show-empty
           :tbody-tr-class="rowClass"
         >
@@ -364,8 +360,9 @@ export default {
       searchText: "",
       totalRows: 0,
       currentPage: 1,
-      perPage: 10,
-      pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
+      perPage: 50,
+      pageOptions: [50, 100],
+      localFilteredItems: null,
       xmlContent: "",
       selectedAwbId: "",
       pollTimer: null,
@@ -393,6 +390,14 @@ export default {
              this.filters.fna_status !== null;
     }
   },
+  watch: {
+    currentPage() {
+      this.fetchShipments();
+    },
+    perPage() {
+      this.applyFilters();
+    }
+  },
   methods: {
     fetchCompanies() {
       ApiService.get(`/superadmin/all-company`)
@@ -408,12 +413,24 @@ export default {
         this.isLoading = true;
       }
 
-      ApiService.query(`/superadmin/client-shipments`, { params: this.filters })
+      const params = {
+        ...this.filters,
+        page: this.currentPage,
+        per_page: this.perPage,
+        search: this.searchText
+      };
+
+      ApiService.query(`/superadmin/client-shipments`, { params })
         .then(({ data }) => {
+          this.localFilteredItems = null;
           this.items = data.shipments;
           this.totalAwb = data.total_awb;
           this.totalHawb = data.total_hawb;
-          this.totalRows = data.shipments.length;
+          if (data.pagination) {
+            this.totalRows = data.pagination.total;
+          } else {
+            this.totalRows = data.shipments.length;
+          }
 
           const now = new Date();
           this.lastUpdated = now.toLocaleTimeString('en-US', {
@@ -433,6 +450,39 @@ export default {
           this.isLoading = false;
           this.scheduleNextPoll();
         });
+    },
+    applyFilters() {
+      this.localFilteredItems = null;
+      if (this.currentPage !== 1) {
+        this.currentPage = 1;
+      } else {
+        this.fetchShipments();
+      }
+    },
+    handleAwbSearch() {
+      const search = this.searchText ? this.searchText.trim().toLowerCase() : "";
+      
+      if (!search) {
+        this.localFilteredItems = null;
+        this.applyFilters();
+        return;
+      }
+
+      // Search in currently loaded items first
+      const localMatches = this.items.filter(item => {
+        const awbCode = item.awb_code ? String(item.awb_code).toLowerCase() : "";
+        const awbNo = item.awb_no ? String(item.awb_no).toLowerCase() : "";
+        const combined = `${awbCode}-${awbNo}`;
+        return combined.includes(search) || awbCode.includes(search) || awbNo.includes(search);
+      });
+
+      if (localMatches.length > 0) {
+        this.localFilteredItems = localMatches;
+      } else {
+        // Not found locally, fallback to server search
+        this.localFilteredItems = null;
+        this.applyFilters();
+      }
     },
     scheduleNextPoll() {
       this.clearPollTimer();
@@ -488,6 +538,32 @@ export default {
       this.fetchShipments();
     },
     downloadCsv() {
+      const isDateFilterActive = (this.filters.dates && this.filters.dates.length > 0) ||
+                                 (this.filters.months && this.filters.months.length > 0);
+
+      if (isDateFilterActive) {
+        this.isLoading = true;
+        const params = {
+          ...this.filters,
+          search: this.searchText,
+          export: 'all'
+        };
+        ApiService.query(`/superadmin/client-shipments`, { params })
+          .then(({ data }) => {
+            this.generateAndDownloadCsv(data.shipments);
+          })
+          .catch(err => {
+            console.error("Failed to export shipments", err);
+            Swal.fire("Error", "Could not retrieve export data.", "error");
+          })
+          .finally(() => {
+            this.isLoading = false;
+          });
+      } else {
+        this.generateAndDownloadCsv(this.items);
+      }
+    },
+    generateAndDownloadCsv(items) {
       const headers = [
         "AWB Number",
         "Client/Company",
@@ -501,7 +577,7 @@ export default {
         "FNA Status"
       ];
 
-      const rows = this.items.map(item => {
+      const rows = items.map(item => {
         const awb = `${item.awb_code}-${item.awb_no}`;
         const company = item.agents_info && item.agents_info.company_name 
           ? item.agents_info.company_name.name 
@@ -545,10 +621,6 @@ export default {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    },
-    onFiltered(filteredItems) {
-      this.totalRows = filteredItems.length;
-      this.currentPage = 1;
     },
     rowClass(item, type) {
       if (!item || type !== 'row') return '';

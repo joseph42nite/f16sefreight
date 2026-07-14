@@ -61,9 +61,7 @@ class SuperAdminController extends Controller
 
     public function getClientShipments(Request $request)
     {
-        $query = \App\AirwayBills::with(['consignmentData', 'agentsInfo.companyName'])
-            ->withCount('houseWayBills')
-            ->orderBy('created_at', 'desc');
+        $query = \App\AirwayBills::query();
 
         if ($request->filled('company_id')) {
             $query->whereHas('agentsInfo', function ($q) use ($request) {
@@ -78,6 +76,21 @@ class SuperAdminController extends Controller
 
         if ($request->filled('destination')) {
             $query->where('destination_airport', 'like', '%' . $request->destination . '%');
+        }
+
+        // AWB Number Search
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            if (strpos($search, '-') !== false) {
+                $parts = explode('-', $search, 2);
+                $query->where('awb_code', $parts[0])
+                      ->where('awb_no', $parts[1]);
+            } else {
+                $query->where(function ($q) use ($search) {
+                    $q->where('awb_no', 'like', '%' . $search . '%')
+                      ->orWhere('awb_code', 'like', '%' . $search . '%');
+                });
+            }
         }
 
         if ($request->has('dates') && is_array($request->dates) && count($request->dates) > 0) {
@@ -130,7 +143,28 @@ class SuperAdminController extends Controller
             }
         }
 
-        $shipments = $query->get();
+        // Calculate counts before pagination/limit
+        $totalAwb = $query->count();
+        
+        $totalHawbQuery = (clone $query)->withCount('houseWayBills');
+        $totalHawb = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$totalHawbQuery->toSql()}) as sub"))
+            ->mergeBindings($totalHawbQuery->getQuery())
+            ->sum('house_way_bills_count');
+
+        // Order and Eager load
+        $query->with(['consignmentData', 'agentsInfo.companyName'])
+            ->withCount('houseWayBills')
+            ->orderBy('created_at', 'desc');
+
+        if ($request->get('export') === 'all') {
+            $shipments = $query->get();
+        } else {
+            $perPage = (int) $request->get('per_page', 50);
+            if ($perPage <= 0) $perPage = 50;
+
+            $paginator = $query->paginate($perPage);
+            $shipments = collect($paginator->items());
+        }
 
         // Fetch status responses only for the retrieved shipments list
         $awbIdsWithHyphen = $shipments->map(function ($awb) {
@@ -150,15 +184,22 @@ class SuperAdminController extends Controller
             $awb->fna_reason = $fnaResponse ? $fnaResponse->reason : null;
         });
 
-        // Calculate counts
-        $totalAwb = $shipments->count();
-        $totalHawb = $shipments->sum('house_way_bills_count');
-
-        return response()->json([
+        $responseData = [
             'shipments' => $shipments,
             'total_awb' => $totalAwb,
-            'total_hawb' => $totalHawb
-        ]);
+            'total_hawb' => (int) $totalHawb,
+        ];
+
+        if ($request->get('export') !== 'all') {
+            $responseData['pagination'] = [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ];
+        }
+
+        return response()->json($responseData);
     }
 
     public function getShipmentXml($awb_id)

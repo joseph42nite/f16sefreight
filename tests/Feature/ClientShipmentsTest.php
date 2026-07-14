@@ -89,7 +89,13 @@ class ClientShipmentsTest extends TestCase
             ->assertJsonStructure([
                 'shipments',
                 'total_awb',
-                'total_hawb'
+                'total_hawb',
+                'pagination' => [
+                    'current_page',
+                    'last_page',
+                    'per_page',
+                    'total',
+                ]
             ]);
 
         // 6. Test filtering by company_id
@@ -100,6 +106,33 @@ class ClientShipmentsTest extends TestCase
             ->assertJsonFragment([
                 'total_awb' => 1,
                 'total_hawb' => 1,
+            ]);
+
+        // 6a. Test AWB Search (hyphen search)
+        $response = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?search=111-22223333');
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'total_awb' => 1,
+            ]);
+
+        // 6b. Test AWB Search (partial code search)
+        $response = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?search=222233');
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'total_awb' => 1,
+            ]);
+
+        // 6c. Test export=all parameter (skips pagination metadata)
+        $response = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?export=all');
+        $response->assertStatus(200)
+            ->assertJsonMissing(['pagination'])
+            ->assertJsonStructure([
+                'shipments',
+                'total_awb',
+                'total_hawb'
             ]);
 
         // 7. Test XML view endpoint

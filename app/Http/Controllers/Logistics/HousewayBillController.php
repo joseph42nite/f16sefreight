@@ -50,12 +50,66 @@ class HousewayBillController extends Controller
             'oci_custom_info_identifier' => $ociCustomInfoIdentifier
         ]);
     }
+    private function getAuthAgent()
+    {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return null;
+        }
+        return Agent::where('id', $user->branch_name)->first();
+    }
+    private function validateAndFormatRouteDates(array &$routing_information)
+    {
+        $dateFields = ['date', 'date_2', 'date_3'];
+        foreach ($dateFields as $field) {
+            if (isset($routing_information[$field]) && !empty($routing_information[$field])) {
+                $dateValue = $routing_information[$field];
+                $timestamp = strtotime($dateValue);
+                if ($timestamp === false && is_string($dateValue)) {
+                    $timestamp = strtotime(str_replace(['T', 'Z'], [' ', ''], $dateValue));
+                }
+                if ($timestamp === false) {
+                    $fieldNameForErr = $field === 'date' ? 'date' : $field;
+                    return response()->json(['errors' => [$field => ["The {$fieldNameForErr} field must be a valid date."]]], 422);
+                }
+                $routing_information[$field] = date('Y-m-d H:i:s', $timestamp);
+            }
+        }
+        return null;
+    }
+    private function getAddressByType(Request $request, string $addressType, string $prefix)
+    {
+        $addressId = $request->input('id') ?? $request->query('id');
+        $address = null;
+        if ($addressId) {
+            $address = SavedAddress::where('id', $addressId)->first();
+        } else {
+            $address = SavedAddress::where('address_type', $addressType)->first();
+        }
+
+        if ($address) {
+            return response()->json([
+                "{$prefix}_name" => $address->name,
+                "{$prefix}_name_2" => $address->name_2,
+                "{$prefix}_account" => $address->account,
+                "{$prefix}_address" => $address->address,
+                "{$prefix}_address_line_2" => $address->address_line_2,
+                "{$prefix}_city" => $address->city,
+                "{$prefix}_airport_code" => $address->airport_code,
+                "{$prefix}_post_code" => $address->post_code,
+                "{$prefix}_state" => $address->state,
+                "{$prefix}_country" => $address->country,
+                "{$prefix}_phone" => $address->phone,
+                "{$prefix}_fax" => $address->fax,
+                "{$prefix}_telex" => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
     private function saveShipperAddress($hawb_no, $shipper_address, $is_shipper_address_save)
     {
         $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
@@ -172,10 +226,7 @@ class HousewayBillController extends Controller
     }
     private function saveConsigneeAddress($hawb_no, $consignee_address, $is_consignee_address_save)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
@@ -244,10 +295,7 @@ class HousewayBillController extends Controller
     }
     private function saveAlsoNotify($hawb_no, $also_notify_address, $is_also_notify_address_save)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
@@ -310,10 +358,7 @@ class HousewayBillController extends Controller
     }
     private function firstBox($first_box, $id = null)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($first_box, [
             'hawb_no' => 'required|regex:/^[a-zA-Z0-9]+$/|max:35',
@@ -354,10 +399,7 @@ class HousewayBillController extends Controller
 
     private function routingInformation($hawb_no, $routing_information)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($routing_information, [
             'departure_airport' => 'required|string',
@@ -383,41 +425,9 @@ class HousewayBillController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Additional date validation after basic validation passes
-        if (isset($routing_information['date']) && !empty($routing_information['date'])) {
-            if (strtotime($routing_information['date']) === false) {
-                return response()->json(['errors' => ['date' => ['The date field must be a valid date.']]], 422);
-            }
-        }
-        if (isset($routing_information['date_2']) && !empty($routing_information['date_2'])) {
-            if (strtotime($routing_information['date_2']) === false) {
-                return response()->json(['errors' => ['date_2' => ['The date_2 field must be a valid date.']]], 422);
-            }
-        }
-        if (isset($routing_information['date_3']) && !empty($routing_information['date_3'])) {
-            if (strtotime($routing_information['date_3']) === false) {
-                return response()->json(['errors' => ['date_3' => ['The date_3 field must be a valid date.']]], 422);
-            }
-        }
-
-        // Format dates to ensure proper format Y-m-d H:i:s
-        if (isset($routing_information['date']) && !empty($routing_information['date'])) {
-            $timestamp = strtotime($routing_information['date']);
-            if ($timestamp !== false) {
-                $routing_information['date'] = date('Y-m-d H:i:s', $timestamp);
-            }
-        }
-        if (isset($routing_information['date_2']) && !empty($routing_information['date_2'])) {
-            $timestamp = strtotime($routing_information['date_2']);
-            if ($timestamp !== false) {
-                $routing_information['date_2'] = date('Y-m-d H:i:s', $timestamp);
-            }
-        }
-        if (isset($routing_information['date_3']) && !empty($routing_information['date_3'])) {
-            $timestamp = strtotime($routing_information['date_3']);
-            if ($timestamp !== false) {
-                $routing_information['date_3'] = date('Y-m-d H:i:s', $timestamp);
-            }
+        $dateError = $this->validateAndFormatRouteDates($routing_information);
+        if ($dateError) {
+            return $dateError;
         }
 
         $HousewayBills = HousewayBills::find($hawb_no);
@@ -468,16 +478,12 @@ class HousewayBillController extends Controller
         $HousewayBills->master_origin = $routing_information['master_origin'];
         $HousewayBills->master_destination = $routing_information['master_destination'];
         $HousewayBills->agent_id = $agent->id ?? null;
-        //    dd($HousewayBills);die;
         $HousewayBills->save();
         return "Routing Information saved successfull";
     }
     private function consignmentInformation($hawb_no, $entries)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         for ($i = 0; $i < sizeof($entries); $i++) {
             $pieces = $entries[$i]['pieces'];
@@ -508,10 +514,7 @@ class HousewayBillController extends Controller
     }
     private function customOriginAndOsiInfo($hawb_no, $custom_origin)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($custom_origin, [
             'customs_origin_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:2',
@@ -545,43 +548,9 @@ class HousewayBillController extends Controller
         $HousewayBills->save();
         return "Custom Origin Code and other tab information save successfully";
     }
-    // private function otherCharges($hawb_no, $charges)
-    // {
-    //     for ($i = 0; $i < sizeof($charges); $i++) {
-    //         $validator = Validator::make($charges[$i], [
-    //             'payment_type' => 'nullable|string',
-    //             'other_code' => 'nullable|string',
-    //             'other_charge_code' => 'nullable|string',
-    //             'amount' => 'nullable|numeric|min:0.01|max:999999999',
-    //             'due' => 'nullable|string',
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             return response()->json(['errors' => $validator->errors()], 422);
-    //         }
-
-    //         $other_charge_code = $charges[$i]['other_charge_code'];
-    //         $otherChargesData = OtherCharge::where([['awb_id', $hawb_no], ['other_charge_code', $other_charge_code]])->first();
-
-    //         if (!isset($otherChargesData)) {
-    //             $otherChargesData = new OtherCharge();
-    //         }
-    //         $otherChargesData->awb_id = $hawb_no;
-    //         $otherChargesData->other_charge_code = $other_charge_code;
-    //         $otherChargesData->other_code = $charges[$i]['other_code'];
-    //         $otherChargesData->payment_type = $charges[$i]['payment_type'];
-    //         $otherChargesData->due = $charges[$i]['due'];
-    //         $otherChargesData->amount = $charges[$i]['amount'];
-    //         $otherChargesData->save();
-    //     }
-    //     return "Other Charges Data saved successfully";
-    // }
     private function otherCharges($hawb_no, $charges)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
         OtherCharge::where('awb_id', $hawb_no)->delete();
         for ($i = 0; $i < sizeof($charges); $i++) {
             $finalOtherChargeCode = isset($charges[$i]['other_code']) && !empty($charges[$i]['other_code'])
@@ -613,12 +582,8 @@ class HousewayBillController extends Controller
     }
     private function paymentInformation($hawb_no, $payment_info)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
-        // dd($payment_info['declear_value_carriage']);die;
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
             // 'total_charges' => 'required|numeric|min:0.000|max:999999999999',
@@ -688,10 +653,7 @@ class HousewayBillController extends Controller
     }
     private function otherCustomInformation($hawb_no, $oci_entries)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make(
@@ -733,9 +695,7 @@ class HousewayBillController extends Controller
     }
     private function totalAmountValume($hawb_no, $totals)
     {
-        $user = auth()->guard('user-api')->user();
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($totals, [
             // 'total_volume' => 'required|numeric|min:0|max:999999999',
@@ -754,10 +714,10 @@ class HousewayBillController extends Controller
             $HousewayBills->id = $hawb_no;
             if (!empty($totals['total_volume']) && $totals['total_volume'] != '0.00')
                 $HousewayBills->total_volume = $totals['total_volume'];
-            $HousewayBills->total_amount = $totals['total_amount'];
+            $HousewayBills->total_amount = $totals['total_amount'] ?? null;
             $HousewayBills->master_pcs = $totals['master_pcs'];
             $HousewayBills->master_weight = $totals['master_weight'];
-            if ($totals['dimention_unit'])
+            if (isset($totals['dimention_unit']) && $totals['dimention_unit'])
                 $HousewayBills->dimention_unit = $totals['dimention_unit'];
             $HousewayBills->agent_id = $agent->id ?? null;
             $HousewayBills->save();
@@ -779,32 +739,9 @@ class HousewayBillController extends Controller
         }
         return "Toatl Amount and Total Volume saved successfull";
     }
-    // private function saveSpecialHandlingCode($hawb_no, $tableCodes)
-    // {
-    //     if (empty($tableCodes)) {
-    //         return "Code is missing in tableCodes entry.";
-    //     }
-    //     $codesArray = [];
-    //     foreach ($tableCodes as $code) {
-    //         if (!empty($code)) {
-    //             $codesArray[] = $code;
-    //         }
-    //     }
-    //     $codesJson = json_encode($codesArray);
-    //     $handlingCode = HousewayBills::find($hawb_no)->first();
-    //     if (!$handlingCode) {
-    //         $handlingCode = new HousewayBills();
-    //     }
-    //     $handlingCode->special_handling_info = $codesJson;
-    //     $handlingCode->save();
-    //     return "Special Handling Codes saved successfully.";
-    // }
     public function saveSpecialHandlingCode($hawb_no, $tableCodes)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         if (empty($tableCodes)) {
             return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
@@ -895,15 +832,11 @@ class HousewayBillController extends Controller
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
-        //for Total Consignee Amount and Total Volume
-        // !empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])
-        if (1) {
-            $error_data = $this->totalAmountValume($hawb_id, $request->totals);
-            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
-            else
-                $main_return_data['totals'] = $error_data;
-        }
+        $error_data = $this->totalAmountValume($hawb_id, $request->totals);
+        if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+            return $error_data;
+        else
+            $main_return_data['totals'] = $error_data;
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($hawb_id, $request->tableCodes);
         }
@@ -1108,94 +1041,17 @@ class HousewayBillController extends Controller
             $shippers = SavedAddress::all();
         }
         return response()->json($shippers);
-    }
     public function getShipperAddress(Request $request)
     {
-        $addressId = $request->id;
-        $addressType = $request->address_type ?? 'shipper_address';
-        
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $addressType)->first();
-        }
-
-        if ($address) {
-            return response()->json([
-                'ship_name' => $address->name,
-                'ship_name_2' => $address->name_2,
-                'ship_account' => $address->account,
-                'ship_address' => $address->address,
-                'ship_address_line_2' => $address->address_line_2,
-                'ship_city' => $address->city,
-                'ship_airport_code' => $address->airport_code,
-                'ship_post_code' => $address->post_code,
-                'ship_state' => $address->state,
-                'ship_country' => $address->country,
-                'ship_phone' => $address->phone,
-                'ship_fax' => $address->fax,
-                'ship_telex' => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
+        return $this->getAddressByType($request, $request->address_type ?? 'shipper_address', 'ship');
     }
     public function getConsigneeAddress(Request $request)
     {
-        $addressId = $request->query('id');
-        $address_type = $request->query('address_type', 'consignee_address');
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $address_type)->first();
-        }
-        if ($address) {
-            return response()->json([
-                'cons_name' => $address->name,
-                'cons_name_2' => $address->name_2,
-                'cons_account' => $address->account,
-                'cons_address' => $address->address,
-                'cons_address_line_2' => $address->address_line_2,
-                'cons_city' => $address->city,
-                'cons_airport_code' => $address->airport_code,
-                'cons_post_code' => $address->post_code,
-                'cons_state' => $address->state,
-                'cons_country' => $address->country,
-                'cons_phone' => $address->phone,
-                'cons_fax' => $address->fax,
-                'cons_telex' => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
+        return $this->getAddressByType($request, $request->query('address_type', 'consignee_address'), 'cons');
     }
     public function getAlsoNotifyAddress(Request $request)
     {
-        $addressId = $request->query('id');
-        $address_type = $request->query('address_type', 'also_notify_address');
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $address_type)->first();
-        }
-        if ($address) {
-            return response()->json([
-                'also_name' => $address->name,
-                'also_name_2' => $address->name_2,
-                'also_account' => $address->account,
-                'also_address' => $address->address,
-                'also_address_line_2' => $address->address_line_2,
-                'also_city' => $address->city,
-                'also_airport_code' => $address->airport_code,
-                'also_post_code' => $address->post_code,
-                'also_state' => $address->state,
-                'also_country' => $address->country,
-                'also_phone' => $address->phone,
-                'also_fax' => $address->fax,
-                'also_telex' => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
+        return $this->getAddressByType($request, $request->query('address_type', 'also_notify_address'), 'also');
+    }
     }
 }

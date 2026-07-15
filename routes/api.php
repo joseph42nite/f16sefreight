@@ -94,10 +94,6 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-oci-data', [HousewayBillController::class, 'getOCIData']);
     Route::get('/houseway-bill/{id}', [HousewayBillController::class, 'show']);
     Route::get('/get-houseway-bills/{status}', [HousewayBillController::class, 'getAllHawb']);
-    Route::get('/get-shippers', [HousewayBillController::class, 'getShippers']);
-    Route::get('/get-shipper-address', [HousewayBillController::class, 'getShipperAddress']);
-    Route::get('/get-consignee-address', [HousewayBillController::class, 'getConsigneeAddress']);
-    Route::get('/get-alsonotify-address', [HousewayBillController::class, 'getAlsoNotifyAddress']);
 
     //message Log 
     Route::get('/all-airway-bill', [MessageLogController::class,'getAllAirwayBill']);

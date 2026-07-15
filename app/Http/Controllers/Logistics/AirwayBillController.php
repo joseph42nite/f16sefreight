@@ -36,12 +36,66 @@ class AirwayBillController extends Controller
         $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference', 'ho_name', 'ho_address', 'ho_city', 'ho_pincode', 'ho_state', 'ho_country']);
         return json_encode($data);
     }
+    private function getAuthAgent()
+    {
+        $user = auth()->guard('user-api')->user();
+        if (!$user) {
+            return null;
+        }
+        return Agent::where('id', $user->branch_name)->first();
+    }
+    private function validateAndFormatRouteDates(array &$routing_information)
+    {
+        $dateFields = ['date', 'date_2', 'date_3'];
+        foreach ($dateFields as $field) {
+            if (isset($routing_information[$field]) && !empty($routing_information[$field])) {
+                $dateValue = $routing_information[$field];
+                $timestamp = strtotime($dateValue);
+                if ($timestamp === false && is_string($dateValue)) {
+                    $timestamp = strtotime(str_replace(['T', 'Z'], [' ', ''], $dateValue));
+                }
+                if ($timestamp === false) {
+                    $fieldNameForErr = $field === 'date' ? 'date' : $field;
+                    return response()->json(['errors' => [$field => ["The {$fieldNameForErr} field must be a valid date."]]], 422);
+                }
+                $routing_information[$field] = date('Y-m-d H:i:s', $timestamp);
+            }
+        }
+        return null;
+    }
+    private function getAddressByType(Request $request, string $addressType, string $prefix)
+    {
+        $addressId = $request->input('id') ?? $request->query('id');
+        $address = null;
+        if ($addressId) {
+            $address = SavedAddress::where('id', $addressId)->first();
+        } else {
+            $address = SavedAddress::where('address_type', $addressType)->first();
+        }
+
+        if ($address) {
+            return response()->json([
+                "{$prefix}_name" => $address->name,
+                "{$prefix}_name_2" => $address->name_2,
+                "{$prefix}_account" => $address->account,
+                "{$prefix}_address" => $address->address,
+                "{$prefix}_address_line_2" => $address->address_line_2,
+                "{$prefix}_city" => $address->city,
+                "{$prefix}_airport_code" => $address->airport_code,
+                "{$prefix}_post_code" => $address->post_code,
+                "{$prefix}_state" => $address->state,
+                "{$prefix}_country" => $address->country,
+                "{$prefix}_phone" => $address->phone,
+                "{$prefix}_fax" => $address->fax,
+                "{$prefix}_telex" => $address->telex,
+            ], 200);
+        }
+        return response()->json(['error' => 'Address not found'], 404);
+    }
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($shipper_address, [
             'ship_name' => 'required|string|max:70',
@@ -83,7 +137,6 @@ class AirwayBillController extends Controller
         $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
         $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
         $WayBillAddress->agent_id = $agent->id ?? null;
-        // dd($WayBillAddress);die();
         $WayBillAddress->save();
 
         //insert address if saved button checked
@@ -109,17 +162,13 @@ class AirwayBillController extends Controller
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
             $SavedAddress->agent_id = $agent->id ?? null;
             $SavedAddress->user_id = $user->id ?? null;
-            // dd($SavedAddress);die();
             $SavedAddress->save();
         }
         return 'shipper address saved successfull';
     }
     private function saveConsigneeAddress($awb_no, $awb_code, $consignee_address, $is_consignee_address_save)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($consignee_address, [
             'cons_name' => 'required|string|max:70',
@@ -189,10 +238,7 @@ class AirwayBillController extends Controller
     }
     private function saveAlsoNotify($awb_no, $awb_code, $also_notify_address, $is_also_notify_address_save)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
@@ -255,10 +301,7 @@ class AirwayBillController extends Controller
     }
     private function firstBox($first_box, $id = null)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         if ($first_box['consolidated_mawb'] == true) {
             $first_box['consolidated_mawb'] = "true";
@@ -289,9 +332,7 @@ class AirwayBillController extends Controller
             $AirwayBills->awb_no = $first_box['awb_no'];
             $AirwayBills->awb_code = $first_box['awb_code'];
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
-            $AirwayBills->awb = $first_box['awb'];
             $AirwayBills->agent_id = $agent->id ?? null;
-            // dd($first_box);
             $AirwayBills->save();
             return response()->json([
                 'message' => 'First box created successfully',
@@ -305,9 +346,6 @@ class AirwayBillController extends Controller
             $AirwayBills->consolidated_mawb = $first_box['consolidated_mawb'];
             $AirwayBills->awb = $first_box['awb'];
             $AirwayBills->agent_id = $agent->id ?? null;
-            // dd($first_box);
-            // $AirwayBills->consolidated_mawb = ($first_box['consolidated_mawb'] == 1) ? true : false;
-            // $AirwayBills->awb = ($first_box['awb'] == 1) ? true : false;
             $AirwayBills->save();
             return response()->json([
                 'message' => 'First box created successfully',
@@ -326,10 +364,7 @@ class AirwayBillController extends Controller
     }
     private function routingInformation($awb_no, $awb_code, $routing_information)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($routing_information, [
             'departure_airport' => 'required|string',
@@ -353,69 +388,9 @@ class AirwayBillController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Additional date validation after basic validation passes
-        if (isset($routing_information['date']) && !empty($routing_information['date'])) {
-            if (strtotime($routing_information['date']) === false) {
-                return response()->json(['errors' => ['date' => ['The date field must be a valid date.']]], 422);
-            }
-        }
-        if (isset($routing_information['date_2']) && !empty($routing_information['date_2'])) {
-            if (strtotime($routing_information['date_2']) === false) {
-                return response()->json(['errors' => ['date_2' => ['The date_2 field must be a valid date.']]], 422);
-            }
-        }
-        if (isset($routing_information['date_3']) && !empty($routing_information['date_3'])) {
-            if (strtotime($routing_information['date_3']) === false) {
-                return response()->json(['errors' => ['date_3' => ['The date_3 field must be a valid date.']]], 422);
-            }
-        }
-
-        // Format dates to ensure proper format Y-m-d H:i:s
-        if (isset($routing_information['date']) && !empty($routing_information['date'])) {
-            $dateValue = $routing_information['date'];
-            $timestamp = strtotime($dateValue);
-            if ($timestamp !== false) {
-                $routing_information['date'] = date('Y-m-d H:i:s', $timestamp);
-            } else {
-                // Try to handle common date formats
-                if (is_string($dateValue)) {
-                    // Try different date parsing approaches
-                    $timestamp = strtotime(str_replace(['T', 'Z'], [' ', ''], $dateValue));
-                    if ($timestamp !== false) {
-                        $routing_information['date'] = date('Y-m-d H:i:s', $timestamp);
-                    }
-                }
-            }
-        }
-        if (isset($routing_information['date_2']) && !empty($routing_information['date_2'])) {
-            $dateValue = $routing_information['date_2'];
-            $timestamp = strtotime($dateValue);
-            if ($timestamp !== false) {
-                $routing_information['date_2'] = date('Y-m-d H:i:s', $timestamp);
-            } else {
-                // Try to handle common date formats
-                if (is_string($dateValue)) {
-                    $timestamp = strtotime(str_replace(['T', 'Z'], [' ', ''], $dateValue));
-                    if ($timestamp !== false) {
-                        $routing_information['date_2'] = date('Y-m-d H:i:s', $timestamp);
-                    }
-                }
-            }
-        }
-        if (isset($routing_information['date_3']) && !empty($routing_information['date_3'])) {
-            $dateValue = $routing_information['date_3'];
-            $timestamp = strtotime($dateValue);
-            if ($timestamp !== false) {
-                $routing_information['date_3'] = date('Y-m-d H:i:s', $timestamp);
-            } else {
-                // Try to handle common date formats
-                if (is_string($dateValue)) {
-                    $timestamp = strtotime(str_replace(['T', 'Z'], [' ', ''], $dateValue));
-                    if ($timestamp !== false) {
-                        $routing_information['date_3'] = date('Y-m-d H:i:s', $timestamp);
-                    }
-                }
-            }
+        $dateError = $this->validateAndFormatRouteDates($routing_information);
+        if ($dateError) {
+            return $dateError;
         }
 
         $awb_id = $awb_code . $awb_no;
@@ -444,10 +419,7 @@ class AirwayBillController extends Controller
     }
     private function consignmentInformation($awb_no, $awb_code, $entries)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $awb_id = $awb_code . $awb_no;
 
@@ -481,10 +453,7 @@ class AirwayBillController extends Controller
     }
     private function customOriginAndOsiInfo($awb_no, $awb_code, $custom_origin)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
 
         $validator = Validator::make($custom_origin, [
@@ -521,10 +490,7 @@ class AirwayBillController extends Controller
     }
     private function otherCharges($awb_no, $awb_code, $charges)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
         $awb_id = $awb_code . $awb_no;
         OtherCharge::where('awb_id', $awb_id)->delete();
         for ($i = 0; $i < sizeof($charges); $i++) {
@@ -556,10 +522,7 @@ class AirwayBillController extends Controller
     }
     private function paymentInformation($awb_no, $awb_code, $payment_info)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($payment_info, [
             'type_of_payment' => 'required',
@@ -633,10 +596,7 @@ class AirwayBillController extends Controller
     }
     private function otherCustomInformation($awb_no, $awb_code, $oci_entries)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $awb_id = $awb_code . $awb_no;
         foreach ($oci_entries as $oci_entry) {
@@ -679,10 +639,7 @@ class AirwayBillController extends Controller
     }
     private function totalAmountValume($awb_no, $awb_code, $totals)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $validator = Validator::make($totals, [
             'total_volume' => 'required|numeric|min:0|max:999999999',
@@ -700,39 +657,15 @@ class AirwayBillController extends Controller
 
         $AirwayBills->total_volume = $totals['total_volume'];
         $AirwayBills->total_amount = $totals['total_amount'];
-        if ($totals['dimention_unit'])
+        if (isset($totals['dimention_unit']) && $totals['dimention_unit'])
             $AirwayBills->dimention_unit = $totals['dimention_unit'];
         $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Toatl Amount and Total Volume saved successfull";
     }
-    // private function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
-    // {
-    //     $awb_id = $awb_code . $awb_no;
-    //     if (empty($tableCodes)) {
-    //         return "Code is missing in tableCodes entry.";
-    //     }
-    //     $codesArray = [];
-    //     foreach ($tableCodes as $code) {
-    //         if (!empty($code)) {
-    //             $codesArray[] = $code;
-    //         }
-    //     }
-    //     $codesJson = json_encode($codesArray);
-    //     $handlingCode = AirwayBills::find($awb_id)->first();
-    //     if (!$handlingCode) {
-    //         $handlingCode = new AirwayBills();
-    //     }
-    //     $handlingCode->special_handling_info = $codesJson;
-    //     $handlingCode->save();
-    //     return "Special Handling Codes saved successfully.";
-    // }
     public function saveSpecialHandlingCode($awb_no, $awb_code, $tableCodes)
     {
-        $user = auth()->guard('user-api')->user();
-        $company_id = $user->company_id;
-        $branch_name = $user->branch_name;
-        $agent = Agent::where('id', $branch_name)->first();
+        $agent = $this->getAuthAgent();
 
         $awb_id = $awb_code . $awb_no;
         if (empty($tableCodes)) {
@@ -1012,92 +945,15 @@ class AirwayBillController extends Controller
     }
     public function getShipperAddress(Request $request)
     {
-        $addressId = $request->id;
-        $addressType = $request->address_type ?? 'shipper_address';
-
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $addressType)->first();
-        }
-
-        if ($address) {
-            return response()->json([
-                'ship_name' => $address->name,
-                'ship_name_2' => $address->name_2,
-                'ship_account' => $address->account,
-                'ship_address' => $address->address,
-                'ship_address_line_2' => $address->address_line_2,
-                'ship_city' => $address->city,
-                'ship_airport_code' => $address->airport_code,
-                'ship_post_code' => $address->post_code,
-                'ship_state' => $address->state,
-                'ship_country' => $address->country,
-                'ship_phone' => $address->phone,
-                'ship_fax' => $address->fax,
-                'ship_telex' => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
+        return $this->getAddressByType($request, $request->address_type ?? 'shipper_address', 'ship');
     }
     public function getConsigneeAddress(Request $request)
     {
-        $addressId = $request->query('id');
-        $address_type = $request->query('address_type', 'consignee_address');
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $address_type)->first();
-        }
-        if ($address) {
-            return response()->json([
-                'cons_name' => $address->name,
-                'cons_name_2' => $address->name_2,
-                'cons_account' => $address->account,
-                'cons_address' => $address->address,
-                'cons_address_line_2' => $address->address_line_2,
-                'cons_city' => $address->city,
-                'cons_airport_code' => $address->airport_code,
-                'cons_post_code' => $address->post_code,
-                'cons_state' => $address->state,
-                'cons_country' => $address->country,
-                'cons_phone' => $address->phone,
-                'cons_fax' => $address->fax,
-                'cons_telex' => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
+        return $this->getAddressByType($request, $request->query('address_type', 'consignee_address'), 'cons');
     }
     public function getAlsoNotifyAddress(Request $request)
     {
-        $addressId = $request->query('id');
-        $address_type = $request->query('address_type', 'also_notify_address');
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $address_type)->first();
-        }
-        if ($address) {
-            return response()->json([
-                'also_name' => $address->name,
-                'also_name_2' => $address->name_2,
-                'also_account' => $address->account,
-                'also_address' => $address->address,
-                'also_address_line_2' => $address->address_line_2,
-                'also_city' => $address->city,
-                'also_airport_code' => $address->airport_code,
-                'also_post_code' => $address->post_code,
-                'also_state' => $address->state,
-                'also_country' => $address->country,
-                'also_phone' => $address->phone,
-                'also_fax' => $address->fax,
-                'also_telex' => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
+        return $this->getAddressByType($request, $request->query('address_type', 'also_notify_address'), 'also');
     }
     public function loadAWB(Request $request)
     {

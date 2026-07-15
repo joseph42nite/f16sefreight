@@ -382,10 +382,7 @@ export default {
             return '';
         },
         getDestinationCode(airportString) {
-            if (airportString) {
-                return airportString.split(',')[0];
-            }
-            return '';
+            return this.getOriginCode(airportString);
         },
         calculateCharge() {
             let chargeRate = parseFloat(this.other_charges.charge);

@@ -546,7 +546,8 @@ class ConversionController extends Controller
         // Applicable Freight Rate Service Charge
         $applicableFreightRateServiceCharge = $xml->createElement('ram:ApplicableFreightRateServiceCharge');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CategoryCode', $consignment_data['rate_class']));
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CommodityItemID', $consignment_data['commodity_item']));
+        if ($consignment_data['commodity_item'])
+            $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CommodityItemID', $consignment_data['commodity_item']));
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:ChargeableWeightMeasure', $consignment_data['chargable_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:AppliedRate', $consignment_data['rate'] ?? 0));
         $applicableAppliedAmount = $xml->createElement('ram:AppliedAmount', $waybill_data['total_amount']);
@@ -1084,7 +1085,8 @@ class ConversionController extends Controller
         // Applicable Freight Rate Service Charge
         $applicableFreightRateServiceCharge = $xml->createElement('ram:ApplicableFreightRateServiceCharge');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CategoryCode', $consignment_data['rate_class']));
-        $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CommodityItemID', $consignment_data['commodity_item']));
+        if ($consignment_data['commodity_item'])
+            $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:CommodityItemID', $consignment_data['commodity_item']));
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:ChargeableWeightMeasure', $consignment_data['chargable_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         $applicableFreightRateServiceCharge->appendChild($xml->createElement('ram:AppliedRate', $consignment_data['rate'] ?? 0));
         $applicableAppliedAmount = $xml->createElement('ram:AppliedAmount', $house_data['total_amount']);
@@ -1273,7 +1275,9 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-    function StatusMessage() {}
+    function StatusMessage()
+    {
+    }
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)

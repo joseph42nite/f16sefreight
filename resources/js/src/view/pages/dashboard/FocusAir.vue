@@ -179,13 +179,13 @@
                                             </div>
                                             <!-- Show Shipper all input field here -->
                                             <div v-if="showShipper">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-name-2-input" class="pb-2 align-items-center">
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>&nbsp;</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }"></b-form-input>
+                                                    <b-form-input id="shipper-name-2-input" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }" autocomplete="off"></b-form-input>
                                                     <has-error :form="form" field="ship_name_2"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
@@ -338,13 +338,13 @@
                                             </div>
                                             <!-- Show Consignee all input field here -->
                                             <div v-if="showConsignee">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="consignee-name-2-input" class="pb-2 align-items-center">
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>&nbsp;</span>
                                                         </div>
                                                     </template>
-                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }"></b-form-input>
+                                                     <b-form-input id="consignee-name-2-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }" autocomplete="off"></b-form-input>
                                                     <has-error :form="form" field="cons_name_2"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">

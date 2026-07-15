@@ -178,7 +178,7 @@
                                                              <span>&nbsp;</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="shipper-name-input" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }"></b-form-input>
+                                                     <b-form-input id="shipper-name-input" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }" autocomplete="off"></b-form-input>
                                                      <has-error :form="form" field="ship_name_2"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-account-input" class="pb-2 align-items-center">
@@ -336,7 +336,7 @@
                                                              <span>&nbsp;</span>
                                                          </div>
                                                      </template>
-                                                     <b-form-input id="cons-name-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }"></b-form-input>
+                                                     <b-form-input id="cons-name-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }" autocomplete="off"></b-form-input>
                                                      <has-error :form="form" field="cons_name_2"></has-error>
                                                 </b-form-group>
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-account-input" class="pb-2 align-items-center">

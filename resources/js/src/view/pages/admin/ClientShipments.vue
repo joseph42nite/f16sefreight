@@ -226,8 +226,8 @@
 
           <template #cell(date_sent)="data">
             <div class="text-nowrap">
-              <span class="font-weight-bold text-dark d-block mb-1">{{ formatDate(data.item.created_at) }}</span>
-              <span class="text-muted font-size-xs"><i class="far fa-clock mr-1 text-primary"></i>{{ formatTime(data.item.created_at) }}</span>
+              <span class="font-weight-bold text-dark d-block mb-1">{{ formatDate(data.item.updated_at) }}</span>
+              <span class="text-muted font-size-xs"><i class="far fa-clock mr-1 text-primary"></i>{{ formatTime(data.item.updated_at) }}</span>
             </div>
           </template>
 

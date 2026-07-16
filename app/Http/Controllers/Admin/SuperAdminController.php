@@ -162,7 +162,7 @@ class SuperAdminController extends Controller
         // Order and Eager load
         $query->with(['consignmentData', 'agentsInfo.companyName'])
             ->withCount('houseWayBills')
-            ->orderBy('created_at', 'desc');
+            ->orderBy('updated_at', 'desc');
 
         if ($request->get('export') === 'all') {
             $shipments = $query->get();

@@ -153,7 +153,12 @@
         </div>
         <div class="w-md-25">
           <b-input-group size="sm">
-            <b-form-input id="filter-input" v-model="searchText" type="search" placeholder="Search AWB... (Enter)" @keyup.enter="handleAwbSearch" @search="handleAwbSearch"></b-form-input>
+            <b-form-input id="filter-input" v-model="searchText" type="search" placeholder="Search AWB..." @keyup.enter="handleAwbSearch" @search="handleAwbSearch"></b-form-input>
+            <b-input-group-append>
+              <b-button variant="primary" @click="handleAwbSearch" class="d-flex align-items-center justify-content-center">
+                <i class="fas fa-search"></i>
+              </b-button>
+            </b-input-group-append>
           </b-input-group>
         </div>
       </div>
@@ -496,6 +501,12 @@ export default {
     },
     perPage() {
       this.applyFilters();
+    },
+    searchText(val) {
+      if (!val || val.trim() === "") {
+        this.localFilteredItems = null;
+        this.applyFilters();
+      }
     }
   },
   methods: {

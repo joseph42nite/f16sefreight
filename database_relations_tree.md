@@ -777,6 +777,25 @@ For production and staging deployments, an independent backup helper container r
   created_at             | TIMESTAMP    |     |
 ```
 
+### 44. `support_tickets` (PK: `id`)
+*Note: This table stores customer/operator bug reports and complaints captured via the in-app chatbot and DOM selector.*
+
+```text
+  Column                 | Type         | Key | Connection Links
+  -----------------------|--------------|-----|----------------------------------------------------
+  id                     | BIGINT       | PK  |
+  agent_id               | BIGINT       | FK  | ◄── agents_info.id (Tenant branch)
+  user_id                | BIGINT       | FK  | ◄── users.id (Reporter user)
+  route                  | VARCHAR(255) |     | (Active page URL/route)
+  element_selector       | VARCHAR(255) |     | (CSS selector path of clicked element)
+  screenshot_path        | VARCHAR(500) |     | (S3 or local screenshot path)
+  console_logs           | JSON         |     | (Array of captured console error logs)
+  description            | TEXT         |     | (Reporter's problem statement)
+  status                 | VARCHAR(20)  |     | (open, investigating, resolved)
+  created_at             | TIMESTAMP    |     |
+  updated_at             | TIMESTAMP    |     |
+```
+
 ---
 
 ## 🧪 Polymorphic MorphTo Mapping Targets
@@ -1478,11 +1497,30 @@ CREATE TABLE pdf_extraction_corrections (
 );
 
 
+-- 44. support_tickets
+CREATE TABLE support_tickets (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    agent_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    route VARCHAR(255) NOT NULL,
+    element_selector VARCHAR(255) NULL,
+    screenshot_path VARCHAR(500) NULL,
+    console_logs JSON NULL,
+    description TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'open', -- open, investigating, resolved
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (agent_id) REFERENCES agents_info(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+
 -- =====================================================================
 -- PERFORMANCE & HIGH-SPEED OPTIMIZATION INDEXES
 -- =====================================================================
 
 -- Single-column indexes
+CREATE INDEX idx_support_tickets_status ON support_tickets (status);
 CREATE INDEX idx_inbound_emails_msg_id ON inbound_emails (message_id);
 CREATE INDEX idx_email_threads_thread_key ON email_threads (thread_key);
 CREATE INDEX idx_manifest_filings_icegate_id ON manifest_filings (icegate_id);

@@ -189,14 +189,15 @@ This folder structure indicates exactly which backend/frontend components are in
  ┗ 📂 Phase 4: Executive dashboards, Target Metrics & Copilot Chatbot
    ┣ 📂 Backend Analytics & AI Services
    ┃ ┣ 🐘 app/Http/Controllers/HelpGuideController.php: API endpoint for help queries
+   ┃ ┣ 🐘 app/Http/Controllers/SupportTicketController.php: API endpoint for ticket CRUD, email notifications & Slack triggers
    ┃ ┣ 🐍 FastAPI: ChromaDB vector client storage & nomic-embed-text similarity search
    ┃ ┣ 🐍 FastAPI: Gemma 4 response translation & instruction step generator
-   ┃ ┣ 🐍 FastAPI: Open-source browser-use agent integration (Playwright browser session & DOM/screen analysis)
    ┃ ┣ 🐘 database/migrations: DB views for DSR (Daily), MSR (Monthly), YSR (Yearly) reports
    ┃ ┣ 🐘 app/Console/Commands: Weekly sales opportunity analysis cron (Weekly AI)
    ┃ ┗ 🐘 app/Console/Commands: Weekly executive brief compiler (Weekly Admin AI)
    ┗ 📂 Frontend Dashboards & Copilot Help
-     ┣ 🎨 HelpCopilotChatbox.vue: Interactive sidebar chatbot panel (with browser viewer/automation toggle)
+     ┣ 🎨 HelpCopilotChatbox.vue: Interactive sidebar chatbot panel with Support Ticket creation flow
+     ┣ 🎨 VisualReporter.vue: Visual issue reporting widget (captures clicked element path, route & screenshot)
      ┣ 🎨 HighlightTourDriver.js: Step-by-step element highlight manager (Driver.js)
      ┣ 🎨 SalesDashboard.vue: Customer metrics grid & on-demand AI customer summarizer
      ┣ 🎨 SalesDashboard.vue: Weekly AI Sales opportunity notifications feed
@@ -987,6 +988,31 @@ To enable global system administrators (not tenant-level company administrators 
 -   **Superadmin Diagnostics Suite:**
     -   *Tail Log Viewer:* A secure, memory-buffered terminal viewer that reads only the last 100 lines of `storage/logs/laravel.log` (similar to running `tail -n 100` via shell). This prevents high memory usage even if log files grow to gigabyte sizes.
     -   *Horizon Failed Job Inspector:* Integrates with Laravel Horizon to query the Redis failed queue list, displaying stack trace metadata for any crashed background jobs, with a one-click button to trigger a retry.
+
+### 4.6 Visual Ticketing & Automated Client Notifications
+
+To streamline user support and bug reporting without external browser automation overhead, we implement an in-app visual ticketing pipeline:
+
+-   **Interactive Ticketing Chatbot Flow (Deterministic Quick-Actions):**
+    -   To prevent AI hallucinations, the chatbot sidebar presents two explicit, static quick-action choices: **"Connect to Support Agent"** or **"Raise a Ticket"**.
+    -   Clicking "Raise a Ticket" bypasses LLM conversational parsing and programmatically launches the visual reporter / overlay selector.
+    -   If the user asks an informational support question, the chatbot answers using RAG content and offers a deterministic "Take Tour" button to launch the guided tour of the page (using `HighlightTourDriver.js`).
+-   **Visual DOM Element Selector (VisualReporter.vue):**
+    -   Adds a "Report Issue" overlay trigger. When clicked, it activates an element selector mode (modifying the mouse cursor and highlighting DOM elements on hover).
+    -   Upon clicking an element, it captures:
+        -   The exact target CSS selector path (e.g., `#inbox-list > .inbox-item-3`).
+        -   The current URL route and query parameters.
+        -   Active UI state, console logs, and a screenshot payload using `html2canvas`.
+    -   Presents a small form inside the chatbot panel for the user to describe the problem before submitting.
+-   **Backend Ticketing Schema (`support_tickets`):**
+    -   *Columns:* `id`, `agent_id` (tenant branch), `user_id` (reporter), `route` (URL path), `element_selector` (CSS selector), `screenshot_path`, `console_logs` (JSON), `description`, `status` (`open`, `investigating`, `resolved`), and `created_at`/`updated_at`.
+-   **Automated Client Notifications:**
+    -   On creation of a ticket, a background job (`SendTicketConfirmationJob`) dispatches a transaction email to the client confirming receipt (e.g. *"We have received your ticket TK-XXXX. Our team is investigating."*).
+    -   Simultaneously, a webhook event posts the ticket details, screenshot link, and CSS selector to the internal support Slack/Teams channel or triggers a browser dashboard push notification for the developer team.
+-   **Backend Ticket Resolution Workspace:**
+    -   *Support Desk Dashboard:* A dedicated panel under `admin.f16sefreight.com/tickets` (gated by `superadmin` / `admin` roles) where engineers and support personnel can filter, view, and assign tickets.
+    -   *Detailed Ticket Viewer:* Displays the user metadata, route path, description, captured console logs, and a modal to inspect the `html2canvas` screenshot. Clicking the target selector path displays instructions to locate the component in the codebase.
+    -   *State Commit & Resolution:* Support operators can update statuses to `investigating` or `resolved`. Marking a ticket as `resolved` triggers a `SendTicketResolvedMail` job, emailing the client with the developer notes and a confirmation link.
 
 ---
 

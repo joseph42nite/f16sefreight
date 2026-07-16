@@ -1041,6 +1041,7 @@ class HousewayBillController extends Controller
             $shippers = SavedAddress::all();
         }
         return response()->json($shippers);
+    }
     public function getShipperAddress(Request $request)
     {
         return $this->getAddressByType($request, $request->address_type ?? 'shipper_address', 'ship');

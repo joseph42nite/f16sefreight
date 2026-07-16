@@ -356,7 +356,7 @@ export default {
 /* Header */
 .post-category-pill { background: #f0f7ff; color: #355594; padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
 .post-read-time { font-size: 0.9rem; color: #64748b; font-weight: 500; }
-.post-title { font-size: 3rem; font-weight: 900; color: #1e3a6e; line-height: 1.1; letter-spacing: -1.5px; }
+.post-title { font-size: 3rem; font-weight: 900; color: #1e3a6e; line-height: 1.1; letter-spacing: -0.2px; }
 .author-name { font-weight: 700; color: #1e3a6e; font-size: 1rem; line-height: 1; }
 .post-date { color: #64748b; font-size: 0.85rem; margin-top: 2px; }
 
@@ -366,7 +366,7 @@ export default {
 
 .lead-text { font-size: 1.5rem; color: #334155; line-height: 1.5; font-weight: 500; }
 .article-body { font-size: 1.2rem; color: #334155; line-height: 1.8; }
-.article-body h3 { font-size: 1.8rem; font-weight: 800; color: #1e3a6e; margin-top: 2.5rem; margin-bottom: 1.25rem; }
+.article-body :deep(h3) { font-size: 2.3rem; font-weight: 800; color: #1e3a6e; margin-top: 3.5rem; margin-bottom: 1.5rem; line-height: 1.3; letter-spacing: -0.5px; border-left: 4px solid #355594; padding-left: 1.25rem; }
 .article-body p { margin-bottom: 1.5rem; }
 
 /* Takeaways Box */

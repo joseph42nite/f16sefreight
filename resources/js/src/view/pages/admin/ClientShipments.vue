@@ -188,7 +188,15 @@
           </template>
 
           <template #cell(house_way_bills_count)="data">
-            <b-badge variant="light-success" pill class="px-3 py-2 font-weight-bold font-size-sm">
+            <b-badge 
+              variant="light-success" 
+              pill 
+              class="px-3 py-2 font-weight-bold font-size-sm cursor-pointer"
+              style="cursor: pointer;"
+              v-b-tooltip.hover
+              title="Click to view associated HAWBs"
+              @click="viewHawbs(data.item)"
+            >
               {{ data.item.house_way_bills_count }} HAWB
             </b-badge>
           </template>
@@ -256,6 +264,95 @@
         <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" size="sm" class="my-0"></b-pagination>
       </div>
     </div>
+
+    <!-- HAWB List Modal -->
+    <b-modal
+      id="hawbs-list-modal"
+      size="xl"
+      hide-header
+      hide-footer
+      body-class="p-0"
+      modal-class="xml-modal-dark"
+      centered
+    >
+      <!-- Custom Modal Header -->
+      <div class="xml-modal-header">
+        <div class="d-flex align-items-center">
+          <div class="xml-modal-icon mr-3" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
+            <i class="fas fa-boxes"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 text-white font-weight-bold">Associated House Air Waybills</h5>
+            <div class="d-flex align-items-center mt-1" v-if="selectedMawb">
+              <span class="xml-awb-badge mr-2"><i class="fas fa-link mr-1"></i>MAWB</span>
+              <code class="text-white font-size-sm" style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.82rem;">{{ selectedMawb.awb_code }}-{{ selectedMawb.awb_no }}</code>
+            </div>
+          </div>
+        </div>
+        <button class="xml-close-btn" @click="$bvModal.hide('hawbs-list-modal')">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Content Area -->
+      <div class="p-6 bg-light" style="min-height: 250px;">
+        <div v-if="isHawbsLoading" class="text-center py-10">
+          <b-spinner variant="primary" class="mb-3"></b-spinner>
+          <p class="text-muted font-weight-bold">Fetching associated House AWBs...</p>
+        </div>
+        <div v-else-if="!hawbsList || hawbsList.length === 0" class="text-center py-10">
+          <i class="fas fa-info-circle text-muted font-size-h1 mb-3"></i>
+          <p class="text-muted font-weight-bold">No House Air Waybills found for this shipment.</p>
+        </div>
+        <div v-else>
+          <div class="table-responsive rounded shadow-sm bg-white">
+            <table class="table table-hover mb-0">
+              <thead class="bg-light text-uppercase text-muted font-size-xs font-weight-bold">
+                <tr>
+                  <th class="px-6 py-4">Sl</th>
+                  <th class="px-6 py-4">HAWB ID</th>
+                  <th class="px-6 py-4 text-center">Destination</th>
+                  <th class="px-6 py-4 text-center">Pieces</th>
+                  <th class="px-6 py-4 text-center">Weight</th>
+                  <th class="px-6 py-4 text-center">Message Status</th>
+                  <th class="px-6 py-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody class="font-size-sm text-dark font-weight-medium">
+                <tr v-for="(hawb, idx) in hawbsList" :key="hawb.id">
+                  <td class="px-6 py-4 align-middle font-weight-bold">#{{ idx + 1 }}</td>
+                  <td class="px-6 py-4 align-middle">
+                    <span class="font-weight-bold text-primary">{{ hawb.id }}</span>
+                  </td>
+                  <td class="px-6 py-4 align-middle text-center font-weight-bold">
+                    {{ hawb.destination_airport || '—' }}
+                  </td>
+                  <td class="px-6 py-4 align-middle text-center font-weight-bold">
+                    {{ hawb.consignment_data ? hawb.consignment_data.pieces : '—' }}
+                  </td>
+                  <td class="px-6 py-4 align-middle text-center font-weight-bold">
+                    {{ hawb.consignment_data ? hawb.consignment_data.gross_weight : '—' }} {{ hawb.consignment_data ? (hawb.consignment_data.weight_code || 'K') : '' }}
+                  </td>
+                  <td class="px-6 py-4 align-middle text-center">
+                    <b-badge v-if="hawb.fna_received" variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" style="cursor: pointer;" v-b-tooltip.hover :title="(hawb.fna_reason || 'Rejection reason not specified') + ' — Click to copy'" @click="copyFnaReason(hawb.fna_reason)">
+                      <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
+                    </b-badge>
+                    <b-badge v-else variant="light-success" class="text-uppercase font-weight-bold px-3 py-2">
+                      <i class="fas fa-check-circle mr-1 text-success"></i> {{ hawb.latest_status || 'FMA' }}
+                    </b-badge>
+                  </td>
+                  <td class="px-6 py-4 align-middle text-center">
+                    <b-button variant="light-primary" size="sm" class="btn-icon-sm" @click="viewHawbXml(hawb.id)">
+                      <i class="fas fa-code mr-1"></i> XML
+                    </b-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </b-modal>
 
     <!-- XML Viewer Modal (redesigned) -->
     <b-modal
@@ -366,7 +463,10 @@ export default {
       xmlContent: "",
       selectedAwbId: "",
       pollTimer: null,
-      lastUpdated: ""
+      lastUpdated: "",
+      selectedMawb: null,
+      hawbsList: [],
+      isHawbsLoading: false
     };
   },
   components: {
@@ -669,6 +769,38 @@ export default {
           this.xmlContent = "Error: XML file could not be found or retrieved.";
         });
     },
+    viewHawbs(mawbItem) {
+      this.selectedMawb = mawbItem;
+      this.hawbsList = [];
+      this.isHawbsLoading = true;
+      this.$bvModal.show("hawbs-list-modal");
+
+      ApiService.get(`/superadmin/mawb-hawbs/${mawbItem.awb_code}/${mawbItem.awb_no}`)
+        .then(({ data }) => {
+          this.hawbsList = data;
+        })
+        .catch(err => {
+          console.error("Failed to fetch HAWBs", err);
+          Swal.fire("Error", "Could not retrieve House AWBs.", "error");
+        })
+        .finally(() => {
+          this.isHawbsLoading = false;
+        });
+    },
+    viewHawbXml(hawbId) {
+      this.selectedAwbId = hawbId;
+      this.xmlContent = "Loading HAWB XML content...";
+      this.$bvModal.show("xml-viewer-modal");
+
+      ApiService.get(`/superadmin/hawb-xml/${hawbId}`)
+        .then(response => {
+          this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
+        })
+        .catch(err => {
+          console.error("Failed to fetch HAWB XML file", err);
+          this.xmlContent = "Error: HAWB XML file could not be found or retrieved.";
+        });
+    },
     copyXml() {
       navigator.clipboard.writeText(this.xmlContent)
         .then(() => {
@@ -688,7 +820,8 @@ export default {
       const blob = new Blob([this.xmlContent], { type: "application/xml" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `xml_airway_bill_${this.selectedAwbId}.xml`;
+      const isMawb = this.selectedAwbId.includes('-');
+      link.download = isMawb ? `xml_airway_bill_${this.selectedAwbId}.xml` : `xml_houseway_bill_${this.selectedAwbId}.xml`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

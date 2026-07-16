@@ -105,7 +105,10 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       xmlContent: "",
       selectedAwbId: "",
       pollTimer: null,
-      lastUpdated: ""
+      lastUpdated: "",
+      selectedMawb: null,
+      hawbsList: [],
+      isHawbsLoading: false
     };
   },
   components: {
@@ -376,6 +379,34 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         _this6.xmlContent = "Error: XML file could not be found or retrieved.";
       });
     },
+    viewHawbs: function viewHawbs(mawbItem) {
+      var _this7 = this;
+      this.selectedMawb = mawbItem;
+      this.hawbsList = [];
+      this.isHawbsLoading = true;
+      this.$bvModal.show("hawbs-list-modal");
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/mawb-hawbs/".concat(mawbItem.awb_code, "/").concat(mawbItem.awb_no)).then(function (_ref4) {
+        var data = _ref4.data;
+        _this7.hawbsList = data;
+      })["catch"](function (err) {
+        console.error("Failed to fetch HAWBs", err);
+        sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire("Error", "Could not retrieve House AWBs.", "error");
+      })["finally"](function () {
+        _this7.isHawbsLoading = false;
+      });
+    },
+    viewHawbXml: function viewHawbXml(hawbId) {
+      var _this8 = this;
+      this.selectedAwbId = hawbId;
+      this.xmlContent = "Loading HAWB XML content...";
+      this.$bvModal.show("xml-viewer-modal");
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/hawb-xml/".concat(hawbId)).then(function (response) {
+        _this8.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
+      })["catch"](function (err) {
+        console.error("Failed to fetch HAWB XML file", err);
+        _this8.xmlContent = "Error: HAWB XML file could not be found or retrieved.";
+      });
+    },
     copyXml: function copyXml() {
       navigator.clipboard.writeText(this.xmlContent).then(function () {
         sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire({
@@ -395,23 +426,24 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       });
       var link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "xml_airway_bill_".concat(this.selectedAwbId, ".xml");
+      var isMawb = this.selectedAwbId.includes('-');
+      link.download = isMawb ? "xml_airway_bill_".concat(this.selectedAwbId, ".xml") : "xml_houseway_bill_".concat(this.selectedAwbId, ".xml");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     },
     copyFnaReason: function copyFnaReason(reason) {
-      var _this7 = this;
+      var _this9 = this;
       var text = reason || 'Rejection reason not specified';
       navigator.clipboard.writeText(text).then(function () {
-        _this7.$bvToast.toast('FNA reason copied to clipboard', {
+        _this9.$bvToast.toast('FNA reason copied to clipboard', {
           title: 'Copied!',
           variant: 'success',
           solid: true,
           autoHideDelay: 2000
         });
       })["catch"](function () {
-        _this7.$bvToast.toast('Failed to copy text', {
+        _this9.$bvToast.toast('Failed to copy text', {
           title: 'Error',
           variant: 'danger',
           solid: true
@@ -803,10 +835,26 @@ var render = function render() {
       key: "cell(house_way_bills_count)",
       fn: function fn(data) {
         return [_c("b-badge", {
-          staticClass: "px-3 py-2 font-weight-bold font-size-sm",
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
+          staticClass: "px-3 py-2 font-weight-bold font-size-sm cursor-pointer",
+          staticStyle: {
+            cursor: "pointer"
+          },
           attrs: {
             variant: "light-success",
-            pill: ""
+            pill: "",
+            title: "Click to view associated HAWBs"
+          },
+          on: {
+            click: function click($event) {
+              return _vm.viewHawbs(data.item);
+            }
           }
         }, [_vm._v("\n            " + _vm._s(data.item.house_way_bills_count) + " HAWB\n          ")])];
       }
@@ -954,6 +1002,158 @@ var render = function render() {
       expression: "currentPage"
     }
   })], 1) : _vm._e()]), _vm._v(" "), _c("b-modal", {
+    attrs: {
+      id: "hawbs-list-modal",
+      size: "xl",
+      "hide-header": "",
+      "hide-footer": "",
+      "body-class": "p-0",
+      "modal-class": "xml-modal-dark",
+      centered: ""
+    }
+  }, [_c("div", {
+    staticClass: "xml-modal-header"
+  }, [_c("div", {
+    staticClass: "d-flex align-items-center"
+  }, [_c("div", {
+    staticClass: "xml-modal-icon mr-3",
+    staticStyle: {
+      background: "rgba(16, 185, 129, 0.2)",
+      color: "#10b981"
+    }
+  }, [_c("i", {
+    staticClass: "fas fa-boxes"
+  })]), _vm._v(" "), _c("div", [_c("h5", {
+    staticClass: "mb-0 text-white font-weight-bold"
+  }, [_vm._v("Associated House Air Waybills")]), _vm._v(" "), _vm.selectedMawb ? _c("div", {
+    staticClass: "d-flex align-items-center mt-1"
+  }, [_c("span", {
+    staticClass: "xml-awb-badge mr-2"
+  }, [_c("i", {
+    staticClass: "fas fa-link mr-1"
+  }), _vm._v("MAWB")]), _vm._v(" "), _c("code", {
+    staticClass: "text-white font-size-sm",
+    staticStyle: {
+      background: "rgba(255,255,255,0.1)",
+      padding: "2px 8px",
+      "border-radius": "4px",
+      "font-size": "0.82rem"
+    }
+  }, [_vm._v(_vm._s(_vm.selectedMawb.awb_code) + "-" + _vm._s(_vm.selectedMawb.awb_no))])]) : _vm._e()])]), _vm._v(" "), _c("button", {
+    staticClass: "xml-close-btn",
+    on: {
+      click: function click($event) {
+        return _vm.$bvModal.hide("hawbs-list-modal");
+      }
+    }
+  }, [_c("i", {
+    staticClass: "fas fa-times"
+  })])]), _vm._v(" "), _c("div", {
+    staticClass: "p-6 bg-light",
+    staticStyle: {
+      "min-height": "250px"
+    }
+  }, [_vm.isHawbsLoading ? _c("div", {
+    staticClass: "text-center py-10"
+  }, [_c("b-spinner", {
+    staticClass: "mb-3",
+    attrs: {
+      variant: "primary"
+    }
+  }), _vm._v(" "), _c("p", {
+    staticClass: "text-muted font-weight-bold"
+  }, [_vm._v("Fetching associated House AWBs...")])], 1) : !_vm.hawbsList || _vm.hawbsList.length === 0 ? _c("div", {
+    staticClass: "text-center py-10"
+  }, [_c("i", {
+    staticClass: "fas fa-info-circle text-muted font-size-h1 mb-3"
+  }), _vm._v(" "), _c("p", {
+    staticClass: "text-muted font-weight-bold"
+  }, [_vm._v("No House Air Waybills found for this shipment.")])]) : _c("div", [_c("div", {
+    staticClass: "table-responsive rounded shadow-sm bg-white"
+  }, [_c("table", {
+    staticClass: "table table-hover mb-0"
+  }, [_c("thead", {
+    staticClass: "bg-light text-uppercase text-muted font-size-xs font-weight-bold"
+  }, [_c("tr", [_c("th", {
+    staticClass: "px-6 py-4"
+  }, [_vm._v("Sl")]), _vm._v(" "), _c("th", {
+    staticClass: "px-6 py-4"
+  }, [_vm._v("HAWB ID")]), _vm._v(" "), _c("th", {
+    staticClass: "px-6 py-4 text-center"
+  }, [_vm._v("Destination")]), _vm._v(" "), _c("th", {
+    staticClass: "px-6 py-4 text-center"
+  }, [_vm._v("Pieces")]), _vm._v(" "), _c("th", {
+    staticClass: "px-6 py-4 text-center"
+  }, [_vm._v("Weight")]), _vm._v(" "), _c("th", {
+    staticClass: "px-6 py-4 text-center"
+  }, [_vm._v("Message Status")]), _vm._v(" "), _c("th", {
+    staticClass: "px-6 py-4 text-center"
+  }, [_vm._v("Action")])])]), _vm._v(" "), _c("tbody", {
+    staticClass: "font-size-sm text-dark font-weight-medium"
+  }, _vm._l(_vm.hawbsList, function (hawb, idx) {
+    return _c("tr", {
+      key: hawb.id
+    }, [_c("td", {
+      staticClass: "px-6 py-4 align-middle font-weight-bold"
+    }, [_vm._v("#" + _vm._s(idx + 1))]), _vm._v(" "), _c("td", {
+      staticClass: "px-6 py-4 align-middle"
+    }, [_c("span", {
+      staticClass: "font-weight-bold text-primary"
+    }, [_vm._v(_vm._s(hawb.id))])]), _vm._v(" "), _c("td", {
+      staticClass: "px-6 py-4 align-middle text-center font-weight-bold"
+    }, [_vm._v("\n                  " + _vm._s(hawb.destination_airport || "—") + "\n                ")]), _vm._v(" "), _c("td", {
+      staticClass: "px-6 py-4 align-middle text-center font-weight-bold"
+    }, [_vm._v("\n                  " + _vm._s(hawb.consignment_data ? hawb.consignment_data.pieces : "—") + "\n                ")]), _vm._v(" "), _c("td", {
+      staticClass: "px-6 py-4 align-middle text-center font-weight-bold"
+    }, [_vm._v("\n                  " + _vm._s(hawb.consignment_data ? hawb.consignment_data.gross_weight : "—") + " " + _vm._s(hawb.consignment_data ? hawb.consignment_data.weight_code || "K" : "") + "\n                ")]), _vm._v(" "), _c("td", {
+      staticClass: "px-6 py-4 align-middle text-center"
+    }, [hawb.fna_received ? _c("b-badge", {
+      directives: [{
+        name: "b-tooltip",
+        rawName: "v-b-tooltip.hover",
+        modifiers: {
+          hover: true
+        }
+      }],
+      staticClass: "text-uppercase font-weight-bold px-3 py-2",
+      staticStyle: {
+        cursor: "pointer"
+      },
+      attrs: {
+        variant: "light-danger",
+        title: (hawb.fna_reason || "Rejection reason not specified") + " — Click to copy"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.copyFnaReason(hawb.fna_reason);
+        }
+      }
+    }, [_c("i", {
+      staticClass: "fas fa-exclamation-triangle mr-1 text-danger"
+    }), _vm._v(" FNA Received\n                  ")]) : _c("b-badge", {
+      staticClass: "text-uppercase font-weight-bold px-3 py-2",
+      attrs: {
+        variant: "light-success"
+      }
+    }, [_c("i", {
+      staticClass: "fas fa-check-circle mr-1 text-success"
+    }), _vm._v(" " + _vm._s(hawb.latest_status || "FMA") + "\n                  ")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "px-6 py-4 align-middle text-center"
+    }, [_c("b-button", {
+      staticClass: "btn-icon-sm",
+      attrs: {
+        variant: "light-primary",
+        size: "sm"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.viewHawbXml(hawb.id);
+        }
+      }
+    }, [_c("i", {
+      staticClass: "fas fa-code mr-1"
+    }), _vm._v(" XML\n                  ")])], 1)]);
+  }), 0)])])])])]), _vm._v(" "), _c("b-modal", {
     attrs: {
       id: "xml-viewer-modal",
       size: "xl",

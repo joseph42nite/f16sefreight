@@ -237,4 +237,62 @@ class SuperAdminController extends Controller
 
         return response()->json(['error' => 'XML file not found'], 404);
     }
+
+    public function getMawbHawbs($awb_code, $awb_no)
+    {
+        try {
+            $houseWayBills = \App\HousewayBills::where('awb_code', $awb_code)
+                ->where('awb_no', $awb_no)
+                ->with('consignmentData')
+                ->get();
+
+            $hawbIds = $houseWayBills->pluck('id')->toArray();
+            
+            $allResponses = \App\StatusReponse::whereIn('business_id', $hawbIds)
+                ->orderBy('id', 'desc')
+                ->get();
+                
+            $statusResponses = $allResponses->unique('business_id')->keyBy('business_id');
+
+            $houseWayBills->each(function ($hawb) use ($statusResponses) {
+                $latestResponse = $statusResponses->get($hawb->id);
+                $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
+                $hawb->fna_received = $isFna;
+                $hawb->fna_reason = $isFna ? $latestResponse->reason : null;
+                $hawb->latest_status = $latestResponse ? $latestResponse->business_status_code : 'FMA';
+            });
+
+            return response()->json($houseWayBills);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch house way bills',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getHawbXml($hawb_id)
+    {
+        $fileName = "xml-conversion-files/xml_houseway_bill_{$hawb_id}.xml";
+        if (\Illuminate\Support\Facades\Storage::exists($fileName)) {
+            $content = \Illuminate\Support\Facades\Storage::get($fileName);
+            return response($content, 200)->header('Content-Type', 'application/xml');
+        }
+
+        // Fallback: Generate mockup/simulated XML if it doesn't exist for test purposes
+        $hawb = \App\HousewayBills::with(['consignmentData'])->where('id', $hawb_id)->first();
+        if ($hawb) {
+            $xml = new \SimpleXMLElement('<HouseShipmentMessage/>');
+            $xml->addChild('HouseAwbNumber', $hawb->id);
+            $xml->addChild('MasterAwbNumber', $hawb->awb_code . '-' . $hawb->awb_no);
+            $xml->addChild('Destination', $hawb->destination_airport);
+            $xml->addChild('Pieces', $hawb->consignmentData->pieces ?? 0);
+            $xml->addChild('Weight', $hawb->consignmentData->gross_weight ?? 0);
+            $xml->addChild('SentAt', $hawb->created_at);
+            $xml->addChild('Note', 'Simulated HAWB XML generated on the fly as file was not found');
+            return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+        }
+
+        return response()->json(['error' => 'XML file not found'], 404);
+    }
 }

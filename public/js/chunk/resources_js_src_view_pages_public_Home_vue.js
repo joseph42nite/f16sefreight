@@ -790,6 +790,7 @@ var render = function render() {
   return _c("section", {
     staticClass: "news-section-container mb-25",
     attrs: {
+      id: "blogs-section",
       "aria-labelledby": "news-heading"
     }
   }, [_c("b-row", {

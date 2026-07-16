@@ -844,7 +844,15 @@ var render = function render() {
     attrs: {
       to: "/product-description"
     }
-  }, [_vm._v("Products")]), _vm._v(" "), _vm.isAuthenticated ? _c("div", {
+  }, [_vm._v("Products")]), _vm._v(" "), _c("b-nav-item", {
+    staticClass: "nav-link-custom",
+    attrs: {
+      to: {
+        path: "/",
+        hash: "#blogs-section"
+      }
+    }
+  }, [_vm._v("Blogs")]), _vm._v(" "), _vm.isAuthenticated ? _c("div", {
     staticClass: "d-lg-none mobile-profile-card"
   }, [_c("div", {
     staticClass: "origin-badge mb-3"

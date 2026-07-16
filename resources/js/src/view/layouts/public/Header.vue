@@ -29,6 +29,9 @@
                             <b-nav-item to="/product-description" class="nav-link-custom"
                                 >Products</b-nav-item
                             >
+                            <b-nav-item :to="{ path: '/', hash: '#blogs-section' }" class="nav-link-custom"
+                                >Blogs</b-nav-item
+                            >
                             <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
                             
                             <!-- Profile Card & Sign Out inside hamburger menu for Mobile -->

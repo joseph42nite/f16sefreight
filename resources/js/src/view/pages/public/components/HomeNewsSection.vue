@@ -1,5 +1,5 @@
 <template>
-    <section class="news-section-container mb-25" aria-labelledby="news-heading">
+    <section id="blogs-section" class="news-section-container mb-25" aria-labelledby="news-heading">
         <b-row class="mb-16 align-items-end">
             <b-col lg="8" class="text-center text-lg-left mb-6 mb-lg-0">
                 <span class="section-eyebrow">Insights</span>

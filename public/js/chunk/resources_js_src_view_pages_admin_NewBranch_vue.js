@@ -113,7 +113,10 @@ __webpack_require__.r(__webpack_exports__);
       };
     },
     selectOption: function selectOption(item) {
-      this.branch_form.agent_issue_loc_code = item.iata_code + ", " + item.destination + " (" + item.iata_code + ")";
+      if (!item) return;
+      var iata = item.iata_code || '';
+      var dest = item.destination || '';
+      this.branch_form.agent_issue_loc_code = iata + (dest ? ", ".concat(dest, " (").concat(iata, ")") : '');
       this.searchQuery = this.branch_form.agent_issue_loc_code;
     },
     toggleDropdown: function toggleDropdown() {
@@ -148,6 +151,11 @@ __webpack_require__.r(__webpack_exports__);
         return item.iata_code.toLowerCase().includes(query) || item.destination && item.destination.toLowerCase().includes(query);
       });
       return filtered.slice(0, 20);
+    }
+  },
+  watch: {
+    searchQuery: function searchQuery(val) {
+      this.branch_form.agent_issue_loc_code = val;
     }
   }
 });

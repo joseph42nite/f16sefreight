@@ -139,6 +139,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     perPage: function perPage() {
       this.applyFilters();
+    },
+    searchText: function searchText(val) {
+      if (!val || val.trim() === "") {
+        this.localFilteredItems = null;
+        this.applyFilters();
+      }
     }
   },
   methods: {
@@ -778,7 +784,7 @@ var render = function render() {
     attrs: {
       id: "filter-input",
       type: "search",
-      placeholder: "Search AWB... (Enter)"
+      placeholder: "Search AWB..."
     },
     on: {
       keyup: function keyup($event) {
@@ -794,7 +800,17 @@ var render = function render() {
       },
       expression: "searchText"
     }
-  })], 1)], 1)]), _vm._v(" "), _c("div", {
+  }), _vm._v(" "), _c("b-input-group-append", [_c("b-button", {
+    staticClass: "d-flex align-items-center justify-content-center",
+    attrs: {
+      variant: "primary"
+    },
+    on: {
+      click: _vm.handleAwbSearch
+    }
+  }, [_c("i", {
+    staticClass: "fas fa-search"
+  })])], 1)], 1)], 1)]), _vm._v(" "), _c("div", {
     staticClass: "admin-table-wrapper px-6 pb-6"
   }, [_vm.isLoading ? _c("SkeletonTable", {
     attrs: {
@@ -932,7 +948,9 @@ var render = function render() {
     }, {
       key: "cell(fna_status)",
       fn: function fn(data) {
-        return [data.item.fna_received ? _c("b-badge", {
+        return [data.item.fna_received ? _c("div", {
+          staticClass: "d-inline-flex align-items-center"
+        }, [_c("b-badge", {
           directives: [{
             name: "b-tooltip",
             rawName: "v-b-tooltip.hover",
@@ -941,12 +959,28 @@ var render = function render() {
             }
           }],
           staticClass: "text-uppercase font-weight-bold px-3 py-2",
+          attrs: {
+            variant: "light-danger",
+            title: data.item.fna_reason || "Rejection reason not specified"
+          }
+        }, [_c("i", {
+          staticClass: "fas fa-exclamation-triangle mr-1 text-danger"
+        }), _vm._v(" FNA Received\n            ")]), _vm._v(" "), _c("b-button", {
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
+          staticClass: "btn-icon-sm ml-2",
           staticStyle: {
-            cursor: "pointer"
+            padding: "0.25rem 0.5rem"
           },
           attrs: {
             variant: "light-danger",
-            title: (data.item.fna_reason || "Rejection reason not specified") + " — Click to copy"
+            size: "sm",
+            title: "Copy FNA Message"
           },
           on: {
             click: function click($event) {
@@ -954,8 +988,8 @@ var render = function render() {
             }
           }
         }, [_c("i", {
-          staticClass: "fas fa-exclamation-triangle mr-1 text-danger"
-        }), _vm._v(" FNA Received\n          ")]) : _c("b-badge", {
+          staticClass: "far fa-copy text-danger"
+        })])], 1) : _c("b-badge", {
           staticClass: "text-uppercase font-weight-bold px-3 py-2",
           attrs: {
             variant: "light-success"
@@ -1107,7 +1141,9 @@ var render = function render() {
       staticClass: "px-6 py-4 align-middle text-center font-weight-bold"
     }, [_vm._v("\n                  " + _vm._s(hawb.consignment_data ? hawb.consignment_data.gross_weight : "—") + " " + _vm._s(hawb.consignment_data ? hawb.consignment_data.weight_code || "K" : "") + "\n                ")]), _vm._v(" "), _c("td", {
       staticClass: "px-6 py-4 align-middle text-center"
-    }, [hawb.fna_received ? _c("b-badge", {
+    }, [hawb.fna_received ? _c("div", {
+      staticClass: "d-inline-flex align-items-center justify-content-center"
+    }, [_c("b-badge", {
       directives: [{
         name: "b-tooltip",
         rawName: "v-b-tooltip.hover",
@@ -1116,12 +1152,28 @@ var render = function render() {
         }
       }],
       staticClass: "text-uppercase font-weight-bold px-3 py-2",
+      attrs: {
+        variant: "light-danger",
+        title: hawb.fna_reason || "Rejection reason not specified"
+      }
+    }, [_c("i", {
+      staticClass: "fas fa-exclamation-triangle mr-1 text-danger"
+    }), _vm._v(" FNA Received\n                    ")]), _vm._v(" "), _c("b-button", {
+      directives: [{
+        name: "b-tooltip",
+        rawName: "v-b-tooltip.hover",
+        modifiers: {
+          hover: true
+        }
+      }],
+      staticClass: "btn-icon-sm ml-2",
       staticStyle: {
-        cursor: "pointer"
+        padding: "0.25rem 0.5rem"
       },
       attrs: {
         variant: "light-danger",
-        title: (hawb.fna_reason || "Rejection reason not specified") + " — Click to copy"
+        size: "sm",
+        title: "Copy FNA Message"
       },
       on: {
         click: function click($event) {
@@ -1129,8 +1181,8 @@ var render = function render() {
         }
       }
     }, [_c("i", {
-      staticClass: "fas fa-exclamation-triangle mr-1 text-danger"
-    }), _vm._v(" FNA Received\n                  ")]) : _c("b-badge", {
+      staticClass: "far fa-copy text-danger"
+    })])], 1) : _c("b-badge", {
       staticClass: "text-uppercase font-weight-bold px-3 py-2",
       attrs: {
         variant: "light-success"

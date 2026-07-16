@@ -706,7 +706,8 @@ var render = function render() {
           }, [_vm._v(_vm._s(status.formatted_created_at))])]), _vm._v(" "), status.reason ? _c("div", {
             staticClass: "pl-7 mt-1 text-muted",
             staticStyle: {
-              "font-size": "0.8rem"
+              "font-size": "0.8rem",
+              "white-space": "pre-line"
             }
           }, [_c("b-icon", {
             staticClass: "mr-1",

@@ -245,9 +245,22 @@
           </template>
 
           <template #cell(fna_status)="data">
-            <b-badge v-if="data.item.fna_received" variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" style="cursor: pointer;" v-b-tooltip.hover :title="(data.item.fna_reason || 'Rejection reason not specified') + ' — Click to copy'" @click="copyFnaReason(data.item.fna_reason)">
-              <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
-            </b-badge>
+            <div v-if="data.item.fna_received" class="d-inline-flex align-items-center">
+              <b-badge variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" v-b-tooltip.hover :title="data.item.fna_reason || 'Rejection reason not specified'">
+                <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
+              </b-badge>
+              <b-button 
+                variant="light-danger" 
+                size="sm" 
+                class="btn-icon-sm ml-2" 
+                @click="copyFnaReason(data.item.fna_reason)" 
+                v-b-tooltip.hover 
+                title="Copy FNA Message"
+                style="padding: 0.25rem 0.5rem;"
+              >
+                <i class="far fa-copy text-danger"></i>
+              </b-button>
+            </div>
             <b-badge v-else variant="light-success" class="text-uppercase font-weight-bold px-3 py-2">
               <i class="fas fa-check-circle mr-1 text-success"></i> FMA
             </b-badge>
@@ -339,9 +352,22 @@
                     {{ hawb.consignment_data ? hawb.consignment_data.gross_weight : '—' }} {{ hawb.consignment_data ? (hawb.consignment_data.weight_code || 'K') : '' }}
                   </td>
                   <td class="px-6 py-4 align-middle text-center">
-                    <b-badge v-if="hawb.fna_received" variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" style="cursor: pointer;" v-b-tooltip.hover :title="(hawb.fna_reason || 'Rejection reason not specified') + ' — Click to copy'" @click="copyFnaReason(hawb.fna_reason)">
-                      <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
-                    </b-badge>
+                    <div v-if="hawb.fna_received" class="d-inline-flex align-items-center justify-content-center">
+                      <b-badge variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" v-b-tooltip.hover :title="hawb.fna_reason || 'Rejection reason not specified'">
+                        <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
+                      </b-badge>
+                      <b-button 
+                        variant="light-danger" 
+                        size="sm" 
+                        class="btn-icon-sm ml-2" 
+                        @click="copyFnaReason(hawb.fna_reason)" 
+                        v-b-tooltip.hover 
+                        title="Copy FNA Message"
+                        style="padding: 0.25rem 0.5rem;"
+                      >
+                        <i class="far fa-copy text-danger"></i>
+                      </b-button>
+                    </div>
                     <b-badge v-else variant="light-success" class="text-uppercase font-weight-bold px-3 py-2">
                       <i class="fas fa-check-circle mr-1 text-success"></i> {{ hawb.latest_status || 'FMA' }}
                     </b-badge>

@@ -279,6 +279,35 @@ export default {
               (item.destination && item.destination.toLowerCase().includes(query))
           );
       });
+      
+      // Sort to prioritize IATA code matches on top
+      filtered.sort((a, b) => {
+        const aIata = a.iata_code.toLowerCase();
+        const bIata = b.iata_code.toLowerCase();
+        const aDest = (a.destination || "").toLowerCase();
+        const bDest = (b.destination || "").toLowerCase();
+
+        // 1. Exact match on IATA code
+        const aExactIata = aIata === query;
+        const bExactIata = bIata === query;
+        if (aExactIata && !bExactIata) return -1;
+        if (!aExactIata && bExactIata) return 1;
+
+        // 2. Starts with IATA code
+        const aStartsIata = aIata.startsWith(query);
+        const bStartsIata = bIata.startsWith(query);
+        if (aStartsIata && !bStartsIata) return -1;
+        if (!aStartsIata && bStartsIata) return 1;
+
+        // 3. Starts with destination name
+        const aStartsDest = aDest.startsWith(query);
+        const bStartsDest = bDest.startsWith(query);
+        if (aStartsDest && !bStartsDest) return -1;
+        if (!aStartsDest && bStartsDest) return 1;
+
+        return 0; // maintain relative order
+      });
+
       return filtered.slice(0, 20);
     }
   },

@@ -152,7 +152,7 @@
                                                 <template #label>
                                                      <div class="shipper-toggle-label">
                                                          <span>Name:</span>
-                                                         <span class="text-danger"> &nbsp;*</span>
+                                                         <span class="text-danger">*</span>
                                                      </div>
                                                 </template>
                                                 <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
@@ -194,7 +194,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Address:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="ship-address-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }" @keydown="limitInput($event, 'shipper_address.ship_address', 40)"></b-form-input>
@@ -214,7 +214,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>City:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <div class="d-flex align-items-center pb-2">
@@ -230,7 +230,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Post Code:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="shipper-postcode-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
@@ -240,7 +240,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>State:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="shipper-state-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
@@ -250,7 +250,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Country:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-select id="shipper-country-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_country" :class="{ 'is-invalid': form.errors.has('ship_country') }">
@@ -287,7 +287,7 @@
                                                      </template>
                                                      <b-form-input id="shipper-telex-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_telex"></b-form-input>
                                                 </b-form-group>
-                                                <b-form-checkbox size="sm" class="" style="margin-left: 70px;" v-model="form.is_shipper_address_save">Save new address to address book</b-form-checkbox>
+                                                <b-form-checkbox size="sm" class="" style="margin-left: 110px;" v-model="form.is_shipper_address_save">Save new address to address book</b-form-checkbox>
                                             </div>
                                         </b-col>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -310,7 +310,7 @@
                                                 <template #label>
                                                      <div class="shipper-toggle-label">
                                                          <span>Name:</span>
-                                                         <span class="text-danger"> &nbsp;*</span>
+                                                         <span class="text-danger">*</span>
                                                      </div>
                                                 </template>
                                                 <div class="custom-dropdown align-items-center" ref="dropdownContainer_consignee" @click="toggleDropdown('consignee')">
@@ -352,7 +352,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Address:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="cons-address-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }" @keydown="limitInput($event, 'consignee_address.cons_address', 40)"></b-form-input>
@@ -372,7 +372,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>City:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <div class="d-flex align-items-center pb-2">
@@ -389,7 +389,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Post Code:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="cons-post-code" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
@@ -399,7 +399,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>State:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-input id="cons-state-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
@@ -409,7 +409,7 @@
                                                      <template #label>
                                                          <div class="shipper-toggle-label">
                                                              <span>Country:</span>
-                                                             <span class="text-danger"> &nbsp;*</span>
+                                                             <span class="text-danger">*</span>
                                                          </div>
                                                      </template>
                                                      <b-form-select class="form-control consignee-form-control" v-model="form.consignee_address.cons_country" :class="{ 'is-invalid': form.errors.has('cons_country') }">
@@ -445,7 +445,7 @@
                                                      <b-form-input id="cons-telex-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_telex"></b-form-input>
                                                 </b-form-group>
 
-                                                <b-form-checkbox size="sm" class="ml-lg-35" v-model="form.is_consignee_address_save">Save new address to address book</b-form-checkbox>
+                                                <b-form-checkbox size="sm" style="margin-left: 110px;" class="ml-lg-35" v-model="form.is_consignee_address_save">Save new address to address book</b-form-checkbox>
                                             </div>
                                         </b-col>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -461,7 +461,7 @@
                                     <b-tabs content-class="mt-7" class="custom-nav-title">
                                         <b-tab title="Routing Information" style="border-bottom:0px !important;">
                                             <b-row class="mt-8 mb-6">
-                                                <b-col cols="12" lg="4">
+                                                <b-col cols="12" lg="5">
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
                                                         label-for="departure"
                                                         style="width:100%;"
@@ -469,10 +469,10 @@
                                                         <template #label>
                                                             <div class="routing-info-label">
                                                                 <span>Departure Airport:</span>
-                                                                <span class="text-danger"> &nbsp;*</span>
+                                                                <span class="text-danger">*</span>
                                                             </div>
                                                         </template>
-                                                         <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown('departure')">
+                                                         <div style="width: 170px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_departure" @click="toggleDropdown('departure')">
                                                              <input style="width:100%" type="text" v-model="form.routing_information.departure_airport" placeholder="Search departure" id="departure" class="form-control" 
                                                                  autocomplete="off" :class="{ 'is-invalid': form.errors.has('departure_airport') }">
                                                              <div v-if="activeDropdown === 'departure' && getFilteredLocations(form.routing_information.departure_airport).length" class="dropdown-options">
@@ -488,10 +488,10 @@
                                                          <template #label>
                                                              <div class="routing-info-label">
                                                                  <span>Destination Airport:</span>
-                                                                 <span class="text-danger"> &nbsp;*</span>
+                                                                 <span class="text-danger">*</span>
                                                              </div>
                                                          </template>
-                                                              <div style="width: 220px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown('destination')">
+                                                              <div style="width: 170px !important;" class="custom-dropdown align-items-center" ref="dropdownContainer_destination" @click="toggleDropdown('destination')">
                                                                   <input style="width:100%" type="text" v-model="form.routing_information.destination_airport" placeholder="Search destination" id="destination" class="form-control" 
                                                                       autocomplete="off" :class="{ 'is-invalid': form.errors.has('destination_airport') }">
                                                                  <div v-if="activeDropdown === 'destination' && getFilteredLocations(form.routing_information.destination_airport).length" class="dropdown-options">
@@ -514,10 +514,10 @@
                                                         <template #label>
                                                             <div class="routing-info-label">
                                                                 <span>Master Origin:</span>
-                                                                <span class="text-danger"> &nbsp;*</span>
+                                                                <span class="text-danger">*</span>
                                                             </div>
                                                         </template>
-                                                        <b-form-input id="input-master-origin" style="width: 220px !important;" class="form-control" v-model="form.routing_information.master_origin" :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
+                                                        <b-form-input id="input-master-origin" style="width: 170px !important;" class="form-control" v-model="form.routing_information.master_origin" :class="{ 'is-invalid': form.errors.has('master_origin') }"></b-form-input>
                                                         <has-error :form="form" field="master_origin" :class="{ 'd-block': form.errors.has('master_origin') }"></has-error>
                                                     </b-form-group>
                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto"
@@ -527,17 +527,17 @@
                                                         <template #label>
                                                             <div class="routing-info-label">
                                                                 <span>Master Destination:</span>
-                                                                <span class="text-danger"> &nbsp;*</span>
+                                                                <span class="text-danger">*</span>
                                                             </div>
                                                         </template>
                                                         <b-form-input id="input-master-destination"
-                                                            style="width: 220px !important;"
+                                                            style="width: 170px !important;"
                                                             class="form-control" v-model="form.routing_information.master_destination"
                                                             :class="{ 'is-invalid': form.errors.has('master_destination') }"></b-form-input>
                                                         <has-error :form="form" field="master_destination" :class="{ 'd-block': form.errors.has('master_destination') }"></has-error>
                                                     </b-form-group>
                                                 </b-col>
-                                                <b-col cols="12" lg="8" class="mt-6 mt-lg-0">
+                                                 <b-col cols="12" lg="7" class="mt-6 mt-lg-0">
                                                     <div class="table-responsive">
                                                         <table class="table" style="max-width:100%;width:100%;min-width:650px !important;">
                                                             <thead>
@@ -1242,8 +1242,8 @@
                                                             content-cols-lg="auto" label-for="input-master-pcs"
                                                             class="">
                                                             <template #label>
-                                                                <div class="d-flex align-items-center justify-content-end" style="width:92px;">
-                                                                    <span>Master Pcs:</span> <span class="text-danger"> &nbsp;*</span>
+                                                                <div class="d-flex align-items-center justify-content-end" style="width:110px; white-space: nowrap;">
+                                                                    <span>Master Pcs:</span> <span class="text-danger">*</span>
                                                                 </div>
                                                             </template>
                                                             <b-form-input id="input-master-pcs" class="form-control"
@@ -1255,10 +1255,9 @@
                                                             content-cols-lg="auto" label-for="input-master-weight"
                                                             class="">
                                                             <template #label>
-                                                                <div class="d-flex align-items-center justify-content-end" style="width:92px;">
-                                                                    <span style="white-space: nowrap;">Master Weight:</span> <span class="text-danger"> &nbsp;*</span>
-                                                                    <span class="text-danger">&nbsp;</span>
-                                                                </div>
+                                                                <div class="d-flex align-items-center justify-content-end" style="width:110px; white-space: nowrap;">
+                                                                     <span style="white-space: nowrap;">Master Weight:</span> <span class="text-danger">*</span>
+                                                                 </div>
                                                             </template>
                                                             <b-form-input id="input-master-weight" class="form-control"
                                                                 style="width:140px;"
@@ -4318,11 +4317,13 @@ th {
         width: 100px;
         display: inline-block;
         text-align: end;
+        white-space: nowrap;
     }
     .routing-info-label {
-        width: 122px;
+        width: 150px;
         display: inline-block;
         text-align: end;
+        white-space: nowrap;
     }
     .awb-flex-row {
         display: flex !important;

@@ -237,7 +237,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>Pin code:</span>
-                                                            <span class="text-danger"> &nbsp;*</span>
+                                                            <span class="text-danger">*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
@@ -247,7 +247,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>State:</span>
-                                                            <span class="text-danger"> &nbsp;*</span>
+                                                            <span class="text-danger">*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
@@ -294,7 +294,7 @@
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_telex"></b-form-input>
                                                 </b-form-group>
-                                                <b-form-checkbox size="sm" class="" style="margin-left: 70px;" v-model="form.is_shipper_address_save"> Save new address to address
+                                                <b-form-checkbox size="sm" class="" style="margin-left: 90px;" v-model="form.is_shipper_address_save"> Save new address to address
                                                     book</b-form-checkbox>
                                             </div>
                                         </b-col>
@@ -395,7 +395,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>Pin code:</span>
-                                                            <span class="text-danger"> &nbsp;*</span>
+                                                            <span class="text-danger">*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
@@ -405,7 +405,7 @@
                                                     <template #label>
                                                         <div class="shipper-toggle-label">
                                                             <span>State:</span>
-                                                            <span class="text-danger"> &nbsp;*</span>
+                                                            <span class="text-danger">*</span>
                                                         </div>
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
@@ -452,7 +452,7 @@
                                                     </template>
                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_telex"></b-form-input>
                                                 </b-form-group>
-                                                <b-form-checkbox size="sm" class="" style="margin-left: 70px;" v-model="form.is_consignee_address_save"> Save new address to address book</b-form-checkbox>
+                                                <b-form-checkbox size="sm" class="" style="margin-left: 90px;" v-model="form.is_consignee_address_save"> Save new address to address book</b-form-checkbox>
                                             </div>
                                         </b-col>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
@@ -4107,9 +4107,10 @@ li {
 }
 
 .shipper-toggle-label {
-    width: 60px;
+    width: 80px;
     display: inline-block;
     text-align: end;
+    white-space: nowrap;
 }
 .routing-info-label {
     width: 150px;

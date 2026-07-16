@@ -88,7 +88,7 @@ export default {
                         const dynamicPosts = data.data.map(item => ({
                             ...item,
                             image: item.image_path,
-                            date: new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                            date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
                         }));
                         
                         // Override with live news

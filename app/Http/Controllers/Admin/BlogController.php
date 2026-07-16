@@ -15,13 +15,15 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Blog::orderBy('created_at', 'desc');
-        
-        if (!$request->is('api/superadmin/*')) {
-            $query->whereNotNull('published_at');
+        if (!$request->is('api/superadmin/*') && !$request->is('superadmin/*')) {
+            $blogs = Blog::whereNotNull('published_at')
+                ->orderBy('published_at', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $blogs = Blog::orderBy('created_at', 'desc')->get();
         }
         
-        $blogs = $query->get();
         return response()->json([
             'success' => true,
             'data' => $blogs

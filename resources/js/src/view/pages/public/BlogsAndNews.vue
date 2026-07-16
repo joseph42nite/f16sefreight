@@ -135,7 +135,7 @@ export default {
               ...item,
               image: item.image_path,
               // Format backend timestamp to consistent UI display format
-              date: new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+              date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
             }));
             
             // Use dynamic data as the source of truth

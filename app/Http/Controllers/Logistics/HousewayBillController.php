@@ -1054,5 +1054,4 @@ class HousewayBillController extends Controller
     {
         return $this->getAddressByType($request, $request->query('address_type', 'also_notify_address'), 'also');
     }
-    }
 }

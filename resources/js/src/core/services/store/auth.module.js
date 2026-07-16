@@ -47,12 +47,13 @@ const actions = {
       .then(({ data }) => {
         context.commit(SET_AUTH, data.user);
         JwtService.saveToken(data.token);
+        JwtService.saveRole(data.role);
         if (data.role == "user") {
           JwtService.saveSource(data.user.origin_airport_code);
           context.commit(SET_Source, data.user.origin_airport_code);
-          router.push(`/focus-air`);
+          router.replace(`/focus-air`);
         } else if (data.role == "superAdmin")
-          router.push(`/superadmin/all-users`);
+          router.replace(`/superadmin/all-users`);
         return data;
       })
       .catch((error) => {
@@ -126,6 +127,7 @@ const mutations = {
     state.errors = {};
     state.user_source ="";
     JwtService.destroyToken();
+    JwtService.destroyRole();
     JwtService.destroySource();
   }
 };

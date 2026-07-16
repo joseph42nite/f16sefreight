@@ -162,6 +162,17 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       this.$store.dispatch(_core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__.LOGOUT).then(function () {
         return window.location.href = "/";
       });
+    },
+    handleBlogClick: function handleBlogClick(e) {
+      if (this.$route.path === '/') {
+        e.preventDefault();
+        var element = document.getElementById('blogs-section');
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth'
+          });
+        }
+      }
     }
   },
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["isAuthenticated", "currentUser"])), {}, {
@@ -851,6 +862,9 @@ var render = function render() {
         path: "/",
         hash: "#blogs-section"
       }
+    },
+    on: {
+      click: _vm.handleBlogClick
     }
   }, [_vm._v("Blogs")]), _vm._v(" "), _vm.isAuthenticated ? _c("div", {
     staticClass: "d-lg-none mobile-profile-card"

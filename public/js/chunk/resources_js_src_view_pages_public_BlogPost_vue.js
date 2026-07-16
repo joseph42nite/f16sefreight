@@ -33,7 +33,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       "@type": "BlogPosting",
       "headline": this.post.title,
       "image": [absoluteImageUrl],
-      "datePublished": this.post.created_at || this.post.date,
+      "datePublished": this.post.published_at || this.post.created_at || this.post.date,
       "author": [{
         "@type": "Organization",
         "name": "F16s Editorial Team",
@@ -142,7 +142,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
             image: item.image_path,
             readTime: item.read_time,
             takeaways: parsedTakeaways || [],
-            date: new Date(item.created_at).toLocaleDateString('en-US', {
+            date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
               month: 'short',
               day: '2-digit',
               year: 'numeric'
@@ -162,7 +162,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
             return d.slug !== slug;
           }).slice(0, 2).map(function (i) {
             return _objectSpread(_objectSpread({}, i), {}, {
-              image: i.image_path
+              image: i.image_path,
+              date: new Date(i.published_at || i.created_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric'
+              })
             });
           });
           if (rel.length > 0) _this.relatedPosts = rel;

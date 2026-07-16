@@ -47,7 +47,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
             return _objectSpread(_objectSpread({}, item), {}, {
               image: item.image_path,
               // Format backend timestamp to consistent UI display format
-              date: new Date(item.created_at).toLocaleDateString('en-US', {
+              date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
                 month: 'short',
                 day: '2-digit',
                 year: 'numeric'

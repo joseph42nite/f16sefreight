@@ -9,7 +9,11 @@ export default new Router({
       return savedPosition;
     }
     if (to.hash) {
-      return { selector: to.hash, behavior: 'smooth' };
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ selector: to.hash, behavior: 'smooth' });
+        }, 150);
+      });
     }
     return { x: 0, y: 0 };
   },

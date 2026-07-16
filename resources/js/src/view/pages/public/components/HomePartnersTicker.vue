@@ -49,7 +49,8 @@ export default {
         getLogoClass(img) {
             const lowerImg = img.toLowerCase();
             return {
-                'is-long-logo': lowerImg.includes('air-france') || lowerImg.includes('etihad'),
+                'is-air-france': lowerImg.includes('air-france'),
+                'is-etihad': lowerImg.includes('etihad'),
                 'is-large-logo': lowerImg.includes('lufthansa') || lowerImg.includes('qatar'),
                 'is-extra-large-logo': lowerImg.includes('air-india')
             };
@@ -62,7 +63,7 @@ export default {
 .aff-section {
     display: flex; align-items: center; gap: 2rem; padding: 1.25rem 1.5rem; background: #fff;
     border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden;
-    position: relative; z-index: 10; top: -8.5rem; width: 90%; max-width: 1100px; left: 5%;
+    position: relative; z-index: 10; top: -8.5rem; width: 100%; max-width: 100%; left: 0;
 }
 .aff-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; display: block; }
 .aff-heading { font-size: 15px; font-weight: 600; color: #355594; display: block; }
@@ -81,10 +82,11 @@ export default {
     transition: background 0.2s ease;
 }
 .aff-logo-wrap:hover { background: #f3f4f6; }
-.affiliate-logo { height: 32px; object-fit: contain; filter: grayscale(100%) opacity(0.45); transition: all 0.3s ease; }
-.affiliate-logo.is-long-logo { height: 18px; }
-.affiliate-logo.is-large-logo { height: 42px; }
-.affiliate-logo.is-extra-large-logo { height: 52px; }
+.affiliate-logo { height: 46px; object-fit: contain; filter: grayscale(100%) opacity(0.45); transition: all 0.3s ease; }
+.affiliate-logo.is-air-france { height: 18px; }
+.affiliate-logo.is-etihad { height: 26px; }
+.affiliate-logo.is-large-logo { height: 58px; }
+.affiliate-logo.is-extra-large-logo { height: 68px; }
 .affiliate-logo:hover { filter: grayscale(0%) opacity(1); transform: scale(1.08); }
 
 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -94,6 +96,7 @@ export default {
         margin-top: 2rem !important; 
         top: 0 !important; 
         left: 5% !important;
+        width: 90% !important;
         position: relative !important;
         margin-bottom: 4rem !important;
         flex-direction: column;

@@ -263,7 +263,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           var dynamicPosts = data.data.map(function (item) {
             return _objectSpread(_objectSpread({}, item), {}, {
               image: item.image_path,
-              date: new Date(item.created_at).toLocaleDateString('en-US', {
+              date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
                 month: 'short',
                 day: '2-digit',
                 year: 'numeric'
@@ -317,7 +317,8 @@ __webpack_require__.r(__webpack_exports__);
     getLogoClass: function getLogoClass(img) {
       var lowerImg = img.toLowerCase();
       return {
-        'is-long-logo': lowerImg.includes('air-france') || lowerImg.includes('etihad'),
+        'is-air-france': lowerImg.includes('air-france'),
+        'is-etihad': lowerImg.includes('etihad'),
         'is-large-logo': lowerImg.includes('lufthansa') || lowerImg.includes('qatar'),
         'is-extra-large-logo': lowerImg.includes('air-india')
       };

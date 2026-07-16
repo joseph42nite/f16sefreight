@@ -29,7 +29,7 @@
                             <b-nav-item to="/product-description" class="nav-link-custom"
                                 >Products</b-nav-item
                             >
-                            <b-nav-item :to="{ path: '/', hash: '#blogs-section' }" class="nav-link-custom"
+                            <b-nav-item :to="{ path: '/', hash: '#blogs-section' }" class="nav-link-custom" @click="handleBlogClick"
                                 >Blogs</b-nav-item
                             >
                             <!-- <b-nav-item to="/focus-air" v-if="isAuthenticated" class="nav-link-custom text-white">Web Doc</b-nav-item> -->
@@ -163,6 +163,16 @@ export default {
             this.$store
                 .dispatch(LOGOUT)
                 .then(() => (window.location.href = "/"));
+        },
+
+        handleBlogClick(e) {
+            if (this.$route.path === '/') {
+                e.preventDefault();
+                const element = document.getElementById('blogs-section');
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
         },
     },
     computed: {

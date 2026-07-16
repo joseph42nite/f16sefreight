@@ -181,7 +181,7 @@
                                                 </div>
                                                 <span class="text-muted" style="font-size: 0.75rem;">{{ status.formatted_created_at }}</span>
                                             </div>
-                                            <div v-if="status.reason" class="pl-7 mt-1 text-muted" style="font-size: 0.8rem;">
+                                            <div v-if="status.reason" class="pl-7 mt-1 text-muted" style="font-size: 0.8rem; white-space: pre-line;">
                                                 <b-icon icon="info-circle" class="mr-1" style="color: #355594; opacity: 0.7;"></b-icon>
                                                 <strong>{{ status.condition_code }}:</strong> {{ status.reason }}
                                             </div>

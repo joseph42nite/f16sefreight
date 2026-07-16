@@ -233,9 +233,11 @@ export default {
             };
         },
         selectOption(item) {
-            this.branch_form.agent_issue_loc_code=item.iata_code+", "+item.destination+" ("+item.iata_code+")";
-            this.searchQuery=this.branch_form.agent_issue_loc_code;
-            
+            if (!item) return;
+            const iata = item.iata_code || '';
+            const dest = item.destination || '';
+            this.branch_form.agent_issue_loc_code = iata + (dest ? `, ${dest} (${iata})` : '');
+            this.searchQuery = this.branch_form.agent_issue_loc_code;
         },
          toggleDropdown() {
            this.isDropdownOpen = !this.isDropdownOpen;
@@ -275,6 +277,11 @@ export default {
             return filtered.slice(0, 20);
         }
     },
+    watch: {
+        searchQuery(val) {
+            this.branch_form.agent_issue_loc_code = val;
+        }
+    }
 };
 </script>
 <style scoped>

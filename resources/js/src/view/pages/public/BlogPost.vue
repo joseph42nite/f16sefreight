@@ -366,7 +366,8 @@ export default {
 
 .lead-text { font-size: 1.5rem; color: #334155; line-height: 1.5; font-weight: 500; }
 .article-body { font-size: 1.2rem; color: #334155; line-height: 1.8; }
-.article-body :deep(h3) { font-size: 2.3rem; font-weight: 800; color: #1e3a6e; margin-top: 3.5rem; margin-bottom: 1.5rem; line-height: 1.3; letter-spacing: -0.5px; border-left: 4px solid #355594; padding-left: 1.25rem; }
+.article-body :deep(h2), .article-body :deep(h3) { font-size: 2.3rem; font-weight: 800; color: #1e3a6e; margin-top: 3.5rem; margin-bottom: 1.5rem; line-height: 1.3; letter-spacing: -0.5px; border-left: 4px solid #355594; padding-left: 1.25rem; }
+.article-body :deep(h4) { font-size: 1.8rem; font-weight: 800; color: #1e3a6e; margin-top: 2.5rem; margin-bottom: 1.2rem; line-height: 1.3; border-left: 3px solid #355594; padding-left: 1rem; }
 .article-body p { margin-bottom: 1.5rem; }
 
 /* Takeaways Box */

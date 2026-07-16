@@ -16,7 +16,7 @@
     <span>Destination: <?= $destination_airport ?></span><br>
     <span>Total Volume: <?= $total_volume . " " . $dimention_unit ?></span><br>
     <span>Status: Rejected – FNA Received</span><br>
-    <span>Error Details: <?= $reason ?></span><br>
+    <span>Error Details: <?= nl2br(e($reason)) ?></span><br>
     <span>Date & Time of Rejection: <?= $date_time ?></span><br>
 
     <p>Kindly review the above error details and take the necessary corrective action at the earliest. Once rectified, please resubmit the shipment details for further processing.

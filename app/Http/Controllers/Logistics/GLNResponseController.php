@@ -29,7 +29,13 @@ class GLNResponseController extends Controller
             $business_id = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:ID')[0] ?? null);
             $business_status_code = (string) ($xml->xpath('//rsm:BusinessHeaderDocument/ram:StatusCode')[0] ?? null);
             $condition_code = (string) ($xml->xpath('//rsm:ResponseStatus/ram:ConditionCode')[0] ?? null);
-            $reason = (string) ($xml->xpath('//rsm:ResponseStatus/ram:Reason')[0] ?? null);
+            
+            $reasons = [];
+            foreach ($xml->xpath('//rsm:ResponseStatus/ram:Reason') as $r) {
+                $reasons[] = trim((string) $r);
+            }
+            $reasons = array_filter(array_unique($reasons));
+            $reason = implode("\n", $reasons);
         }
         $data = [
             'message_id' => (string) ($xml->xpath('//rsm:MessageHeaderDocument/ram:ID')[0] ?? null),

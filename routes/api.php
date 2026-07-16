@@ -117,6 +117,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
 
     //File Upload API
     Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware(['tier', 'throttle:60,1']);
+    Route::post('/upload-awb-files-multi', [OcrController::class, 'extractMulti'])->middleware(['tier:viper_tactical,viper_command', 'throttle:30,1']);
     Route::get('/ocr-status/{jobId}', [OcrController::class, 'status']);
     Route::get('/ocr-history', [OcrController::class, 'history']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
@@ -144,6 +145,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
         Route::post('/inbox/jobs/{job_id}/cost-sheet', [EmailInboxController::class, 'saveJobCostSheet']);
         Route::post('/inbox/jobs/{job_id}/update-status', [EmailInboxController::class, 'updateJobStatus']);
         Route::post('/inbox/threads/{master_id}/link-hbl', [EmailInboxController::class, 'linkHblToMbl']);
+        Route::get('/inbox/attachments/{id}/download', [EmailInboxController::class, 'downloadAttachment']);
 
         // Air Import Shipments Backend APIs
         Route::post('/import-shipments/{id}/send-arrival-notice', [\App\Http\Controllers\Logistics\ImportShipmentController::class, 'sendArrivalNotice']);
@@ -156,6 +158,17 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
         Route::get('/analytics/response-times', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getResponseTimes']);
         Route::get('/analytics/staff-load', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getStaffLoad']);
         Route::get('/analytics/client-summary', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getClientSummary']);
+        Route::get('/analytics/client-stats', [\App\Http\Controllers\Logistics\AnalyticsController::class, 'getClientStats']);
+
+        // Boss Analytics (company-wide, boss designation only)
+        Route::prefix('analytics/boss')->group(function () {
+            Route::get('/branch-summary', [\App\Http\Controllers\Logistics\BossAnalyticsController::class, 'getBranchSummary']);
+            Route::get('/staff-all', [\App\Http\Controllers\Logistics\BossAnalyticsController::class, 'getAllStaff']);
+            Route::get('/action-items', [\App\Http\Controllers\Logistics\BossAnalyticsController::class, 'getActionItems']);
+            Route::get('/client-all', [\App\Http\Controllers\Logistics\BossAnalyticsController::class, 'getAllClients']);
+            Route::get('/sales-targets', [\App\Http\Controllers\Logistics\BossAnalyticsController::class, 'getSalesTargets']);
+            Route::post('/sales-targets', [\App\Http\Controllers\Logistics\BossAnalyticsController::class, 'saveSalesTarget']);
+        });
     });
 
     // Financial and Reconciliation Routes

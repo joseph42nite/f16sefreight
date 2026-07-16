@@ -5,6 +5,6 @@
         "${workspaceFolder}/python",
         "${workspaceFolder}/python/venv/lib/python3.10/site-packages"
     ],
-    "workbench.colorTheme": "Quiet Light",
+    "workbench.colorTheme": "Default Dark Modern",
     "workbench.preferredDarkColorTheme": "Abyss"
 }

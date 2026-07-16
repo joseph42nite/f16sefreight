@@ -13,12 +13,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_dashboard_FocusAir_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/dashboard/FocusAir.vue */ "./resources/js/src/view/pages/dashboard/FocusAir.vue");
+/* harmony import */ var _view_pages_dashboard_FocusAirImport_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/dashboard/FocusAirImport.vue */ "./resources/js/src/view/pages/dashboard/FocusAirImport.vue");
+
+
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "JobInbox",
   components: {
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
+    FocusAir: _view_pages_dashboard_FocusAir_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    FocusAirImport: _view_pages_dashboard_FocusAirImport_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: function data() {
     return {
@@ -65,7 +71,7 @@ __webpack_require__.r(__webpack_exports__);
       refreshInterval: null,
       // Phase 2.6 — Drawer
       drawerOpen: false,
-      drawerTab: 'upload',
+      drawerTab: 'focusair',
       // OCR state
       ocrFile: null,
       ocrDragOver: false,
@@ -108,21 +114,9 @@ __webpack_require__.r(__webpack_exports__);
       var portalScope = sessionStorage.getItem('active_portal_scope') || 'air';
       if (portalScope === 'sea') {
         return [{
-          key: 'upload',
-          label: 'Upload/OCR',
-          icon: 'cloud-upload'
-        }, {
           key: 'sea_master',
-          label: 'Focus Sea Master',
+          label: 'Sea Export',
           icon: 'file-earmark-text'
-        }, {
-          key: 'sea_house',
-          label: 'Focus Sea House',
-          icon: 'file-earmark'
-        }, {
-          key: 'sea_consol',
-          label: 'Sea Consol',
-          icon: 'folder2-open'
         }, {
           key: 'cost',
           label: 'Job Cost',
@@ -130,21 +124,13 @@ __webpack_require__.r(__webpack_exports__);
         }];
       } else {
         return [{
-          key: 'upload',
-          label: 'Upload/OCR',
-          icon: 'cloud-upload'
-        }, {
           key: 'focusair',
-          label: 'Focus Air',
-          icon: 'file-earmark-text'
+          label: 'Air Export',
+          icon: 'airplane'
         }, {
           key: 'focusair_import',
-          label: 'Focus Air Import',
-          icon: 'file-earmark-arrow-down'
-        }, {
-          key: 'hwb',
-          label: 'HWB',
-          icon: 'file-earmark'
+          label: 'Air Import',
+          icon: 'airplane-engines'
         }, {
           key: 'cost',
           label: 'Job Cost',
@@ -241,6 +227,24 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   methods: {
+    onAttachmentDragStart: function onAttachmentDragStart(event, att) {
+      event.dataTransfer.setData('application/json', JSON.stringify(att));
+      event.dataTransfer.effectAllowed = 'copy';
+    },
+    openAttachment: function openAttachment(att) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/inbox/attachments/".concat(att.id, "/download"), {
+        responseType: 'blob'
+      }).then(function (response) {
+        var file = new Blob([response.data], {
+          type: att.mime_type || 'application/pdf'
+        });
+        var fileURL = URL.createObjectURL(file);
+        window.open(fileURL, '_blank');
+      })["catch"](function (err) {
+        console.error("Failed to download attachment:", err);
+        alert("Encountered failure downloading attachment.");
+      });
+    },
     loadWorkspaceData: function loadWorkspaceData() {
       this.fetchFolderCounts();
       this.fetchThreads(true);
@@ -1272,14 +1276,28 @@ var render = function render() {
     }, _vm._l(email.attachments, function (att) {
       return _c("div", {
         key: att.id,
-        staticClass: "attachment-chip d-flex align-items-center p-2 rounded-lg border bg-light"
+        staticClass: "attachment-chip d-flex align-items-center p-2 rounded-lg border bg-light",
+        staticStyle: {
+          cursor: "grab"
+        },
+        attrs: {
+          draggable: "true"
+        },
+        on: {
+          dragstart: function dragstart($event) {
+            return _vm.onAttachmentDragStart($event, att);
+          }
+        }
       }, [_c("b-icon", {
         staticClass: "mr-2 text-danger font-scale-1.2",
         attrs: {
           icon: "file-earmark-pdf-fill"
         }
       }), _vm._v(" "), _c("span", {
-        staticClass: "attachment-name text-truncate mr-2"
+        staticClass: "attachment-name text-truncate mr-2",
+        staticStyle: {
+          "max-width": "150px"
+        }
       }, [_vm._v(_vm._s(att.filename))]), _vm._v(" "), _c("b-button", {
         directives: [{
           name: "b-tooltip",
@@ -1293,6 +1311,11 @@ var render = function render() {
           size: "sm",
           variant: "light",
           title: "Open File"
+        },
+        on: {
+          click: function click($event) {
+            return _vm.openAttachment(att);
+          }
         }
       }, [_c("b-icon", {
         attrs: {
@@ -1413,282 +1436,23 @@ var render = function render() {
       "font-scale": "1.2"
     }
   })], 1)], 1), _vm._v(" "), _c("div", {
-    staticClass: "drawer-body flex-grow-1 overflow-auto"
-  }, [_vm.drawerTab === "upload" ? _c("div", {
-    staticClass: "drawer-tab-content"
-  }, [_c("div", {
-    staticClass: "ocr-header mb-4"
-  }, [_c("h6", {
-    staticClass: "font-weight-bold mb-1",
-    staticStyle: {
-      color: "#1e293b"
-    }
-  }, [_vm._v("Upload & OCR Extract")]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small mb-0"
-  }, [_vm._v("Drop a PDF or image — AI will extract shipper, consignee, weight and dimensions automatically.")])]), _vm._v(" "), _c("div", {
-    staticClass: "ocr-dropzone",
-    "class": {
-      "drag-over": _vm.ocrDragOver
-    },
-    on: {
-      dragover: function dragover($event) {
-        $event.preventDefault();
-        _vm.ocrDragOver = true;
-      },
-      dragleave: function dragleave($event) {
-        $event.preventDefault();
-        _vm.ocrDragOver = false;
-      },
-      drop: function drop($event) {
-        $event.preventDefault();
-        return _vm.handleOcrDrop.apply(null, arguments);
-      },
-      click: function click($event) {
-        return _vm.$refs.ocrFileInput.click();
-      }
-    }
-  }, [_c("input", {
-    ref: "ocrFileInput",
-    staticClass: "d-none",
+    staticClass: "drawer-body flex-grow-1 overflow-hidden"
+  }, [_vm.drawerTab === "focusair" ? _c("div", {
+    staticClass: "drawer-tab-content drawer-tab-embed"
+  }, [_c("FocusAir", {
+    staticClass: "drawer-embedded-page",
     attrs: {
-      type: "file",
-      accept: ".pdf,image/*"
-    },
-    on: {
-      change: _vm.handleOcrFileSelect
+      "is-drawer": true
     }
-  }), _vm._v(" "), !_vm.ocrFile && !_vm.ocrProcessing && !_vm.ocrResult ? _c("div", {
-    staticClass: "text-center"
-  }, [_c("div", {
-    staticClass: "ocr-drop-icon mb-3"
-  }, [_c("b-icon", {
-    staticClass: "text-primary",
+  })], 1) : _vm._e(), _vm._v(" "), _vm.drawerTab === "focusair_import" ? _c("div", {
+    staticClass: "drawer-tab-content drawer-tab-embed"
+  }, [_c("FocusAirImport", {
+    staticClass: "drawer-embedded-page",
     attrs: {
-      icon: "cloud-upload-fill",
-      "font-scale": "3"
+      "is-drawer": true
     }
-  })], 1), _vm._v(" "), _c("p", {
-    staticClass: "font-weight-bold mb-1",
-    staticStyle: {
-      color: "#334155"
-    }
-  }, [_vm._v("Drag & drop a file here")]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small"
-  }, [_vm._v("or click to browse — PDF, PNG, JPG accepted")])]) : _vm.ocrProcessing ? _c("div", {
-    staticClass: "text-center py-4"
-  }, [_c("b-spinner", {
-    staticClass: "mb-3 text-primary"
-  }), _vm._v(" "), _c("p", {
-    staticClass: "font-weight-bold text-primary mb-0"
-  }, [_vm._v("Processing with OCR...")]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small"
-  }, [_vm._v("This usually takes 5–10 seconds")])], 1) : _vm.ocrFile && !_vm.ocrResult && !_vm.ocrProcessing ? _c("div", {
-    staticClass: "text-center py-3"
-  }, [_c("b-icon", {
-    staticClass: "text-danger mb-2",
-    attrs: {
-      icon: "file-earmark-pdf-fill",
-      "font-scale": "2.5"
-    }
-  }), _vm._v(" "), _c("p", {
-    staticClass: "font-weight-bold mb-1",
-    staticStyle: {
-      color: "#334155"
-    }
-  }, [_vm._v(_vm._s(_vm.ocrFile.name))]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small mb-0"
-  }, [_vm._v("Ready to extract")])], 1) : _vm._e()]), _vm._v(" "), _vm.ocrFile && !_vm.ocrResult ? _c("div", {
-    staticClass: "d-flex justify-content-between mt-3"
-  }, [_c("b-button", {
-    attrs: {
-      variant: "outline-secondary",
-      size: "sm"
-    },
-    on: {
-      click: _vm.clearOcr
-    }
-  }, [_vm._v("Clear")]), _vm._v(" "), _c("b-button", {
-    staticClass: "ocr-extract-btn",
-    attrs: {
-      variant: "primary",
-      size: "sm",
-      disabled: _vm.ocrProcessing
-    },
-    on: {
-      click: _vm.runOcrExtract
-    }
-  }, [_c("b-icon", {
-    staticClass: "mr-1",
-    attrs: {
-      icon: "cpu-fill"
-    }
-  }), _vm._v("\n                                        Extract with AI\n                                    ")], 1)], 1) : _vm._e(), _vm._v(" "), _vm.ocrResult ? _c("div", {
-    staticClass: "ocr-result-card mt-4"
-  }, [_c("div", {
-    staticClass: "d-flex align-items-center justify-content-between mb-3"
-  }, [_c("h6", {
-    staticClass: "font-weight-bold mb-0",
-    staticStyle: {
-      color: "#1e293b"
-    }
-  }, [_vm._v("Extracted Data")]), _vm._v(" "), _c("b-button", {
-    attrs: {
-      variant: "outline-secondary",
-      size: "sm"
-    },
-    on: {
-      click: _vm.clearOcr
-    }
-  }, [_vm._v("Clear")])], 1), _vm._v(" "), _c("div", {
-    staticClass: "ocr-fields"
-  }, _vm._l(_vm.ocrResult, function (value, key) {
-    return _c("div", {
-      key: key,
-      staticClass: "ocr-field-row"
-    }, [_c("span", {
-      staticClass: "ocr-field-label"
-    }, [_vm._v(_vm._s(_vm.formatOcrKey(key)))]), _vm._v(" "), _c("span", {
-      staticClass: "ocr-field-value"
-    }, [_vm._v(_vm._s(value || "—"))])]);
-  }), 0)]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.drawerTab === "focusair" ? _c("div", {
-    staticClass: "drawer-tab-content"
-  }, [_c("div", {
-    staticClass: "workspace-link-card",
-    on: {
-      click: function click($event) {
-        return _vm.navigateTo("/focus-air");
-      }
-    }
-  }, [_c("div", {
-    staticClass: "workspace-link-icon",
-    staticStyle: {
-      background: "linear-gradient(135deg, #355594 0%, #1e3a8a 100%)"
-    }
-  }, [_c("b-icon", {
-    staticClass: "text-white",
-    attrs: {
-      icon: "file-earmark-text",
-      "font-scale": "2"
-    }
-  })], 1), _vm._v(" "), _c("div", {
-    staticClass: "flex-grow-1"
-  }, [_c("h6", {
-    staticClass: "font-weight-bold mb-1",
-    staticStyle: {
-      color: "#1e293b"
-    }
-  }, [_vm._v("Focus Air Waybill")]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small mb-0"
-  }, [_vm._v("Create or edit Master Air Waybills for this job. All fields pre-linked to the active thread.")])]), _vm._v(" "), _c("b-icon", {
-    staticClass: "text-primary",
-    attrs: {
-      icon: "arrow-right-circle-fill",
-      "font-scale": "1.3"
-    }
-  })], 1), _vm._v(" "), _vm.activeThread && _vm.activeThread.job ? _c("div", {
-    staticClass: "mt-4 p-3 rounded-lg",
-    staticStyle: {
-      background: "#f0f9ff",
-      border: "1px solid #bae6fd"
-    }
-  }, [_c("p", {
-    staticClass: "small font-weight-bold mb-1",
-    staticStyle: {
-      color: "#0369a1"
-    }
-  }, [_vm._v("Linked Job")]), _vm._v(" "), _c("p", {
-    staticClass: "mb-0 font-weight-bold",
-    staticStyle: {
-      color: "#1e293b"
-    }
-  }, [_vm._v(_vm._s(_vm.activeThread.job.enquiry_no) + " — " + _vm._s(_vm.activeThread.job.status))])]) : _c("div", {
-    staticClass: "mt-4 p-3 rounded-lg",
-    staticStyle: {
-      background: "#fffbeb",
-      border: "1px solid #fde68a"
-    }
-  }, [_c("p", {
-    staticClass: "small mb-0",
-    staticStyle: {
-      color: "#92400e"
-    }
-  }, [_c("b-icon", {
-    staticClass: "mr-1",
-    attrs: {
-      icon: "exclamation-triangle-fill"
-    }
-  }), _vm._v("No job linked to this thread yet. Classify the email first to auto-create a job card.")], 1)])]) : _vm._e(), _vm._v(" "), _vm.drawerTab === "focusair_import" ? _c("div", {
-    staticClass: "drawer-tab-content"
-  }, [_c("div", {
-    staticClass: "workspace-link-card",
-    on: {
-      click: function click($event) {
-        return _vm.navigateTo("/focus-air-import");
-      }
-    }
-  }, [_c("div", {
-    staticClass: "workspace-link-icon",
-    staticStyle: {
-      background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
-    }
-  }, [_c("b-icon", {
-    staticClass: "text-white",
-    attrs: {
-      icon: "file-earmark-arrow-down",
-      "font-scale": "2"
-    }
-  })], 1), _vm._v(" "), _c("div", {
-    staticClass: "flex-grow-1"
-  }, [_c("h6", {
-    staticClass: "font-weight-bold mb-1",
-    staticStyle: {
-      color: "#1e293b"
-    }
-  }, [_vm._v("Focus Air Import")]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small mb-0"
-  }, [_vm._v("Manage air cargo imports, arrivals notices, and delivery orders.")])]), _vm._v(" "), _c("b-icon", {
-    staticClass: "text-indigo",
-    attrs: {
-      icon: "arrow-right-circle-fill",
-      "font-scale": "1.3"
-    }
-  })], 1)]) : _vm._e(), _vm._v(" "), _vm.drawerTab === "hwb" ? _c("div", {
-    staticClass: "drawer-tab-content"
-  }, [_c("div", {
-    staticClass: "workspace-link-card",
-    on: {
-      click: function click($event) {
-        return _vm.navigateTo("/house-way-bill");
-      }
-    }
-  }, [_c("div", {
-    staticClass: "workspace-link-icon",
-    staticStyle: {
-      background: "linear-gradient(135deg, #059669 0%, #065f46 100%)"
-    }
-  }, [_c("b-icon", {
-    staticClass: "text-white",
-    attrs: {
-      icon: "file-earmark",
-      "font-scale": "2"
-    }
-  })], 1), _vm._v(" "), _c("div", {
-    staticClass: "flex-grow-1"
-  }, [_c("h6", {
-    staticClass: "font-weight-bold mb-1",
-    staticStyle: {
-      color: "#1e293b"
-    }
-  }, [_vm._v("House Waybill")]), _vm._v(" "), _c("p", {
-    staticClass: "text-muted small mb-0"
-  }, [_vm._v("Generate House Waybills for consolidation shipments. Opens the full editor.")])]), _vm._v(" "), _c("b-icon", {
-    staticClass: "text-success",
-    attrs: {
-      icon: "arrow-right-circle-fill",
-      "font-scale": "1.3"
-    }
-  })], 1)]) : _vm._e(), _vm._v(" "), _vm.drawerTab === "sea_master" ? _c("div", {
-    staticClass: "drawer-tab-content"
+  })], 1) : _vm._e(), _vm._v(" "), _vm.drawerTab === "sea_master" ? _c("div", {
+    staticClass: "drawer-tab-content drawer-tab-embed"
   }, [_c("div", {
     staticClass: "workspace-link-card",
     on: {
@@ -2488,6 +2252,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/dashboard/JobInbox.vue":
 /*!************************************************************!*\
   !*** ./resources/js/src/view/pages/dashboard/JobInbox.vue ***!
@@ -2501,16 +2277,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _JobInbox_vue_vue_type_template_id_283c11e0_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./JobInbox.vue?vue&type=template&id=283c11e0&scoped=true */ "./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=template&id=283c11e0&scoped=true");
 /* harmony import */ var _JobInbox_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./JobInbox.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=script&lang=js");
 /* harmony import */ var _JobInbox_vue_vue_type_style_index_0_id_283c11e0_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./JobInbox.vue?vue&type=style&index=0&id=283c11e0&scoped=true&lang=css */ "./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=0&id=283c11e0&scoped=true&lang=css");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+/* harmony import */ var _JobInbox_vue_vue_type_style_index_1_id_283c11e0_lang_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css */ "./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
 
 ;
 
 
+
 /* normalize component */
 
-var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_4__["default"])(
   _JobInbox_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
   _JobInbox_vue_vue_type_template_id_283c11e0_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
   _JobInbox_vue_vue_type_template_id_283c11e0_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
@@ -2567,6 +2345,18 @@ __webpack_require__.r(__webpack_exports__);
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_JobInbox_vue_vue_type_style_index_0_id_283c11e0_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./JobInbox.vue?vue&type=style&index=0&id=283c11e0&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=0&id=283c11e0&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css":
+/*!********************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css ***!
+  \********************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_JobInbox_vue_vue_type_style_index_1_id_283c11e0_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/JobInbox.vue?vue&type=style&index=1&id=283c11e0&lang=css");
 
 
 /***/ })

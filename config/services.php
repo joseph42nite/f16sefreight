@@ -44,4 +44,9 @@ return [
         'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
     ],
 
+    'plaid' => [
+        'client_id' => env('PLAID_CLIENT_ID'),
+        'secret' => env('PLAID_SECRET'),
+    ],
+
 ];

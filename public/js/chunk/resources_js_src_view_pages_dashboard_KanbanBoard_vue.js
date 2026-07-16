@@ -70,6 +70,11 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
     isOps: function isOps() {
       return this.currentUser && this.currentUser.designation === 'operations';
     },
+    opsOperators: function opsOperators() {
+      return this.operators.filter(function (op) {
+        return op.designation === 'operations';
+      });
+    },
     filteredJobs: function filteredJobs() {
       var _this = this;
       var list = this.jobs;
@@ -81,9 +86,15 @@ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == 
 
       // Filter by selected operator
       if (this.selectedOperatorId) {
-        list = list.filter(function (j) {
-          return j.operator_id === _this.selectedOperatorId;
-        });
+        if (this.selectedOperatorId === 'unassigned') {
+          list = list.filter(function (j) {
+            return !j.operator_id;
+          });
+        } else {
+          list = list.filter(function (j) {
+            return j.operator_id === _this.selectedOperatorId;
+          });
+        }
       }
 
       // Filter by planned clearance date range
@@ -656,7 +667,7 @@ var render = function render() {
     staticStyle: {
       gap: "16px"
     }
-  }, [_c("div", {
+  }, [!_vm.isOps ? _c("div", {
     staticClass: "d-flex align-items-center flex-wrap",
     staticStyle: {
       gap: "8px"
@@ -683,14 +694,33 @@ var render = function render() {
     domProps: {
       value: null
     }
-  }, [_vm._v("All Operators")]), _vm._v(" "), _vm._l(_vm.operators, function (op) {
+  }, [_vm._v("All Operators")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "unassigned"
+    }
+  }, [_vm._v("Unassigned Jobs")]), _vm._v(" "), _vm._l(_vm.opsOperators, function (op) {
     return _c("option", {
       key: op.id,
       domProps: {
         value: op.id
       }
     }, [_vm._v("\n                                " + _vm._s(op.name) + " (" + _vm._s(op.active_jobs) + " jobs) " + _vm._s(op.active_jobs >= 15 ? "🔴 OVERLOAD" : "🟢 OK") + "\n                            ")]);
-  })], 2)], 1), _vm._v(" "), _c("div", {
+  })], 2)], 1) : _c("div", {
+    staticClass: "d-flex align-items-center flex-wrap",
+    staticStyle: {
+      gap: "8px"
+    }
+  }, [_c("span", {
+    staticClass: "small font-weight-bold text-muted text-uppercase"
+  }, [_vm._v("Operator:")]), _vm._v(" "), _c("span", {
+    staticClass: "badge badge-primary px-3 py-2 font-weight-bold font-family-inter",
+    staticStyle: {
+      "font-size": "0.85rem",
+      "border-radius": "8px",
+      "background-color": "#355594",
+      color: "#ffffff"
+    }
+  }, [_vm._v("\n                            " + _vm._s(_vm.currentUser ? _vm.currentUser.name : "My Assigned") + "\n                        ")])]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center flex-wrap",
     staticStyle: {
       gap: "8px"

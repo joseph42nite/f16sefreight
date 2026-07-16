@@ -1,5 +1,13 @@
 <template>
-    <b-container fluid class="body-color">
+    <div>
+        <!-- Sales role sees their dedicated branch analytics dashboard -->
+        <SalesAnalyticsDashboard v-if="isSalesRole" />
+
+        <!-- Boss role sees company-wide analytics dashboard -->
+        <BossAnalyticsDashboard v-else-if="isBossRole" />
+
+        <!-- All other roles see the original ops/boss analytics dashboard -->
+        <b-container v-else fluid class="body-color">
         <div class="d-flex flex-column flex-lg-row">
             <SideBar></SideBar>
             <div class="main-content-area ml-lg-4 mt-4 mt-lg-0">
@@ -188,11 +196,14 @@
                 </div>
             </div>
         </div>
-    </b-container>
+        </b-container>
+    </div>
 </template>
 
 <script>
 import SideBar from "@/view/layouts/public/SideBar.vue";
+import SalesAnalyticsDashboard from "@/view/pages/dashboard/SalesAnalyticsDashboard.vue";
+import BossAnalyticsDashboard from "@/view/pages/dashboard/BossAnalyticsDashboard.vue";
 import VueApexCharts from "vue-apexcharts";
 import ApiService from "@/core/services/api.service";
 
@@ -200,6 +211,8 @@ export default {
     name: "AnalyticsDashboard",
     components: {
         SideBar,
+        SalesAnalyticsDashboard,
+        BossAnalyticsDashboard,
         apexchart: VueApexCharts
     },
     data() {
@@ -278,6 +291,12 @@ export default {
         currentUser() {
             return this.$store.getters.currentUser;
         },
+        isSalesRole() {
+            return this.currentUser && this.currentUser.designation === 'sales';
+        },
+        isBossRole() {
+            return this.currentUser && this.currentUser.designation === 'boss';
+        },
         companyTier() {
             return this.currentUser && this.currentUser.company ? this.currentUser.company.tier : 'viper_core';
         },
@@ -296,6 +315,9 @@ export default {
         }
     },
     mounted() {
+        // Sales and Boss roles are handled by their own dedicated dashboards
+        if (this.isSalesRole || this.isBossRole) return;
+
         const isExcluded = this.currentUser && (this.currentUser.designation === 'operations' || this.currentUser.designation === 'pricing');
         if (isExcluded) {
             this.$router.push('/inbox');

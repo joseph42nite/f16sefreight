@@ -118,4 +118,72 @@ class OcrController extends Controller
 
         return response()->json(['status' => true, 'data' => $jobs]);
     }
+
+    /**
+     * Multi-File Upload Endpoint
+     * POST /api/user/upload-awb-files-multi
+     * Accepts multiple PDFs with extraction role assignments for Tactical/Command AI extraction.
+     */
+    public function extractMulti(Request $request)
+    {
+        $request->validate([
+            'upload_files'   => ['required', 'array', 'min:1', 'max:5'],
+            'upload_files.*' => ['required', 'file', 'mimes:pdf', 'max:25600'],
+            'roles'          => ['required', 'string'], // JSON array of role assignments
+        ]);
+
+        $files = $request->file('upload_files');
+        $roles = $request->input('roles');
+
+        // Validate the roles JSON
+        $rolesDecoded = json_decode($roles, true);
+        if (!is_array($rolesDecoded)) {
+            return response()->json([
+                'status' => false,
+                'error'  => 'Invalid roles format. Must be a JSON array.'
+            ], 422);
+        }
+
+        try {
+            $tempFilePaths = [];
+            $originalFilenames = [];
+
+            foreach ($files as $file) {
+                $tempFilename = Str::uuid() . '.pdf';
+                Storage::disk('pdf_temp')->putFileAs('', $file, $tempFilename);
+                $tempFilePaths[] = $tempFilename;
+                $originalFilenames[] = $file->getClientOriginalName();
+            }
+
+            // Create a single processing job record with multi-file metadata
+            $processingJob = PdfProcessingJob::create([
+                'user_id'           => Auth::id(),
+                'original_filename' => implode(', ', $originalFilenames),
+                'temp_file_path'    => json_encode($tempFilePaths), // Store as JSON array
+                'document_type'     => 'multi_unstructured',
+                'status'            => 'pending',
+                'extracted_data'    => ['_meta' => ['roles' => $rolesDecoded, 'file_count' => count($files)]],
+            ]);
+
+            // Dispatch the multi-file processing job
+            \App\Jobs\ProcessMultiPdfOcrJob::dispatch($processingJob->id)
+                ->onQueue('pdf_processing');
+
+            return response()->json([
+                'status'     => true,
+                'job_id'     => $processingJob->id,
+                'job_status' => 'pending',
+                'msg'        => 'Successfully loaded ' . count($files) . ' document(s) for analysis.',
+            ], 202);
+
+        } catch (\Throwable $e) {
+            Log::error('Multi-PDF Upload Dispatch Failure: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => false,
+                'error'  => 'Server encountered an issue preparing files for analysis.'
+            ], 500);
+        }
+    }
 }

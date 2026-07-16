@@ -290,10 +290,17 @@
                                             <div v-if="email.attachments && email.attachments.length > 0" class="attachments-section mt-4 pt-3 border-top">
                                                 <h6 class="font-weight-bold text-muted small mb-2">Attachments ({{ email.attachments.length }})</h6>
                                                 <div class="d-flex flex-wrap" style="gap: 10px;">
-                                                    <div v-for="att in email.attachments" :key="att.id" class="attachment-chip d-flex align-items-center p-2 rounded-lg border bg-light">
+                                                    <div 
+                                                        v-for="att in email.attachments" 
+                                                        :key="att.id" 
+                                                        class="attachment-chip d-flex align-items-center p-2 rounded-lg border bg-light"
+                                                        draggable="true"
+                                                        @dragstart="onAttachmentDragStart($event, att)"
+                                                        style="cursor: grab;"
+                                                    >
                                                         <b-icon icon="file-earmark-pdf-fill" class="mr-2 text-danger font-scale-1.2"></b-icon>
-                                                        <span class="attachment-name text-truncate mr-2">{{ att.filename }}</span>
-                                                        <b-button size="sm" variant="light" class="p-1 line-height-0 rounded" v-b-tooltip.hover title="Open File">
+                                                        <span class="attachment-name text-truncate mr-2" style="max-width: 150px;">{{ att.filename }}</span>
+                                                        <b-button size="sm" variant="light" class="p-1 line-height-0 rounded" v-b-tooltip.hover title="Open File" @click="openAttachment(att)">
                                                             <b-icon icon="eye" font-scale="0.9"></b-icon>
                                                         </b-button>
                                                     </div>
@@ -363,117 +370,20 @@
                             </div>
 
                             <!-- Drawer Body -->
-                            <div class="drawer-body flex-grow-1 overflow-auto">
+                            <div class="drawer-body flex-grow-1 overflow-hidden">
 
-                                <!-- TAB: Upload / OCR -->
-                                <div v-if="drawerTab === 'upload'" class="drawer-tab-content">
-                                    <div class="ocr-header mb-4">
-                                        <h6 class="font-weight-bold mb-1" style="color: #1e293b;">Upload & OCR Extract</h6>
-                                        <p class="text-muted small mb-0">Drop a PDF or image — AI will extract shipper, consignee, weight and dimensions automatically.</p>
-                                    </div>
-                                    <div 
-                                        class="ocr-dropzone"
-                                        :class="{ 'drag-over': ocrDragOver }"
-                                        @dragover.prevent="ocrDragOver = true"
-                                        @dragleave.prevent="ocrDragOver = false"
-                                        @drop.prevent="handleOcrDrop"
-                                        @click="$refs.ocrFileInput.click()"
-                                    >
-                                        <input ref="ocrFileInput" type="file" accept=".pdf,image/*" class="d-none" @change="handleOcrFileSelect">
-                                        <div v-if="!ocrFile && !ocrProcessing && !ocrResult" class="text-center">
-                                            <div class="ocr-drop-icon mb-3">
-                                                <b-icon icon="cloud-upload-fill" font-scale="3" class="text-primary"></b-icon>
-                                            </div>
-                                            <p class="font-weight-bold mb-1" style="color: #334155;">Drag & drop a file here</p>
-                                            <p class="text-muted small">or click to browse — PDF, PNG, JPG accepted</p>
-                                        </div>
-                                        <div v-else-if="ocrProcessing" class="text-center py-4">
-                                            <b-spinner class="mb-3 text-primary"></b-spinner>
-                                            <p class="font-weight-bold text-primary mb-0">Processing with OCR...</p>
-                                            <p class="text-muted small">This usually takes 5–10 seconds</p>
-                                        </div>
-                                        <div v-else-if="ocrFile && !ocrResult && !ocrProcessing" class="text-center py-3">
-                                            <b-icon icon="file-earmark-pdf-fill" font-scale="2.5" class="text-danger mb-2"></b-icon>
-                                            <p class="font-weight-bold mb-1" style="color: #334155;">{{ ocrFile.name }}</p>
-                                            <p class="text-muted small mb-0">Ready to extract</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- OCR Action Buttons -->
-                                    <div v-if="ocrFile && !ocrResult" class="d-flex justify-content-between mt-3">
-                                        <b-button variant="outline-secondary" size="sm" @click="clearOcr">Clear</b-button>
-                                        <b-button variant="primary" size="sm" class="ocr-extract-btn" @click="runOcrExtract" :disabled="ocrProcessing">
-                                            <b-icon icon="cpu-fill" class="mr-1"></b-icon>
-                                            Extract with AI
-                                        </b-button>
-                                    </div>
-
-                                    <!-- OCR Result Card -->
-                                    <div v-if="ocrResult" class="ocr-result-card mt-4">
-                                        <div class="d-flex align-items-center justify-content-between mb-3">
-                                            <h6 class="font-weight-bold mb-0" style="color: #1e293b;">Extracted Data</h6>
-                                            <b-button variant="outline-secondary" size="sm" @click="clearOcr">Clear</b-button>
-                                        </div>
-                                        <div class="ocr-fields">
-                                            <div v-for="(value, key) in ocrResult" :key="key" class="ocr-field-row">
-                                                <span class="ocr-field-label">{{ formatOcrKey(key) }}</span>
-                                                <span class="ocr-field-value">{{ value || '—' }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <!-- TAB: Air Export — embedded inline -->
+                                <div v-if="drawerTab === 'focusair'" class="drawer-tab-content drawer-tab-embed">
+                                    <FocusAir class="drawer-embedded-page" :is-drawer="true" />
                                 </div>
 
-                                <!-- TAB: Focus Air -->
-                                <div v-if="drawerTab === 'focusair'" class="drawer-tab-content">
-                                    <div class="workspace-link-card" @click="navigateTo('/focus-air')">
-                                        <div class="workspace-link-icon" style="background: linear-gradient(135deg, #355594 0%, #1e3a8a 100%)">
-                                            <b-icon icon="file-earmark-text" font-scale="2" class="text-white"></b-icon>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="font-weight-bold mb-1" style="color: #1e293b;">Focus Air Waybill</h6>
-                                            <p class="text-muted small mb-0">Create or edit Master Air Waybills for this job. All fields pre-linked to the active thread.</p>
-                                        </div>
-                                        <b-icon icon="arrow-right-circle-fill" class="text-primary" font-scale="1.3"></b-icon>
-                                    </div>
-                                    <div v-if="activeThread && activeThread.job" class="mt-4 p-3 rounded-lg" style="background: #f0f9ff; border: 1px solid #bae6fd;">
-                                        <p class="small font-weight-bold mb-1" style="color: #0369a1;">Linked Job</p>
-                                        <p class="mb-0 font-weight-bold" style="color: #1e293b;">{{ activeThread.job.enquiry_no }} — {{ activeThread.job.status }}</p>
-                                    </div>
-                                    <div v-else class="mt-4 p-3 rounded-lg" style="background: #fffbeb; border: 1px solid #fde68a;">
-                                        <p class="small mb-0" style="color: #92400e;"><b-icon icon="exclamation-triangle-fill" class="mr-1"></b-icon>No job linked to this thread yet. Classify the email first to auto-create a job card.</p>
-                                    </div>
-                                </div>
-
-                                <!-- TAB: Focus Air Import -->
-                                <div v-if="drawerTab === 'focusair_import'" class="drawer-tab-content">
-                                    <div class="workspace-link-card" @click="navigateTo('/focus-air-import')">
-                                        <div class="workspace-link-icon" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)">
-                                            <b-icon icon="file-earmark-arrow-down" font-scale="2" class="text-white"></b-icon>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="font-weight-bold mb-1" style="color: #1e293b;">Focus Air Import</h6>
-                                            <p class="text-muted small mb-0">Manage air cargo imports, arrivals notices, and delivery orders.</p>
-                                        </div>
-                                        <b-icon icon="arrow-right-circle-fill" class="text-indigo" font-scale="1.3"></b-icon>
-                                    </div>
-                                </div>
-
-                                <!-- TAB: House Waybill -->
-                                <div v-if="drawerTab === 'hwb'" class="drawer-tab-content">
-                                    <div class="workspace-link-card" @click="navigateTo('/house-way-bill')">
-                                        <div class="workspace-link-icon" style="background: linear-gradient(135deg, #059669 0%, #065f46 100%)">
-                                            <b-icon icon="file-earmark" font-scale="2" class="text-white"></b-icon>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="font-weight-bold mb-1" style="color: #1e293b;">House Waybill</h6>
-                                            <p class="text-muted small mb-0">Generate House Waybills for consolidation shipments. Opens the full editor.</p>
-                                        </div>
-                                        <b-icon icon="arrow-right-circle-fill" class="text-success" font-scale="1.3"></b-icon>
-                                    </div>
+                                <!-- TAB: Air Import — embedded inline -->
+                                <div v-if="drawerTab === 'focusair_import'" class="drawer-tab-content drawer-tab-embed">
+                                    <FocusAirImport class="drawer-embedded-page" :is-drawer="true" />
                                 </div>
 
                                 <!-- TAB: Focus Sea Master -->
-                                <div v-if="drawerTab === 'sea_master'" class="drawer-tab-content">
+                                <div v-if="drawerTab === 'sea_master'" class="drawer-tab-content drawer-tab-embed">
                                     <div class="workspace-link-card" @click="navigateTo('/focus-sea-master')">
                                         <div class="workspace-link-icon" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%)">
                                             <b-icon icon="file-earmark-text" font-scale="2" class="text-white"></b-icon>
@@ -779,11 +689,15 @@
 <script>
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import ApiService from "@/core/services/api.service";
+import FocusAir from "@/view/pages/dashboard/FocusAir.vue";
+import FocusAirImport from "@/view/pages/dashboard/FocusAirImport.vue";
 
 export default {
     name: "JobInbox",
     components: {
-        SideBar
+        SideBar,
+        FocusAir,
+        FocusAirImport
     },
     data() {
         return {
@@ -812,7 +726,7 @@ export default {
             refreshInterval: null,
             // Phase 2.6 — Drawer
             drawerOpen: false,
-            drawerTab: 'upload',
+            drawerTab: 'focusair',
             // OCR state
             ocrFile: null,
             ocrDragOver: false,
@@ -855,19 +769,14 @@ export default {
             const portalScope = sessionStorage.getItem('active_portal_scope') || 'air';
             if (portalScope === 'sea') {
                 return [
-                    { key: 'upload',     label: 'Upload/OCR',     icon: 'cloud-upload'       },
-                    { key: 'sea_master', label: 'Focus Sea Master', icon: 'file-earmark-text'  },
-                    { key: 'sea_house',  label: 'Focus Sea House',  icon: 'file-earmark'       },
-                    { key: 'sea_consol', label: 'Sea Consol',     icon: 'folder2-open'       },
-                    { key: 'cost',       label: 'Job Cost',        icon: 'cash-stack'         }
+                    { key: 'sea_master', label: 'Sea Export', icon: 'file-earmark-text' },
+                    { key: 'cost',       label: 'Job Cost',   icon: 'cash-stack'        }
                 ];
             } else {
                 return [
-                    { key: 'upload',          label: 'Upload/OCR',      icon: 'cloud-upload'       },
-                    { key: 'focusair',        label: 'Focus Air',       icon: 'file-earmark-text'  },
-                    { key: 'focusair_import', label: 'Focus Air Import',icon: 'file-earmark-arrow-down' },
-                    { key: 'hwb',             label: 'HWB',             icon: 'file-earmark'        },
-                    { key: 'cost',            label: 'Job Cost',        icon: 'cash-stack'          }
+                    { key: 'focusair',        label: 'Air Export', icon: 'airplane'                    },
+                    { key: 'focusair_import', label: 'Air Import', icon: 'airplane-engines'            },
+                    { key: 'cost',            label: 'Job Cost',   icon: 'cash-stack'                  }
                 ];
             }
         },
@@ -951,6 +860,22 @@ export default {
         }
     },
     methods: {
+        onAttachmentDragStart(event, att) {
+            event.dataTransfer.setData('application/json', JSON.stringify(att));
+            event.dataTransfer.effectAllowed = 'copy';
+        },
+        openAttachment(att) {
+            ApiService.get(`/user/inbox/attachments/${att.id}/download`, { responseType: 'blob' })
+                .then(response => {
+                    const file = new Blob([response.data], { type: att.mime_type || 'application/pdf' });
+                    const fileURL = URL.createObjectURL(file);
+                    window.open(fileURL, '_blank');
+                })
+                .catch(err => {
+                    console.error("Failed to download attachment:", err);
+                    alert("Encountered failure downloading attachment.");
+                });
+        },
         loadWorkspaceData() {
             this.fetchFolderCounts();
             this.fetchThreads(true);
@@ -1880,6 +1805,37 @@ export default {
 /* Drawer body */
 .drawer-body { flex-grow: 1; overflow-y: auto; padding: 24px; }
 
+/* Embed mode: FocusAir (or sea) fills the entire drawer body, no extra padding */
+.drawer-body:has(.drawer-tab-embed) { padding: 0; overflow: hidden; }
+.drawer-tab-embed { height: 100%; overflow-y: auto; }
+
+/* Embedded page — reset FocusAir's own outer chrome so it renders inline */
+.drawer-embedded-page {
+    display: block !important;
+    position: relative !important;
+}
+/* Hide FocusAir's own SideBar and b-container gutters when embedded in the drawer */
+.drawer-tab-embed ::v-deep .body-color {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+}
+.drawer-tab-embed ::v-deep .sidebar-container {
+    display: none !important;
+}
+/* Strip the white card chrome so the form renders flush inside the drawer panel */
+.drawer-tab-embed ::v-deep .d-flex.flex-column.flex-lg-row > div[style*="border-radius"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding-top: 0 !important;
+}
+/* Reduce outer container padding so it fits the narrower drawer width */
+.drawer-tab-embed ::v-deep .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
 /* Tab content fade-in-up */
 .drawer-tab-content { animation: drawerFadeUp 0.25s ease forwards; }
 @keyframes drawerFadeUp {
@@ -1937,4 +1893,27 @@ export default {
 .cost-coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; min-height: 300px; }
 .cost-icon-wrap { width: 80px; height: 80px; background: linear-gradient(135deg, rgba(53,85,148,0.1) 0%, rgba(30,58,138,0.05) 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 
+</style>
+<style>
+/* Global overrides: FocusAir/sea embedded in the right-side drawer.
+   Unscoped so they pierce child component DOM. */
+.drawer-tab-embed .sidebar-container,
+.drawer-tab-embed .sidebar-mobile {
+    display: none !important;
+}
+.drawer-tab-embed .d-flex.flex-column.flex-lg-row > div[style*="border-radius"],
+.drawer-tab-embed .d-flex.flex-column.flex-lg-row > div[style*="box-shadow"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.drawer-tab-embed .body-color {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+.drawer-tab-embed .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    max-width: 100% !important;
+}
 </style>

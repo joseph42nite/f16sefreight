@@ -130,6 +130,27 @@ $usersToCreate = [
         'designation' => 'operations',
     ],
     [
+        'email' => 'emma.ops@f16s.com',
+        'name' => 'Emma Watson',
+        'company' => $tacticalCompany,
+        'agent' => $tacticalAgent,
+        'designation' => 'operations',
+    ],
+    [
+        'email' => 'liam.ops@f16s.com',
+        'name' => 'Liam Neeson',
+        'company' => $tacticalCompany,
+        'agent' => $tacticalAgent,
+        'designation' => 'operations',
+    ],
+    [
+        'email' => 'olivia.ops@f16s.com',
+        'name' => 'Olivia Wilde',
+        'company' => $tacticalCompany,
+        'agent' => $tacticalAgent,
+        'designation' => 'operations',
+    ],
+    [
         'email' => 'tactical.pricing@f16s.com',
         'name' => 'Tactical Pricing',
         'company' => $tacticalCompany,
@@ -727,5 +748,184 @@ if ($job3) {
     'sender_reference' => 'WIRE IN: Unknown Client - Payment Ref 9999',
     'status' => 'unreconciled',
 ]);
+
+// -------------------------------------------------------------
+// Seed Demo Data for Tactical HQ (Focus Air Operators & Jobs)
+// -------------------------------------------------------------
+
+// Create Mailbox Connection for Tactical Ops (so we can associate inbound messages/threads)
+$tacticalConn = MailboxConnection::updateOrCreate(
+    ['email_address' => 'ops@tacticallogix.com'],
+    [
+        'user_id' => $createdUsers['tactical.ops@f16s.com']->id,
+        'provider' => 'gmail',
+        'access_token' => 'mock_access_token_tactical',
+        'refresh_token' => 'mock_refresh_token_tactical',
+        'expires_at' => Carbon::now()->addHours(24),
+        'is_active' => true,
+    ]
+);
+
+$tacticalJobsToSeed = [
+    [
+        'transport_mode' => 'air',
+        'direction' => 'export',
+        'status' => 'Verification',
+        'enquiry_no' => 'ENQA-26-8001',
+        'execution_job_no' => null,
+        'client_id' => $client1->id,
+        'operator_id' => $createdUsers['tactical.ops@f16s.com']->id,
+        'created_offset' => 2,
+        'weight' => 1200,
+        'pol' => 'BLR',
+        'pod' => 'LHR',
+        'flight_date_offset' => 2,
+    ],
+    [
+        'transport_mode' => 'air',
+        'direction' => 'import',
+        'status' => 'AI Extraction',
+        'enquiry_no' => 'ENQA-26-8002',
+        'execution_job_no' => null,
+        'client_id' => $client2->id,
+        'operator_id' => $createdUsers['tactical.ops@f16s.com']->id,
+        'created_offset' => 1,
+        'weight' => 600,
+        'pol' => 'SIN',
+        'pod' => 'BLR',
+        'flight_date_offset' => 1,
+    ],
+    [
+        'transport_mode' => 'air',
+        'direction' => 'export',
+        'status' => 'Verification',
+        'enquiry_no' => 'ENQA-26-8003',
+        'execution_job_no' => 'JOBA-26-8001',
+        'client_id' => $client3->id,
+        'operator_id' => $createdUsers['emma.ops@f16s.com']->id,
+        'created_offset' => 3,
+        'weight' => 1500,
+        'pol' => 'BLR',
+        'pod' => 'FRA',
+        'flight_date_offset' => 3,
+    ],
+    [
+        'transport_mode' => 'air',
+        'direction' => 'import',
+        'status' => 'Sent to Airline',
+        'enquiry_no' => 'ENQA-26-8004',
+        'execution_job_no' => 'JOBA-26-8002',
+        'client_id' => $client1->id,
+        'operator_id' => $createdUsers['liam.ops@f16s.com']->id,
+        'created_offset' => 4,
+        'weight' => 850,
+        'pol' => 'DXB',
+        'pod' => 'BLR',
+        'flight_date_offset' => -1, // Overdue
+    ],
+    [
+        'transport_mode' => 'air',
+        'direction' => 'export',
+        'status' => 'Completed',
+        'enquiry_no' => 'ENQA-26-8005',
+        'execution_job_no' => 'JOBA-26-8003',
+        'client_id' => $client2->id,
+        'operator_id' => $createdUsers['olivia.ops@f16s.com']->id,
+        'created_offset' => 5,
+        'weight' => 2200,
+        'pol' => 'BLR',
+        'pod' => 'SIN',
+        'flight_date_offset' => -3,
+    ],
+    // Unassigned Jobs (for pricing to assign!)
+    [
+        'transport_mode' => 'air',
+        'direction' => 'export',
+        'status' => 'Intake',
+        'enquiry_no' => 'ENQA-26-8006',
+        'execution_job_no' => null,
+        'client_id' => $client3->id,
+        'operator_id' => null,
+        'created_offset' => 1,
+        'weight' => 350,
+        'pol' => 'BLR',
+        'pod' => 'HKG',
+        'flight_date_offset' => 4,
+    ],
+    [
+        'transport_mode' => 'air',
+        'direction' => 'import',
+        'status' => 'Intake',
+        'enquiry_no' => 'ENQA-26-8007',
+        'execution_job_no' => null,
+        'client_id' => $client1->id,
+        'operator_id' => null,
+        'created_offset' => 2,
+        'weight' => 1800,
+        'pol' => 'FRA',
+        'pod' => 'BLR',
+        'flight_date_offset' => 1,
+    ],
+];
+
+foreach ($tacticalJobsToSeed as $index => $item) {
+    $createdAt = (clone $now)->subDays($item['created_offset'])->subHours(2)->subMinutes(rand(10, 50));
+    
+    $job = Job::create([
+        'agent_id' => $tacticalAgent->id,
+        'transport_mode' => $item['transport_mode'],
+        'direction' => $item['direction'],
+        'enquiry_no' => $item['enquiry_no'],
+        'execution_job_no' => $item['execution_job_no'],
+        'client_id' => $item['client_id'],
+        'operator_id' => $item['operator_id'],
+        'status' => $item['status'],
+        'created_at' => $createdAt,
+        'updated_at' => $createdAt,
+    ]);
+
+    AirShipmentDetail::create([
+        'job_id' => $job->id,
+        'flight_number' => 'AI-' . rand(100, 999),
+        'flight_date' => (clone $createdAt)->addDays($item['flight_date_offset']),
+        'carrier_name' => 'Air India',
+        'pol_code' => $item['pol'],
+        'pod_code' => $item['pod'],
+        'piece_count' => rand(10, 50),
+        'gross_weight' => $item['weight'],
+        'chargeable_weight' => $item['weight'] + 50,
+        'volume_cbm' => round($item['weight'] / 167, 2),
+    ]);
+
+    // Create Associated Email Thread for Tactical Logix
+    $threadKey = 'tactical_t' . ($index + 1);
+    $thread = EmailThread::create([
+        'agent_id' => $tacticalAgent->id,
+        'job_id' => $job->id,
+        'thread_key' => $threadKey,
+        'subject' => "Tactical Inquiry: " . $item['enquiry_no'] . " route " . $item['pol'] . "-" . $item['pod'],
+        'latest_message_received_at' => $createdAt,
+        'participant_emails' => ['shipper@client.com', 'ops@tacticallogix.com'],
+        'status' => 'replied',
+        'assigned_operator_id' => $item['operator_id'],
+        'first_reply_at' => (clone $createdAt)->addMinutes(10),
+        'created_at' => $createdAt,
+        'updated_at' => $createdAt,
+    ]);
+
+    InboundEmail::create([
+        'agent_id' => $tacticalAgent->id,
+        'mailbox_connection_id' => $tacticalConn->id,
+        'message_id' => 'msg_tac_' . ($index + 1) . '_1',
+        'thread_key' => $threadKey,
+        'from' => 'shipper@client.com',
+        'to' => 'ops@tacticallogix.com',
+        'subject' => "Tactical Inquiry: " . $item['enquiry_no'],
+        'body_text' => "We need transport for " . $item['weight'] . " Kgs from " . $item['pol'] . " to " . $item['pod'],
+        'received_at' => $createdAt,
+        'created_at' => $createdAt,
+        'updated_at' => $createdAt,
+    ]);
+}
 
 echo "Demo workspace successfully seeded with rich historical data and Segment B financial testbeds!\n";

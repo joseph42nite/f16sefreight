@@ -33,10 +33,21 @@
                             
                             <!-- Profile Card & Sign Out inside hamburger menu for Mobile -->
                             <div v-if="isAuthenticated" class="d-lg-none mobile-profile-card">
-                                <div class="origin-badge mb-3">
-                                    <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
-                                    <span>Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
+                                <div class="profile-card-header">
+                                    <div class="avatar-glow">
+                                        <img :src="avatarLogoSrc" alt="User avatar" class="mobile-avatar" />
+                                    </div>
+                                    <div class="profile-meta">
+                                        <span class="profile-name">Hello, {{ currentUser.name }}</span>
+                                        <div class="origin-badge">
+                                            <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
+                                            <span>Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
+                                        </div>
+                                    </div>
                                 </div>
+                                <router-link to="/settings" class="settings-btn-premium">
+                                    <b-icon icon="gear" class="mr-2"></b-icon>Settings
+                                </router-link>
                                 <button class="sign-out-btn-premium" @click="logout()">
                                     <b-icon icon="box-arrow-right" class="mr-2"></b-icon>Sign out
                                 </button>
@@ -79,16 +90,66 @@
                         <b-navbar-nav
                             class="align-items-center content-gap d-none d-lg-flex"
                         >
+                            <!-- Origin Airport Badge -->
+                            <div class="airport-badge mr-1">
+                                <b-icon icon="geo-alt-fill" class="mr-1"></b-icon>
+                                <span>{{ currentUser.origin_airport_code }}</span>
+                            </div>
+
+                            <!-- Notifications Bell Dropdown -->
+                            <b-nav-item-dropdown right no-caret class="notification-dropdown">
+                                <template #button-content>
+                                    <div class="action-btn">
+                                        <b-icon icon="bell-fill" font-scale="1.2"></b-icon>
+                                        <span v-if="unreadCount > 0" class="pulse-indicator"></span>
+                                    </div>
+                                </template>
+                                <div class="panel-header d-flex align-items-center justify-content-between p-3 border-bottom" style="background: rgba(244, 248, 255, 0.3); border-color: rgba(53, 85, 148, 0.08) !important;">
+                                    <span class="font-weight-bold text-primary" style="font-size: 13px;">Notifications</span>
+                                    <span v-if="unreadCount > 0" class="badge badge-light-primary cursor-pointer extra-small py-1" @click.stop="markAllAsRead">Mark all read</span>
+                                </div>
+                                <div class="panel-body" style="max-height: 300px; overflow-y: auto;">
+                                    <div v-if="notifications.length === 0" class="p-4 text-center text-muted">
+                                        <b-icon icon="bell-slash" font-scale="1.5" class="mb-2 opacity-50"></b-icon>
+                                        <p class="mb-0 extra-small">All caught up!</p>
+                                    </div>
+                                    <div v-else>
+                                        <div 
+                                            v-for="item in notifications" 
+                                            :key="item.id" 
+                                            class="notification-item p-3 border-bottom d-flex align-items-start"
+                                            :class="{ 'unread-item': !item.read }"
+                                            @click="handleNotificationClick(item)"
+                                        >
+                                            <div class="item-icon-wrap mr-2">
+                                                <b-icon :icon="item.icon" :variant="item.iconVariant" font-scale="1.0"></b-icon>
+                                            </div>
+                                            <div class="item-content flex-grow-1">
+                                                <p class="mb-1 text-dark small" :class="{'font-weight-bold': !item.read}" style="line-height: 1.3; font-size: 11px !important;">{{ item.title }}</p>
+                                                <span class="text-muted extra-small d-block">{{ item.time }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </b-nav-item-dropdown>
+
+                            <!-- User Greeting -->
+                            <div class="user-greeting d-flex flex-column mr-1 text-right">
+                                <span class="greeting-text">Hello,</span>
+                                <span class="user-name font-weight-bold text-dark">{{ currentUser.name }}</span>
+                            </div>
+
+                            <!-- Profile avatar dropdown -->
                             <b-nav-item-dropdown right no-caret>
                                 <template #button-content>
                                     <div class="avatar-wrapper">
                                         <img :src="avatarLogoSrc" alt="User profile" id="avatar-logo" />
                                     </div>
                                 </template>
-                                <b-dropdown-item disabled>
+                                <b-dropdown-item to="/settings">
                                     <div class="d-flex align-items-center">
-                                        <b-icon icon="geo-alt" class="mr-2" variant="primary"></b-icon>
-                                        <span style="font-size: 12px; color: #355594;">Origin: <strong>{{ currentUser.origin_airport_code }}</strong></span>
+                                        <b-icon icon="gear" class="mr-2" variant="secondary"></b-icon>
+                                        <span style="font-size: 12px; color: #334155;">Settings</span>
                                     </div>
                                 </b-dropdown-item>
                                 <b-dropdown-divider></b-dropdown-divider>
@@ -145,6 +206,35 @@ export default {
             show_login_modal: false,
             otp_verification_modal: false,
             avatarLogoSrc: "/media/assets/ui/user-avatar.png",
+            notifications: [
+                {
+                    id: 1,
+                    title: "MAWB 020-98304921 draft has been saved successfully.",
+                    time: "10 mins ago",
+                    icon: "file-earmark-arrow-up",
+                    iconVariant: "success",
+                    read: false,
+                    path: "/focus-air"
+                },
+                {
+                    id: 2,
+                    title: "Operator Liam Neeson assigned to Consol Enquiry JOBA-26-9028.",
+                    time: "45 mins ago",
+                    icon: "person-check",
+                    iconVariant: "primary",
+                    read: false,
+                    path: "/focus-air-import"
+                },
+                {
+                    id: 3,
+                    title: "New email inquiry received from Emirates Cargo: Quote request Singapore.",
+                    time: "2 hours ago",
+                    icon: "envelope-open",
+                    iconVariant: "warning",
+                    read: true,
+                    path: "/inbox"
+                }
+            ]
         };
     },
     methods: {
@@ -161,6 +251,17 @@ export default {
                 .dispatch(LOGOUT)
                 .then(() => (window.location.href = "/"));
         },
+
+        markAllAsRead() {
+            this.notifications.forEach(item => item.read = true);
+        },
+
+        handleNotificationClick(item) {
+            item.read = true;
+            if (item.path && this.$route.path !== item.path) {
+                this.$router.push(item.path);
+            }
+        }
     },
     mounted() {
         if (this.$route.query.trigger_login === "true") {
@@ -173,6 +274,10 @@ export default {
         logoSrc() {
             return "/media/assets/logos/white-logo.png";
         },
+
+        unreadCount() {
+            return this.notifications.filter(item => !item.read).length;
+        }
     },
 };
 </script>
@@ -221,19 +326,19 @@ export default {
 }
 .nav-link {
     padding: 0px !important;
-    color: #355594 !important;
+    color: #1e3a6e !important;
 }
 .content-gap {
     gap: 18px;
 }
 
 .nav-link-custom:hover {
-    color: #2a4476 !important;
+    color: #111827 !important;
 }
 .nav-link-custom {
-    font-size: 15px;
+    font-size: 15.5px;
     line-height: 30px;
-    font-weight: 500;
+    font-weight: 600;
     font-family: "Inter", sans-serif !important;
 }
 
@@ -266,12 +371,12 @@ a.menu-link {
     gap: 12px;
 }
 .action-btn {
-    background: rgba(53, 85, 148, 0.05);
+    background: rgba(53, 85, 148, 0.06);
     border: none;
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 12px;
-    color: #355594;
+    color: #1e3a6e;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,14 +385,14 @@ a.menu-link {
     transition: all 0.2s ease;
 }
 .action-btn:hover {
-    background: rgba(53, 85, 148, 0.1);
+    background: rgba(53, 85, 148, 0.12);
     color: #1e3a6e;
     transform: translateY(-1px);
 }
 .pulse-indicator {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 11px;
+    right: 11px;
     width: 8px;
     height: 8px;
     background: #ef4444;
@@ -296,13 +401,13 @@ a.menu-link {
 }
 .airport-badge {
     background: rgba(53, 85, 148, 0.08);
-    color: #355594;
+    color: #1e3a6e;
     padding: 6px 14px;
     border-radius: 999px;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 13.5px;
     letter-spacing: 0.05em;
-    border: 1px solid rgba(53, 85, 148, 0.1);
+    border: 1px solid rgba(53, 85, 148, 0.15);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -580,6 +685,33 @@ a.menu-link {
     align-items: center;
 }
 
+.settings-btn-premium {
+    background: rgba(53, 85, 148, 0.06) !important;
+    border: 1px solid rgba(53, 85, 148, 0.15) !important;
+    color: #355594 !important;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 20px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 8px;
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.settings-btn-premium:hover {
+    background: #355594 !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(53, 85, 148, 0.2);
+    transform: translateY(-1px);
+}
+
 .sign-out-btn-premium {
     background: rgba(239, 68, 68, 0.06) !important;
     border: 1px solid rgba(239, 68, 68, 0.15) !important;
@@ -604,9 +736,66 @@ a.menu-link {
     box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
     transform: translateY(-1px);
 }
+
+.user-greeting {
+    font-family: "Inter", sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+.greeting-text {
+    font-size: 11px;
+    color: #1e3a6e;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: -1px;
+    font-weight: 700;
+}
+.user-name {
+    font-size: 14.5px;
+    font-weight: 700 !important;
+    color: #1e3a6e;
+}
+.notification-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(53, 85, 148, 0.06) !important;
+}
+.notification-item:hover {
+    background-color: rgba(53, 85, 148, 0.06) !important;
+}
+.unread-item {
+    background-color: rgba(53, 85, 148, 0.03) !important;
+}
+.item-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(53, 85, 148, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.extra-small {
+    font-size: 10px;
+}
 </style>
 
 <style>
+.notification-dropdown .dropdown-menu {
+    width: 460px !important;
+    max-width: 90vw !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: rgba(244, 248, 255, 0.6) !important;
+    background-color: rgba(244, 248, 255, 0.6) !important;
+    backdrop-filter: blur(24px) saturate(180%) brightness(1.02) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.02) !important;
+    border: 1px solid rgba(53, 85, 148, 0.15) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 20px 50px rgba(30, 58, 110, 0.15) !important;
+}
 .navbar-collapse,
 .collapse {
     width: 90%;

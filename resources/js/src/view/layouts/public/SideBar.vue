@@ -83,6 +83,66 @@ export default {
             return this.currentUser && this.currentUser.company ? this.currentUser.company.tier : 'viper_core';
         },
         menuItems() {
+            const isSales = this.currentUser && this.currentUser.designation === 'sales';
+            const isBoss  = this.currentUser && this.currentUser.designation === 'boss';
+
+            // Sales role sees a stripped-down sidebar: Analytics, Mailbox, Kanban only
+            if (isSales) {
+                return [
+                    {
+                        label: "Analytics",
+                        path: "/analytics",
+                        icon: "bar-chart",
+                        activePaths: ['/analytics']
+                    },
+                    {
+                        label: "Mail/Inbox",
+                        path: "/inbox",
+                        icon: "mailbox",
+                        activePaths: ['/inbox']
+                    },
+                    {
+                        label: "Kanban Board",
+                        path: "/kanban",
+                        icon: "grid-3x3-gap",
+                        activePaths: ['/kanban']
+                    },
+                ];
+            }
+
+            // Boss sees Analytics, Inbox, Kanban — and Financials if Command tier
+            if (isBoss) {
+                const bossList = [
+                    {
+                        label: "Analytics",
+                        path: "/analytics",
+                        icon: "bar-chart",
+                        activePaths: ['/analytics']
+                    },
+                    {
+                        label: "Mail/Inbox",
+                        path: "/inbox",
+                        icon: "mailbox",
+                        activePaths: ['/inbox']
+                    },
+                    {
+                        label: "Kanban Board",
+                        path: "/kanban",
+                        icon: "grid-3x3-gap",
+                        activePaths: ['/kanban']
+                    },
+                ];
+                if (this.companyTier === 'viper_command') {
+                    bossList.push({
+                        label: "Financials",
+                        path: "/financials",
+                        icon: "cash",
+                        activePaths: ['/financials']
+                    });
+                }
+                return bossList;
+            }
+
             const list = [
                 {
                     label: "Mail/Inbox",
@@ -105,7 +165,7 @@ export default {
                 { 
                     label: "Focus Air Import", 
                     path: "/focus-air-import", 
-                    icon: "file-earmark-check", 
+                    icon: "file-earmark-arrow-down", 
                     activePaths: ['/focus-air-import']
                 },
             ];
@@ -131,13 +191,6 @@ export default {
                 });
             }
 
-            list.push({
-                label: "Settings",
-                path: "/settings",
-                icon: "gear",
-                activePaths: ['/settings']
-            });
-
             return list;
         },
         activeItem() {
@@ -148,7 +201,7 @@ export default {
         isActive(paths) {
             if (typeof paths === "string") paths = [paths];
             return paths.some((path) => {
-                const regex = new RegExp(`^${path.replace(/:[^\s/]+/g, "[^/]+")}`);
+                const regex = new RegExp(`^${path.replace(/:[^\s/]+/g, "[^/]+")}(?:/|$)`);
                 return regex.test(this.$route.path);
             });
         },

@@ -4,10 +4,10 @@ import tempfile
 import os
 import logging
 import json
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 import google.generativeai as genai
-from schemas import CommercialInvoiceSchema, PackingListSchema
+from schemas import CommercialInvoiceSchema, PackingListSchema, MergedExtractionSchema
 from pydantic import BaseModel
 
 # Load absolute paths to guarantee loading regardless of execution directory
@@ -187,6 +187,196 @@ async def extract_unstructured(
     except Exception as e:
         logger.error(f"Unstructured extraction internal failure: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"LLM parsing failed: {str(e)}")
+
+
+@app.post("/extract-multi-unstructured")
+async def extract_multi_unstructured(
+    files: List[UploadFile] = File(...),
+    roles: str = Form(...)
+):
+    """
+    Multi-document extraction using PyMuPDF + Gemini AI.
+    Accepts multiple PDFs with extraction role assignments.
+    Merges results into a single unified response payload.
+    
+    roles: JSON string array e.g. [{"index": 0, "role": "shipper_consignee"}, {"index": 1, "role": "pieces_dimensions"}]
+    Valid roles: shipper_consignee, pieces_dimensions, full
+    """
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        logger.error("GEMINI_API_KEY is not configured in the environment.")
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not configured on the server.")
+    
+    genai.configure(api_key=api_key)
+
+    # Parse roles
+    try:
+        role_assignments = json.loads(roles)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid roles JSON: {e}")
+
+    if len(files) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 files allowed per request.")
+
+    # Build role-specific prompts
+    ROLE_PROMPTS = {
+        "shipper_consignee": (
+            "Focus ONLY on extracting the shipper/exporter and consignee/importer party information from this document. "
+            "Extract: shipper_name, shipper_address, shipper_city, shipper_post_code, shipper_state, shipper_country, shipper_phone, "
+            "consignee_name, consignee_address, consignee_city, consignee_post_code, consignee_state, consignee_country, consignee_phone. "
+            "For all other fields (cargo, financial, etc.), set their value to null with confidence 'low'."
+        ),
+        "pieces_dimensions": (
+            "Focus ONLY on extracting the cargo/package/dimension/weight information from this document. "
+            "Extract: total_packages, total_gross_weight, total_net_weight, total_volume, dimensions, chargeable_weight. "
+            "Also extract any individual packing line items if available. "
+            "For all other fields (shipper, consignee, financial, etc.), set their value to null with confidence 'low'."
+        ),
+        "full": (
+            "Extract ALL available fields from this document including shipper, consignee, cargo dimensions, "
+            "financial totals, and line items. For each field, determine the confidence (high, medium, or low) "
+            "based on whether the field is explicitly and clearly stated (high), inferred or reconstructed (medium), "
+            "or missing/uncertain (low)."
+        ),
+    }
+
+    total_tokens_in = 0
+    total_tokens_out = 0
+    merged_result = {}
+
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    for assignment in role_assignments:
+        idx = assignment.get("index", 0)
+        role = assignment.get("role", "full")
+        
+        if idx >= len(files):
+            logger.warning(f"Role assignment index {idx} exceeds file count {len(files)}, skipping.")
+            continue
+
+        file = files[idx]
+        file_bytes = await file.read()
+        # Reset file position for potential re-reads
+        await file.seek(0)
+
+        # Extract text using PyMuPDF
+        text = ""
+        is_pdf = file.filename.lower().endswith(".pdf") if file.filename else False
+        if is_pdf:
+            try:
+                import fitz
+                doc = fitz.open(stream=file_bytes, filetype="pdf")
+                for page in doc:
+                    text += page.get_text()
+                doc.close()
+            except Exception as e:
+                logger.warning(f"PyMuPDF text extraction failed for file {idx}: {e}")
+
+        # Build the prompt with role-specific instructions
+        role_instruction = ROLE_PROMPTS.get(role, ROLE_PROMPTS["full"])
+        prompt = (
+            f"Analyze the following document and extract fields according to the schema.\n"
+            f"{role_instruction}\n"
+            f"For each field, provide a 'value' and 'confidence' (high/medium/low)."
+        )
+
+        try:
+            # Use text if substantial, otherwise fall back to vision
+            if text.strip() and len(text.strip()) > 100:
+                logger.info(f"File {idx} ({file.filename}): Using extracted PDF text for Gemini prompt. Role: {role}")
+                contents = [f"Document text:\n{text}\n\n{prompt}"]
+            else:
+                logger.info(f"File {idx} ({file.filename}): Using multi-modal vision parsing. Role: {role}")
+                mime = "application/pdf" if is_pdf else (file.content_type or "image/png")
+                contents = [
+                    {"mime_type": mime, "data": file_bytes},
+                    prompt
+                ]
+
+            response = model.generate_content(
+                contents,
+                generation_config={
+                    "response_mime_type": "application/json",
+                    "response_schema": MergedExtractionSchema
+                }
+            )
+
+            file_result = json.loads(response.text)
+
+            usage = response.usage_metadata
+            total_tokens_in += usage.prompt_token_count if usage else 0
+            total_tokens_out += usage.candidates_token_count if usage else 0
+
+            # Merge results: only override fields relevant to this role
+            _merge_by_role(merged_result, file_result, role)
+
+            logger.info(f"File {idx} ({file.filename}) extraction successful with role '{role}'.")
+
+        except Exception as e:
+            logger.error(f"Extraction failed for file {idx} ({file.filename}): {str(e)}", exc_info=True)
+            # Continue processing remaining files instead of aborting entirely
+            continue
+
+    if not merged_result:
+        raise HTTPException(status_code=500, detail="All file extractions failed. No data could be parsed.")
+
+    logger.info(f"Multi-document extraction complete. Total In: {total_tokens_in}, Out: {total_tokens_out}")
+
+    return JSONResponse(content={
+        "status": "success",
+        "extracted_data": merged_result,
+        "tokens_in": total_tokens_in,
+        "tokens_out": total_tokens_out,
+        "model": "gemini-1.5-flash",
+        "files_processed": len(role_assignments)
+    })
+
+
+def _merge_by_role(target: dict, source: dict, role: str):
+    """
+    Merges extraction results from a source document into the target dict,
+    only overriding fields that belong to the given role category.
+    """
+    SHIPPER_CONSIGNEE_FIELDS = {
+        "shipper_name", "shipper_address", "shipper_city", "shipper_post_code",
+        "shipper_state", "shipper_country", "shipper_phone",
+        "consignee_name", "consignee_address", "consignee_city", "consignee_post_code",
+        "consignee_state", "consignee_country", "consignee_phone",
+    }
+    PIECES_DIMENSIONS_FIELDS = {
+        "total_packages", "total_gross_weight", "total_net_weight", "total_volume",
+        "dimensions", "chargeable_weight", "packing_items",
+    }
+    FINANCIAL_FIELDS = {
+        "invoice_no", "document_date", "grand_total", "currency",
+        "payment_terms", "tax_registration_no", "items",
+    }
+
+    if role == "shipper_consignee":
+        allowed = SHIPPER_CONSIGNEE_FIELDS
+    elif role == "pieces_dimensions":
+        allowed = PIECES_DIMENSIONS_FIELDS
+    elif role == "full":
+        allowed = SHIPPER_CONSIGNEE_FIELDS | PIECES_DIMENSIONS_FIELDS | FINANCIAL_FIELDS
+    else:
+        allowed = SHIPPER_CONSIGNEE_FIELDS | PIECES_DIMENSIONS_FIELDS | FINANCIAL_FIELDS
+
+    for key, value in source.items():
+        if key not in allowed:
+            continue
+        # Only override if the source field has actual data
+        if isinstance(value, dict):
+            val = value.get("value")
+            conf = value.get("confidence", "low")
+            if val is not None and val != "" and conf != "low":
+                target[key] = value
+            elif key not in target:
+                target[key] = value
+        elif isinstance(value, list) and len(value) > 0:
+            target[key] = value
+        elif value is not None:
+            target[key] = value
+
 
 @app.post("/classify-email")
 async def classify_email(

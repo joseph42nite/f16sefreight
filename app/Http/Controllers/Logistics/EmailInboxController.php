@@ -1010,4 +1010,30 @@ class EmailInboxController extends Controller
             'child_job' => $childJob
         ], 200);
     }
+
+    public function downloadAttachment(Request $request, $id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        $attachment = \App\InboundAttachment::findOrFail($id);
+
+        // Scope the attachment's email to the user's branch (agent_id)
+        $email = \App\InboundEmail::where('id', $attachment->inbound_email_id)->firstOrFail();
+        $thread = \App\EmailThread::where('thread_key', $email->thread_key)
+            ->where('agent_id', $user->branch_name)
+            ->firstOrFail();
+
+        if (!\Illuminate\Support\Facades\Storage::disk('local')->exists($attachment->file_path)) {
+            return response()->json(['error' => 'File not found on disk.'], 404);
+        }
+
+        return response()->download(
+            \Illuminate\Support\Facades\Storage::disk('local')->path($attachment->file_path),
+            $attachment->filename,
+            ['Content-Type' => $attachment->mime_type]
+        );
+    }
 }

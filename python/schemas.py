@@ -89,3 +89,49 @@ class PackingListSchema(BaseModel):
     
     # Line items
     items: List[PackingListItemSchema]
+
+
+class MergedExtractionSchema(BaseModel):
+    """
+    Unified schema for multi-document extraction.
+    Combines shipper/consignee party data, cargo/weight/dimension data,
+    financial data, and routing info into a single response payload.
+    Each field includes a confidence score from the AI extraction.
+    """
+    # Shipper / Exporter Info
+    shipper_name: ParsedField[str]
+    shipper_address: ParsedField[str]
+    shipper_city: ParsedField[str]
+    shipper_post_code: ParsedField[str]
+    shipper_state: ParsedField[str]
+    shipper_country: ParsedField[str]
+    shipper_phone: ParsedField[str]
+
+    # Consignee Info
+    consignee_name: ParsedField[str]
+    consignee_address: ParsedField[str]
+    consignee_city: ParsedField[str]
+    consignee_post_code: ParsedField[str]
+    consignee_state: ParsedField[str]
+    consignee_country: ParsedField[str]
+    consignee_phone: ParsedField[str]
+
+    # Cargo / Dimensions Info
+    total_packages: ParsedField[int]
+    total_gross_weight: ParsedField[float]
+    total_net_weight: ParsedField[float]
+    total_volume: ParsedField[float]
+    dimensions: ParsedField[str]
+    chargeable_weight: ParsedField[float]
+
+    # Financial / Invoice Info
+    invoice_no: ParsedField[str]
+    document_date: ParsedField[str]
+    grand_total: ParsedField[float]
+    currency: ParsedField[str]
+    payment_terms: ParsedField[str]
+    tax_registration_no: ParsedField[str]
+
+    # Line items (merged from all documents)
+    items: Optional[List[InvoiceItemSchema]] = None
+    packing_items: Optional[List[PackingListItemSchema]] = None

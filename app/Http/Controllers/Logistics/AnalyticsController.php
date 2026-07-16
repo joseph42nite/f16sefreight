@@ -613,7 +613,121 @@ class AnalyticsController extends Controller
 
         return response()->json([
             'status' => true,
-            'data' => $mappedTargets
+            'data'   => $mappedTargets
+        ]);
+    }
+
+    /**
+     * Per-client stats for Command-tier Sales users.
+     * GET /api/user/analytics/client-stats
+     */
+    public function getClientStats(Request $request)
+    {
+        $user = Auth::user();
+        $agentId = $user->branch_name;
+
+        if (!$agentId) {
+            return response()->json(['error' => 'No branch context found.'], 400);
+        }
+
+        $period = $request->query('period', 'monthly');
+        $daysRange = $period === 'yearly' ? 1825 : ($period === 'monthly' ? 365 : 30);
+        $startDate = Carbon::now()->subDays($daysRange);
+
+        $driver = DB::connection()->getDriverName();
+        $monthExpr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', created_at)"
+            : "DATE_FORMAT(created_at, '%Y-%m')";
+
+        // Fetch all distinct clients that have jobs in this branch
+        $clientIds = Job::where('agent_id', $agentId)
+            ->where('created_at', '>=', $startDate)
+            ->whereNotNull('client_id')
+            ->whereNotNull('enquiry_no')
+            ->distinct()
+            ->pluck('client_id');
+
+        $results = [];
+
+        foreach ($clientIds as $clientId) {
+            $client = Company::find($clientId);
+            if (!$client) continue;
+
+            $baseQ = Job::where('agent_id', $agentId)
+                ->where('client_id', $clientId)
+                ->whereNotNull('enquiry_no')
+                ->where('created_at', '>=', $startDate);
+
+            $raised    = (clone $baseQ)->count();
+            $converted = (clone $baseQ)->whereNotNull('execution_job_no')->count();
+            $lost      = (clone $baseQ)->where('status', 'Lost')->count();
+            $replied   = (clone $baseQ)->whereHas('emailThreads', function ($q) {
+                $q->withoutGlobalScope(\App\Scopes\PortalScope::class)
+                  ->whereNotNull('first_reply_at');
+            })->count();
+
+            $slaBreached = (clone $baseQ)
+                ->whereNull('execution_job_no')
+                ->where('status', '!=', 'Lost')
+                ->whereHas('emailThreads', function ($q) {
+                    $q->withoutGlobalScope(\App\Scopes\PortalScope::class)
+                      ->where('status', '!=', 'replied')
+                      ->where('status', '!=', 'archived')
+                      ->where('latest_message_received_at', '<', Carbon::now()->subMinutes(15));
+                })->count();
+
+            $conversionRate = $raised > 0 ? round(($converted / $raised) * 100, 1) : 0;
+
+            // Month-on-month trend (last 6 months of raised counts)
+            $trend = (clone $baseQ)
+                ->select(DB::raw("$monthExpr as month"), DB::raw('count(*) as total'))
+                ->groupBy('month')
+                ->orderBy('month', 'asc')
+                ->limit(6)
+                ->get()
+                ->map(fn ($r) => ['month' => $r->month, 'total' => $r->total])
+                ->values();
+
+            // Top lanes for this client
+            $jobs = (clone $baseQ)->with(['airShipmentDetail', 'seaShipmentDetail'])->get();
+            $lanes = [];
+            foreach ($jobs as $job) {
+                $origin = $dest = '';
+                if ($job->transport_mode === 'air' && $job->airShipmentDetail) {
+                    $origin = $job->airShipmentDetail->pol_code;
+                    $dest   = $job->airShipmentDetail->pod_code;
+                } elseif ($job->transport_mode === 'sea' && $job->seaShipmentDetail) {
+                    $origin = $job->seaShipmentDetail->pol_code;
+                    $dest   = $job->seaShipmentDetail->pod_code;
+                }
+                if ($origin && $dest) {
+                    $key = strtoupper($origin) . '→' . strtoupper($dest);
+                    $lanes[$key] = ($lanes[$key] ?? 0) + 1;
+                }
+            }
+            arsort($lanes);
+            $topLanes = array_slice($lanes, 0, 3, true);
+
+            $results[] = [
+                'client_id'       => $clientId,
+                'client_name'     => $client->name,
+                'raised'          => $raised,
+                'replied'         => $replied,
+                'converted'       => $converted,
+                'lost'            => $lost,
+                'sla_breached'    => $slaBreached,
+                'conversion_rate' => $conversionRate,
+                'top_lanes'       => $topLanes,
+                'trend'           => $trend,
+            ];
+        }
+
+        // Sort by raised desc
+        usort($results, fn ($a, $b) => $b['raised'] <=> $a['raised']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $results,
         ]);
     }
 }

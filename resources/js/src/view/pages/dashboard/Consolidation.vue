@@ -6,7 +6,7 @@
             <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
                 <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; flex: 1; min-width: 0;">
-                    <div class="container py-8 px-10">
+                    <div class="container py-8 px-6 px-sm-8 px-md-10">
                         <b-row class="align-items-center mb-8">
                             <b-col cols="12" md="6">
                                 <div class="d-flex flex-column">
@@ -59,7 +59,7 @@
                         </b-row>
                     </div>
                     <hr class="hr" />
-                    <div class="container px-10 pt-6 pb-10">
+                    <div class="container px-6 px-sm-8 px-md-10 pt-6 pb-10">
                     <b-row>
                         <b-col cols="12">
                             <div class="align-items-center">
@@ -147,311 +147,221 @@
                             <b-col cols="12">
                                 <div class="py-5">
                                     <b-tabs content-class="mt-3" class="custom-nav">
-                                        <b-tab title="House Waybill Details">
-                                            <div class="ml-3 mt-8">
-                                                <div class="py-7">
-                                                    <b-row>
-                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
-                                                            <b-form-group id="fieldset-hwb" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-hwb"
-                                                                class="" style="margin-bottom: 7px !important;">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>HWB No:</span>
-                                                                        <span class="text-danger">*</span>
-                                                                    </div>
-                                                                </template>
-                                                                <b-form-input id="input-hwb" class="form-control" style="width:240px;" v-model="form.id" disabled></b-form-input>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
-                                                            <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-destination"
-                                                                class=""
-                                                                style="width:140px;margin-bottom: 7px !important;">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>Origin:</span>
-                                                                        <span class="text-danger">*</span>
-                                                                    </div>
-                                                                </template>
-                                                                <div class="custom-dropdown" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
-                                                                    <input type="text" v-model="form.master_origin" placeholder="Search Origin" id="departure" class="form-control" 
-                                                                        autocomplete="off">
-                                                                    <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
-                                                                        <div v-for="(item, index) in filteredLocations_departure" 
-                                                                            :key="index" 
-                                                                            @click.stop="selectOption_departure(item)" 
-                                                                            class="option">
-                                                                            {{ item.iata_code }} ({{ item.destination }})
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
-                                                            <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto"
-                                                                label-for="input-destination" class="" style="width:140px;margin-bottom: 7px !important;">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>Destination:</span>
-                                                                        <span class="text-danger">*</span>
-                                                                    </div>
-                                                                </template>
-                                                                <div class="custom-dropdown" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
-                                                                    <input type="text" v-model="form.master_destination" placeholder="Search destination" id="destination" class="form-control" 
-                                                                        autocomplete="off">
-                                                                    <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
-                                                                        <div v-for="(item, index) in filteredLocations_destination" 
-                                                                            :key="index" 
-                                                                            @click.stop="selectOption_destination(item)" 
-                                                                            class="option">
-                                                                            {{ item.iata_code }} ({{ item.destination }})
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                    </b-row>
-                                                    <b-row>
-                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
-                                                            <!-- Pieces input -->
-                                                            <b-form-group id="fieldset-hwb" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-hwb"
-                                                                class="" style="margin-bottom: 7px !important;">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>Pieces:</span>
-                                                                        <span class="text-danger">*</span>
-                                                                    </div>
-                                                                </template>
-                                                                <div class="d-flex align-items-center">
-                                                                    <b-form-input id="input-hwb" class="form-control" style="width: 65px;" v-model="form.pieces"></b-form-input>
-                                                                    <span class="px-4">of</span>
-                                                                    <b-form-input id="input-origin" class="form-control" style="width: 65px;" v-model="form.pieces"></b-form-input>
-                                                                </div>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
-                                                            <!-- Weight input -->
-                                                            <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-destination"
-                                                            class=""
-                                                            style="width:140px;margin-bottom: 7px !important;">
-                                                            <template #label>
-                                                                <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                    <span>Weight:</span>
-                                                                    <span class="text-danger">*</span>
-                                                                </div>
-                                                            </template>
-                                                            <b-form-input id="input-destination" class="form-control" v-model="form.gross_weight"></b-form-input>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                        <b-col cols="12" lg="4" class="mb-4 lg-mb-0">
-                                                            <!-- Volume input -->
-                                                            <div class="d-flex">
-                                                            <b-form-group id="fieldset-destination" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-destination"
-                                                                class="" style="margin-bottom: 7px !important;">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>Volume:</span>
-                                                                    </div>
-                                                                </template>
-                                                                <b-form-input id="input-destination" class="form-control" style="width:100px;"></b-form-input>
-                                                            </b-form-group>
-                                                            <b-form-group id="fieldset-horizontal"
-                                                                label-cols-lg="auto" content-cols-sm
-                                                                content-cols-lg="auto" label-for="input-horizontal"
-                                                                class="" style="padding-left:0px !important;">
-                                                                <b-form-select class="form-control"
-                                                                style="width:70px;">
-                                                                    <option value="">cm3</option>
-                                                                    <option value="CC">m3</option>
-                                                                    <option value="CC">ft3</option>
-                                                                    <option value="CC">in3</option>
-                                                                </b-form-select>
-                                                            </b-form-group>
-                                                            </div>
-                                                        </b-col>
-                                                    </b-row>
-                                                    <b-row>
-                                                        <b-col cols="auto">
-                                                            <!-- Nature of Goods input -->
-                                                            <b-form-group id="fieldset-hwb" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-hwb"
-                                                                class="" style="margin-bottom: 7px !important;">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>Nature of Goods:</span>
-                                                                        <span class="text-danger">*</span>
-                                                                    </div>
-                                                                </template>
-                                                                <b-form-input id="input-hwb" class="form-control" style="width:320px;" v-model="form.description"></b-form-input>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                    </b-row>
-                                                    <b-row>
-                                                        <b-col cols="auto">
-                                                            <!-- Handling Codes input -->
-                                                            <b-form-group id="fieldset-horizontal"
-                                                                label-cols-lg="auto" content-cols-sm
-                                                                content-cols-lg="auto" label="Handling Codes:" label-for="input-horizontal"
-                                                                class="">
-                                                                <template #label>
-                                                                    <div style="width: 120px;" class="d-flex justify-content-end">
-                                                                        <span>Handling Codes:</span>
-                                                                    </div>
-                                                                </template>
-                                                                <div class="d-flex align-items-center">
-                                                                    <b-form-select class="form-control" style="width:320px;" v-model="selectedCode">
-                                                                    <option disabled value="">Select Special Handling Codes</option>
-                                                                    <option v-for="code in codes" :key="code.value"
-                                                                        :value="code.value">{{ code.text }}</option>
-                                                                    <option value="">Select Special Handling Codes</option>
-                                                                    </b-form-select>
-                                                                    <span class="px-4">Or:</span>
-                                                                    <b-form-input id="input-origin" class="form-control" style="width:100px;" v-model="custom_special_handling_code"></b-form-input>
-                                                                </div>
-                                                            </b-form-group>
-                                                        </b-col>
-                                                        <b-col cols="auto">
-                                                            <!-- Add button -->
-                                                            <b-button id="show-btn" @click="getHousewayBills('send')" v-b-modal.modal-s class="show-btn ml-2 mr-10"><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b></b-button>
-                                                            <b-button class="show-btn ml-4" @click="addManualCode">Add</b-button>
-                                                        </b-col>
-                                                    </b-row>
-                                                    <b-row>
-                                                        <b-col cols="auto" class="mt-4">
-                                                            <div class="table-responsive-wrapper"><table>
-                                                                <thead>
-                                                                    <tr class="" style="background-color: #F2F9FF;">
-                                                                        <th class="" style="width:400px;font-size: 12px;font-weight:400;padding:4px 0px 4px 6px;">Other Customs Information</th>
-                                                                        <th style="width:50px;">&nbsp;</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <tr v-for="(code, index) in form.tableCodes" :key="index">
-                                                                        <td class="">{{ code }}</td>
-                                                                        <td class=""><b-icon icon="trash" font-scale="1"
-                                                                            @click="deleteSplCode(index)"></b-icon>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table></div>
-                                                        </b-col>
-                                                    </b-row>
-                                                </div>
-                                            </div>
-                                        </b-tab>
-                                        <b-tab title="Other Customs Information">
-                                            <div class="ml-3 mt-8">
-                                                <div class="py-7">
-                                                    <b-row>
-                                                        <b-col cols="auto">
-                                                            <div class="table-responsive-wrapper"><table>
-                                                                <thead>
-                                                                    <tr class="" style="background-color: #F2F9FF;margin-bottom:10px;">
-                                                                        <th class="" style="font-size: 12px;font-weight:400;padding:4px 0px 4px 6px;">Country code:</th>
-                                                                        <th class="" style="font-size: 12px;font-weight:400;">Information identifier:</th>
-                                                                        <th class="" style="font-size: 12px;font-weight:400;">Customs information identifier</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <tr>
-                                                                        <td style="padding: 12px 20px 0px 0px;">
-                                                                            <b-form-group id="fieldset-horizontal">
-                                                                                <b-form-select class="form-control"
-                                                                                style="width:200px;" v-model="oci_info.country_code">
-                                                                                    <option value="">Select a country</option>
-                                                                                    <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                                                        {{ country.text }}
-                                                                                    </option>
-                                                                                </b-form-select>
-                                                                            </b-form-group>
-                                                                        </td>
-                                                                        <td class="editable-cell py-4">
-                                                                            <b-form-group id="fieldset-horizontal"
-                                                                                class="form-control-sm col-form-label"
-                                                                                style="width: 240px;">
-                                                                                <b-form-select class="form-control-sm"
-                                                                                    v-model="oci_info.info_identifier"
-                                                                                    :class="{ 'is-invalid': form.errors.has('info_identifier') }">
-                                                                                    <option value="">Select a code</option>
-                                                                                    <option v-for="oci_option in oci_identifiers.identifiers" 
-                                                                                            :key="oci_option.value" 
-                                                                                            :value="oci_option.value">
-                                                                                        {{ oci_option.text }}
-                                                                                    </option>
-                                                                                    <has-error :form="form" field="info_identifier"></has-error>
-                                                                                </b-form-select>
-                                                                            </b-form-group>
-                                                                        </td>
-                                                                        <td class="editable-cell py-4">
-                                                                            <b-form-group id="fieldset-horizontal"
-                                                                                class="form-control-sm col-form-label"
-                                                                                style="width: 240px;">
-                                                                                <b-form-select class="form-control-sm"
-                                                                                    v-model="oci_info.custom_info_identifier"
-                                                                                    :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
-                                                                                    <option value="">Select a code</option>
-                                                                                    <option v-for="oci_options in oci_data.oci_custom_info_identifier" 
-                                                                                            :key="oci_options.value" :value="oci_options.value">
-                                                                                        {{ oci_options.text }}
-                                                                                    </option>
-                                                                                </b-form-select>
-                                                                                <has-error :form="form"
-                                                                                    field="custom_info_identifier"></has-error>
-                                                                            </b-form-group>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table></div>
-                                                            <div class="d-flex align-items-center pt-4">
-                                                                <div>
-                                                                    <b-form-group id="fieldset-horizontal"
-                                                                        label-cols-lg="auto" content-cols-sm
-                                                                        content-cols-lg="auto" label-for="input-horizontal"
-                                                                        class="d-flex align-items-center" style="">
-                                                                        <template #label>
-                                                                            <span class="d-flex justify-content-center" style="width:210px;">Supplementary information:</span>
-                                                                        </template>
-                                                                        <b-form-input id="input-origin" class="form-control" style="width:350px;" v-model="oci_info.supplementary_info"></b-form-input>
-                                                                    </b-form-group>
-                                                                </div>
-                                                                <div class="d-flex justify-content-end" style="width: 100%;">
-                                                                    <b-button class="show-btn" @click="addOtherCustomInfo">{{ editIndex !== null ? 'Update' : 'Add' }}</b-button>
-                                                                </div>
-                                                            </div>
-                                                        </b-col>
-                                                    </b-row>
-                                                    <b-row>
-                                                        <b-col cols="auto" class="mt-4">
-                                                            <div class="table-responsive-wrapper"><table>
-                                                                <thead>
-                                                                    <tr class="" style="background-color: #F2F9FF;">
-                                                                        <th class="" style="width:240px;font-size: 12px;font-weight:400;padding:4px 0px 4px 6px;">Other Customs Information</th>
-                                                                        <th style="width:180px;">&nbsp;</th>
-                                                                        <th style="width:180px;">&nbsp;</th>
-                                                                        <th style="width:180px;">&nbsp;</th>
-                                                                        <th style="width:60px;">&nbsp;</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <tr v-for="(row, index) in form.oci_entries" :key="index">
-                                                                        <td><p class="pl-2">{{ row.country_code }}</p></td>
-                                                                        <td><p>{{ row.info_identifier }}</p></td>
-                                                                        <td><p>{{ row.custom_info_identifier }}</p></td>
-                                                                        <td><p>{{ row.supplementary_info }}</p></td>
-                                                                        <td><p v-if="row.country_code && row.info_identifier && row.custom_info_identifier && row.supplementary_info"> 
-                                                                            <b-icon icon="pencil" font-scale="1" class="mr-2" style="cursor: pointer;" @click="editOciInfo(index)"></b-icon>
-                                                                            <b-icon icon="trash" font-scale="1" @click="deleteOciInfo(index)"></b-icon>
-                                                                        </p></td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table></div>
-                                                        </b-col>
-                                                    </b-row>
-                                                </div>
-                                            </div>
-                                        </b-tab>
-                                    </b-tabs>
+                                         <b-tab title="House Waybill Details">
+                                             <div class="ml-3 mt-8">
+                                                 <div class="py-7">
+                                                     <b-row>
+                                                         <!-- Row 1: HWB No, Origin, Destination -->
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">HWB No <span class="text-danger">*</span></label>
+                                                             <b-form-input id="input-hwb" class="form-control" v-model="form.id" disabled></b-form-input>
+                                                         </b-col>
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Origin <span class="text-danger">*</span></label>
+                                                             <div class="custom-dropdown" ref="dropdownContainer_departure" @click="toggleDropdown_departure">
+                                                                 <input type="text" v-model="form.master_origin" placeholder="Search Origin" id="departure" class="form-control" autocomplete="off">
+                                                                 <div v-if="isDropdownOpen_departure && filteredLocations_departure.length" class="dropdown-options">
+                                                                     <div v-for="(item, index) in filteredLocations_departure" 
+                                                                         :key="index" 
+                                                                         @click.stop="selectOption_departure(item)" 
+                                                                         class="option">
+                                                                         {{ item.iata_code }} ({{ item.destination }})
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+                                                         </b-col>
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Destination <span class="text-danger">*</span></label>
+                                                             <div class="custom-dropdown" ref="dropdownContainer_destination" @click="toggleDropdown_destination">
+                                                                 <input type="text" v-model="form.master_destination" placeholder="Search destination" id="destination" class="form-control" autocomplete="off">
+                                                                 <div v-if="isDropdownOpen_destination && filteredLocations_destination.length" class="dropdown-options">
+                                                                     <div v-for="(item, index) in filteredLocations_destination" 
+                                                                         :key="index" 
+                                                                         @click.stop="selectOption_destination(item)" 
+                                                                         class="option">
+                                                                         {{ item.iata_code }} ({{ item.destination }})
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+                                                         </b-col>
+                                                     </b-row>
+                                                     <b-row>
+                                                         <!-- Row 2: Pieces, Weight, Volume -->
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Pieces <span class="text-danger">*</span></label>
+                                                             <div class="d-flex align-items-center">
+                                                                 <b-form-input id="input-pieces-1" class="form-control" style="width: 80px;" v-model="form.pieces"></b-form-input>
+                                                                 <span class="px-3 text-muted">of</span>
+                                                                 <b-form-input id="input-pieces-2" class="form-control" style="width: 80px;" v-model="form.pieces"></b-form-input>
+                                                             </div>
+                                                         </b-col>
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Weight <span class="text-danger">*</span></label>
+                                                             <b-form-input id="input-weight" class="form-control" v-model="form.gross_weight"></b-form-input>
+                                                         </b-col>
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Volume</label>
+                                                             <div class="d-flex align-items-center">
+                                                                 <b-form-input id="input-volume" class="form-control mr-2" style="flex: 1;"></b-form-input>
+                                                                 <b-form-select class="form-control" style="width: 90px;">
+                                                                     <option value="">cm3</option>
+                                                                     <option value="CC">m3</option>
+                                                                     <option value="CC">ft3</option>
+                                                                     <option value="CC">in3</option>
+                                                                 </b-form-select>
+                                                             </div>
+                                                         </b-col>
+                                                     </b-row>
+                                                     <b-row>
+                                                         <!-- Row 3: Nature of Goods -->
+                                                         <b-col cols="12" class="mb-4">
+                                                             <label class="premium-field-label">Nature of Goods <span class="text-danger">*</span></label>
+                                                             <b-form-input id="input-goods" class="form-control" v-model="form.description"></b-form-input>
+                                                         </b-col>
+                                                     </b-row>
+                                                     <b-row class="align-items-end">
+                                                         <!-- Row 4: Handling Codes selection -->
+                                                         <b-col cols="12" md="6" class="mb-4">
+                                                             <label class="premium-field-label">Handling Codes</label>
+                                                             <div class="d-flex align-items-center">
+                                                                 <b-form-select class="form-control mr-2" style="flex: 1;" v-model="selectedCode">
+                                                                     <option disabled value="">Select Special Handling Codes</option>
+                                                                     <option v-for="code in codes" :key="code.value" :value="code.value">{{ code.text }}</option>
+                                                                     <option value="">Select Special Handling Codes</option>
+                                                                 </b-form-select>
+                                                                 <span class="px-2 text-muted">Or</span>
+                                                                 <b-form-input id="input-custom-handling" class="form-control ml-2" style="width: 120px;" placeholder="Custom Code" v-model="custom_special_handling_code"></b-form-input>
+                                                             </div>
+                                                         </b-col>
+                                                         <b-col cols="12" md="6" class="mb-4 d-flex justify-content-start" style="gap: 12px;">
+                                                             <b-button class="show-btn" @click="addManualCode">
+                                                                 <b-icon icon="plus-circle" class="mr-1"></b-icon> Add Code
+                                                             </b-button>
+                                                             <b-button @click.prevent="getHousewayBills('send')" v-b-modal.modal-s class="btn btn-outline-secondary" style="border-radius: 10px; height: 38px; font-weight: 500;">
+                                                                 <b-icon icon="clock-history" class="mr-1"></b-icon> 10 Latest
+                                                             </b-button>
+                                                         </b-col>
+                                                     </b-row>
+                                                     <b-row>
+                                                         <!-- Row 5: Table of handling codes -->
+                                                         <b-col cols="12" class="mt-4">
+                                                             <div class="table-responsive-wrapper">
+                                                                 <table class="table table-bordered table-hover" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; border-collapse: separate; border-spacing: 0;">
+                                                                     <thead>
+                                                                         <tr style="background-color: #F8FAFC;">
+                                                                             <th class="font-weight-bold py-3 px-4" style="color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Special Handling Codes</th>
+                                                                             <th class="text-center font-weight-bold py-3 px-4" style="width: 100px; color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Action</th>
+                                                                         </tr>
+                                                                     </thead>
+                                                                     <tbody>
+                                                                         <tr v-if="!form.tableCodes || form.tableCodes.length === 0">
+                                                                             <td colspan="2" class="text-center text-muted py-4">No special handling codes added yet.</td>
+                                                                         </tr>
+                                                                         <tr v-for="(code, index) in form.tableCodes" :key="index">
+                                                                             <td class="py-3 px-4" style="color: #1E293B; font-weight: 500;">{{ code }}</td>
+                                                                             <td class="text-center py-2 px-4">
+                                                                                 <b-button variant="flat" size="sm" class="text-danger p-1" @click="deleteSplCode(index)" style="background: transparent; border: none;">
+                                                                                     <b-icon icon="trash" font-scale="1.2"></b-icon>
+                                                                                 </b-button>
+                                                                             </td>
+                                                                         </tr>
+                                                                     </tbody>
+                                                                 </table>
+                                                             </div>
+                                                         </b-col>
+                                                     </b-row>
+                                                 </div>
+                                             </div>
+                                         </b-tab>
+                                         <b-tab title="Other Customs Information">
+                                             <div class="ml-3 mt-8">
+                                                 <div class="py-7">
+                                                     <b-row>
+                                                         <!-- Row 1: Country Code, Info Identifier, Customs Info Identifier -->
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Country Code</label>
+                                                             <b-form-select class="form-control" v-model="oci_info.country_code">
+                                                                 <option value="">Select a country</option>
+                                                                 <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                                     {{ country.text }}
+                                                                 </option>
+                                                             </b-form-select>
+                                                         </b-col>
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Information Identifier</label>
+                                                             <b-form-select class="form-control" v-model="oci_info.info_identifier" :class="{ 'is-invalid': form.errors.has('info_identifier') }">
+                                                                 <option value="">Select a code</option>
+                                                                 <option v-for="oci_option in oci_identifiers.identifiers" :key="oci_option.value" :value="oci_option.value">
+                                                                     {{ oci_option.text }}
+                                                                 </option>
+                                                             </b-form-select>
+                                                             <has-error :form="form" field="info_identifier"></has-error>
+                                                         </b-col>
+                                                         <b-col cols="12" md="4" class="mb-4">
+                                                             <label class="premium-field-label">Customs Information Identifier</label>
+                                                             <b-form-select class="form-control" v-model="oci_info.custom_info_identifier" :class="{ 'is-invalid': form.errors.has('custom_info_identifier') }">
+                                                                 <option value="">Select a code</option>
+                                                                 <option v-for="oci_options in oci_data.oci_custom_info_identifier" :key="oci_options.value" :value="oci_options.value">
+                                                                     {{ oci_options.text }}
+                                                                 </option>
+                                                             </b-form-select>
+                                                             <has-error :form="form" field="custom_info_identifier"></has-error>
+                                                         </b-col>
+                                                     </b-row>
+                                                     <b-row class="row-gap-3 align-items-end">
+                                                         <!-- Row 2: Supplementary Info & Button -->
+                                                         <b-col cols="12" md="9" class="mb-4">
+                                                             <label class="premium-field-label">Supplementary Information</label>
+                                                             <b-form-input id="input-supplementary" class="form-control" v-model="oci_info.supplementary_info"></b-form-input>
+                                                         </b-col>
+                                                         <b-col cols="12" md="3" class="mb-4 d-flex justify-content-md-end">
+                                                             <b-button class="show-btn btn-block" @click="addOtherCustomInfo" style="height: 38px;">
+                                                                 <b-icon :icon="editIndex !== null ? 'check-circle' : 'plus-circle'" class="mr-1"></b-icon>
+                                                                 {{ editIndex !== null ? 'Update OCI' : 'Add OCI' }}
+                                                             </b-button>
+                                                         </b-col>
+                                                     </b-row>
+                                                     <b-row>
+                                                         <!-- Row 3: OCI Table entries -->
+                                                         <b-col cols="12" class="mt-4">
+                                                             <div class="table-responsive-wrapper">
+                                                                 <table class="table table-bordered table-hover" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; border-collapse: separate; border-spacing: 0;">
+                                                                     <thead>
+                                                                         <tr style="background-color: #F8FAFC;">
+                                                                             <th class="font-weight-bold py-3 px-4" style="color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Country Code</th>
+                                                                             <th class="font-weight-bold py-3 px-4" style="color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Info Identifier</th>
+                                                                             <th class="font-weight-bold py-3 px-4" style="color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Customs Info Identifier</th>
+                                                                             <th class="font-weight-bold py-3 px-4" style="color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Supplementary Info</th>
+                                                                             <th class="text-center font-weight-bold py-3 px-4" style="width: 120px; color: #475569; font-size: 13px; border-bottom: 2px solid #E2E8F0;">Action</th>
+                                                                         </tr>
+                                                                     </thead>
+                                                                     <tbody>
+                                                                         <tr v-if="!form.oci_entries || form.oci_entries.length === 0">
+                                                                             <td colspan="5" class="text-center text-muted py-4">No custom information entries added yet.</td>
+                                                                         </tr>
+                                                                         <tr v-for="(row, index) in form.oci_entries" :key="index">
+                                                                             <td class="py-3 px-4" style="color: #1E293B; font-weight: 500;">{{ row.country_code }}</td>
+                                                                             <td class="py-3 px-4" style="color: #1E293B; font-weight: 500;">{{ row.info_identifier }}</td>
+                                                                             <td class="py-3 px-4" style="color: #1E293B; font-weight: 500;">{{ row.custom_info_identifier }}</td>
+                                                                             <td class="py-3 px-4" style="color: #1E293B; font-weight: 500;">{{ row.supplementary_info }}</td>
+                                                                             <td class="text-center py-2 px-4">
+                                                                                 <b-button variant="flat" size="sm" class="text-primary p-1 mr-2" @click="editOciInfo(index)" style="background: transparent; border: none;">
+                                                                                     <b-icon icon="pencil" font-scale="1.2"></b-icon>
+                                                                                 </b-button>
+                                                                                 <b-button variant="flat" size="sm" class="text-danger p-1" @click="deleteOciInfo(index)" style="background: transparent; border: none;">
+                                                                                     <b-icon icon="trash" font-scale="1.2"></b-icon>
+                                                                                 </b-button>
+                                                                             </td>
+                                                                         </tr>
+                                                                     </tbody>
+                                                                 </table>
+                                                             </div>
+                                                         </b-col>
+                                                     </b-row>
+                                                 </div>
+                                             </div>
+                                         </b-tab>
+                                     </b-tabs>
                                 </div>
                             </b-col>
                         </b-row>
@@ -1771,17 +1681,53 @@ th {
     }
     .custom-nav .nav-tabs {
         border-bottom: 0px !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        gap: 4px;
+        background: #F1F5F9;
+        padding: 6px;
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        width: 100% !important;
+    }
+    .custom-nav .nav-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+    .custom-nav .nav-item {
+        flex: 0 0 auto !important;
     }
     .custom-nav .nav-link {
-        color: #355594 !important;
-        font-weight: 400 !important;
-        font-size: 12px !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
         border: none !important;
-        padding: 0px !important;
-        margin: 0px 10px !important;
+        padding: 8px 16px !important;
+        margin: 0px !important;
+        border-radius: 10px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        white-space: nowrap !important;
     }
-    .custom-nav .nav-link:hover,
+    .custom-nav .nav-link:hover {
+        color: #355594 !important;
+        background: rgba(53, 85, 148, 0.05) !important;
+    }
     .custom-nav .nav-link.active {
-        border-bottom: 2px solid #355594 !important;
+        color: #355594 !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(53, 85, 148, 0.08) !important;
+        border-bottom: none !important;
+    }
+    .premium-field-label {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        color: #355594 !important;
+        margin-bottom: 6px !important;
+        display: block !important;
     }
 </style>

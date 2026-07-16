@@ -960,7 +960,7 @@ var render = function render() {
       "min-width": "0"
     }
   }, [_c("div", {
-    staticClass: "container py-8 px-10"
+    staticClass: "container py-8 px-6 px-sm-8 px-md-10"
   }, [_c("b-row", {
     staticClass: "align-items-center mb-8"
   }, [_c("b-col", {
@@ -1112,7 +1112,7 @@ var render = function render() {
   })], 1)], 1), _vm._v(" "), _c("hr", {
     staticClass: "hr"
   }), _vm._v(" "), _c("div", {
-    staticClass: "container px-10 pt-6 pb-10"
+    staticClass: "container px-6 px-sm-8 px-md-10 pt-6 pb-10"
   }, [_c("b-row", [_c("b-col", {
     attrs: {
       cols: "12"
@@ -1290,41 +1290,17 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "py-7"
   }, [_c("b-row", [_c("b-col", {
-    staticClass: "mb-4 lg-mb-0",
+    staticClass: "mb-4",
     attrs: {
       cols: "12",
-      lg: "4"
+      md: "4"
     }
-  }, [_c("b-form-group", {
-    staticStyle: {
-      "margin-bottom": "7px !important"
-    },
-    attrs: {
-      id: "fieldset-hwb",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-hwb"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("HWB No:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("*")])])];
-      },
-      proxy: true
-    }], null, false, 455423582)
-  }, [_vm._v(" "), _c("b-form-input", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("HWB No "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("b-form-input", {
     staticClass: "form-control",
-    staticStyle: {
-      width: "240px"
-    },
     attrs: {
       id: "input-hwb",
       disabled: ""
@@ -1336,39 +1312,17 @@ var render = function render() {
       },
       expression: "form.id"
     }
-  })], 1)], 1), _vm._v(" "), _c("b-col", {
-    staticClass: "mb-4 lg-mb-0",
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4",
     attrs: {
       cols: "12",
-      lg: "4"
+      md: "4"
     }
-  }, [_c("b-form-group", {
-    staticStyle: {
-      width: "140px",
-      "margin-bottom": "7px !important"
-    },
-    attrs: {
-      id: "fieldset-destination",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-destination"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Origin:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("*")])])];
-      },
-      proxy: true
-    }], null, false, 2902117782)
-  }, [_vm._v(" "), _c("div", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Origin "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("div", {
     ref: "dropdownContainer_departure",
     staticClass: "custom-dropdown",
     on: {
@@ -1409,40 +1363,18 @@ var render = function render() {
           return _vm.selectOption_departure(item);
         }
       }
-    }, [_vm._v("\n                                                                        " + _vm._s(item.iata_code) + " (" + _vm._s(item.destination) + ")\n                                                                    ")]);
-  }), 0) : _vm._e()])])], 1), _vm._v(" "), _c("b-col", {
-    staticClass: "mb-4 lg-mb-0",
+    }, [_vm._v("\n                                                                     " + _vm._s(item.iata_code) + " (" + _vm._s(item.destination) + ")\n                                                                 ")]);
+  }), 0) : _vm._e()])]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4",
     attrs: {
       cols: "12",
-      lg: "4"
+      md: "4"
     }
-  }, [_c("b-form-group", {
-    staticStyle: {
-      width: "140px",
-      "margin-bottom": "7px !important"
-    },
-    attrs: {
-      id: "fieldset-destination",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-destination"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Destination:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("*")])])];
-      },
-      proxy: true
-    }], null, false, 126435966)
-  }, [_vm._v(" "), _c("div", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Destination "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("div", {
     ref: "dropdownContainer_destination",
     staticClass: "custom-dropdown",
     on: {
@@ -1483,47 +1415,26 @@ var render = function render() {
           return _vm.selectOption_destination(item);
         }
       }
-    }, [_vm._v("\n                                                                        " + _vm._s(item.iata_code) + " (" + _vm._s(item.destination) + ")\n                                                                    ")]);
-  }), 0) : _vm._e()])])], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
-    staticClass: "mb-4 lg-mb-0",
+    }, [_vm._v("\n                                                                     " + _vm._s(item.iata_code) + " (" + _vm._s(item.destination) + ")\n                                                                 ")]);
+  }), 0) : _vm._e()])])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+    staticClass: "mb-4",
     attrs: {
       cols: "12",
-      lg: "4"
+      md: "4"
     }
-  }, [_c("b-form-group", {
-    staticStyle: {
-      "margin-bottom": "7px !important"
-    },
-    attrs: {
-      id: "fieldset-hwb",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-hwb"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Pieces:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("*")])])];
-      },
-      proxy: true
-    }], null, false, 1508117803)
-  }, [_vm._v(" "), _c("div", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Pieces "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center"
   }, [_c("b-form-input", {
     staticClass: "form-control",
     staticStyle: {
-      width: "65px"
+      width: "80px"
     },
     attrs: {
-      id: "input-hwb"
+      id: "input-pieces-1"
     },
     model: {
       value: _vm.form.pieces,
@@ -1533,14 +1444,14 @@ var render = function render() {
       expression: "form.pieces"
     }
   }), _vm._v(" "), _c("span", {
-    staticClass: "px-4"
+    staticClass: "px-3 text-muted"
   }, [_vm._v("of")]), _vm._v(" "), _c("b-form-input", {
     staticClass: "form-control",
     staticStyle: {
-      width: "65px"
+      width: "80px"
     },
     attrs: {
-      id: "input-origin"
+      id: "input-pieces-2"
     },
     model: {
       value: _vm.form.pieces,
@@ -1549,42 +1460,20 @@ var render = function render() {
       },
       expression: "form.pieces"
     }
-  })], 1)])], 1), _vm._v(" "), _c("b-col", {
-    staticClass: "mb-4 lg-mb-0",
+  })], 1)]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4",
     attrs: {
       cols: "12",
-      lg: "4"
+      md: "4"
     }
-  }, [_c("b-form-group", {
-    staticStyle: {
-      width: "140px",
-      "margin-bottom": "7px !important"
-    },
-    attrs: {
-      id: "fieldset-destination",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-destination"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Weight:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("*")])])];
-      },
-      proxy: true
-    }], null, false, 1714158946)
-  }, [_vm._v(" "), _c("b-form-input", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Weight "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("b-form-input", {
     staticClass: "form-control",
     attrs: {
-      id: "input-destination"
+      id: "input-weight"
     },
     model: {
       value: _vm.form.gross_weight,
@@ -1593,60 +1482,28 @@ var render = function render() {
       },
       expression: "form.gross_weight"
     }
-  })], 1)], 1), _vm._v(" "), _c("b-col", {
-    staticClass: "mb-4 lg-mb-0",
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4",
     attrs: {
       cols: "12",
-      lg: "4"
+      md: "4"
     }
-  }, [_c("div", {
-    staticClass: "d-flex"
-  }, [_c("b-form-group", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Volume")]), _vm._v(" "), _c("div", {
+    staticClass: "d-flex align-items-center"
+  }, [_c("b-form-input", {
+    staticClass: "form-control mr-2",
     staticStyle: {
-      "margin-bottom": "7px !important"
+      flex: "1"
     },
     attrs: {
-      id: "fieldset-destination",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-destination"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Volume:")])])];
-      },
-      proxy: true
-    }], null, false, 1487785878)
-  }, [_vm._v(" "), _c("b-form-input", {
+      id: "input-volume"
+    }
+  }), _vm._v(" "), _c("b-form-select", {
     staticClass: "form-control",
     staticStyle: {
-      width: "100px"
-    },
-    attrs: {
-      id: "input-destination"
-    }
-  })], 1), _vm._v(" "), _c("b-form-group", {
-    staticStyle: {
-      "padding-left": "0px !important"
-    },
-    attrs: {
-      id: "fieldset-horizontal",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-horizontal"
-    }
-  }, [_c("b-form-select", {
-    staticClass: "form-control",
-    staticStyle: {
-      width: "70px"
+      width: "90px"
     }
   }, [_c("option", {
     attrs: {
@@ -1664,42 +1521,19 @@ var render = function render() {
     attrs: {
       value: "CC"
     }
-  }, [_vm._v("in3")])])], 1)], 1)])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }, [_vm._v("in3")])])], 1)])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+    staticClass: "mb-4",
     attrs: {
-      cols: "auto"
+      cols: "12"
     }
-  }, [_c("b-form-group", {
-    staticStyle: {
-      "margin-bottom": "7px !important"
-    },
-    attrs: {
-      id: "fieldset-hwb",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-hwb"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Nature of Goods:")]), _vm._v(" "), _c("span", {
-          staticClass: "text-danger"
-        }, [_vm._v("*")])])];
-      },
-      proxy: true
-    }], null, false, 2567505954)
-  }, [_vm._v(" "), _c("b-form-input", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Nature of Goods "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("b-form-input", {
     staticClass: "form-control",
-    staticStyle: {
-      width: "320px"
-    },
     attrs: {
-      id: "input-hwb"
+      id: "input-goods"
     },
     model: {
       value: _vm.form.description,
@@ -1708,37 +1542,22 @@ var render = function render() {
       },
       expression: "form.description"
     }
-  })], 1)], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  })], 1)], 1), _vm._v(" "), _c("b-row", {
+    staticClass: "align-items-end"
+  }, [_c("b-col", {
+    staticClass: "mb-4",
     attrs: {
-      cols: "auto"
+      cols: "12",
+      md: "6"
     }
-  }, [_c("b-form-group", {
-    attrs: {
-      id: "fieldset-horizontal",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      label: "Handling Codes:",
-      "label-for": "input-horizontal"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("div", {
-          staticClass: "d-flex justify-content-end",
-          staticStyle: {
-            width: "120px"
-          }
-        }, [_c("span", [_vm._v("Handling Codes:")])])];
-      },
-      proxy: true
-    }], null, false, 1333459279)
-  }, [_vm._v(" "), _c("div", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Handling Codes")]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center"
   }, [_c("b-form-select", {
-    staticClass: "form-control",
+    staticClass: "form-control mr-2",
     staticStyle: {
-      width: "320px"
+      flex: "1"
     },
     model: {
       value: _vm.selectedCode,
@@ -1764,14 +1583,15 @@ var render = function render() {
       value: ""
     }
   }, [_vm._v("Select Special Handling Codes")])], 2), _vm._v(" "), _c("span", {
-    staticClass: "px-4"
-  }, [_vm._v("Or:")]), _vm._v(" "), _c("b-form-input", {
-    staticClass: "form-control",
+    staticClass: "px-2 text-muted"
+  }, [_vm._v("Or")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "form-control ml-2",
     staticStyle: {
-      width: "100px"
+      width: "120px"
     },
     attrs: {
-      id: "input-origin"
+      id: "input-custom-handling",
+      placeholder: "Custom Code"
     },
     model: {
       value: _vm.custom_special_handling_code,
@@ -1780,11 +1600,26 @@ var render = function render() {
       },
       expression: "custom_special_handling_code"
     }
-  })], 1)])], 1), _vm._v(" "), _c("b-col", {
+  })], 1)]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 d-flex justify-content-start",
+    staticStyle: {
+      gap: "12px"
+    },
     attrs: {
-      cols: "auto"
+      cols: "12",
+      md: "6"
     }
   }, [_c("b-button", {
+    staticClass: "show-btn",
+    on: {
+      click: _vm.addManualCode
+    }
+  }, [_c("b-icon", {
+    staticClass: "mr-1",
+    attrs: {
+      icon: "plus-circle"
+    }
+  }), _vm._v(" Add Code\n                                                         ")], 1), _vm._v(" "), _c("b-button", {
     directives: [{
       name: "b-modal",
       rawName: "v-b-modal.modal-s",
@@ -1792,62 +1627,96 @@ var render = function render() {
         "modal-s": true
       }
     }],
-    staticClass: "show-btn ml-2 mr-10",
-    attrs: {
-      id: "show-btn"
+    staticClass: "btn btn-outline-secondary",
+    staticStyle: {
+      "border-radius": "10px",
+      height: "38px",
+      "font-weight": "500"
     },
     on: {
       click: function click($event) {
+        $event.preventDefault();
         return _vm.getHousewayBills("send");
       }
     }
-  }, [_c("b", {
-    staticClass: "font-weight-bolder",
-    staticStyle: {
-      "font-size": "1.05rem"
+  }, [_c("b-icon", {
+    staticClass: "mr-1",
+    attrs: {
+      icon: "clock-history"
     }
-  }, [_vm._v("10 Latest")])]), _vm._v(" "), _c("b-button", {
-    staticClass: "show-btn ml-4",
-    on: {
-      click: _vm.addManualCode
-    }
-  }, [_vm._v("Add")])], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }), _vm._v(" 10 Latest\n                                                         ")], 1)], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mt-4",
     attrs: {
-      cols: "auto"
+      cols: "12"
     }
   }, [_c("div", {
     staticClass: "table-responsive-wrapper"
-  }, [_c("table", [_c("thead", [_c("tr", {
+  }, [_c("table", {
+    staticClass: "table table-bordered table-hover",
     staticStyle: {
-      "background-color": "#F2F9FF"
+      "background-color": "#ffffff",
+      "border-radius": "12px",
+      overflow: "hidden",
+      "border-collapse": "separate",
+      "border-spacing": "0"
+    }
+  }, [_c("thead", [_c("tr", {
+    staticStyle: {
+      "background-color": "#F8FAFC"
     }
   }, [_c("th", {
+    staticClass: "font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "400px",
-      "font-size": "12px",
-      "font-weight": "400",
-      padding: "4px 0px 4px 6px"
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v("Other Customs Information")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Special Handling Codes")]), _vm._v(" "), _c("th", {
+    staticClass: "text-center font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "50px"
+      width: "100px",
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v(" ")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.form.tableCodes, function (code, index) {
+  }, [_vm._v("Action")])])]), _vm._v(" "), _c("tbody", [!_vm.form.tableCodes || _vm.form.tableCodes.length === 0 ? _c("tr", [_c("td", {
+    staticClass: "text-center text-muted py-4",
+    attrs: {
+      colspan: "2"
+    }
+  }, [_vm._v("No special handling codes added yet.")])]) : _vm._e(), _vm._v(" "), _vm._l(_vm.form.tableCodes, function (code, index) {
     return _c("tr", {
       key: index
-    }, [_c("td", {}, [_vm._v(_vm._s(code))]), _vm._v(" "), _c("td", {}, [_c("b-icon", {
+    }, [_c("td", {
+      staticClass: "py-3 px-4",
+      staticStyle: {
+        color: "#1E293B",
+        "font-weight": "500"
+      }
+    }, [_vm._v(_vm._s(code))]), _vm._v(" "), _c("td", {
+      staticClass: "text-center py-2 px-4"
+    }, [_c("b-button", {
+      staticClass: "text-danger p-1",
+      staticStyle: {
+        background: "transparent",
+        border: "none"
+      },
       attrs: {
-        icon: "trash",
-        "font-scale": "1"
+        variant: "flat",
+        size: "sm"
       },
       on: {
         click: function click($event) {
           return _vm.deleteSplCode(index);
         }
       }
-    })], 1)]);
-  }), 0)])])])], 1)], 1)])]), _vm._v(" "), _c("b-tab", {
+    }, [_c("b-icon", {
+      attrs: {
+        icon: "trash",
+        "font-scale": "1.2"
+      }
+    })], 1)], 1)]);
+  })], 2)])])])], 1)], 1)])]), _vm._v(" "), _c("b-tab", {
     attrs: {
       title: "Other Customs Information"
     }
@@ -1856,45 +1725,15 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "py-7"
   }, [_c("b-row", [_c("b-col", {
+    staticClass: "mb-4",
     attrs: {
-      cols: "auto"
+      cols: "12",
+      md: "4"
     }
-  }, [_c("div", {
-    staticClass: "table-responsive-wrapper"
-  }, [_c("table", [_c("thead", [_c("tr", {
-    staticStyle: {
-      "background-color": "#F2F9FF",
-      "margin-bottom": "10px"
-    }
-  }, [_c("th", {
-    staticStyle: {
-      "font-size": "12px",
-      "font-weight": "400",
-      padding: "4px 0px 4px 6px"
-    }
-  }, [_vm._v("Country code:")]), _vm._v(" "), _c("th", {
-    staticStyle: {
-      "font-size": "12px",
-      "font-weight": "400"
-    }
-  }, [_vm._v("Information identifier:")]), _vm._v(" "), _c("th", {
-    staticStyle: {
-      "font-size": "12px",
-      "font-weight": "400"
-    }
-  }, [_vm._v("Customs information identifier")])])]), _vm._v(" "), _c("tbody", [_c("tr", [_c("td", {
-    staticStyle: {
-      padding: "12px 20px 0px 0px"
-    }
-  }, [_c("b-form-group", {
-    attrs: {
-      id: "fieldset-horizontal"
-    }
-  }, [_c("b-form-select", {
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Country Code")]), _vm._v(" "), _c("b-form-select", {
     staticClass: "form-control",
-    staticStyle: {
-      width: "200px"
-    },
     model: {
       value: _vm.oci_info.country_code,
       callback: function callback($$v) {
@@ -1912,19 +1751,17 @@ var render = function render() {
       domProps: {
         value: country.value
       }
-    }, [_vm._v("\n                                                                                    " + _vm._s(country.text) + "\n                                                                                ")]);
-  })], 2)], 1)], 1), _vm._v(" "), _c("td", {
-    staticClass: "editable-cell py-4"
-  }, [_c("b-form-group", {
-    staticClass: "form-control-sm col-form-label",
-    staticStyle: {
-      width: "240px"
-    },
+    }, [_vm._v("\n                                                                 " + _vm._s(country.text) + "\n                                                             ")]);
+  })], 2)], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4",
     attrs: {
-      id: "fieldset-horizontal"
+      cols: "12",
+      md: "4"
     }
-  }, [_c("b-form-select", {
-    staticClass: "form-control-sm",
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Information Identifier")]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "form-control",
     "class": {
       "is-invalid": _vm.form.errors.has("info_identifier")
     },
@@ -1945,24 +1782,22 @@ var render = function render() {
       domProps: {
         value: oci_option.value
       }
-    }, [_vm._v("\n                                                                                    " + _vm._s(oci_option.text) + "\n                                                                                ")]);
-  }), _vm._v(" "), _c("has-error", {
+    }, [_vm._v("\n                                                                 " + _vm._s(oci_option.text) + "\n                                                             ")]);
+  })], 2), _vm._v(" "), _c("has-error", {
     attrs: {
       form: _vm.form,
       field: "info_identifier"
     }
-  })], 2)], 1)], 1), _vm._v(" "), _c("td", {
-    staticClass: "editable-cell py-4"
-  }, [_c("b-form-group", {
-    staticClass: "form-control-sm col-form-label",
-    staticStyle: {
-      width: "240px"
-    },
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4",
     attrs: {
-      id: "fieldset-horizontal"
+      cols: "12",
+      md: "4"
     }
-  }, [_c("b-form-select", {
-    staticClass: "form-control-sm",
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Customs Information Identifier")]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "form-control",
     "class": {
       "is-invalid": _vm.form.errors.has("custom_info_identifier")
     },
@@ -1983,42 +1818,26 @@ var render = function render() {
       domProps: {
         value: oci_options.value
       }
-    }, [_vm._v("\n                                                                                    " + _vm._s(oci_options.text) + "\n                                                                                ")]);
+    }, [_vm._v("\n                                                                 " + _vm._s(oci_options.text) + "\n                                                             ")]);
   })], 2), _vm._v(" "), _c("has-error", {
     attrs: {
       form: _vm.form,
       field: "custom_info_identifier"
     }
-  })], 1)], 1)])])])]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex align-items-center pt-4"
-  }, [_c("div", [_c("b-form-group", {
-    staticClass: "d-flex align-items-center",
+  })], 1)], 1), _vm._v(" "), _c("b-row", {
+    staticClass: "row-gap-3 align-items-end"
+  }, [_c("b-col", {
+    staticClass: "mb-4",
     attrs: {
-      id: "fieldset-horizontal",
-      "label-cols-lg": "auto",
-      "content-cols-sm": "",
-      "content-cols-lg": "auto",
-      "label-for": "input-horizontal"
-    },
-    scopedSlots: _vm._u([{
-      key: "label",
-      fn: function fn() {
-        return [_c("span", {
-          staticClass: "d-flex justify-content-center",
-          staticStyle: {
-            width: "210px"
-          }
-        }, [_vm._v("Supplementary information:")])];
-      },
-      proxy: true
-    }], null, false, 1384796813)
-  }, [_vm._v(" "), _c("b-form-input", {
+      cols: "12",
+      md: "9"
+    }
+  }, [_c("label", {
+    staticClass: "premium-field-label"
+  }, [_vm._v("Supplementary Information")]), _vm._v(" "), _c("b-form-input", {
     staticClass: "form-control",
-    staticStyle: {
-      width: "350px"
-    },
     attrs: {
-      id: "input-origin"
+      id: "input-supplementary"
     },
     model: {
       value: _vm.oci_info.supplementary_info,
@@ -2027,81 +1846,157 @@ var render = function render() {
       },
       expression: "oci_info.supplementary_info"
     }
-  })], 1)], 1), _vm._v(" "), _c("div", {
-    staticClass: "d-flex justify-content-end",
-    staticStyle: {
-      width: "100%"
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 d-flex justify-content-md-end",
+    attrs: {
+      cols: "12",
+      md: "3"
     }
   }, [_c("b-button", {
-    staticClass: "show-btn",
+    staticClass: "show-btn btn-block",
+    staticStyle: {
+      height: "38px"
+    },
     on: {
       click: _vm.addOtherCustomInfo
     }
-  }, [_vm._v(_vm._s(_vm.editIndex !== null ? "Update" : "Add"))])], 1)])])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+  }, [_c("b-icon", {
+    staticClass: "mr-1",
+    attrs: {
+      icon: _vm.editIndex !== null ? "check-circle" : "plus-circle"
+    }
+  }), _vm._v("\n                                                             " + _vm._s(_vm.editIndex !== null ? "Update OCI" : "Add OCI") + "\n                                                         ")], 1)], 1)], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mt-4",
     attrs: {
-      cols: "auto"
+      cols: "12"
     }
   }, [_c("div", {
     staticClass: "table-responsive-wrapper"
-  }, [_c("table", [_c("thead", [_c("tr", {
+  }, [_c("table", {
+    staticClass: "table table-bordered table-hover",
     staticStyle: {
-      "background-color": "#F2F9FF"
+      "background-color": "#ffffff",
+      "border-radius": "12px",
+      overflow: "hidden",
+      "border-collapse": "separate",
+      "border-spacing": "0"
+    }
+  }, [_c("thead", [_c("tr", {
+    staticStyle: {
+      "background-color": "#F8FAFC"
     }
   }, [_c("th", {
+    staticClass: "font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "240px",
-      "font-size": "12px",
-      "font-weight": "400",
-      padding: "4px 0px 4px 6px"
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v("Other Customs Information")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Country Code")]), _vm._v(" "), _c("th", {
+    staticClass: "font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "180px"
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v(" ")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Info Identifier")]), _vm._v(" "), _c("th", {
+    staticClass: "font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "180px"
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v(" ")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Customs Info Identifier")]), _vm._v(" "), _c("th", {
+    staticClass: "font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "180px"
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v(" ")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Supplementary Info")]), _vm._v(" "), _c("th", {
+    staticClass: "text-center font-weight-bold py-3 px-4",
     staticStyle: {
-      width: "60px"
+      width: "120px",
+      color: "#475569",
+      "font-size": "13px",
+      "border-bottom": "2px solid #E2E8F0"
     }
-  }, [_vm._v(" ")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.form.oci_entries, function (row, index) {
+  }, [_vm._v("Action")])])]), _vm._v(" "), _c("tbody", [!_vm.form.oci_entries || _vm.form.oci_entries.length === 0 ? _c("tr", [_c("td", {
+    staticClass: "text-center text-muted py-4",
+    attrs: {
+      colspan: "5"
+    }
+  }, [_vm._v("No custom information entries added yet.")])]) : _vm._e(), _vm._v(" "), _vm._l(_vm.form.oci_entries, function (row, index) {
     return _c("tr", {
       key: index
-    }, [_c("td", [_c("p", {
-      staticClass: "pl-2"
-    }, [_vm._v(_vm._s(row.country_code))])]), _vm._v(" "), _c("td", [_c("p", [_vm._v(_vm._s(row.info_identifier))])]), _vm._v(" "), _c("td", [_c("p", [_vm._v(_vm._s(row.custom_info_identifier))])]), _vm._v(" "), _c("td", [_c("p", [_vm._v(_vm._s(row.supplementary_info))])]), _vm._v(" "), _c("td", [row.country_code && row.info_identifier && row.custom_info_identifier && row.supplementary_info ? _c("p", [_c("b-icon", {
-      staticClass: "mr-2",
+    }, [_c("td", {
+      staticClass: "py-3 px-4",
       staticStyle: {
-        cursor: "pointer"
+        color: "#1E293B",
+        "font-weight": "500"
+      }
+    }, [_vm._v(_vm._s(row.country_code))]), _vm._v(" "), _c("td", {
+      staticClass: "py-3 px-4",
+      staticStyle: {
+        color: "#1E293B",
+        "font-weight": "500"
+      }
+    }, [_vm._v(_vm._s(row.info_identifier))]), _vm._v(" "), _c("td", {
+      staticClass: "py-3 px-4",
+      staticStyle: {
+        color: "#1E293B",
+        "font-weight": "500"
+      }
+    }, [_vm._v(_vm._s(row.custom_info_identifier))]), _vm._v(" "), _c("td", {
+      staticClass: "py-3 px-4",
+      staticStyle: {
+        color: "#1E293B",
+        "font-weight": "500"
+      }
+    }, [_vm._v(_vm._s(row.supplementary_info))]), _vm._v(" "), _c("td", {
+      staticClass: "text-center py-2 px-4"
+    }, [_c("b-button", {
+      staticClass: "text-primary p-1 mr-2",
+      staticStyle: {
+        background: "transparent",
+        border: "none"
       },
       attrs: {
-        icon: "pencil",
-        "font-scale": "1"
+        variant: "flat",
+        size: "sm"
       },
       on: {
         click: function click($event) {
           return _vm.editOciInfo(index);
         }
       }
-    }), _vm._v(" "), _c("b-icon", {
+    }, [_c("b-icon", {
       attrs: {
-        icon: "trash",
-        "font-scale": "1"
+        icon: "pencil",
+        "font-scale": "1.2"
+      }
+    })], 1), _vm._v(" "), _c("b-button", {
+      staticClass: "text-danger p-1",
+      staticStyle: {
+        background: "transparent",
+        border: "none"
+      },
+      attrs: {
+        variant: "flat",
+        size: "sm"
       },
       on: {
         click: function click($event) {
           return _vm.deleteOciInfo(index);
         }
       }
-    })], 1) : _vm._e()])]);
-  }), 0)])])])], 1)], 1)])])], 1)], 1)])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
+    }, [_c("b-icon", {
+      attrs: {
+        icon: "trash",
+        "font-scale": "1.2"
+      }
+    })], 1)], 1)]);
+  })], 2)])])])], 1)], 1)])])], 1)], 1)])], 1), _vm._v(" "), _c("b-row", [_c("b-col", {
     attrs: {
       cols: "12"
     }

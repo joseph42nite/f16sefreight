@@ -218,7 +218,32 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     return {
       show_login_modal: false,
       otp_verification_modal: false,
-      avatarLogoSrc: "/media/assets/ui/user-avatar.png"
+      avatarLogoSrc: "/media/assets/ui/user-avatar.png",
+      notifications: [{
+        id: 1,
+        title: "MAWB 020-98304921 draft has been saved successfully.",
+        time: "10 mins ago",
+        icon: "file-earmark-arrow-up",
+        iconVariant: "success",
+        read: false,
+        path: "/focus-air"
+      }, {
+        id: 2,
+        title: "Operator Liam Neeson assigned to Consol Enquiry JOBA-26-9028.",
+        time: "45 mins ago",
+        icon: "person-check",
+        iconVariant: "primary",
+        read: false,
+        path: "/focus-air-import"
+      }, {
+        id: 3,
+        title: "New email inquiry received from Emirates Cargo: Quote request Singapore.",
+        time: "2 hours ago",
+        icon: "envelope-open",
+        iconVariant: "warning",
+        read: true,
+        path: "/inbox"
+      }]
     };
   },
   methods: {
@@ -232,6 +257,17 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       this.$store.dispatch(_core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__.LOGOUT).then(function () {
         return window.location.href = "/";
       });
+    },
+    markAllAsRead: function markAllAsRead() {
+      this.notifications.forEach(function (item) {
+        return item.read = true;
+      });
+    },
+    handleNotificationClick: function handleNotificationClick(item) {
+      item.read = true;
+      if (item.path && this.$route.path !== item.path) {
+        this.$router.push(item.path);
+      }
     }
   },
   mounted: function mounted() {
@@ -242,6 +278,11 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["isAuthenticated", "currentUser"])), {}, {
     logoSrc: function logoSrc() {
       return "/media/assets/logos/white-logo.png";
+    },
+    unreadCount: function unreadCount() {
+      return this.notifications.filter(function (item) {
+        return !item.read;
+      }).length;
     }
   })
 });
@@ -1446,13 +1487,37 @@ var render = function render() {
   }, [_vm._v("Products")]), _vm._v(" "), _vm.isAuthenticated ? _c("div", {
     staticClass: "d-lg-none mobile-profile-card"
   }, [_c("div", {
-    staticClass: "origin-badge mb-3"
+    staticClass: "profile-card-header"
+  }, [_c("div", {
+    staticClass: "avatar-glow"
+  }, [_c("img", {
+    staticClass: "mobile-avatar",
+    attrs: {
+      src: _vm.avatarLogoSrc,
+      alt: "User avatar"
+    }
+  })]), _vm._v(" "), _c("div", {
+    staticClass: "profile-meta"
+  }, [_c("span", {
+    staticClass: "profile-name"
+  }, [_vm._v("Hello, " + _vm._s(_vm.currentUser.name))]), _vm._v(" "), _c("div", {
+    staticClass: "origin-badge"
   }, [_c("b-icon", {
     staticClass: "mr-1",
     attrs: {
       icon: "geo-alt-fill"
     }
-  }), _vm._v(" "), _c("span", [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1), _vm._v(" "), _c("button", {
+  }), _vm._v(" "), _c("span", [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1)])]), _vm._v(" "), _c("router-link", {
+    staticClass: "settings-btn-premium",
+    attrs: {
+      to: "/settings"
+    }
+  }, [_c("b-icon", {
+    staticClass: "mr-2",
+    attrs: {
+      icon: "gear"
+    }
+  }), _vm._v("Settings\n                            ")], 1), _vm._v(" "), _c("button", {
     staticClass: "sign-out-btn-premium",
     on: {
       click: function click($event) {
@@ -1464,7 +1529,7 @@ var render = function render() {
     attrs: {
       icon: "box-arrow-right"
     }
-  }), _vm._v("Sign out\n                            ")], 1)]) : _vm._e(), _vm._v(" "), _c("div", {
+  }), _vm._v("Sign out\n                            ")], 1)], 1) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "head-btn d-lg-none"
   }, [!_vm.isAuthenticated ? _c("b-nav-item", {
     staticClass: "nav-link-custom d-lg-none"
@@ -1489,7 +1554,111 @@ var render = function render() {
     staticClass: "nav-header-right"
   }, [_c("b-navbar-nav", {
     staticClass: "align-items-center content-gap d-none d-lg-flex"
-  }, [_c("b-nav-item-dropdown", {
+  }, [_c("div", {
+    staticClass: "airport-badge mr-1"
+  }, [_c("b-icon", {
+    staticClass: "mr-1",
+    attrs: {
+      icon: "geo-alt-fill"
+    }
+  }), _vm._v(" "), _c("span", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])], 1), _vm._v(" "), _c("b-nav-item-dropdown", {
+    staticClass: "notification-dropdown",
+    attrs: {
+      right: "",
+      "no-caret": ""
+    },
+    scopedSlots: _vm._u([{
+      key: "button-content",
+      fn: function fn() {
+        return [_c("div", {
+          staticClass: "action-btn"
+        }, [_c("b-icon", {
+          attrs: {
+            icon: "bell-fill",
+            "font-scale": "1.2"
+          }
+        }), _vm._v(" "), _vm.unreadCount > 0 ? _c("span", {
+          staticClass: "pulse-indicator"
+        }) : _vm._e()], 1)];
+      },
+      proxy: true
+    }], null, false, 877371786)
+  }, [_vm._v(" "), _c("div", {
+    staticClass: "panel-header d-flex align-items-center justify-content-between p-3 border-bottom",
+    staticStyle: {
+      background: "rgba(244, 248, 255, 0.3)",
+      "border-color": "rgba(53, 85, 148, 0.08) !important"
+    }
+  }, [_c("span", {
+    staticClass: "font-weight-bold text-primary",
+    staticStyle: {
+      "font-size": "13px"
+    }
+  }, [_vm._v("Notifications")]), _vm._v(" "), _vm.unreadCount > 0 ? _c("span", {
+    staticClass: "badge badge-light-primary cursor-pointer extra-small py-1",
+    on: {
+      click: function click($event) {
+        $event.stopPropagation();
+        return _vm.markAllAsRead.apply(null, arguments);
+      }
+    }
+  }, [_vm._v("Mark all read")]) : _vm._e()]), _vm._v(" "), _c("div", {
+    staticClass: "panel-body",
+    staticStyle: {
+      "max-height": "300px",
+      "overflow-y": "auto"
+    }
+  }, [_vm.notifications.length === 0 ? _c("div", {
+    staticClass: "p-4 text-center text-muted"
+  }, [_c("b-icon", {
+    staticClass: "mb-2 opacity-50",
+    attrs: {
+      icon: "bell-slash",
+      "font-scale": "1.5"
+    }
+  }), _vm._v(" "), _c("p", {
+    staticClass: "mb-0 extra-small"
+  }, [_vm._v("All caught up!")])], 1) : _c("div", _vm._l(_vm.notifications, function (item) {
+    return _c("div", {
+      key: item.id,
+      staticClass: "notification-item p-3 border-bottom d-flex align-items-start",
+      "class": {
+        "unread-item": !item.read
+      },
+      on: {
+        click: function click($event) {
+          return _vm.handleNotificationClick(item);
+        }
+      }
+    }, [_c("div", {
+      staticClass: "item-icon-wrap mr-2"
+    }, [_c("b-icon", {
+      attrs: {
+        icon: item.icon,
+        variant: item.iconVariant,
+        "font-scale": "1.0"
+      }
+    })], 1), _vm._v(" "), _c("div", {
+      staticClass: "item-content flex-grow-1"
+    }, [_c("p", {
+      staticClass: "mb-1 text-dark small",
+      "class": {
+        "font-weight-bold": !item.read
+      },
+      staticStyle: {
+        "line-height": "1.3",
+        "font-size": "11px !important"
+      }
+    }, [_vm._v(_vm._s(item.title))]), _vm._v(" "), _c("span", {
+      staticClass: "text-muted extra-small d-block"
+    }, [_vm._v(_vm._s(item.time))])])]);
+  }), 0)])]), _vm._v(" "), _c("div", {
+    staticClass: "user-greeting d-flex flex-column mr-1 text-right"
+  }, [_c("span", {
+    staticClass: "greeting-text"
+  }, [_vm._v("Hello,")]), _vm._v(" "), _c("span", {
+    staticClass: "user-name font-weight-bold text-dark"
+  }, [_vm._v(_vm._s(_vm.currentUser.name))])]), _vm._v(" "), _c("b-nav-item-dropdown", {
     attrs: {
       right: "",
       "no-caret": ""
@@ -1511,22 +1680,22 @@ var render = function render() {
     }], null, false, 267970355)
   }, [_vm._v(" "), _c("b-dropdown-item", {
     attrs: {
-      disabled: ""
+      to: "/settings"
     }
   }, [_c("div", {
     staticClass: "d-flex align-items-center"
   }, [_c("b-icon", {
     staticClass: "mr-2",
     attrs: {
-      icon: "geo-alt",
-      variant: "primary"
+      icon: "gear",
+      variant: "secondary"
     }
   }), _vm._v(" "), _c("span", {
     staticStyle: {
       "font-size": "12px",
-      color: "#355594"
+      color: "#334155"
     }
-  }, [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1)]), _vm._v(" "), _c("b-dropdown-divider"), _vm._v(" "), _c("b-dropdown-item", {
+  }, [_vm._v("Settings")])], 1)]), _vm._v(" "), _c("b-dropdown-divider"), _vm._v(" "), _c("b-dropdown-item", {
     on: {
       click: function click($event) {
         return _vm.logout();

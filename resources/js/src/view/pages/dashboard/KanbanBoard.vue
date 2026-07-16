@@ -70,7 +70,7 @@
                     <!-- Filter Control Panel -->
                     <div class="filter-panel p-3 mb-4 rounded-lg bg-light border d-flex flex-wrap align-items-center justify-content-between" style="gap: 16px;">
                         <!-- Staff Workload Filter -->
-                        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                        <div v-if="!isOps" class="d-flex align-items-center flex-wrap" style="gap: 8px;">
                             <span class="small font-weight-bold text-muted text-uppercase">Operator:</span>
                             <b-form-select 
                                 v-model="selectedOperatorId" 
@@ -79,10 +79,17 @@
                                 style="width: 240px; border-radius: 8px;"
                             >
                                 <option :value="null">All Operators</option>
-                                <option v-for="op in operators" :key="op.id" :value="op.id">
+                                <option value="unassigned">Unassigned Jobs</option>
+                                <option v-for="op in opsOperators" :key="op.id" :value="op.id">
                                     {{ op.name }} ({{ op.active_jobs }} jobs) {{ op.active_jobs >= 15 ? '🔴 OVERLOAD' : '🟢 OK' }}
                                 </option>
                             </b-form-select>
+                        </div>
+                        <div v-else class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <span class="small font-weight-bold text-muted text-uppercase">Operator:</span>
+                            <span class="badge badge-primary px-3 py-2 font-weight-bold font-family-inter" style="font-size: 0.85rem; border-radius: 8px; background-color: #355594; color: #ffffff;">
+                                {{ currentUser ? currentUser.name : 'My Assigned' }}
+                            </span>
                         </div>
 
                         <!-- Date Filters -->
@@ -529,6 +536,9 @@ export default {
         isOps() {
             return this.currentUser && this.currentUser.designation === 'operations';
         },
+        opsOperators() {
+            return this.operators.filter(op => op.designation === 'operations');
+        },
         filteredJobs() {
             let list = this.jobs;
             if (this.isOps) {
@@ -537,7 +547,11 @@ export default {
 
             // Filter by selected operator
             if (this.selectedOperatorId) {
-                list = list.filter(j => j.operator_id === this.selectedOperatorId);
+                if (this.selectedOperatorId === 'unassigned') {
+                    list = list.filter(j => !j.operator_id);
+                } else {
+                    list = list.filter(j => j.operator_id === this.selectedOperatorId);
+                }
             }
 
             // Filter by planned clearance date range

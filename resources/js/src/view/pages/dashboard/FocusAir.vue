@@ -14,7 +14,7 @@
                             <b-row class="align-items-center mb-8">
                                 <b-col cols="12" md="6">
                                     <div class="d-flex flex-column">
-                                        <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Navigation</span>
+                                        <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Air Export</span>
                                         <h6 style="color:#355594;font-size:26px !important;line-height:34px !important;font-weight:800 !important;letter-spacing:-0.5px !important;margin-bottom:1rem;font-family:'Inter', sans-serif !important;">Documentation</h6>
                                         <b-form-group id="fieldset-horizontal" class="mb-0 nav-dropdown-group">
                                             <div class="d-flex align-items-center" style="background:#F0F7FF;border-radius:12px;padding:6px 16px;width:fit-content;border:1px solid #E6F0FF;">
@@ -37,7 +37,7 @@
                                         <b-button @click="getAirwayBills('send')" class="show-btn">
                                             <b-icon icon="clock-history" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">10 Latest</b>
                                         </b-button>
-                                        <OcrUploadModal category="focus_air" @extracted="processExtractedData" />
+                                        <OcrUploadModal :is-drawer="isDrawer" category="focus_air" @extracted="processExtractedData" />
                                     </div>
                                 </b-col>
                                 <!-- History List Modals injected from reusable component -->
@@ -2514,6 +2514,12 @@ import airWayBillMixin from "@/core/mixins/airWayBillMixin";
 export default {
     name: "FocusAir",
     mixins: [airWayBillMixin],
+    props: {
+        isDrawer: {
+            type: Boolean,
+            default: false
+        }
+    },
     data() {
         return {
             form: new Form({

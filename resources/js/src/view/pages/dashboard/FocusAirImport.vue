@@ -1,23 +1,29 @@
 <template>
-  <div class="py-5 premium-air-page font-outfit">
+  <b-container fluid class="body-color">
+    <div class="d-flex flex-column flex-lg-row">
+      <SideBar></SideBar>
+      <div class="ml-lg-4 mt-4 mt-lg-0" style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; flex: 1; min-width: 0;">
+        <div class="container py-8 px-6 px-sm-8 px-md-10 font-outfit">
     <!-- Header section -->
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-7">
-      <div class="admin-page-header mb-4 mb-md-0">
-        <h2 class="text-white font-weight-bolder d-flex align-items-center">
-          <b-icon icon="airplane-engines" class="mr-3 text-indigo"></b-icon>
-          Focus Air — Import Consol Manager
-        </h2>
-        <span class="text-muted small">Manage inbound flights, consolidate HAWBs, coordinate customs filings, and issue delivery orders</span>
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-8">
+      <div class="d-flex flex-column">
+        <span style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-weight: 700; color: #355594; opacity: 0.6; margin-bottom: 0.5rem; display: block;">Air Import</span>
+        <h6 style="color:#355594;font-size:26px !important;line-height:34px !important;font-weight:800 !important;letter-spacing:-0.5px !important;margin-bottom:0.5rem;font-family:'Inter', sans-serif !important;" class="d-flex align-items-center">
+          <b-icon icon="airplane-engines" class="mr-3" style="color: #355594;"></b-icon>
+          Import Consol Manager
+        </h6>
+        <span style="color: #5A6B8A; font-size: 0.9rem;">Manage inbound flights, consolidate HAWBs, coordinate customs filings, and issue delivery orders</span>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <b-button variant="outline-light" class="btn-pill mr-2 px-4" @click="loadDemoConsol">
-          <b-icon icon="lightning-fill" class="mr-1 text-warning"></b-icon> Load Demo Consol
+        <OcrUploadModal :is-drawer="isDrawer" category="focus_air_import" @extracted="processImportExtractedData" />
+        <b-button @click="loadDemoConsol" class="show-btn">
+          <b-icon icon="lightning-fill" class="mr-2 text-warning"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Load Demo</b>
         </b-button>
-        <b-button variant="outline-danger" class="btn-pill mr-2 px-4" @click="resetForm">
-          <b-icon icon="arrow-counterclockwise" class="mr-1"></b-icon> Reset
+        <b-button @click="resetForm" class="show-btn">
+          <b-icon icon="arrow-counterclockwise" class="mr-2 text-danger"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Reset</b>
         </b-button>
-        <router-link to="/inbox" class="btn btn-light-primary btn-pill px-4">
-          <b-icon icon="arrow-left" class="mr-2"></b-icon> Back to Inbox
+        <router-link to="/inbox" class="show-btn text-decoration-none">
+          <b-icon icon="arrow-left" class="mr-2" style="color: #355594;"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Back to Inbox</b>
         </router-link>
       </div>
     </div>
@@ -27,28 +33,28 @@
       <div class="d-flex flex-wrap align-items-center gap-4">
         <div class="px-4 py-2 border-right-premium mb-2 mb-md-0">
           <span class="banner-label">Consol Job / Enquiry No</span>
-          <h5 class="banner-value text-indigo font-weight-bold mb-0">
+          <h5 class="banner-value text-indigo font-weight-bold mb-0" style="color: #355594 !important;">
             {{ form.execution_job_no || 'DRAFT' }}
           </h5>
           <span class="small text-muted">{{ form.consol_type }}</span>
         </div>
         <div class="px-4 py-2 border-right-premium mb-2 mb-md-0">
           <span class="banner-label">Flight Details</span>
-          <h5 class="banner-value mb-0 text-white font-weight-bold">
+          <h5 class="banner-value mb-0 font-weight-bold" style="color: #475569;">
             {{ form.shipping_details.flight_number || 'TBD' }}
           </h5>
           <span class="small text-muted">Carrier: {{ form.shipping_details.carrier_name || 'TBD' }}</span>
         </div>
         <div class="px-4 py-2 border-right-premium mb-2 mb-md-0">
           <span class="banner-label">Route</span>
-          <h5 class="banner-value mb-0 text-white font-weight-bold">
+          <h5 class="banner-value mb-0 font-weight-bold" style="color: #475569;">
             {{ form.routing.departure_airport || 'TBD' }} ➔ {{ form.routing.destination_airport || 'TBD' }}
           </h5>
           <span class="small text-muted">ETA: {{ formatDateTime(form.shipping_details.eta_datetime) }}</span>
         </div>
         <div class="px-4 py-2 mb-2 mb-md-0">
           <span class="banner-label">Payload Totals</span>
-          <h5 class="banner-value mb-0 text-white font-weight-bold">
+          <h5 class="banner-value mb-0 font-weight-bold" style="color: #475569;">
             {{ formatWeight(form.packing.gross_weight) }} KGS / {{ form.packing.piece_count }} PCS
           </h5>
           <span class="small text-muted">Vol: {{ formatVol(form.packing.volume_cbm) }} CBM / Chg Wt: {{ formatWeight(form.packing.chargeable_weight) }} KGS</span>
@@ -72,8 +78,8 @@
 
     <!-- Top-Level Consol Metadata Form -->
     <div class="premium-glass-card p-6 mb-6">
-      <h4 class="text-white font-weight-bold mb-5 d-flex align-items-center">
-        <b-icon icon="info-circle" class="mr-3 text-indigo"></b-icon> Consolidation Core Parameters
+      <h4 class="h-color mb-5 d-flex align-items-center">
+        <b-icon icon="info-circle" class="mr-3" style="color: #355594;"></b-icon> Consolidation Core Parameters
       </h4>
       <b-row>
         <b-col md="3" class="mb-4">
@@ -127,7 +133,7 @@
             <!-- Origin Agent -->
             <b-col lg="4" class="mb-4">
               <div class="entity-card p-5 rounded-lg h-100">
-                <h6 class="text-white font-weight-bold mb-4 d-flex align-items-center">
+                <h6 class="h-color mb-4 d-flex align-items-center">
                   <span class="badge badge-light-indigo mr-2">1</span> Origin Agent
                 </h6>
                 <b-form-group label="Search Origin Agent" label-class="text-muted small font-weight-bold">
@@ -157,7 +163,7 @@
             <!-- Destination Agent -->
             <b-col lg="4" class="mb-4">
               <div class="entity-card p-5 rounded-lg h-100">
-                <h6 class="text-white font-weight-bold mb-4 d-flex align-items-center">
+                <h6 class="h-color mb-4 d-flex align-items-center">
                   <span class="badge badge-light-indigo mr-2">2</span> Destination Agent
                 </h6>
                 <b-form-group label="Search Destination Agent" label-class="text-muted small font-weight-bold">
@@ -187,7 +193,7 @@
             <!-- Selling Agent -->
             <b-col lg="4" class="mb-4">
               <div class="entity-card p-5 rounded-lg h-100">
-                <h6 class="text-white font-weight-bold mb-4 d-flex align-items-center">
+                <h6 class="h-color mb-4 d-flex align-items-center">
                   <span class="badge badge-light-indigo mr-2">3</span> Selling Agent
                 </h6>
                 <b-form-group label="Search Selling Agent" label-class="text-muted small font-weight-bold">
@@ -225,7 +231,7 @@
             </div>
           </template>
           <div class="premium-glass-card p-6">
-            <h5 class="text-white font-weight-bold mb-5">Vessel/Flight Particulars</h5>
+            <h5 class="h-color mb-5">Vessel/Flight Particulars</h5>
             <b-row>
               <b-col md="4" class="mb-4">
                 <b-form-group label="Flight Number *" label-class="text-muted small font-weight-bold">
@@ -276,7 +282,7 @@
             </div>
           </template>
           <div class="premium-glass-card p-6">
-            <h5 class="text-white font-weight-bold mb-5">Journey Routing Legs</h5>
+            <h5 class="h-color mb-5">Journey Routing Legs</h5>
             <b-row>
               <b-col md="6" class="mb-4">
                 <b-form-group label="Departure Port / Airport (Origin) *" label-class="text-muted small font-weight-bold">
@@ -310,7 +316,7 @@
 
             <hr class="border-secondary opacity-15 my-6">
             
-            <h6 class="text-white font-weight-bold mb-4">Multi-Leg Journey Details</h6>
+            <h6 class="h-color mb-4">Multi-Leg Journey Details</h6>
             <div v-for="(leg, index) in form.routing.legs" :key="index" class="routing-leg-row p-4 mb-3 rounded-lg border border-secondary border-opacity-10">
               <div class="d-flex align-items-center justify-content-between mb-3">
                 <span class="text-indigo font-weight-bold small">Leg {{ index + 1 }}</span>
@@ -361,14 +367,13 @@
             <b-col lg="8" class="mb-6">
               <div class="premium-glass-card p-6 h-100">
                 <div class="d-flex align-items-center justify-content-between mb-5">
-                  <h5 class="text-white font-weight-bold mb-0">House Air Waybills (HAWBs) Mapped</h5>
+                  <h5 class="h-color mb-0">House Air Waybills (HAWBs) Mapped</h5>
                   <span class="badge badge-light-indigo font-weight-bold py-2 px-3">{{ form.attached_house.length }} HAWBs Bundle</span>
                 </div>
                 
                 <div class="table-responsive">
                   <b-table
                     hover
-                    dark
                     :items="form.attached_house"
                     :fields="hawbTableFields"
                     class="premium-table mb-0"
@@ -394,7 +399,7 @@
             <!-- Attachment Sidebar -->
             <b-col lg="4" class="mb-6">
               <div class="premium-glass-card p-6 h-100">
-                <h5 class="text-white font-weight-bold mb-4">Link Pending House Job</h5>
+                <h5 class="h-color mb-4">Link Pending House Job</h5>
                 <p class="text-muted small">Select from unlinked import house jobs to bundle costs and group the manifest cargo.</p>
                 
                 <div v-if="linkHawbSuccess" class="alert alert-success py-2 px-3 small mb-4 font-weight-bold animate-fade-in">
@@ -431,14 +436,14 @@
             <!-- Aggregates card -->
             <b-col lg="4" class="mb-6">
               <div class="premium-glass-card p-6 h-100">
-                <h5 class="text-white font-weight-bold mb-5">Cargo Aggregates</h5>
+                <h5 class="h-color mb-5">Cargo Aggregates</h5>
                 <div class="agg-row mb-4">
                   <span class="agg-label text-muted small uppercase">Total Piece Count</span>
-                  <h3 class="text-white font-weight-bold mb-0 mt-1">{{ form.packing.piece_count }} PCS</h3>
+                  <h3 class="text-dark font-weight-bold mb-0 mt-1">{{ form.packing.piece_count }} PCS</h3>
                 </div>
                 <div class="agg-row mb-4">
                   <span class="agg-label text-muted small uppercase">Total Gross Weight</span>
-                  <h3 class="text-white font-weight-bold mb-0 mt-1">{{ formatWeight(form.packing.gross_weight) }} KGS</h3>
+                  <h3 class="text-dark font-weight-bold mb-0 mt-1">{{ formatWeight(form.packing.gross_weight) }} KGS</h3>
                 </div>
                 <div class="agg-row mb-4">
                   <span class="agg-label text-muted small uppercase">Calculated Volume</span>
@@ -456,14 +461,14 @@
             <b-col lg="8" class="mb-6">
               <div class="premium-glass-card p-6 h-100">
                 <div class="d-flex align-items-center justify-content-between mb-5">
-                  <h5 class="text-white font-weight-bold mb-0">Interactive Volumetric Calculator</h5>
-                  <b-button variant="outline-light" size="sm" class="btn-pill" @click="addDimensionRow">
+                  <h5 class="h-color mb-0">Interactive Volumetric Calculator</h5>
+                  <b-button size="sm" class="show-btn" @click="addDimensionRow">
                     <b-icon icon="plus-circle" class="mr-1"></b-icon> Add Box Group
                   </b-button>
                 </div>
 
                 <div class="table-responsive mb-4">
-                  <table class="table table-sm text-white border border-secondary border-opacity-10">
+                  <table class="table table-sm border border-secondary border-opacity-10">
                     <thead>
                       <tr class="dim-header">
                         <th>Pieces</th>
@@ -510,11 +515,11 @@
                   </table>
                 </div>
 
-                <div v-if="calculatorRows.length > 0" class="d-flex justify-content-between align-items-center bg-dark bg-opacity-20 p-4 rounded-lg">
+                <div v-if="calculatorRows.length > 0" class="d-flex justify-content-between align-items-center p-4 rounded-lg" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
                   <div class="small text-muted">
-                    Total Calculator Run: <span class="text-white">{{ calcTotalPieces }} Pcs</span> / 
-                    <span class="text-info">{{ formatVol(calcTotalCbm) }} CBM</span> / 
-                    <span class="text-success">{{ formatWeight(calcTotalVolWeight) }} KGS Vol Wt</span>
+                    Total Calculator Run: <span class="font-weight-bold" style="color: #475569;">{{ calcTotalPieces }} Pcs</span> / 
+                    <span class="text-info font-weight-bold">{{ formatVol(calcTotalCbm) }} CBM</span> / 
+                    <span class="text-success font-weight-bold">{{ formatWeight(calcTotalVolWeight) }} KGS Vol Wt</span>
                   </div>
                   <b-button variant="success" class="btn-pill px-4" @click="applyCalculatorToPacking">
                     Apply to Packing Details
@@ -540,7 +545,7 @@
             <!-- DO Party Roles Form -->
             <b-col lg="8" class="mb-6">
               <div class="premium-glass-card p-6">
-                <h5 class="text-white font-weight-bold mb-4">Delivery Routing Parties</h5>
+                <h5 class="h-color mb-4">Delivery Routing Parties</h5>
                 <b-row>
                   <b-col md="6" class="mb-4">
                     <b-form-group label="Consignee (Client Profile) *" label-class="text-muted small font-weight-bold">
@@ -626,7 +631,7 @@
 
               <!-- DO Parameters -->
               <div class="premium-glass-card p-5">
-                <h5 class="text-white font-weight-bold mb-4">DO Parameters</h5>
+                <h5 class="h-color mb-4">DO Parameters</h5>
                 
                 <b-form-group label="DO Status" label-class="text-muted small font-weight-bold">
                   <b-form-select v-model="form.delivery_order.status" :options="doStatusOptions" class="premium-select"></b-form-select>
@@ -651,16 +656,14 @@
                 <!-- DO Printing Buttons -->
                 <div class="mt-5 pt-3 border-top border-secondary border-opacity-10">
                   <b-button 
-                    variant="indigo" 
-                    class="w-100 btn-pill mb-2 py-3 font-weight-bold" 
+                    class="btn btn-indigo w-100 btn-pill mb-2 py-3 font-weight-bold" 
                     :disabled="isDOBlocked" 
                     @click="printDO"
                   >
                     <b-icon icon="printer-fill" class="mr-1"></b-icon> Print Delivery Order
                   </b-button>
                   <b-button 
-                    variant="outline-light" 
-                    class="w-100 btn-pill py-3" 
+                    class="show-btn w-100 btn-pill py-3 font-weight-bold" 
                     :disabled="isDOBlocked"
                     @click="printReceipt"
                   >
@@ -682,14 +685,14 @@
           </template>
           <div class="premium-glass-card p-6">
             <div class="d-flex justify-content-between align-items-center mb-5">
-              <h5 class="text-white font-weight-bold mb-0">Consol Billing Splits</h5>
-              <b-button variant="outline-light" size="sm" class="btn-pill" @click="addChargeItem">
+              <h5 class="h-color mb-0">Consol Billing Splits</h5>
+              <b-button size="sm" class="show-btn" @click="addChargeItem">
                 <b-icon icon="plus-circle" class="mr-1"></b-icon> Add Charge Item
               </b-button>
             </div>
 
             <div class="table-responsive mb-4">
-              <table class="table table-sm text-white border border-secondary border-opacity-10">
+              <table class="table table-sm border border-secondary border-opacity-10">
                 <thead>
                   <tr class="dim-header">
                     <th>Charge Code</th>
@@ -719,8 +722,8 @@
                       </b-button>
                     </td>
                   </tr>
-                  <tr class="dim-row font-weight-bold border-top border-secondary bg-dark bg-opacity-20">
-                    <td>TOTALS</td>
+                  <tr class="dim-row font-weight-bold border-top" style="background: #F8FAFC;">
+                    <td class="text-dark">TOTALS</td>
                     <td></td>
                     <td class="text-right text-info font-weight-bolder pr-4" style="line-height:34px;">
                       ₹ {{ totalChargesPrepaid.toFixed(2) }}
@@ -751,7 +754,7 @@
             <!-- Payment forms -->
             <b-col lg="8" class="mb-6">
               <div class="premium-glass-card p-6">
-                <h5 class="text-white font-weight-bold mb-5">Billing & Accounts Receivable Status</h5>
+                <h5 class="h-color mb-5">Billing & Accounts Receivable Status</h5>
                 <b-row>
                   <b-col md="4" class="mb-4">
                     <b-form-group label="Payment Status / Mode *" label-class="text-muted small font-weight-bold">
@@ -777,7 +780,7 @@
                   </b-col>
                   <b-col md="6" class="mb-4">
                     <b-form-group label="Prepaid/Collect Split Details" label-class="text-muted small font-weight-bold">
-                      <div class="p-3 bg-dark bg-opacity-30 rounded-lg small">
+                      <div class="p-3 rounded-lg small" style="background: #F8FAFC; border: 1px solid #E2E8F0; color: #475569;">
                         Freight Collect splits are automatically aggregated. Billing entities are matched to the Consignee debtor.
                       </div>
                     </b-form-group>
@@ -789,7 +792,7 @@
             <!-- Credit Master profile -->
             <b-col lg="4" class="mb-6">
               <div class="credit-card p-5 rounded-lg border border-opacity-10 h-100" :class="isCreditLimitExceeded ? 'credit-card-alert' : 'credit-card-ok'">
-                <h5 class="font-weight-bold mb-4 d-flex align-items-center text-white">
+                <h5 class="font-weight-bold mb-4 d-flex align-items-center h-color">
                   <b-icon icon="credit-card-2-front-fill" class="mr-2" :class="isCreditLimitExceeded ? 'text-danger' : 'text-success'"></b-icon>
                   Consignee Credit Master
                 </h5>
@@ -810,7 +813,7 @@
 
                 <div class="credit-detail mb-3">
                   <span class="text-muted small">Assigned Credit Limit</span>
-                  <h5 class="text-white font-weight-bold mt-1">
+                  <h5 class="font-weight-bold mt-1 text-dark">
                     {{ selectedConsigneeObj ? formatCurrency(selectedConsigneeObj.credit_limit) : '₹ 0.00' }}
                   </h5>
                 </div>
@@ -824,7 +827,7 @@
 
                 <div class="credit-detail">
                   <span class="text-muted small">Payment Terms</span>
-                  <p class="text-white font-weight-bold mb-0 mt-1">
+                  <p class="font-weight-bold mb-0 mt-1 text-dark">
                     {{ selectedConsigneeObj ? selectedConsigneeObj.default_payment_terms : '—' }}
                   </p>
                 </div>
@@ -844,7 +847,7 @@
           
           <div class="premium-glass-card p-6 mb-6">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5">
-              <h5 class="text-white font-weight-bold mb-3 mb-md-0">Customs IGM / CGM Manifest Filings</h5>
+              <h5 class="h-color mb-3 mb-md-0">Customs IGM / CGM Manifest Filings</h5>
               <div class="d-flex flex-wrap align-items-center gap-2">
                 <b-form-select v-model="customsFilterStatus" :options="customsFilterOptions" class="premium-select-sm mr-2" style="width:160px;"></b-form-select>
                 <b-form-input v-model="customsFilterGate" placeholder="Custom House (e.g. INMAA4)" class="premium-input-sm mr-2 text-uppercase" style="width:200px;"></b-form-input>
@@ -858,7 +861,6 @@
             <div class="table-responsive">
               <b-table
                 hover
-                dark
                 :items="filteredCustomsFilings"
                 :fields="customsTableFields"
                 class="premium-table mb-0"
@@ -905,7 +907,7 @@
             <!-- Upload Dropzone -->
             <b-col lg="6" class="mb-4">
               <div class="premium-glass-card p-6 h-100">
-                <h5 class="text-white font-weight-bold mb-4">Upload physical shipping documents</h5>
+                <h5 class="h-color mb-4">Upload physical shipping documents</h5>
                 
                 <!-- Dropzone Box -->
                 <div 
@@ -915,7 +917,7 @@
                   @drop.prevent="handleFileDrop"
                 >
                   <b-icon icon="cloud-upload" font-scale="3" class="text-indigo mb-3 animate-pulse"></b-icon>
-                  <h6 class="text-white font-weight-bold">Drag and drop files here to upload</h6>
+                  <h6 style="color: #1E293B; font-weight: 700;">Drag and drop files here to upload</h6>
                   <p class="text-muted small mb-0 mt-1">Supports PDF, PNG, JPG files. Max 10MB.</p>
                   <input type="file" ref="fileInput" class="d-none" multiple @change="handleFileSelect">
                 </div>
@@ -933,14 +935,14 @@
             <!-- Attachment File List -->
             <b-col lg="6" class="mb-4">
               <div class="premium-glass-card p-6 h-100">
-                <h5 class="text-white font-weight-bold mb-4">Attached Documents Docket</h5>
+                <h5 class="h-color mb-4">Attached Documents Docket</h5>
                 
                 <div v-for="(doc, idx) in form.e_docket" :key="idx" class="docket-file-row p-3 mb-3 rounded-lg d-flex align-items-center justify-content-between border border-secondary border-opacity-10 animate-fade-in">
                   <div class="d-flex align-items-center">
                     <b-icon icon="file-earmark-pdf" font-scale="1.5" class="text-danger mr-3" v-if="doc.mime_type.includes('pdf')"></b-icon>
                     <b-icon icon="file-earmark-image" font-scale="1.5" class="text-info mr-3" v-else></b-icon>
                     <div>
-                      <div class="text-white font-weight-bold small text-truncate" style="max-width: 200px;">{{ doc.file_name }}</div>
+                      <div class="font-weight-bold small text-truncate text-dark" style="max-width: 200px;">{{ doc.file_name }}</div>
                       <span class="text-muted small">{{ formatBytes(doc.file_size) }}</span>
                     </div>
                   </div>
@@ -975,18 +977,12 @@
     <b-modal 
       id="cgm-filing-modal" 
       title="Submit CGM / ICEGATE manifest Data" 
-      header-bg-variant="dark" 
-      header-text-variant="light" 
-      body-bg-variant="dark" 
-      body-text-variant="light"
-      footer-bg-variant="dark"
-      footer-text-variant="light"
       size="lg"
       centered
       hide-footer
     >
-      <div class="cgm-modal-body p-4 font-outfit text-white bg-dark rounded-lg">
-        <h5 class="text-indigo font-weight-bold mb-4">Filing Details - Custom Gate Chennai</h5>
+      <div class="cgm-modal-body p-4 font-outfit text-dark rounded-lg">
+        <h5 class="h-color mb-4">Filing Details - Custom Gate Chennai</h5>
         
         <b-row>
           <b-col md="6" class="mb-3">
@@ -1017,13 +1013,13 @@
           </b-col>
           <b-col md="6" class="mb-3">
             <b-form-group label="Sending Method" label-class="text-muted small font-weight-bold">
-              <b-form-radio-group v-model="cgmFilingForm.sending_method" :options="sendingMethods" class="premium-radio-group text-white pt-2"></b-form-radio-group>
+              <b-form-radio-group v-model="cgmFilingForm.sending_method" :options="sendingMethods" class="premium-radio-group text-dark pt-2"></b-form-radio-group>
             </b-form-group>
           </b-col>
         </b-row>
 
         <!-- Status / DSC Terminal Screen -->
-        <h6 class="text-white font-weight-bold mt-4 mb-2">Manifest Submission Console & DSC Status</h6>
+        <h6 class="h-color mt-4 mb-2">Manifest Submission Console & DSC Status</h6>
         <div class="dsc-terminal p-4 rounded-lg border border-info border-opacity-30 mb-5 font-family-monospace">
           <div v-for="(log, idx) in dscLogs" :key="idx" class="dsc-log-line" :class="getDscLogClass(log.type)">
             {{ log.text }}
@@ -1035,7 +1031,7 @@
 
         <!-- Action Buttons -->
         <div class="d-flex flex-wrap justify-content-end gap-2 pt-3 border-top border-secondary border-opacity-10">
-          <b-button variant="outline-light" class="btn-pill mr-2 px-4" @click="closeCgmModal">Close</b-button>
+          <b-button class="show-btn mr-2 px-4" @click="closeCgmModal">Close</b-button>
           <b-button variant="outline-info" class="btn-pill mr-2 px-4" href="#" @click.prevent="openSignatureUtility">
             <b-icon icon="download" class="mr-1"></b-icon> Get Signature Tool
           </b-button>
@@ -1049,12 +1045,28 @@
         </div>
       </div>
     </b-modal>
-  </div>
+        </div>
+      </div>
+    </div>
+  </b-container>
 </template>
 
 <script>
+import SideBar from "@/view/layouts/public/SideBar.vue";
+import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
+
 export default {
   name: "FocusAirImport",
+  components: {
+    SideBar,
+    OcrUploadModal
+  },
+  props: {
+    isDrawer: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       successMsg: null,
@@ -1938,65 +1950,197 @@ export default {
           setTimeout(() => { this.successMsg = null; }, 5000);
         }
       }, 1000);
+    },
+
+    // OCR Extraction: Map AI-extracted fields into the import form
+    processImportExtractedData(response) {
+      console.log('Import form: Processing extracted data payload:', response);
+
+      // Helper for unstructured fields with {value, confidence} shape
+      const getVal = (fieldKey) => {
+        const field = response[fieldKey];
+        if (field && typeof field === 'object' && field.value !== null && field.value !== undefined) {
+          return String(field.value);
+        }
+        if (typeof field === 'string') return field;
+        return '';
+      };
+
+      // Map shipper/consignee into entity address blocks
+      const shipperParts = [getVal('shipper_name'), getVal('shipper_address'), getVal('shipper_city'), getVal('shipper_state'), getVal('shipper_post_code'), getVal('shipper_country')].filter(Boolean);
+      if (shipperParts.length > 0) {
+        this.form.entities.origin_agent.address = shipperParts.join('\n');
+      }
+
+      const consigneeParts = [getVal('consignee_name'), getVal('consignee_address'), getVal('consignee_city'), getVal('consignee_state'), getVal('consignee_post_code'), getVal('consignee_country')].filter(Boolean);
+      if (consigneeParts.length > 0) {
+        this.form.entities.dest_agent.address = consigneeParts.join('\n');
+      }
+
+      // Map packing / cargo details
+      const totalPackages = getVal('total_packages');
+      if (totalPackages) {
+        this.form.packing.piece_count = parseInt(totalPackages) || this.form.packing.piece_count;
+      }
+
+      const grossWeight = getVal('total_gross_weight');
+      if (grossWeight) {
+        this.form.packing.gross_weight = parseFloat(grossWeight) || this.form.packing.gross_weight;
+      }
+
+      const totalVolume = getVal('total_volume');
+      if (totalVolume) {
+        this.form.packing.volume_cbm = parseFloat(totalVolume) || this.form.packing.volume_cbm;
+      }
+
+      const chargeableWeight = getVal('chargeable_weight');
+      if (chargeableWeight) {
+        this.form.packing.chargeable_weight = parseFloat(chargeableWeight) || this.form.packing.chargeable_weight;
+      }
+
+      // Map dimensions if available
+      const dimensions = getVal('dimensions');
+      if (dimensions && this.calculatorRows) {
+        // Try to parse dimension string like "120x80x100 cm"
+        const dimMatch = dimensions.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+        if (dimMatch) {
+          this.calculatorRows.push({
+            pieces: parseInt(totalPackages) || 1,
+            length: parseFloat(dimMatch[1]),
+            width: parseFloat(dimMatch[2]),
+            height: parseFloat(dimMatch[3]),
+            volume_cbm: 0,
+            vol_weight: 0
+          });
+          this.recalcVolumeRow(this.calculatorRows.length - 1);
+        }
+      }
+
+      // Map financial info if available
+      const invoiceNo = getVal('invoice_no');
+      if (invoiceNo) {
+        this.form.financials.invoice_no = invoiceNo;
+      }
+
+      const grandTotal = getVal('grand_total');
+      if (grandTotal) {
+        this.form.financials.invoice_amount = parseFloat(grandTotal) || this.form.financials.invoice_amount;
+      }
+
+      this.successMsg = 'Document data extracted successfully. Please verify all fields.';
+      setTimeout(() => { this.successMsg = null; }, 5000);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 };
 </script>
 
 <style scoped>
-.premium-air-page {
-  background: #0d0e1b;
-  min-height: 90vh;
-  padding: 24px;
+.body-color {
+  padding-top: 35px;
+  padding-bottom: 35px;
+  min-height: 80vh;
 }
 
 .font-outfit {
   font-family: 'Outfit', sans-serif;
 }
 
+.h-color {
+  color: #355594;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.2px;
+}
+
+.show-btn {
+  background: white !important;
+  color: #355594 !important;
+  border: 1px solid #E6F0FF !important;
+  border-radius: 50px !important;
+  padding: 10px 22px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+}
+
+.show-btn:hover {
+  background: #f0f7ff !important;
+  border-color: #355594 !important;
+  color: #355594 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 12px rgba(53, 85, 148, 0.1) !important;
+}
+
 .premium-glass-card {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(53, 85, 148, 0.03);
 }
 
 .entity-card {
-  background: rgba(15, 23, 42, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
 }
 
 .premium-input, .premium-select, .premium-textarea {
-  background-color: rgba(15, 23, 42, 0.6) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid #E2E8F0 !important;
   border-radius: 10px !important;
-  transition: all 0.25s ease;
+  height: 38px;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  color: #1E293B !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background-color: #FFFFFF !important;
+}
+
+.premium-textarea {
+  height: auto !important;
 }
 
 .premium-input:focus, .premium-select:focus, .premium-textarea:focus {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+  border-color: #355594 !important;
+  box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.12) !important;
+  outline: none !important;
+  background-color: #FFFFFF !important;
 }
 
 .premium-input-sm {
-  background-color: rgba(15, 23, 42, 0.6) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid #E2E8F0 !important;
   border-radius: 8px !important;
-  height: 34px !important;
+  height: 32px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  color: #1E293B !important;
+  background-color: #FFFFFF !important;
   font-size: 0.85rem !important;
 }
 
+.premium-input-sm:focus {
+  border-color: #355594 !important;
+  box-shadow: 0 0 0 2px rgba(53, 85, 148, 0.1) !important;
+  outline: none !important;
+}
+
 .premium-select-sm {
-  background-color: rgba(15, 23, 42, 0.6) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid #E2E8F0 !important;
   border-radius: 8px !important;
-  height: 34px !important;
+  height: 32px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  color: #1E293B !important;
+  background-color: #FFFFFF !important;
   font-size: 0.85rem !important;
   padding: 2px 8px !important;
+}
+
+.premium-select-sm:focus {
+  border-color: #355594 !important;
+  box-shadow: 0 0 0 2px rgba(53, 85, 148, 0.1) !important;
+  outline: none !important;
 }
 
 .border-warning-premium {
@@ -2009,12 +2153,13 @@ export default {
 }
 
 .mbl-summary-banner {
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: #F0F7FF;
+  border: 1px solid #E6F0FF;
+  border-radius: 16px;
 }
 
 .border-right-premium {
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(53, 85, 148, 0.12);
 }
 
 .banner-label {
@@ -2028,43 +2173,51 @@ export default {
 
 .banner-value {
   font-size: 1.15rem;
+  color: #355594;
 }
 
 .premium-table >>> th {
-  background: rgba(15, 23, 42, 0.7) !important;
-  color: #cbd5e1 !important;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.08) !important;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.05em;
+  background-color: #F8FAFC !important;
+  color: #355594 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 12px 6px !important;
+  border-bottom: 1px solid rgba(53, 85, 148, 0.1) !important;
+  border-top: none !important;
 }
 
 .premium-table >>> td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-  vertical-align: middle;
-  color: #cbd5e1;
+  padding: 8px 6px !important;
+  vertical-align: middle !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  border-top: none !important;
+  color: #475569 !important;
+  font-size: 14px !important;
 }
 
 .btn-indigo {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #355594 0%, #2a4476 100%);
   border: none;
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 15px rgba(53, 85, 148, 0.25);
 }
+
 .btn-indigo:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  background: linear-gradient(135deg, #2a4476 0%, #1e3054 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 8px 25px rgba(53, 85, 148, 0.35);
 }
 
 .btn-outline-indigo {
-  color: #6366f1;
-  border-color: #6366f1;
+  color: #355594;
+  border-color: #355594;
   background: transparent;
 }
+
 .btn-outline-indigo:hover {
-  background: #6366f1;
+  background: #355594;
   color: #ffffff;
 }
 
@@ -2079,30 +2232,36 @@ export default {
 }
 
 .dim-header th {
-  background: rgba(15, 23, 42, 0.7) !important;
-  color: #94a3b8 !important;
+  background-color: #F8FAFC !important;
+  color: #355594 !important;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   padding: 8px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(53, 85, 148, 0.1) !important;
 }
 
 .dim-row td {
   padding: 8px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  color: #475569 !important;
 }
 
 .routing-leg-row {
-  background: rgba(15, 23, 42, 0.3);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
 }
 
 .credit-card {
-  background: rgba(15, 23, 42, 0.45);
+  background: #F8FAFC;
+  border-radius: 16px;
 }
+
 .credit-card-ok {
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.02);
 }
+
 .credit-card-alert {
   border: 1px solid rgba(239, 68, 68, 0.25);
   background: rgba(239, 68, 68, 0.03);
@@ -2121,46 +2280,79 @@ export default {
 }
 
 .dropzone-box {
-  background: rgba(15, 23, 42, 0.3);
+  background: #F8FAFC;
+  border: 2px dashed #E2E8F0 !important;
   transition: all 0.2s ease;
 }
+
 .dropzone-box:hover {
-  border-color: #6366f1 !important;
-  background: rgba(99, 102, 241, 0.05);
+  border-color: #355594 !important;
+  background: rgba(53, 85, 148, 0.05);
 }
 
 .docket-file-row {
-  background: rgba(15, 23, 42, 0.3);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0 !important;
+}
+
+.badge-indigo {
+  background-color: #355594;
+  color: #ffffff;
 }
 
 .badge-light-indigo {
-  background-color: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  background-color: rgba(53, 85, 148, 0.1);
+  color: #355594;
 }
 
 .custom-nav-tabs >>> .nav-tabs {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 0px !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  gap: 4px;
+  background: #F1F5F9 !important;
+  padding: 6px !important;
+  border-radius: 14px !important;
+  margin-bottom: 1.5rem !important;
+  width: 100% !important;
+}
+
+.custom-nav-tabs >>> .nav-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.custom-nav-tabs >>> .nav-item {
+  flex: 0 0 auto !important;
 }
 
 .custom-nav-tabs >>> .nav-link {
-  color: #94a3b8 !important;
+  color: #64748B !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
   border: none !important;
-  border-bottom: 2px solid transparent !important;
-  padding: 12px 20px !important;
-  font-weight: 500;
-  transition: all 0.2s;
+  padding: 8px 16px !important;
+  margin: 0px !important;
+  border-radius: 10px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
   background: transparent !important;
 }
 
-.custom-nav-tabs >>> .nav-link.active {
-  color: #6366f1 !important;
-  border-bottom-color: #6366f1 !important;
-  font-weight: 600;
+.custom-nav-tabs >>> .nav-link:hover:not(.active) {
+  color: #355594 !important;
+  background: rgba(53, 85, 148, 0.05) !important;
 }
 
-.custom-nav-tabs >>> .nav-link:hover:not(.active) {
-  color: #ffffff !important;
-  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+.custom-nav-tabs >>> .nav-link.active {
+  color: #355594 !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(53, 85, 148, 0.08) !important;
+  border-bottom: none !important;
 }
 
 .animate-fade-in {

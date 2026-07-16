@@ -9017,11 +9017,15 @@ var actions = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_d
     if (data.role == "user") {
       _core_services_jwt_service__WEBPACK_IMPORTED_MODULE_2__["default"].saveSource(data.user.origin_airport_code);
       context.commit(SET_Source, data.user.origin_airport_code);
-      var portalScope = sessionStorage.getItem('active_portal_scope') || 'air';
-      if (portalScope === 'sea') {
-        _router__WEBPACK_IMPORTED_MODULE_0__["default"].push("/focus-sea-master");
+      if (data.user.designation === 'sales' || data.user.designation === 'boss') {
+        _router__WEBPACK_IMPORTED_MODULE_0__["default"].push('/analytics');
       } else {
-        _router__WEBPACK_IMPORTED_MODULE_0__["default"].push("/focus-air");
+        var portalScope = sessionStorage.getItem('active_portal_scope') || 'air';
+        if (portalScope === 'sea') {
+          _router__WEBPACK_IMPORTED_MODULE_0__["default"].push("/focus-sea-master");
+        } else {
+          _router__WEBPACK_IMPORTED_MODULE_0__["default"].push("/focus-air");
+        }
       }
     } else if (data.role == "superAdmin") _router__WEBPACK_IMPORTED_MODULE_0__["default"].push("/superadmin/all-users");
     return data;
@@ -9765,7 +9769,7 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
       name: "Focus Air",
       path: "focus-air",
       component: function component() {
-        return Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAir_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue"));
+        return __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue"));
       },
       meta: {
         userType: 'user'
@@ -9774,7 +9778,7 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
       path: 'edit-airway-bill/:id?',
       name: 'EditAirwayBill',
       component: function component() {
-        return Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAir_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue"));
+        return __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue"));
       },
       meta: {
         userType: 'user'
@@ -9855,7 +9859,7 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
       name: "Focus Air Import",
       path: "focus-air-import",
       component: function component() {
-        return Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAirImport_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAirImport */ "./resources/js/src/view/pages/dashboard/FocusAirImport.vue"));
+        return __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAirImport */ "./resources/js/src/view/pages/dashboard/FocusAirImport.vue"));
       },
       meta: {
         userType: 'user'

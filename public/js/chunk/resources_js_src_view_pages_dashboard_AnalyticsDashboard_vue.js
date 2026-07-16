@@ -27,9 +27,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue-apexcharts */ "./node_modules/vue-apexcharts/dist/vue-apexcharts.js");
-/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(vue_apexcharts__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_dashboard_SalesAnalyticsDashboard_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/dashboard/SalesAnalyticsDashboard.vue */ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue");
+/* harmony import */ var _view_pages_dashboard_BossAnalyticsDashboard_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/dashboard/BossAnalyticsDashboard.vue */ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-apexcharts */ "./node_modules/vue-apexcharts/dist/vue-apexcharts.js");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(vue_apexcharts__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -39,11 +41,15 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
 
 
 
+
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "AnalyticsDashboard",
   components: {
     SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
-    apexchart: (vue_apexcharts__WEBPACK_IMPORTED_MODULE_1___default())
+    SalesAnalyticsDashboard: _view_pages_dashboard_SalesAnalyticsDashboard_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    BossAnalyticsDashboard: _view_pages_dashboard_BossAnalyticsDashboard_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    apexchart: (vue_apexcharts__WEBPACK_IMPORTED_MODULE_3___default())
   },
   data: function data() {
     return {
@@ -144,6 +150,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     currentUser: function currentUser() {
       return this.$store.getters.currentUser;
     },
+    isSalesRole: function isSalesRole() {
+      return this.currentUser && this.currentUser.designation === 'sales';
+    },
+    isBossRole: function isBossRole() {
+      return this.currentUser && this.currentUser.designation === 'boss';
+    },
     companyTier: function companyTier() {
       return this.currentUser && this.currentUser.company ? this.currentUser.company.tier : 'viper_core';
     },
@@ -157,6 +169,8 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     }
   },
   mounted: function mounted() {
+    // Sales and Boss roles are handled by their own dedicated dashboards
+    if (this.isSalesRole || this.isBossRole) return;
     var isExcluded = this.currentUser && (this.currentUser.designation === 'operations' || this.currentUser.designation === 'pricing');
     if (isExcluded) {
       this.$router.push('/inbox');
@@ -177,7 +191,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       };
 
       // Funnel Metrics
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/funnel', {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].query('/user/analytics/funnel', {
         params: params
       }).then(function (res) {
         if (res.data.status) {
@@ -219,7 +233,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       });
 
       // Lost Reasons
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/lost-reasons', {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].query('/user/analytics/lost-reasons', {
         params: params
       }).then(function (res) {
         if (res.data.status) {
@@ -238,7 +252,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       });
 
       // Response Times
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/response-times', {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].query('/user/analytics/response-times', {
         params: params
       }).then(function (res) {
         if (res.data.status) {
@@ -263,7 +277,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       });
 
       // Staff Load
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/analytics/staff-load').then(function (res) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/analytics/staff-load').then(function (res) {
         if (res.data.status) {
           _this.staffLoad = res.data.data;
         }
@@ -275,7 +289,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     fetchClients: function fetchClients() {
       var _this2 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/companies').then(function (res) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/companies').then(function (res) {
         _this2.clients = res.data;
       })["catch"](function (err) {
         return console.error(err);
@@ -285,7 +299,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       var _this3 = this;
       this.summaryLoading = true;
       this.clientSummary = null;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/client-summary', {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].query('/user/analytics/client-summary', {
         params: {
           client_id: this.selectedClientId
         }
@@ -323,6 +337,903 @@ function roundToDecimals(value, decimals) {
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=script&lang=js":
+/*!******************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=script&lang=js ***!
+  \******************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue-apexcharts */ "./node_modules/vue-apexcharts/dist/vue-apexcharts.js");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(vue_apexcharts__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "BossAnalyticsDashboard",
+  components: {
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
+    apexchart: (vue_apexcharts__WEBPACK_IMPORTED_MODULE_1___default())
+  },
+  data: function data() {
+    return {
+      loading: false,
+      filterPeriod: "monthly",
+      totals: {
+        raised: 0,
+        converted: 0,
+        sla_breached: 0,
+        branches: 0
+      },
+      branchData: [],
+      allStaff: [],
+      // Action items
+      actionItems: [],
+      actionLoading: false,
+      // Mailbox
+      mailboxConnections: [],
+      newMailbox: {
+        email_address: '',
+        provider: 'gmail',
+        access_token: ''
+      },
+      connecting: false,
+      disconnecting: null,
+      // Sales targets
+      salesTargets: [],
+      newTarget: {
+        target_type: 'user',
+        target_id: '',
+        quarter: '',
+        revenue_target: null,
+        tonnage_target: null
+      },
+      savingTarget: false,
+      targetSaved: false,
+      // Command: clients
+      clientStats: [],
+      clientLoading: false,
+      clientSearch: '',
+      clientSortKey: 'raised'
+    };
+  },
+  computed: {
+    currentUser: function currentUser() {
+      return this.$store.getters.currentUser;
+    },
+    companyTier: function companyTier() {
+      return this.currentUser && this.currentUser.company ? this.currentUser.company.tier : 'viper_core';
+    },
+    isViperCore: function isViperCore() {
+      return this.companyTier === 'viper_core';
+    },
+    isViperCommand: function isViperCommand() {
+      return this.companyTier === 'viper_command';
+    },
+    filteredClients: function filteredClients() {
+      var _this = this;
+      var list = _toConsumableArray(this.clientStats);
+      if (this.clientSearch.trim()) {
+        var q = this.clientSearch.trim().toLowerCase();
+        list = list.filter(function (c) {
+          return c.client_name.toLowerCase().includes(q);
+        });
+      }
+      list.sort(function (a, b) {
+        return b[_this.clientSortKey] - a[_this.clientSortKey];
+      });
+      return list;
+    }
+  },
+  mounted: function mounted() {
+    if (!this.isViperCore) {
+      this.fetchAll();
+    }
+  },
+  methods: {
+    fetchAll: function fetchAll() {
+      var _this2 = this;
+      this.loading = true;
+      this.actionLoading = true;
+      var branchReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/boss/branch-summary', {
+        params: {
+          period: this.filterPeriod
+        }
+      }).then(function (res) {
+        if (res.data.status) {
+          _this2.branchData = res.data.data;
+          _this2.totals = res.data.totals;
+        }
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      var staffReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/analytics/boss/staff-all').then(function (res) {
+        if (res.data.status) _this2.allStaff = res.data.data;
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      var actionReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/analytics/boss/action-items').then(function (res) {
+        if (res.data.status) _this2.actionItems = res.data.data;
+      })["catch"](function (err) {
+        return console.error(err);
+      })["finally"](function () {
+        _this2.actionLoading = false;
+      });
+      var mailboxReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/mailbox-connections').then(function (res) {
+        _this2.mailboxConnections = Array.isArray(res.data) ? res.data : [];
+      })["catch"](function () {
+        _this2.mailboxConnections = [];
+      });
+      var targetReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/analytics/boss/sales-targets').then(function (res) {
+        if (res.data.status) _this2.salesTargets = res.data.data;
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      Promise.all([branchReq, staffReq, actionReq, mailboxReq, targetReq])["finally"](function () {
+        _this2.loading = false;
+      });
+      if (this.isViperCommand) {
+        this.fetchClientStats();
+      }
+    },
+    fetchClientStats: function fetchClientStats() {
+      var _this3 = this;
+      this.clientLoading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/boss/client-all', {
+        params: {
+          period: this.filterPeriod
+        }
+      }).then(function (res) {
+        if (res.data.status) _this3.clientStats = res.data.data;
+      })["catch"](function (err) {
+        return console.error(err);
+      })["finally"](function () {
+        _this3.clientLoading = false;
+      });
+    },
+    connectMailbox: function connectMailbox() {
+      var _this4 = this;
+      return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
+        var res, _t;
+        return _regenerator().w(function (_context) {
+          while (1) switch (_context.p = _context.n) {
+            case 0:
+              _this4.connecting = true;
+              _context.p = 1;
+              _context.n = 2;
+              return _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].post('/user/mailbox-connections/connect', _objectSpread(_objectSpread({}, _this4.newMailbox), {}, {
+                refresh_token: 'placeholder'
+              }));
+            case 2:
+              res = _context.v;
+              if (res.data.status) {
+                _this4.mailboxConnections.push(res.data.data);
+                _this4.newMailbox = {
+                  email_address: '',
+                  provider: 'gmail',
+                  access_token: ''
+                };
+              }
+              _context.n = 4;
+              break;
+            case 3:
+              _context.p = 3;
+              _t = _context.v;
+              console.error(_t);
+            case 4:
+              _context.p = 4;
+              _this4.connecting = false;
+              return _context.f(4);
+            case 5:
+              return _context.a(2);
+          }
+        }, _callee, null, [[1, 3, 4, 5]]);
+      }))();
+    },
+    disconnectMailbox: function disconnectMailbox(id) {
+      var _this5 = this;
+      return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
+        var _t2;
+        return _regenerator().w(function (_context2) {
+          while (1) switch (_context2.p = _context2.n) {
+            case 0:
+              _this5.disconnecting = id;
+              _context2.p = 1;
+              _context2.n = 2;
+              return _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"]["delete"]("/user/mailbox-connections/".concat(id));
+            case 2:
+              _this5.mailboxConnections = _this5.mailboxConnections.filter(function (c) {
+                return c.id !== id;
+              });
+              _context2.n = 4;
+              break;
+            case 3:
+              _context2.p = 3;
+              _t2 = _context2.v;
+              console.error(_t2);
+            case 4:
+              _context2.p = 4;
+              _this5.disconnecting = null;
+              return _context2.f(4);
+            case 5:
+              return _context2.a(2);
+          }
+        }, _callee2, null, [[1, 3, 4, 5]]);
+      }))();
+    },
+    saveTarget: function saveTarget() {
+      var _this6 = this;
+      return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
+        var res, t, _t3;
+        return _regenerator().w(function (_context3) {
+          while (1) switch (_context3.p = _context3.n) {
+            case 0:
+              _this6.savingTarget = true;
+              _this6.targetSaved = false;
+              _context3.p = 1;
+              _context3.n = 2;
+              return _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].post('/user/analytics/boss/sales-targets', _objectSpread(_objectSpread({}, _this6.newTarget), {}, {
+                target_id: parseInt(_this6.newTarget.target_id)
+              }));
+            case 2:
+              res = _context3.v;
+              if (!res.data.status) {
+                _context3.n = 4;
+                break;
+              }
+              _this6.targetSaved = true;
+              _this6.newTarget = {
+                target_type: 'user',
+                target_id: '',
+                quarter: '',
+                revenue_target: null,
+                tonnage_target: null
+              };
+              // Reload targets
+              _context3.n = 3;
+              return _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/analytics/boss/sales-targets');
+            case 3:
+              t = _context3.v;
+              if (t.data.status) _this6.salesTargets = t.data.data;
+            case 4:
+              _context3.n = 6;
+              break;
+            case 5:
+              _context3.p = 5;
+              _t3 = _context3.v;
+              console.error(_t3);
+            case 6:
+              _context3.p = 6;
+              _this6.savingTarget = false;
+              return _context3.f(6);
+            case 7:
+              return _context3.a(2);
+          }
+        }, _callee3, null, [[1, 5, 6, 7]]);
+      }))();
+    },
+    getInitials: function getInitials(name) {
+      if (!name) return '?';
+      return name.split(' ').map(function (w) {
+        return w[0];
+      }).join('').toUpperCase().slice(0, 2);
+    },
+    getOliClass: function getOliClass(score) {
+      if (score >= 15.0) return 'oli-danger';
+      if (score >= 8.0) return 'oli-warning';
+      return 'oli-success';
+    },
+    getBranchSparklineOptions: function getBranchSparklineOptions(branch) {
+      var _branch$trend$total, _branch$trend, _branch$trend$0$total, _branch$trend$;
+      var last = (_branch$trend$total = (_branch$trend = branch.trend[branch.trend.length - 1]) === null || _branch$trend === void 0 ? void 0 : _branch$trend.total) !== null && _branch$trend$total !== void 0 ? _branch$trend$total : 0;
+      var first = (_branch$trend$0$total = (_branch$trend$ = branch.trend[0]) === null || _branch$trend$ === void 0 ? void 0 : _branch$trend$.total) !== null && _branch$trend$0$total !== void 0 ? _branch$trend$0$total : 0;
+      return {
+        chart: {
+          type: 'area',
+          sparkline: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
+          }
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            opacityFrom: 0.3,
+            opacityTo: 0.02
+          }
+        },
+        colors: [last >= first ? '#10B981' : '#F59E0B'],
+        tooltip: {
+          enabled: false
+        }
+      };
+    },
+    getConversionClass: function getConversionClass(rate) {
+      if (rate >= 60) return 'ring-high';
+      if (rate >= 30) return 'ring-mid';
+      return 'ring-low';
+    },
+    getClientSparkOptions: function getClientSparkOptions(client) {
+      var _client$trend$total, _client$trend, _client$trend$0$total, _client$trend$;
+      var last = (_client$trend$total = (_client$trend = client.trend[client.trend.length - 1]) === null || _client$trend === void 0 ? void 0 : _client$trend.total) !== null && _client$trend$total !== void 0 ? _client$trend$total : 0;
+      var first = (_client$trend$0$total = (_client$trend$ = client.trend[0]) === null || _client$trend$ === void 0 ? void 0 : _client$trend$.total) !== null && _client$trend$0$total !== void 0 ? _client$trend$0$total : 0;
+      return {
+        chart: {
+          type: 'area',
+          sparkline: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
+          }
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            opacityFrom: 0.35,
+            opacityTo: 0.02
+          }
+        },
+        colors: [last >= first ? '#10B981' : '#F59E0B'],
+        tooltip: {
+          enabled: true,
+          x: {
+            show: false
+          },
+          y: {
+            formatter: function formatter(v) {
+              return "".concat(v, " jobs");
+            }
+          }
+        }
+      };
+    },
+    formatAmount: function formatAmount(val) {
+      if (!val) return '0';
+      return Number(val).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=script&lang=js":
+/*!*******************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=script&lang=js ***!
+  \*******************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue-apexcharts */ "./node_modules/vue-apexcharts/dist/vue-apexcharts.js");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(vue_apexcharts__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "SalesAnalyticsDashboard",
+  components: {
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
+    apexchart: (vue_apexcharts__WEBPACK_IMPORTED_MODULE_1___default())
+  },
+  data: function data() {
+    return {
+      loading: false,
+      filterPeriod: "monthly",
+      filterTransportMode: "",
+      totals: {
+        raised: 0,
+        replied: 0,
+        converted: 0,
+        pending_sla_breached: 0
+      },
+      // Funnel chart
+      funnelChartSeries: [],
+      funnelChartOptions: {
+        chart: {
+          type: 'bar',
+          toolbar: {
+            show: false
+          }
+        },
+        plotOptions: {
+          bar: {
+            columnWidth: '55%',
+            borderRadius: 4
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          show: true,
+          width: 2,
+          colors: ['transparent']
+        },
+        xaxis: {
+          categories: []
+        },
+        yaxis: {
+          title: {
+            text: 'Jobs'
+          }
+        },
+        fill: {
+          opacity: 1
+        },
+        colors: ['#355594', '#10B981', '#3B82F6', '#EF4444'],
+        legend: {
+          position: 'top'
+        }
+      },
+      // Lost reasons donut
+      lostChartSeries: [],
+      lostChartOptions: {
+        chart: {
+          type: 'donut'
+        },
+        labels: [],
+        colors: ['#EF4444', '#F59E0B', '#3B82F6', '#8B5CF6', '#6EE7B7'],
+        legend: {
+          position: 'bottom'
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 200
+            }
+          }
+        }]
+      },
+      // SLA response time
+      responseTimeSeries: [],
+      responseTimeOptions: {
+        chart: {
+          type: 'line',
+          toolbar: {
+            show: false
+          }
+        },
+        stroke: {
+          width: 3,
+          curve: 'smooth'
+        },
+        xaxis: {
+          categories: []
+        },
+        yaxis: {
+          title: {
+            text: 'Minutes'
+          }
+        },
+        colors: ['#F59E0B'],
+        markers: {
+          size: 5
+        }
+      },
+      // Staff load (for alerts panel)
+      staffLoad: [],
+      // Staff performance MoM cards
+      staffPerformance: [],
+      // Branch MoM chart
+      branchMoMSeries: [],
+      branchMoMOptions: {
+        chart: {
+          type: 'bar',
+          toolbar: {
+            show: false
+          }
+        },
+        plotOptions: {
+          bar: {
+            columnWidth: '60%',
+            borderRadius: 4
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        xaxis: {
+          categories: []
+        },
+        colors: ['#355594', '#10B981'],
+        legend: {
+          position: 'top'
+        }
+      },
+      branchStats: {
+        bestMonth: '—',
+        bestMonthVolume: 0,
+        worstMonth: '—',
+        worstMonthVolume: 0,
+        avgConversionRate: 0,
+        avgMonthlyJobs: 0
+      },
+      // Command-tier: client stats
+      clientStats: [],
+      clientLoading: false,
+      clientSearch: '',
+      clientSortKey: 'raised'
+    };
+  },
+  computed: {
+    currentUser: function currentUser() {
+      return this.$store.getters.currentUser;
+    },
+    companyTier: function companyTier() {
+      return this.currentUser && this.currentUser.company ? this.currentUser.company.tier : 'viper_core';
+    },
+    isViperCore: function isViperCore() {
+      return this.companyTier === 'viper_core';
+    },
+    isViperCommand: function isViperCommand() {
+      return this.companyTier === 'viper_command';
+    },
+    filteredClientStats: function filteredClientStats() {
+      var _this = this;
+      var list = _toConsumableArray(this.clientStats);
+      if (this.clientSearch.trim()) {
+        var q = this.clientSearch.trim().toLowerCase();
+        list = list.filter(function (c) {
+          return c.client_name.toLowerCase().includes(q);
+        });
+      }
+      list.sort(function (a, b) {
+        return b[_this.clientSortKey] - a[_this.clientSortKey];
+      });
+      return list;
+    }
+  },
+  mounted: function mounted() {
+    if (!this.isViperCore) {
+      this.fetchAll();
+    }
+  },
+  methods: {
+    fetchAll: function fetchAll() {
+      var _this2 = this;
+      this.loading = true;
+      var params = {
+        transport_mode: this.filterTransportMode,
+        period: this.filterPeriod
+      };
+      var funnelReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/funnel', {
+        params: params
+      }).then(function (res) {
+        if (res.data.status) {
+          var raw = res.data.data;
+          _this2.totals = res.data.totals;
+          _this2.funnelChartOptions = _objectSpread(_objectSpread({}, _this2.funnelChartOptions), {}, {
+            xaxis: {
+              categories: raw.map(function (i) {
+                return i.period;
+              })
+            }
+          });
+          _this2.funnelChartSeries = [{
+            name: 'Raised',
+            data: raw.map(function (i) {
+              return i.raised;
+            })
+          }, {
+            name: 'Replied',
+            data: raw.map(function (i) {
+              return i.replied;
+            })
+          }, {
+            name: 'Converted',
+            data: raw.map(function (i) {
+              return i.converted;
+            })
+          }, {
+            name: 'SLA Breached',
+            data: raw.map(function (i) {
+              return i.pending_sla_breached;
+            })
+          }];
+          // Build branch MoM from funnel data (monthly view)
+          _this2.buildBranchMoM(raw);
+        }
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      var lostReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/lost-reasons', {
+        params: params
+      }).then(function (res) {
+        if (res.data.status) {
+          var raw = res.data.data;
+          _this2.lostChartSeries = raw.map(function (i) {
+            return i.total;
+          });
+          _this2.lostChartOptions = _objectSpread(_objectSpread({}, _this2.lostChartOptions), {}, {
+            labels: raw.map(function (i) {
+              return i.lost_reason;
+            })
+          });
+        }
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      var rtReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/response-times', {
+        params: params
+      }).then(function (res) {
+        if (res.data.status) {
+          var raw = res.data.data;
+          _this2.responseTimeOptions = _objectSpread(_objectSpread({}, _this2.responseTimeOptions), {}, {
+            xaxis: {
+              categories: raw.map(function (i) {
+                return i.date_group;
+              })
+            }
+          });
+          _this2.responseTimeSeries = [{
+            name: 'Avg Reply Time (min)',
+            data: raw.map(function (i) {
+              return roundToDecimals(i.avg_latency_seconds / 60, 1);
+            })
+          }];
+        }
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      var staffReq = _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/analytics/staff-load').then(function (res) {
+        if (res.data.status) {
+          _this2.staffLoad = res.data.data;
+          // Enrich with MoM stats for the staff card section
+          _this2.buildStaffPerformance(res.data.data);
+        }
+      })["catch"](function (err) {
+        return console.error(err);
+      });
+      Promise.all([funnelReq, lostReq, rtReq, staffReq])["finally"](function () {
+        _this2.loading = false;
+        // After core data loads, fetch client breakdown for Command tier
+        if (_this2.isViperCommand) {
+          _this2.fetchClientStats();
+        }
+      });
+    },
+    buildBranchMoM: function buildBranchMoM(raw) {
+      if (!raw || raw.length === 0) return;
+      var categories = raw.map(function (i) {
+        return i.period;
+      });
+      var raised = raw.map(function (i) {
+        return i.raised;
+      });
+      var converted = raw.map(function (i) {
+        return i.converted;
+      });
+      this.branchMoMOptions = _objectSpread(_objectSpread({}, this.branchMoMOptions), {}, {
+        xaxis: {
+          categories: categories
+        }
+      });
+      this.branchMoMSeries = [{
+        name: 'Jobs Raised',
+        data: raised
+      }, {
+        name: 'Jobs Converted',
+        data: converted
+      }];
+
+      // Compute summary stats
+      var maxIdx = raised.indexOf(Math.max.apply(Math, _toConsumableArray(raised)));
+      var minIdx = raised.indexOf(Math.min.apply(Math, _toConsumableArray(raised)));
+      var totalRaised = raised.reduce(function (a, b) {
+        return a + b;
+      }, 0);
+      var totalConverted = converted.reduce(function (a, b) {
+        return a + b;
+      }, 0);
+      this.branchStats = {
+        bestMonth: categories[maxIdx] || '—',
+        bestMonthVolume: raised[maxIdx] || 0,
+        worstMonth: categories[minIdx] || '—',
+        worstMonthVolume: raised[minIdx] || 0,
+        avgConversionRate: totalRaised > 0 ? roundToDecimals(totalConverted / totalRaised * 100, 1) : 0,
+        avgMonthlyJobs: raised.length > 0 ? Math.round(totalRaised / raised.length) : 0
+      };
+    },
+    buildStaffPerformance: function buildStaffPerformance(staffData) {
+      // Map staff load data to performance cards
+      // The existing endpoint returns active_jobs_count and oli_score per operator.
+      // We augment with what's available; full MoM breakdown would need a dedicated endpoint.
+      this.staffPerformance = staffData.map(function (s) {
+        return {
+          operator_id: s.operator_id,
+          name: s.name,
+          designation: s.designation || 'Operator',
+          oli_score: s.oli_score,
+          active_jobs_count: s.active_jobs_count,
+          // MoM stats — use available data; 0 as default until dedicated endpoint is wired
+          raised_this_month: s.raised_this_month || s.active_jobs_count || 0,
+          raised_last_month: s.raised_last_month || 0,
+          replied_this_month: s.replied_this_month || 0,
+          replied_last_month: s.replied_last_month || 0,
+          converted_this_month: s.converted_this_month || 0,
+          converted_last_month: s.converted_last_month || 0,
+          sla_breached_this_month: s.sla_breached_this_month || 0,
+          sla_breached_last_month: s.sla_breached_last_month || 0,
+          trend: s.trend || []
+        };
+      });
+    },
+    getInitials: function getInitials(name) {
+      if (!name) return '?';
+      return name.split(' ').map(function (w) {
+        return w[0];
+      }).join('').toUpperCase().slice(0, 2);
+    },
+    getDeltaText: function getDeltaText(current, previous) {
+      if (previous === 0 && current === 0) return '—';
+      if (previous === 0) return "+".concat(current);
+      var delta = current - previous;
+      var pct = roundToDecimals(Math.abs(delta / previous) * 100, 0);
+      return delta >= 0 ? "\u25B2 ".concat(pct, "%") : "\u25BC ".concat(pct, "%");
+    },
+    getDeltaClass: function getDeltaClass(current, previous) {
+      if (current === previous) return 'text-muted';
+      return current > previous ? 'text-success' : 'text-danger';
+    },
+    getSparklineOptions: function getSparklineOptions(member) {
+      return {
+        chart: {
+          type: 'area',
+          sparkline: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
+          }
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            opacityFrom: 0.4,
+            opacityTo: 0.05
+          }
+        },
+        colors: [member.oli_score >= 15 ? '#EF4444' : member.oli_score >= 8 ? '#F59E0B' : '#10B981'],
+        tooltip: {
+          enabled: false
+        }
+      };
+    },
+    getOliClass: function getOliClass(score) {
+      if (score >= 15.0) return 'oli-danger';
+      if (score >= 8.0) return 'oli-warning';
+      return 'oli-success';
+    },
+    getOliDotClass: function getOliDotClass(score) {
+      if (score >= 15.0) return 'dot-red';
+      if (score >= 8.0) return 'dot-amber';
+      return 'dot-green';
+    },
+    fetchClientStats: function fetchClientStats() {
+      var _this3 = this;
+      this.clientLoading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query('/user/analytics/client-stats', {
+        params: {
+          period: this.filterPeriod
+        }
+      }).then(function (res) {
+        if (res.data.status) {
+          _this3.clientStats = res.data.data;
+        }
+      })["catch"](function (err) {
+        return console.error(err);
+      })["finally"](function () {
+        _this3.clientLoading = false;
+      });
+    },
+    getConversionClass: function getConversionClass(rate) {
+      if (rate >= 60) return 'ring-high';
+      if (rate >= 30) return 'ring-mid';
+      return 'ring-low';
+    },
+    getClientSparklineOptions: function getClientSparklineOptions(client) {
+      var hasGrowth = client.trend.length > 1 && client.trend[client.trend.length - 1].total >= client.trend[0].total;
+      return {
+        chart: {
+          type: 'area',
+          sparkline: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
+          }
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            opacityFrom: 0.35,
+            opacityTo: 0.02
+          }
+        },
+        colors: [hasGrowth ? '#10B981' : '#F59E0B'],
+        tooltip: {
+          enabled: true,
+          x: {
+            show: false
+          },
+          y: {
+            formatter: function formatter(v) {
+              return "".concat(v, " jobs");
+            }
+          }
+        }
+      };
+    }
+  }
+});
+function roundToDecimals(value, decimals) {
+  return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+}
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=template&id=1e384585&scoped=true":
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=template&id=1e384585&scoped=true ***!
@@ -338,7 +1249,7 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("b-container", {
+  return _c("div", [_vm.isSalesRole ? _c("SalesAnalyticsDashboard") : _vm.isBossRole ? _c("BossAnalyticsDashboard") : _c("b-container", {
     staticClass: "body-color",
     attrs: {
       fluid: ""
@@ -671,7 +1582,1437 @@ var render = function render() {
     staticClass: "font-weight-bold mb-1 text-primary"
   }, [_vm._v("Credit Alert: Chennai Core Logix")]), _vm._v(" "), _c("p", {
     staticClass: "mb-0 text-muted small"
-  }, [_vm._v("\n                                                Client "), _c("strong", [_vm._v("Core Logix")]), _vm._v(" outstanding receivables have reached 83% of their set credit limit. Coordinate collection follow-ups before the system freezes pending releases.\n                                            ")])])], 1)])])])], 1)], 1)], 1)])], 1)]);
+  }, [_vm._v("\n                                                Client "), _c("strong", [_vm._v("Core Logix")]), _vm._v(" outstanding receivables have reached 83% of their set credit limit. Coordinate collection follow-ups before the system freezes pending releases.\n                                            ")])])], 1)])])])], 1)], 1)], 1)])], 1)])], 1);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true":
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("b-container", {
+    staticClass: "body-color",
+    attrs: {
+      fluid: ""
+    }
+  }, [_c("div", {
+    staticClass: "d-flex flex-column flex-lg-row"
+  }, [_c("SideBar"), _vm._v(" "), _c("div", {
+    staticClass: "main-content-area ml-lg-4 mt-4 mt-lg-0"
+  }, [_c("div", {
+    staticClass: "container py-8 px-6 px-sm-8 px-md-10"
+  }, [_c("div", {
+    staticClass: "d-flex justify-content-between align-items-center flex-wrap"
+  }, [_c("div", {
+    staticClass: "d-flex flex-column"
+  }, [_c("span", {
+    staticClass: "sub-header-text"
+  }, [_vm._v("Business Intelligence")]), _vm._v(" "), _c("h6", {
+    staticClass: "main-header-title"
+  }, [_vm._v("Boss Analytics")])]), _vm._v(" "), !_vm.isViperCore ? _c("div", {
+    staticClass: "d-flex align-items-center mt-3 mt-md-0"
+  }, [_c("b-form-select", {
+    staticClass: "filter-select mr-2",
+    attrs: {
+      size: "sm"
+    },
+    on: {
+      change: _vm.fetchAll
+    },
+    model: {
+      value: _vm.filterPeriod,
+      callback: function callback($$v) {
+        _vm.filterPeriod = $$v;
+      },
+      expression: "filterPeriod"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "daily"
+    }
+  }, [_vm._v("Daily View")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "monthly"
+    }
+  }, [_vm._v("Monthly View")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "yearly"
+    }
+  }, [_vm._v("Yearly View")])])], 1) : _vm._e()])]), _vm._v(" "), _c("hr", {
+    staticClass: "separator-line"
+  }), _vm._v(" "), _vm.isViperCore ? _c("div", {
+    staticClass: "container py-12 px-6 text-center"
+  }, [_c("div", {
+    staticClass: "teaser-container mx-auto py-10 px-8"
+  }, [_c("div", {
+    staticClass: "icon-circle mb-6 mx-auto"
+  }, [_c("b-icon", {
+    staticClass: "text-white",
+    attrs: {
+      icon: "shield-lock-fill",
+      "font-scale": "3"
+    }
+  })], 1), _vm._v(" "), _c("h3", {
+    staticClass: "teaser-title mb-4"
+  }, [_vm._v("Upgrade to Access Boss Analytics")]), _vm._v(" "), _c("p", {
+    staticClass: "teaser-description mb-6 mx-auto"
+  }, [_vm._v("\n                        Get full cross-branch visibility, actionable alerts, staff performance tracking, and sales target management across your entire operation.\n                    ")]), _vm._v(" "), _c("b-button", {
+    staticClass: "upgrade-btn px-8 py-3"
+  }, [_vm._v("Upgrade to Viper Tactical")])], 1)]) : _c("div", {
+    staticClass: "container-fluid py-6 px-6 px-sm-8 px-md-10"
+  }, [_c("b-overlay", {
+    attrs: {
+      show: _vm.loading,
+      rounded: "lg",
+      opacity: "0.6"
+    }
+  }, [_c("b-row", {
+    staticClass: "mb-8"
+  }, [_c("b-col", {
+    staticClass: "mb-4 mb-md-0",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("Total Jobs Raised")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-primary"
+  }, [_vm._v(_vm._s(_vm.totals.raised))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("Across all branches")])])]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 mb-md-0",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("Total Converted")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-success"
+  }, [_vm._v(_vm._s(_vm.totals.converted))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("Executed jobs company-wide")])])]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 mb-md-0",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm border-danger-left"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("SLA Breaches")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-danger"
+  }, [_vm._v(_vm._s(_vm.totals.sla_breached))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("> 15 min without reply")])])]), _vm._v(" "), _c("b-col", {
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("Active Branches")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-info"
+  }, [_vm._v(_vm._s(_vm.totals.branches))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("Branches in your company")])])])], 1), _vm._v(" "), _vm.actionItems.length > 0 || _vm.actionLoading ? _c("b-row", {
+    staticClass: "mb-8"
+  }, [_c("b-col", {
+    attrs: {
+      cols: "12"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm"
+  }, [_c("div", {
+    staticClass: "d-flex align-items-center mb-4"
+  }, [_c("h5", {
+    staticClass: "chart-title mb-0"
+  }, [_c("b-icon", {
+    staticClass: "text-warning mr-2",
+    attrs: {
+      icon: "exclamation-triangle-fill"
+    }
+  }), _vm._v("\n                                        Actionable Items\n                                    ")], 1), _vm._v(" "), _vm.actionLoading ? _c("b-spinner", {
+    staticClass: "ml-3 text-primary",
+    attrs: {
+      small: ""
+    }
+  }) : _vm._e()], 1), _vm._v(" "), _c("b-row", _vm._l(_vm.actionItems, function (item, idx) {
+    return _c("b-col", {
+      key: idx,
+      staticClass: "mb-4",
+      attrs: {
+        md: "6",
+        lg: "4"
+      }
+    }, [_c("div", {
+      staticClass: "action-card",
+      "class": "action-card--".concat(item.severity)
+    }, [_c("div", {
+      staticClass: "d-flex align-items-start"
+    }, [_c("div", {
+      staticClass: "traffic-dot mt-1 mr-3 flex-shrink-0",
+      "class": item.severity === "danger" ? "dot-red" : "dot-amber"
+    }), _vm._v(" "), _c("div", [_c("div", {
+      staticClass: "action-title"
+    }, [_vm._v(_vm._s(item.title))]), _vm._v(" "), _c("div", {
+      staticClass: "action-branch"
+    }, [_vm._v(_vm._s(item.branch_name))]), _vm._v(" "), _c("div", {
+      staticClass: "action-desc"
+    }, [_vm._v(_vm._s(item.description))])])])])]);
+  }), 1), _vm._v(" "), !_vm.actionLoading && _vm.actionItems.length === 0 ? _c("div", {
+    staticClass: "text-center py-6 text-muted"
+  }, [_c("b-icon", {
+    staticClass: "text-success mb-3",
+    attrs: {
+      icon: "check-circle-fill",
+      "font-scale": "2"
+    }
+  }), _vm._v(" "), _c("p", {
+    staticClass: "mb-0"
+  }, [_vm._v("No urgent action items — all branches running smoothly!")])], 1) : _vm._e()], 1)])], 1) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "mb-4"
+  }, [_c("h5", {
+    staticClass: "section-heading"
+  }, [_vm._v("Branch Performance")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc"
+  }, [_vm._v("Jobs raised, converted, and SLA health per branch over the selected period.")])]), _vm._v(" "), _c("b-row", {
+    staticClass: "mb-8"
+  }, _vm._l(_vm.branchData, function (branch) {
+    return _c("b-col", {
+      key: branch.branch_id,
+      staticClass: "mb-5",
+      attrs: {
+        lg: "4",
+        md: "6"
+      }
+    }, [_c("div", {
+      staticClass: "branch-card shadow-sm"
+    }, [_c("div", {
+      staticClass: "d-flex align-items-center mb-3"
+    }, [_c("div", {
+      staticClass: "branch-icon mr-3"
+    }, [_c("b-icon", {
+      staticClass: "text-white",
+      attrs: {
+        icon: "building",
+        "font-scale": "1.2"
+      }
+    })], 1), _vm._v(" "), _c("div", {
+      staticClass: "flex-grow-1",
+      staticStyle: {
+        "min-width": "0"
+      }
+    }, [_c("div", {
+      staticClass: "branch-name text-truncate"
+    }, [_vm._v(_vm._s(branch.branch_name))]), _vm._v(" "), _c("div", {
+      staticClass: "branch-staff"
+    }, [_vm._v(_vm._s(branch.staff_count) + " staff")])]), _vm._v(" "), _c("div", {
+      staticClass: "sla-badge",
+      "class": branch.sla_breached > 0 ? "sla-red" : "sla-green"
+    }, [_vm._v("\n                                        " + _vm._s(branch.sla_breached > 0 ? branch.sla_breached + " SLA" : "✓ SLA") + "\n                                    ")])]), _vm._v(" "), _c("div", {
+      staticClass: "branch-stats-row"
+    }, [_c("div", {
+      staticClass: "bstat"
+    }, [_c("div", {
+      staticClass: "bstat-val text-primary"
+    }, [_vm._v(_vm._s(branch.raised))]), _vm._v(" "), _c("div", {
+      staticClass: "bstat-lbl"
+    }, [_vm._v("Raised")])]), _vm._v(" "), _c("div", {
+      staticClass: "bstat"
+    }, [_c("div", {
+      staticClass: "bstat-val text-success"
+    }, [_vm._v(_vm._s(branch.converted))]), _vm._v(" "), _c("div", {
+      staticClass: "bstat-lbl"
+    }, [_vm._v("Converted")])]), _vm._v(" "), _c("div", {
+      staticClass: "bstat"
+    }, [_c("div", {
+      staticClass: "bstat-val",
+      "class": branch.conversion_rate >= 50 ? "text-success" : branch.conversion_rate >= 25 ? "text-warning" : "text-danger"
+    }, [_vm._v("\n                                            " + _vm._s(branch.conversion_rate) + "%\n                                        ")]), _vm._v(" "), _c("div", {
+      staticClass: "bstat-lbl"
+    }, [_vm._v("Conv. Rate")])])]), _vm._v(" "), branch.trend && branch.trend.length > 1 ? _c("div", {
+      staticClass: "mt-3"
+    }, [_c("apexchart", {
+      attrs: {
+        type: "area",
+        height: "45",
+        options: _vm.getBranchSparklineOptions(branch),
+        series: [{
+          name: "Jobs",
+          data: branch.trend.map(function (t) {
+            return t.total;
+          })
+        }]
+      }
+    })], 1) : _vm._e()])]);
+  }), 1), _vm._v(" "), _c("div", {
+    staticClass: "mb-4"
+  }, [_c("h5", {
+    staticClass: "section-heading"
+  }, [_vm._v("Staff Across All Branches")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc"
+  }, [_vm._v("Operator Load Index and active job workload for every staff member.")])]), _vm._v(" "), _c("div", {
+    staticClass: "chart-container shadow-sm mb-8"
+  }, [_c("div", {
+    staticClass: "table-responsive"
+  }, [_c("table", {
+    staticClass: "boss-staff-table w-100"
+  }, [_c("thead", [_c("tr", [_c("th", [_vm._v("Name")]), _vm._v(" "), _c("th", [_vm._v("Designation")]), _vm._v(" "), _c("th", [_vm._v("Branch")]), _vm._v(" "), _c("th", [_vm._v("Active Jobs")]), _vm._v(" "), _c("th", [_vm._v("OLI Score")])])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.allStaff, function (member) {
+    return _c("tr", {
+      key: member.user_id,
+      staticClass: "staff-row-tr"
+    }, [_c("td", [_c("div", {
+      staticClass: "d-flex align-items-center"
+    }, [_c("div", {
+      staticClass: "mini-avatar mr-2"
+    }, [_vm._v(_vm._s(_vm.getInitials(member.name)))]), _vm._v(" "), _c("span", {
+      staticClass: "font-weight-bold"
+    }, [_vm._v(_vm._s(member.name))])])]), _vm._v(" "), _c("td", {
+      staticClass: "text-capitalize text-muted"
+    }, [_vm._v(_vm._s(member.designation))]), _vm._v(" "), _c("td", [_c("span", {
+      staticClass: "branch-tag"
+    }, [_vm._v(_vm._s(member.branch_name))])]), _vm._v(" "), _c("td", [_vm._v(_vm._s(member.active_jobs_count))]), _vm._v(" "), _c("td", [_c("span", {
+      staticClass: "oli-badge",
+      "class": _vm.getOliClass(member.oli_score)
+    }, [_vm._v("\n                                                OLI " + _vm._s(member.oli_score) + "\n                                            ")])])]);
+  }), _vm._v(" "), _vm.allStaff.length === 0 ? _c("tr", [_c("td", {
+    staticClass: "text-center text-muted py-6",
+    attrs: {
+      colspan: "5"
+    }
+  }, [_vm._v("No staff data found.")])]) : _vm._e()], 2)])])]), _vm._v(" "), _c("div", {
+    staticClass: "mb-4"
+  }, [_c("h5", {
+    staticClass: "section-heading"
+  }, [_vm._v("Mailbox Connection")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc"
+  }, [_vm._v("Connect your corporate email address to enable inbox automation.")])]), _vm._v(" "), _c("div", {
+    staticClass: "chart-container shadow-sm mb-8"
+  }, [_vm.mailboxConnections.length > 0 ? _c("div", {
+    staticClass: "mb-5"
+  }, [_c("h6", {
+    staticClass: "section-sub-title mb-3"
+  }, [_vm._v("Connected Mailboxes")]), _vm._v(" "), _vm._l(_vm.mailboxConnections, function (conn) {
+    return _c("div", {
+      key: conn.id,
+      staticClass: "mailbox-row d-flex align-items-center mb-3"
+    }, [_c("div", {
+      staticClass: "mailbox-provider-icon mr-3"
+    }, [_c("b-icon", {
+      staticClass: "text-white",
+      attrs: {
+        icon: conn.provider === "gmail" ? "envelope-fill" : "microsoft",
+        "font-scale": "1.2"
+      }
+    })], 1), _vm._v(" "), _c("div", {
+      staticClass: "flex-grow-1"
+    }, [_c("div", {
+      staticClass: "font-weight-bold"
+    }, [_vm._v(_vm._s(conn.email_address))]), _vm._v(" "), _c("div", {
+      staticClass: "small text-muted text-capitalize"
+    }, [_vm._v(_vm._s(conn.provider) + " • " + _vm._s(conn.is_active ? "Active" : "Inactive"))])]), _vm._v(" "), _c("b-button", {
+      staticClass: "rounded-pill px-3",
+      attrs: {
+        size: "sm",
+        variant: "outline-danger",
+        disabled: _vm.disconnecting === conn.id
+      },
+      on: {
+        click: function click($event) {
+          return _vm.disconnectMailbox(conn.id);
+        }
+      }
+    }, [_vm.disconnecting === conn.id ? _c("b-spinner", {
+      attrs: {
+        small: ""
+      }
+    }) : _c("span", [_vm._v("Disconnect")])], 1)], 1);
+  })], 2) : _vm._e(), _vm._v(" "), _c("h6", {
+    staticClass: "section-sub-title mb-3"
+  }, [_vm._v("Connect a New Mailbox")]), _vm._v(" "), _c("b-form", {
+    on: {
+      submit: function submit($event) {
+        $event.preventDefault();
+        return _vm.connectMailbox.apply(null, arguments);
+      }
+    }
+  }, [_c("b-row", [_c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "4"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Email Address")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "boss-input",
+    attrs: {
+      type: "email",
+      placeholder: "yourname@company.com",
+      required: ""
+    },
+    model: {
+      value: _vm.newMailbox.email_address,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newMailbox, "email_address", $$v);
+      },
+      expression: "newMailbox.email_address"
+    }
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Provider")]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "boss-input",
+    attrs: {
+      required: ""
+    },
+    model: {
+      value: _vm.newMailbox.provider,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newMailbox, "provider", $$v);
+      },
+      expression: "newMailbox.provider"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "gmail"
+    }
+  }, [_vm._v("Gmail (Google Workspace)")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "outlook"
+    }
+  }, [_vm._v("Outlook (Microsoft 365)")])])], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Access Token")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "boss-input",
+    attrs: {
+      type: "password",
+      placeholder: "OAuth Access Token",
+      required: ""
+    },
+    model: {
+      value: _vm.newMailbox.access_token,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newMailbox, "access_token", $$v);
+      },
+      expression: "newMailbox.access_token"
+    }
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3 d-flex align-items-end",
+    attrs: {
+      md: "2"
+    }
+  }, [_c("b-button", {
+    staticClass: "connect-btn w-100",
+    attrs: {
+      type: "submit",
+      disabled: _vm.connecting
+    }
+  }, [_vm.connecting ? _c("b-spinner", {
+    staticClass: "mr-1",
+    attrs: {
+      small: ""
+    }
+  }) : _c("b-icon", {
+    staticClass: "mr-1",
+    attrs: {
+      icon: "plus-circle-fill"
+    }
+  }), _vm._v("\n                                        Connect\n                                    ")], 1)], 1)], 1), _vm._v(" "), _c("p", {
+    staticClass: "small text-muted mt-2"
+  }, [_c("b-icon", {
+    staticClass: "text-success mr-1",
+    attrs: {
+      icon: "shield-check"
+    }
+  }), _vm._v("\n                                Only corporate email domains are accepted. Personal email addresses (Gmail/Yahoo personal) are blocked for security.\n                            ")], 1)], 1)], 1), _vm._v(" "), _c("div", {
+    staticClass: "mb-4"
+  }, [_c("h5", {
+    staticClass: "section-heading"
+  }, [_vm._v("Sales Targets & Plans")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc"
+  }, [_vm._v("Set quarterly revenue and tonnage targets for branches or individual sales staff.")])]), _vm._v(" "), _c("div", {
+    staticClass: "chart-container shadow-sm mb-8"
+  }, [_vm.salesTargets.length > 0 ? _c("div", {
+    staticClass: "mb-6"
+  }, [_c("h6", {
+    staticClass: "section-sub-title mb-3"
+  }, [_vm._v("Current Targets")]), _vm._v(" "), _c("div", {
+    staticClass: "table-responsive"
+  }, [_c("table", {
+    staticClass: "boss-staff-table w-100"
+  }, [_c("thead", [_c("tr", [_c("th", [_vm._v("Target")]), _vm._v(" "), _c("th", [_vm._v("Type")]), _vm._v(" "), _c("th", [_vm._v("Quarter")]), _vm._v(" "), _c("th", [_vm._v("Revenue Target")]), _vm._v(" "), _c("th", [_vm._v("Tonnage Target")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.salesTargets, function (t) {
+    return _c("tr", {
+      key: t.id
+    }, [_c("td", {
+      staticClass: "font-weight-bold"
+    }, [_vm._v(_vm._s(t.name))]), _vm._v(" "), _c("td", [_c("span", {
+      staticClass: "branch-tag text-capitalize"
+    }, [_vm._v(_vm._s(t.target_type))])]), _vm._v(" "), _c("td", [_vm._v(_vm._s(t.quarter))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(t.revenue_target ? "INR " + _vm.formatAmount(t.revenue_target) : "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(t.tonnage_target ? t.tonnage_target + " MT" : "—"))])]);
+  }), 0)])])]) : _vm._e(), _vm._v(" "), _c("h6", {
+    staticClass: "section-sub-title mb-3"
+  }, [_vm._v("Set New Target")]), _vm._v(" "), _c("b-form", {
+    on: {
+      submit: function submit($event) {
+        $event.preventDefault();
+        return _vm.saveTarget.apply(null, arguments);
+      }
+    }
+  }, [_c("b-row", [_c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "2"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Target Type")]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "boss-input",
+    attrs: {
+      required: ""
+    },
+    on: {
+      change: function change($event) {
+        _vm.newTarget.target_id = "";
+      }
+    },
+    model: {
+      value: _vm.newTarget.target_type,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newTarget, "target_type", $$v);
+      },
+      expression: "newTarget.target_type"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "user"
+    }
+  }, [_vm._v("Sales Staff")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "branch"
+    }
+  }, [_vm._v("Branch")])])], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v(_vm._s(_vm.newTarget.target_type === "user" ? "Select Staff" : "Select Branch"))]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "boss-input",
+    attrs: {
+      required: ""
+    },
+    model: {
+      value: _vm.newTarget.target_id,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newTarget, "target_id", $$v);
+      },
+      expression: "newTarget.target_id"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("— Select —")]), _vm._v(" "), _vm.newTarget.target_type === "user" ? _vm._l(_vm.allStaff.filter(function (m) {
+    return m.designation === "sales";
+  }), function (s) {
+    return _c("option", {
+      key: s.user_id,
+      domProps: {
+        value: s.user_id
+      }
+    }, [_vm._v(_vm._s(s.name) + " (" + _vm._s(s.branch_name) + ")")]);
+  }) : _vm._l(_vm.branchData, function (b) {
+    return _c("option", {
+      key: b.branch_id,
+      domProps: {
+        value: b.branch_id
+      }
+    }, [_vm._v(_vm._s(b.branch_name))]);
+  })], 2)], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "2"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Quarter")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "boss-input",
+    attrs: {
+      placeholder: "e.g. Q3-2025",
+      required: ""
+    },
+    model: {
+      value: _vm.newTarget.quarter,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newTarget, "quarter", $$v);
+      },
+      expression: "newTarget.quarter"
+    }
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "2"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Revenue Target (INR)")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "boss-input",
+    attrs: {
+      type: "number",
+      placeholder: "0"
+    },
+    model: {
+      value: _vm.newTarget.revenue_target,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newTarget, "revenue_target", $$v);
+      },
+      expression: "newTarget.revenue_target"
+    }
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3",
+    attrs: {
+      md: "2"
+    }
+  }, [_c("label", {
+    staticClass: "form-label-boss"
+  }, [_vm._v("Tonnage Target (MT)")]), _vm._v(" "), _c("b-form-input", {
+    staticClass: "boss-input",
+    attrs: {
+      type: "number",
+      placeholder: "0"
+    },
+    model: {
+      value: _vm.newTarget.tonnage_target,
+      callback: function callback($$v) {
+        _vm.$set(_vm.newTarget, "tonnage_target", $$v);
+      },
+      expression: "newTarget.tonnage_target"
+    }
+  })], 1), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-3 d-flex align-items-end",
+    attrs: {
+      md: "1"
+    }
+  }, [_c("b-button", {
+    staticClass: "connect-btn w-100",
+    attrs: {
+      type: "submit",
+      disabled: _vm.savingTarget
+    }
+  }, [_vm.savingTarget ? _c("b-spinner", {
+    attrs: {
+      small: ""
+    }
+  }) : _c("b-icon", {
+    attrs: {
+      icon: "check-lg"
+    }
+  })], 1)], 1)], 1)], 1), _vm._v(" "), _vm.targetSaved ? _c("b-alert", {
+    staticClass: "mt-3",
+    attrs: {
+      show: "",
+      variant: "success",
+      dismissible: ""
+    }
+  }, [_vm._v("\n                            Target saved successfully!\n                        ")]) : _vm._e()], 1), _vm._v(" "), _vm.isViperCommand ? [_c("hr", {
+    staticClass: "separator-line my-8"
+  }), _vm._v(" "), _c("div", {
+    staticClass: "mb-4 d-flex align-items-center"
+  }, [_c("div", [_c("h5", {
+    staticClass: "section-heading mb-1"
+  }, [_c("span", {
+    staticClass: "command-badge mr-2"
+  }, [_vm._v("COMMAND")]), _vm._v("\n                                    Client Performance — All Branches\n                                ")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc mb-0"
+  }, [_vm._v("How each client is performing across all your branches.")])]), _vm._v(" "), _vm.clientLoading ? _c("b-spinner", {
+    staticClass: "ml-auto text-primary",
+    attrs: {
+      small: ""
+    }
+  }) : _vm._e()], 1), _vm._v(" "), _c("div", {
+    staticClass: "d-flex align-items-center mb-6",
+    staticStyle: {
+      gap: "12px"
+    }
+  }, [_c("div", {
+    staticClass: "client-search-wrap"
+  }, [_c("b-icon", {
+    staticClass: "client-search-icon",
+    attrs: {
+      icon: "search"
+    }
+  }), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.clientSearch,
+      expression: "clientSearch"
+    }],
+    staticClass: "client-search-input",
+    attrs: {
+      type: "text",
+      placeholder: "Search client..."
+    },
+    domProps: {
+      value: _vm.clientSearch
+    },
+    on: {
+      input: function input($event) {
+        if ($event.target.composing) return;
+        _vm.clientSearch = $event.target.value;
+      }
+    }
+  })], 1), _vm._v(" "), _c("b-form-select", {
+    staticClass: "filter-select",
+    staticStyle: {
+      width: "auto"
+    },
+    attrs: {
+      size: "sm"
+    },
+    model: {
+      value: _vm.clientSortKey,
+      callback: function callback($$v) {
+        _vm.clientSortKey = $$v;
+      },
+      expression: "clientSortKey"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "raised"
+    }
+  }, [_vm._v("Sort: Most Jobs")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "converted"
+    }
+  }, [_vm._v("Sort: Most Converted")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "conversion_rate"
+    }
+  }, [_vm._v("Sort: Conversion Rate")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "sla_breached"
+    }
+  }, [_vm._v("Sort: SLA Breaches")])])], 1), _vm._v(" "), _vm.filteredClients.length > 0 ? _c("b-row", _vm._l(_vm.filteredClients, function (client) {
+    return _c("b-col", {
+      key: client.client_id,
+      staticClass: "mb-6",
+      attrs: {
+        lg: "4",
+        md: "6"
+      }
+    }, [_c("div", {
+      staticClass: "client-card shadow-sm"
+    }, [_c("div", {
+      staticClass: "client-card-header d-flex align-items-start mb-4"
+    }, [_c("div", {
+      staticClass: "client-avatar mr-3"
+    }, [_vm._v(_vm._s(_vm.getInitials(client.client_name)))]), _vm._v(" "), _c("div", {
+      staticClass: "flex-grow-1",
+      staticStyle: {
+        "min-width": "0"
+      }
+    }, [_c("div", {
+      staticClass: "client-card-name text-truncate"
+    }, [_vm._v(_vm._s(client.client_name))]), _vm._v(" "), _c("div", {
+      staticClass: "client-card-sub"
+    }, [_vm._v(_vm._s(client.raised) + " enquir" + _vm._s(client.raised === 1 ? "y" : "ies") + " • " + _vm._s(client.branches) + " branch" + _vm._s(client.branches > 1 ? "es" : ""))])]), _vm._v(" "), _c("div", {
+      staticClass: "conversion-ring ml-2",
+      "class": _vm.getConversionClass(client.conversion_rate)
+    }, [_c("span", {
+      staticClass: "conversion-ring-value"
+    }, [_vm._v(_vm._s(client.conversion_rate) + "%")]), _vm._v(" "), _c("span", {
+      staticClass: "conversion-ring-label"
+    }, [_vm._v("Conv.")])])]), _vm._v(" "), _c("div", {
+      staticClass: "client-stats-grid mb-4"
+    }, [_c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Raised")]), _c("span", {
+      staticClass: "cstat-value text-primary"
+    }, [_vm._v(_vm._s(client.raised))])]), _vm._v(" "), _c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Replied")]), _c("span", {
+      staticClass: "cstat-value"
+    }, [_vm._v(_vm._s(client.replied))])]), _vm._v(" "), _c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Converted")]), _c("span", {
+      staticClass: "cstat-value text-success"
+    }, [_vm._v(_vm._s(client.converted))])]), _vm._v(" "), _c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Lost")]), _c("span", {
+      staticClass: "cstat-value text-danger"
+    }, [_vm._v(_vm._s(client.lost))])])]), _vm._v(" "), client.sla_breached > 0 ? _c("div", {
+      staticClass: "sla-breach-row mb-4"
+    }, [_c("div", {
+      staticClass: "traffic-dot dot-red mr-2"
+    }), _vm._v(" "), _c("span", {
+      staticClass: "small font-weight-bold text-danger"
+    }, [_vm._v(_vm._s(client.sla_breached) + " SLA breach" + _vm._s(client.sla_breached > 1 ? "es" : ""))])]) : _vm._e(), _vm._v(" "), client.trend && client.trend.length > 1 ? _c("div", [_c("div", {
+      staticClass: "cstat-label mb-1"
+    }, [_vm._v("6-Month Trend")]), _vm._v(" "), _c("apexchart", {
+      attrs: {
+        type: "area",
+        height: "50",
+        options: _vm.getClientSparkOptions(client),
+        series: [{
+          name: "Jobs",
+          data: client.trend.map(function (t) {
+            return t.total;
+          })
+        }]
+      }
+    })], 1) : _vm._e()])]);
+  }), 1) : !_vm.clientLoading ? _c("div", {
+    staticClass: "text-center py-10 text-muted"
+  }, [_vm._v("\n                            No client data found for this company and period.\n                        ")]) : _vm._e()] : _vm._e()], 2)], 1)])], 1)]);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true":
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("b-container", {
+    staticClass: "body-color",
+    attrs: {
+      fluid: ""
+    }
+  }, [_c("div", {
+    staticClass: "d-flex flex-column flex-lg-row"
+  }, [_c("SideBar"), _vm._v(" "), _c("div", {
+    staticClass: "main-content-area ml-lg-4 mt-4 mt-lg-0"
+  }, [_c("div", {
+    staticClass: "container py-8 px-6 px-sm-8 px-md-10"
+  }, [_c("div", {
+    staticClass: "d-flex justify-content-between align-items-center flex-wrap"
+  }, [_c("div", {
+    staticClass: "d-flex flex-column"
+  }, [_c("span", {
+    staticClass: "sub-header-text"
+  }, [_vm._v("Sales Intelligence")]), _vm._v(" "), _c("h6", {
+    staticClass: "main-header-title"
+  }, [_vm._v("Branch Analytics")])]), _vm._v(" "), !_vm.isViperCore ? _c("div", {
+    staticClass: "d-flex align-items-center mt-3 mt-md-0"
+  }, [_c("b-form-select", {
+    staticClass: "filter-select mr-2",
+    attrs: {
+      size: "sm"
+    },
+    on: {
+      change: _vm.fetchAll
+    },
+    model: {
+      value: _vm.filterPeriod,
+      callback: function callback($$v) {
+        _vm.filterPeriod = $$v;
+      },
+      expression: "filterPeriod"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "daily"
+    }
+  }, [_vm._v("Daily View")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "monthly"
+    }
+  }, [_vm._v("Monthly View")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "yearly"
+    }
+  }, [_vm._v("Yearly View")])]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "filter-select",
+    attrs: {
+      size: "sm"
+    },
+    on: {
+      change: _vm.fetchAll
+    },
+    model: {
+      value: _vm.filterTransportMode,
+      callback: function callback($$v) {
+        _vm.filterTransportMode = $$v;
+      },
+      expression: "filterTransportMode"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All Modes")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "air"
+    }
+  }, [_vm._v("Focus Air")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "sea"
+    }
+  }, [_vm._v("Focus Sea")])])], 1) : _vm._e()])]), _vm._v(" "), _c("hr", {
+    staticClass: "separator-line"
+  }), _vm._v(" "), _vm.isViperCore ? _c("div", {
+    staticClass: "container py-12 px-6 px-sm-8 px-md-10 text-center"
+  }, [_c("div", {
+    staticClass: "teaser-container mx-auto py-10 px-8 rounded-lg shadow-lg"
+  }, [_c("div", {
+    staticClass: "icon-circle mb-6 mx-auto"
+  }, [_c("b-icon", {
+    staticClass: "lock-icon",
+    attrs: {
+      icon: "shield-lock-fill",
+      "font-scale": "3"
+    }
+  })], 1), _vm._v(" "), _c("h3", {
+    staticClass: "teaser-title mb-4"
+  }, [_vm._v("Upgrade to Unlock Sales Analytics")]), _vm._v(" "), _c("p", {
+    staticClass: "teaser-description mb-6 mx-auto"
+  }, [_vm._v("\n                        Access staff performance tracking, job enquiry funnels, SLA delay alerts, and month-on-month branch performance charts — all in one place.\n                    ")]), _vm._v(" "), _c("b-button", {
+    staticClass: "upgrade-btn px-8 py-3",
+    attrs: {
+      variant: "primary"
+    }
+  }, [_vm._v("\n                        Upgrade to Viper Tactical\n                    ")])], 1)]) : _c("div", {
+    staticClass: "container-fluid py-6 px-6 px-sm-8 px-md-10"
+  }, [_c("b-overlay", {
+    attrs: {
+      show: _vm.loading,
+      rounded: "lg",
+      opacity: "0.6"
+    }
+  }, [_c("b-row", {
+    staticClass: "mb-8"
+  }, [_c("b-col", {
+    staticClass: "mb-4 mb-md-0",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("Jobs Raised")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-primary"
+  }, [_vm._v(_vm._s(_vm.totals.raised))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("Total enquiries this period")])])]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 mb-md-0",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("Jobs Replied")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-success"
+  }, [_vm._v(_vm._s(_vm.totals.replied))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("Proposals sent")])])]), _vm._v(" "), _c("b-col", {
+    staticClass: "mb-4 mb-md-0",
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("Converted")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-info"
+  }, [_vm._v(_vm._s(_vm.totals.converted))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("Executed jobs")])])]), _vm._v(" "), _c("b-col", {
+    attrs: {
+      md: "3"
+    }
+  }, [_c("div", {
+    staticClass: "metric-card shadow-sm border-danger-left"
+  }, [_c("span", {
+    staticClass: "metric-label"
+  }, [_vm._v("SLA Breaches")]), _vm._v(" "), _c("div", {
+    staticClass: "metric-value text-danger"
+  }, [_vm._v(_vm._s(_vm.totals.pending_sla_breached))]), _vm._v(" "), _c("span", {
+    staticClass: "metric-subtext"
+  }, [_vm._v("> 15 min without reply")])])])], 1), _vm._v(" "), _c("b-row", {
+    staticClass: "mb-8"
+  }, [_c("b-col", {
+    staticClass: "mb-8 mb-lg-0",
+    attrs: {
+      lg: "8"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm"
+  }, [_c("h5", {
+    staticClass: "chart-title"
+  }, [_vm._v("Enquiry Conversion Funnel")]), _vm._v(" "), _c("apexchart", {
+    attrs: {
+      type: "bar",
+      height: "320",
+      options: _vm.funnelChartOptions,
+      series: _vm.funnelChartSeries
+    }
+  })], 1)]), _vm._v(" "), _c("b-col", {
+    attrs: {
+      lg: "4"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm h-100"
+  }, [_c("h5", {
+    staticClass: "chart-title"
+  }, [_vm._v("Enquiry Drop-off (Lost Reasons)")]), _vm._v(" "), _vm.lostChartSeries.length > 0 ? _c("apexchart", {
+    attrs: {
+      type: "donut",
+      height: "320",
+      options: _vm.lostChartOptions,
+      series: _vm.lostChartSeries
+    }
+  }) : _c("div", {
+    staticClass: "d-flex align-items-center justify-content-center h-75 text-muted small"
+  }, [_vm._v("\n                                    No lost data recorded for this period.\n                                ")])], 1)])], 1), _vm._v(" "), _c("b-row", {
+    staticClass: "mb-8"
+  }, [_c("b-col", {
+    staticClass: "mb-8 mb-lg-0",
+    attrs: {
+      lg: "6"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm"
+  }, [_c("h5", {
+    staticClass: "chart-title"
+  }, [_vm._v("Average SLA Response Time")]), _vm._v(" "), _c("apexchart", {
+    attrs: {
+      type: "line",
+      height: "280",
+      options: _vm.responseTimeOptions,
+      series: _vm.responseTimeSeries
+    }
+  })], 1)]), _vm._v(" "), _c("b-col", {
+    attrs: {
+      lg: "6"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm"
+  }, [_c("h5", {
+    staticClass: "chart-title"
+  }, [_c("b-icon", {
+    staticClass: "text-warning mr-2",
+    attrs: {
+      icon: "exclamation-triangle-fill"
+    }
+  }), _vm._v("\n                                    Delays & Alerts\n                                ")], 1), _vm._v(" "), _vm.totals.pending_sla_breached > 0 ? _c("div", {
+    staticClass: "alert-badge mb-4 d-flex align-items-center"
+  }, [_c("div", {
+    staticClass: "traffic-dot dot-red mr-3"
+  }), _vm._v(" "), _c("div", [_c("span", {
+    staticClass: "font-weight-bold text-danger"
+  }, [_vm._v(_vm._s(_vm.totals.pending_sla_breached) + " SLA Breach" + _vm._s(_vm.totals.pending_sla_breached > 1 ? "es" : ""))]), _vm._v(" "), _c("span", {
+    staticClass: "d-block small text-muted"
+  }, [_vm._v("Enquiries awaiting reply for > 15 min")])])]) : _c("div", {
+    staticClass: "alert-badge-ok mb-4 d-flex align-items-center"
+  }, [_c("div", {
+    staticClass: "traffic-dot dot-green mr-3"
+  }), _vm._v(" "), _c("div", [_c("span", {
+    staticClass: "font-weight-bold text-success"
+  }, [_vm._v("All SLAs Met")]), _vm._v(" "), _c("span", {
+    staticClass: "d-block small text-muted"
+  }, [_vm._v("No pending breaches this period")])])]), _vm._v(" "), _c("h6", {
+    staticClass: "section-sub-title mb-3"
+  }, [_vm._v("Staff Workload (OLI)")]), _vm._v(" "), _c("div", {
+    staticClass: "staff-list"
+  }, [_vm._l(_vm.staffLoad, function (staff) {
+    return _c("div", {
+      key: staff.operator_id,
+      staticClass: "staff-row d-flex justify-content-between align-items-center py-3 border-bottom"
+    }, [_c("div", {
+      staticClass: "d-flex align-items-center"
+    }, [_c("div", {
+      staticClass: "traffic-dot mr-3",
+      "class": _vm.getOliDotClass(staff.oli_score)
+    }), _vm._v(" "), _c("div", {
+      staticClass: "d-flex flex-column"
+    }, [_c("span", {
+      staticClass: "staff-name"
+    }, [_vm._v(_vm._s(staff.name))]), _vm._v(" "), _c("span", {
+      staticClass: "staff-desg"
+    }, [_vm._v(_vm._s(staff.designation || "Operator") + " • " + _vm._s(staff.active_jobs_count) + " active")])])]), _vm._v(" "), _c("div", {
+      staticClass: "oli-badge",
+      "class": _vm.getOliClass(staff.oli_score)
+    }, [_vm._v("\n                                            OLI " + _vm._s(staff.oli_score) + "\n                                        ")])]);
+  }), _vm._v(" "), _vm.staffLoad.length === 0 ? _c("div", {
+    staticClass: "py-5 text-center text-muted small"
+  }, [_vm._v("\n                                        No operator data found for this branch.\n                                    ")]) : _vm._e()], 2)])])], 1), _vm._v(" "), _c("b-row", {
+    staticClass: "mb-8"
+  }, [_c("b-col", {
+    staticClass: "mb-8 mb-lg-0",
+    attrs: {
+      lg: "8"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm"
+  }, [_c("h5", {
+    staticClass: "chart-title"
+  }, [_vm._v("Branch Monthly Volume (Last 12 Months)")]), _vm._v(" "), _c("apexchart", {
+    attrs: {
+      type: "bar",
+      height: "300",
+      options: _vm.branchMoMOptions,
+      series: _vm.branchMoMSeries
+    }
+  })], 1)]), _vm._v(" "), _c("b-col", {
+    attrs: {
+      lg: "4"
+    }
+  }, [_c("div", {
+    staticClass: "chart-container shadow-sm h-100"
+  }, [_c("h5", {
+    staticClass: "chart-title"
+  }, [_vm._v("Branch Performance Summary")]), _vm._v(" "), _c("div", {
+    staticClass: "performance-summary"
+  }, [_c("div", {
+    staticClass: "perf-item"
+  }, [_c("span", {
+    staticClass: "perf-label"
+  }, [_vm._v("Best Month")]), _vm._v(" "), _c("span", {
+    staticClass: "perf-value text-success"
+  }, [_vm._v(_vm._s(_vm.branchStats.bestMonth))]), _vm._v(" "), _c("span", {
+    staticClass: "perf-sub"
+  }, [_vm._v(_vm._s(_vm.branchStats.bestMonthVolume) + " jobs")])]), _vm._v(" "), _c("div", {
+    staticClass: "perf-divider"
+  }), _vm._v(" "), _c("div", {
+    staticClass: "perf-item"
+  }, [_c("span", {
+    staticClass: "perf-label"
+  }, [_vm._v("Lowest Month")]), _vm._v(" "), _c("span", {
+    staticClass: "perf-value text-danger"
+  }, [_vm._v(_vm._s(_vm.branchStats.worstMonth))]), _vm._v(" "), _c("span", {
+    staticClass: "perf-sub"
+  }, [_vm._v(_vm._s(_vm.branchStats.worstMonthVolume) + " jobs")])]), _vm._v(" "), _c("div", {
+    staticClass: "perf-divider"
+  }), _vm._v(" "), _c("div", {
+    staticClass: "perf-item"
+  }, [_c("span", {
+    staticClass: "perf-label"
+  }, [_vm._v("Avg Conversion Rate")]), _vm._v(" "), _c("span", {
+    staticClass: "perf-value text-primary"
+  }, [_vm._v(_vm._s(_vm.branchStats.avgConversionRate) + "%")]), _vm._v(" "), _c("span", {
+    staticClass: "perf-sub"
+  }, [_vm._v("Raised → Converted")])]), _vm._v(" "), _c("div", {
+    staticClass: "perf-divider"
+  }), _vm._v(" "), _c("div", {
+    staticClass: "perf-item"
+  }, [_c("span", {
+    staticClass: "perf-label"
+  }, [_vm._v("Avg Monthly Jobs")]), _vm._v(" "), _c("span", {
+    staticClass: "perf-value text-info"
+  }, [_vm._v(_vm._s(_vm.branchStats.avgMonthlyJobs))]), _vm._v(" "), _c("span", {
+    staticClass: "perf-sub"
+  }, [_vm._v("Over last 12 months")])])])])])], 1), _vm._v(" "), _c("div", {
+    staticClass: "mb-4"
+  }, [_c("h5", {
+    staticClass: "section-heading"
+  }, [_vm._v("Staff Performance — This Branch")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc"
+  }, [_vm._v("Month-on-month job handling metrics for all staff in your branch.")])]), _vm._v(" "), _c("b-row", _vm._l(_vm.staffPerformance, function (member) {
+    return _c("b-col", {
+      key: member.operator_id,
+      staticClass: "mb-6",
+      attrs: {
+        lg: "4",
+        md: "6"
+      }
+    }, [_c("div", {
+      staticClass: "staff-card shadow-sm"
+    }, [_c("div", {
+      staticClass: "staff-card-header d-flex align-items-center mb-4"
+    }, [_c("div", {
+      staticClass: "staff-avatar mr-3"
+    }, [_vm._v("\n                                        " + _vm._s(_vm.getInitials(member.name)) + "\n                                    ")]), _vm._v(" "), _c("div", [_c("div", {
+      staticClass: "staff-card-name"
+    }, [_vm._v(_vm._s(member.name))]), _vm._v(" "), _c("div", {
+      staticClass: "staff-card-desg"
+    }, [_vm._v(_vm._s(member.designation))])]), _vm._v(" "), _c("div", {
+      staticClass: "ml-auto oli-badge-sm",
+      "class": _vm.getOliClass(member.oli_score)
+    }, [_vm._v("\n                                        OLI " + _vm._s(member.oli_score) + "\n                                    ")])]), _vm._v(" "), _c("div", {
+      staticClass: "staff-stats-grid"
+    }, [_c("div", {
+      staticClass: "stat-box"
+    }, [_c("span", {
+      staticClass: "stat-label"
+    }, [_vm._v("Raised")]), _vm._v(" "), _c("span", {
+      staticClass: "stat-value"
+    }, [_vm._v(_vm._s(member.raised_this_month))]), _vm._v(" "), _c("span", {
+      staticClass: "stat-delta",
+      "class": _vm.getDeltaClass(member.raised_this_month, member.raised_last_month)
+    }, [_vm._v("\n                                            " + _vm._s(_vm.getDeltaText(member.raised_this_month, member.raised_last_month)) + "\n                                        ")])]), _vm._v(" "), _c("div", {
+      staticClass: "stat-box"
+    }, [_c("span", {
+      staticClass: "stat-label"
+    }, [_vm._v("Replied")]), _vm._v(" "), _c("span", {
+      staticClass: "stat-value"
+    }, [_vm._v(_vm._s(member.replied_this_month))]), _vm._v(" "), _c("span", {
+      staticClass: "stat-delta",
+      "class": _vm.getDeltaClass(member.replied_this_month, member.replied_last_month)
+    }, [_vm._v("\n                                            " + _vm._s(_vm.getDeltaText(member.replied_this_month, member.replied_last_month)) + "\n                                        ")])]), _vm._v(" "), _c("div", {
+      staticClass: "stat-box"
+    }, [_c("span", {
+      staticClass: "stat-label"
+    }, [_vm._v("Converted")]), _vm._v(" "), _c("span", {
+      staticClass: "stat-value text-success"
+    }, [_vm._v(_vm._s(member.converted_this_month))]), _vm._v(" "), _c("span", {
+      staticClass: "stat-delta",
+      "class": _vm.getDeltaClass(member.converted_this_month, member.converted_last_month)
+    }, [_vm._v("\n                                            " + _vm._s(_vm.getDeltaText(member.converted_this_month, member.converted_last_month)) + "\n                                        ")])]), _vm._v(" "), _c("div", {
+      staticClass: "stat-box"
+    }, [_c("span", {
+      staticClass: "stat-label"
+    }, [_vm._v("SLA Breach")]), _vm._v(" "), _c("span", {
+      staticClass: "stat-value text-danger"
+    }, [_vm._v(_vm._s(member.sla_breached_this_month))]), _vm._v(" "), _c("span", {
+      staticClass: "stat-delta",
+      "class": _vm.getDeltaClass(member.sla_breached_last_month, member.sla_breached_this_month)
+    }, [_vm._v("\n                                            " + _vm._s(_vm.getDeltaText(member.sla_breached_this_month, member.sla_breached_last_month)) + "\n                                        ")])])]), _vm._v(" "), member.trend && member.trend.length > 1 ? _c("div", {
+      staticClass: "mt-4"
+    }, [_c("apexchart", {
+      attrs: {
+        type: "area",
+        height: "60",
+        options: _vm.getSparklineOptions(member),
+        series: [{
+          name: "Jobs",
+          data: member.trend
+        }]
+      }
+    })], 1) : _vm._e()])]);
+  }), 1), _vm._v(" "), _vm.staffPerformance.length === 0 && !_vm.loading ? _c("div", {
+    staticClass: "text-center py-10 text-muted"
+  }, [_vm._v("\n                        No staff performance data available for this branch.\n                    ")]) : _vm._e(), _vm._v(" "), _vm.isViperCommand ? [_c("hr", {
+    staticClass: "separator-line my-8"
+  }), _vm._v(" "), _c("div", {
+    staticClass: "mb-4 d-flex align-items-center"
+  }, [_c("div", [_c("h5", {
+    staticClass: "section-heading mb-1"
+  }, [_c("span", {
+    staticClass: "command-badge mr-2"
+  }, [_vm._v("COMMAND")]), _vm._v("\n                                    Client Performance Breakdown\n                                ")]), _vm._v(" "), _c("p", {
+    staticClass: "section-desc mb-0"
+  }, [_vm._v("Per-client job handling and conversion metrics for your branch.")])]), _vm._v(" "), _vm.clientLoading ? _c("b-spinner", {
+    staticClass: "ml-auto text-primary",
+    attrs: {
+      small: ""
+    }
+  }) : _vm._e()], 1), _vm._v(" "), _c("div", {
+    staticClass: "d-flex align-items-center mb-6",
+    staticStyle: {
+      gap: "12px"
+    }
+  }, [_c("div", {
+    staticClass: "client-search-wrap"
+  }, [_c("b-icon", {
+    staticClass: "client-search-icon",
+    attrs: {
+      icon: "search"
+    }
+  }), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.clientSearch,
+      expression: "clientSearch"
+    }],
+    staticClass: "client-search-input",
+    attrs: {
+      type: "text",
+      placeholder: "Search client..."
+    },
+    domProps: {
+      value: _vm.clientSearch
+    },
+    on: {
+      input: function input($event) {
+        if ($event.target.composing) return;
+        _vm.clientSearch = $event.target.value;
+      }
+    }
+  })], 1), _vm._v(" "), _c("b-form-select", {
+    staticClass: "filter-select",
+    staticStyle: {
+      width: "auto"
+    },
+    attrs: {
+      size: "sm"
+    },
+    model: {
+      value: _vm.clientSortKey,
+      callback: function callback($$v) {
+        _vm.clientSortKey = $$v;
+      },
+      expression: "clientSortKey"
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "raised"
+    }
+  }, [_vm._v("Sort: Most Jobs")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "converted"
+    }
+  }, [_vm._v("Sort: Most Converted")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "conversion_rate"
+    }
+  }, [_vm._v("Sort: Conversion Rate")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "sla_breached"
+    }
+  }, [_vm._v("Sort: SLA Breaches")])])], 1), _vm._v(" "), _vm.filteredClientStats.length > 0 ? _c("b-row", _vm._l(_vm.filteredClientStats, function (client) {
+    return _c("b-col", {
+      key: client.client_id,
+      staticClass: "mb-6",
+      attrs: {
+        lg: "4",
+        md: "6"
+      }
+    }, [_c("div", {
+      staticClass: "client-card shadow-sm"
+    }, [_c("div", {
+      staticClass: "client-card-header d-flex align-items-start mb-4"
+    }, [_c("div", {
+      staticClass: "client-avatar mr-3"
+    }, [_vm._v("\n                                            " + _vm._s(_vm.getInitials(client.client_name)) + "\n                                        ")]), _vm._v(" "), _c("div", {
+      staticClass: "flex-grow-1",
+      staticStyle: {
+        "min-width": "0"
+      }
+    }, [_c("div", {
+      staticClass: "client-card-name text-truncate"
+    }, [_vm._v(_vm._s(client.client_name))]), _vm._v(" "), _c("div", {
+      staticClass: "client-card-sub"
+    }, [_vm._v(_vm._s(client.raised) + " enquir" + _vm._s(client.raised === 1 ? "y" : "ies") + " this period")])]), _vm._v(" "), _c("div", {
+      staticClass: "conversion-ring ml-2",
+      "class": _vm.getConversionClass(client.conversion_rate)
+    }, [_c("span", {
+      staticClass: "conversion-ring-value"
+    }, [_vm._v(_vm._s(client.conversion_rate) + "%")]), _vm._v(" "), _c("span", {
+      staticClass: "conversion-ring-label"
+    }, [_vm._v("Conv.")])])]), _vm._v(" "), _c("div", {
+      staticClass: "client-stats-grid mb-4"
+    }, [_c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Raised")]), _vm._v(" "), _c("span", {
+      staticClass: "cstat-value text-primary"
+    }, [_vm._v(_vm._s(client.raised))])]), _vm._v(" "), _c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Replied")]), _vm._v(" "), _c("span", {
+      staticClass: "cstat-value"
+    }, [_vm._v(_vm._s(client.replied))])]), _vm._v(" "), _c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Converted")]), _vm._v(" "), _c("span", {
+      staticClass: "cstat-value text-success"
+    }, [_vm._v(_vm._s(client.converted))])]), _vm._v(" "), _c("div", {
+      staticClass: "cstat-box"
+    }, [_c("span", {
+      staticClass: "cstat-label"
+    }, [_vm._v("Lost")]), _vm._v(" "), _c("span", {
+      staticClass: "cstat-value text-danger"
+    }, [_vm._v(_vm._s(client.lost))])])]), _vm._v(" "), client.sla_breached > 0 ? _c("div", {
+      staticClass: "sla-breach-row mb-4"
+    }, [_c("div", {
+      staticClass: "traffic-dot dot-red mr-2"
+    }), _vm._v(" "), _c("span", {
+      staticClass: "small font-weight-bold text-danger"
+    }, [_vm._v(_vm._s(client.sla_breached) + " SLA breach" + _vm._s(client.sla_breached > 1 ? "es" : ""))])]) : _vm._e(), _vm._v(" "), Object.keys(client.top_lanes).length > 0 ? _c("div", {
+      staticClass: "mb-4"
+    }, [_c("div", {
+      staticClass: "cstat-label mb-2"
+    }, [_vm._v("Top Lanes")]), _vm._v(" "), _vm._l(client.top_lanes, function (count, lane) {
+      return _c("div", {
+        key: lane,
+        staticClass: "lane-pill mb-1"
+      }, [_c("b-icon", {
+        staticClass: "mr-1",
+        attrs: {
+          icon: "arrow-right-short"
+        }
+      }), _vm._v(" "), _c("span", {
+        staticClass: "font-weight-bold"
+      }, [_vm._v(_vm._s(lane))]), _vm._v(" "), _c("span", {
+        staticClass: "ml-auto text-muted small"
+      }, [_vm._v(_vm._s(count) + " job" + _vm._s(count > 1 ? "s" : ""))])], 1);
+    })], 2) : _vm._e(), _vm._v(" "), client.trend && client.trend.length > 1 ? _c("div", [_c("div", {
+      staticClass: "cstat-label mb-1"
+    }, [_vm._v("6-Month Trend")]), _vm._v(" "), _c("apexchart", {
+      attrs: {
+        type: "area",
+        height: "55",
+        options: _vm.getClientSparklineOptions(client),
+        series: [{
+          name: "Jobs",
+          data: client.trend.map(function (t) {
+            return t.total;
+          })
+        }]
+      }
+    })], 1) : _vm._e()])]);
+  }), 1) : !_vm.clientLoading ? _c("div", {
+    staticClass: "text-center py-10 text-muted"
+  }, [_vm._v("\n                            No client data found for this branch and period.\n                        ")]) : _vm._e()] : _vm._e()], 2)], 1)])], 1)]);
 };
 var staticRenderFns = [];
 render._withStripped = true;
@@ -683,6 +3024,32 @@ render._withStripped = true;
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=style&index=0&id=1e384585&scoped=true&lang=css ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css":
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -1005,6 +3372,88 @@ component.options.__file = "resources/js/src/view/pages/dashboard/AnalyticsDashb
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue":
+/*!**************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue ***!
+  \**************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _BossAnalyticsDashboard_vue_vue_type_template_id_2e26145c_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true */ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true");
+/* harmony import */ var _BossAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./BossAnalyticsDashboard.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=script&lang=js");
+/* harmony import */ var _BossAnalyticsDashboard_vue_vue_type_style_index_0_id_2e26145c_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css */ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _BossAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _BossAnalyticsDashboard_vue_vue_type_template_id_2e26145c_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _BossAnalyticsDashboard_vue_vue_type_template_id_2e26145c_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "2e26145c",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue":
+/*!***************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue ***!
+  \***************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _SalesAnalyticsDashboard_vue_vue_type_template_id_5a335093_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true */ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true");
+/* harmony import */ var _SalesAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SalesAnalyticsDashboard.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=script&lang=js");
+/* harmony import */ var _SalesAnalyticsDashboard_vue_vue_type_style_index_0_id_5a335093_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css */ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _SalesAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _SalesAnalyticsDashboard_vue_vue_type_template_id_5a335093_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _SalesAnalyticsDashboard_vue_vue_type_template_id_5a335093_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "5a335093",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=script&lang=js":
 /*!**********************************************************************************************!*\
   !*** ./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=script&lang=js ***!
@@ -1018,6 +3467,38 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./AnalyticsDashboard.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=script&lang=js");
  /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=script&lang=js":
+/*!**************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=script&lang=js ***!
+  \**************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_BossAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BossAnalyticsDashboard.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_BossAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=script&lang=js":
+/*!***************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=script&lang=js ***!
+  \***************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_SalesAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./SalesAnalyticsDashboard.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_SalesAnalyticsDashboard_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
@@ -1038,6 +3519,40 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true":
+/*!********************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true ***!
+  \********************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_BossAnalyticsDashboard_vue_vue_type_template_id_2e26145c_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_BossAnalyticsDashboard_vue_vue_type_template_id_2e26145c_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_BossAnalyticsDashboard_vue_vue_type_template_id_2e26145c_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=template&id=2e26145c&scoped=true");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true":
+/*!*********************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true ***!
+  \*********************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_SalesAnalyticsDashboard_vue_vue_type_template_id_5a335093_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_SalesAnalyticsDashboard_vue_vue_type_template_id_5a335093_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_SalesAnalyticsDashboard_vue_vue_type_template_id_5a335093_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=template&id=5a335093&scoped=true");
+
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=style&index=0&id=1e384585&scoped=true&lang=css":
 /*!******************************************************************************************************************************!*\
   !*** ./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=style&index=0&id=1e384585&scoped=true&lang=css ***!
@@ -1047,6 +3562,32 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_AnalyticsDashboard_vue_vue_type_style_index_0_id_1e384585_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./AnalyticsDashboard.vue?vue&type=style&index=0&id=1e384585&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/AnalyticsDashboard.vue?vue&type=style&index=0&id=1e384585&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css":
+/*!**********************************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css ***!
+  \**********************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_BossAnalyticsDashboard_vue_vue_type_style_index_0_id_2e26145c_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/BossAnalyticsDashboard.vue?vue&type=style&index=0&id=2e26145c&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css":
+/*!***********************************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css ***!
+  \***********************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_SalesAnalyticsDashboard_vue_vue_type_style_index_0_id_5a335093_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/SalesAnalyticsDashboard.vue?vue&type=style&index=0&id=5a335093&scoped=true&lang=css");
 
 
 /***/ })

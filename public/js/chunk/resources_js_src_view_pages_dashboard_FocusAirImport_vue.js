@@ -11,8 +11,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "FocusAirImport",
+  components: {
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
+  },
   data: function data() {
     return {
       successMsg: null,
@@ -1251,60 +1256,116 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("div", {
-    staticClass: "py-5 premium-air-page font-outfit"
+  return _c("b-container", {
+    staticClass: "body-color",
+    attrs: {
+      fluid: ""
+    }
   }, [_c("div", {
-    staticClass: "d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-7"
+    staticClass: "d-flex flex-column flex-lg-row"
+  }, [_c("SideBar"), _vm._v(" "), _c("div", {
+    staticClass: "ml-lg-4 mt-4 mt-lg-0",
+    staticStyle: {
+      background: "#ffffff",
+      border: "1px solid rgba(255, 255, 255, 0.4)",
+      "box-shadow": "0 10px 30px rgba(53, 85, 148, 0.1)",
+      "z-index": "1",
+      "border-radius": "32px",
+      flex: "1",
+      "min-width": "0"
+    }
   }, [_c("div", {
-    staticClass: "admin-page-header mb-4 mb-md-0"
-  }, [_c("h2", {
-    staticClass: "text-white font-weight-bolder d-flex align-items-center"
+    staticClass: "container py-8 px-6 px-sm-8 px-md-10 font-outfit"
+  }, [_c("div", {
+    staticClass: "d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-8"
+  }, [_c("div", {
+    staticClass: "d-flex flex-column"
+  }, [_c("span", {
+    staticStyle: {
+      "text-transform": "uppercase",
+      "letter-spacing": "2px",
+      "font-size": "0.85rem",
+      "font-weight": "700",
+      color: "#355594",
+      opacity: "0.6",
+      "margin-bottom": "0.5rem",
+      display: "block"
+    }
+  }, [_vm._v("Air Import")]), _vm._v(" "), _c("h6", {
+    staticClass: "d-flex align-items-center",
+    staticStyle: {
+      color: "#355594",
+      "font-size": "26px !important",
+      "line-height": "34px !important",
+      "font-weight": "800 !important",
+      "letter-spacing": "-0.5px !important",
+      "margin-bottom": "0.5rem",
+      "font-family": "'Inter', sans-serif !important"
+    }
   }, [_c("b-icon", {
-    staticClass: "mr-3 text-indigo",
+    staticClass: "mr-3",
+    staticStyle: {
+      color: "#355594"
+    },
     attrs: {
       icon: "airplane-engines"
     }
-  }), _vm._v("\n        Focus Air — Import Consol Manager\n      ")], 1), _vm._v(" "), _c("span", {
-    staticClass: "text-muted small"
+  }), _vm._v("\n        Import Consol Manager\n      ")], 1), _vm._v(" "), _c("span", {
+    staticStyle: {
+      color: "#5A6B8A",
+      "font-size": "0.9rem"
+    }
   }, [_vm._v("Manage inbound flights, consolidate HAWBs, coordinate customs filings, and issue delivery orders")])]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center gap-2"
   }, [_c("b-button", {
-    staticClass: "btn-pill mr-2 px-4",
-    attrs: {
-      variant: "outline-light"
-    },
+    staticClass: "show-btn",
     on: {
       click: _vm.loadDemoConsol
     }
   }, [_c("b-icon", {
-    staticClass: "mr-1 text-warning",
+    staticClass: "mr-2 text-warning",
     attrs: {
       icon: "lightning-fill"
     }
-  }), _vm._v(" Load Demo Consol\n      ")], 1), _vm._v(" "), _c("b-button", {
-    staticClass: "btn-pill mr-2 px-4",
-    attrs: {
-      variant: "outline-danger"
-    },
+  }), _c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("Load Demo")])], 1), _vm._v(" "), _c("b-button", {
+    staticClass: "show-btn",
     on: {
       click: _vm.resetForm
     }
   }, [_c("b-icon", {
-    staticClass: "mr-1",
+    staticClass: "mr-2 text-danger",
     attrs: {
       icon: "arrow-counterclockwise"
     }
-  }), _vm._v(" Reset\n      ")], 1), _vm._v(" "), _c("router-link", {
-    staticClass: "btn btn-light-primary btn-pill px-4",
+  }), _c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("Reset")])], 1), _vm._v(" "), _c("router-link", {
+    staticClass: "show-btn text-decoration-none",
     attrs: {
       to: "/inbox"
     }
   }, [_c("b-icon", {
     staticClass: "mr-2",
+    staticStyle: {
+      color: "#355594"
+    },
     attrs: {
       icon: "arrow-left"
     }
-  }), _vm._v(" Back to Inbox\n      ")], 1)], 1)]), _vm._v(" "), _vm.form.execution_job_no || _vm.form.shipping_details.flight_number ? _c("div", {
+  }), _c("b", {
+    staticClass: "font-weight-bolder",
+    staticStyle: {
+      "font-size": "1.05rem"
+    }
+  }, [_vm._v("Back to Inbox")])], 1)], 1)]), _vm._v(" "), _vm.form.execution_job_no || _vm.form.shipping_details.flight_number ? _c("div", {
     staticClass: "mbl-summary-banner p-5 mb-6 rounded-lg animate-fade-in d-flex flex-column flex-md-row justify-content-between align-items-md-center"
   }, [_c("div", {
     staticClass: "d-flex flex-wrap align-items-center gap-4"
@@ -1313,7 +1374,10 @@ var render = function render() {
   }, [_c("span", {
     staticClass: "banner-label"
   }, [_vm._v("Consol Job / Enquiry No")]), _vm._v(" "), _c("h5", {
-    staticClass: "banner-value text-indigo font-weight-bold mb-0"
+    staticClass: "banner-value text-indigo font-weight-bold mb-0",
+    staticStyle: {
+      color: "#355594 !important"
+    }
   }, [_vm._v("\n          " + _vm._s(_vm.form.execution_job_no || "DRAFT") + "\n        ")]), _vm._v(" "), _c("span", {
     staticClass: "small text-muted"
   }, [_vm._v(_vm._s(_vm.form.consol_type))])]), _vm._v(" "), _c("div", {
@@ -1321,7 +1385,10 @@ var render = function render() {
   }, [_c("span", {
     staticClass: "banner-label"
   }, [_vm._v("Flight Details")]), _vm._v(" "), _c("h5", {
-    staticClass: "banner-value mb-0 text-white font-weight-bold"
+    staticClass: "banner-value mb-0 font-weight-bold",
+    staticStyle: {
+      color: "#475569"
+    }
   }, [_vm._v("\n          " + _vm._s(_vm.form.shipping_details.flight_number || "TBD") + "\n        ")]), _vm._v(" "), _c("span", {
     staticClass: "small text-muted"
   }, [_vm._v("Carrier: " + _vm._s(_vm.form.shipping_details.carrier_name || "TBD"))])]), _vm._v(" "), _c("div", {
@@ -1329,7 +1396,10 @@ var render = function render() {
   }, [_c("span", {
     staticClass: "banner-label"
   }, [_vm._v("Route")]), _vm._v(" "), _c("h5", {
-    staticClass: "banner-value mb-0 text-white font-weight-bold"
+    staticClass: "banner-value mb-0 font-weight-bold",
+    staticStyle: {
+      color: "#475569"
+    }
   }, [_vm._v("\n          " + _vm._s(_vm.form.routing.departure_airport || "TBD") + " ➔ " + _vm._s(_vm.form.routing.destination_airport || "TBD") + "\n        ")]), _vm._v(" "), _c("span", {
     staticClass: "small text-muted"
   }, [_vm._v("ETA: " + _vm._s(_vm.formatDateTime(_vm.form.shipping_details.eta_datetime)))])]), _vm._v(" "), _c("div", {
@@ -1337,7 +1407,10 @@ var render = function render() {
   }, [_c("span", {
     staticClass: "banner-label"
   }, [_vm._v("Payload Totals")]), _vm._v(" "), _c("h5", {
-    staticClass: "banner-value mb-0 text-white font-weight-bold"
+    staticClass: "banner-value mb-0 font-weight-bold",
+    staticStyle: {
+      color: "#475569"
+    }
   }, [_vm._v("\n          " + _vm._s(_vm.formatWeight(_vm.form.packing.gross_weight)) + " KGS / " + _vm._s(_vm.form.packing.piece_count) + " PCS\n        ")]), _vm._v(" "), _c("span", {
     staticClass: "small text-muted"
   }, [_vm._v("Vol: " + _vm._s(_vm.formatVol(_vm.form.packing.volume_cbm)) + " CBM / Chg Wt: " + _vm._s(_vm.formatWeight(_vm.form.packing.chargeable_weight)) + " KGS")])])]), _vm._v(" "), _c("div", {
@@ -1348,7 +1421,11 @@ var render = function render() {
     staticClass: "badge badge-light-primary px-3 py-2 mt-1"
   }, [_vm._v(_vm._s(_vm.getOwnerName(_vm.form.job_owner_id)))])])]) : _vm._e(), _vm._v(" "), _vm.successMsg ? _c("div", {
     staticClass: "alert alert-custom alert-light-success mb-6 shadow-sm animate-fade-in"
-  }, [_vm._m(0), _vm._v(" "), _c("div", {
+  }, [_c("div", {
+    staticClass: "alert-icon"
+  }, [_c("i", {
+    staticClass: "fas fa-check-circle text-success"
+  })]), _vm._v(" "), _c("div", {
     staticClass: "alert-text font-weight-bold"
   }, [_vm._v(_vm._s(_vm.successMsg))])]) : _vm._e(), _vm._v(" "), _vm.validationWarning ? _c("div", {
     staticClass: "alert alert-custom alert-light-warning mb-6 shadow-sm animate-fade-in"
@@ -1364,9 +1441,12 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.validationWarning))])]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "premium-glass-card p-6 mb-6"
   }, [_c("h4", {
-    staticClass: "text-white font-weight-bold mb-5 d-flex align-items-center"
+    staticClass: "h-color mb-5 d-flex align-items-center"
   }, [_c("b-icon", {
-    staticClass: "mr-3 text-indigo",
+    staticClass: "mr-3",
+    staticStyle: {
+      color: "#355594"
+    },
     attrs: {
       icon: "info-circle"
     }
@@ -1524,7 +1604,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "entity-card p-5 rounded-lg h-100"
   }, [_c("h6", {
-    staticClass: "text-white font-weight-bold mb-4 d-flex align-items-center"
+    staticClass: "h-color mb-4 d-flex align-items-center"
   }, [_c("span", {
     staticClass: "badge badge-light-indigo mr-2"
   }, [_vm._v("1")]), _vm._v(" Origin Agent\n              ")]), _vm._v(" "), _c("b-form-group", {
@@ -1583,7 +1663,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "entity-card p-5 rounded-lg h-100"
   }, [_c("h6", {
-    staticClass: "text-white font-weight-bold mb-4 d-flex align-items-center"
+    staticClass: "h-color mb-4 d-flex align-items-center"
   }, [_c("span", {
     staticClass: "badge badge-light-indigo mr-2"
   }, [_vm._v("2")]), _vm._v(" Destination Agent\n              ")]), _vm._v(" "), _c("b-form-group", {
@@ -1642,7 +1722,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "entity-card p-5 rounded-lg h-100"
   }, [_c("h6", {
-    staticClass: "text-white font-weight-bold mb-4 d-flex align-items-center"
+    staticClass: "h-color mb-4 d-flex align-items-center"
   }, [_c("span", {
     staticClass: "badge badge-light-indigo mr-2"
   }, [_vm._v("3")]), _vm._v(" Selling Agent\n              ")]), _vm._v(" "), _c("b-form-group", {
@@ -1711,7 +1791,7 @@ var render = function render() {
   }, [_vm._v(" "), _c("div", {
     staticClass: "premium-glass-card p-6"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-5"
+    staticClass: "h-color mb-5"
   }, [_vm._v("Vessel/Flight Particulars")]), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mb-4",
     attrs: {
@@ -1850,7 +1930,7 @@ var render = function render() {
   }, [_vm._v(" "), _c("div", {
     staticClass: "premium-glass-card p-6"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-5"
+    staticClass: "h-color mb-5"
   }, [_vm._v("Journey Routing Legs")]), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mb-4",
     attrs: {
@@ -1910,7 +1990,7 @@ var render = function render() {
   }, [_vm._v("\n                  Must be exactly 3 uppercase letters (IATA Code).\n                ")]) : _vm._e()], 1)], 1)], 1), _vm._v(" "), _c("hr", {
     staticClass: "border-secondary opacity-15 my-6"
   }), _vm._v(" "), _c("h6", {
-    staticClass: "text-white font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("Multi-Leg Journey Details")]), _vm._v(" "), _vm._l(_vm.form.routing.legs, function (leg, index) {
     return _c("div", {
       key: index,
@@ -2064,7 +2144,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "d-flex align-items-center justify-content-between mb-5"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-0"
+    staticClass: "h-color mb-0"
   }, [_vm._v("House Air Waybills (HAWBs) Mapped")]), _vm._v(" "), _c("span", {
     staticClass: "badge badge-light-indigo font-weight-bold py-2 px-3"
   }, [_vm._v(_vm._s(_vm.form.attached_house.length) + " HAWBs Bundle")])]), _vm._v(" "), _c("div", {
@@ -2073,7 +2153,6 @@ var render = function render() {
     staticClass: "premium-table mb-0",
     attrs: {
       hover: "",
-      dark: "",
       items: _vm.form.attached_house,
       fields: _vm.hawbTableFields,
       "show-empty": "",
@@ -2118,7 +2197,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "premium-glass-card p-6 h-100"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("Link Pending House Job")]), _vm._v(" "), _c("p", {
     staticClass: "text-muted small"
   }, [_vm._v("Select from unlinked import house jobs to bundle costs and group the manifest cargo.")]), _vm._v(" "), _vm.linkHawbSuccess ? _c("div", {
@@ -2180,19 +2259,19 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "premium-glass-card p-6 h-100"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-5"
+    staticClass: "h-color mb-5"
   }, [_vm._v("Cargo Aggregates")]), _vm._v(" "), _c("div", {
     staticClass: "agg-row mb-4"
   }, [_c("span", {
     staticClass: "agg-label text-muted small uppercase"
   }, [_vm._v("Total Piece Count")]), _vm._v(" "), _c("h3", {
-    staticClass: "text-white font-weight-bold mb-0 mt-1"
+    staticClass: "text-dark font-weight-bold mb-0 mt-1"
   }, [_vm._v(_vm._s(_vm.form.packing.piece_count) + " PCS")])]), _vm._v(" "), _c("div", {
     staticClass: "agg-row mb-4"
   }, [_c("span", {
     staticClass: "agg-label text-muted small uppercase"
   }, [_vm._v("Total Gross Weight")]), _vm._v(" "), _c("h3", {
-    staticClass: "text-white font-weight-bold mb-0 mt-1"
+    staticClass: "text-dark font-weight-bold mb-0 mt-1"
   }, [_vm._v(_vm._s(_vm.formatWeight(_vm.form.packing.gross_weight)) + " KGS")])]), _vm._v(" "), _c("div", {
     staticClass: "agg-row mb-4"
   }, [_c("span", {
@@ -2217,11 +2296,10 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "d-flex align-items-center justify-content-between mb-5"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-0"
+    staticClass: "h-color mb-0"
   }, [_vm._v("Interactive Volumetric Calculator")]), _vm._v(" "), _c("b-button", {
-    staticClass: "btn-pill",
+    staticClass: "show-btn",
     attrs: {
-      variant: "outline-light",
       size: "sm"
     },
     on: {
@@ -2235,7 +2313,7 @@ var render = function render() {
   }), _vm._v(" Add Box Group\n                ")], 1)], 1), _vm._v(" "), _c("div", {
     staticClass: "table-responsive mb-4"
   }, [_c("table", {
-    staticClass: "table table-sm text-white border border-secondary border-opacity-10"
+    staticClass: "table table-sm border border-secondary border-opacity-10"
   }, [_c("thead", [_c("tr", {
     staticClass: "dim-header"
   }, [_c("th", [_vm._v("Pieces")]), _vm._v(" "), _c("th", [_vm._v("L (cm)")]), _vm._v(" "), _c("th", [_vm._v("W (cm)")]), _vm._v(" "), _c("th", [_vm._v("H (cm)")]), _vm._v(" "), _c("th", [_vm._v("Vol (CBM)")]), _vm._v(" "), _c("th", [_vm._v("Vol Wt (KGS)")]), _vm._v(" "), _c("th", [_vm._v("Action")])])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.calculatorRows, function (row, idx) {
@@ -2363,15 +2441,22 @@ var render = function render() {
       colspan: "7"
     }
   }, [_vm._v('\n                        Click "Add Box Group" to compute volumes and weights for loose cargo packs.\n                      ')])]) : _vm._e()], 2)])]), _vm._v(" "), _vm.calculatorRows.length > 0 ? _c("div", {
-    staticClass: "d-flex justify-content-between align-items-center bg-dark bg-opacity-20 p-4 rounded-lg"
+    staticClass: "d-flex justify-content-between align-items-center p-4 rounded-lg",
+    staticStyle: {
+      background: "#F8FAFC",
+      border: "1px solid #E2E8F0"
+    }
   }, [_c("div", {
     staticClass: "small text-muted"
   }, [_vm._v("\n                  Total Calculator Run: "), _c("span", {
-    staticClass: "text-white"
+    staticClass: "font-weight-bold",
+    staticStyle: {
+      color: "#475569"
+    }
   }, [_vm._v(_vm._s(_vm.calcTotalPieces) + " Pcs")]), _vm._v(" / \n                  "), _c("span", {
-    staticClass: "text-info"
+    staticClass: "text-info font-weight-bold"
   }, [_vm._v(_vm._s(_vm.formatVol(_vm.calcTotalCbm)) + " CBM")]), _vm._v(" / \n                  "), _c("span", {
-    staticClass: "text-success"
+    staticClass: "text-success font-weight-bold"
   }, [_vm._v(_vm._s(_vm.formatWeight(_vm.calcTotalVolWeight)) + " KGS Vol Wt")])]), _vm._v(" "), _c("b-button", {
     staticClass: "btn-pill px-4",
     attrs: {
@@ -2412,7 +2497,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "premium-glass-card p-6"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("Delivery Routing Parties")]), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mb-4",
     attrs: {
@@ -2608,7 +2693,7 @@ var render = function render() {
   }, [_vm._v("Delivery Order released is authorized for cargo pick-up.")])]), _vm._v(" "), _c("div", {
     staticClass: "premium-glass-card p-5"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("DO Parameters")]), _vm._v(" "), _c("b-form-group", {
     attrs: {
       label: "DO Status",
@@ -2697,9 +2782,8 @@ var render = function render() {
   })], 1), _vm._v(" "), _c("div", {
     staticClass: "mt-5 pt-3 border-top border-secondary border-opacity-10"
   }, [_c("b-button", {
-    staticClass: "w-100 btn-pill mb-2 py-3 font-weight-bold",
+    staticClass: "btn btn-indigo w-100 btn-pill mb-2 py-3 font-weight-bold",
     attrs: {
-      variant: "indigo",
       disabled: _vm.isDOBlocked
     },
     on: {
@@ -2711,9 +2795,8 @@ var render = function render() {
       icon: "printer-fill"
     }
   }), _vm._v(" Print Delivery Order\n                ")], 1), _vm._v(" "), _c("b-button", {
-    staticClass: "w-100 btn-pill py-3",
+    staticClass: "show-btn w-100 btn-pill py-3 font-weight-bold",
     attrs: {
-      variant: "outline-light",
       disabled: _vm.isDOBlocked
     },
     on: {
@@ -2744,11 +2827,10 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "d-flex justify-content-between align-items-center mb-5"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-0"
+    staticClass: "h-color mb-0"
   }, [_vm._v("Consol Billing Splits")]), _vm._v(" "), _c("b-button", {
-    staticClass: "btn-pill",
+    staticClass: "show-btn",
     attrs: {
-      variant: "outline-light",
       size: "sm"
     },
     on: {
@@ -2762,7 +2844,7 @@ var render = function render() {
   }), _vm._v(" Add Charge Item\n            ")], 1)], 1), _vm._v(" "), _c("div", {
     staticClass: "table-responsive mb-4"
   }, [_c("table", {
-    staticClass: "table table-sm text-white border border-secondary border-opacity-10"
+    staticClass: "table table-sm border border-secondary border-opacity-10"
   }, [_c("thead", [_c("tr", {
     staticClass: "dim-header"
   }, [_c("th", [_vm._v("Charge Code")]), _vm._v(" "), _c("th", [_vm._v("Description")]), _vm._v(" "), _c("th", {
@@ -2858,8 +2940,13 @@ var render = function render() {
       }
     })], 1)], 1)]);
   }), _vm._v(" "), _c("tr", {
-    staticClass: "dim-row font-weight-bold border-top border-secondary bg-dark bg-opacity-20"
-  }, [_c("td", [_vm._v("TOTALS")]), _vm._v(" "), _c("td"), _vm._v(" "), _c("td", {
+    staticClass: "dim-row font-weight-bold border-top",
+    staticStyle: {
+      background: "#F8FAFC"
+    }
+  }, [_c("td", {
+    staticClass: "text-dark"
+  }, [_vm._v("TOTALS")]), _vm._v(" "), _c("td"), _vm._v(" "), _c("td", {
     staticClass: "text-right text-info font-weight-bolder pr-4",
     staticStyle: {
       "line-height": "34px"
@@ -2901,7 +2988,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "premium-glass-card p-6"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-5"
+    staticClass: "h-color mb-5"
   }, [_vm._v("Billing & Accounts Receivable Status")]), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mb-4",
     attrs: {
@@ -3001,7 +3088,12 @@ var render = function render() {
       "label-class": "text-muted small font-weight-bold"
     }
   }, [_c("div", {
-    staticClass: "p-3 bg-dark bg-opacity-30 rounded-lg small"
+    staticClass: "p-3 rounded-lg small",
+    staticStyle: {
+      background: "#F8FAFC",
+      border: "1px solid #E2E8F0",
+      color: "#475569"
+    }
   }, [_vm._v("\n                      Freight Collect splits are automatically aggregated. Billing entities are matched to the Consignee debtor.\n                    ")])])], 1)], 1)], 1)]), _vm._v(" "), _c("b-col", {
     staticClass: "mb-6",
     attrs: {
@@ -3011,7 +3103,7 @@ var render = function render() {
     staticClass: "credit-card p-5 rounded-lg border border-opacity-10 h-100",
     "class": _vm.isCreditLimitExceeded ? "credit-card-alert" : "credit-card-ok"
   }, [_c("h5", {
-    staticClass: "font-weight-bold mb-4 d-flex align-items-center text-white"
+    staticClass: "font-weight-bold mb-4 d-flex align-items-center h-color"
   }, [_c("b-icon", {
     staticClass: "mr-2",
     "class": _vm.isCreditLimitExceeded ? "text-danger" : "text-success",
@@ -3041,7 +3133,7 @@ var render = function render() {
   }, [_c("span", {
     staticClass: "text-muted small"
   }, [_vm._v("Assigned Credit Limit")]), _vm._v(" "), _c("h5", {
-    staticClass: "text-white font-weight-bold mt-1"
+    staticClass: "font-weight-bold mt-1 text-dark"
   }, [_vm._v("\n                  " + _vm._s(_vm.selectedConsigneeObj ? _vm.formatCurrency(_vm.selectedConsigneeObj.credit_limit) : "₹ 0.00") + "\n                ")])]), _vm._v(" "), _c("div", {
     staticClass: "credit-detail mb-3"
   }, [_c("span", {
@@ -3054,7 +3146,7 @@ var render = function render() {
   }, [_c("span", {
     staticClass: "text-muted small"
   }, [_vm._v("Payment Terms")]), _vm._v(" "), _c("p", {
-    staticClass: "text-white font-weight-bold mb-0 mt-1"
+    staticClass: "font-weight-bold mb-0 mt-1 text-dark"
   }, [_vm._v("\n                  " + _vm._s(_vm.selectedConsigneeObj ? _vm.selectedConsigneeObj.default_payment_terms : "—") + "\n                ")])])])])], 1)], 1), _vm._v(" "), _c("b-tab", {
     scopedSlots: _vm._u([{
       key: "title",
@@ -3075,7 +3167,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-3 mb-md-0"
+    staticClass: "h-color mb-3 mb-md-0"
   }, [_vm._v("Customs IGM / CGM Manifest Filings")]), _vm._v(" "), _c("div", {
     staticClass: "d-flex flex-wrap align-items-center gap-2"
   }, [_c("b-form-select", {
@@ -3127,7 +3219,6 @@ var render = function render() {
     staticClass: "premium-table mb-0",
     attrs: {
       hover: "",
-      dark: "",
       items: _vm.filteredCustomsFilings,
       fields: _vm.customsTableFields,
       "show-empty": "",
@@ -3207,7 +3298,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "premium-glass-card p-6 h-100"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("Upload physical shipping documents")]), _vm._v(" "), _c("div", {
     staticClass: "dropzone-box d-flex flex-column align-items-center justify-content-center py-10 px-5 text-center cursor-pointer rounded-lg border-dashed border-2 border-secondary",
     on: {
@@ -3227,7 +3318,10 @@ var render = function render() {
       "font-scale": "3"
     }
   }), _vm._v(" "), _c("h6", {
-    staticClass: "text-white font-weight-bold"
+    staticStyle: {
+      color: "#1E293B",
+      "font-weight": "700"
+    }
   }, [_vm._v("Drag and drop files here to upload")]), _vm._v(" "), _c("p", {
     staticClass: "text-muted small mb-0 mt-1"
   }, [_vm._v("Supports PDF, PNG, JPG files. Max 10MB.")]), _vm._v(" "), _c("input", {
@@ -3261,7 +3355,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "premium-glass-card p-6 h-100"
   }, [_c("h5", {
-    staticClass: "text-white font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("Attached Documents Docket")]), _vm._v(" "), _vm._l(_vm.form.e_docket, function (doc, idx) {
     return _c("div", {
       key: idx,
@@ -3281,7 +3375,7 @@ var render = function render() {
         "font-scale": "1.5"
       }
     }), _vm._v(" "), _c("div", [_c("div", {
-      staticClass: "text-white font-weight-bold small text-truncate",
+      staticClass: "font-weight-bold small text-truncate text-dark",
       staticStyle: {
         "max-width": "200px"
       }
@@ -3354,20 +3448,14 @@ var render = function render() {
     attrs: {
       id: "cgm-filing-modal",
       title: "Submit CGM / ICEGATE manifest Data",
-      "header-bg-variant": "dark",
-      "header-text-variant": "light",
-      "body-bg-variant": "dark",
-      "body-text-variant": "light",
-      "footer-bg-variant": "dark",
-      "footer-text-variant": "light",
       size: "lg",
       centered: "",
       "hide-footer": ""
     }
   }, [_c("div", {
-    staticClass: "cgm-modal-body p-4 font-outfit text-white bg-dark rounded-lg"
+    staticClass: "cgm-modal-body p-4 font-outfit text-dark rounded-lg"
   }, [_c("h5", {
-    staticClass: "text-indigo font-weight-bold mb-4"
+    staticClass: "h-color mb-4"
   }, [_vm._v("Filing Details - Custom Gate Chennai")]), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mb-3",
     attrs: {
@@ -3452,7 +3540,7 @@ var render = function render() {
       "label-class": "text-muted small font-weight-bold"
     }
   }, [_c("b-form-radio-group", {
-    staticClass: "premium-radio-group text-white pt-2",
+    staticClass: "premium-radio-group text-dark pt-2",
     attrs: {
       options: _vm.sendingMethods
     },
@@ -3464,7 +3552,7 @@ var render = function render() {
       expression: "cgmFilingForm.sending_method"
     }
   })], 1)], 1)], 1), _vm._v(" "), _c("h6", {
-    staticClass: "text-white font-weight-bold mt-4 mb-2"
+    staticClass: "h-color mt-4 mb-2"
   }, [_vm._v("Manifest Submission Console & DSC Status")]), _vm._v(" "), _c("div", {
     staticClass: "dsc-terminal p-4 rounded-lg border border-info border-opacity-30 mb-5 font-family-monospace"
   }, [_vm._l(_vm.dscLogs, function (log, idx) {
@@ -3478,10 +3566,7 @@ var render = function render() {
   }, [_vm._v('\n          Terminal Idle. Trigger "Submit" or "Send for Signature" to execute filings.\n        ')]) : _vm._e()], 2), _vm._v(" "), _c("div", {
     staticClass: "d-flex flex-wrap justify-content-end gap-2 pt-3 border-top border-secondary border-opacity-10"
   }, [_c("b-button", {
-    staticClass: "btn-pill mr-2 px-4",
-    attrs: {
-      variant: "outline-light"
-    },
+    staticClass: "show-btn mr-2 px-4",
     on: {
       click: _vm.closeCgmModal
     }
@@ -3525,17 +3610,9 @@ var render = function render() {
     on: {
       click: _vm.sendForSignature
     }
-  }, [_vm._v("\n          Sign & Transmit (DSC)\n        ")])], 1)], 1)])], 1);
+  }, [_vm._v("\n          Sign & Transmit (DSC)\n        ")])], 1)], 1)])], 1)])], 1)]);
 };
-var staticRenderFns = [function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("div", {
-    staticClass: "alert-icon"
-  }, [_c("i", {
-    staticClass: "fas fa-check-circle text-success"
-  })]);
-}];
+var staticRenderFns = [];
 render._withStripped = true;
 
 

@@ -67,6 +67,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'string', 'max:100'],
+            'branch_name' => ['nullable', 'max:50'],
             'plan_expiry_date' => ['required'],
             'can_send' => ['required'],
         ]);
@@ -77,6 +78,7 @@ class UserController extends Controller
         $user = User::find($id);
         $user->name = $request->name;
         $user->company_name = $request->company_name;
+        $user->branch_name = $request->branch_name;
         $user->origin_airport_code = $request->origin_airport_code;
         // $user->daily_login_count=$request->daily_login_count;
         // $user->plan_expiry_date=$request->plan_expiry_date;

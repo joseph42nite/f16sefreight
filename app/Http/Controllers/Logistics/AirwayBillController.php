@@ -303,7 +303,7 @@ class AirwayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        if ($first_box['consolidated_mawb'] == true) {
+        if ($first_box['consolidated_mawb']) {
             $first_box['consolidated_mawb'] = "true";
         } else {
             $first_box['consolidated_mawb'] = "false";

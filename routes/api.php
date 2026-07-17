@@ -186,4 +186,3 @@ Route::get('/get-public-blog/{slug}', [BlogController::class, 'show']);
 Route::post('/openclaw/webhook', [\App\Http\Controllers\OpenClawController::class, 'webhook'])->middleware('openclaw.verify');
 Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
 Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
-Route::get('/check-awb', [ConversionController::class, 'checkAWB']);

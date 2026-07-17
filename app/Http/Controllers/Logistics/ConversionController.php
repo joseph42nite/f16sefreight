@@ -1821,44 +1821,4 @@ class ConversionController extends Controller
             // ];
         }
     }
-
-    public function checkAWB(){
-        $awb_id = "12523736436";
-        // Fetch data from the database (this is just sample data for now)
-        $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
-        $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
-        $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
-        $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
-
-        $utc_current_date = gmdate("Y-m-d H:i:s");
-        $utc_current_date = str_replace(' ', 'T', $utc_current_date);
-        $time = time();
-
-        $description = $consignment_data['description'];
-        $words = ['CONSOLIDATION', 'CONSOLE', 'CONSOL', 'CONSOLIDATED'];
-        $found = false;
-        foreach ($words as $word) {
-            if (stripos($description, $word) !== false) {
-                $found = true;
-                break;
-            }
-        }
-        $waybill_name = '';
-        $waybill_code = '';
-        echo "Description: " . $description . "<br>";
-        echo $found."<br>";
-        echo $waybill_data['consolidated_mawb']."<br>";
-        if ($found || $waybill_data['consolidated_mawb'] != 'false') {
-            $waybill_name = 'Master Air Waybill';
-            $waybill_code = 741;
-        } else {
-            $waybill_name = 'Air Waybill';
-            $waybill_code = 740;
-        }
-
-        echo "Waybill Name: " . $waybill_name . "<br>";
-        echo "Waybill Code: " . $waybill_code . "<br>";
-    }
 }

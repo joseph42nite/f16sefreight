@@ -233,8 +233,17 @@ class ClientShipmentsTest extends TestCase
         $this->assertNotNull($s3);
 
         $this->assertFalse($s1['fna_received']);
+        $this->assertNull($s1['fma_reason']);
+        $this->assertEquals('FMA', $s1['latest_status']);
+
         $this->assertTrue($s2['fna_received']);
+        $this->assertEquals('Bad pieces', $s2['fna_reason']);
+        $this->assertNull($s2['fma_reason']);
+        $this->assertEquals('Rejected', $s2['latest_status']);
+
         $this->assertFalse($s3['fna_received']); // Successfully resolved!
+        $this->assertEquals('Accepted successfully', $s3['fma_reason']);
+        $this->assertEquals('Acknowledged', $s3['latest_status']);
 
         // 5. Test filtering by fna_status=yes (only AWB 2 should match)
         $responseYes = $this->actingAs($superAdmin, 'superAdmin-api')

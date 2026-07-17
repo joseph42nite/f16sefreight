@@ -193,6 +193,8 @@ class SuperAdminController extends Controller
             $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
             $awb->fna_received = $isFna;
             $awb->fna_reason = $isFna ? $latestResponse->reason : null;
+            $awb->fma_reason = (!$isFna && $latestResponse) ? $latestResponse->reason : null;
+            $awb->latest_status = $latestResponse ? $latestResponse->business_status_code : 'FMA';
         });
 
         $responseData = [
@@ -260,6 +262,7 @@ class SuperAdminController extends Controller
                 $hawb->fna_received = $isFna;
                 $hawb->fna_reason = $isFna ? $latestResponse->reason : null;
                 $hawb->latest_status = $latestResponse ? $latestResponse->business_status_code : 'FMA';
+                $hawb->fma_reason = (!$isFna && $latestResponse) ? $latestResponse->reason : null;
             });
 
             return response()->json($houseWayBills);

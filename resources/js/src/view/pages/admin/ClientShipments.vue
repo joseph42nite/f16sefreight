@@ -245,6 +245,7 @@
           </template>
 
           <template #cell(fna_status)="data">
+            <!-- FNA Received (Shown when fna_received is true) -->
             <div v-if="data.item.fna_received" class="d-inline-flex align-items-center">
               <b-badge variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" v-b-tooltip.hover :title="data.item.fna_reason || 'Rejection reason not specified'">
                 <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
@@ -261,9 +262,44 @@
                 <i class="far fa-copy text-danger"></i>
               </b-button>
             </div>
-            <b-badge v-else variant="light-success" class="text-uppercase font-weight-bold px-3 py-2">
-              <i class="fas fa-check-circle mr-1 text-success"></i> FMA
-            </b-badge>
+
+            <!-- FMA (Shown when fna_received is false) -->
+            <div v-else class="d-inline-flex align-items-center">
+              <b-badge 
+                variant="light-success" 
+                class="text-uppercase font-weight-bold px-3 py-2" 
+                v-b-tooltip.hover 
+                :title="data.item.fma_reason || 'Approved or accepted by airline'"
+              >
+                <i class="fas fa-check-circle mr-1 text-success"></i> FMA
+              </b-badge>
+
+              <!-- Conditionally show "Rejected" next to FMA in red if the message indicates rejection -->
+              <b-badge 
+                v-if="data.item.fma_reason && data.item.fma_reason.toLowerCase().includes('reject')" 
+                variant="light-danger" 
+                class="text-uppercase font-weight-bold px-2 py-1 ml-2"
+                style="font-size: 0.75rem;"
+                v-b-tooltip.hover
+                title="Airline response contains rejection details"
+              >
+                Rejected
+              </b-badge>
+
+              <!-- Copy Button for FMA Message -->
+              <b-button 
+                v-if="data.item.fma_reason"
+                variant="light-success" 
+                size="sm" 
+                class="btn-icon-sm ml-2" 
+                @click="copyFnaReason(data.item.fma_reason)" 
+                v-b-tooltip.hover 
+                title="Copy FMA Message"
+                style="padding: 0.25rem 0.5rem;"
+              >
+                <i class="far fa-copy text-success"></i>
+              </b-button>
+            </div>
           </template>
 
           <template #cell(action)="data">
@@ -352,6 +388,7 @@
                     {{ hawb.consignment_data ? hawb.consignment_data.gross_weight : '—' }} {{ hawb.consignment_data ? (hawb.consignment_data.weight_code || 'K') : '' }}
                   </td>
                   <td class="px-6 py-4 align-middle text-center">
+                    <!-- FNA Received (Shown when fna_received is true) -->
                     <div v-if="hawb.fna_received" class="d-inline-flex align-items-center justify-content-center">
                       <b-badge variant="light-danger" class="text-uppercase font-weight-bold px-3 py-2" v-b-tooltip.hover :title="hawb.fna_reason || 'Rejection reason not specified'">
                         <i class="fas fa-exclamation-triangle mr-1 text-danger"></i> FNA Received
@@ -368,9 +405,44 @@
                         <i class="far fa-copy text-danger"></i>
                       </b-button>
                     </div>
-                    <b-badge v-else variant="light-success" class="text-uppercase font-weight-bold px-3 py-2">
-                      <i class="fas fa-check-circle mr-1 text-success"></i> {{ hawb.latest_status || 'FMA' }}
-                    </b-badge>
+
+                    <!-- FMA (Shown when fna_received is false) -->
+                    <div v-else class="d-inline-flex align-items-center justify-content-center">
+                      <b-badge 
+                        variant="light-success" 
+                        class="text-uppercase font-weight-bold px-3 py-2" 
+                        v-b-tooltip.hover 
+                        :title="hawb.fma_reason || 'Approved or accepted by airline'"
+                      >
+                        <i class="fas fa-check-circle mr-1 text-success"></i> FMA
+                      </b-badge>
+
+                      <!-- Conditionally show "Rejected" next to FMA in red if the message indicates rejection -->
+                      <b-badge 
+                        v-if="hawb.fma_reason && hawb.fma_reason.toLowerCase().includes('reject')" 
+                        variant="light-danger" 
+                        class="text-uppercase font-weight-bold px-2 py-1 ml-2"
+                        style="font-size: 0.75rem;"
+                        v-b-tooltip.hover
+                        title="Airline response contains rejection details"
+                      >
+                        Rejected
+                      </b-badge>
+
+                      <!-- Copy Button for FMA Message -->
+                      <b-button 
+                        v-if="hawb.fma_reason"
+                        variant="light-success" 
+                        size="sm" 
+                        class="btn-icon-sm ml-2" 
+                        @click="copyFnaReason(hawb.fma_reason)" 
+                        v-b-tooltip.hover 
+                        title="Copy FMA Message"
+                        style="padding: 0.25rem 0.5rem;"
+                      >
+                        <i class="far fa-copy text-success"></i>
+                      </b-button>
+                    </div>
                   </td>
                   <td class="px-6 py-4 align-middle text-center">
                     <b-button variant="light-primary" size="sm" class="btn-icon-sm" @click="viewHawbXml(hawb.id)">
@@ -864,10 +936,10 @@ export default {
       document.body.removeChild(link);
     },
     copyFnaReason(reason) {
-      const text = reason || 'Rejection reason not specified';
+      const text = reason || 'Message not specified';
       navigator.clipboard.writeText(text)
         .then(() => {
-          this.$bvToast.toast('FNA reason copied to clipboard', {
+          this.$bvToast.toast('Message copied to clipboard', {
             title: 'Copied!',
             variant: 'success',
             solid: true,

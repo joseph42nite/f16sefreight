@@ -51,7 +51,7 @@ class ConversionController extends Controller
         }
         $waybill_name = '';
         $waybill_code = '';
-        if ($found || $waybill_data['consolidated_mawb']) {
+        if ($found || $waybill_data['consolidated_mawb'] != 'false') {
             $waybill_name = 'Master Air Waybill';
             $waybill_code = 741;
         } else {
@@ -1275,9 +1275,7 @@ class ConversionController extends Controller
         return response($xml->saveXML(), 200)
             ->header('Content-Type', 'application/xml');
     }
-    function StatusMessage()
-    {
-    }
+    function StatusMessage() {}
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)

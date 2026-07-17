@@ -1847,6 +1847,9 @@ class ConversionController extends Controller
         }
         $waybill_name = '';
         $waybill_code = '';
+        echo "Description: " . $description . "<br>";
+        echo $found."<br>";
+        echo $waybill_data['consolidated_mawb']."<br>";
         if ($found || $waybill_data['consolidated_mawb'] != 'false') {
             $waybill_name = 'Master Air Waybill';
             $waybill_code = 741;
@@ -1855,7 +1858,7 @@ class ConversionController extends Controller
             $waybill_code = 740;
         }
 
-        echo "Waybill Name: " . $waybill_name . "\n";
-        echo "Waybill Code: " . $waybill_code . "\n";
+        echo "Waybill Name: " . $waybill_name . "<br>";
+        echo "Waybill Code: " . $waybill_code . "<br>";
     }
 }

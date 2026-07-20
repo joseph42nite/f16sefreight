@@ -16,6 +16,9 @@ SHOW COLUMNS FROM air_way_bills WHERE Field IN ('status', 'awb_email', 't_id', '
 
 -- Check columns on house_way_bills
 SHOW COLUMNS FROM house_way_bills WHERE Field IN ('status', 't_id', 'send_created', 'send_status');
+
+-- Check columns on airlines
+SHOW COLUMNS FROM airlines LIKE 'airline_address';
 ```
 
 ---
@@ -52,6 +55,13 @@ ALTER TABLE house_way_bills
   ADD COLUMN IF NOT EXISTS send_status VARCHAR(255) NULL;
 ```
 
+### Table: `airlines`
+`GenerateAwbPdfController` and `GenerateHawbPdfController` query `airlines.airline_address`, but no migration in this repo ever created it — it was likely added by hand on the live server previously (same as the columns above) and just never documented here. **Run the check query first**; only run the ALTER if it's actually missing:
+```sql
+ALTER TABLE airlines ADD COLUMN airline_address TEXT NULL;
+```
+A migration (`2026_07_20_000000_add_airline_address_to_airlines_table.php`) now exists in this repo so fresh/local environments get this column automatically — it won't affect the live server, which still needs the manual step above if the column isn't already present.
+
 ---
 
 ## 3. Post-Upgrade Verification
@@ -60,4 +70,5 @@ Verify the columns were successfully created:
 DESCRIBE way_bill_addresses;
 DESCRIBE air_way_bills;
 DESCRIBE house_way_bills;
+DESCRIBE airlines;
 ```

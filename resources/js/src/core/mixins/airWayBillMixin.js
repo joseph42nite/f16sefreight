@@ -58,6 +58,11 @@ export default {
                 uld_infos: [],
             }),
             activeDropdown: null,
+            // Registry of dropdown container DOM nodes handed up by extracted
+            // child components (e.g. AddressBlock). closeAllDropdowns() falls back
+            // to this when a $refs lookup misses. Not reactive on purpose — only
+            // read inside the window-click handler.
+            dropdownRefs: {},
         };
     },
     computed: {
@@ -691,7 +696,7 @@ export default {
             if (this.activeDropdown === 'issuing_loc' || this.activeDropdown === 'issue') {
                 refName = 'dropdownContainer_issue';
             }
-            const container = this.$refs[refName];
+            const container = this.$refs[refName] || this.dropdownRefs[this.activeDropdown];
             if (container && typeof container.contains === 'function') {
                 if (!container.contains(event.target)) {
                     this.activeDropdown = null;
@@ -699,6 +704,9 @@ export default {
             } else {
                 this.activeDropdown = null;
             }
+        },
+        registerDropdownRef(name, el) {
+            this.dropdownRefs[name] = el;
         },
         selectShipper(shipper) {
             if (!shipper) return;

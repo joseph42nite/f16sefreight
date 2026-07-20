@@ -440,9 +440,9 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     copyFnaReason: function copyFnaReason(reason) {
       var _this9 = this;
-      var text = reason || 'Rejection reason not specified';
+      var text = reason || 'Message not specified';
       navigator.clipboard.writeText(text).then(function () {
-        _this9.$bvToast.toast('FNA reason copied to clipboard', {
+        _this9.$bvToast.toast('Message copied to clipboard', {
           title: 'Copied!',
           variant: 'success',
           solid: true,
@@ -989,14 +989,64 @@ var render = function render() {
           }
         }, [_c("i", {
           staticClass: "far fa-copy text-danger"
-        })])], 1) : _c("b-badge", {
+        })])], 1) : _c("div", {
+          staticClass: "d-inline-flex align-items-center"
+        }, [_c("b-badge", {
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
           staticClass: "text-uppercase font-weight-bold px-3 py-2",
           attrs: {
-            variant: "light-success"
+            variant: "light-success",
+            title: data.item.fma_reason || "Approved or accepted by airline"
           }
         }, [_c("i", {
           staticClass: "fas fa-check-circle mr-1 text-success"
-        }), _vm._v(" FMA\n          ")])];
+        }), _vm._v(" FMA\n            ")]), _vm._v(" "), data.item.fma_reason && data.item.fma_reason.toLowerCase().includes("reject") ? _c("b-badge", {
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
+          staticClass: "text-uppercase font-weight-bold px-2 py-1 ml-2",
+          staticStyle: {
+            "font-size": "0.75rem"
+          },
+          attrs: {
+            variant: "light-danger",
+            title: "Airline response contains rejection details"
+          }
+        }, [_vm._v("\n              Rejected\n            ")]) : _vm._e(), _vm._v(" "), data.item.fma_reason ? _c("b-button", {
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
+          staticClass: "btn-icon-sm ml-2",
+          staticStyle: {
+            padding: "0.25rem 0.5rem"
+          },
+          attrs: {
+            variant: "light-success",
+            size: "sm",
+            title: "Copy FMA Message"
+          },
+          on: {
+            click: function click($event) {
+              return _vm.copyFnaReason(data.item.fma_reason);
+            }
+          }
+        }, [_c("i", {
+          staticClass: "far fa-copy text-success"
+        })]) : _vm._e()], 1)];
       }
     }, {
       key: "cell(action)",
@@ -1182,14 +1232,64 @@ var render = function render() {
       }
     }, [_c("i", {
       staticClass: "far fa-copy text-danger"
-    })])], 1) : _c("b-badge", {
+    })])], 1) : _c("div", {
+      staticClass: "d-inline-flex align-items-center justify-content-center"
+    }, [_c("b-badge", {
+      directives: [{
+        name: "b-tooltip",
+        rawName: "v-b-tooltip.hover",
+        modifiers: {
+          hover: true
+        }
+      }],
       staticClass: "text-uppercase font-weight-bold px-3 py-2",
       attrs: {
-        variant: "light-success"
+        variant: "light-success",
+        title: hawb.fma_reason || "Approved or accepted by airline"
       }
     }, [_c("i", {
       staticClass: "fas fa-check-circle mr-1 text-success"
-    }), _vm._v(" " + _vm._s(hawb.latest_status || "FMA") + "\n                  ")])], 1), _vm._v(" "), _c("td", {
+    }), _vm._v(" FMA\n                    ")]), _vm._v(" "), hawb.fma_reason && hawb.fma_reason.toLowerCase().includes("reject") ? _c("b-badge", {
+      directives: [{
+        name: "b-tooltip",
+        rawName: "v-b-tooltip.hover",
+        modifiers: {
+          hover: true
+        }
+      }],
+      staticClass: "text-uppercase font-weight-bold px-2 py-1 ml-2",
+      staticStyle: {
+        "font-size": "0.75rem"
+      },
+      attrs: {
+        variant: "light-danger",
+        title: "Airline response contains rejection details"
+      }
+    }, [_vm._v("\n                      Rejected\n                    ")]) : _vm._e(), _vm._v(" "), hawb.fma_reason ? _c("b-button", {
+      directives: [{
+        name: "b-tooltip",
+        rawName: "v-b-tooltip.hover",
+        modifiers: {
+          hover: true
+        }
+      }],
+      staticClass: "btn-icon-sm ml-2",
+      staticStyle: {
+        padding: "0.25rem 0.5rem"
+      },
+      attrs: {
+        variant: "light-success",
+        size: "sm",
+        title: "Copy FMA Message"
+      },
+      on: {
+        click: function click($event) {
+          return _vm.copyFnaReason(hawb.fma_reason);
+        }
+      }
+    }, [_c("i", {
+      staticClass: "far fa-copy text-success"
+    })]) : _vm._e()], 1)]), _vm._v(" "), _c("td", {
       staticClass: "px-6 py-4 align-middle text-center"
     }, [_c("b-button", {
       staticClass: "btn-icon-sm",

@@ -1500,7 +1500,12 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         hsCodes: [],
         uld_infos: []
       }),
-      activeDropdown: null
+      activeDropdown: null,
+      // Registry of dropdown container DOM nodes handed up by extracted
+      // child components (e.g. AddressBlock). closeAllDropdowns() falls back
+      // to this when a $refs lookup misses. Not reactive on purpose — only
+      // read inside the window-click handler.
+      dropdownRefs: {}
     };
   },
   computed: {
@@ -2164,7 +2169,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       if (this.activeDropdown === 'issuing_loc' || this.activeDropdown === 'issue') {
         refName = 'dropdownContainer_issue';
       }
-      var container = this.$refs[refName];
+      var container = this.$refs[refName] || this.dropdownRefs[this.activeDropdown];
       if (container && typeof container.contains === 'function') {
         if (!container.contains(event.target)) {
           this.activeDropdown = null;
@@ -2172,6 +2177,9 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       } else {
         this.activeDropdown = null;
       }
+    },
+    registerDropdownRef: function registerDropdownRef(name, el) {
+      this.dropdownRefs[name] = el;
     },
     selectShipper: function selectShipper(shipper) {
       if (!shipper) return;

@@ -140,156 +140,31 @@
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS ROW START HERE -->
                                 <b-row class="my-4 my-md-10">
                                     <b-col cols="12" md="6">
-                                        <b-col cols="auto">
-                                            <h4 class="h-color ml-2">
-                                                Shipper
-                                            </h4>
-                                            <div class="d-flex align-items-center pb-2">
-                                                <b-form-group id="fieldset-horizontal"
-                                                label-cols-lg="auto"
-                                                label-for="shipper"
-                                                class="align-items-center">
-                                                <template #label>
-                                                     <div class="shipper-toggle-label">
-                                                         <span>Name:</span>
-                                                         <span class="text-danger">*</span>
-                                                     </div>
-                                                </template>
-                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
-                                                     <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control shipper-form-control" autocomplete="off"
-                                                     :class="{ 'is-invalid': form.errors.has('ship_name') }"
-                                                     @input="filterShippers" @focus="toggleDropdown('shipper', true)" />
-
-                                                     <div v-if="activeDropdown === 'shipper' && filteredShippers.length" class="dropdown-options align-items-center">
-                                                         <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
-                                                             {{ shipper.name }}
-                                                         </div>
-                                                     </div>
-                                                </div>
-                                                <has-error :form="form" field="ship_name"></has-error>
-                                                </b-form-group>
-                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2" style="color:#355594;stroke:#355594;" @click="showShipper = !showShipper"></b-icon>
-                                            </div>
-                                            <!-- Show Shipper all input field here -->
-                                            <div v-if="showShipper">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-name-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>&nbsp;</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-name-input" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }" autocomplete="off"></b-form-input>
-                                                     <has-error :form="form" field="ship_name_2"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-account-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Account:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-account-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_account" :class="{ 'is-invalid': form.errors.has('ship_account') }"></b-form-input>
-                                                     <has-error :form="form" field="ship_account"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="ship-address-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Address:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="ship-address-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }" @keydown="limitInput($event, 'shipper_address.ship_address', 40)"></b-form-input>
-                                                     <has-error :form="form" field="ship_address"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-address-line-2-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>&nbsp;</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-address-line-2-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }" @keydown="limitInput($event, 'shipper_address.ship_address_line_2', 35)"></b-form-input>
-                                                     <has-error :form="form" field="ship_address_line_2"></has-error>
-                                                </b-form-group>
-                                                
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="ship-city-input" class="align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>City:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <div class="d-flex align-items-center pb-2">
-                                                         <b-form-input id="ship-city-input" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
-                                                         <b-form-input id="ship-airport-input" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                                     </div>
-                                                     <div>
-                                                         <has-error :form="form" field="ship_city" :class="{ 'd-block': form.errors.has('ship_city') }"></has-error>
-                                                         <has-error :form="form" field="ship_airport_code" :class="{ 'd-block': form.errors.has('ship_airport_code') }"></has-error>
-                                                     </div>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-postcode-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Post Code:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-postcode-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
-                                                     <has-error :form="form" field="ship_post_code"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-state-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>State:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-state-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
-                                                     <has-error :form="form" field="ship_state"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-country-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Country:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-select id="shipper-country-input" class="form-control shipper-form-control" v-model="form.shipper_address.ship_country" :class="{ 'is-invalid': form.errors.has('ship_country') }">
-                                                         <option disabled value=""> Please select one</option>
-                                                         <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                             {{ country.text }}
-                                                         </option>
-                                                     </b-form-select>
-                                                     <has-error :form="form" field="ship_country"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-phone-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Phone:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-phone-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_phone" :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
-                                                     <has-error :form="form" field="ship_phone"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-fax-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Fax:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-fax-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_fax" :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
-                                                     <has-error :form="form" field="ship_fax"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-telex-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Telex:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="shipper-telex-input" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_telex"></b-form-input>
-                                                </b-form-group>
-                                                <b-form-checkbox size="sm" class="" style="margin-left: 110px;" v-model="form.is_shipper_address_save">Save new address to address book</b-form-checkbox>
-                                            </div>
-                                        </b-col>
+                                        <hawb-address-block
+                                            title="Shipper"
+                                            dropdown-name="shipper"
+                                            prefix="ship"
+                                            id-prefix="shipper"
+                                            address-key="shipper_address"
+                                            control-class="shipper-form-control"
+                                            name2-extra-class="ship_name_2"
+                                            search-id="shipper"
+                                            search-placeholder="Search shipper"
+                                            :form="form"
+                                            :address="form.shipper_address"
+                                            :countries="countries"
+                                            :active-dropdown="activeDropdown"
+                                            :filtered="filteredShippers"
+                                            :show="showShipper"
+                                            :save-checked="form.is_shipper_address_save"
+                                            @update:show="showShipper = $event"
+                                            @update:saveChecked="form.is_shipper_address_save = $event"
+                                            @toggle="toggleDropdown"
+                                            @filter="filterShippers"
+                                            @select="selectShipper"
+                                            @limit="limitInput"
+                                            @register-ref="registerDropdownRef"
+                                        ></hawb-address-block>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                              content-cols-lg="auto" label="" label-for="input-horizontal"
                                              class="form-control-sm col-form-label mt-2 d-none d-md-block">
@@ -298,156 +173,31 @@
                                     </b-col>
                                     <!-- CONSIGNEE SECTION COLUMN -->
                                     <b-col cols="12" md="6" class="mt-6 mt-md-0 mt-lg-0">
-                                        <b-col cols="auto">
-                                            <h4 class="h-color ml-2">
-                                                Consignee
-                                            </h4>
-                                            <div class="d-flex align-items-center pb-2">
-                                                <b-form-group id="fieldset-horizontal"
-                                                label-cols-lg="auto"
-                                                label-for="consignee"
-                                                class="align-items-center">
-                                                <template #label>
-                                                     <div class="shipper-toggle-label">
-                                                         <span>Name:</span>
-                                                         <span class="text-danger">*</span>
-                                                     </div>
-                                                </template>
-                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_consignee" @click="toggleDropdown('consignee')">
-                                                     <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control consignee-form-control" autocomplete="off"
-                                                     :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                     @input="filterConsignee" @focus="toggleDropdown('consignee', true)" />
-
-                                                     <div v-if="activeDropdown === 'consignee' && filteredConsignees.length" class="dropdown-options align-items-center">
-                                                         <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
-                                                             {{ consignee.name }}
-                                                         </div>
-                                                     </div>
-                                                </div>
-                                                <has-error :form="form" field="cons_name"></has-error>
-                                                </b-form-group>
-                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2" style="color:#355594;stroke:#355594;" @click="showConsignee = !showConsignee"></b-icon>
-                                            </div>
-                                            <!-- Show Consignee all input field here -->
-                                            <div v-if="showConsignee">
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-name-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>&nbsp;</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-name-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }" autocomplete="off"></b-form-input>
-                                                     <has-error :form="form" field="cons_name_2"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-account-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Account:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-account-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_account" :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
-                                                     <has-error :form="form" field="cons_account"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-address-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Address:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-address-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }" @keydown="limitInput($event, 'consignee_address.cons_address', 40)"></b-form-input>
-                                                     <has-error :form="form" field="cons_address"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-address-line-2-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>&nbsp;</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-address-line-2-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }" @keydown="limitInput($event, 'consignee_address.cons_address_line_2', 35)"></b-form-input>
-                                                     <has-error :form="form" field="cons_address_line_2"></has-error>
-                                                </b-form-group>
-                                                
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>City:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <div class="d-flex align-items-center pb-2">
-                                                         <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
-                                                         <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.cons_airport_code" :class="{ 'is-invalid': form.errors.has('cons_airport_code') }"></b-form-input>
-                                                     </div>
-                                                     <div>
-                                                         <has-error :form="form" field="cons_city" :class="{ 'd-block': form.errors.has('cons_city') }"></has-error>
-                                                         <has-error :form="form" field="cons_airport_code" :class="{ 'd-block': form.errors.has('cons_airport_code') }"></has-error>
-                                                     </div>
-                                                </b-form-group>
-                                                    
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-post-code" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Post Code:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-post-code" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
-                                                     <has-error :form="form" field="cons_post_code"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-state-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>State:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-state-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
-                                                     <has-error :form="form" field="cons_state"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-country-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Country:</span>
-                                                             <span class="text-danger">*</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-select class="form-control consignee-form-control" v-model="form.consignee_address.cons_country" :class="{ 'is-invalid': form.errors.has('cons_country') }">
-                                                         <option value="Please select one"> Please select one</option>
-                                                         <option v-for="country in countries" :key="country.value" :value="country.value">
-                                                             {{ country.text }}
-                                                         </option>
-                                                     </b-form-select>
-                                                     <has-error :form="form" field="cons_country"></has-error>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-phone-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Phone:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-phone-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_phone"></b-form-input>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-fax-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Fax:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_fax"></b-form-input>
-                                                </b-form-group>
-                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="cons-telex-input" class="pb-2 align-items-center">
-                                                     <template #label>
-                                                         <div class="shipper-toggle-label">
-                                                             <span>Telex:</span>
-                                                         </div>
-                                                     </template>
-                                                     <b-form-input id="cons-telex-input" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_telex"></b-form-input>
-                                                </b-form-group>
-
-                                                <b-form-checkbox size="sm" style="margin-left: 110px;" class="ml-lg-35" v-model="form.is_consignee_address_save">Save new address to address book</b-form-checkbox>
-                                            </div>
-                                        </b-col>
+                                        <hawb-address-block
+                                            title="Consignee"
+                                            dropdown-name="consignee"
+                                            prefix="cons"
+                                            id-prefix="cons"
+                                            address-key="consignee_address"
+                                            control-class="consignee-form-control"
+                                            city-control-class="consignee-form-control"
+                                            search-id="consignee"
+                                            search-placeholder="Search consignee"
+                                            :form="form"
+                                            :address="form.consignee_address"
+                                            :countries="countries"
+                                            :active-dropdown="activeDropdown"
+                                            :filtered="filteredConsignees"
+                                            :show="showConsignee"
+                                            :save-checked="form.is_consignee_address_save"
+                                            @update:show="showConsignee = $event"
+                                            @update:saveChecked="form.is_consignee_address_save = $event"
+                                            @toggle="toggleDropdown"
+                                            @filter="filterConsignee"
+                                            @select="selectConsignee"
+                                            @limit="limitInput"
+                                            @register-ref="registerDropdownRef"
+                                        ></hawb-address-block>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                              content-cols-lg="auto" label="" label-for="input-horizontal"
                                              class="form-control-sm col-form-label mt-2 d-md-none">
@@ -2338,6 +2088,7 @@ import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 // import PageLoader from "../../components/PageLoader.vue";
 import airWayBillMixin from "@/core/mixins/airWayBillMixin";
+import HawbAddressBlock from "@/view/pages/dashboard/components/HawbAddressBlock.vue";
 
 export default {
     mixins: [airWayBillMixin],
@@ -3512,6 +3263,7 @@ export default {
         DatePicker,
         SideBar,
         OcrUploadModal,
+        HawbAddressBlock,
         // PageLoader
     },
 };

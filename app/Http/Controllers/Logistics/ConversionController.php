@@ -1340,7 +1340,7 @@ class ConversionController extends Controller
         $XDDHeader->appendChild($xml->createElement('AWBAccountDateTime', $waybill_data['execution_date_time']));
         $XDDHeader->appendChild($xml->createElement('AWBExecutionDateTime', $waybill_data['execution_date_time']));
         $XDDHeader->appendChild($xml->createElement('ConsolidationIndicator', $house_data ? 'true' : 'false'));
-        $XDDHeader->appendChild($xml->createElement('ElectronicIndicator', !$waybill_data['awb'] ? 'true' : 'false'));
+        $XDDHeader->appendChild($xml->createElement('ElectronicIndicator', $waybill_data['awb']!='true' ? 'true' : 'false'));
 
         // Origin Location
         $WaybillOriginLocation = $xml->createElement('WaybillOriginLocation');

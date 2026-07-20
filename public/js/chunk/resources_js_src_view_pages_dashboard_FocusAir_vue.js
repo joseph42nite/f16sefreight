@@ -2167,12 +2167,12 @@ var render = function render() {
       fn: function fn() {
         return [_c("div", {
           staticClass: "shipper-toggle-label"
-        }, [_c("span", [_vm._v("Pin code:")]), _vm._v(" "), _c("span", {
+        }, [_c("span", [_vm._v("Post Code:")]), _vm._v(" "), _c("span", {
           staticClass: "text-danger"
         }, [_vm._v("*")])])];
       },
       proxy: true
-    }], null, false, 3659841831)
+    }], null, false, 3778114888)
   }, [_vm._v(" "), _c("b-form-input", {
     staticClass: "form-control",
     "class": [_vm.controlClass, {

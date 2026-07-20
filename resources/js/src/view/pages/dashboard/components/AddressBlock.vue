@@ -86,7 +86,7 @@
             <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
                 <template #label>
                     <div class="shipper-toggle-label">
-                        <span>Pin code:</span>
+                        <span>Post Code:</span>
                         <span class="text-danger">*</span>
                     </div>
                 </template>

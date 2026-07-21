@@ -2,7 +2,7 @@ This guide outlines the optimal, step-by-step developer playbook to implement th
 
 > [!IMPORTANT]
 > **Key Architectural References:**
-> - **Backend Database Schema & DDL:** [database_relations_tree.md](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md) (traces all 44 tables, foreign keys, and indexes).
+> - **Backend Database Schema & DDL:** [database_relations_tree.md](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md) (traces all 45 tables, foreign keys, and indexes).
 > - **Operational & Product Roadmap:** [future_plan.md](file:///Users/jomygeorge/Desktop/f16sefreight/future_plan.md) (outlines product features, subscription tiers, and workflows).
 
 ---
@@ -50,22 +50,23 @@ Establish the containerized infrastructure, domain routing, and VM boundaries fo
 ---
 
 ### Step 1: Complete Schema Migration (Database Layer)
-Initialize all database tables across **three ordered batches** with a verification checkpoint between each. Running all 44 migrations in one shot risks an unrecoverable partial schema if any FK reference fails mid-way.
+Initialize all database tables across **three ordered batches** with a verification checkpoint between each. Running all 45 migrations in one shot risks an unrecoverable partial schema if any FK reference fails mid-way.
 
 #### Batch 1a — Prerequisite & Tenant Tables
 These have no inbound foreign key dependencies — run these absolutely first:
 * `sequence_counters` (must be first — all numbering depends on it)
 * `ports` (UN/LOCODE master reference)
-* Alter `companies` — add `tier`, `email_domain`, `ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit`
-* Create `customers` table (company_id FK → `companies.id`, default_port_id FK → `ports.id`, branch_id FK → `agents_info.id`, sales_rep_id FK → `users.id` via cyclic constraints, including tax/address/banking fields: `gst_no`, `pan_no`, `duns_no`, `address`, `phone`, `email`, `bank_name`, `bank_account_no`, `bank_ifsc_code`, `payment_terms_days`, `credit_limit`)
-* Alter `users` — add `default_port_id` (Nullable FK → `ports.id`), `pima_address`, `designation`
+* Alter `companies` — add `tier`, `email_domain`, `ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit` (strict SaaS tenant settings)
+* Create `customers` table (company_id FK → `companies.id`, default_port_id FK → `ports.id`, branch_id FK → `agents_info.id`, sales_rep_id FK → `users.id` via cyclic constraints, including tax/address/banking fields: `gst_no`, `pan_no`, `duns_no`, `address`, `phone`, `email`, `bank_name`, `bank_account_no`, `bank_ifsc_code` encrypted at rest, `payment_terms_days`, `credit_limit`)
+* Create `partners` table (company_id FK → `companies.id`, storing airlines, shipping lines, customs brokers, transporters, and other vendors/creditors, with `partner_type`, address details, and banking fields encrypted at rest: `bank_account_no`, `bank_ifsc_code`)
+* Alter `users` — add `origin_port_id` (Nullable FK → `ports.id`), `pima_address`, `designation`
 * Alter `air_way_bills` & `house_way_bills` — add `uuid` (UUID unique), `job_id` (Nullable FK)
 
 **Verify:** `php artisan migrate:status` — all batches show `Ran`.
 
 #### Batch 1b — Core Operations & AI Tables
 These depend on `agents_info`, `companies`, `users`, and `jobs` existing:
-* `jobs` (includes `cargo_type`, `delivery_mode`, `booking_thru`, `pickup_address`, `delivery_address`, `planned_clearance_date`, `completed_at`, `is_sub_shipment`, `is_consolidation`, `extracted_pieces`, `extracted_weight`, `extracted_volume`, `cargo_description`)
+* `jobs` (includes `cargo_type`, `delivery_mode`, `booking_thru`, `pickup_address`, `delivery_address`, `planned_clearance_date`, `completed_at`, `is_sub_shipment`, `is_consolidation`, `extracted_pieces`, `extracted_weight`, `extracted_volume`, `cargo_description`; **cancellation fields** `cancellation_reason`, `cancellation_reason_custom`, `cancelled_at`, `cancelled_by` and the `Cancelled` status; **re-init lineage** `reinitiated_from_job_id` (self-FK → `jobs.id`); **pricing-owned reassignment** `pending_operator_id`, `pending_operator_requested_by`, `pending_operator_requested_at`. Scope sequence number uniqueness to `(agent_id, enquiry_no)` and `(agent_id, execution_job_no)` to prevent global uniqueness sequence violations).
 * `mailbox_connections` (FK → `agents_info`, `users`)
 * `inbound_emails` (FK → `agents_info`, `mailbox_connections`)
 * `email_threads` (FK → `agents_info`, `users`, `jobs`)
@@ -75,19 +76,24 @@ These depend on `agents_info`, `companies`, `users`, and `jobs` existing:
 * `audit_logs` (append-only trigger registered here)
 * `sea_containers` (FK → `agents_info`, `jobs`)
 * `sea_container_items` (FK → `agents_info`, `sea_containers`, `jobs`)
-* `cargo_arrival_notices` (FK → `agents_info`, `jobs`)
-* `job_entities` (FK → `agents_info`, `jobs`, `customers`)
-* `sea_shipment_details` (FK → `jobs`)
+* `cargo_arrival_notices` (FK → `agents_info`, `jobs` - uses `notice_number` column instead of `can_no`)
+* `job_entities` (FK → `agents_info`, `jobs`. Uses polymorphic `party_type` and `party_id` referencing `customers.id` or `partners.id`. Uses generated virtual column `unique_role_gate` to enforce partial uniqueness on role except for `'notify_party'`).
+* `sea_shipment_details` (FK → `jobs`, with `carrier_id` and `haulage_provider_id` FKs referencing `partners.id` instead of `companies.id`)
 * `air_shipment_details` (FK → `jobs`)
-* `llm_usage_logs` (FK → `jobs`)
+* `llm_usage_logs` (FK → `jobs` - tracks FastAPI token usage and model stats)
+* `rate_cards` (FK → `agents_info.id`, with polymorphic party columns referencing `customers` or `partners` for pricing tariff rules)
+* `exchange_rates` (daily conversion factor tracker for Forex gain/loss logic)
+* `sla_policies` (FK → `companies.id`, configures minutes per tier)
 * `pdf_processing_jobs` (FK → `users`)
 * `manifest_filings` (FK → `agents_info`, `jobs`)
 * `approved_drafts_queue` (FK → `agents_info`, `jobs`, `users`)
-* `operational_cover_letters` (FK → `agents_info`, `jobs`, `customers`, `users`)
+* `operational_cover_letters` (FK → `agents_info`, `jobs`, `customers` via `recipient_customer_id`, `users`)
 * `email_classification_rules` (FK → `agents_info.id`)
 * `email_classification_overrides` (FK → `agents_info.id`, `email_threads.id`, `email_classification_rules.id`, `users.id`)
 * `ocr_credit_transactions` (FK → `companies.id`, `jobs.id` ON DELETE SET NULL)
 * `pdf_extraction_corrections` (FK → `pdf_processing_jobs.id` ON DELETE CASCADE, `users.id`)
+* `support_tickets` (FK → `agents_info`, `users` — visual bug reports captured via the in-app chatbot/DOM selector)
+* `notifications` (UUID PK, FK → `agents_info`; polymorphic `notifiable` → `users` — Laravel `DatabaseNotification` store powering the bell/notification center, pushed live via Soketi)
 
 **Verify:** `php artisan tinker` → `Job::count()`, `EmailThread::count()`, `EmailClassificationRule::count()` all return `0` without exceptions.
 
@@ -95,18 +101,18 @@ These depend on `agents_info`, `companies`, `users`, and `jobs` existing:
 These depend on `agents_info`, `companies`, `users`, `jobs`, and `chart_of_accounts` existing:
 * `chart_of_accounts` (self-referencing `parent_account_id`)
 * `accounting_periods` (FK → `agents_info`)
-* `accounts_invoices` (FK → `agents_info`, `jobs` ON DELETE RESTRICT, `customers`, `users`)
+* `accounts_invoices` (FK → `agents_info`, `jobs` ON DELETE RESTRICT, `customers` via `client_id`, `users`)
 * `accounts_invoice_items` (FK → `accounts_invoices` CASCADE)
 * `accounts_invoice_brokerage_details` (1-to-1 FK → `accounts_invoices`)
-* `accounts_invoice_consol_details` (1-to-1 FK → `accounts_invoices`)
-* `accounts_purchase_vouchers` (FK → `agents_info`, `jobs` ON DELETE RESTRICT, `companies`, `users`)
+* `accounts_invoice_consol_details` (1-to-1 FK → `accounts_invoices`, with `partner_agent_id` FK referencing `partners.id`)
+* `accounts_purchase_vouchers` (FK → `agents_info`, `jobs` ON DELETE RESTRICT, `partners` via `vendor_id`, `users`)
 * `accounts_purchase_items` (FK → `accounts_purchase_vouchers` CASCADE)
-* `accounts_ledger_entries` (FK → `agents_info`, `chart_of_accounts`, `accounting_periods`)
-* `gst_ledger_entries` (FK → `agents_info`, `companies`)
-* `unposted_transactions_queue` (FK → `agents_info`, `companies`, `users`)
+* `accounts_ledger_entries` (FK → `agents_info`, `chart_of_accounts`, `accounting_periods`. No list/range partitioning is applied to preserve foreign key integrity).
+* `gst_ledger_entries` (FK → `agents_info`, `companies` representing the tenant)
+* `unposted_transactions_queue` (FK → `agents_info`, `companies` representing the tenant, `users`)
 * `bank_transactions` (FK → `agents_info`, `accounts_invoices` SET NULL, `accounts_purchase_vouchers` SET NULL)
 * `financial_snapshots` (FK → `agents_info`, `accounting_period_id`)
-* `accounts_cass_statements` (FK → `agents_info`, `companies`, `accounts_purchase_vouchers`)
+* `accounts_cass_statements` (FK → `agents_info`, `partners` representing the billing airline, `accounts_purchase_vouchers`)
 
 **Verify:** `php artisan tinker` → `AccountsInvoice::count()`, `AccountsLedgerEntry::count()` return `0`. Confirm `RESTRICT` FK on invoice `job_id` by running a quick delete test on a job row — it must fail with an integrity constraint error.
   * Execute cyclic constraints via `ALTER TABLE` at the end of the script to link `customers` back to `ports`, `agents_info`, and `users` without migration dependency locks.
@@ -117,8 +123,8 @@ These depend on `agents_info`, `companies`, `users`, `jobs`, and `chart_of_accou
 Create matching Eloquent models in `app/` and register observers to handle operational roll-ups and ledger automation:
 
 1. **Define Relationships:**
-   * Build relationships on the `Job` model (belongsTo client, operator, parent consolidation card; hasOne sea shipment details, hasOne air shipment details, hasMany invoices/vouchers).
-   * Build relationships on `AccountsInvoice` and `AccountsPurchaseVoucher` (belongsTo job, vendor, parent debit/credit notes, hasMany items).
+   * Build relationships on the `Job` model (belongsTo `Customer` as client, operator, parent consolidation card; hasOne sea shipment details, hasOne air shipment details, hasMany invoices/vouchers).
+   * Build relationships on `AccountsInvoice` (belongsTo `Customer` as client, parent debit/credit notes, hasMany items) and `AccountsPurchaseVoucher` (belongsTo `Partner` as vendor, hasMany items).
 2. **Register Observers:**
    * **`JobObserver.php`**: Monitors job creation/updates. Triggers SLA log entries in `milestone_performance_logs` and debounces container roll-up counts.
    * **`InvoiceObserver.php`**: Listens for invoice posting events. Moves draft entries from `unposted_transactions_queue` to the permanent `accounts_ledger_entries` journal and computes `gst_ledger_entries` tax splits.
@@ -160,7 +166,7 @@ Implement the core background services, parsing microservices, and OAuth connect
      ```
 4. **General Ledger & Plaid Reconciler Services:**
    * Build ledger poster services to generate balanced journal entries.
-   * Build cash reconciliation services matching incoming `bank_transactions` credits against pending `accounts_invoices` balances.
+   * Build cash reconciliation services matching incoming `bank_transactions` credits (ingested instantly via Plaid webhooks or 3-day fallback cron scheduler) against pending `accounts_invoices` balances, automatically computing exchange rate variance on settlement dates and posting realized FX gain/loss entries to ledger account `5500-Forex-Gain-Loss`.
 
 ---
 
@@ -172,10 +178,16 @@ Create REST APIs in `routes/api.php` linking dashboard pages to backend services
    * Automatically promo/demotes threads, spawning new Job cards or marking incorrect jobs as status `Lost`.
    * `POST /api/inbox/threads/{id}/claim` $\rightarrow$ atomic claim updates (`UPDATE jobs SET operator_id = ? WHERE id = ? AND operator_id IS NULL`). Returns `409 Conflict` if claiming fails.
 2. **Kanban & Drawer API (`JobController.php`):**
-   * `GET /api/jobs` $\rightarrow$ retrieves jobs. Supports named scopes for active portals (`scopeForActivePortal()`) and personal filters.
+   * `GET /api/jobs` $\rightarrow$ retrieves jobs. Supports named scopes for active portals (`scopeForActivePortal()`) and personal filters (own vs. team, role-scoped per the visibility rules).
+   * `GET /api/jobs/operator-load` $\rightarrow$ returns each operator's active jobs, clearance schedule, and computed **OLI** for the pricing load-balancing view.
    * `PUT /api/jobs/{id}/status` $\rightarrow$ updates status milestones.
+   * `POST /api/jobs/{id}/cancel` $\rightarrow$ sets `status = 'Cancelled'` with a required `cancellation_reason`; returns `422` if posted invoices/vouchers exist; detaches assigned AWB/HWB on success.
+   * `POST /api/jobs/{id}/reinitiate` $\rightarrow$ creates a fresh job (new `enquiry_no`, `reinitiated_from_job_id` set) and queues the re-quote client email.
+   * `POST /api/jobs/{id}/reassign` $\rightarrow$ pricing owner directly reassigns `operator_id` (assignment authority).
+   * `POST /api/jobs/{id}/reassign/request` $\rightarrow$ operator stages `pending_operator_id` and notifies the pricing owner's bell.
+   * `POST /api/jobs/{id}/reassign/{accept|reject}` $\rightarrow$ pricing owner resolves a pending reassignment (accept promotes `pending_operator_id` to `operator_id`; reject clears it).
 3. **Billing & Ledger API (`InvoiceController.php` / `PurchaseVoucherController.php`):**
-   * Handles draft finalizations, tax evaluations, and posting ledger lines.
+   * Handles draft finalizations, tax evaluations, and posting ledger lines. Credit limits are strictly checked on the server-side before finalization and DO release, aborting with `422 Unprocessable Entity` if the client's balance exceeds their limit.
 4. **Customs CGM API (`ManifestFilingController.php`):**
    * Generates flat-file customs CGM manifests for ICEGATE submission.
 5. **Superadmin Health Check & Debug API (`AdminHealthController.php`):**
@@ -231,7 +243,7 @@ Write and execute automated test coverage suites to verify integration stability
     -   **Custom Modelfile Baking:** Build a local Ollama custom `Modelfile` (embedding the target invoice/packing list system parsing instructions and Pydantic JSON schemas) and build it (`ollama create gemma-custom -f ./Modelfile`) to minimize input token overhead.
     -   **FastAPI Linkage:** In the FastAPI `ocr_server.py`, route selectable PDF parsing queries to the local AI instance's API endpoint: `http://<ai-server-private-vpc-ip>:11434`.
     -   **Vision Fallback:** Configure the cloud Gemini 2.5 Flash API as a fallback vision OCR handler for high-resolution scanned PDFs and images, routing foreign documents to standard English. Check for python microservice connection errors.
--   **Step 1.2:** Run database migrations to add `tier`, `email_domain`, and `transport_mode` columns to `companies` and `pdf_processing_jobs` tables. Enforce SQLite/MySQL database triggers on user designation checks (operator must be `operations`, owner must be `pricing`).
+-   **Step 1.2:** Run database migrations to add `tier`, `email_domain`, and the OCR credit columns (`ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit`) to the `companies` table. Separately add the `transport_mode` (Enum `air`/`sea`) column to `pdf_processing_jobs`, `accounts_invoices`, and `accounts_purchase_vouchers` (it already lives on `jobs`) for query scoping and sequence partitioning — `transport_mode` does **not** belong on `companies`. Enforce SQLite/MySQL database triggers on user designation checks (operator must be `operations`, owner must be `pricing`).
 -   **Step 1.3:** Run database migrations to add `origin_port_id` (referencing `ports.id`) and `pima_address` columns to the `users` table. Check for schema mapping errors.
 -   **Step 1.4:** Create the drag-and-drop file upload handler inside `OcrUploadModal.vue`. The modal hits the backend, triggers the extraction task, saves the result to `pdf_processing_jobs.extracted_data` (storing original LLM data, confidence ratings, and manual adjustments for auditing), and returns the JSON payload to pre-populate form fields in `FocusAir.vue` and `HouseWayBill.vue` inline, highlighting low-confidence fields in orange.
 -   **Step 1.5:** Run validation tests and sanity check each model and endpoint for errors before moving to Phase 2.
@@ -248,10 +260,22 @@ Write and execute automated test coverage suites to verify integration stability
 ### Phase 3: Workflow Automation, Kanban & Job Cost Sheets
 
 -   **Step 3.1:** Create `jobs` table migration. Implement triage actions (converting client inquiries to Jobs), manual override classification updates (promotions/demotions), and assign task dialog (clearance dates, assigned operator, AWB association). Implement responder-based auto-assignment (assigning `operator_id`/`assigned_operator_id` to the user who replies to the thread) and support reassigning to other pricing staff.
+-   **Step 3.1a — Job Cancellation & Re-initiation:**
+    -   Build a **Cancel Shipment** action (post-conversion) that sets `status = 'Cancelled'` (a soft state, never a hard `DELETE` — the row must persist for boss tracking and audit), captures a mandatory `cancellation_reason` from the dropdown (`customs_hold_unresolved`, `client_cancelled`, `cargo_not_ready`, `documentation_incomplete`, `payment_or_credit_hold`, `carrier_space_lost`, `cargo_damaged`, `prohibited_regulatory`, `rate_expired_requote`, `duplicate`, `other`) plus `cancellation_reason_custom` when `other`, and stamps `cancelled_at`/`cancelled_by`.
+    -   **Guard:** block cancellation with `422` if the job has posted invoices/vouchers (`accounts_invoices.is_posted = true`) until they are voided or credit-noted. On successful cancel, detach any assigned AWB/HWB (`air_way_bills.job_id`/`house_way_bills.job_id` → `NULL`) to release the number back to stock.
+    -   **Re-initiate:** spawns a **new** `jobs` row with a fresh `enquiry_no` (never recycles the old number — sequence gaps are acceptable), sets `reinitiated_from_job_id` to the cancelled job, and triggers a fresh client email carrying the re-quoted rate (via the automated client-messaging consent engine). The cancelled job stays visible with a link to its successor.
+    -   Keep **`Cancelled` (post-conversion aborts) analytically separate from `Lost` (pre-conversion enquiry losses)** so conversion-funnel views (`dsr/msr/ysr_funnel_view`) stay clean.
+-   **Step 3.1b — Pricing-Owned Reassignment (request → accept):**
+    -   Pricing staff (`job_owner_id`) hold assignment authority: assigning/reassigning sets `operator_id` directly (the atomic claim `UPDATE ... WHERE operator_id IS NULL` still guards the unassigned pool, returning `409` on conflict).
+    -   An operator can **request** a handover from the split view: this sets `pending_operator_id` (+ `pending_operator_requested_by`, `pending_operator_requested_at`) **without** changing the live `operator_id`, and dispatches a `ReassignmentRequested` notification (row in `notifications`, pushed via Soketi) to the job's pricing owner's bell.
+    -   Pricing **accepts** (moves `pending_operator_id` → `operator_id`, clears the pending fields, notifies both operators) or **rejects** (clears the pending fields; job stays with the current operator). Unactioned requests remain pending (no auto-expiry).
 -   **Step 3.2:** Build `OpsDashboard.vue` (dual-view Kanban workspace):
     -   **Top Unassigned Tasks Header Scroll:** Implement a horizontal scroll bar with a `[+]` / `[-]` toggle. When expanded (`[+]`), clicking a card shows an assign overlay to either claim or select a staff member to assign it to.
     -   **Process View:** Implement exactly 4 columns: `Processing`, `Awaiting Customer`, `In Transit`, and `Completed`. Cards in all 4 columns feature a mail icon that navigates to the Mail page (`/inbox`). Cards in the `In Transit` column also feature a message log icon that navigates to the Message Log page (`/message-log`). Clicking a card in the `In Transit` column opens the **Drawer Workspace** directly on the **Routing & Voyage/Flight Details** tab. Add a prominent **"View Source Email" button** in the drawer toolbar to instantly navigate the operator back to the original email thread in the `JobInbox` for reference.
     -   **Staff View:** Implement a vertically paginated clearance grid matrix where the left Y-axis shows the Day and Date, and columns show the staff names. Intersecting cards show the AWB/Job number.
+    -   **Role Visibility Scoping:** an individual **operator** sees only their own jobs (`operator_id = me`) in the calendar/clearance view; the **Process View** card shows both the `operator_id` and `job_owner_id` names so collaborators share context; **sales** staff see an account-centric board of their customers' jobs (`customers.sales_rep_id = me`) with handler names (read-mostly); the cross-staff matrix is reserved for **pricing** (for assignment) and **boss/director** (for oversight).
+    -   **Pricing Load-Balancing View (OLI):** for pricing staff, render every operator's active jobs + clearance schedule alongside their **Operator Load Index** — `OLI = 3×(jobs clearing today or overdue) + 2×(jobs clearing tomorrow) + 1×(other active jobs)`, counting only `status NOT IN ('Completed','Lost','Cancelled')`. Lower OLI = more capacity; pricing uses it to decide who to assign new work to. Back it with the `idx_jobs_operator_clearance` composite index.
+    -   **Bell / Notification Center:** render an unread badge from the `notifications` table (Soketi live push); reassignment-approval requests land here for the pricing owner to accept/reject inline.
     -   **SLA Color-Coding:** Apply color styles: Red if clearance is today and AWB is not sent to airline; Yellow if clearance is tomorrow and AWB was not sent a day before; Green if everything is on track.
     -   **Magnetic Drag-and-Drop:** Enable dragging cards between staff columns and date rows, which automatically updates `operator_id` and `planned_clearance_date` and snaps the card to that grid cell like a magnet.
 -   **Step 3.3:** Run migrations for `accounts_invoices`, `accounts_invoice_items`, `accounts_purchase_vouchers`, and `accounts_purchase_items`.
@@ -286,7 +310,7 @@ Write and execute automated test coverage suites to verify integration stability
 ### Phase 5: Automated Ledgers, CASS Reconciliations & Reports
 
 -   **Step 5.1:** Run migrations for `accounts_ledger_entries` and `accounts_cass_statements` and audit triggers.
--   **Step 5.2:** Build Plaid/Setu sync service to poll raw bank statements every 3 days. Map bank accounts to specific branch ledger accounts centrally. Highlight payment discrepancies in the UI and allow one-click popup resolutions (Write-off, Short-Paid, Discount).
+-   **Step 5.2:** Build Plaid/Setu sync service to ingest bank transactions in real-time via Plaid webhooks (`transaction-added` events), with a scheduled fallback cron running every 3 days. Map bank accounts to specific branch ledger accounts centrally. Automatically post exchange rate variance difference to realized FX gain/loss entries in the general ledger (account `5500-Forex-Gain-Loss`). Highlight payment discrepancies in the UI and allow one-click popup resolutions (Write-off, Short-Paid, Discount).
 -   **Step 5.3:** Build CASS file upload portal. Reconcile reported AWB charges with estimated cost vouchers, flagging weight/rate mismatches.
 -   **Step 5.4:** Compile financial balance sheets, trial balance sheets, and Profit & Loss reports from the ledger. Enforce strict period lockout constraints (late adjustments require explicitly opening, editing, and re-closing).
 -   **Step 5.5:** Run reconciliation runs and report computations, validating results and checking for errors at each point.

@@ -1,12 +1,49 @@
 # 🚀 Implementation Blueprint: F16s Freight Operations OS
 
-This document outlines the step-by-step roadmap for upgrading the F16s platform into an inbox-driven logistics operating system. It is divided into three segments:
+The step-by-step roadmap for upgrading the F16s platform into an **inbox-driven logistics operating system** — turning inbound customer email into triaged jobs, operational documents, and posted accounting entries with minimal manual re-keying.
 
--   **Segment A: Core Operations OS (Phases 1-4)** — Multi-portal document workspace (Focus Air, Focus Sea), email inbox sync, Kanban workflows, and analytics.
--   **Segment B: Automated Financials & Reconciliation** — Payment tracking, bank statement/CASS reconciliation, ledger accounts, and future-ready analytical logs/ledgers.
--   **Segment C: Future Expansion Modules** — Import management and direct carrier/airline bookings integrations.
+## ⭐ At a Glance (Master Summary)
 
-> [!IMPORTANT] > **Implementation Methodology (Small Increments & Testing)**: To maintain the stability of the platform, the code changes for each phase/segment must be kept small and incremental. Verify and check for errors at each step before moving to the next.
+**What it is**
+-   A multi-tenant SaaS for freight forwarders: each **company** (tenant) runs one or more **branches** (`agents_info`), with strict per-branch data isolation.
+-   Three access **portals**, resolved by subdomain: `focusair.` (air), `focussea.` (sea), and `admin.` (platform superadmin).
+-   Driven end-to-end from a unified **email inbox** → AI/OCR document extraction → Kanban operations → double-entry financials.
+
+**The three build segments**
+-   **Segment A — Core Operations OS (Phases 1–4):** multi-portal document workspace (Focus Air, Focus Sea), Gmail/Outlook inbox sync, Kanban workflows, role dashboards, and analytics.
+-   **Segment B — Automated Financials & Reconciliation:** invoices/vouchers, GST, double-entry ledger, bank (Plaid/Setu) + IATA CASS reconciliation, and financial reports.
+-   **Segment C — Future Expansion:** air/sea import documentation & customs transmission, and direct carrier/airline booking integrations.
+
+**Technology stack**
+-   **Backend:** Laravel (PHP-FPM) + Horizon queue workers, MySQL 8.0, Redis, Soketi (Pusher-compatible WebSockets).
+-   **AI/OCR microservice:** Python **FastAPI** — PyMuPDF (`fitz`) for fast text extraction, local **Ollama / Gemma 4 E4B** for JSON mapping, **Gemini 2.5 Flash** cloud fallback for scanned/visual OCR, **ChromaDB** + `nomic-embed-text` for RAG.
+-   **Frontend:** Vue.js (drawer-workspace SPA), `vuedraggable` Kanban, ApexCharts.
+-   **Infra:** Docker Compose locally; dedicated AWS `t4g.large` (Graviton) instance for the AI/Ollama server inside a private VPC.
+
+**Subscription tiers** (gated at DB, middleware, background-job, and frontend layers)
+-   **`core`** — local coordinate-based PDF extraction only (`pdfplumber`); no AI, no email, no financials.
+-   **`tactical`** — adds AI unstructured parsing + unified Gmail/Outlook sync + operational workflows + basic analytics.
+-   **`command`** — adds accounting, bank/CASS reconciliation ledger, structured analytics, and Director/Boss dashboards.
+
+**Data model** — 45 tables (see [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md)), grouped as:
+-   **Tenancy & parties:** `companies`, `agents_info`, `users`, `customers` (debtors), `partners` (vendors/carriers), `ports`.
+-   **Operations:** `jobs`, `air_/sea_shipment_details`, `air_/house_way_bills`, `sea_containers(_items)`, `job_entities`, `cargo_arrival_notices`, `manifest_filings`, `job_documents`.
+-   **Inbox & AI:** `mailbox_connections`, `inbound_emails(_attachments)`, `email_threads`, `email_classification_rules`/`_overrides`, `pdf_processing_jobs`, `pdf_extraction_corrections`, `llm_usage_logs`, `ocr_credit_transactions`.
+-   **Financials:** `accounts_invoices(_items/_brokerage/_consol)`, `accounts_purchase_vouchers(_items)`, `accounts_ledger_entries`, `gst_ledger_entries`, `chart_of_accounts`, `accounting_periods`, `bank_transactions`, `accounts_cass_statements`, `exchange_rates`, `rate_cards`, `financial_snapshots`, queues (`unposted_transactions_queue`, `approved_drafts_queue`, `operational_cover_letters`), `sequence_counters`, `sla_policies`, `audit_logs`, `support_tickets`.
+-   **Platform:** `notifications` (bell / notification center — reassignment approvals, alerts).
+
+**Core workflows**
+-   **Triage:** inbound mail is classified (customer enquiry / airline / clearance / trucking); enquiries spawn `jobs` with a per-branch `enquiry_no`; the first staff responder is auto-assigned as operator (atomic claim, `409` on conflict).
+-   **Extraction:** documents parsed to a draft JSON payload; low-confidence fields highlighted orange; corrections logged for accuracy auditing.
+-   **Operations:** dual-view Kanban (Process columns + Staff clearance grid) with SLA color-coding and magnetic drag-and-drop. Pricing owns assignment and balances load via the **Operator Load Index (OLI)**; operators request handovers, pricing approves them via a **bell notification**.
+-   **Cancellation & re-init:** a confirmed shipment that can't proceed is **soft-cancelled** with a required reason (kept analytically separate from `Lost` enquiries) and can be **re-initiated as a fresh job + re-quoted client email**, linked back via `reinitiated_from_job_id`.
+-   **Financials:** finalized invoices/vouchers post balanced double-entry lines + GST splits; bank & CASS feeds auto-reconcile and post realized FX gain/loss.
+
+**Delivery method**
+-   Vertical-slice, **small incremental changes**, verifying and checking for errors at every step before moving on (see the phase roadmap and migration order checklist below).
+
+> [!IMPORTANT]
+> **Implementation Methodology (Small Increments & Testing):** to keep the platform stable, code changes for each phase/segment must be small and incremental. Verify and check for errors at each step before moving to the next.
 
 ## 📖 Table of Contents
 
@@ -28,14 +65,15 @@ This document outlines the step-by-step roadmap for upgrading the F16s platform 
 -   [🎨 System Mockup: Toggled Drawer Workspace](#system-mockup-toggled-drawer-workspace)
 -   [🛠️ Phase 1: Document Processing, Database & AI Ingestion](#phase-1-document-processing-database-ai-ingestion)
     -   [Phase 1a: Complete Database Foundation & Eloquent Models](#phase-1a-complete-database-foundation-eloquent-models)
-    -   [Phase 1b: FastAPI Parsing Engine (In-Memory Unstructured Extraction)](#phase-1b-fastapi-parsing-engine-in-memory-unstructured-extraction)
+    -   [Phase 1b: FastAPI Parsing Engine](#phase-1b-fastapi-parsing-engine)
     -   [Phase 1c: Laravel Integration & Vue Ingestion Modal](#phase-1c-laravel-integration-vue-ingestion-modal)
 -   [📧 Phase 2: Unified Gmail & Outlook Sync](#phase-2-unified-gmail-outlook-sync)
     -   [2.1 Database & OAuth Schema](#21-database-oauth-schema)
     -   [2.2 Background Polling Service](#22-background-polling-service)
-    -   [2.3 The Airline Exclusion Engine](#23-the-airline-exclusion-engine)
+    -   [2.3 The Configurable Regex Classification Engine (Learning Feedback Loop)](#23-the-configurable-regex-classification-engine-learning-feedback-loop)
     -   [2.4 Global Sidebar & Gmail-Inspired Workspace UI](#24-global-sidebar-gmail-inspired-workspace-ui)
     -   [2.5 Quick Replies](#25-quick-replies)
+    -   [2.5a Automated Client Messaging & Consent Engine (Permission-Based)](#25a-automated-client-messaging-consent-engine-permission-based)
     -   [2.6 Vue 2 Frontend Drawer Workspace & Split-Pane Column Hiding](#26-vue-2-frontend-drawer-workspace-split-pane-column-hiding)
 -   [🗂️ Phase 3: Operations & Pricing Workflows](#phase-3-operations-pricing-workflows)
     -   [3.0 Job Lifecycle & Transition Flow](#30-job-lifecycle-transition-flow)
@@ -43,8 +81,12 @@ This document outlines the step-by-step roadmap for upgrading the F16s platform 
     -   [3.2 Pricing / Triage Dashboard](#32-pricing-triage-dashboard)
 -   [📊 Phase 4: Executive Sales & Admin Dashboard](#phase-4-executive-sales-admin-dashboard)
     -   [4.1 Aggregations & Status Reporting (DSR/MSR/YSR)](#41-aggregations-status-reporting-dsrmsrysr)
-    -   [4.2 Sales Dashboard & AI Client Insights](#42-sales-dashboard-ai-client-insights)
+    -   [4.2 Sales Dashboard & Static Insights](#42-sales-dashboard-static-insights)
     -   [4.3 Boss / Director Dashboard](#43-boss-director-dashboard)
+    -   [4.4 Internal Docs RAG Help Guide (Interactive Copilot Tour Agent)](#44-internal-docs-rag-help-guide-interactive-copilot-tour-agent)
+    -   [4.5 Superadmin Infrastructure Health Monitor & Debugging Console (Platform Level)](#45-superadmin-infrastructure-health-monitor-debugging-console-platform-level)
+    -   [4.6 Visual Ticketing & Automated Client Notifications](#46-visual-ticketing-automated-client-notifications)
+-   [💰 Segment B: Automated Financials & Statement Reconciliation](#segment-b-automated-financials-statement-reconciliation)
     -   [B.1 Accounts Database Schema & Isolation](#b1-accounts-database-schema-isolation)
     -   [B.2 Bank Statement Ingestion (Plaid / Setu APIs)](#b2-bank-statement-ingestion-plaid-setu-apis)
     -   [B.3 Automated Payment Reconciliation (Tallying Matching Engine)](#b3-automated-payment-reconciliation-tallying-matching-engine)
@@ -53,6 +95,7 @@ This document outlines the step-by-step roadmap for upgrading the F16s platform 
     -   [B.6 Import DO & Airline Cost Auto-Calculation Rules](#b6-import-do-airline-cost-auto-calculation-rules)
     -   [B.7 Decoupled Job Cost Sheet Workflow (Operational vs Financial Data)](#b7-decoupled-job-cost-sheet-workflow-operational-vs-financial-data)
     -   [B.8 Logistics Invoicing, Reporting & Queue Specifications (Sea and Air)](#b8-logistics-invoicing-reporting-queue-specifications-sea-and-air)
+-   [🔮 Segment C: Future Expansion Modules (Later Stage)](#segment-c-future-expansion-modules-later-stage)
     -   [C.1 Air Import Documentation & Transmission](#c1-air-import-documentation-transmission)
     -   [C.2 Direct Carrier & Airline Booking Integration](#c2-direct-carrier-airline-booking-integration)
 -   [🌐 Multi-Portal Scope Segregation (Air vs Sea)](#multi-portal-scope-segregation-air-vs-sea)
@@ -89,14 +132,9 @@ This document outlines the step-by-step roadmap for upgrading the F16s platform 
     -   [2. Business Intelligence Formulas (Backend Metrics Engines)](#2-business-intelligence-formulas-backend-metrics-engines)
     -   [3. Business Intelligence Dashboards: Knowing the Business (Sales vs. Admin Roles)](#3-business-intelligence-dashboards-knowing-the-business-sales-vs-admin-roles)
 -   [🗺️ Step-by-Step Implementation Roadmap](#step-by-step-implementation-roadmap)
-    -   [Phase 1: Core Document Parsing & Frontend Verification Form](#phase-1-core-document-parsing-frontend-verification-form)
-    -   [Phase 2: Inbox Sync & Split-Screen Workspace UI](#phase-2-inbox-sync-split-screen-workspace-ui)
-    -   [Phase 3: Workflow Automation, Kanban & Job Cost Sheets](#phase-3-workflow-automation-kanban-job-cost-sheets)
-    -   [Phase 4: Multi-Portal Access Scoping (Air, Sea)](#phase-4-multi-portal-access-scoping-air-sea)
-    -   [Phase 5: Automated Ledgers, CASS Reconciliations & Reports](#phase-5-automated-ledgers-cass-reconciliations-reports)
 -   [⚡ Speed & Efficiency Optimization Plan](#speed-efficiency-optimization-plan)
     -   [1. In-Memory PDF Processing (FastAPI)](#1-in-memory-pdf-processing-fastapi)
-    -   [2. LLM Prompt Caching (Gemini API)](#2-llm-prompt-caching-gemini-api)
+    -   [2. LLM Prompt Optimization & Caching (Gemma & Gemini)](#2-llm-prompt-optimization-caching-gemma-gemini)
     -   [3. Delta Email Syncing & Lazy-Loading Attachments](#3-delta-email-syncing-lazy-loading-attachments)
     -   [4. Database Indexing & Query Optimizations](#4-database-indexing-query-optimizations)
     -   [5. Eager Loading Optimization (N+1 Query Prevention)](#5-eager-loading-optimization-n1-query-prevention)
@@ -108,11 +146,20 @@ This document outlines the step-by-step roadmap for upgrading the F16s platform 
     -   [3. Data Backup, Archival & Retention Strategy](#3-data-backup-archival-retention-strategy)
     -   [4. Invoice Sequence Generation per Billing Type](#4-invoice-sequence-generation-per-billing-type)
 -   [📝 Technical Implementation Checklist](#technical-implementation-checklist)
-    -   [🏗️ Architectural Prerequisites & Decisions](#architectural-prerequisites-decisions)
-    -   [Phase 1a: Complete Database Foundation & Eloquent Models](#phase-1a-complete-database-foundation-eloquent-models)
-    -   [Phase 1b: FastAPI Parsing Engine (In-Memory Unstructured Extraction)](#phase-1b-fastapi-parsing-engine-in-memory-unstructured-extraction)
-    -   [Phase 1c: Laravel Integration & Vue Ingestion Modal](#phase-1c-laravel-integration-vue-ingestion-modal)
-    -   [🧪 Automated Testing Strategy](#automated-testing-strategy)
+-   [🏗️ Architectural Prerequisites & Decisions](#architectural-prerequisites-decisions)
+-   [Existing Codebase Inventory](#existing-codebase-inventory)
+-   [Phase 1a: Complete Database Foundation & Eloquent Models](#phase-1a-complete-database-foundation-eloquent-models)
+-   [Phase 1b: FastAPI Parsing Engine (In-Memory Unstructured Extraction)](#phase-1b-fastapi-parsing-engine-in-memory-unstructured-extraction)
+-   [Phase 1c: Laravel Integration & Vue Ingestion Modal](#phase-1c-laravel-integration-vue-ingestion-modal)
+-   [Phase 2: Gmail & Outlook Account Inbound Ingestion](#phase-2-gmail-outlook-account-inbound-ingestion)
+-   [Phase 3: Operations & Pricing Workflows & Kanban Board](#phase-3-operations-pricing-workflows-kanban-board)
+-   [Phase 4: Multi-Portal Scoping & Air-Sea Segregation](#phase-4-multi-portal-scoping-air-sea-segregation)
+-   [Phase 5: Dashboards, Target Metrics & Analytics](#phase-5-dashboards-target-metrics-analytics)
+-   [Phase 6: Financial Ledgers & Reconciliation Engine](#phase-6-financial-ledgers-reconciliation-engine)
+-   [🧪 Automated Testing Strategy](#automated-testing-strategy)
+-   [Proposed Changes Summary](#proposed-changes-summary)
+-   [Execution Priority Order (Migration Order Checklist)](#execution-priority-order-migration-order-checklist)
+-   [⏳ Pending Modules](#pending-modules)
 
 ---
 
@@ -227,17 +274,37 @@ To minimize database bloat and leverage F16s' existing data structures, the syst
         -   `job_id` (BigInteger, nullable, foreign key): References `jobs.id` to link the waybill back to its parent operational job.
 3.  **`agents_info` & `companies` (Existing Tables):**
     -   _Usage:_ Tenant management, branch isolation, and customer alignment. All lists, metrics, and actions are filtered by `agent_id` and `company_id`.
-    -   _New Columns to Add to `companies`:_
+    -   _New Columns to Add to `companies` (Strictly SaaS Tenant Settings):_
         -   `tier` (String, default: `'core'`): Controls feature access levels (`core`, `tactical`, or `command`).
         -   `email_domain` (String, Nullable): The authorized corporate email domains (e.g. comma-separated list like `'xyzcompany.com, xyzcompany.co.in'`) used to restrict and validate OAuth mailbox connections for Tactical and Command tiers.
-        -   `credit_limit` (Decimal(15,2), default: 0.00): Maximum outstanding receivable balance allowed.
-        -   `credit_currency` (String, 3 chars, default: `'INR'`): Currency of the credit limit.
-        -   `default_payment_terms` (String, max 20, Nullable): Default billing terms (e.g., `'Net 30'`, `'COD'`).
-        -   `credit_status` (Enum: `'active'`, `'hold'`, `'suspended'`, default: `'active'`): Controls billing eligibility.
-        -   `gstin` (String, max 15, Nullable): Indian GST Identification Number for tax compliance.
-        -   `state_code` (String, max 5, Nullable): GST state code prefix (e.g., `'33-TN'` for Tamil Nadu).
+        -   `ocr_credits_balance` (Integer, default: 0): Stores current vision OCR credits balance.
+        -   `ocr_credits_monthly_allowance` (Integer, default: 0): Monthly allowance quota.
+        -   `ocr_credits_limit` (Integer, default: 0): Overdraft ceiling threshold.
+
+3a. **`customers` (New Table):**
+    -   _Usage:_ Stores client debtors (shippers, consignees, notify parties) owned by a platform tenant.
+    -   _Key Columns:_
+        -   `company_id` (BigInteger, FK referencing `companies.id`): Tenant owning this customer.
+        -   `name` (String, max 100): Customer company name.
+        -   `email` (String, max 100): Contact email.
+        -   `gst_no` (String, max 30): GST number.
+        -   `pan_no` (String, max 20): PAN number.
+        -   `bank_account_no` (String, Encrypted): Bank account.
+        -   `bank_ifsc_code` (String, Encrypted): IFSC code.
+        -   `credit_limit` (Decimal(15,2), default: 0.00): Credit limit enforced at backend for DO releases and finalizations.
+        -   `payment_terms_days` (Integer, default: 30): Term days.
+
+3b. **`partners` (New Table):**
+    -   _Usage:_ Stores operational partners, carriers, airlines, custom brokers, transporters, and other vendors.
+    -   _Key Columns:_
+        -   `company_id` (BigInteger, FK referencing `companies.id`): Tenant owning this partner.
+        -   `name` (String, max 100): Partner name.
+        -   `partner_type` (String): e.g., 'airline', 'shipping_line', 'co-loader', 'transporter', 'customs_broker', 'agent', 'broker', 'vendor'.
+        -   `bank_account_no` (String, Encrypted): Bank account.
+        -   `bank_ifsc_code` (String, Encrypted): IFSC code.
+
 4.  **`airlines` (Existing Table):**
-    -   _Usage:_ Used by the exclusion engine to block standard system/airline notice emails.
+    -   _Usage:_ Used by the exclusion engine to block standard system/airline notice emails. Carrier records for accounting and operational integrations reside in the new `partners` table.
 5.  **`users` (Existing Table):**
     -   _Usage:_ Stores operational user accounts, roles, and profiles.
     -   _New Columns to Add:_
@@ -289,7 +356,12 @@ All core tables (operational, side-details, and financial chart tables) are migr
         -   `job_id` (BigInteger, Nullable, FK referencing `jobs.id` on delete set null): Operational link.
         -   `first_reply_at` (Timestamp, Nullable): Tracks the timestamp of the first outbound email reply sent by staff (immutable once set; protected from updates).
         -   `first_triage_at` (Timestamp, Nullable): Tracks the timestamp when the email thread was first triaged (assigned an enquiry number) (immutable once set; protected from updates).
-            -   _Re-Triage Flow:_ If a triage decision was incorrect (e.g., an email notice was incorrectly triaged as a job), a senior operator can invoke a re-triage action. This action nullifies `email_threads.job_id`, sets the incorrect `jobs` row to `status = 'Lost'` (with `lost_reason = 'other'` and `lost_reason_custom = 'Incorrectly triaged via operator override'`), does NOT recycle the consumed `enquiry_no` (sequence gaps are acceptable), and sets `email_threads.status = 'archived'` (or the correct reclassified status). Crucially, the original `first_triage_at` timestamp is preserved as an immutable audit record of the mistake.
+            -   _Re-Triage Flow:_ when a triage decision was wrong (e.g. an email notice mis-triaged as a job), a senior operator can invoke a re-triage action, which:
+                -   Nullifies `email_threads.job_id`.
+                -   Sets the incorrect `jobs` row to `status = 'Lost'` (`lost_reason = 'other'`, `lost_reason_custom = 'Incorrectly triaged via operator override'`).
+                -   Does **not** recycle the consumed `enquiry_no` — sequence gaps are acceptable.
+                -   Sets `email_threads.status = 'archived'` (or the correct reclassified status).
+                -   Preserves the original `first_triage_at` as an immutable audit record of the mistake.
         -   `created_at`, `updated_at` (Timestamps)
     -   _Indexes:_ Composite index on `(agent_id, status, latest_message_received_at)` to load scoped operator folders in milliseconds.
 4.  **`inbound_attachments`**:
@@ -310,27 +382,37 @@ All core tables (operational, side-details, and financial chart tables) are migr
         -   `agent_id` (BigInteger, FK referencing `agents_info.id`): Branch-level tenant isolation key. All queries are scoped by this.
         -   `transport_mode` (Enum: `'air'`, `'sea'`): Mode of logistics. Used for query scoping and sequence partitioning.
         -   `direction` (Enum: `'export'`, `'import'`, default: `'export'`): Shipment direction.
-        -   `enquiry_no` (String, Unique): Auto-generated unique enquiry number assigned at intake.
-            -   _Air Sequence:_ `ENQA-26-0001` (Incremented separately from Sea)
-            -   _Sea Sequence:_ `ENQS-26-0001` (Incremented separately from Air)
-        -   `execution_job_no` (String, Unique, Nullable): Auto-generated unique execution job number assigned only when the shipment is confirmed/executed.
-            -   _Air Sequence:_ `JOBA-26-0001` (Incremented separately from Sea)
-            -   _Sea Sequence:_ `JOBS-26-0001` (Incremented separately from Air)
+        -   `enquiry_no` (String): Auto-generated unique enquiry number assigned at intake, scoped unique per agent branch.
+            -   _Air Sequence:_ `ENQA-{agent_code}-26-0001` (Incremented separately from Sea)
+            -   _Sea Sequence:_ `ENQS-{agent_code}-26-0001` (Incremented separately from Air)
+        -   `execution_job_no` (String, Nullable): Auto-generated unique execution job number assigned only when the shipment is confirmed/executed, scoped unique per agent branch.
+            -   _Air Sequence:_ `JOBA-{agent_code}-26-0001` (Incremented separately from Sea)
+            -   _Sea Sequence:_ `JOBS-{agent_code}-26-0001` (Incremented separately from Air)
+        -   `job_order_no` (String, Nullable): Client-side reference job order number, unique per agent branch.
+        -   `quotation_no` (String, Nullable): Reference to the quotation draft payload.
         -   `awb_number` (String, Nullable): Reference to the assigned Air Waybill (for Air) or Bill of Lading (for Sea) identifier.
-        -   `client_id` (BigInteger, Nullable, FK referencing `companies.id`): Canonical billing debtor for this job.
-        -   `operator_id` (BigInteger, Nullable, FK referencing `users.id` on delete set null): The user (operator) assigned to manage the job (enforced at the DB level via a trigger ensuring the user holds an operator/execution role).
-        -   `job_owner_id` (BigInteger, Nullable, FK referencing `users.id`): Ownership assignee for visibility filtering (enforced at the DB level via a trigger ensuring the user holds a pricing role).
+        -   `client_id` (BigInteger, Nullable, FK referencing `customers.id`): Canonical billing debtor for this job.
+        -   `operator_id` (BigInteger, Nullable, FK referencing `users.id` on delete set null): The live user (operator) assigned to manage the job. Assigned by the pricing owner (enforced at the DB level via a trigger ensuring the user holds an operator/execution role).
+        -   `pending_operator_id` (BigInteger, Nullable, FK referencing `users.id`): A staged reassignment awaiting pricing-owner approval; `operator_id` stays live until the change is accepted.
+        -   `pending_operator_requested_by` (BigInteger, Nullable, FK referencing `users.id`): The operator who requested the handover.
+        -   `pending_operator_requested_at` (Timestamp, Nullable): When the reassignment was requested.
+        -   `job_owner_id` (BigInteger, Nullable, FK referencing `users.id`): Pricing owner — holds **assignment authority** and the OLI load-balancing view (enforced at the DB level via a trigger ensuring the user holds a pricing role).
         -   `doc_user_id` (BigInteger, Nullable, FK referencing `users.id`): Document validation owner.
         -   `planned_clearance_date` (Date, Nullable): Targeted date for customs clearance.
         -   `completed_at` (Timestamp, Nullable): Date/time when the job reached `Completed` status.
         -   `parent_job_id` (BigInteger, Nullable, FK referencing `jobs.id`, self-referencing): Links House shipments to Master parent.
+        -   `reinitiated_from_job_id` (BigInteger, Nullable, FK referencing `jobs.id`, self-referencing): Re-init lineage — a fresh job points back to the cancelled/lost job it superseded, so the boss can trace the chain.
         -   `is_sub_shipment` (Boolean, default: false): Indicates child House record under consolidation.
         -   `is_consolidation` (Boolean, default: false): Indicates parent Master record accepting child Houses.
-        -   `status` (String): Tracks the active operational stage (e.g. `Intake`, `AI Extraction`, `Verification`, `Generation`, `PDF Generated`, `Sent to Airline`, `Airline Confirmed`, `Completed`, `Lost`). Automated client messaging drafts are generated during specific status transitions (acknowledgement of Intake, AI Extraction, and Sent to Airline), each requiring explicit operator permission before transmission.
-        -   `lost_reason` (Enum: `'rates_high'`, `'delay_in_response'`, `'client_cancelled'`, `'capacity_issue'`, `'other'`, Nullable): Reason why the enquiry/job was lost.
+        -   `status` (String): Tracks the active operational stage (e.g. `Intake`, `AI Extraction`, `Verification`, `Generation`, `PDF Generated`, `Sent to Airline`, `Airline Confirmed`, `Completed`, `Lost`, `Cancelled`). Automated client messaging drafts are generated during specific status transitions (acknowledgement of Intake, AI Extraction, and Sent to Airline), each requiring explicit operator permission before transmission.
+        -   `lost_reason` (Enum: `'rates_high'`, `'delay_in_response'`, `'client_cancelled'`, `'capacity_issue'`, `'other'`, Nullable): Reason a **pre-conversion enquiry** was lost (never converted). Kept analytically separate from cancellation.
         -   `lost_reason_custom` (String, max 255, Nullable): Custom reason details when `lost_reason` is set to `'other'`.
         -   `lost_at` (Timestamp, Nullable): Timestamp when the job was marked as lost.
-        -   `created_at`, `updated_at`, `deleted_at` (Timestamps) — Uses Laravel `SoftDeletes`.
+        -   `cancellation_reason` (Enum: `'customs_hold_unresolved'`, `'client_cancelled'`, `'cargo_not_ready'`, `'documentation_incomplete'`, `'payment_or_credit_hold'`, `'carrier_space_lost'`, `'cargo_damaged'`, `'prohibited_regulatory'`, `'rate_expired_requote'`, `'duplicate'`, `'other'`, Nullable): Reason a **post-conversion shipment** was aborted (e.g. not clearing customs). Distinct from `lost_reason` to keep conversion-funnel analytics clean.
+        -   `cancellation_reason_custom` (String, max 255, Nullable): Free text when `cancellation_reason = 'other'`.
+        -   `cancelled_at` (Timestamp, Nullable): When the job was cancelled.
+        -   `cancelled_by` (BigInteger, Nullable, FK referencing `users.id`): Operator/manager who cancelled.
+        -   `created_at`, `updated_at`, `deleted_at` (Timestamps) — Uses Laravel `SoftDeletes`. **Cancellation is a soft status transition, never a hard delete** — cancelled rows persist for boss tracking + audit.
     -   _Note:_ Mode-specific voyage/flight data columns (e.g. `vessel_name`, `flight_number`) are split into mode-specific details tables (`sea_shipment_details` and `air_shipment_details`), while global classification fields (e.g. `cargo_type`, `delivery_mode`, `consol_type`) live directly in the `jobs` table.
 
 6.  **`sea_shipment_details`** (New):
@@ -438,6 +520,50 @@ All core tables (operational, side-details, and financial chart tables) are migr
         -   `submitted_by` (BigInteger, FK referencing `users.id`)
         -   `submitted_at` (Timestamp, Nullable)
         -   `created_at`, `updated_at` (Timestamps)
+14. **`rate_cards`** (New):
+    -   _Purpose:_ Stores contract tariff rates per customer or partner to auto-calculate local and freight costs.
+    -   _Columns:_
+        -   `id` (BigInteger, PK, Auto-increment)
+        -   `agent_id` (BigInteger, FK referencing `agents_info.id`): Branch-level isolation.
+        -   `party_type` (String, max 20) — `'customer'`, `'partner'`.
+        -   `party_id` (BigInteger) — Polymorphic ID referencing customers.id or partners.id.
+        -   `charge_type` (String, max 50) — e.g. `'delivery_order_fee'`, `'air_freight'`.
+        -   `origin_port_id` (BigInteger, FK referencing `ports.id`, Nullable)
+        -   `destination_port_id` (BigInteger, FK referencing `ports.id`, Nullable)
+        -   `cargo_type` (String, max 20, Nullable)
+        -   `weight_break_from` (Decimal(10,2))
+        -   `weight_break_to` (Decimal(10,2))
+        -   `rate` (Decimal(15,2))
+        -   `currency` (String, 3 chars)
+        -   `valid_from` (Date), `valid_to` (Date)
+        -   `created_at`, `updated_at` (Timestamps)
+15. **`exchange_rates`** (New):
+    -   _Purpose:_ Daily currency exchange rates cache reference table to calculate realized FX gain/loss.
+    -   _Columns:_
+        -   `id` (BigInteger, PK, Auto-increment)
+        -   `from_currency` (String, 3 chars)
+        -   `to_currency` (String, 3 chars)
+        -   `rate_date` (Date)
+        -   `rate` (Decimal(12,6))
+        -   `created_at`, `updated_at` (Timestamps)
+16. **`sla_policies`** (New):
+    -   _Purpose:_ Configuration table storing target SLA response timelines per subscription tier.
+    -   _Columns:_
+        -   `id` (BigInteger, PK, Auto-increment)
+        -   `company_id` (BigInteger, FK referencing `companies.id`): Platform tenant settings link.
+        -   `tier` (String, max 30)
+        -   `max_reply_time_minutes` (Integer, default: 15)
+        -   `created_at`, `updated_at` (Timestamps)
+17. **`notifications`** (New):
+    -   _Purpose:_ Laravel `DatabaseNotification`-compatible store powering the **bell / notification center** (reassignment-approval requests, assignment changes, credit alerts). Pushed live via Soketi.
+    -   _Columns:_
+        -   `id` (UUID / CHAR(36), PK)
+        -   `agent_id` (BigInteger, FK referencing `agents_info.id`): Branch-level isolation.
+        -   `type` (String, max 255): Notification class (e.g. `App\Notifications\ReassignmentRequested`).
+        -   `notifiable_type` (String, max 100) / `notifiable_id` (BigInteger): Polymorphic recipient morph (usually `App\User` → `users.id`).
+        -   `data` (JSON): Payload (`job_id`, `from_operator_id`, `to_operator_id`, `requested_by`, …).
+        -   `read_at` (Timestamp, Nullable): Null = unread; drives the bell badge.
+        -   `created_at`, `updated_at` (Timestamps)
 
 ### Database Views for Analytics
 
@@ -476,7 +602,13 @@ To monetize the platform and segregate capabilities based on the customer's sele
 3.  **Background Job Sync Filtering:**
     -   The `mailboxes:poll` daemon only queries refresh tokens and pulls new emails for connections whose company is flagged as `tactical` or `command`.
 4.  **OCR Processing Branching (`ProcessPdfOcrJob.php`):**
-    -   Before processing any uploaded document, the job executes strict server-side MIME-type sniffing using PHP's `finfo_file` (not just checking file extensions) to reject HTML, SVG, or other non-supported formats. It then checks the uploading user's company tier. If it is `core`, it restricts extraction strictly to template-based `pdfplumber` cell coordinates. If `tactical` or `command`, the local Gemma 4 parsing engine is unlocked. If a scanned document or image requires visual OCR (dispatching to the Gemini 2.5 Flash API), the system checks `companies.ocr_credits_balance`. If the balance is greater than the company's overdraft limit (`companies.ocr_credits_balance > companies.ocr_credits_limit`), the job proceeds, decrements the balance by 1 credit, and logs the usage in the `ocr_credit_transactions` table. If the balance reaches or falls below the overdraft limit, the job halts, flags the status as `failed` (reason: `Credits Exhausted`), and sends a WebSocket alert to prompt the user to recharge.
+    -   **MIME guard:** strict server-side MIME sniffing via PHP `finfo_file` (not extension checks) — rejects HTML, SVG, and other unsupported formats before any processing.
+    -   **Tier routing:**
+        -   `core` → template-based `pdfplumber` cell-coordinate extraction only.
+        -   `tactical` / `command` → local Gemma 4 parsing engine unlocked.
+    -   **Visual OCR credit gate** (scanned docs/images dispatched to Gemini 2.5 Flash), executed inside a DB transaction with a row-level write lock (`SELECT ... FOR UPDATE` on the `companies` row) to prevent race conditions on concurrent uploads by the same tenant:
+        -   If `ocr_credits_balance > ocr_credits_limit` (overdraft threshold) → proceed, decrement balance by 1, commit, and log to `ocr_credit_transactions`.
+        -   If balance ≤ limit → commit, halt the job, set status `failed` (reason `Credits Exhausted`), and push a WebSocket recharge alert.
 5.  **Frontend State & UI Teasers:**
     -   The user object returned on login (`currentUser`) includes `user.company.tier`.
     -   The Vue routing system blocks the `/inbox` (Unified Sync) and `/accounts` (Reconciliation) pages for disallowed tiers, rendering high-conversion "Upgrade Required" teaser panels instead. Blocked pages display a blurred lock overlay containing a "Request Upgrade" button. Clicking this triggers a support request to the account administrator/sales.
@@ -499,7 +631,11 @@ Below is the functional specification for each database schema, backend service,
 
 -   **FastAPI `/extract-unstructured` Endpoint (`ocr_server.py`):**
     -   _Purpose:_ Ingests uploaded PDF/image documents (Invoices and Packing Lists).
-    -   _Function:_ Uses `PyMuPDF` (`fitz`) to extract raw text blocks instantly. For digital PDFs, it feeds the clean extracted text to a local **Gemma 4 E4B** model (hosted on the separate AI instance via Ollama) to parse into structured JSON. If the document is an image or a scanned PDF (no selectable text), the engine falls back to the **Gemini 2.5 Flash/High API** for high-resolution vision OCR to prevent transcription/character coordinate errors. Returns confidence scores (high/medium/low) for each parsed field.
+    -   _Function:_
+        -   Uses `PyMuPDF` (`fitz`) to extract raw text blocks instantly.
+        -   **Digital PDFs** → feeds clean extracted text to a local **Gemma 4 E4B** model (hosted on the separate AI instance via Ollama) to parse into structured JSON.
+        -   **Images / scanned PDFs** (no selectable text) → falls back to the **Gemini 2.5 Flash/High API** for high-resolution vision OCR, preventing transcription/character-coordinate errors.
+        -   Returns confidence scores (high/medium/low) for each parsed field.
 -   **FastAPI Pydantic Schemas:**
     -   _Purpose:_ Declares data schemas for Invoices and Packing Lists.
     -   _Function:_ Validates the structure, data types, and confidence metadata of LLM outputs before returning them to Laravel, ensuring consistency in field mapping.
@@ -511,9 +647,16 @@ Below is the functional specification for each database schema, backend service,
     -   _Function:_ Utilizes `document_type` to store document categories (MAWB, HAWB, Invoice, Packing List) and the `extracted_data` JSON column to cache parsed drafts before final generation.
 -   **`ProcessPdfOcrJob.php`:**
     -   _Purpose:_ Handles document extraction in Laravel's background queue.
-    -   _Function:_ Checks the company's tier and credit balance before processing: If the company is Tier 1 (Core), it bypasses the LLM and runs the fast coordinate-based extraction via `pdfplumber`. For Tier 2 & 3 (Tactical & Command), it validates the file via strict server-side MIME sniffing. If the file is a text-selectable digital PDF, it dispatches it to the FastAPI server for local PyMuPDF + Gemma 4 parsing. If the file is a scanned PDF or image, it verifies that the company's `ocr_credits_balance` in the `companies` table is greater than zero. If credits are available, it dispatches the document to the Gemini API, decrements the balance by 1, and inserts a transaction log into the `ocr_credit_transactions` table. If the balance is zero, it blocks the Gemini request, saves a `failed` status with a `Credits Exhausted` message, and broadcasts a WebSocket notification prompting the company to recharge.
-    -   _Translation & Overrides:_ Automatically translates foreign documents (descriptions, names, addresses) to standard English during LLM processing, keeping JSON schemas standardized. Stores the original LLM payload and confidence scores inside the database.
-    -   _Extraction Correction Tracking Loop:_ When the operator reviews the extraction results and clicks `[Confirm & Approve]` to save the initial verified draft, the backend compares the user-verified draft values against the original LLM-parsed output stored in `pdf_processing_jobs.extracted_data`. (Note: The comparison must happen at this draft verification step, rather than comparing against final airline execution records, since the final cargo weight, dimensions, and pieces will naturally change later at the customs warehouse/airline terminal). If any initially parsed field (e.g. weight, pieces, shipper name) has been corrected during this draft verification stage, the backend logs the offset to `pdf_extraction_corrections` to accurately isolate and audit LLM extraction errors.
+    -   _Function:_ Checks the company's tier and credit balance before processing:
+        -   **Tier 1 (Core):** bypasses the LLM; runs fast coordinate-based extraction via `pdfplumber`.
+        -   **Tier 2 & 3 (Tactical & Command):** validates the file via strict server-side MIME sniffing, then:
+            -   **Text-selectable digital PDF** → dispatch to FastAPI for local PyMuPDF + Gemma 4 parsing (no credit cost).
+            -   **Scanned PDF / image** → requires `companies.ocr_credits_balance > 0`. If credits available: dispatch to Gemini, decrement balance by 1, insert log into `ocr_credit_transactions`. If zero: block the request, save `failed` status with `Credits Exhausted`, and broadcast a WebSocket recharge notification.
+    -   _Translation & Overrides:_ auto-translates foreign documents (descriptions, names, addresses) to standard English during LLM processing to keep JSON schemas standardized; stores the original LLM payload and confidence scores in the database.
+    -   _Extraction Correction Tracking Loop:_
+        -   On operator `[Confirm & Approve]` of the initial verified draft, the backend diffs the user-verified values against the original LLM output in `pdf_processing_jobs.extracted_data`.
+        -   Any corrected field (e.g. weight, pieces, shipper name) is logged to `pdf_extraction_corrections` to isolate and audit LLM extraction errors.
+        -   **Why at draft-verification (not vs. final records):** final cargo weight/dimensions/pieces naturally change later at the customs warehouse/airline terminal, so comparing against execution records would produce false "errors."
 -   **F16s Admin Portal - Client AWB Tracking Tab:**
     -   _Purpose:_ Provides global oversight of processed Air Waybills for administrative staff.
     -   _Function:_ A dedicated UI tab in the admin dashboard to list all extracted/processed client AWBs. Includes date range filters (From/Till) and a data extraction/export button (e.g., CSV/Excel).
@@ -531,7 +674,10 @@ Below is the functional specification for each database schema, backend service,
     -   _Function:_ Runs Regex subject-matching and checks sender domains against an airline exclusion blocklist. Uses a cheap LLM call to classify ambiguous mail as either an automated system notification (ignored but saved in the database under 'system' status) or a customer inquiry (triaged to active operator inbox).
 -   **OAuth Controllers:**
     -   _Purpose:_ Handles secure mailbox registration.
-    -   _Function:_ Manages OAuth redirect endpoints, exchange processes for code tokens, and connection validation scopes. For Tier 2 and Tier 3 companies, the controllers strictly enforce that the mailbox email address being connected contains one of the registered corporate email domain suffixes (supports comma-separated list like `company.com, company.co.in`) configured for the company. On company subscription downgrade, connected mailboxes are soft-deactivated (`is_active = false`) and background syncing is paused, preserving encrypted tokens.
+    -   _Function:_
+        -   Manages OAuth redirect endpoints, code-for-token exchange, and connection validation scopes.
+        -   **Domain enforcement (Tier 2 & 3):** the connecting mailbox address must contain one of the company's registered corporate email-domain suffixes (comma-separated list supported, e.g. `company.com, company.co.in`).
+        -   **On downgrade:** connected mailboxes are soft-deactivated (`is_active = false`) and syncing pauses, while encrypted tokens are preserved.
 -   **`MailboxSettings.vue`:**
     -   _Purpose:_ Settings UI for connecting mailboxes.
     -   _Function:_ Displays connected mailboxes, OAuth connection buttons for Google/Microsoft, and connection status alerts.
@@ -745,7 +891,11 @@ To support global navigation and day-to-day operations, the layout is divided in
 
 ### 2.5a Automated Client Messaging & Consent Engine (Permission-Based)
 
-To improve customer communication consistency and keep clients informed without increasing manual workload, the system integrates pre-defined automated email triggers at key milestones. These automated emails are fully prepared by the system; the operator is presented with a simple **Accept or Reject** confirmation box to authorize or discard them. All operator details (such as `[User Name]`, custom greeting phrases, and email signature parameters) are retrieved dynamically from the user's personal **Profile Settings page**:
+Pre-defined automated email triggers at key milestones keep clients informed without adding manual workload:
+-   Emails are **fully prepared by the system**; the operator gets a simple **Accept or Reject** confirmation box to authorize or discard.
+-   All operator details (`[User Name]`, custom greeting phrases, email signature parameters) are retrieved dynamically from the user's personal **Profile Settings page**.
+
+Milestone triggers:
 
 1.  **Intake Acknowledgement Email:**
     -   *Trigger:* When an unclassified thread is triaged as `[Job / Enquiry]` (setting `status` to `'Intake'`).
@@ -827,7 +977,10 @@ _Goal: Turn email threads into trackable jobs, build work distribution interface
         -   **`[Clearance Mail]`**: Categorizes it as a customs clearance instruction.
     -   **Responder-Based Auto-Assignment:** There is no default or preferred operator mapping for client companies. When a new customer inquiry is triaged, the job's `operator_id` (and the email thread's `assigned_operator_id`) is initially left as `NULL`. The system automatically assigns the job/enquiry to the first pricing staff member who responds to the email.
     -   **Unassigned/Takeover Pool:** If no pricing staff member has responded to the email or is assigned yet, the job remains in the public **Unassigned Pool** tab. Pricing staff/operators can view and manually claim it.
-    -   **Reassignment & Claiming:** A `Claim / Take Over` button allows any staff member of the same department to claim the job. To block race conditions, the operator assignment must update the row atomically: `UPDATE jobs SET operator_id = ? WHERE id = ? AND operator_id IS NULL`. If the affected row count is zero, the system returns a `409 Conflict` response to the second operator. A reassignment dialog/dropdown lets users assign or reassign the job to another pricing/operations staff member.
+    -   **Reassignment & Claiming:**
+        -   A `Claim / Take Over` button lets any same-department staff member claim the job.
+        -   **Atomic claim (race-safe):** `UPDATE jobs SET operator_id = ? WHERE id = ? AND operator_id IS NULL`; if affected rows = 0, return `409 Conflict` to the second operator.
+        -   A reassignment dialog/dropdown allows assigning or reassigning the job to another pricing/operations staff member.
 2.  **Confirmed Shipment State (Execution):**
     -   **Top-Right Trigger:** Once the rate is approved, the operator clicks the **`[Confirm Shipment]`** button located in the **top-right header** of the thread workspace (leaving the bottom of the email timeline free for standard `[Reply]` / `[Reply All]` buttons).
     -   **Assign Task Popover:** This trigger opens a compact floating popover dialog directly below the button (avoiding a full side panel since only 3 inputs are required). The popover prompts the operator to configure:
@@ -848,7 +1001,8 @@ _Goal: Turn email threads into trackable jobs, build work distribution interface
             -   *Automated Document Delivery:* System auto-generates a delivery email attaching the compiled MAWB PDF + all user-created HAWB PDFs. Renders an **Accept/Reject** confirmation box; sent only upon operator Acceptance.
         7.  **`[Airline Confirmed]`:** The carrier/airline has officially confirmed booking space/flight details for the AWB.
         8.  **`[Completed]` (Dispatched):** Shipment finalized and dispatched to carrier (Shipment executed state / cargo departure).
-        9.  **`[Lost]` (Cancelled/Dropped):** The enquiry was marked as lost before confirmation/execution, recording the explicit reason (rates, delay, client, space, etc.).
+        9.  **`[Lost]` (Dropped pre-confirmation):** The enquiry was marked as lost **before** confirmation/execution, recording the explicit `lost_reason` (rates, delay, client, space, etc.). Distinct from `[Cancelled]`, which aborts a shipment **after** it has been confirmed (see state 4 below).
+        10. **`[Cancelled]` (Aborted post-confirmation):** A confirmed/executing shipment was aborted (e.g. not clearing customs), recording a `cancellation_reason` — tracked separately from `Lost` so it never pollutes conversion analytics.
 3.  **Lost Enquiry State & Drop-off Reason Capture:**
     -   **Top-Right Trigger:** If the enquiry fails to convert (e.g. client rejects quotes, does not reply, or rate is uncompetitive), the operator clicks the **`[Mark as Lost]`** button next to `[Confirm Shipment]` in the workspace header.
     -   **Reason Selection Popover:** A compact popover requires selecting the primary reason for loss:
@@ -858,12 +1012,23 @@ _Goal: Turn email threads into trackable jobs, build work distribution interface
         -   `Space/Capacity Issue`: Unable to secure carrier/airline space.
         -   `Other`: Displays a text box to write a custom reason (saved to `lost_reason_custom`).
     -   **SLA & Transition Execution:** Submitting the form changes `jobs.status` to `Lost`, saves the reason codes, sets the `lost_at` timestamp, and halts all pending SLA timers for that thread. The card is removed from active Kanban workflow columns and placed into the "Lost/Archived" section for Boss Dashboard aggregations.
-4.  **Role-Based Workspace Permissions:**
+4.  **Cancelled Shipment State & Re-initiation (post-conversion aborts):**
+    -   **When:** a shipment that already converted (has an `execution_job_no`, possibly an AWB) can no longer proceed — e.g. it isn't clearing customs, cargo isn't ready, or a credit/payment hold applies.
+    -   **Top-Right Trigger:** the operator clicks **`[Cancel Shipment]`** and a compact popover requires a `cancellation_reason` from the dropdown:
+        -   `Customs Hold Unresolved`, `Client Cancelled`, `Cargo Not Ready / No-Show`, `Documentation Incomplete`, `Payment / Credit Hold`, `Carrier Space Lost`, `Cargo Damaged`, `Prohibited / Regulatory`, `Rate Expired (Re-quote)`, `Duplicate`, `Other` (free text → `cancellation_reason_custom`).
+    -   **Soft, not destructive:** cancellation only sets `status = 'Cancelled'` (+ `cancelled_at`, `cancelled_by`); the row is **never hard-deleted**, so the boss can track every cancellation and its reason later. Financial FK `RESTRICT` and `audit_logs` also forbid deletion.
+    -   **Financial guard:** if the job has posted invoices/vouchers (`is_posted = true`), cancellation is blocked (`422`) until they are voided or credit-noted, since real costs (DO fees, etc.) may already exist.
+    -   **AWB release:** on cancel, any assigned AWB/HWB is detached (`job_id → NULL`) and returned to stock for reuse.
+    -   **Re-initiation (fresh quote):** because freight rates are time-sensitive, re-starting a cancelled shipment spawns a **new** job with a **fresh `enquiry_no`** (the old number is never recycled — gaps are fine), sets `reinitiated_from_job_id` to the cancelled job, and dispatches a **fresh client email with the re-quoted rate** via the consent engine. The cancelled job remains for tracking, linked to its successor.
+    -   **Analytics separation:** `Cancelled` (post-conversion) is aggregated separately from `Lost` (pre-conversion) so the conversion funnel (`dsr/msr/ysr_funnel_view`) stays accurate — a converted-then-aborted job is not a lost lead.
+5.  **Role-Based Workspace Permissions:**
     -   **Pricing Staff View:** Pricing managers have dual capabilities. They see the **`[Confirm Shipment]`** trigger in the top-right header (which opens the compact floating popover to allocate AWB, assign task, and set the Planned Clearance Date) **and** have full access to the **`[Analyze PDF / Extract PDF]`** right sidebar drop zone. This allows pricing staff in smaller operations to act as operators and handle document parsing directly.
     -   **Operations (OPS) Staff View:** Operations staff have a restricted, action-oriented workspace:
         -   **Personalized Workload Queue:** Upon login, their dashboard automatically defaults to show only the jobs/AWB tasks assigned to their username, isolating their daily queue.
         -   **Click-to-Open Navigation:** Clicking any assigned card or task immediately opens the corresponding email thread workspace (revealing conversation history, attachments, and the PDF extraction zone).
-        -   **PDF Generation Phase Auto-Detection:** The backend dynamically cross-checks the job's assigned `AWB Number` against AWB/HWB records saved as drafts via the Focus Air/House Waybill database. If a matching draft AWB number is found, the system concludes the task is in the **PDF Generation Phase**. It displays a prominent status badge (`[PDF Generation]`) on both the Kanban card and the email header, signaling that the data has been verified and the PDF draft is ready for final generation.
+        -   **PDF Generation Phase Auto-Detection:**
+            -   Backend cross-checks the job's assigned `AWB Number` against AWB/HWB draft records in the Focus Air/House Waybill database.
+            -   On a matching draft → concludes the task is in the **PDF Generation Phase** and shows a `[PDF Generation]` status badge on both the Kanban card and the email header, signaling the data is verified and the PDF draft is ready for final generation.
         -   **Restricted Panel Access:** The `[Confirm Shipment]` trigger and `[Assign Task]` popover are completely hidden. They **only** see the **`[Analyze PDF / Extract PDF]`** right sidebar drop zone to parse documents and save drafts.
         -   **OPS Workspace Visual Mockup:** Below is a visual representation of how the dashboard appears to an Operations staff member, showing the auto-detected `PDF Generation Phase` status badge and only the `Analyze PDF` workspace enabled on the right:
             ![Freight OS OPS Workspace Mockup](/Users/jomygeorge/.gemini/antigravity-ide/brain/a3b44097-17aa-4ad3-ad33-c4b8023da6b2/freight_os_ops_workspace_view_1781008648713.png)
@@ -906,8 +1071,13 @@ _Goal: Turn email threads into trackable jobs, build work distribution interface
     -   **Filter by Progress & Processed State:** Segment cards by active workflow columns or view fully **Processed / Finalized** jobs.
     -   **Filter by Date Range:** A calendar picker enabling date-specific searches, featuring a quick-action **`[Today]`** shortcut button that immediately restricts the board to only the current day's work.
 -   **Staff Workload & Overload Prevention:** Show live workload badges next to the staff filters calculated in Operator Load Index (OLI) units. Highlight staff load states:
+    -   **OLI formula:** `OLI = 3×(active jobs clearing today or overdue) + 2×(active jobs clearing tomorrow) + 1×(other active jobs)`, counting only jobs with `status NOT IN ('Completed','Lost','Cancelled')`. Lower OLI = more capacity.
     -   `Ravi: 18.5 OLI` (🔴 **Overloaded** — exceeds capacity cap of 15.0 OLI, visual warning to prevent new assignments).
     -   `Priya: 7.0 OLI` (🟢 **Available** — under cap, safe for new job assignment).
+-   **Assignment Authority & Reassignment Requests (pricing-owned):**
+    -   **Pricing owns assignment.** Pricing staff assign/reassign operators directly — dragging a card in the Staff-View grid (or the assignment overlay) sets `operator_id` immediately.
+    -   **Operators request, they don't reassign.** When an operator wants to hand a job to another operator from the split view, the change is **staged** (`pending_operator_id` set; live `operator_id` unchanged) and a **bell notification** (`notifications` row, live via Soketi) is sent to the job's pricing owner (`job_owner_id`).
+    -   **Pricing accepts/rejects from the bell:** accept promotes `pending_operator_id` → `operator_id` and clears the pending fields (notifying both operators); reject clears the request and the job stays with the current operator. Unactioned requests stay pending (no auto-expiry).
 -   **Filtered Staff Detail Widget:** When the board is filtered by a specific staff member, F16s displays a summary banner showing:
     -   **Active Jobs Count:** Number of jobs currently being drafted or processed.
     -   **Pending Jobs Count:** Number of jobs awaiting staff action or customer replies.
@@ -923,6 +1093,8 @@ _Goal: Turn email threads into trackable jobs, build work distribution interface
 ### 3.2 Pricing / Triage Dashboard
 
 -   **Job Assignment UI:** Give pricing managers a list of unassigned jobs. They can assign the job to an operations staff member with a single click, taking staff workload indicators (from Section 3.1) into account to prevent bottlenecking.
+-   **Operator Load View (OLI-driven, pricing-only):** Pricing staff see **every operator's** active jobs and clearance schedule side-by-side, each annotated with its live **OLI** (`3×today/overdue + 2×tomorrow + 1×other`, active jobs only). This is the load-balancing surface pricing uses to decide who gets the next job — individual operators do **not** see other operators' boards (they see only `operator_id = me`). Backed by the `idx_jobs_operator_clearance` index.
+-   **Reassignment Approval Inbox (bell):** Operator-initiated handover requests (`pending_operator_id`) surface here and on the pricing owner's bell; accept/reject inline (accept promotes the pending operator to live, reject discards). See Section 3.1.
 -   **Staff Load View:** Display a grid of all staff members detailing active jobs assigned to them, pending email replies, and SLA breaches.
 -   **Click-to-Track AWB Drawer (Cargo Progress):** Clicking any AWB number on a job card slides open a tracking drawer. This shows a vertical milestone progress feed representing the shipment's physical progress, polled from carrier status entries:
     -   `[Cargo Accepted]` -> `[Manifested]` -> `[Departed]` -> `[Arrived at Destination]` -> `[Customs Cleared]` -> `[Out for Delivery]` -> `[Delivered]`
@@ -1037,7 +1209,7 @@ To handle complex logistics transactions (where one operational job contains bot
     -   `invoice_no` (String, max 30, Unique per agent): Sequential formatted document number.
     -   `document_date` (Date): Issuance date. Validated against `accounting_periods` to block postings in closed months.
     -   `job_id` (BigInteger, FK referencing `jobs.id` on delete restrict): Anchor link to the operational job. Financial records are immutable, so job deletion is restricted.
-    -   `client_id` (BigInteger, FK referencing `companies.id`): The entity ID being billed (debtor). Maps to customer, agent, or carrier.
+    -   `client_id` (BigInteger, FK referencing `customers.id`): The entity ID being billed (debtor). Maps to client customer.
     -   `billed_party_role` (String, max 20, default: `'client'`): Discriminates role of billed entity. Valid values: `'client'`, `'carrier'`, `'agent'`.
         -   _Semantic Rules:_
             -   `type = 'invoice'` → `billed_party_role = 'client'`
@@ -1048,7 +1220,7 @@ To handle complex logistics transactions (where one operational job contains bot
     -   `exchange_rate` (Decimal(12,6), default: 1.000000): Conversion factor to base currency.
     -   `billing_address` (Text, Nullable): Snapshot of client billing address at issuance time.
     -   `tax_registration_no` (String, max 20, Nullable): GSTIN or VAT number of the billed party.
-    -   `payment_terms` (String, max 20, Nullable): e.g., `'Net 30'`, `'COD'`. Defaults from `companies.default_payment_terms`.
+    -   `payment_terms` (String, max 20, Nullable): e.g., `'Net 30'`, `'COD'`. Defaults from `customers.payment_terms_days`.
     -   `subtotal` (Decimal(15,2)): Net total before tax.
     -   `tax_amount` (Decimal(15,2)): Total tax.
     -   `grand_total` (Decimal(15,2)): Total billing amount.
@@ -1077,7 +1249,7 @@ To handle complex logistics transactions (where one operational job contains bot
     -   `id` (BigInteger, PK, Auto-increment)
     -   `invoice_id` (BigInteger, FK referencing `accounts_invoices.id` on delete cascade, Unique)
     -   `profit_share_ratio` (Decimal(5,2)): Percentage share for the agent in a co-loaded consolidation.
-    -   `partner_agent_id` (BigInteger, FK referencing `companies.id`): The counterpart co-loading agent.
+    -   `partner_agent_id` (BigInteger, FK referencing `partners.id`): The counterpart co-loading agent.
     -   `created_at`, `updated_at` (Timestamps)
 
 #### 2. `accounts_invoice_items` (Invoice Line Items — Sell Rates):
@@ -1117,7 +1289,7 @@ To handle complex logistics transactions (where one operational job contains bot
     -   `voucher_no` (String, max 30, Unique per agent): Internal voucher tracker (e.g. `PV-26-0001`).
     -   `document_date` (Date): Validated against `accounting_periods`.
     -   `job_id` (BigInteger, FK referencing `jobs.id` on delete restrict)
-    -   `vendor_id` (BigInteger, FK referencing `companies.id`): The vendor being paid.
+    -   `vendor_id` (BigInteger, FK referencing `partners.id`): The vendor being paid (creditor).
     -   `currency` (String, 3 chars): Currency code.
     -   `exchange_rate` (Decimal(12,6), default: 1.000000): Conversion factor.
     -   `subtotal` (Decimal(15,2)): Net total before tax.
@@ -1180,7 +1352,7 @@ To handle complex logistics transactions (where one operational job contains bot
     -   `matched_voucher_id` (BigInteger, Nullable, FK to `accounts_purchase_vouchers.id` on delete set null): References the matched expense voucher.
     -   `created_at`, `updated_at` (Timestamps)
 
-#### 8. `bank_transactions` (Ingested Statements Tracker) (New):
+#### 7. `bank_transactions` (Ingested Statements Tracker) (New):
 
 -   _Purpose:_ Holds bank account transaction records imported via Plaid API, driving the automated payment matching and reconciliation engine.
 -   _Columns:_
@@ -1207,7 +1379,7 @@ To handle complex logistics transactions (where one operational job contains bot
 
 -   **Connector Integration:** Connects with Plaid (international) and Setu (Indian) read-only endpoints, keeping other Indian/international alternatives customizable.
 -   **Branch Ledger Mapping:** HQ accountants manage bank integration links (Plaid/Setu) centrally but map each connected bank account to a specific branch's ledger account, ensuring correct branch-isolated P&L reports.
--   **Polling Frequency:** Laravel scheduler command runs every 3 days, polling new statements and populating the `bank_transactions` table:
+-   **Webhook Ingestion & Fallback Polling:** Real-time transaction ingestion is driven by Plaid webhooks (`transaction-added` events) to import transactions instantly into the `bank_transactions` table. To prevent data gaps from missed webhooks, a scheduled Laravel cron command runs every 3 days as a safety fallback reconciliation pass, scanning and importing any missing bank statement transactions.
     -   **`bank_transactions` Table Columns:** `id`, `agent_id`, `bank_account_id`, `plaid_transaction_id` (unique), `plaid_account_id`, `transaction_date`, `value_date`, `amount` (positive for credit/deposits, negative for debit/payouts), `payee_name` (representing sender_reference), `reconciliation_status` (`unreconciled`, `matched`, `disputed`, `ignored`).
 
 ---
@@ -1217,6 +1389,10 @@ To handle complex logistics transactions (where one operational job contains bot
 -   Build a rule-based Matching Engine in PHP to compare bank credits against pending invoice balances:
     -   **Level 1 matching (Direct):** Direct string regex searches for Job Number (e.g., `Job #10234`) or Air Waybill Number (e.g., `17612345678`) mentioned in the wire transfer memo.
     -   **Level 2 matching (Fuzzy/Amount):** Matches exact payment amounts combined with the client's name or code.
+-   **Realized FX Gain/Loss Accounting:** when a bank payment (in settlement currency, e.g. INR) matches an invoice booked in a foreign currency (e.g. USD), the Matching Engine:
+    -   Computes the exchange-rate difference between the document date and the settlement date.
+    -   Registers the settlement amount and writes a double-entry ledger entry closing the accounts-receivable balance.
+    -   Posts the difference to the `Realized Forex Gain/Loss` GL account (code `5500-Forex-Gain-Loss`).
 -   **Interactive Discrepancy Resolution:** Mismatches (underpayments or overpayments) are flagged and shown visually in the UI. Operators resolve them with a single click in a popup panel: `Write-off to Bank Charges` (closes invoice, registers expense), `Keep as Short-Paid` (keeps invoice open with partial balance outstanding), or `Mark as Discount`.
 -   Successfully reconciled items update `accounts_invoices.status` to `paid`/`partially_paid`, write corresponding debit/credit records to `accounts_ledger_entries` (reducing receivables and increasing cash account), and flag the `bank_transactions` record as `matched`.
 
@@ -1417,8 +1593,8 @@ erDiagram
     -   `voucher_type` (String, max 30) — `'Invoice'`, `'Debit Note'`, `'Credit Note'`, `'Purchase Voucher'`.
     -   `voucher_no` (String, max 30) — Source invoice or voucher document code.
     -   `voucher_date` (Date) — Transaction date.
-    -   `company_id` (BigInteger, FK referencing `companies.id`, Index) — Transacted client or vendor.
-    -   `company_name` (String) — Client/vendor billing name captured at time of posting.
+    -   `company_id` (BigInteger, FK referencing `companies.id`, Index) — Platform tenant company.
+    -   `company_name` (String) — Transacted client/vendor billing name captured at time of posting.
     -   `company_gstin` (String, max 15) — 15-character GSTIN.
     -   `place_of_supply` (String, max 5) — Two-character state code prefix (e.g. `'33-TN'`).
     -   `hsn_sac_code` (String, max 8) — Standard tax code classification.
@@ -1446,7 +1622,7 @@ erDiagram
     -   `source_type` (String, max 30) — `'Invoice'`, `'Debit Note'`, `'Credit Note'`, `'Purchase Voucher'`.
     -   `source_no` (String, max 30) — Source invoice/voucher number.
     -   `document_date` (Date)
-    -   `company_id` (BigInteger, FK referencing `companies.id`, Index) — Customer/Vendor party.
+    -   `company_id` (BigInteger, FK referencing `companies.id`, Index) — Platform tenant company.
     -   `net_amount` (Decimal(15,2)) — Net total before tax.
     -   `tax_amount` (Decimal(15,2)) — Total tax.
     -   `grand_total` (Decimal(15,2)) — Total transaction value.
@@ -1471,7 +1647,7 @@ erDiagram
     -   `agent_id` (BigInteger, FK referencing `agents_info.id`): Branch-level tenant isolation.
     -   `cover_letter_no` (String, Unique, Index, max 30) — Sequential ID (e.g. `CL-26-0001`).
     -   `date` (Date) — Issuance date.
-    -   `recipient_company_id` (BigInteger, FK referencing `companies.id`, Index) — Target broker or agent.
+    -   `recipient_customer_id` (BigInteger, FK referencing `customers.id`, Index) — Target client customer.
     -   `recipient_address` (Text) — Shipping delivery address.
     -   `contact_person` (String, max 100) — Direct contact person.
     -   `subject` (String, max 255) — Subject line.
@@ -1482,7 +1658,7 @@ erDiagram
     -   `created_at`, `updated_at` (Timestamps)
 -   **Eloquent Relationships:**
     -   `CoverLetter` belongsTo `Job` via `job_id`
-    -   `CoverLetter` belongsTo `Company` as `recipient` via `recipient_company_id`
+    -   `CoverLetter` belongsTo `Customer` as `recipient` via `recipient_customer_id`
     -   `CoverLetter` belongsTo `User` as `author` via `prepared_by`
 -   **Business Integration:**
     -   Submitting a cover letter triggers a background worker that fetches the checked document PDF templates, grabs files from `job_documents` (E-Docket) associated with `job_id` (verifying that they belong to the same `agent_id` tenant to prevent cross-tenant data leakage), merges them, and emails the complete packet to the recipient contact.
@@ -1530,7 +1706,7 @@ erDiagram
     -   `expected_revenue` (Decimal(15,2)) — Sum of expected sell rates estimated.
 -   **Eloquent Relationships (on target Job Model):**
     -   `Job` hasMany `Invoice` via `job_id`
-    -   `Job` belongsTo `Company` as `client` via `client_id`
+    -   `Job` belongsTo `Customer` as `client` via `client_id`
 -   **Business Rules:**
     -   If `delay_days` > 7, flags warning on the billing dashboard.
     -   Double-clicking an unbilled job opens the split-pane job cost sheet drawer to immediately finalize rates and trigger invoice generation.
@@ -1559,7 +1735,7 @@ To support complete import operations alongside exports, we introduce the Air Im
     *   `arrival_date` (Timestamp)
     *   `carrier_prefix` (String, 3 chars)
     *   `mawb_number` (String, 8 chars)
-    *   `handling_agent_id` (BigInteger, FK referencing `companies.id` / airline ground handlers)
+    *   `handling_agent_id` (BigInteger, FK referencing `partners.id` / airline ground handlers)
     *   `free_storage_days` (Integer, default: 2)
     *   `storage_charges_start_date` (Date)
     -   **Customs Filing Info:**
@@ -1604,9 +1780,9 @@ Apart from the global header, the form is divided into entry fields, a tabbed na
 | **Cargo Type**        | Dropdown                    | Options: `Loose` (default), `ULD`, `(Blank)`.                                 | Standard dropdown.         | `jobs.cargo_type`                                                         |
 | **Consol Owner**      | Search Lookup               | Predictive search to assign the managing user.                                | Max 50 chars.              | `jobs.job_owner_id` (FK → `users.id`)                                     |
 | **Consol Type**       | Dropdown                    | Options: `Agent Consolidation` (default), `Buyer's Consolidation`, `(Blank)`. | Standard dropdown.         | `jobs.consol_type`                                                        |
-| **Destination Agent** | Search Lookup               | Auto-populated default destination handler.                                   | Address block.             | `job_entities` (role: `'dest_agent'`, FK → `companies.id` & `address`)    |
-| **Origin Agent**      | Search Lookup               | Selecting the loading port handler agent.                                     | Address block.             | `job_entities` (role: `'origin_agent'`, FK → `companies.id` & `address`)  |
-| **Selling Agent**     | Search Lookup               | Links the agent for commission and profit splits.                             | Address block.             | `job_entities` (role: `'selling_agent'`, FK → `companies.id` & `address`) |
+| **Destination Agent** | Search Lookup               | Auto-populated default destination handler.                                   | Address block.             | `job_entities` (role: `'dest_agent'`, FK → `partners.id` & `address`)    |
+| **Origin Agent**      | Search Lookup               | Selecting the loading port handler agent.                                     | Address block.             | `job_entities` (role: `'origin_agent'`, FK → `partners.id` & `address`)  |
+| **Selling Agent**     | Search Lookup               | Links the agent for commission and profit splits.                             | Address block.             | `job_entities` (role: `'selling_agent'`, FK → `partners.id` & `address`) |
 
 ##### 2. Navigational Tab Architecture
 
@@ -1671,10 +1847,10 @@ This tab maps the key parties, logistics providers, and handling locations invol
 
 | Field Name         | Type / Control            | Character Limit (Est.) | Description / Relational Logic                                                                                                | Database Target                                                            |
 | ------------------ | ------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **Consignee**      | Search Lookup / Text Area | 250–500 chars          | The ultimate receiver of the goods. Relates directly to the master **Customer/Client database**.                              | `job_entities` (role: `'consignee'`, FK → `companies.id` & `address`)      |
-| **Transporter**    | Search Lookup / Text Area | 250–500 chars          | The trucking/logistics company hired for final mileage. Relates to the **Vendor/Transporter master list**.                    | `job_entities` (role: `'transporter'`, FK → `companies.id` & `address`)    |
-| **High Sea Buyer** | Search Lookup / Text Area | 250–500 chars          | Used if the shipment underwent a High Seas Sale prior to customs clearance. Relates to the **Customer master**.               | `job_entities` (role: `'high_sea_buyer'`, FK → `companies.id` & `address`) |
-| **Custom Broker**  | Search Lookup / Text Area | 250–500 chars          | The Customs House Agent (CHA) clearing the cargo. Relates to the **Vendor/Agent master list**.                                | `job_entities` (role: `'customs_broker'`, FK → `companies.id` & `address`) |
+| **Consignee**      | Search Lookup / Text Area | 250–500 chars          | The ultimate receiver of the goods. Relates directly to the master **Customer/Client database**.                              | `job_entities` (role: `'consignee'`, FK → `customers.id` & `address`)      |
+| **Transporter**    | Search Lookup / Text Area | 250–500 chars          | The trucking/logistics company hired for final mileage. Relates to the **Vendor/Transporter master list**.                    | `job_entities` (role: `'transporter'`, FK → `partners.id` & `address`)    |
+| **High Sea Buyer** | Search Lookup / Text Area | 250–500 chars          | Used if the shipment underwent a High Seas Sale prior to customs clearance. Relates to the **Customer master**.               | `job_entities` (role: `'high_sea_buyer'`, FK → `customers.id` & `address`) |
+| **Custom Broker**  | Search Lookup / Text Area | 250–500 chars          | The Customs House Agent (CHA) clearing the cargo. Relates to the **Vendor/Agent master list**.                                | `job_entities` (role: `'customs_broker'`, FK → `partners.id` & `address`) |
 | **Pick Up**        | Search Lookup / Text Area | 250–500 chars          | Origin address where the cargo is collected (e.g., Airport Warehouse/CFS). Relates to **Warehouse/Port Location masters**.    | `jobs.pickup_address` (Text, Nullable)                                     |
 | **Delivery Add.**  | Free-text Area            | 500 chars              | Final physical address for delivery. Inherits data if a standard Consignee address is selected, but allows manual overriding. | `jobs.delivery_address` (Text, Nullable)                                   |
 
@@ -1731,7 +1907,9 @@ The form operates on a strict relational hierarchy triggered by the core header 
 
 1.  **Header to Tab Dependency:** Choosing a **Shipment No** or **Consul No** acts as the primary key. It auto-queries the operational database to populate the _Consignee_ and _Custom Broker_ fields inside the _Entity_ tab automatically.
 2.  **Entity to Delivery Validation:** The **Delivery Add.** box is dynamically dependent on the _Consignee_ selection. If the chosen Consignee has multiple registered branches, a secondary lookup allows selecting the specific branch profile.
-3.  **Payment Gatekeeping:** The **[Print DO]** and **[Print Receipt]** action buttons are programmatically conditional. They read data from the **Payment** tab; if an invoice is marked as "Pending" or a client is over their credit limit, the system locks the printing functionality to prevent unauthorized cargo release.
+3.  **Payment Gatekeeping:**
+    -   The **[Print DO]** and **[Print Receipt]** buttons are conditional on **Payment**-tab data: if an invoice is "Pending" or the client is over their credit limit, printing is locked to prevent unauthorized cargo release.
+    -   Credit limits are enforced **server-side** during finalization and DO release — returning `422 Unprocessable Entity` on breach — not just via client-side UI checks.
 
 #### E. Form Specification: CGM Filing (Air)
 
@@ -1891,7 +2069,7 @@ Before mapping UI fields to database columns, we define the core Sea-specific ta
     -   `voyage_no` (String, max 20, Nullable): Carrier-assigned voyage identifier.
     -   `vessel_flag` (String, 2 chars, Nullable): ISO 3166-1 alpha-2 country code of vessel registration.
     -   `imo_number` (String, max 7, Nullable): 7-digit IMO vessel identification number.
-    -   `carrier_id` (BigInteger, Nullable, FK referencing `companies.id`): Shipping line/carrier company.
+    -   `carrier_id` (BigInteger, Nullable, FK referencing `partners.id`): Shipping line/carrier company.
     -   `service_contract_no` (String, max 30, Nullable): Carrier service contract reference.
     -   `por_code` (String, max 5, Nullable): Place of Receipt UN/LOCODE.
     -   `pol_code` (String, max 5, Nullable): Port of Loading UN/LOCODE.
@@ -1920,7 +2098,7 @@ Before mapping UI fields to database columns, we define the core Sea-specific ta
     -   `bl_type` (Enum: `'HBL'`, `'MBL'`, Nullable)
     -   `bl_release_type` (Enum: `'original'`, `'telex'`, `'seaway'`, Nullable)
     -   `freight_terms` (Enum: `'prepaid'`, `'collect'`, Nullable)
-    -   `haulage_provider_id` (BigInteger, Nullable, FK referencing `companies.id`)
+    -   `haulage_provider_id` (BigInteger, Nullable, FK referencing `partners.id`)
     -   `pickup_address` (Text, Nullable)
     -   `delivery_address` (Text, Nullable)
     -   `empty_depot` (String, max 100, Nullable)
@@ -1932,12 +2110,14 @@ Before mapping UI fields to database columns, we define the core Sea-specific ta
 
 ### `job_entities` (Operational Party Contacts)
 
--   _Purpose:_ Polymorphic entity grid linking companies (shippers, consignees, agents, brokers) to a job in specific roles. Shared across Air and Sea.
+-   _Purpose:_ Polymorphic entity grid linking customers and partners to a job in specific roles. Shared across Air and Sea.
 -   _Columns:_
     -   `id` (BigInteger, PK, Auto-increment)
     -   `job_id` (BigInteger, FK referencing `jobs.id` on delete cascade, Index)
-    -   `company_id` (BigInteger, FK referencing `companies.id`, Index): The linked company profile.
-    -   `role` (Enum: `'shipper'`, `'consignee'`, `'customer'`, `'origin_agent'`, `'dest_agent'`, `'selling_agent'`, `'notify_party'`, `'customs_broker'`, `'consigned_order'`, `'transporter'`, `'high_sea_buyer'`): Role of the entity in this shipment.
+    -   `party_type` (String, max 50): Discriminates the polymorphic target ('customer' or 'partner').
+    -   `party_id` (BigInteger): Polymorphic ID referencing customers.id or partners.id.
+    -   `role` (Enum: `'shipper'`, `'consignee'`, `'origin_agent'`, `'dest_agent'`, `'selling_agent'`, `'notify_party'`, `'customs_broker'`, `'transporter'`, `'high_sea_buyer'`, `'other'`): Role of the entity in this shipment.
+    -   `custom_role_label` (String, max 50, Nullable): Custom label text when role is set to `'other'`.
     -   `address` (Text, Nullable): Snapshot of the company address at the time of selection (read-only until entity is selected).
     -   `contact_person` (String, max 100, Nullable)
     -   `created_at`, `updated_at` (Timestamps)
@@ -2050,10 +2230,10 @@ These fields are anchored at the top of `FocusSeaMaster.vue` / `FocusSeaHouse.vu
 -   **UI Control:** 2-column BootstrapVue grid of search boxes (Max 100 chars) paired with address textareas (Max 500 chars).
 -   **Database Mapping:** Linked via the `job_entities` table.
 -   **Architectural Connections:**
-    -   Selecting a Shipper, Consignee, or Customer queries the `companies` database table (`GET /api/companies?type=client`).
-    -   Origin/Destination Agents are filtered by partner networks (`GET /api/companies?type=agent`).
+    -   Selecting a Shipper, Consignee, or Customer queries the `customers` database table (`GET /api/customers`).
+    -   Origin/Destination Agents are filtered by partner networks (`GET /api/partners?partner_type=agent`).
     -   The **Customer** field is the critical anchor: it sets the default debtor ID in `accounts_invoices.client_id`.
-    -   **"Add/Remove Entity"** dynamically appends items to the `form.entities` array, which Laravel inserts as additional rows in `job_entities` with roles like `notify_party` or `customs_broker`.
+    -   **"Add/Remove Entity"** dynamically appends items to the `form.entities` array, which Laravel inserts as additional rows in `job_entities` with roles like `notify_party`, `customs_broker`, or a custom role with `custom_role_label`.
 
 #### Tab 2: Shipping Dtls. (Maritime Voyage Details)
 
@@ -2061,7 +2241,7 @@ These fields are anchored at the top of `FocusSeaMaster.vue` / `FocusSeaHouse.vu
 -   **Database Mapping:** Mapped to columns in `sea_shipment_details`.
 -   **Architectural Connections:**
     -   IMO Number validated with regex: `^[0-9]{7}$`.
-    -   Carrier Lookup queries shipping line vendors (`GET /api/companies?type=carrier`).
+    -   Carrier Lookup queries shipping line vendors (`GET /api/partners?partner_type=shipping_line`).
     -   Service Contract No. is cross-checked on save to audit pre-configured contract rates in the pricing module.
 
 #### Tab 3: Routing (UN/LOCODE Transit Paths)
@@ -2636,9 +2816,9 @@ The system maps different company records to the same relational fields dependin
 
 | Entity Role      | House Bill of Lading (HBL)                                                          | Master Bill of Lading (MBL)                                                                   |
 | :--------------- | :---------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
-| **Shipper**      | The actual exporter / manufacturer profile selected from the `companies` lookup.    | The Freight Forwarder branch itself (defaults to your branch company ledger entry).           |
-| **Consignee**    | The actual overseas buyer / importing company selected from the `companies` lookup. | The counterpart Destination Agent (defaults to the agent profile configured on the shipment). |
-| **Notify Party** | The actual buyer or their designated local customs broker.                          | Same as Consignee (the counterpart Destination Agent profile).                                |
+| **Shipper**      | The actual exporter / manufacturer profile selected from the `customers` lookup.    | The Freight Forwarder branch itself (defaults to your branch company ledger entry).           |
+| **Consignee**    | The actual overseas buyer / importing company selected from the `customers` lookup. | The counterpart Destination Agent (defaults to the agent profile configured on the shipment from `partners` lookup). |
+| **Notify Party** | The actual buyer or their designated local customs broker (from `customers` or `partners` lookup). | Same as Consignee (the counterpart Destination Agent profile from `partners` lookup). |
 
 #### B. Cargo Consolidation Roll-up Engine
 
@@ -2817,7 +2997,7 @@ Based on the active interface for the **Delivery Order [Sea]** module (URL: `DOA
 | Field Name                   | Type / Control           | Character Limit / Format     | Description / Relational Logic                                          | Database Target                                                 |
 | ---------------------------- | ------------------------ | ---------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
 | **Shipment No / Consol No**  | Dropdown Toggle & Search | Max 30-50 chars alphanumeric | Toggle selection. Filters lookup for individual shipment or consol job. | `jobs.execution_job_no` (where `transport_mode = 'sea'`)        |
-| **CAN Number / Invoice No.** | Dropdown Toggle & Search | Max 30-50 chars alphanumeric | Toggle selection. Links the DO to pre-arrival CAN or billing invoice.   | `cargo_arrival_notices.can_no` / `accounts_invoices.invoice_no` |
+| **CAN Number / Invoice No.** | Dropdown Toggle & Search | Max 30-50 chars alphanumeric | Toggle selection. Links the DO to pre-arrival CAN or billing invoice.   | `cargo_arrival_notices.notice_number` / `accounts_invoices.invoice_no` |
 | **DO Given To**              | Free-text Input          | Max 100 chars                | Recipient representative picking up the legal delivery order.           | `sea_shipment_details.do_given_to`                              |
 
 #### B. Form Tabs
@@ -2835,10 +3015,10 @@ Every field block under this tab contains a **Search/Code input box** (top line 
 
 | Field Name         | Type / Control            | Character Limit / Format    | Description / Relational Logic                                      | Database Target                                                            |
 | ------------------ | ------------------------- | --------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **Consignee**      | Search Lookup / Text Area | 250-500 chars address block | Billed party or receiver authorized to claim the cargo.             | `job_entities` (role: `'consignee'`, FK → `companies.id` & `address`)      |
-| **Transporter**    | Search Lookup / Text Area | 250-500 chars address block | Trucking / haulage company moving the cargo inland.                 | `job_entities` (role: `'transporter'`, FK → `companies.id` & `address`)    |
-| **High Sea Buyer** | Search Lookup / Text Area | 250-500 chars address block | In-transit buyer under high seas sale (overrides Consignee).        | `job_entities` (role: `'high_sea_buyer'`, FK → `companies.id` & `address`) |
-| **Custom Broker**  | Search Lookup / Text Area | 250-500 chars address block | Licensed Customs House Agent (CHA) clearing customs.                | `job_entities` (role: `'customs_broker'`, FK → `companies.id` & `address`) |
+| **Consignee**      | Search Lookup / Text Area | 250-500 chars address block | Billed party or receiver authorized to claim the cargo.             | `job_entities` (role: `'consignee'`, FK → `customers.id` & `address`)      |
+| **Transporter**    | Search Lookup / Text Area | 250-500 chars address block | Trucking / haulage company moving the cargo inland.                 | `job_entities` (role: `'transporter'`, FK → `partners.id` & `address`)    |
+| **High Sea Buyer** | Search Lookup / Text Area | 250-500 chars address block | In-transit buyer under high seas sale (overrides Consignee).        | `job_entities` (role: `'high_sea_buyer'`, FK → `customers.id` & `address`) |
+| **Custom Broker**  | Search Lookup / Text Area | 250-500 chars address block | Licensed Customs House Agent (CHA) clearing customs.                | `job_entities` (role: `'customs_broker'`, FK → `partners.id` & `address`) |
 | **Pick Up**        | Search Lookup / Text Area | 250-500 chars address block | Warehouse, CFS, or terminal storage origin coordinates.             | `sea_shipment_details.empty_depot` / `pickup_address`                      |
 | **Delivery Add.**  | Free-text Area            | 500 chars editable block    | Final physical address for cargo delivery. Manual override allowed. | `sea_shipment_details.delivery_address`                                    |
 
@@ -3085,19 +3265,20 @@ To keep the application highly responsive, low-latency, and cost-effective, we w
         -   Loading Invoices: `Invoice::with(['client', 'items'])`
 -   **Impact:** Reduces the count of SQL round-trips from dozens per request to exactly 1 or 2 queries, accelerating page rendering speeds.
 
-### 6. Database Partitioning for Large Log & Ledger Tables
+### 6. High Performance Indexing & Snapshots (No Partitioning)
 
 -   **Optimization:**
-    -   Implement **Range/List Partitioning** on tables expected to hold millions of rows: `inbound_emails` and `accounts_ledger_entries`.
-    -   _Strategy:_ Partition `inbound_emails` by year/month range (e.g. `PARTITION p2026_06 VALUES LESS THAN ('2026-07-01')`) and `accounts_ledger_entries` by `agent_id` list values.
--   **Impact:** Limits queries scanning historic records to search within a single partition file, minimizing index sizes and disk read constraints.
+    -   Do **NOT** implement range or list partitioning on InnoDB tables (such as `inbound_emails` or `accounts_ledger_entries`), as MySQL standard partitioning does not support foreign key constraints.
+    -   _Strategy:_ Rely on pre-aggregated reporting snapshots (`financial_snapshots`) updated via background jobs and heavily index lookup paths (e.g., `idx_ledger_agent_date_account` and `idx_threads_agent_status_received`) to maintain sub-second search speeds on tables with millions of rows.
+-   **Impact:** Guarantees database integrity and maintains foreign key constraints while keeping query performance extremely fast.
 
-### 7. Distributed Locks & Asynchronous Queue Workers
+### 7. Database Transactions & Distributed Locks
 
 -   **Optimization:**
-    -   Use **Redis Distributed Locks** (via Laravel Cache lock interface) on critical operations: sequence increments (if outside database transactions) and Plaid webhook ingestions.
+    -   Standardize sequential counter increments (e.g. `jobs.enquiry_no`, `accounts_invoices.invoice_no`) using database transactions protected by database row-level write locks (`SELECT ... FOR UPDATE`). Drop Redis distributed locks for database sequence increments.
+    -   Reserve **Redis Distributed Locks** (via Laravel Cache lock interface) strictly for non-database transaction operations (e.g., Plaid webhook transaction-added real-time event deduplication and API deduplication).
     -   Decouple non-blocking tasks from the HTTP lifecycle using Redis queues. Dispatch email ingestion parsing, AWB PDF compilation, CASS statement tally runs, and audit logging tasks directly to background workers using Laravel Horizon.
--   **Impact:** Safeguards data consistency from concurrent duplication conflicts and keeps HTTP response latency under 100 milliseconds.
+-   **Impact:** Safeguards data consistency and prevents race conditions from concurrent duplication conflicts, keeping HTTP response latency under 100 milliseconds.
 
 ### 8. Dedicated Local AI Server Instance (Gemma 4 E4B & ChromaDB)
 
@@ -3173,9 +3354,23 @@ To prevent duplicate invoice numbers under concurrent request spikes, billing se
     }
     ```
 
----
+### 5. Tenant Isolation & Security Boundaries
 
----
+-   **Laravel Global Query Scope:** To enforce strict multi-tenant isolation at the database layer, all models possessing an `agent_id` or `company_id` column automatically apply a Laravel Global Scope. This scope automatically appends a `WHERE agent_id = ?` clause to all SELECT, UPDATE, and DELETE queries, resolved from the authenticated user's branch ID (`auth()->user()->branch_name`).
+-   **Escape Hatch (`withoutAgentScope()`):** Background daemons, console workers, webhooks, and supervisor commands running outside of user sessions can bypass this global query scope by calling the static `withoutAgentScope()` method on the model (e.g., `Job::withoutAgentScope()->find($id)`).
+-   **Active Portal Scope (Non-Global Query Scope):** To isolate operational views between Air and Sea, the system applies a manual query scope `forActivePortal()` that filters by `transport_mode`. Unlike the security-critical `agent_id` global scope, this active portal scope is not global and must be explicitly chained by the developer in the controller/handler level to allow unified cross-mode operations.
+-   **Automated Security Boundary Testing:** The automated test suite includes dedicated security tests that assert boundary isolation:
+    -   *Cross-Tenant Read/Write Tests:* Authenticates as a user of Agent A and attempts to fetch or edit records belonging to Agent B, asserting a `403 Forbidden` or `404 Not Found` response.
+
+### 6. PII Security, Compliance, & WebSocket Authorization
+
+-   **PII Encryption at Rest:** Sensitive bank account details in `customers` and `partners` tables (such as `bank_account_no` and `bank_ifsc_code`) must be encrypted at rest. Use Laravel's native database encryption/casting (`encrypted` cast in Eloquent) to handle transparent encryption and decryption using the application's AES-256-CBC `APP_KEY`.
+-   **Email Attachment Antivirus Screening:** All incoming email attachments pulled by the `mailboxes:poll` daemon must be screened for malware/viruses before being saved to storage. Integrate a background job step that streams attachments through a ClamAV daemon microservice using the `clamav-validator` API before storing them in `job_documents` or forwarding them.
+-   **Production Secrets Management:** Do not store plain text API keys (Gemini API key, Plaid/Setu client secrets, Google/Microsoft OAuth credentials) directly in repository files or standard `.env` files in production. Use a secure cloud secrets manager (e.g., AWS Secrets Manager or HashiCorp Vault) to host and inject production secrets at runtime.
+-   **DPDP Act 2023 Compliance & Retention:** per India's Digital Personal Data Protection Act 2023, F16s OS enforces erasure and retention limits:
+    -   Customer/contact PII is permanently anonymized or deleted on request (Right to Erasure), unless retention is legally mandated for tax, accounting, or customs-audit compliance.
+    -   Example retention: general-ledger lines kept for **8 fiscal years**; transient email text and support screenshot payloads purged after **2 years**.
+-   **Branch-Scoped WebSocket Authorizations:** Real-time push updates broadcast over Pusher/Soketi private WebSocket channels (such as `private-branch.{agent_id}`) must be authorized securely. The WebSocket authorization controller (`Broadcast::channel()`) must explicitly check that the authenticated user's `branch_name` matches the requested `{agent_id}` channel parameter.
 
 ---
 
@@ -3654,7 +3849,9 @@ protected $casts = [
 
 -   **Step 2.1:** Build `PollMailboxes` sync daemon command. If a mailbox connection is set to `is_active = false` (tier downgrade flag), it is immediately bypassed.
 -   **Step 2.2:** Build the database-driven configurable `RegexClassificationService` mapping rules from `email_classification_rules`. Keep tracking notices and pre-alerts in the unified inbox feed by assigning appropriate `classification` tags without generating a `Job` record. If the regex classification is corrected by an operator, record the override event in `email_classification_overrides` for learning analysis.
--   **Step 2.3:** Build `MailboxOAuthController` callbacks. Enforce corporate email domain verification: parse the authenticated mailbox address and verify that its domain (the suffix after `@`) is included in the selected company's `email_domain` multi-domain list (e.g. `xyzcompany.com, xyzcompany.co.in`) for Tier 2 and Tier 3 connections. Return a `403` validation error on mismatch. On company subscription downgrade, connected mailboxes are soft-deactivated (`is_active = false`), pausing background sync and leaving tokens encrypted.
+-   **Step 2.3:** Build `MailboxOAuthController` callbacks:
+    -   **Domain verification (Tier 2 & 3):** parse the authenticated mailbox address and verify its `@` suffix is in the company's `email_domain` multi-domain list (e.g. `xyzcompany.com, xyzcompany.co.in`); return `403` on mismatch.
+    -   **On downgrade:** soft-deactivate connected mailboxes (`is_active = false`), pausing background sync while leaving tokens encrypted.
 
 ---
 

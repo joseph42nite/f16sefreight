@@ -77,6 +77,7 @@ For production and staging deployments, an independent backup helper container r
   ------------------|----------------|-----|----------------------------------------------------
   id                | BIGINT         | PK  | ──► jobs.client_id
                     |                |     | ──► accounts_invoices.client_id
+                    |                |     | ──► accounts_invoices.billed_party_id (Polymorphic; when billed_party_type = 'customer')
                     |                |     | ──► operational_cover_letters.recipient_customer_id
                     |                |     | ──► job_entities.party_id (Polymorphic; when party_type = 'customer')
                     |                |     | ──► rate_cards.party_id (Polymorphic; when party_type = 'customer')
@@ -116,6 +117,7 @@ For production and staging deployments, an independent backup helper container r
                     |                |     | ──► accounts_cass_statements.airline_id
                     |                |     | ──► accounts_invoice_brokerage_details.partner_agent_id
                     |                |     | ──► accounts_invoice_consol_details.partner_agent_id
+                    |                |     | ──► accounts_invoices.billed_party_id (Polymorphic; when billed_party_type = 'partner')
                     |                |     | ──► job_entities.party_id (Polymorphic; when party_type = 'partner')
                     |                |     | ──► rate_cards.party_id (Polymorphic; when party_type = 'partner')
   company_id        | BIGINT         | FK  | ◄── companies.id (Tenant company owning this partner)
@@ -438,9 +440,14 @@ For production and staging deployments, an independent backup helper container r
   Column                 | Type         | Key | Connection Links
   -----------------------|--------------|-----|----------------------------------------------------
   id                     | BIGINT       | PK  |
+  agent_id               | BIGINT       | FK  | ◄── agents_info.id (Branch-level tenant isolation)
   job_id                 | BIGINT       | FK  | ◄── jobs.id (Cascade delete)
-  document_type          | VARCHAR(50)  |     |
-  file_path              | VARCHAR(255) |     |
+  document_type          | VARCHAR(50)  |     | (commercial_invoice, packing_list, awb_copy, bl_copy, delivery_order, arrival_notice, cover_letter, other, ...)
+  file_name              | VARCHAR(255) |     | (Original uploaded filename)
+  file_path              | VARCHAR(500) |     | (Storage path on disk or S3)
+  mime_type              | VARCHAR(50)  |     | (e.g. application/pdf, image/png)
+  file_size              | INT          |     | (Size in bytes)
+  uploaded_by            | BIGINT       | FK  | ◄── users.id
   created_at             | TIMESTAMP    |     |
   updated_at             | TIMESTAMP    |     |
 ```
@@ -578,7 +585,9 @@ For production and staging deployments, an independent backup helper container r
   agent_id               | BIGINT       | FK  | ◄── agents_info.id
   job_id                 | BIGINT       | FK  | ◄── jobs.id (On Delete Restrict)
   transport_mode         | VARCHAR(10)  |     | (air, sea — inherited from parent jobs.transport_mode; used for scoping/partitioning)
-  client_id              | BIGINT       | FK  | ◄── customers.id (Debtor)
+  client_id              | BIGINT       | FK  | ◄── customers.id (Customer debtor; NULLABLE — populated only for customer-billed docs, drives AR/collections/credit which are customer-only)
+  billed_party_type      | VARCHAR(20)  |     | (Polymorphic bill-to: 'customer' or 'partner')
+  billed_party_id        | BIGINT       |     | (Polymorphic ID → customers.id or partners.id — the actual recipient; equals client_id for customer invoices, a partner for brokerage/consol/agent invoices)
   parent_invoice_id      | BIGINT       | FK  | ◄── accounts_invoices.id (Self-referencing credit notes)
   created_by             | BIGINT       | FK  | ◄── users.id
   invoice_no             | VARCHAR(30)  | UK  | (Central Counter sequential prefix-YY-NNNN)
@@ -592,7 +601,7 @@ For production and staging deployments, an independent backup helper container r
   currency               | CHAR(3)      |     | (USD, INR, EUR, etc.)
   exchange_rate          | DECIMAL(10,4)|     | (Conversion multiplier to base currency)
   is_posted              | BOOLEAN      |     | (true = locked/posted to general ledger)
-  billed_party_role      | VARCHAR(30)  |     | (client, agent, broker, notify_party)
+  billed_party_role      | VARCHAR(30)  |     | (client, agent, broker, notify_party — semantic role label; pairs with billed_party_type/id)
   created_at             | TIMESTAMP    |     |
   updated_at             | TIMESTAMP    |     | (Soft deletes forbidden)
 ```
@@ -1009,6 +1018,11 @@ For production and staging deployments, an independent backup helper container r
 *   Standard Laravel morph identifying the notification recipient:
     *   `notifiable_type = 'App\User'` $\rightarrow$ `notifiable_id` points to `users.id` (pricing owner receiving a reassignment request, operator receiving an accept/reject, etc.)
 
+#### 6. `billed_party_id` / `billed_party_type` in `accounts_invoices`
+*   Polymorphic bill-to recipient (so brokerage/consol/agent invoices can bill a partner, not just a customer):
+    *   `billed_party_type = 'customer'` $\rightarrow$ `billed_party_id` points to `customers.id` (standard/debit/credit invoices; also mirrored in `client_id`)
+    *   `billed_party_type = 'partner'` $\rightarrow$ `billed_party_id` points to `partners.id` (brokerage, consol, or agent-billed invoices; `client_id` is NULL)
+
 ---
 
 ## 💾 Raw SQL DDL Script (CREATE TABLE statements & Indexes)
@@ -1335,12 +1349,19 @@ CREATE TABLE inbound_attachments (
 -- 14. job_documents
 CREATE TABLE job_documents (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    agent_id BIGINT NOT NULL,                        -- Branch-level tenant isolation
     job_id BIGINT NOT NULL,
     document_type VARCHAR(50) NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,                 -- Original uploaded filename
+    file_path VARCHAR(500) NOT NULL,                 -- Disk or S3 path
+    mime_type VARCHAR(50) NULL,                      -- e.g. application/pdf, image/png
+    file_size INT NULL,                              -- Size in bytes
+    uploaded_by BIGINT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    FOREIGN KEY (agent_id) REFERENCES agents_info(id),
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id)
 );
 
 -- 15. milestone_performance_logs
@@ -1469,7 +1490,9 @@ CREATE TABLE accounts_invoices (
     agent_id BIGINT NOT NULL,
     job_id BIGINT NOT NULL,
     transport_mode VARCHAR(10) NULL, -- 'air', 'sea' (inherited from parent jobs.transport_mode; scoping/partitioning)
-    client_id BIGINT NOT NULL,
+    client_id BIGINT NULL, -- Customer debtor; NULLABLE — populated only for customer-billed docs (AR/collections/credit are customer-only)
+    billed_party_type VARCHAR(20) NULL, -- Polymorphic bill-to: 'customer' or 'partner'
+    billed_party_id BIGINT NULL, -- Polymorphic → customers.id or partners.id (actual recipient; a partner for brokerage/consol/agent invoices)
     parent_invoice_id BIGINT NULL,
     created_by BIGINT NULL,
     invoice_no VARCHAR(30) NOT NULL,
@@ -1483,7 +1506,7 @@ CREATE TABLE accounts_invoices (
     currency CHAR(3) DEFAULT 'INR',
     exchange_rate DECIMAL(10, 4) DEFAULT 1.0000,
     is_posted BOOLEAN DEFAULT FALSE,
-    billed_party_role VARCHAR(30) DEFAULT 'client',
+    billed_party_role VARCHAR(30) DEFAULT 'client', -- semantic role label (client, agent, broker, notify_party)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),

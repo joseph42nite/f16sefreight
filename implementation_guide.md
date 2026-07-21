@@ -101,7 +101,7 @@ These depend on `agents_info`, `companies`, `users`, and `jobs` existing:
 These depend on `agents_info`, `companies`, `users`, `jobs`, and `chart_of_accounts` existing:
 * `chart_of_accounts` (self-referencing `parent_account_id`)
 * `accounting_periods` (FK → `agents_info`)
-* `accounts_invoices` (FK → `agents_info`, `jobs` ON DELETE RESTRICT, `customers` via `client_id`, `users`)
+* `accounts_invoices` (FK → `agents_info`, `jobs` ON DELETE RESTRICT, `customers` via **nullable** `client_id`, `users`; plus polymorphic bill-to `billed_party_type`/`billed_party_id` → `customers` or `partners` so brokerage/consol/agent invoices bill a partner while `client_id` stays customer-only for AR/collections)
 * `accounts_invoice_items` (FK → `accounts_invoices` CASCADE)
 * `accounts_invoice_brokerage_details` (1-to-1 FK → `accounts_invoices`)
 * `accounts_invoice_consol_details` (1-to-1 FK → `accounts_invoices`, with `partner_agent_id` FK referencing `partners.id`)
@@ -136,6 +136,10 @@ Create matching Eloquent models in `app/` and register observers to handle opera
          'purchase_voucher' => 'App\AccountsPurchaseVoucher',
          'awb' => 'App\AirwayBills',
          'hawb' => 'App\HousewayBills',
+         // Party morph — resolves job_entities.party_type, rate_cards.party_type,
+         // and accounts_invoices.billed_party_type (polymorphic bill-to)
+         'customer' => 'App\Customer',
+         'partner' => 'App\Partner',
      ]);
      ```
 

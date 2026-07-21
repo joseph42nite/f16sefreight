@@ -1252,12 +1252,14 @@ To handle complex logistics transactions (where one operational job contains bot
     -   `invoice_no` (String, max 30, Unique per agent): Sequential formatted document number.
     -   `document_date` (Date): Issuance date. Validated against `accounting_periods` to block postings in closed months.
     -   `job_id` (BigInteger, FK referencing `jobs.id` on delete restrict): Anchor link to the operational job. Financial records are immutable, so job deletion is restricted.
-    -   `client_id` (BigInteger, FK referencing `customers.id`): The entity ID being billed (debtor). Maps to client customer.
-    -   `billed_party_role` (String, max 20, default: `'client'`): Discriminates role of billed entity. Valid values: `'client'`, `'carrier'`, `'agent'`.
+    -   `client_id` (BigInteger, **Nullable**, FK referencing `customers.id`): The **customer debtor**. Populated only for customer-billed documents — it drives AR/collections/credit, which are customer-only concepts. **NULL** when the document is billed to a partner (brokerage/consol/agent).
+    -   `billed_party_type` (String, max 20, Nullable): Polymorphic bill-to discriminator — `'customer'` or `'partner'`.
+    -   `billed_party_id` (BigInteger, Nullable): Polymorphic ID → `customers.id` or `partners.id`. The **actual recipient** of the document (equals `client_id` for customer invoices; a **partner** for brokerage/consol/agent invoices).
+    -   `billed_party_role` (String, max 30, default: `'client'`): Semantic role label paired with `billed_party_type/id`. Valid values: `'client'`, `'agent'`, `'broker'`, `'notify_party'`.
         -   _Semantic Rules:_
-            -   `type = 'invoice'` → `billed_party_role = 'client'`
-            -   `type = 'brokerage'` → `billed_party_role = 'carrier'` or `'agent'`
-            -   `type = 'consol_invoice'` → `billed_party_role = 'agent'`
+            -   `type = 'invoice' | 'debit_note' | 'credit_note'` → `billed_party_type = 'customer'` (`client_id` set), `billed_party_role = 'client'`
+            -   `type = 'brokerage'` → `billed_party_type = 'partner'` (`client_id` NULL), `billed_party_role = 'broker'` or `'agent'`
+            -   `type = 'consol_invoice'` → `billed_party_type = 'partner'` (`client_id` NULL), `billed_party_role = 'agent'`
     -   `parent_invoice_id` (BigInteger, Nullable, FK referencing `accounts_invoices.id`): Self-referencing link used by Debit/Credit Notes to trace back to the original Invoice.
     -   `currency` (String, 3 chars): Active currency code (e.g. `USD`, `INR`, `EUR`).
     -   `exchange_rate` (Decimal(12,6), default: 1.000000): Conversion factor to base currency.
@@ -1539,14 +1541,14 @@ erDiagram
 -   **Database Mapping:** Stored in the canonical `accounts_invoices` table (defined in [Section B.1](#1-accounts_invoices--canonical-schema-receivables--billing-documents)) with `type = 'invoice'`. Line items are stored in `accounts_invoice_items` with `charge_type` values matching standard operational sales (e.g. `'air_freight'`, `'ocean_freight'`, etc.).
 -   **Eloquent Relationships:**
     -   `Invoice` belongsTo `Job` via `job_id`
-    -   `Invoice` belongsTo `Company` as `client` via `client_id`
+    -   `Invoice` belongsTo `Customer` as `client` via `client_id` (`billed_party_type = 'customer'`)
     -   `Invoice` belongsTo `User` as `creator` via `created_by`
     -   `Invoice` hasMany `InvoiceItem` via `invoice_id`
     -   `Invoice` hasMany `LedgerEntry` (polymorphic tracking) via `invoice_no` matching `ledger_entries.reference`
 -   **Validation Rules:**
     -   `document_date` is required and must be a valid open date in `accounting_periods`.
     -   `due_date` must be greater than or equal to `document_date`.
-    -   `client_id` must reference a company where `role` matches `'client'` or has active credit status.
+    -   `client_id` must reference a `customer` belonging to the acting user's tenant (`company_id`), with active credit status.
     -   `job_id` is required for standard operational invoicing.
     -   Each line item must have a valid `charge_type`, `hsn_sac_code`, and positive `rate` / `quantity`.
 -   **General Ledger Postings (On Finalization):**
@@ -1560,7 +1562,7 @@ erDiagram
 -   **Database Mapping:** Stored in `accounts_invoices` where `type = 'debit_note'`. Uses columns `parent_invoice_id` (linking to the original invoice) and `debit_reason` (String, max 100, explaining the charge correction).
 -   **Eloquent Relationships:**
     -   `DebitNote` belongsTo `Invoice` as `parentInvoice` via `parent_invoice_id`
-    -   `DebitNote` belongsTo `Company` as `client` via `client_id` (auto-locked to match `parentInvoice.client_id`)
+    -   `DebitNote` belongsTo `Customer` as `client` via `client_id` (auto-locked to match `parentInvoice.client_id`)
     -   `DebitNote` belongsTo `Job` via `job_id` (auto-locked to match `parentInvoice.job_id`)
     -   `DebitNote` hasMany `InvoiceItem` via `invoice_id`
 -   **Validation Rules:**
@@ -1578,7 +1580,7 @@ erDiagram
 -   **Database Mapping:** Stored in `accounts_invoices` where `type = 'credit_note'`. Uses `parent_invoice_id` and `credit_reason` (String, max 100).
 -   **Eloquent Relationships:**
     -   `CreditNote` belongsTo `Invoice` as `parentInvoice` via `parent_invoice_id`
-    -   `CreditNote` belongsTo `Company` as `client` via `client_id` (auto-locked to `parentInvoice.client_id`)
+    -   `CreditNote` belongsTo `Customer` as `client` via `client_id` (auto-locked to `parentInvoice.client_id`)
     -   `CreditNote` hasMany `InvoiceItem` via `invoice_id`
 -   **Validation Rules:**
     -   `parent_invoice_id` is required and must reference a finalized invoice.
@@ -1594,12 +1596,12 @@ erDiagram
 -   **Purpose:** Billed to carriers (shipping lines or airlines) or overseas agents to collect sales commission, booking brokerage, or handling commissions.
 -   **Database Mapping:** Stored in `accounts_invoices` where `type = 'brokerage'`. Relational data is linked 1-to-1 in `accounts_invoice_brokerage_details` storing `brokerage_basis`, `commission_rate`, and `base_freight_cost`.
 -   **Eloquent Relationships:**
-    -   `BrokerageInvoice` belongsTo `Company` as `carrierAgent` via `client_id` (where the company's role is `'carrier'` or `'agent'`)
+    -   `BrokerageInvoice` belongsTo `Partner` as `carrierAgent` via `billed_party_id` (`billed_party_type = 'partner'`; `client_id` is NULL)
     -   `BrokerageInvoice` belongsTo `Job` via `job_id` (links to the master operational carrier booking)
     -   `BrokerageInvoice` hasOne `AccountsInvoiceBrokerageDetail` as `brokerageDetails` via `invoice_id`
     -   `BrokerageInvoice` hasMany `InvoiceItem` via `invoice_id`
 -   **Validation Rules:**
-    -   `client_id` (representing the carrier/agent debtor) is required and must reference a company where `role` matches `'carrier'` or `'agent'`.
+    -   `billed_party_id` (representing the carrier/agent debtor) is required and must reference a `partner` (`billed_party_type = 'partner'`, `partner_type` in carrier/airline/agent); `client_id` is NULL.
     -   `brokerageDetails.brokerage_basis` and `brokerageDetails.commission_rate` are required.
     -   `job_id` must represent a valid operational shipment containing a carrier.
 -   **General Ledger Postings (On Finalization):**
@@ -1612,7 +1614,7 @@ erDiagram
 -   **Purpose:** Issued to an overseas agent, co-loader, or counterpart office to settle charges, local handling splits, and profit shares across _multiple_ House shipments (HBLs/HAWBs) bundled under a single Consol Job.
 -   **Database Mapping:** Stored in `accounts_invoices` where `type = 'consol_invoice'`. Relational profit sharing parameters are stored in `accounts_invoice_consol_details` mapping `profit_share_ratio` and `partner_agent_id` (linked to `accounts_invoices.id`).
 -   **Eloquent Relationships:**
-    -   `ConsolInvoice` belongsTo `Company` as `agent` via `client_id` (where role is `'agent'`)
+    -   `ConsolInvoice` belongsTo `Partner` as `agent` via `billed_party_id` (`billed_party_type = 'partner'`; `client_id` is NULL)
     -   `ConsolInvoice` belongsTo `Job` via `job_id` (must reference a Master Job where `is_consolidation = true`)
     -   `ConsolInvoice` hasOne `AccountsInvoiceConsolDetail` as `consolDetails` via `invoice_id`
     -   `ConsolInvoice` hasMany `InvoiceItem` via `invoice_id`
@@ -3401,8 +3403,12 @@ To prevent duplicate invoice numbers under concurrent request spikes, billing se
 
 ### 5. Tenant Isolation & Security Boundaries
 
--   **Laravel Global Query Scope:** To enforce strict multi-tenant isolation at the database layer, all models possessing an `agent_id` or `company_id` column automatically apply a Laravel Global Scope. This scope automatically appends a `WHERE agent_id = ?` clause to all SELECT, UPDATE, and DELETE queries, resolved from the authenticated user's branch ID (`auth()->user()->branch_name`).
--   **Escape Hatch (`withoutAgentScope()`):** Background daemons, console workers, webhooks, and supervisor commands running outside of user sessions can bypass this global query scope by calling the static `withoutAgentScope()` method on the model (e.g., `Job::withoutAgentScope()->find($id)`).
+-   **Laravel Global Query Scope (keyed by isolation column):** To enforce strict multi-tenant isolation at the database layer, all models carrying a tenancy column automatically apply a Laravel Global Scope. The scope predicate **branches on which column the table has** — the two are not interchangeable:
+    -   **Branch-scoped tables (`agent_id`)** — e.g. `jobs`, `email_threads`, `accounts_invoices`, `job_documents`: appends `WHERE agent_id = ?`, resolved from the authenticated user's branch (`auth()->user()->branch_name`).
+    -   **Tenant-scoped tables (`company_id`)** — e.g. `customers`, `partners`, `sla_policies`, `gst_ledger_entries`, `unposted_transactions_queue`, `ocr_credit_transactions`: appends `WHERE company_id = ?`, resolved from the branch's parent company (`auth()->user()->branch->company_id`).
+-   **Customers & partners are tenant-wide, shared across all of a tenant's branches.** They are isolated by `company_id`, **not** `agent_id`. The `customers.branch_id` column is an **advisory "managing/proximity branch"** for routing and sales assignment — it is **not** an isolation boundary, so any branch of the tenant can transact with any of the tenant's customers/partners. (If a tenant later needs hard per-branch client walls, that becomes an explicit product feature, not the default.)
+-   **Cross-tenant referential integrity (application-enforced):** because a job's branch (`jobs.agent_id` → company) and its parties (`jobs.client_id`, `job_entities.party_id`, `accounts_invoices.billed_party_id`, voucher `vendor_id`) are not composite-keyed to the same tenant at the DB level, a `FormRequest`/service guard **must** assert that every referenced customer/partner shares the acting user's `company_id` before persisting. The cross-tenant security tests below cover this.
+-   **Escape Hatch (`withoutTenantScope()`):** Background daemons, console workers, webhooks, and supervisor commands running outside of user sessions can bypass the global scope (agent- or company-keyed) by calling the static `withoutTenantScope()` method on the model (e.g., `Job::withoutTenantScope()->find($id)`).
 -   **Active Portal Scope (Non-Global Query Scope):** To isolate operational views between Air and Sea, the system applies a manual query scope `forActivePortal()` that filters by `transport_mode`. Unlike the security-critical `agent_id` global scope, this active portal scope is not global and must be explicitly chained by the developer in the controller/handler level to allow unified cross-mode operations.
 -   **Automated Security Boundary Testing:** The automated test suite includes dedicated security tests that assert boundary isolation:
     -   *Cross-Tenant Read/Write Tests:* Authenticates as a user of Agent A and attempts to fetch or edit records belonging to Agent B, asserting a `403 Forbidden` or `404 Not Found` response.

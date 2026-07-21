@@ -1389,9 +1389,9 @@
                                                                             </div>
                                                                         </template>
                                                                         <b-form-input style="width: 315px" id="input-horizontal" class="form-control"
-                                                                            v-model="form.also_notify_address.also_name"
-                                                                            :class="{ 'is-invalid': form.errors.has('also_name') }"></b-form-input>
-                                                                        <has-error :form="form" field="also_name"></has-error>
+                                                                            v-model="form.also_notify_address.also_name_2"
+                                                                            :class="{ 'is-invalid': form.errors.has('also_name_2') }"></b-form-input>
+                                                                        <has-error :form="form" field="also_name_2"></has-error>
                                                                     </b-form-group>
                                                                     <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                                                         content-cols-lg="auto" label-for="input-horizontal"
@@ -2136,6 +2136,7 @@ export default {
                 },
                 also_notify_address: {
                     also_name: '',
+                    also_name_2: '',
                     also_address: '',
                     also_address_line_2: '',
                     also_city: '',

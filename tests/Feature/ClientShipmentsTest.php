@@ -28,9 +28,10 @@ class ClientShipmentsTest extends TestCase
         // Clean up test records
         SuperAdmin::where('email', 'testadmin@example.com')->delete();
         Company::where('name', 'Acme Test Logistics')->delete();
-        AirwayBills::where('id', '11122223333')->delete();
-        ConsignmentData::where('awb_id', '11122223333')->delete();
-        HousewayBills::where('id', 'HAWB-TEST-01')->delete();
+        AirwayBills::whereIn('id', ['11122223333', '11122223334', '11122223335', '11122223336'])->delete();
+        ConsignmentData::whereIn('awb_id', ['11122223333', '11122223334', '11122223335', '11122223336'])->delete();
+        HousewayBills::whereIn('id', ['HAWB-TEST-01', 'HAWB-TEST-02'])->delete();
+        \App\StatusReponse::whereIn('business_id', ['111-22223334', '111-22223335', '111-22223336'])->delete();
     }
 
     public function test_superadmin_can_view_shipments_per_client()

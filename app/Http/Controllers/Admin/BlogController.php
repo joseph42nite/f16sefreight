@@ -44,6 +44,9 @@ class BlogController extends Controller
             ], 404);
         }
 
+        // Increment view count
+        $blog->increment('views_count');
+
         return response()->json([
             'success' => true,
             'data' => $blog

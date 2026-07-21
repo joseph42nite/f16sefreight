@@ -1006,7 +1006,7 @@ var render = function render() {
           }
         }, [_c("i", {
           staticClass: "fas fa-check-circle mr-1 text-success"
-        }), _vm._v(" FMA\n            ")]), _vm._v(" "), data.item.fma_reason && data.item.fma_reason.toLowerCase().includes("reject") ? _c("b-badge", {
+        }), _vm._v(" " + _vm._s(data.item.latest_status || "FMA") + "\n            ")]), _vm._v(" "), data.item.fma_reason && data.item.fma_reason.toLowerCase().includes("reject") ? _c("b-badge", {
           directives: [{
             name: "b-tooltip",
             rawName: "v-b-tooltip.hover",
@@ -1249,7 +1249,7 @@ var render = function render() {
       }
     }, [_c("i", {
       staticClass: "fas fa-check-circle mr-1 text-success"
-    }), _vm._v(" FMA\n                    ")]), _vm._v(" "), hawb.fma_reason && hawb.fma_reason.toLowerCase().includes("reject") ? _c("b-badge", {
+    }), _vm._v(" " + _vm._s(hawb.latest_status || "FMA") + "\n                    ")]), _vm._v(" "), hawb.fma_reason && hawb.fma_reason.toLowerCase().includes("reject") ? _c("b-badge", {
       directives: [{
         name: "b-tooltip",
         rawName: "v-b-tooltip.hover",

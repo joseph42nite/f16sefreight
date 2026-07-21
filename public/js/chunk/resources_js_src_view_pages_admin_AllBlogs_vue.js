@@ -31,6 +31,9 @@ __webpack_require__.r(__webpack_exports__);
         label: "Content / Title",
         key: "title"
       }, {
+        label: "Views",
+        key: "views_count"
+      }, {
         label: "Status",
         key: "status"
       }, {
@@ -233,6 +236,18 @@ var render = function render() {
             variant: "light-primary"
           }
         }, [_vm._v(_vm._s(data.item.category))]), _vm._v(" "), _c("span", [_vm._v(_vm._s(data.item.read_time) + " read")])], 1)])];
+      }
+    }, {
+      key: "cell(views_count)",
+      fn: function fn(data) {
+        return [_c("b-badge", {
+          staticClass: "font-weight-bold py-2 px-3",
+          attrs: {
+            variant: "light-info"
+          }
+        }, [_c("i", {
+          staticClass: "fas fa-eye mr-1 text-info"
+        }), _vm._v(" " + _vm._s(data.item.views_count || 0) + "\n                    ")])];
       }
     }, {
       key: "cell(status)",

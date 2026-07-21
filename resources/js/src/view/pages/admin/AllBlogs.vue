@@ -56,6 +56,12 @@
                         </div>
                     </template>
 
+                    <template #cell(views_count)="data">
+                        <b-badge variant="light-info" class="font-weight-bold py-2 px-3">
+                            <i class="fas fa-eye mr-1 text-info"></i> {{ data.item.views_count || 0 }}
+                        </b-badge>
+                    </template>
+
                     <template #cell(status)="data">
                         <b-badge :variant="data.item.published_at ? 'light-success' : 'light-warning'">
                             {{ data.item.published_at ? 'Published' : 'Draft' }}
@@ -103,6 +109,7 @@ export default {
             fields: [
                 { label: "Cover", key: "image", thClass: "pl-4", tdClass: "pl-4" },
                 { label: "Content / Title", key: "title" },
+                { label: "Views", key: "views_count" },
                 { label: "Status", key: "status" },
                 { label: "Published Date", key: "date" },
                 { label: "Actions", key: "action", tdClass: "text-right", thClass: "text-right pr-4" },

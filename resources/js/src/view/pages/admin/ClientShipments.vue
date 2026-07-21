@@ -263,7 +263,7 @@
               </b-button>
             </div>
 
-            <!-- FMA (Shown when fna_received is false) -->
+            <!-- FMA / Processed Message (Shown when fna_received is false) -->
             <div v-else class="d-inline-flex align-items-center">
               <b-badge 
                 variant="light-success" 
@@ -271,7 +271,7 @@
                 v-b-tooltip.hover 
                 :title="data.item.fma_reason || 'Approved or accepted by airline'"
               >
-                <i class="fas fa-check-circle mr-1 text-success"></i> FMA
+                <i class="fas fa-check-circle mr-1 text-success"></i> {{ data.item.latest_status || 'FMA' }}
               </b-badge>
 
               <!-- Conditionally show "Rejected" next to FMA in red if the message indicates rejection -->
@@ -406,7 +406,7 @@
                       </b-button>
                     </div>
 
-                    <!-- FMA (Shown when fna_received is false) -->
+                    <!-- FMA / Processed Message (Shown when fna_received is false) -->
                     <div v-else class="d-inline-flex align-items-center justify-content-center">
                       <b-badge 
                         variant="light-success" 
@@ -414,7 +414,7 @@
                         v-b-tooltip.hover 
                         :title="hawb.fma_reason || 'Approved or accepted by airline'"
                       >
-                        <i class="fas fa-check-circle mr-1 text-success"></i> FMA
+                        <i class="fas fa-check-circle mr-1 text-success"></i> {{ hawb.latest_status || 'FMA' }}
                       </b-badge>
 
                       <!-- Conditionally show "Rejected" next to FMA in red if the message indicates rejection -->

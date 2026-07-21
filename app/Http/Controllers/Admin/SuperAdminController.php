@@ -192,9 +192,18 @@ class SuperAdminController extends Controller
             // Only mark as FNA if the LATEST response is Rejected
             $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
             $awb->fna_received = $isFna;
-            $awb->fna_reason = $isFna ? $latestResponse->reason : null;
-            $awb->fma_reason = (!$isFna && $latestResponse) ? $latestResponse->reason : null;
-            $awb->latest_status = $latestResponse ? $latestResponse->business_status_code : 'FMA';
+            $awb->fna_reason = $isFna ? ($latestResponse->reason ?: 'Rejection message received') : null;
+            
+            if (!$isFna && $latestResponse) {
+                $statusLabel = $latestResponse->condition_code ?: ($latestResponse->business_status_code ?: 'FMA');
+                $awb->fma_reason = $latestResponse->reason 
+                    ? $latestResponse->reason 
+                    : ($latestResponse->business_name ? "{$statusLabel} - {$latestResponse->business_name}" : "Status: {$statusLabel}");
+                $awb->latest_status = $statusLabel;
+            } else {
+                $awb->fma_reason = null;
+                $awb->latest_status = $latestResponse ? ($latestResponse->condition_code ?: $latestResponse->business_status_code) : 'FMA';
+            }
         });
 
         $responseData = [
@@ -260,9 +269,18 @@ class SuperAdminController extends Controller
                 $latestResponse = $statusResponses->get($hawb->id);
                 $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
                 $hawb->fna_received = $isFna;
-                $hawb->fna_reason = $isFna ? $latestResponse->reason : null;
-                $hawb->latest_status = $latestResponse ? $latestResponse->business_status_code : 'FMA';
-                $hawb->fma_reason = (!$isFna && $latestResponse) ? $latestResponse->reason : null;
+                $hawb->fna_reason = $isFna ? ($latestResponse->reason ?: 'Rejection message received') : null;
+
+                if (!$isFna && $latestResponse) {
+                    $statusLabel = $latestResponse->condition_code ?: ($latestResponse->business_status_code ?: 'FMA');
+                    $hawb->fma_reason = $latestResponse->reason 
+                        ? $latestResponse->reason 
+                        : ($latestResponse->business_name ? "{$statusLabel} - {$latestResponse->business_name}" : "Status: {$statusLabel}");
+                    $hawb->latest_status = $statusLabel;
+                } else {
+                    $hawb->fma_reason = null;
+                    $hawb->latest_status = $latestResponse ? ($latestResponse->condition_code ?: $latestResponse->business_status_code) : 'FMA';
+                }
             });
 
             return response()->json($houseWayBills);

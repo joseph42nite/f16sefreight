@@ -96,7 +96,7 @@ For production and staging deployments, an independent backup helper container r
   credit_limit      | DECIMAL(15,2)  |     | (Maximum allowed accounts receivable outstanding balance)
   default_port_id   | BIGINT         | FK  | ◄── ports.id (Preferred destination port)
   branch_id         | BIGINT         | FK  | ◄── agents_info.id (Auto-resolved proximity branch)
-  sales_rep_id      | BIGINT         | FK  | ◄── users.id (Command tier assigned sales rep)
+  sales_rep_id      | BIGINT         | FK  | ◄── users.id (Assigned account manager; auto-set on onboarding. Drives the Command-tier client-book sales view; ignored by the Tactical branch-level view)
   created_at        | TIMESTAMP      |     |
   updated_at        | TIMESTAMP      |     |
 ```

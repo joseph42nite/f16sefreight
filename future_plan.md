@@ -56,6 +56,7 @@ The step-by-step roadmap for upgrading the F16s platform into an **inbox-driven 
     -   [Database Views for Analytics](#database-views-for-analytics)
 -   [🎖️ Subscription Tier Feature Gates](#subscription-tier-feature-gates)
     -   [Tier definitions:](#tier-definitions)
+    -   [🎯 Tier Feature Matrix (Authoritative Gate Reference)](#tier-feature-matrix-authoritative-gate-reference)
     -   [Implementation Strategy:](#implementation-strategy)
 -   [🌲 Segment A: Component & Function Breakdown](#segment-a-component-function-breakdown)
     -   [Phase 1: Document Processing, Database & AI Ingestion](#phase-1-document-processing-database-ai-ingestion)
@@ -580,8 +581,29 @@ To monetize the platform and segregate capabilities based on the customer's sele
 ### Tier definitions:
 
 -   **Tier 1 (`core`):** Access to local coordinate-based PDF extraction (`pdfplumber` templates). No AI parsing, no email integrations, and no automated financials.
--   **Tier 2 (`tactical`):** Access to AI-powered unstructured parsing (Gemini/PyMuPDF) via the upload button + Unified Gmail/Outlook email sync, automated operational workflows, and basic analytics widgets.
--   **Tier 3 (`command`):** Access to all Tier 2 features + accounts tracking, bank statement reconciliation ledger, structured analytical data, and Director/Boss dashboards.
+-   **Tier 2 (`tactical`):** Access to AI-powered unstructured parsing (Gemini/PyMuPDF) via the upload button + Unified Gmail/Outlook email sync, automated operational workflows, and **branch-level** analytics (aggregate performance of the whole branch — no per-client attribution, no money).
+-   **Tier 3 (`command`):** All Tier 2 features + **client-level** intelligence (per-client performance, movement, outstanding, credit, collections) + accounts tracking, bank/CASS reconciliation ledger, structured analytical data, and Director/Boss dashboards.
+
+### 🎯 Tier Feature Matrix (Authoritative Gate Reference)
+
+This matrix is the **single source of truth** for what each tier unlocks. The `CheckCompanyTier` middleware and the Vue route guards implement against this table; keep inline gating comments in sync with it.
+
+| Capability | `core` | `tactical` | `command` |
+|---|:---:|:---:|:---:|
+| Coordinate-based PDF extraction (`pdfplumber` templates) | ✅ | ✅ | ✅ |
+| AI unstructured parsing (PyMuPDF + Gemma) & vision OCR (Gemini) | ❌ | ✅ | ✅ |
+| Unified Gmail/Outlook inbox sync & triage | ❌ | ✅ | ✅ |
+| Operational workflows (jobs, Kanban, assignment, OLI) | ❌ | ✅ | ✅ |
+| Cancellation / re-initiation & audit trail | ❌ | ✅ | ✅ |
+| **Sales view — branch performance** (wins/losses, shipment counts, country/lane movement from AWB, per-staff job load) | ❌ | ✅ | ✅ |
+| **Sales view — client book** (per-client performance & movement, scoped by `sales_rep_id = me`) | ❌ | ❌ | ✅ |
+| **Outstanding receivables, credit exposure & collections** | ❌ | ❌ | ✅ |
+| Automated financials (invoices, vouchers, GST, double-entry ledger) | ❌ | ❌ | ✅ |
+| Bank (Plaid/Setu) & IATA CASS reconciliation | ❌ | ❌ | ✅ |
+| Director / Boss executive dashboards | ❌ | ❌ | ✅ |
+| Structured analytical data & exports | ❌ | Basic | ✅ Full |
+
+> **The drastic line (what drives the upgrade):** Tactical answers *"how is my branch doing?"* — aggregate wins, losses, volume, and where cargo is moving. **Command answers *"how is each of MY clients doing, and who owes me money?"*** — the per-client performance, movement, outstanding balances, and credit exposure that let a sales rep actually manage and grow (and collect on) their book of business. You cannot see a single client's revenue, margin, or outstanding balance until Command.
 
 ### Implementation Strategy:
 
@@ -1122,12 +1144,33 @@ _Goal: Provide executive analytics, branch target monitoring, and AI business an
         $$\text{Conversion Rate} = \frac{\text{Count of } \mathtt{execution\_job\_no}}{\text{Count of } \mathtt{enquiry\_no}} \times 100\%$$
         Calculated across daily, monthly, and yearly intervals, and partitioned separately for Focus Air and Focus Sea.
 
-### 4.2 Sales Dashboard & Static Insights
+### 4.2 Sales Dashboard (`SalesDashboard.vue`) — Tier-Differentiated
 
--   **Sales Representative Visibility (Branch-Level):** Sales representatives have **branch-level** visibility across the operational workspace. They can view customer files, email threads, pricing queries, and dashboard metrics for all clients within the branch, ensuring seamless coverage and collaboration.
--   **Account Funnel Tracker:** Sales staff see the core funnel metrics (Jobs Raised, Replied, Pending/Delayed, Converted) at the branch level, allowing them to track overall branch targets and volume performance.
--   **On-Demand Customer Profile:** An operational widget summarizing the customer's lane and volume metrics compiled from database logs.
--   **Static Lane Analyzer:** Weekly scheduled task that aggregates customer lane metrics and outputs static recommendations (e.g. "Frankfurt lane volume exceeds 5 standard shipments this week. Consider proposing a direct tariff.").
+The sales experience is deliberately split so the upgrade from Tactical → Command is dramatic: **Tactical shows the branch; Command shows *your clients and their money.*** See the [Tier Feature Matrix](#tier-feature-matrix-authoritative-gate-reference).
+
+#### A. Tactical Tier — Branch Performance View (aggregate, no client attribution, no money)
+
+Sales staff on Tactical get a **bird's-eye view of the whole branch** — no per-client drill-down, no financials. What they see:
+
+-   **Branch Scoreboard:** total **Wins vs Losses** and **Conversion Rate %** for the branch (from the DSR/MSR/YSR funnel), plus loss breakdown by `lost_reason` — all aggregated, not attributed to any one client.
+-   **Shipment Volume:** count of enquiries and confirmed shipments (jobs) for the branch, split by Air/Sea and by period (day/month/year).
+-   **Per-Staff Job Load:** how many jobs are assigned to each operator/pricing staff and their status distribution — visibility into who is carrying what across the branch.
+-   **Country / Lane Movement:** where the branch's cargo is moving, derived from **AWB routing data** (`air_shipment_details` / `sea_shipment_details` origin/destination `pol_code`/`pod_code`/LOCODEs) — e.g. "Branch moved 42 shipments to DE, 30 to AE, 18 to US this month." Aggregate lanes only, not tied to specific clients.
+-   **Static Lane Analyzer:** weekly scheduled task outputting branch-level lane recommendations (e.g. "Frankfurt lane volume exceeds 5 standard shipments this week — consider a direct tariff.").
+
+> Tactical answers *"how is my branch performing and where is our cargo going?"* — but a sales rep **cannot** see which client drives that volume, any client's revenue/margin, or who owes money. That gap is the upsell.
+
+#### B. Command Tier — Client Book & Financial Intelligence (per-client, scoped by `sales_rep_id = me`)
+
+Command unlocks the account-manager cockpit — everything from Tactical **plus** a client-centric, money-aware layer scoped to the rep's own book (`customers.sales_rep_id = me`):
+
+-   **My Accounts Grid:** one row per assigned client — active enquiries/jobs, conversion %, **revenue (MTD/YTD)** and **gross margin** (sell `accounts_invoices` − buy `accounts_purchase_vouchers`), last-activity/dormancy flag.
+-   **Per-Client Movement & Lanes:** each client's shipment history and lane mix (from their AWBs), so the rep sees exactly what and where each account is shipping — the granular version of the Tactical branch lanes.
+-   **Outstanding, Credit & Collections:** per-client outstanding receivables (aged 0–30 / 31–60 / 60+), overdue highlights, and **credit exposure** vs `credit_limit`. Collection responsibility is assigned to the managing sales rep.
+-   **Client Win/Loss Intelligence:** per-client lost enquiries with reasons — `rates_high` (renegotiate) and `delay_in_response` (internal SLA failure to escalate) — so the rep intervenes while the account is still warm.
+-   **AI Account Tools:** on-demand per-customer summary + weekly AI opportunity/reactivation/churn-risk feed, scoped to their book.
+
+> Command answers *"how is **each of my clients** doing, what are they shipping, and who owes me money?"* — the per-client revenue, margin, movement, outstanding, and credit that let a rep manage, grow, and collect on their book.
 
 ### 4.3 Boss / Director Dashboard
 
@@ -3189,6 +3232,8 @@ To translate raw database tables and backend formulas into actionable operationa
 
 #### A. The Sales Team Cockpit (Customer & Revenue Optimization)
 
+> **Tier note:** this client-and-revenue cockpit is the **Command-tier** sales experience (per-client, scoped by `sales_rep_id = me`, with financials). On **Tactical**, sales staff instead get the **branch-level aggregate** view described in [Section 4.2.A](#42-sales-dashboard-salesdashboardvue--tier-differentiated) — wins/losses, shipment counts, and country/lane movement for the whole branch, with no per-client attribution or money. See the [Tier Feature Matrix](#tier-feature-matrix-authoritative-gate-reference).
+
 Sales representatives use the cockpit to track customer account health, maximize booking conversions, and catch margin leaks:
 
 -   **Sales Representative Performance Attribution [Command Tier Only]:**
@@ -3201,7 +3246,7 @@ Sales representatives use the cockpit to track customer account health, maximize
 -   **Client Margin & Wallet Share Leaderboards:** Renders client accounts sorted by cumulative gross margin (Sales Revenue - Cost of Sales) alongside tonnage volumes. This exposes:
     -   _High-Volume, Low-Margin Accounts:_ Targets for rate renegotiations.
     -   _Low-Volume, High-Margin Accounts:_ High-potential candidates for active sales expansion.
--   **Proactive Credit Health Monitor:** Compares active client accounts receivable balances against their set credit limits (`companies.credit_limit`). Alerts sales reps when a client reaches 80% of their limit, enabling proactive collections follow-ups before the system freezes their pending delivery orders.
+-   **Proactive Credit Health Monitor:** Compares active client accounts receivable balances against their set credit limits (`customers.credit_limit`). Alerts sales reps when a client reaches 80% of their limit, enabling proactive collections follow-ups before the system freezes their pending delivery orders.
 -   **AI-Generated Lane Consolidation Leads:** Feeds a list of recurring LCL/loose shipments on identical lanes (e.g. weekly cargo to identical ports/airports) that can be merged into a single consolidated FCL container or ULD, boosting margin captures by up to 35-40%.
 
 #### B. The Admin & Director Cockpit (Branch & Workflow Optimization)

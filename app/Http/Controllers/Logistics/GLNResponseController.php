@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Logistics;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use App\StatusReponse;
 use App\AirwayBills;
 use Mail;
@@ -68,7 +69,9 @@ class GLNResponseController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            dd($e->getMessage());
+            Log::error('GLNResponseController: failed to process GLN response', [
+                'error' => $e->getMessage(),
+            ]);
         }
         // $filePath = storage_path('logs/gln_responses.txt');
         // file_put_contents($filePath, "=================\n" . $xmlContent, FILE_APPEND);

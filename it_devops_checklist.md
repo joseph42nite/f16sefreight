@@ -72,6 +72,22 @@ ALTER TABLE companies ADD COLUMN in_testing_mode TINYINT(1) NULL DEFAULT 0;
 ```
 A migration (`2026_07_20_000001_add_in_testing_mode_to_companies_table.php`) now exists in this repo for fresh/local environments; the live server still needs the manual step above if the column isn't already present.
 
+### Table: `house_way_bills` (HAWB PDF columns)
+`GenerateHawbPdfController` selects `house_way_bills.ho_name / ho_address / ho_city / ho_pincode / ho_state / ho_country` and `as_agreed`, but no migration ever created them — they exist on live (added by hand) so the HAWB PDF routes work there, but were missing locally, which made those routes fail in dev/test. **Run the check query first**; only run the ALTER for columns that are actually missing:
+```sql
+SHOW COLUMNS FROM house_way_bills WHERE Field IN ('ho_name','ho_address','ho_city','ho_pincode','ho_state','ho_country','as_agreed');
+
+ALTER TABLE house_way_bills
+  ADD COLUMN IF NOT EXISTS ho_name VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS ho_address VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS ho_city VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS ho_pincode VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS ho_state VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS ho_country VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS as_agreed TINYINT(1) NULL;
+```
+A migration (`2026_07_21_000000_add_ho_and_as_agreed_columns_to_house_way_bills_table.php`) now exists for fresh/local environments; the live server still needs the manual step above if the columns aren't already present.
+
 ---
 
 ## 3. Post-Upgrade Verification

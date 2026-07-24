@@ -255,6 +255,8 @@ For production and staging deployments, an independent backup helper container r
   lost_reason            | VARCHAR(30)  |     | (rates_high, delay_in_response, client_cancelled, capacity_issue, other) — pre-conversion enquiry losses only
   lost_reason_custom     | VARCHAR(255) |     |
   lost_at                | TIMESTAMP    |     |
+  enquiry_stale_nudged_at| TIMESTAMP    |     | (Last time pricing was nudged to mark a stale, unconfirmed enquiry as Lost; set by the inactivity daemon to debounce repeat nudges, cleared on any new client reply)
+  reopened_at            | TIMESTAMP    |     | (Set when a Lost enquiry is revived by a trailing client mail — status returns to active and lost_reason/lost_at are cleared. Reopen applies to Lost only; a Cancelled shipment is never reopened — it must be re-initiated as a new job number)
   cancellation_reason    | VARCHAR(30)  |     | (customs_hold_unresolved, client_cancelled, cargo_not_ready, documentation_incomplete, payment_or_credit_hold, carrier_space_lost, cargo_damaged, prohibited_regulatory, rate_expired_requote, duplicate, other) — post-conversion aborts only
   cancellation_reason_custom | VARCHAR(255) | | (Free text when cancellation_reason = 'other')
   cancelled_at           | TIMESTAMP    |     | (When status set to Cancelled)
@@ -972,7 +974,7 @@ For production and staging deployments, an independent backup helper container r
 ```
 
 ### 45. `notifications` (PK: `id`)
-*Note: Laravel `DatabaseNotification`-compatible store powering the bell/notification center — e.g. reassignment-approval requests, assignment changes, credit alerts. Pushed live via Soketi.*
+*Note: Laravel `DatabaseNotification`-compatible store powering the bell/notification center — e.g. reassignment-approval requests, assignment changes, credit alerts. Pushed live via Soketi. Acceptance/reassignment-approval requests carry an elevated `priority` so they pin to the **top** of the bell above chronological alerts; the bell orders by `priority DESC, created_at DESC`. When the originating handover is **withdrawn** (the requesting operator reverts `pending_operator_id` back to himself) or otherwise resolved, the matching unread reassignment notification is **hard-deleted** so it auto-dissolves from the pricing owner's bell.*
 
 ```text
   Column                 | Type         | Key | Connection Links
@@ -983,6 +985,7 @@ For production and staging deployments, an independent backup helper container r
   notifiable_type        | VARCHAR(100) |     | (Polymorphic morph — usually 'App\User')
   notifiable_id          | BIGINT       |     | (Recipient; when notifiable_type = 'App\User' → users.id)
   data                   | JSON         |     | (Payload: job_id, from_operator_id, to_operator_id, requested_by, etc.)
+  priority               | SMALLINT     |     | (Bell sort weight, default 0; elevated (e.g. 100) pins reassignment-approval requests to the top. Bell orders by priority DESC, created_at DESC)
   read_at                | TIMESTAMP    |     | (Null = unread; drives the bell unread badge)
   created_at             | TIMESTAMP    |     |
   updated_at             | TIMESTAMP    |     |
@@ -1151,6 +1154,8 @@ CREATE TABLE jobs (
     lost_reason VARCHAR(30) NULL, -- pre-conversion enquiry losses (rates_high, delay_in_response, client_cancelled, capacity_issue, other)
     lost_reason_custom VARCHAR(255) NULL,
     lost_at TIMESTAMP NULL,
+    enquiry_stale_nudged_at TIMESTAMP NULL, -- Last inactivity nudge to pricing to mark a stale unconfirmed enquiry Lost (debounce; cleared on new client reply)
+    reopened_at TIMESTAMP NULL, -- Lost enquiry revived by a trailing client mail (status back to active, lost_reason/lost_at cleared). Lost-only; Cancelled is re-initiated as a new job instead
     cancellation_reason VARCHAR(30) NULL, -- post-conversion aborts (customs_hold_unresolved, client_cancelled, cargo_not_ready, documentation_incomplete, payment_or_credit_hold, carrier_space_lost, cargo_damaged, prohibited_regulatory, rate_expired_requote, duplicate, other)
     cancellation_reason_custom VARCHAR(255) NULL,
     cancelled_at TIMESTAMP NULL,
@@ -1890,6 +1895,7 @@ CREATE TABLE notifications (
     notifiable_type VARCHAR(100) NOT NULL,           -- Polymorphic morph (usually 'App\User')
     notifiable_id BIGINT NOT NULL,                   -- Recipient id
     data JSON NOT NULL,                              -- Payload (job_id, from/to operator, requested_by, ...)
+    priority SMALLINT NOT NULL DEFAULT 0,            -- Bell sort weight; elevated pins reassignment-approval requests to top (order by priority DESC, created_at DESC)
     read_at TIMESTAMP NULL,                          -- Null = unread
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1919,8 +1925,8 @@ CREATE INDEX idx_jobs_agent_mode_status ON jobs (agent_id, transport_mode, statu
 -- 2a. Operator Load Index (OLI) scan — pricing staff load-balancing by operator + clearance date
 CREATE INDEX idx_jobs_operator_clearance ON jobs (agent_id, operator_id, status, planned_clearance_date);
 
--- 2b. Bell / notification center unread lookup
-CREATE INDEX idx_notifications_recipient_unread ON notifications (notifiable_type, notifiable_id, read_at);
+-- 2b. Bell / notification center unread lookup + priority-pinned ordering (priority DESC, created_at DESC)
+CREATE INDEX idx_notifications_recipient_unread ON notifications (notifiable_type, notifiable_id, read_at, priority, created_at);
 
 -- 3. General Ledger Scanning composite index
 CREATE INDEX idx_ledger_agent_date_account ON accounts_ledger_entries (agent_id, posting_date, chart_of_account_id);

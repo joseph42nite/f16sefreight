@@ -81,7 +81,7 @@ class GLNResponseController extends Controller
     public function check()
     {
         Mail::raw('Test Mail Body', function ($message) {
-            $message->to('dimpybca@gmail.com')
+            $message->to('dhiraj.thakur@zed.pe')
                 ->subject('Test Subject');
         });
     }

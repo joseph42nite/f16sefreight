@@ -90,20 +90,20 @@ var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
   return _c("div", {
-    staticClass: "mt-10 p-5"
+    staticClass: "py-5"
   }, [_c("div", {
-    staticClass: "d-flex justify-content-between align-items-center mb-8"
+    staticClass: "d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-6"
   }, [_c("h2", {
-    staticClass: "font-weight-bolder text-dark"
+    staticClass: "font-weight-bolder text-dark mb-3 mb-md-0"
   }, [_vm._v("System OCR Templates")]), _vm._v(" "), _c("router-link", {
-    staticClass: "btn btn-primary font-weight-bold px-6",
+    staticClass: "btn btn-primary font-weight-bold px-6 d-flex align-items-center justify-content-center",
     attrs: {
       to: "/superadmin/edit-template"
     }
   }, [_c("i", {
     staticClass: "la la-plus mr-2"
   }), _vm._v(" Create New Template\n        ")])], 1), _vm._v(" "), _c("div", {
-    staticClass: "bg-white p-8 rounded shadow-sm border"
+    staticClass: "bg-white p-4 p-md-8 rounded shadow-sm border"
   }, [_c("div", {
     staticClass: "table-responsive"
   }, [_c("table", {

@@ -5,8 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\SuperAdmin;
+use App\AirwayBills;
+use App\HousewayBills;
+use App\StatusReponse;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
 class SuperAdminController extends Controller
 {
     public function register(Request $request){
@@ -33,13 +38,6 @@ class SuperAdminController extends Controller
         auth()->guard('superAdmin-api')->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'token' => $token,
-            'token_type' =>  'bearer',
-        ]);
-    }
 
     public function update(Request $request){
         $id=auth()->guard('superAdmin-api')->user()->id;
@@ -47,13 +45,9 @@ class SuperAdminController extends Controller
         return json_encode(['status'=>true,'message'=>"Data updated successful"]);
     }
     public function update_password(Request $request){
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'password' => ['required', 'confirmed','min:4'],
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
         $id=auth()->guard('superAdmin-api')->user()->id;
         SuperAdmin::where('id', $id)->update(['password'=>Hash::make($request->password)]);
         return json_encode(['status'=>true,'message'=>"Password updated successful"]);
@@ -61,7 +55,7 @@ class SuperAdminController extends Controller
 
     public function getClientShipments(Request $request)
     {
-        $query = \App\AirwayBills::query();
+        $query = AirwayBills::query();
 
         if ($request->filled('company_id')) {
             $query->whereHas('agentsInfo', function ($q) use ($request) {
@@ -121,14 +115,14 @@ class SuperAdminController extends Controller
 
         // Database-level filtering for FNA Status
         if ($request->filled('fna_status')) {
-            $driver = \Illuminate\Support\Facades\DB::getDriverName();
-            $concatSql = $driver === 'sqlite' 
-                ? "awb_code || '-' || awb_no" 
+            $driver = DB::getDriverName();
+            $concatSql = $driver === 'sqlite'
+                ? "awb_code || '-' || awb_no"
                 : "CONCAT(awb_code, '-', awb_no)";
 
             if ($request->fna_status === 'yes') {
                 $query->whereExists(function ($q) use ($concatSql) {
-                    $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                    $q->select(DB::raw(1))
                       ->from('status_response')
                       ->whereRaw("status_response.business_id = {$concatSql}")
                       ->where('status_response.business_status_code', 'Rejected')
@@ -137,11 +131,11 @@ class SuperAdminController extends Controller
             } elseif ($request->fna_status === 'no') {
                 $query->where(function ($outer) use ($concatSql) {
                     $outer->whereNotExists(function ($q) use ($concatSql) {
-                        $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                        $q->select(DB::raw(1))
                           ->from('status_response')
                           ->whereRaw("status_response.business_id = {$concatSql}");
                     })->orWhereExists(function ($q) use ($concatSql) {
-                        $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                        $q->select(DB::raw(1))
                           ->from('status_response')
                           ->whereRaw("status_response.business_id = {$concatSql}")
                           ->where('status_response.business_status_code', '!=', 'Rejected')
@@ -155,7 +149,7 @@ class SuperAdminController extends Controller
         $totalAwb = $query->count();
         
         $totalHawbQuery = (clone $query)->withCount('houseWayBills');
-        $totalHawb = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$totalHawbQuery->toSql()}) as sub"))
+        $totalHawb = DB::table(DB::raw("({$totalHawbQuery->toSql()}) as sub"))
             ->mergeBindings($totalHawbQuery->getQuery())
             ->sum('house_way_bills_count');
 
@@ -174,37 +168,8 @@ class SuperAdminController extends Controller
             $shipments = collect($paginator->items());
         }
 
-        // Fetch status responses only for the retrieved shipments list
-        $awbIdsWithHyphen = $shipments->map(function ($awb) {
-            return $awb->awb_code . '-' . $awb->awb_no;
-        })->toArray();
-
-        // Fetch the latest status response per AWB (by highest id)
-        $allResponses = \App\StatusReponse::whereIn('business_id', $awbIdsWithHyphen)
-            ->orderBy('id', 'desc')
-            ->get();
-        $statusResponses = $allResponses->unique('business_id')->keyBy('business_id');
-
-        // Map status responses details back to models
-        $shipments->each(function ($awb) use ($statusResponses) {
-            $key = $awb->awb_code . '-' . $awb->awb_no;
-            $latestResponse = $statusResponses->get($key);
-            // Only mark as FNA if the LATEST response is Rejected
-            $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
-            $awb->fna_received = $isFna;
-            $awb->fna_reason = $isFna ? ($latestResponse->reason ?: 'Rejection message received') : null;
-            
-            if (!$isFna && $latestResponse) {
-                $statusLabel = $latestResponse->condition_code ?: ($latestResponse->business_status_code ?: 'FMA');
-                $awb->fma_reason = $latestResponse->reason 
-                    ? $latestResponse->reason 
-                    : ($latestResponse->business_name ? "{$statusLabel} - {$latestResponse->business_name}" : "Status: {$statusLabel}");
-                $awb->latest_status = $statusLabel;
-            } else {
-                $awb->fma_reason = null;
-                $awb->latest_status = $latestResponse ? ($latestResponse->condition_code ?: $latestResponse->business_status_code) : 'FMA';
-            }
-        });
+        // Attach the latest FNA/FMA status to each shipment (keyed by AWB code-no)
+        $this->applyStatusResponses($shipments, fn($awb) => $awb->awb_code . '-' . $awb->awb_no);
 
         $responseData = [
             'shipments' => $shipments,
@@ -226,14 +191,12 @@ class SuperAdminController extends Controller
 
     public function getShipmentXml($awb_id)
     {
-        $fileName = "xml-conversion-files/xml_airway_bill_{$awb_id}.xml";
-        if (\Illuminate\Support\Facades\Storage::exists($fileName)) {
-            $content = \Illuminate\Support\Facades\Storage::get($fileName);
-            return response($content, 200)->header('Content-Type', 'application/xml');
+        if ($stored = $this->storedXml("xml-conversion-files/xml_airway_bill_{$awb_id}.xml")) {
+            return $stored;
         }
 
         // Fallback: Generate mockup/simulated XML if it doesn't exist for test purposes
-        $awb = \App\AirwayBills::with(['consignmentData', 'agentsInfo'])->where('id', $awb_id)->first();
+        $awb = AirwayBills::with(['consignmentData', 'agentsInfo'])->find($awb_id);
         if ($awb) {
             $xml = new \SimpleXMLElement('<ShipmentMessage/>');
             $xml->addChild('AwbNumber', $awb->awb_code . '-' . $awb->awb_no);
@@ -243,7 +206,7 @@ class SuperAdminController extends Controller
             $xml->addChild('Weight', $awb->consignmentData->gross_weight ?? 0);
             $xml->addChild('SentAt', $awb->created_at);
             $xml->addChild('Note', 'Simulated XML generated on the fly as file was not found');
-            return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+            return $this->xmlResponse($xml);
         }
 
         return response()->json(['error' => 'XML file not found'], 404);
@@ -252,36 +215,13 @@ class SuperAdminController extends Controller
     public function getMawbHawbs($awb_code, $awb_no)
     {
         try {
-            $houseWayBills = \App\HousewayBills::where('awb_code', $awb_code)
+            $houseWayBills = HousewayBills::where('awb_code', $awb_code)
                 ->where('awb_no', $awb_no)
                 ->with('consignmentData')
                 ->get();
 
-            $hawbIds = $houseWayBills->pluck('id')->toArray();
-            
-            $allResponses = \App\StatusReponse::whereIn('business_id', $hawbIds)
-                ->orderBy('id', 'desc')
-                ->get();
-                
-            $statusResponses = $allResponses->unique('business_id')->keyBy('business_id');
-
-            $houseWayBills->each(function ($hawb) use ($statusResponses) {
-                $latestResponse = $statusResponses->get($hawb->id);
-                $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
-                $hawb->fna_received = $isFna;
-                $hawb->fna_reason = $isFna ? ($latestResponse->reason ?: 'Rejection message received') : null;
-
-                if (!$isFna && $latestResponse) {
-                    $statusLabel = $latestResponse->condition_code ?: ($latestResponse->business_status_code ?: 'FMA');
-                    $hawb->fma_reason = $latestResponse->reason 
-                        ? $latestResponse->reason 
-                        : ($latestResponse->business_name ? "{$statusLabel} - {$latestResponse->business_name}" : "Status: {$statusLabel}");
-                    $hawb->latest_status = $statusLabel;
-                } else {
-                    $hawb->fma_reason = null;
-                    $hawb->latest_status = $latestResponse ? ($latestResponse->condition_code ?: $latestResponse->business_status_code) : 'FMA';
-                }
-            });
+            // Attach the latest FNA/FMA status to each HAWB (keyed by HAWB id)
+            $this->applyStatusResponses($houseWayBills, fn($hawb) => $hawb->id);
 
             return response()->json($houseWayBills);
         } catch (\Exception $e) {
@@ -294,14 +234,12 @@ class SuperAdminController extends Controller
 
     public function getHawbXml($hawb_id)
     {
-        $fileName = "xml-conversion-files/xml_houseway_bill_{$hawb_id}.xml";
-        if (\Illuminate\Support\Facades\Storage::exists($fileName)) {
-            $content = \Illuminate\Support\Facades\Storage::get($fileName);
-            return response($content, 200)->header('Content-Type', 'application/xml');
+        if ($stored = $this->storedXml("xml-conversion-files/xml_houseway_bill_{$hawb_id}.xml")) {
+            return $stored;
         }
 
         // Fallback: Generate mockup/simulated XML if it doesn't exist for test purposes
-        $hawb = \App\HousewayBills::with(['consignmentData'])->where('id', $hawb_id)->first();
+        $hawb = HousewayBills::with(['consignmentData'])->find($hawb_id);
         if ($hawb) {
             $xml = new \SimpleXMLElement('<HouseShipmentMessage/>');
             $xml->addChild('HouseAwbNumber', $hawb->id);
@@ -311,9 +249,61 @@ class SuperAdminController extends Controller
             $xml->addChild('Weight', $hawb->consignmentData->gross_weight ?? 0);
             $xml->addChild('SentAt', $hawb->created_at);
             $xml->addChild('Note', 'Simulated HAWB XML generated on the fly as file was not found');
-            return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+            return $this->xmlResponse($xml);
         }
 
         return response()->json(['error' => 'XML file not found'], 404);
+    }
+
+    /**
+     * Attach fna_received / fna_reason / fma_reason / latest_status to each model
+     * in $items, derived from the latest StatusReponse row. $keyResolver maps a
+     * model to its status_response.business_id (AWB "code-no" or HAWB id).
+     */
+    private function applyStatusResponses($items, callable $keyResolver)
+    {
+        $keys = $items->map($keyResolver)->all();
+
+        $statusResponses = StatusReponse::whereIn('business_id', $keys)
+            ->orderBy('id', 'desc')
+            ->get()
+            ->unique('business_id')
+            ->keyBy('business_id');
+
+        $items->each(function ($item) use ($statusResponses, $keyResolver) {
+            $latestResponse = $statusResponses->get($keyResolver($item));
+            // Only mark as FNA if the LATEST response is Rejected
+            $isFna = $latestResponse && $latestResponse->business_status_code === 'Rejected';
+            $item->fna_received = $isFna;
+            $item->fna_reason = $isFna ? ($latestResponse->reason ?: 'Rejection message received') : null;
+
+            if (!$isFna && $latestResponse) {
+                $statusLabel = $latestResponse->condition_code ?: ($latestResponse->business_status_code ?: 'FMA');
+                $item->fma_reason = $latestResponse->reason
+                    ? $latestResponse->reason
+                    : ($latestResponse->business_name ? "{$statusLabel} - {$latestResponse->business_name}" : "Status: {$statusLabel}");
+                $item->latest_status = $statusLabel;
+            } else {
+                $item->fma_reason = null;
+                $item->latest_status = $latestResponse ? ($latestResponse->condition_code ?: $latestResponse->business_status_code) : 'FMA';
+            }
+        });
+
+        return $items;
+    }
+
+    /** Return the stored XML file as a response, or null when it doesn't exist. */
+    private function storedXml($fileName)
+    {
+        if (Storage::exists($fileName)) {
+            return response(Storage::get($fileName), 200)->header('Content-Type', 'application/xml');
+        }
+        return null;
+    }
+
+    /** Wrap a SimpleXMLElement as an application/xml response. */
+    private function xmlResponse(\SimpleXMLElement $xml)
+    {
+        return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
     }
 }

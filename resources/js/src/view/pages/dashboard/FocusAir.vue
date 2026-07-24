@@ -1,4 +1,3 @@
-<template>
     <!-- <div class="">
         <div class="container-fluid"> -->
         <b-container fluid class="body-color">
@@ -2611,7 +2610,6 @@ export default {
             this.isConsignmentAdded = false;
 
             // Injected existing extraction pipeline
-            console.log('Processing received payload:', response);
             var awb_number = response.awb_number ? response.awb_number.split("-") : ['', ''];
             this.form.first_box.awb_code = awb_number[0] || '';
             this.form.first_box.awb_no = awb_number[1] || '';
@@ -2673,7 +2671,6 @@ export default {
             if (shipper) {
                 const matchedShipper = this.findMatchingAddress(shipper, this.shippers);
                 if (matchedShipper) {
-                    console.log('Auto-matched shipper (90%+ similarity):', matchedShipper.name);
                     this.selectShipper(matchedShipper);
                 } else {
                     this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -2702,7 +2699,6 @@ export default {
             if (consignee) {
                 const matchedConsignee = this.findMatchingAddress(consignee, this.consignees);
                 if (matchedConsignee) {
-                    console.log('Auto-matched consignee (90%+ similarity):', matchedConsignee.name);
                     this.selectConsignee(matchedConsignee);
                 } else {
                     this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -2807,7 +2803,6 @@ export default {
         },
 
         isGeneratePdf(generateButton) {
-            // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
             const errors = [];
         
             // Check first box
@@ -2865,64 +2860,18 @@ export default {
                 }
             }, 2000);
         },
-        // generateAwbPDF() {
-        //     // const itemId = this.$route.params.id;
-        //     const itemId =  this.existingData.id
-        //     console.log("sdfnjbf",itemId);
-        //     const pdfUrl = `/download-awb-pdf/${itemId}`; // Construct the URL for the PDF
-        //     window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
-        // },
-        // generateAwbPDF() {
-        //     if (!this.validateFormFields()) {
-        //         return;
-        //     }
-        //     const itemId = this.$route.params.id;
-        //     console.log("dknfehjf", itemId);
-        //     const pdfUrl = `/download-awb-pdf/${itemId}`;
-        //     console.log("skfnjfer",pdfUrl);
-        //     window.open(pdfUrl, '_blank');
-        // },
         generateAwbPDF(pdf_generate_type) {
-            this.generatePDFAfterSave='';
+            this.generatePDFAfterSave = '';
             if (!this.existingData || !this.existingData.id) {
-                // console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
             window.open(pdfUrl, '_blank');
         },
         handleSaveAndGeneratePDF(pdf_generate_type) {
+            // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
             this.generatePDFAfterSave = pdf_generate_type;
-            const result = this.onSubmit() || Promise.resolve({});
-            result.then(response => {
-                if (response.data && response.data.data && response.data.data.id) {
-                    // this.generateAwbPDF(pdf_generate_type);
-                } else {
-                    console.error('ID is missing in the response data');
-                }
-            }).catch(error => {
-                console.error('Error while saving data:', error);
-            });
-            // try {
-            //     this.showSpinner = true;
-            //     this.pdf_error_msg = ''; // Clear previous errors
-            //     const result = this.onSubmit() || Promise.resolve({});
-            //     result.then(response => {
-            //     if (response.data.error) {
-            //         this.pdf_error_msg = response.data.error;
-            //         this.is_generate_pdf = false;
-            //         console.log("hello");
-            //     } else {
-            //         // Handle successful PDF generation
-            //         window.open(response.data.url, '_blank');
-            //     }
-            // });
-            // } catch (error) {
-            //     this.pdf_error_msg = error.response?.data?.message || 'Failed to generate PDF';
-            //     this.is_generate_pdf = false;
-            // } finally {
-            //     this.showSpinner = false;
-            // }
+            this.onSubmit();
         },
         formatBackendError(msg) {
             if (!msg) return "";
@@ -2992,15 +2941,8 @@ export default {
         converXml(awb_no){
             ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
-                    // console.log(data);
                 });
         },
-        // showModal() {
-        //     this.$refs["my-modal"].show();
-        // },
-        // hideModal() {
-        //     this.$refs["my-modal"].hide();
-        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3082,10 +3024,8 @@ export default {
                 ApiService.get(`/user/get-shipper-address?id=${this.selectedShipper}`)
                 .then( response => {
                     this.form.shipper_address = response.data; 
-                    // console.log('Shipper', response.data);
                 })
                 .catch(error => {
-                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.shipper_address = {
@@ -3102,10 +3042,8 @@ export default {
                 ApiService.get(`/user/get-consignee-address?id=${this.selectedConsignee}`)
                 .then( response => {
                     this.form.consignee_address = response.data; 
-                    // console.log('Consignee', response.data);
                 })
                 .catch(error => {
-                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.consignee_address = {
@@ -3122,10 +3060,8 @@ export default {
                 ApiService.get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`)
                 .then( response => {
                     this.form.also_notify_address = response.data; 
-                    // console.log('Also Notify address', response.data);
                 })
                 .catch(error => {
-                    // console.error('Error fetching Also notify address address:', error);
                 });
             } else {
                 this.form.also_notify_address = {
@@ -3142,11 +3078,9 @@ export default {
             this.main_error_msg='';
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             // Prepare form data for submission - convert display dates to proper format
-            // const preparedFormData = this.prepareFormDataForSubmission();
             
             if (this.mode === 'add') {
                 // Update the existing form with prepared data
-                // Object.assign(this.form, preparedFormData);
                 this.from= { ...this.form };
                 this.form.post(`/user/create-focusair`)
                 .then(response => {
@@ -3178,7 +3112,6 @@ export default {
                     return;
                 }
                 // Update the existing form with prepared data
-                // Object.assign(this.form, preparedFormData);
                 this.from= { ...this.form };
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
@@ -3222,7 +3155,6 @@ export default {
                     this.data_items = response.data;
                 })
                 .catch(error => {
-                    // console.error("Failed to fetch items:", error);
                 })
                 .finally(() => {
                     this.isFetching = false;
@@ -3237,7 +3169,6 @@ export default {
                             ...this.defaultPaymentInfo,
                             ...(this.existingData.payment_info || {})
                         };
-                        // this.setDefaultValues();
                         this.showAWBSection = true;
                         this.awbError = null;
                         this.openForm('update', this.existingData.id);
@@ -3264,7 +3195,6 @@ export default {
                     this.existingData = response.data;
                     this.showAWBSection = true;
                     this.awbError = null;
-                    // this.openForm('update', this.existingData.id);
                 } else {
                     this.existingData = null;
                     this.showAWBSection = false;
@@ -3272,7 +3202,6 @@ export default {
                 }
             })
             .catch((error) => {
-                // console.error("Error fetching AWB:", error.response || error);
                 this.showAWBSection = false;
                 this.awbError = error.response?.status === 404
                     ? "Air Waybill not found."
@@ -3302,7 +3231,6 @@ export default {
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
 
-                    // const specialHandlingCodes = this.form.tableCodes;
                     const specialHandlingCodes = Array.isArray(this.form.tableCodes) ? this.form.tableCodes : [];
 
                     if (specialHandlingCodes.includes("EAW")) {
@@ -3317,7 +3245,6 @@ export default {
 
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
                     
-                    // this.form.payment_info = this.existingData.payment_info || {};
                     this.form.payment_info = {
                         ...this.defaultPaymentInfo,
                         ...(this.existingData.payment_info || {})
@@ -3325,21 +3252,7 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
-                    //     ? this.existingData.consignment_data
-                    //     : [this.existingData.consignment_data];
-                   const entry = this.existingData.consignment_data;
-                    // const parsedEntry = {
-                    //     ...entry,
-                    //     hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
-                    //     itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
-                    //     uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
-                    //     // hsCodes: entry.hs_code && entry.hs_code !== '' ? JSON.parse(entry.hs_code) : [],
-                    //     // itemss: entry.pieces_info && entry.pieces_info !== '' ? JSON.parse(entry.pieces_info) : [],
-                    //     // uld_infos: entry.uld_info && entry.uld_info !== '' ? JSON.parse(entry.uld_info) : []
-
-                    // };
-                    // this.form.entries = [parsedEntry]; 
+                    const entry = this.existingData.consignment_data;
                     if (entry) {
                         const parsedEntry = {
                             ...entry,
@@ -3348,23 +3261,17 @@ export default {
                             uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
                         };
                         this.form.entries = [parsedEntry];
-                        // console.log("Parsed entry:", parsedEntry);
                     } else {
-                        // console.warn("No consignment data available. Entry is null or undefined.");
                         this.form.entries = []; // Default to an empty array if no data exists
                     }
                     if(!this.form.entries){
                         this.isConsignmentAdded = true;
                     }
-                    // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info);
-                    // this.consignment_list = this.existingData.consignment_data;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
                     this.form.awb_email=this.existingData.awb_email;
                 } else {
-                    // console.error('existingData is not an array:', this.existingData);
-                    // console.log("Add mode activated");
                 }
         },
         handleEditNavigation(id) {
@@ -3392,7 +3299,6 @@ export default {
                 }
                 })
                 .catch(error => {
-                    // console.error("Error fetching agent information:", error);
                 });
         },
         getCountry(){
@@ -3402,7 +3308,6 @@ export default {
                     text: data[key]
                 }));
             }).catch(error => {
-                // console.error("Error fetching countries:", error);
             });
         },
         getOtherChargesCode(){
@@ -3412,7 +3317,6 @@ export default {
                     text: data[key]
                 }));
             }).catch(error => {
-                // console.error("Error fetching countries:", error);
             });
         },
         getOCIData(){
@@ -3432,16 +3336,11 @@ export default {
                 }));
             }
             }).catch(error => {
-                // console.error("Error fetching countries:", error);
                 this.oci_data.oci_custom_info_identifier = []; 
             });
         },
         handleRadioChange(value) {
-            // const selectedCode = this.selectedCode;
-            // this.form.tableCodes = [];
-            // this.form.tableCodes.push(selectedCode);
             
-            // this.form.first_box.awb = false;
 
             if (!Array.isArray(this.form.tableCodes)) {
                 this.form.tableCodes = [];
@@ -3458,7 +3357,6 @@ export default {
                 }
                 this.form.first_box.awb = false;
             }
-            // console.log("Updated Table Codes:", this.form.tableCodes);
         },
         addManualCode() {
             if (!Array.isArray(this.form.tableCodes)) {
@@ -3469,7 +3367,6 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
-                    // console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3517,8 +3414,6 @@ export default {
                 this.awb_prefix_message = "";
             }
             if (awb_code && awb_no) {
-                // this.awbError = null;
-                // this.awb_prefix_message = "";
                 this.awbId = `${String(awb_code)}${String(awb_no)}`;
                 this.getAirWayBillForRealod(this.awbId);
                 this.$router.push({ query: { awb_code: String(awb_code), awb_no: String(awb_no) } });
@@ -3534,7 +3429,6 @@ export default {
             if (confirmed) { 
                 this.awbDetails = false;
                 this.showAWBSection = false;
-                // openForm('update', this.existingData.id)
                 this.$router.go(0);
                 this.getAirWayBill(this.awbId);
             }
@@ -3542,7 +3436,6 @@ export default {
         reloadPageWithContent() {
             const awbId = this.awbId;
             if (!awbId) {
-                // console.error('AWB ID is missing');
                 return;
             }
                ApiService.get(`/user/airway-bill/${awbId}`)
@@ -3551,9 +3444,7 @@ export default {
                     if (this.existingData) {
                         this.awbDetails = false;
                         this.openForm('update', this.existingData.id);
-                        // this.$router.push({ path: `/edit-airway-bill/${awbId}`});
                         this.location.reload();
-                        // this.$router.push({ path: `/edit-airway-bill/${awbId}` });
                        
                     }else{
                         this.awbDetails = false;
@@ -3561,15 +3452,12 @@ export default {
                 })
                 .catch(error => {
                     this.existingData = null;
-                    // this.awbError = "No data found for this AWB ID.";
                     this.awbDetails = false;
-                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
 
     },
     mounted(){
-        // this.setDefaultValues();
         this.calculateTotalVolume();
         this.getLocation(); 
         this.fetchAllAddressBook();
@@ -3598,7 +3486,6 @@ export default {
                 this.showAWBSection = false;
             }
         }
-        // console.log("Current User:", this.current_user);
         if(this.current_user)
         this.getAgent(this.current_user.company_name,this.current_user.branch_name);
     },
@@ -3607,28 +3494,11 @@ export default {
             const savedEmail = localStorage.getItem('fna_default_email');
             this.use_my_email = !!(savedEmail && val === savedEmail);
         },
-        // 'consignment_list': function () {
-        //     this.form.totals.total_amount = this.calculateTotalAmount();
-        // },
-        // 'form.entries.dimention_unit': function() {
-        //     this.calculateTotalVolume();
-        // },
-        'agent_information.participate': function(newValue) {
-            // console.log('Participate value changed to:', newValue);
-        },
         '$route.params.id'(newId) {
             if (newId) {
                 this.getAirWayBill(newId);
             }
         },
-        existingData(newData) {
-            // console.log("New data:", newData);
-            if (newData && newData.id) {
-                // this.generateAwbPDF();
-            } else {
-                // console.error('ID is missing in new data, cannot generate PDF.');
-            }
-        }
     },
     created() {
         const id = this.$route.params.id;

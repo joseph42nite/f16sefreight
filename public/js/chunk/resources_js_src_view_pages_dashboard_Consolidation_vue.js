@@ -35,7 +35,6 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 
 
 
-// import PageLoader from "../../components/PageLoader.vue";
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
     return {
@@ -407,17 +406,10 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       }
     },
     generateAwbPDF: function generateAwbPDF() {
-      var awbNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.form.awb_no;
-      var awbCode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.form.awb_code;
-      var awb_code = this.form.awb_code; // Access the awb_code from the form data
+      var awb_code = this.form.awb_code;
       var awb_no = this.form.awb_no;
-      var itemId = String(awb_code) + String(awb_no); // Access the awb_no from the form data
-      var pdfUrl = "/download-consolidation-pdf/".concat(String(awb_code), "/").concat(String(awb_no)); // Construct the URL for the PDF
-      window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
-    },
-    referTOEditAwb: function referTOEditAwb() {
-      // Navigating to another route using Vue Router
-      // this.$router.push({ name: 'YourPage' });  // Replace 'YourPage' with the name of your route
+      var pdfUrl = "/download-consolidation-pdf/".concat(String(awb_code), "/").concat(String(awb_no));
+      window.open(pdfUrl, '_blank');
     },
     mouseover: function mouseover() {
       this.isOpen = true;
@@ -426,10 +418,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       this.isOpen = false;
     },
     manifest_send: function manifest_send() {
-      // $('#manifest-send-btn').text('Wait...');
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/manifest-send/".concat(this.form.awb_code).concat(this.form.awb_no)).then(function (response) {
-        console.log(response);
-      });
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/manifest-send/".concat(this.form.awb_code).concat(this.form.awb_no)).then(function (response) {});
     },
     showModal: function showModal() {
       this.$refs["my-modal"].show();
@@ -451,12 +440,6 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         _this.location = data;
       });
     },
-    onSubmit: function onSubmit(evt) {
-      evt.preventDefault();
-      // this.form.put(`/update-consolidation`).then(response => {
-      //     console.log(response);
-      // })
-    },
     getHousewayBills: function getHousewayBills(status) {
       var _this2 = this;
       this.isFetching = true;
@@ -477,11 +460,6 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         console.error("Failed to fetch master AWBs with house waybills:", error);
         _this3.data_items = [];
       });
-    },
-    allConsolidation: function allConsolidation() {
-      // ApiService.get(`/all-consolidation`).then(({ data }) => {
-      //     this.consolidation =  data;
-      // });
     },
     searchWayBills: function searchWayBills() {
       var _this4 = this;
@@ -796,7 +774,6 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       }
     },
     deleteOciInfo: function deleteOciInfo(index) {
-      // this.oci_entries.splice(index, 1);
       if (this.form.oci_entries.length > index) {
         this.form.oci_entries.splice(index, 1);
       }
@@ -880,7 +857,6 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     this.getLocation();
     this.getCountry();
     this.getOCIData();
-    // this.allConsolidation();
     this.allHousewayBill();
     this.location = [];
     window.addEventListener('click', this.closeDropdown_destination);

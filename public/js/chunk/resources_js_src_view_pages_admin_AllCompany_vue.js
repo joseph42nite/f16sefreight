@@ -11,12 +11,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
+/* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
+/* harmony import */ var _core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/mixins/adminList.mixin */ "./resources/js/src/core/mixins/adminList.mixin.js");
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminallcompany",
+  mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_1__["default"]],
   data: function data() {
     return {
       fields: [{
@@ -28,44 +29,19 @@ __webpack_require__.r(__webpack_exports__);
       }, {
         label: "Action",
         key: "action"
-      }],
-      items: [],
-      isLoading: false,
-      current_date: "",
-      filter: null,
-      totalRows: 0,
-      currentPage: 1,
-      perPage: 10,
-      pageOptions: [10, 15, 20, {
-        value: 100,
-        text: "Show a lot"
       }]
     };
   },
   components: {
-    SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
+    SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
   },
   methods: {
     get_company: function get_company() {
-      var _this = this;
-      this.items = [];
-      this.isLoading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company/0").then(function (_ref) {
-        var data = _ref.data;
-        _this.items = data;
-        _this.totalRows = data.length;
-      })["finally"](function () {
-        _this.isLoading = false;
-      });
-    },
-    onFiltered: function onFiltered(filteredItems) {
-      this.totalRows = filteredItems.length;
-      this.currentPage = 1;
+      return this.loadItems("/superadmin/all-company/0");
     }
   },
   mounted: function mounted() {
     this.get_company();
-    this.current_date = new Date().toISOString().slice(0, 10);
   }
 });
 
@@ -146,6 +122,7 @@ var render = function render() {
   }) : _c("b-table", {
     attrs: {
       responsive: "",
+      stacked: "md",
       hover: "",
       items: _vm.items,
       fields: _vm.fields,

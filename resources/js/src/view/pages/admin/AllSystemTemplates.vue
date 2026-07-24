@@ -1,13 +1,13 @@
 <template>
-    <div class="mt-10 p-5">
-        <div class="d-flex justify-content-between align-items-center mb-8">
-            <h2 class="font-weight-bolder text-dark">System OCR Templates</h2>
-            <router-link to="/superadmin/edit-template" class="btn btn-primary font-weight-bold px-6">
+    <div class="py-5">
+        <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-6">
+            <h2 class="font-weight-bolder text-dark mb-3 mb-md-0">System OCR Templates</h2>
+            <router-link to="/superadmin/edit-template" class="btn btn-primary font-weight-bold px-6 d-flex align-items-center justify-content-center">
                 <i class="la la-plus mr-2"></i> Create New Template
             </router-link>
         </div>
 
-        <div class="bg-white p-8 rounded shadow-sm border">
+        <div class="bg-white p-4 p-md-8 rounded shadow-sm border">
             <div class="table-responsive">
                 <table class="table table-vertical-center table-head-custom table-borderless">
                     <thead>

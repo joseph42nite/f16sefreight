@@ -15,11 +15,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! sweetalert2 */ "./node_modules/sweetalert2/dist/sweetalert2.all.js");
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(sweetalert2__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/mixins/adminList.mixin */ "./resources/js/src/core/mixins/adminList.mixin.js");
+
 
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminallblogs",
+  mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_3__["default"]],
   data: function data() {
     return {
       fields: [{
@@ -45,12 +48,7 @@ __webpack_require__.r(__webpack_exports__);
         tdClass: "text-right",
         thClass: "text-right pr-4"
       }],
-      items: [],
-      isLoading: false,
-      filter: null,
-      totalRows: 0,
-      currentPage: 1,
-      perPage: 10,
+      // Blogs list omits the "Show a lot" option (heavier rows w/ images)
       pageOptions: [10, 15, 20]
     };
   },
@@ -59,24 +57,9 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     fetchBlogs: function fetchBlogs() {
-      var _this = this;
-      this.isLoading = true;
-      // Pull the internal protected list
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-blogs-internal").then(function (_ref) {
-        var data = _ref.data;
-        if (data.success) {
-          _this.items = data.data;
-          _this.totalRows = data.data.length;
-        }
-      })["catch"](function (error) {
-        console.error("Error fetching blogs", error);
-      })["finally"](function () {
-        _this.isLoading = false;
+      return this.loadItems("/superadmin/all-blogs-internal", function (data) {
+        return data.success ? data.data : [];
       });
-    },
-    onFiltered: function onFiltered(filteredItems) {
-      this.totalRows = filteredItems.length;
-      this.currentPage = 1;
     },
     formatDate: function formatDate(dateString) {
       if (!dateString) return '';
@@ -87,7 +70,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     confirmDelete: function confirmDelete(blog) {
-      var _this2 = this;
+      var _this = this;
       sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire({
         title: 'Delete this Blog?',
         text: "You are about to permanently delete \"".concat(blog.title, "\". This action cannot be undone."),
@@ -100,7 +83,7 @@ __webpack_require__.r(__webpack_exports__);
         if (result.isConfirmed) {
           _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/superadmin/delete-blog/".concat(blog.id)).then(function (response) {
             sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire('Deleted!', 'Successfully removed blog.', 'success');
-            _this2.fetchBlogs();
+            _this.fetchBlogs();
           })["catch"](function (err) {
             sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire('Error', 'Failed to delete record.', 'error');
           });
@@ -190,6 +173,7 @@ var render = function render() {
   }) : _c("b-table", {
     attrs: {
       responsive: "",
+      stacked: "md",
       hover: "",
       items: _vm.items,
       fields: _vm.fields,

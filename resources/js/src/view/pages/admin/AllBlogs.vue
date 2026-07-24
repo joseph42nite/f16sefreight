@@ -27,6 +27,7 @@
                 <b-table
                     v-else
                     responsive
+                    stacked="md"
                     hover
                     :items="items"
                     :fields="fields"
@@ -101,9 +102,11 @@
 import ApiService from "@/core/services/api.service";
 import SkeletonTable from "../../components/SkeletonTable.vue";
 import Swal from 'sweetalert2';
+import adminListMixin from "@/core/mixins/adminList.mixin";
 
 export default {
     name: "superadminallblogs",
+    mixins: [adminListMixin],
     data() {
         return {
             fields: [
@@ -114,12 +117,7 @@ export default {
                 { label: "Published Date", key: "date" },
                 { label: "Actions", key: "action", tdClass: "text-right", thClass: "text-right pr-4" },
             ],
-            items: [],
-            isLoading: false,
-            filter: null,
-            totalRows: 0,
-            currentPage: 1,
-            perPage: 10,
+            // Blogs list omits the "Show a lot" option (heavier rows w/ images)
             pageOptions: [10, 15, 20],
         };
     },
@@ -128,25 +126,10 @@ export default {
     },
     methods: {
         fetchBlogs() {
-            this.isLoading = true;
-            // Pull the internal protected list
-            ApiService.get(`/superadmin/all-blogs-internal`)
-              .then(({ data }) => {
-                if(data.success){
-                    this.items = data.data;
-                    this.totalRows = data.data.length;
-                }
-              })
-              .catch(error => {
-                  console.error("Error fetching blogs", error);
-              })
-              .finally(() => {
-                this.isLoading = false;
-              });
-        },
-        onFiltered(filteredItems) {
-            this.totalRows = filteredItems.length;
-            this.currentPage = 1;
+            return this.loadItems(
+                `/superadmin/all-blogs-internal`,
+                data => (data.success ? data.data : [])
+            );
         },
         formatDate(dateString) {
             if (!dateString) return '';

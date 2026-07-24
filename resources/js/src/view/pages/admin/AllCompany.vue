@@ -27,6 +27,7 @@
                 <b-table
                     v-else
                     responsive
+                    stacked="md"
                     hover
                     :items="items"
                     :fields="fields"
@@ -70,10 +71,11 @@
 </template>
 
 <script>
-import ApiService from "@/core/services/api.service";
 import SkeletonTable from "../../components/SkeletonTable.vue";
+import adminListMixin from "@/core/mixins/adminList.mixin";
 export default {
     name: "superadminallcompany",
+    mixins: [adminListMixin],
     data() {
         return {
             fields: [
@@ -81,14 +83,6 @@ export default {
                 { label: "Name", key: "name" },
                 { label: "Action", key: "action" },
             ],
-            items: [],
-            isLoading: false,
-            current_date: "",
-            filter: null,
-            totalRows: 0,
-            currentPage: 1,
-            perPage: 10,
-            pageOptions: [10, 15, 20, { value: 100, text: "Show a lot" }],
         };
     },
     components: {
@@ -96,25 +90,11 @@ export default {
     },
     methods: {
         get_company() {
-            this.items = [];
-            this.isLoading = true;
-            ApiService.get(`/superadmin/all-company/0`)
-              .then(({ data }) => {
-                this.items = data;
-                this.totalRows = data.length;
-              })
-              .finally(() => {
-                this.isLoading = false;
-              });
-        },
-        onFiltered(filteredItems) {
-            this.totalRows = filteredItems.length;
-            this.currentPage = 1;
+            return this.loadItems(`/superadmin/all-company/0`);
         },
     },
     mounted() {
         this.get_company();
-        this.current_date = new Date().toISOString().slice(0, 10);
     },
 };
 </script>

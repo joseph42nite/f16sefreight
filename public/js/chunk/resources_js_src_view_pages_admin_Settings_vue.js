@@ -82,10 +82,16 @@ var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
   return _c("div", {
-    staticClass: "mt-10 p-5"
-  }, [_c("h1", [_vm._v("Add notice for Airline")]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex justify-content-between"
-  }, [_c("div", [_c("label", {
+    staticClass: "py-5"
+  }, [_vm._m(0), _vm._v(" "), _c("div", {
+    staticClass: "admin-glass-card mb-6"
+  }, [_c("div", {
+    staticClass: "row"
+  }, [_c("div", {
+    staticClass: "col-12 col-md-8 mb-4 mb-md-0"
+  }, [_c("div", {
+    staticClass: "admin-form-group mb-0"
+  }, [_c("label", {
     attrs: {
       "for": "user_message"
     }
@@ -96,9 +102,10 @@ var render = function render() {
       value: _vm.msg_form.message,
       expression: "msg_form.message"
     }],
+    staticClass: "form-control",
     attrs: {
-      rows: "7",
-      cols: "100"
+      id: "user_message",
+      rows: "6"
     },
     domProps: {
       value: _vm.msg_form.message
@@ -109,14 +116,18 @@ var render = function render() {
         _vm.$set(_vm.msg_form, "message", $event.target.value);
       }
     }
-  })]), _vm._v(" "), _c("div", [_c("select", {
+  })])]), _vm._v(" "), _c("div", {
+    staticClass: "col-12 col-md-4"
+  }, [_c("div", {
+    staticClass: "admin-form-group"
+  }, [_c("label", [_vm._v("Airline")]), _vm._v(" "), _c("select", {
     directives: [{
       name: "model",
       rawName: "v-model",
       value: _vm.msg_form.airline,
       expression: "msg_form.airline"
     }],
-    staticClass: "form-control",
+    staticClass: "form-control custom-select",
     on: {
       change: function change($event) {
         var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
@@ -138,31 +149,61 @@ var render = function render() {
       domProps: {
         value: airline.carrier_code
       }
-    }, [_vm._v("\n                    " + _vm._s(airline.carrier_code) + "\n                ")]);
-  })], 2)]), _vm._v(" "), _c("div", [_c("button", {
-    staticClass: "btn btn-primary",
+    }, [_vm._v("\n                            " + _vm._s(airline.carrier_code) + "\n                        ")]);
+  })], 2)]), _vm._v(" "), _c("button", {
+    staticClass: "admin-pill-btn w-100 justify-content-center",
     on: {
       click: _vm.submit
     }
-  }, [_vm._v("Save")])])]), _vm._v(" "), _c("table", {
-    staticClass: "table mt-5"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.all_notice, function (notice) {
+  }, [_vm._v("Save")])])])]), _vm._v(" "), _c("div", {
+    staticClass: "admin-glass-card"
+  }, [_c("div", {
+    staticClass: "admin-table-wrapper table-responsive"
+  }, [_c("table", {
+    staticClass: "table b-table mb-0"
+  }, [_vm._m(1), _vm._v(" "), _c("tbody", [_vm._l(_vm.all_notice, function (notice) {
     return _c("tr", {
       key: notice.carrier_code
-    }, [_c("td", [_vm._v(_vm._s(notice.carrier_code))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(notice.user_notice_1))]), _vm._v(" "), _c("td", [_c("button", {
-      staticClass: "btn btn-danger",
+    }, [_c("td", {
+      attrs: {
+        "data-label": "Airline"
+      }
+    }, [_vm._v(_vm._s(notice.carrier_code))]), _vm._v(" "), _c("td", {
+      attrs: {
+        "data-label": "Message"
+      }
+    }, [_vm._v(_vm._s(notice.user_notice_1))]), _vm._v(" "), _c("td", {
+      staticClass: "text-right",
+      attrs: {
+        "data-label": "Action"
+      }
+    }, [_c("button", {
+      staticClass: "btn btn-danger btn-sm",
       on: {
         click: function click($event) {
           return _vm.delete_notice(notice.carrier_code);
         }
       }
     }, [_vm._v("Delete")])])]);
-  }), 0)])]);
+  }), _vm._v(" "), !_vm.all_notice.length ? _c("tr", [_c("td", {
+    staticClass: "text-center text-muted py-6",
+    attrs: {
+      colspan: "3"
+    }
+  }, [_vm._v("No airline notices configured yet.")])]) : _vm._e()], 2)])])])]);
 };
 var staticRenderFns = [function () {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("thead", [_c("th", [_vm._v("Airline")]), _vm._v(" "), _c("th", [_vm._v("Message")]), _vm._v(" "), _c("th", [_vm._v("Action")])]);
+  return _c("div", {
+    staticClass: "admin-page-header mb-6"
+  }, [_c("h2", [_vm._v("Add notice for Airline")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", [_vm._v("Airline")]), _vm._v(" "), _c("th", [_vm._v("Message")]), _vm._v(" "), _c("th", {
+    staticClass: "text-right"
+  }, [_vm._v("Action")])])]);
 }];
 render._withStripped = true;
 

@@ -571,7 +571,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       this.showShipper = false;
       this.showConsignee = false;
       this.isConsignmentAdded = false;
-      console.log('Processing payload:', response);
       this.form.first_box.hawb_no = response.awb_number;
 
       // Routing Block
@@ -645,7 +644,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       if (shipper) {
         var matchedShipper = this.findMatchingAddress(shipper, this.shippers);
         if (matchedShipper) {
-          console.log('Auto-matched shipper (90%+ similarity):', matchedShipper.name);
           this.selectShipper(matchedShipper);
         } else {
           this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -674,7 +672,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       if (consignee) {
         var matchedConsignee = this.findMatchingAddress(consignee, this.consignees);
         if (matchedConsignee) {
-          console.log('Auto-matched consignee (90%+ similarity):', matchedConsignee.name);
           this.selectConsignee(matchedConsignee);
         } else {
           this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -776,8 +773,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     isGeneratePdf: function isGeneratePdf(generateButton) {
       var _this2 = this;
-      // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
-
       // Start the progress bar animation
       if (generateButton == 0 && this.is_generate_pdf == 1) {
         this.is_generate_pdf = 0;
@@ -800,48 +795,17 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         }
       }, 2000);
     },
-    // handleSaveAndGeneratePDF() {
-    //     this.generatePDFAfterSave = true;
-    //     const result = this.onSubmit() || Promise.resolve({});
-    //     result.then(response => {
-    //         console.log('Save response:', response);
-    //         console.log('Response Data:', response.data);
-    //         if (response.data && response.data.data && response.data.data.id) {
-    //             this.generateHawbPDF();
-    //         } else {
-    //             console.error('ID is missing in the response data');
-    //         }
-    //     }).catch(error => {
-    //         console.error('Error while saving data:', error);
-    //     });
-    // },
     handleSaveAndGeneratePDF: function handleSaveAndGeneratePDF(pdf_generate_type) {
+      // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
       this.generatePDFAfterSave = pdf_generate_type;
-      var result = this.onSubmit() || Promise.resolve({});
-      result.then(function (response) {
-        if (response.data && response.data.data && response.data.data.id) {
-          // this.generateAwbPDF(pdf_generate_type);
-        } else {
-          console.error('ID is missing in the response data');
-        }
-      })["catch"](function (error) {
-        console.error('Error while saving data:', error);
-      });
+      this.onSubmit();
     },
-    // generateHawbPDF() {
-    //     if (!this.validateFormFields()) {
-    //         return;
-    //     }
-    //     const itemId = this.$route.params.id; // Get the ID from the URL
-    //     const pdfUrl = `/download-hawb-pdf/${itemId}`; // Construct the URL for the PDF
-    //     window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
-    // },
-    generateHawbPDF: function generateHawbPDF() {
+    generateHawbPDF: function generateHawbPDF(pdf_generate_type) {
+      this.generatePDFAfterSave = false;
       if (!this.existingData || !this.existingData.id) {
-        console.error('Existing data ID is missing. Cannot generate PDF.');
         return;
       }
-      var pdfUrl = "/download-hawb-pdf/".concat(this.existingData.id);
+      var pdfUrl = "/".concat(pdf_generate_type, "/").concat(this.existingData.id);
       window.open(pdfUrl, '_blank');
     },
     validateFormFields: function validateFormFields() {
@@ -897,8 +861,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     converXml: function converXml(awb_no) {
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/waybill/".concat(awb_no)).then(function (_ref5) {
         var data = _ref5.data;
-      } // console.log(data);
-      );
+      });
     },
     toggleModal: function toggleModal() {
       this.$refs["my-modal"].toggle("#toggle-btn");
@@ -962,7 +925,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         'opacity': '0.5'
       });
       this.main_error_msg = '';
-      // this.form.agent_head_office.ho_name=this.agent_information.ho_name;
       if (this.mode === 'add') {
         // Create a new Form instance with prepared data
         var form = new Form(_objectSpread({}, this.form));
@@ -974,7 +936,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
             _this3.existingData = response.data.data.first_box.original.data;
             if (_this3.generatePDFAfterSave && _this3.existingData && _this3.existingData.id) {
-              _this3.generateHawbPDF();
+              _this3.generateHawbPDF(_this3.generatePDFAfterSave);
             }
             _this3.successMessage = '-e-HSWB Saved in database -Pass';
           } else {
@@ -1012,7 +974,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
             _this3.existingData = response.data.data.first_box.original.data;
             if (_this3.generatePDFAfterSave && _this3.existingData && _this3.existingData.id) {
-              _this3.generateHawbPDF();
+              _this3.generateHawbPDF(_this3.generatePDFAfterSave);
             }
             _this3.successMessage = '-e-HSWB Saved in database -Pass';
           } else {}
@@ -1098,17 +1060,8 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         this.form.agent_head_office.ho_state = this.existingData.ho_state;
         this.form.agent_head_office.ho_country = this.existingData.ho_country;
         this.form.as_agreed = this.existingData.as_agreed;
-        // this.form.payment_info = this.existingData.payment_info || {};
         this.form.payment_info = _objectSpread(_objectSpread({}, this.defaultPaymentInfo), this.existingData.payment_info || {});
         this.form.charges = Array.isArray(this.existingData.other_charge) ? this.existingData.other_charge : [];
-        // this.form.entries = Array.isArray(this.existingData.consignment_data)
-        //     ? this.existingData.consignment_data
-        //     : [this.existingData.consignment_data];
-        // console.log("Entries in form:", this.form.entries);
-
-        // this.consignment_list = this.existingData.consignment_data;
-        // this.form.entries = this.existingData.consignment_data;
-        // console.log("entries", this.form.entries);
         var entry = this.existingData.consignment_data;
         var parsedEntry = _objectSpread(_objectSpread({}, entry), {}, {
           hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
@@ -1119,14 +1072,10 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         if (!this.form.entries) {
           this.isConsignmentAdded = true;
         }
-        // console.log("hs code", parsedEntry);
         this.form.consignee_address = this.existingData.way_bill_address;
         this.form.shipper_address = this.existingData.way_bill_address;
         this.form.also_notify_address = this.existingData.way_bill_address;
-      } else {
-        // console.error('existingData is not an array:', this.existingData);
-        // console.log("Add mode activated");
-      }
+      } else {}
     },
     getCountry: function getCountry() {
       var _this6 = this;
@@ -1216,7 +1165,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       if (this.selectedShipper) {
         _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/get-shipper-address?id=".concat(this.selectedShipper)).then(function (response) {
           _this1.form.shipper_address = response.data;
-          // console.log('Shipper', response.data);
         })["catch"](function (error) {
           console.error('Error fetching shipper address:', error);
         });
@@ -1234,10 +1182,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       if (this.selectedConsignee) {
         _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/get-consignee-address?id=".concat(this.selectedConsignee)).then(function (response) {
           _this10.form.consignee_address = response.data;
-          // console.log('Consignee', response.data);
-        })["catch"](function (error) {
-          // console.error('Error fetching shipper address:', error);
-        });
+        })["catch"](function (error) {});
       } else {
         this.form.consignee_address = {
           cons_name: '',
@@ -1252,10 +1197,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       if (this.selectAlsoNotify) {
         _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/get-alsonotify-address?id=".concat(this.selectAlsoNotify)).then(function (response) {
           _this11.form.also_notify_address = response.data;
-          // console.log('Also Notify address', response.data);
-        })["catch"](function (error) {
-          // console.error('Error fetching Also notify address address:', error);
-        });
+        })["catch"](function (error) {});
       } else {
         this.form.also_notify_address = {
           also_name: '',
@@ -1298,21 +1240,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         _this12.oci_data.oci_custom_info_identifier = [];
       });
     },
-    // addManualCode() {
-    //     const code = this.selectedCode || this.manualCode.trim();
-    //     if (code) {
-    //         if (!this.form.tableCodes.includes(code)) {
-    //             this.form.tableCodes.push(code);
-    //             console.log("Table code ", this.form.tableCodes);
-    //         } else {
-    //             alert('This code is already added.');
-    //         }
-    //     } else {
-    //         alert('Please select or enter a code.');
-    //     }
-    //     this.selectedCode = '';
-    //     this.manualCode = '';
-    // },
     addManualCode: function addManualCode() {
       if (!Array.isArray(this.form.tableCodes)) {
         this.form.tableCodes = [];
@@ -1321,7 +1248,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       if (code) {
         if (!this.form.tableCodes.includes(code)) {
           this.form.tableCodes.push(code);
-          // console.log("Table codes:", this.form.tableCodes);
         } else {
           alert('This code is already added.');
         }
@@ -1389,33 +1315,15 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     this.fillAlsoNotifyDetails();
     this.getOtherChargesCode();
     this.getOCIData();
-    // const id = this.$route.params.id;
-    // if (id) {
-    // this.getHouseWayBill(id);
-    // }
   },
   watch: {
     'form.awb_email': function formAwb_email(val) {
       var savedEmail = localStorage.getItem('fna_default_email');
       this.use_my_email = !!(savedEmail && val === savedEmail);
     },
-    // 'consignment_list': function () {
-    //     this.form.totals.total_amount = this.calculateTotalAmount();
-    // },
-    // 'consignment_list.dimention_unit': function() {
-    //     this.calculateTotalVolume();
-    // },
     '$route.params.id': function $routeParamsId(newId) {
       if (newId) {
         this.getHouseWayBill(newId);
-      }
-    },
-    existingData: function existingData(newData) {
-      // console.log("New data:", newData);
-      if (newData && newData.id) {
-        // this.generateAwbPDF();
-      } else {
-        // console.error('ID is missing in new data, cannot generate PDF.');
       }
     }
   },
@@ -1427,7 +1335,6 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     }
     this.getOCIData();
     this.onSubmit = this.onSubmit.bind(this);
-    // console.log("Current User:", this.current_user);
     if (this.current_user) this.getAgent(this.current_user.company_name, this.current_user.branch_name);
   },
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_10__.mapGetters)({

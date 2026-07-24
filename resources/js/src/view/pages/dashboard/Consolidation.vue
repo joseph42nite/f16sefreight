@@ -491,7 +491,6 @@ import SideBar from "@/view/layouts/public/SideBar.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 import ApiService from "@/core/services/api.service";
 import "vue2-datepicker/index.css";
-// import PageLoader from "../../components/PageLoader.vue";
 export default {
     data() {
         return {
@@ -663,17 +662,11 @@ export default {
                 window.location.href = value;  // This will navigate to the selected page
             }
         },
-        generateAwbPDF(awbNo = this.form.awb_no, awbCode = this.form.awb_code) {
-            const awb_code = this.form.awb_code; // Access the awb_code from the form data
+        generateAwbPDF() {
+            const awb_code = this.form.awb_code;
             const awb_no = this.form.awb_no;
-            const itemId = String(awb_code)+String(awb_no); // Access the awb_no from the form data
-            const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`; // Construct the URL for the PDF
-            window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
-            
-        },
-        referTOEditAwb() {
-            // Navigating to another route using Vue Router
-            // this.$router.push({ name: 'YourPage' });  // Replace 'YourPage' with the name of your route
+            const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`;
+            window.open(pdfUrl, '_blank');
         },
         mouseover: function () {
             this.isOpen = true;
@@ -682,11 +675,8 @@ export default {
             this.isOpen = false;
         },
         manifest_send(){
-            // $('#manifest-send-btn').text('Wait...');
             ApiService.get(`/user/manifest-send/${this.form.awb_code}${this.form.awb_no}`)
-                .then(response => {
-                    console.log(response);
-                });
+                .then(response => {});
         },
         showModal() {
             this.$refs["my-modal"].show();
@@ -705,12 +695,6 @@ export default {
             ApiService.get(`/user/get-location`).then(({ data }) => {
                 this.location=data;
             });
-        },
-        onSubmit(evt) {
-            evt.preventDefault();
-            // this.form.put(`/update-consolidation`).then(response => {
-            //     console.log(response);
-            // })
         },
         getHousewayBills(status) {
             this.isFetching = true;
@@ -735,11 +719,6 @@ export default {
                     console.error("Failed to fetch master AWBs with house waybills:", error);
                     this.data_items = [];
                 });
-        },
-        allConsolidation(){
-            // ApiService.get(`/all-consolidation`).then(({ data }) => {
-            //     this.consolidation =  data;
-            // });
         },
         searchWayBills() {
             this.searchPerformed = true;
@@ -1042,7 +1021,6 @@ export default {
             }
         },
         deleteOciInfo(index) {
-            // this.oci_entries.splice(index, 1);
             if (this.form.oci_entries.length > index) {
                 this.form.oci_entries.splice(index, 1);
             }
@@ -1125,10 +1103,9 @@ export default {
         },
     },
     mounted(){
-        this.getLocation(); 
+        this.getLocation();
         this.getCountry();
         this.getOCIData();
-        // this.allConsolidation();
         this.allHousewayBill();
         this.location = [];
         window.addEventListener('click', this.closeDropdown_destination);

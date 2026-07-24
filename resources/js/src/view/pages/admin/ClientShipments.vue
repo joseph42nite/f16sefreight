@@ -170,6 +170,7 @@
         <b-table
           v-else
           responsive
+          stacked="md"
           hover
           :items="localFilteredItems !== null ? localFilteredItems : items"
           :fields="fields"
@@ -1171,6 +1172,43 @@ export default {
 .mx-datepicker-custom .mx-icon-clear {
   right: 10px !important;
   color: #a1a5b7 !important;
+}
+
+/* Mobile / phone tuning */
+@media (max-width: 767.98px) {
+  /* Stat cards: stack full-width, trim padding, smaller numbers */
+  .stats-card {
+    padding: 1.25rem !important;
+    margin-bottom: 1rem;
+  }
+  .row.mb-5 > [class*="col-"]:last-child .stats-card {
+    margin-bottom: 0;
+  }
+  .stats-value {
+    font-size: 1.75rem;
+  }
+  .stats-icon .font-size-h1 {
+    font-size: 2rem !important;
+  }
+
+  /* Filter panel: lighter padding, spaced-out stacked fields */
+  .filter-panel {
+    padding: 1rem !important;
+  }
+  .filter-panel .row > [class*="col-"] {
+    margin-bottom: 0.85rem;
+  }
+  .filter-panel .row > [class*="col-"]:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Neutralize the heavy horizontal padding inside the card on phones */
+  .admin-filter-row,
+  .admin-table-wrapper,
+  .admin-pagination-wrap {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
 }
 </style>
 

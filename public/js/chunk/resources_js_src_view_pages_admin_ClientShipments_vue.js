@@ -820,6 +820,7 @@ var render = function render() {
   }) : _c("b-table", {
     attrs: {
       responsive: "",
+      stacked: "md",
       hover: "",
       items: _vm.localFilteredItems !== null ? _vm.localFilteredItems : _vm.items,
       fields: _vm.fields,

@@ -4,28 +4,46 @@
     class="header-mobile align-items-center"
     v-bind:class="headerClasses"
   >
-   <!--begin::Toolbar-->
-    <div class="d-flex align-items-center">
-      <!--begin::Aside Mobile Toggle-->
-      <button
-        v-if="asideEnabled"
-        class="btn p-0 burger-icon burger-icon-left"
-        id="kt_aside_mobile_toggle"
-      >
-        <span></span>
-      </button>
-      <!--end::Aside Mobile Toggle-->
-    </div>
-    <!--end::Toolbar-->
-
-    <!--begin::Logo-->
-    <router-link to="/superadmin/dashboard">
-      <img src="/media/assets/logos/logo_white.png" alt="Logo" width="75" height="75" class="img-fluid">
+    <!--begin::Logo (left-aligned)-->
+    <router-link to="/superadmin/all-company" class="mobile-brand-logo">
+      <img src="/media/assets/logos/white-logo.png" alt="F16s" class="mobile-brand-logo-img">
     </router-link>
     <!--end::Logo-->
-   
+
+    <!--begin::Aside Mobile Toggle (right)-->
+    <button
+      v-if="asideEnabled"
+      class="btn p-0 burger-icon burger-icon-right"
+      id="kt_aside_mobile_toggle"
+    >
+      <span></span>
+    </button>
+    <!--end::Aside Mobile Toggle-->
   </div>
 </template>
+
+<style>
+/* Clean, branded mobile header (global — overrides Metronic theme classes) */
+#kt_header_mobile.header-mobile {
+  background-color: #1B2134 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+}
+#kt_header_mobile .mobile-brand-logo {
+  display: flex;
+  align-items: center;
+}
+#kt_header_mobile .mobile-brand-logo-img {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+/* Burger lines -> white so they read on the dark bar */
+#kt_header_mobile .burger-icon span,
+#kt_header_mobile .burger-icon span::before,
+#kt_header_mobile .burger-icon span::after {
+  background-color: #ffffff !important;
+}
+</style>
 
 <script>
 import { mapGetters } from "vuex";

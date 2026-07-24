@@ -13,10 +13,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
+/* harmony import */ var _core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/mixins/adminList.mixin */ "./resources/js/src/core/mixins/adminList.mixin.js");
+
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminalluser",
+  mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_2__["default"]],
   data: function data() {
     return {
       fields: [{
@@ -42,19 +45,8 @@ __webpack_require__.r(__webpack_exports__);
         label: "Action",
         key: "action"
       }],
-      items: [],
       companies: [],
-      selectedCompany: null,
-      isLoading: false,
-      current_date: '',
-      filter: null,
-      totalRows: 0,
-      currentPage: 1,
-      perPage: 10,
-      pageOptions: [10, 15, 20, {
-        value: 100,
-        text: "Show a lot"
-      }]
+      selectedCompany: null
     };
   },
   computed: {
@@ -104,20 +96,16 @@ __webpack_require__.r(__webpack_exports__);
   methods: {
     delete_user: function delete_user(id) {
       var _this3 = this;
-      var proceed = confirm("Are you sure you want to proceed?");
-      if (proceed) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/superadmin/user/".concat(id)).then(function (_ref) {
-          var data = _ref.data;
-          _this3.get_users();
-        });
-      }
+      this.confirmRemove("/superadmin/user/".concat(id)).then(function (removed) {
+        if (removed) _this3.get_users();
+      });
     },
     get_users: function get_users() {
       var _this4 = this;
       this.items = [];
       this.isLoading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-user/0").then(function (_ref2) {
-        var data = _ref2.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-user/0").then(function (_ref) {
+        var data = _ref.data;
         _this4.items = data;
         _this4.totalRows = _this4.filteredUsers.length;
       })["finally"](function () {
@@ -126,8 +114,8 @@ __webpack_require__.r(__webpack_exports__);
     },
     get_companies: function get_companies() {
       var _this5 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company").then(function (_ref3) {
-        var data = _ref3.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company").then(function (_ref2) {
+        var data = _ref2.data;
         _this5.companies = data;
       })["catch"](function (err) {
         console.error("Failed to load companies", err);
@@ -144,10 +132,6 @@ __webpack_require__.r(__webpack_exports__);
       });
       if (companyByName) return companyByName.name;
       return val;
-    },
-    onFiltered: function onFiltered(filteredItems) {
-      this.totalRows = filteredItems.length;
-      this.currentPage = 1;
     }
   },
   components: {
@@ -156,7 +140,6 @@ __webpack_require__.r(__webpack_exports__);
   mounted: function mounted() {
     this.get_users();
     this.get_companies();
-    this.current_date = new Date().toISOString().slice(0, 10);
   }
 });
 
@@ -264,6 +247,7 @@ var render = function render() {
   }) : _c("b-table", {
     attrs: {
       responsive: "",
+      stacked: "md",
       hover: "",
       items: _vm.filteredUsers,
       fields: _vm.fields,

@@ -308,3 +308,151 @@ label {
     background-color: #1a2542 !important; /* Even darker for logo area */
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
+
+/* =====================================================================
+   Mobile / Phone optimizations (superadmin dashboard)
+   All admin listing/form pages share the .admin-* classes below, so
+   these rules clean up the phone UX across the whole dashboard at once.
+   ===================================================================== */
+@media (max-width: 767.98px) {
+
+    /* Tighter surfaces so content isn't crushed by desktop padding */
+    .admin-glass-card {
+        padding: 1.25rem !important;
+        border-radius: 12px !important;
+    }
+
+    /* Page header: stack title above the action button, full-width CTA */
+    .admin-page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
+
+        h2 {
+            font-size: 1.35rem;
+        }
+
+        .admin-pill-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Filter bar: stack controls vertically, each full width */
+    .admin-filter-row {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.85rem;
+        padding: 1rem;
+
+        > div {
+            width: 100% !important;
+        }
+
+        .w-md-25 {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Label + select pairs sit inline but wrap gracefully */
+        .form-control-sm,
+        .custom-select {
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+    }
+
+    /* Pagination: center it and stack the "showing X of Y" summary */
+    .admin-pagination-wrap {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.85rem;
+        text-align: center;
+
+        .pagination {
+            justify-content: center;
+        }
+    }
+
+    /* -----------------------------------------------------------------
+       Stacked tables — turn each row into a readable card on phones.
+       The Metronic theme does NOT import bootstrap-vue's CSS, so the
+       stacked="md" mechanics are re-declared here (self-contained).
+       ----------------------------------------------------------------- */
+    .table.b-table.b-table-stacked-md {
+        display: block;
+        width: 100%;
+
+        > caption,
+        > tbody,
+        > tbody > tr,
+        > tbody > tr > td,
+        > tbody > tr > th {
+            display: block;
+        }
+
+        > thead,
+        > tfoot {
+            display: none;
+        }
+
+        > tbody > tr > [data-label]::before {
+            content: attr(data-label);
+            width: 38%;
+            float: left;
+            text-align: left;
+            overflow-wrap: break-word;
+            font-weight: 600;
+            font-style: normal;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.03em;
+            color: $text-light-gray;
+            padding: 0.15rem 0.75rem 0 0;
+            margin: 0;
+        }
+
+        > tbody > tr > [data-label]::after {
+            display: block;
+            clear: both;
+            content: "";
+        }
+
+        > tbody > tr > [data-label] > div {
+            display: inline-block;
+            width: 62%;
+            padding: 0 0 0 0.5rem;
+            margin: 0;
+            /* Break long unbroken values (emails, codes) instead of clipping */
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+    }
+
+    /* Card styling for the stacked rows */
+    .admin-table-wrapper .table.b-table.b-table-stacked-md {
+        > tbody > tr {
+            border: 1px solid #E4E6EF;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 1rem;
+            padding: 0.25rem 0.25rem;
+        }
+
+        > tbody > tr:hover td {
+            background-color: transparent !important;
+        }
+
+        > tbody > tr > td {
+            border: none !important;
+            border-bottom: 1px solid #F4F6FA !important;
+            padding: 0.7rem 1rem !important;
+
+            &:last-child {
+                border-bottom: none !important;
+            }
+        }
+    }
+}

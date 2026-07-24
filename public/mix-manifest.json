@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "/js/app.js": "/js/app.js?id=d0885bf0e34ee215a0bb8fe0c8bad5b7",
     "/js/manifest.js": "/js/manifest.js?id=60eb9f3cf4c0846193e5733e678a2636",
     "/vendor.css": "/vendor.css?id=2e85f30ebd66129fdcb06b817d4a0893",
@@ -7,13 +6,4 @@
     "/common.css": "/common.css?id=b1aa5627d2c5f20500375ff1a5fce3db",
     "/js/chunk/common.js": "/js/chunk/common.js?id=ac87f0b62fd6357f9cc7f363ad305717",
     "/css/app.css": "/css/app.css?id=07fa955aba5e7f72f068cf27ab209a0c"
-=======
-    "/js/app.js": "/js/app.js?id=c189c5b924fe0e71ecd050df8da254cf",
-    "/js/manifest.js": "/js/manifest.js?id=66d9a1434b34e36800641ab2fe9ccbc2",
-    "/vendor.css": "/vendor.css?id=2e85f30ebd66129fdcb06b817d4a0893",
-    "/vendor.js": "/vendor.js?id=5bfd4f17d5373ace88631cf934ea46f5",
-    "/common.css": "/common.css?id=b1aa5627d2c5f20500375ff1a5fce3db",
-    "/js/chunk/common.js": "/js/chunk/common.js?id=5e5ef4f09057f054e0d91e38b8b4d138",
-    "/css/app.css": "/css/app.css?id=3138bdb65b8a658aa1fb0f5c2f544385"
->>>>>>> origin/main
 }

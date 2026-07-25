@@ -268,8 +268,8 @@
                                             <b-col cols="12" lg="8" class="mt-6 mt-lg-0">
                                                 <!-- <div class="d-flex flex-column align-items-center"> -->
                                                     <!-- <div class="container"> -->
-                                                        <div class="table-responsive">
-                                                        <table class="table" style="max-width:100%;width:100%;min-width:650px !important;">
+                                                        <div class="table-responsive routing-table-wrap">
+                                                        <table class="table routing-table" style="max-width:100%;width:100%;min-width:650px !important;">
                                                             <thead>
                                                                 <tr class="">
                                                                     <th class="" style="color:#355594; width: 8%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">&nbsp;</th>
@@ -4352,6 +4352,14 @@ max-width: 100% !important;
     background: #FFFFFF !important;
     box-shadow: 0 4px 12px rgba(53, 85, 148, 0.08) !important;
     border-bottom: none !important;
+}
+
+/* Routing rows have in-cell location dropdowns; on desktop the table fits so we
+   drop the overflow clipping (from .table's rounded corners and .table-responsive's
+   scroll) that was hiding the last row's dropdown. Mobile keeps horizontal scroll. */
+@media (min-width: 992px) {
+    .routing-table-wrap { overflow: visible !important; }
+    .routing-table { overflow: visible !important; }
 }
 </style>
 <style>

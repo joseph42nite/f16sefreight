@@ -14,15 +14,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuejs-datepicker */ "./node_modules/vuejs-datepicker/dist/vuejs-datepicker.esm.js");
 /* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
-/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-/* harmony import */ var _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/view/components/OcrUploadModal.vue */ "./resources/js/src/view/components/OcrUploadModal.vue");
-/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
-/* harmony import */ var _core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/core/mixins/airWayBillMixin */ "./resources/js/src/core/mixins/airWayBillMixin.js");
-/* harmony import */ var _view_pages_dashboard_components_HawbAddressBlock_vue__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/view/pages/dashboard/components/HawbAddressBlock.vue */ "./resources/js/src/view/pages/dashboard/components/HawbAddressBlock.vue");
+/* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/view/components/OcrUploadModal.vue */ "./resources/js/src/view/components/OcrUploadModal.vue");
+/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
+/* harmony import */ var _core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/core/mixins/airWayBillMixin */ "./resources/js/src/core/mixins/airWayBillMixin.js");
+/* harmony import */ var _view_pages_dashboard_components_HawbAddressBlock_vue__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @/view/pages/dashboard/components/HawbAddressBlock.vue */ "./resources/js/src/view/pages/dashboard/components/HawbAddressBlock.vue");
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -44,11 +45,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
 
 
 
+
 // import PageLoader from "../../components/PageLoader.vue";
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  mixins: [_core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_8__["default"]],
+  mixins: [_core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_9__["default"]],
   data: function data() {
     return {
       mode: 'add',
@@ -652,14 +654,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           this.form.shipper_address.ship_post_code = shipper.pin;
           this.form.shipper_address.ship_state = shipper.state;
           if (shipper.country) {
-            var shipper_country_code = '';
-            for (var c = 0; c < 252; c++) {
-              if (this.countries[c] && this.countries[c].text.toLowerCase() == shipper.country.toLowerCase()) {
-                shipper_country_code = this.countries[c].value;
-                break;
-              }
-            }
-            this.form.shipper_address.ship_country = shipper_country_code;
+            this.form.shipper_address.ship_country = this.countryCodeByName(shipper.country);
           }
           this.form.shipper_address.ship_phone = shipper.phone;
           this.form.shipper_address.ship_fax = shipper.email;
@@ -681,14 +676,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           this.form.consignee_address.cons_post_code = consignee.pin;
           this.form.consignee_address.cons_state = consignee.state;
           if (consignee.country) {
-            var consignee_country_code = '';
-            for (var _c = 0; _c < 252; _c++) {
-              if (this.countries[_c] && this.countries[_c].text.toLowerCase() == consignee.country.toLowerCase()) {
-                consignee_country_code = this.countries[_c].value;
-                break;
-              }
-            }
-            this.form.consignee_address.cons_country = consignee_country_code;
+            this.form.consignee_address.cons_country = this.countryCodeByName(consignee.country);
           }
           this.form.consignee_address.cons_phone = consignee.phone;
           this.form.consignee_address.cons_fax = consignee.email;
@@ -1093,15 +1081,14 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     getLocation: function getLocation() {
       var _this7 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/get-location").then(function (_ref7) {
-        var data = _ref7.data;
+      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_3__.loadLocations)().then(function (data) {
         _this7.location = data;
       });
     },
     getOtherChargesCode: function getOtherChargesCode() {
       var _this8 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/other-charges').then(function (_ref8) {
-        var data = _ref8.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/other-charges').then(function (_ref7) {
+        var data = _ref7.data;
         _this8.other_charges_code = Object.keys(data).map(function (key) {
           return {
             value: key,
@@ -1114,8 +1101,8 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     getAgent: function getAgent() {
       var _this9 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/agent-info/").then(function (_ref9) {
-        var data = _ref9.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/agent-info/").then(function (_ref8) {
+        var data = _ref8.data;
         if (Array.isArray(data) && data.length > 0) {
           _this9.agent_information = data[0];
           if (!_this9.form.agent_head_office.ho_name) {
@@ -1209,13 +1196,13 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     getOCIData: function getOCIData() {
       var _this12 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/get-oci-data').then(function (_ref0) {
-        var data = _ref0.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/get-oci-data').then(function (_ref9) {
+        var data = _ref9.data;
         if (data && data.oci_custom_info_identifier) {
-          _this12.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(function (_ref1) {
-            var _ref10 = _slicedToArray(_ref1, 2),
-              key = _ref10[0],
-              value = _ref10[1];
+          _this12.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(function (_ref0) {
+            var _ref1 = _slicedToArray(_ref0, 2),
+              key = _ref1[0],
+              value = _ref1[1];
             return {
               value: key,
               text: value
@@ -1225,10 +1212,10 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           _this12.oci_data.oci_custom_info_identifier = [];
         }
         if (data && data.identifiers) {
-          _this12.oci_identifiers.identifiers = Object.entries(data.identifiers).map(function (_ref11) {
-            var _ref12 = _slicedToArray(_ref11, 2),
-              key = _ref12[0],
-              value = _ref12[1];
+          _this12.oci_identifiers.identifiers = Object.entries(data.identifiers).map(function (_ref10) {
+            var _ref11 = _slicedToArray(_ref10, 2),
+              key = _ref11[0],
+              value = _ref11[1];
             return {
               value: key,
               text: value
@@ -1282,7 +1269,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         evt.preventDefault();
       }
     },
-    onAWBInput: lodash_debounce__WEBPACK_IMPORTED_MODULE_3___default()(function () {
+    onAWBInput: lodash_debounce__WEBPACK_IMPORTED_MODULE_4___default()(function () {
       var _this13 = this;
       var awb_code = this.form.first_box.awb_code;
       var awb_no = this.form.first_box.awb_no;
@@ -1337,7 +1324,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     this.onSubmit = this.onSubmit.bind(this);
     if (this.current_user) this.getAgent(this.current_user.company_name, this.current_user.branch_name);
   },
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_10__.mapGetters)({
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_11__.mapGetters)({
     current_user: "currentUser"
   })), {}, {
     submitButtonText: function submitButtonText() {
@@ -1346,12 +1333,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   }),
   name: "HouseWayBill",
   components: {
-    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_7__["default"],
+    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_8__["default"],
     Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__["default"],
     DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"],
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_5__["default"],
-    OcrUploadModal: _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_6__["default"],
-    HawbAddressBlock: _view_pages_dashboard_components_HawbAddressBlock_vue__WEBPACK_IMPORTED_MODULE_9__["default"]
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_6__["default"],
+    OcrUploadModal: _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_7__["default"],
+    HawbAddressBlock: _view_pages_dashboard_components_HawbAddressBlock_vue__WEBPACK_IMPORTED_MODULE_10__["default"]
     // PageLoader
   }
 });
@@ -1512,7 +1499,7 @@ var render = function render() {
   }, [_vm._v("\n        " + _vm._s(_vm.title) + "\n    ")]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center pb-2"
   }, [_c("b-form-group", {
-    staticClass: "align-items-center",
+    staticClass: "align-items-center mb-0",
     attrs: {
       id: "fieldset-horizontal",
       "label-cols-lg": "auto",

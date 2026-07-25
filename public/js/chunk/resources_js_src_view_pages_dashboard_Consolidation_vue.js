@@ -16,7 +16,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
 /* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
+/* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
+/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -29,6 +30,7 @@ function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) 
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+
 
 
 
@@ -435,8 +437,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     // location
     getLocation: function getLocation() {
       var _this = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/get-location").then(function (_ref) {
-        var data = _ref.data;
+      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__.loadLocations)().then(function (data) {
         _this.location = data;
       });
     },
@@ -642,8 +643,8 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getCountry: function getCountry() {
       var _this7 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-country').then(function (_ref2) {
-        var data = _ref2.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-country').then(function (_ref) {
+        var data = _ref.data;
         _this7.countries = Object.keys(data).map(function (key) {
           return {
             value: key,
@@ -656,8 +657,8 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getAgent: function getAgent() {
       var _this8 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/agent-info/").then(function (_ref3) {
-        var data = _ref3.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/agent-info/").then(function (_ref2) {
+        var data = _ref2.data;
         if (Array.isArray(data) && data.length > 0) {
           _this8.agent_information = data[0];
           _this8.iata_cass = {
@@ -673,13 +674,13 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     },
     getOCIData: function getOCIData() {
       var _this9 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-oci-data').then(function (_ref4) {
-        var data = _ref4.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-oci-data').then(function (_ref3) {
+        var data = _ref3.data;
         if (data && data.oci_custom_info_identifier) {
-          _this9.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(function (_ref5) {
-            var _ref6 = _slicedToArray(_ref5, 2),
-              key = _ref6[0],
-              value = _ref6[1];
+          _this9.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(function (_ref4) {
+            var _ref5 = _slicedToArray(_ref4, 2),
+              key = _ref5[0],
+              value = _ref5[1];
             return {
               value: key,
               text: value
@@ -689,10 +690,10 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
           _this9.oci_data.oci_custom_info_identifier = [];
         }
         if (data && data.identifiers) {
-          _this9.oci_identifiers.identifiers = Object.entries(data.identifiers).map(function (_ref7) {
-            var _ref8 = _slicedToArray(_ref7, 2),
-              key = _ref8[0],
-              value = _ref8[1];
+          _this9.oci_identifiers.identifiers = Object.entries(data.identifiers).map(function (_ref6) {
+            var _ref7 = _slicedToArray(_ref6, 2),
+              key = _ref7[0],
+              value = _ref7[1];
             return {
               value: key,
               text: value
@@ -858,7 +859,6 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     this.getCountry();
     this.getOCIData();
     this.allHousewayBill();
-    this.location = [];
     window.addEventListener('click', this.closeDropdown_destination);
     window.addEventListener('click', this.closeDropdown_departure);
   },

@@ -1220,6 +1220,7 @@
                                             </div>
                                         </b-col>
                                     </b-row>
+                                    <b-form-checkbox size="lg" class="mt-2 text-bold justify-content-lg-start" v-model="form.as_agreed" :value="1" :unchecked-value="0" id="agreed" style="font-size: 16px; font-weight: 600;">As Agreed</b-form-checkbox>
                                 </div>
                                 <!-- CONSIGNMENT RATE DESCRIPTION SECTION END HERE -->
                                 <hr class="hr" />
@@ -2655,6 +2656,7 @@ export default {
                 is_also_notify_address_save: false,
                 is_iata_login_later: false,
                 status:'',
+                as_agreed:0,
             }),
             consignmentUrl: '/user/get-consignment-error',
             iata_cass:{
@@ -3610,6 +3612,7 @@ export default {
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
                     this.form.awb_email=this.existingData.awb_email;
+                    this.form.as_agreed=this.existingData.as_agreed;
                 } else {
                     // console.error('existingData is not an array:', this.existingData);
                     // console.log("Add mode activated");

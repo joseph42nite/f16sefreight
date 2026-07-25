@@ -775,6 +775,19 @@ export default {
             if (!str) return '';
             return str.toLowerCase().replace(/[^a-z0-9]/g, '');
         },
+        /**
+         * Resolve a country name (e.g. from OCR) to its select `value` code.
+         * Scans the full `countries` list (no hardcoded length) and returns
+         * '' when there is no match.
+         */
+        countryCodeByName(name) {
+            if (!name) return '';
+            const target = String(name).toLowerCase();
+            const match = (this.countries || []).find(
+                c => c && c.text && c.text.toLowerCase() === target
+            );
+            return match ? match.value : '';
+        },
         calculateSimilarity(str1, str2) {
             if (!str1 || !str2) return 0;
             const s1 = this.normalizeText(str1);

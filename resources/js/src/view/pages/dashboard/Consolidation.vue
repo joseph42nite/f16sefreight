@@ -490,6 +490,7 @@ import DatePicker from "vue2-datepicker";
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 import ApiService from "@/core/services/api.service";
+import { loadLocations } from "@/core/services/location.cache";
 import "vue2-datepicker/index.css";
 export default {
     data() {
@@ -692,8 +693,8 @@ export default {
         },
         // location
         getLocation() {
-            ApiService.get(`/user/get-location`).then(({ data }) => {
-                this.location=data;
+            loadLocations().then(data => {
+                this.location = data;
             });
         },
         getHousewayBills(status) {
@@ -1107,7 +1108,6 @@ export default {
         this.getCountry();
         this.getOCIData();
         this.allHousewayBill();
-        this.location = [];
         window.addEventListener('click', this.closeDropdown_destination);
         window.addEventListener('click', this.closeDropdown_departure);
     },

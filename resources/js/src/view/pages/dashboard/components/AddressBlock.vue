@@ -7,7 +7,7 @@
             <b-form-group id="fieldset-horizontal"
             label-cols-lg="auto"
             label-for="input-shipper"
-            class="align-items-center">
+            class="align-items-center mb-0">
                 <template #label>
                     <div class="shipper-toggle-label">
                         <span>Name:</span>

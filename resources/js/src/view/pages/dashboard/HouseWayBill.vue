@@ -2080,6 +2080,7 @@
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
+import { loadLocations } from "@/core/services/location.cache";
 import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 import SideBar from "@/view/layouts/public/SideBar.vue";
@@ -2500,14 +2501,7 @@ export default {
                     this.form.shipper_address.ship_post_code=shipper.pin;
                     this.form.shipper_address.ship_state=shipper.state;
                     if(shipper.country){
-                        let shipper_country_code='';
-                        for(let c=0;c<252;c++){
-                            if(this.countries[c] && this.countries[c].text.toLowerCase()==shipper.country.toLowerCase()){
-                                shipper_country_code=this.countries[c].value;
-                                break;
-                            }
-                        }
-                        this.form.shipper_address.ship_country=shipper_country_code;
+                        this.form.shipper_address.ship_country=this.countryCodeByName(shipper.country);
                     }
                     this.form.shipper_address.ship_phone=shipper.phone;
                     this.form.shipper_address.ship_fax=shipper.email;
@@ -2529,14 +2523,7 @@ export default {
                     this.form.consignee_address.cons_post_code=consignee.pin;
                     this.form.consignee_address.cons_state=consignee.state;
                     if(consignee.country){
-                        let consignee_country_code='';
-                        for(let c=0;c<252;c++){
-                            if(this.countries[c] && this.countries[c].text.toLowerCase()==consignee.country.toLowerCase()){
-                                consignee_country_code=this.countries[c].value;
-                                break;
-                            }
-                        }
-                        this.form.consignee_address.cons_country=consignee_country_code;
+                        this.form.consignee_address.cons_country=this.countryCodeByName(consignee.country);
                     }
                     this.form.consignee_address.cons_phone=consignee.phone;
                     this.form.consignee_address.cons_fax=consignee.email;
@@ -2932,8 +2919,8 @@ export default {
             });
         },
         getLocation() {
-            ApiService.get(`/user/get-location`).then(({ data }) => {
-                this.location=data;
+            loadLocations().then(data => {
+                this.location = data;
             });
         },
         getOtherChargesCode(){

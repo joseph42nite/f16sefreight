@@ -1,3 +1,4 @@
+<template>
     <!-- <div class="">
         <div class="container-fluid"> -->
         <b-container fluid class="body-color">

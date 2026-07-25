@@ -17,7 +17,8 @@ class Blog extends Model
         'meta_description',
         'content',
         'takeaways',
-        'published_at'
+        'published_at',
+        'views_count'
     ];
 
     protected $casts = [

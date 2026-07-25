@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<rsm:HouseWaybill xmlns:rsm="iata:housewaybill:1" xmlns:ram="iata:datamodel:3">
+  <rsm:MessageHeaderDocument>
+    <ram:ID>99966665555_NORMALIZED</ram:ID>
+    <ram:Name>House waybill</ram:Name>
+    <ram:TypeCode>703</ram:TypeCode>
+    <ram:IssueDateTime>NORMALIZED</ram:IssueDateTime>
+    <ram:PurposeCode>Creation</ram:PurposeCode>
+    <ram:VersionID>3.00</ram:VersionID>
+    <ram:SenderParty>
+      <ram:PrimaryID schemeID="P">PIMAADDR</ram:PrimaryID>
+    </ram:SenderParty>
+    <ram:RecipientParty>
+      <ram:PrimaryID schemeID="C">TDVSYS03GLNUNADDR</ram:PrimaryID>
+    </ram:RecipientParty>
+  </rsm:MessageHeaderDocument>
+  <rsm:BusinessHeaderDocument>
+    <ram:ID>99966665555</ram:ID>
+    <ram:IncludedHeaderNote>
+      <ram:ContentCode>C</ram:ContentCode>
+      <ram:Content>Consolidation</ram:Content>
+    </ram:IncludedHeaderNote>
+    <ram:SignatoryConsignorAuthentication>
+      <ram:Signatory>SIGN</ram:Signatory>
+    </ram:SignatoryConsignorAuthentication>
+    <ram:SignatoryCarrierAuthentication>
+      <ram:ActualDateTime>NORMALIZED</ram:ActualDateTime>
+      <ram:Signatory>HAWB Conv Agent</ram:Signatory>
+      <ram:IssueAuthenticationLocation>
+        <ram:Name>LOC</ram:Name>
+      </ram:IssueAuthenticationLocation>
+    </ram:SignatoryCarrierAuthentication>
+  </rsm:BusinessHeaderDocument>
+  <rsm:MasterConsignment>
+    <ram:IncludedTareGrossWeightMeasure unitCode="KGM"/>
+    <ram:TotalPieceQuantity/>
+    <ram:TransportContractDocument>
+      <ram:ID>999-66665555</ram:ID>
+    </ram:TransportContractDocument>
+    <ram:OriginLocation>
+      <ram:ID/>
+    </ram:OriginLocation>
+    <ram:FinalDestinationLocation>
+      <ram:ID/>
+    </ram:FinalDestinationLocation>
+    <ram:IncludedHouseConsignment>
+      <ram:NilCarriageValueIndicator>true</ram:NilCarriageValueIndicator>
+      <ram:NilCustomsValueIndicator>true</ram:NilCustomsValueIndicator>
+      <ram:NilInsuranceValueIndicator>true</ram:NilInsuranceValueIndicator>
+      <ram:TotalChargePrepaidIndicator>true</ram:TotalChargePrepaidIndicator>
+      <ram:TotalDisbursementPrepaidIndicator>true</ram:TotalDisbursementPrepaidIndicator>
+      <ram:IncludedTareGrossWeightMeasure unitCode="KGM">50</ram:IncludedTareGrossWeightMeasure>
+      <ram:TotalPieceQuantity>5</ram:TotalPieceQuantity>
+      <ram:SummaryDescription>General cargo</ram:SummaryDescription>
+      <ram:ConsignorParty>
+        <ram:Name>Shipper Co</ram:Name>
+        <ram:AccountID>SHIPACC</ram:AccountID>
+        <ram:PostalStructuredAddress>
+          <ram:PostcodeCode>11111</ram:PostcodeCode>
+          <ram:StreetName>123 Shipper St</ram:StreetName>
+          <ram:CityName>Ship City</ram:CityName>
+          <ram:CountryID>US</ram:CountryID>
+        </ram:PostalStructuredAddress>
+      </ram:ConsignorParty>
+      <ram:ConsigneeParty>
+        <ram:Name>Consignee Co</ram:Name>
+        <ram:AccountID>CONSACC</ram:AccountID>
+        <ram:PostalStructuredAddress>
+          <ram:PostcodeCode>22222</ram:PostcodeCode>
+          <ram:StreetName>456 Consignee Rd</ram:StreetName>
+          <ram:CityName>Cons City</ram:CityName>
+          <ram:CountryID>GB</ram:CountryID>
+        </ram:PostalStructuredAddress>
+      </ram:ConsigneeParty>
+      <ram:OriginLocation>
+        <ram:ID>JFK</ram:ID>
+      </ram:OriginLocation>
+      <ram:FinalDestinationLocation>
+        <ram:ID>LHR</ram:ID>
+      </ram:FinalDestinationLocation>
+      <ram:SpecifiedLogisticsTransportMovement>
+        <ram:StageCode>Main-Carriage</ram:StageCode>
+        <ram:ModeCode>4</ram:ModeCode>
+        <ram:Mode>AIR TRANSPORT</ram:Mode>
+        <ram:ID>AA100</ram:ID>
+        <ram:SequenceNumeric>1</ram:SequenceNumeric>
+        <ram:UsedLogisticsTransportMeans>
+          <ram:Name>AA</ram:Name>
+        </ram:UsedLogisticsTransportMeans>
+        <ram:ArrivalEvent>
+          <ram:OccurrenceArrivalLocation>
+            <ram:ID>CDG</ram:ID>
+            <ram:TypeCode>Airport</ram:TypeCode>
+          </ram:OccurrenceArrivalLocation>
+        </ram:ArrivalEvent>
+        <ram:DepartureEvent>
+          <ram:ScheduledOccurrenceDateTime>2026-07-15T10:00:00</ram:ScheduledOccurrenceDateTime>
+          <ram:OccurrenceDepartureLocation>
+            <ram:ID>JFK</ram:ID>
+            <ram:TypeCode>Airport</ram:TypeCode>
+          </ram:OccurrenceDepartureLocation>
+        </ram:DepartureEvent>
+      </ram:SpecifiedLogisticsTransportMovement>
+      <ram:SpecifiedLogisticsTransportMovement>
+        <ram:StageCode>Main-Carriage</ram:StageCode>
+        <ram:ModeCode>4</ram:ModeCode>
+        <ram:Mode>AIR TRANSPORT</ram:Mode>
+        <ram:ID>BA200</ram:ID>
+        <ram:SequenceNumeric>2</ram:SequenceNumeric>
+        <ram:UsedLogisticsTransportMeans>
+          <ram:Name>BA</ram:Name>
+        </ram:UsedLogisticsTransportMeans>
+        <ram:ArrivalEvent>
+          <ram:OccurrenceArrivalLocation>
+            <ram:ID>FRA</ram:ID>
+            <ram:TypeCode>Airport</ram:TypeCode>
+          </ram:OccurrenceArrivalLocation>
+        </ram:ArrivalEvent>
+        <ram:DepartureEvent>
+          <ram:ScheduledOccurrenceDateTime>2026-07-15T14:00:00</ram:ScheduledOccurrenceDateTime>
+          <ram:OccurrenceDepartureLocation>
+            <ram:ID>CDG</ram:ID>
+            <ram:TypeCode>Airport</ram:TypeCode>
+          </ram:OccurrenceDepartureLocation>
+        </ram:DepartureEvent>
+      </ram:SpecifiedLogisticsTransportMovement>
+      <ram:SpecifiedLogisticsTransportMovement>
+        <ram:StageCode>Main-Carriage</ram:StageCode>
+        <ram:ModeCode>4</ram:ModeCode>
+        <ram:Mode>AIR TRANSPORT</ram:Mode>
+        <ram:ID>CA300</ram:ID>
+        <ram:SequenceNumeric>3</ram:SequenceNumeric>
+        <ram:UsedLogisticsTransportMeans>
+          <ram:Name>CA</ram:Name>
+        </ram:UsedLogisticsTransportMeans>
+        <ram:ArrivalEvent>
+          <ram:OccurrenceArrivalLocation>
+            <ram:ID>LHR</ram:ID>
+            <ram:TypeCode>Airport</ram:TypeCode>
+          </ram:OccurrenceArrivalLocation>
+        </ram:ArrivalEvent>
+        <ram:DepartureEvent>
+          <ram:ScheduledOccurrenceDateTime>2026-07-15T18:00:00</ram:ScheduledOccurrenceDateTime>
+          <ram:OccurrenceDepartureLocation>
+            <ram:ID>FRA</ram:ID>
+            <ram:TypeCode>Airport</ram:TypeCode>
+          </ram:OccurrenceDepartureLocation>
+        </ram:DepartureEvent>
+      </ram:SpecifiedLogisticsTransportMovement>
+      <ram:ApplicableOriginCurrencyExchange>
+        <ram:SourceCurrencyCode>INR</ram:SourceCurrencyCode>
+      </ram:ApplicableOriginCurrencyExchange>
+      <ram:ApplicableLogisticsAllowanceCharge>
+        <ram:ID>AW</ram:ID>
+        <ram:PartyTypeCode>A</ram:PartyTypeCode>
+        <ram:ActualAmount currencyID="USD">10</ram:ActualAmount>
+      </ram:ApplicableLogisticsAllowanceCharge>
+      <ram:IncludedHouseConsignmentItem>
+        <ram:SequenceNumeric>1</ram:SequenceNumeric>
+        <ram:TypeCode listAgencyID="1">1234.56</ram:TypeCode>
+        <ram:GrossWeightMeasure unitCode="KGM">50</ram:GrossWeightMeasure>
+        <ram:GrossVolumeMeasure unitCode="MTQ">100</ram:GrossVolumeMeasure>
+        <ram:TotalChargeAmount currencyID="USD">500</ram:TotalChargeAmount>
+        <ram:PieceQuantity>5</ram:PieceQuantity>
+        <ram:Information>NDA</ram:Information>
+        <ram:NatureIdentificationTransportCargo>
+          <ram:Identification>General cargo</ram:Identification>
+        </ram:NatureIdentificationTransportCargo>
+        <ram:ApplicableFreightRateServiceCharge>
+          <ram:CategoryCode>Q</ram:CategoryCode>
+          <ram:ChargeableWeightMeasure unitCode="KGM">50</ram:ChargeableWeightMeasure>
+          <ram:AppliedRate>10</ram:AppliedRate>
+          <ram:AppliedAmount currencyID="USD">500</ram:AppliedAmount>
+        </ram:ApplicableFreightRateServiceCharge>
+      </ram:IncludedHouseConsignmentItem>
+    </ram:IncludedHouseConsignment>
+  </rsm:MasterConsignment>
+</rsm:HouseWaybill>

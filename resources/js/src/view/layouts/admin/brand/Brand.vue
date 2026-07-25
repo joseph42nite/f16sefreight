@@ -1,25 +1,36 @@
 <template>
   <!-- begin:: Aside -->
   <div>
-  <div class="brand flex-column-auto" id="kt_brand" ref="kt_brand">
-    <div class="d-flex align-items-center mt-5 mb-5 ml-5 w-100">
-        <div>
-            <h4 class="text-nowrap font-weight-bolder text-white mb-0">F16s</h4>
-            <span class="text-nowrap text-muted font-size-xs font-weight-bold">ADMIN CONSOLE</span>
-        </div>
-    </div>
-    <div class="brand-tools" v-if="allowMinimize">
+  <div class="brand flex-column-auto d-flex align-items-center justify-content-between" id="kt_brand" ref="kt_brand">
+    <!-- Logo (hidden on phone — the mobile header already shows it) -->
+    <router-link to="/superadmin/all-company" class="brand-logo d-none d-lg-flex align-items-center">
+      <img src="/media/assets/logos/white-logo.png" alt="F16s" class="brand-logo-img" />
+    </router-link>
+
+    <div class="d-flex align-items-center ml-auto">
+      <!-- Desktop minimize toggle -->
+      <div class="brand-tools" v-if="allowMinimize">
+        <button
+          class="brand-toggle btn btn-sm px-0"
+          id="kt_aside_toggle"
+          ref="kt_aside_toggle"
+        >
+          <span class="svg-icon svg-icon svg-icon-xl">
+            <inline-svg
+              class="svg-icon"
+              src="media/svg/icons/Navigation/Angle-double-left.svg"
+            />
+          </span>
+        </button>
+      </div>
+
+      <!-- Mobile close button (wired to the offcanvas via id) -->
       <button
-        class="brand-toggle btn btn-sm px-0"
-        id="kt_aside_toggle"
-        ref="kt_aside_toggle"
+        id="kt_aside_close_btn"
+        class="btn aside-close-btn d-lg-none"
+        aria-label="Close menu"
       >
-        <span class="svg-icon svg-icon svg-icon-xl">
-          <inline-svg
-            class="svg-icon"
-            src="media/svg/icons/Navigation/Angle-double-left.svg"
-          />
-        </span>
+        <i class="fas fa-times"></i>
       </button>
     </div>
   </div>
@@ -32,16 +43,28 @@
 .aside-toggle {
   outline: none;
 }
-.brand{
+.brand {
   height: auto !important;
+  background-color: #1B2134 !important;
+  padding: 1.25rem 1.25rem;
 }
-.brand {
-    background-color: #1B2134 !important;
+.brand-logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
 }
-@media (max-width: 991.98px){
-.brand {
-    display: -webkit-box !important;
-}
+.aside-close-btn {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.08);
+  }
 }
 </style>
 

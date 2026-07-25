@@ -6,6 +6,7 @@ use App\Agent;
 use App\Airline;
 use App\AirwayBills;
 use App\Http\Controllers\Controller;
+use App\Http\Traits\WaybillTrait;
 use App\PaymentInfo;
 use App\WayBillAddress;
 use App\SavedAddress;
@@ -23,6 +24,8 @@ use phpseclib3\Net\SFTP;
 
 class AirwayBillController extends Controller
 {
+    use WaybillTrait;
+
     protected $conversionController;
 
     public function __construct(ConversionController $conversionController)
@@ -35,62 +38,6 @@ class AirwayBillController extends Controller
         $branch_name = $user->branch_name;
         $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference', 'ho_name', 'ho_address', 'ho_city', 'ho_pincode', 'ho_state', 'ho_country']);
         return json_encode($data);
-    }
-    private function getAuthAgent()
-    {
-        $user = auth()->guard('user-api')->user();
-        if (!$user) {
-            return null;
-        }
-        return Agent::where('id', $user->branch_name)->first();
-    }
-    private function validateAndFormatRouteDates(array &$routing_information)
-    {
-        $dateFields = ['date', 'date_2', 'date_3'];
-        foreach ($dateFields as $field) {
-            if (isset($routing_information[$field]) && !empty($routing_information[$field])) {
-                $dateValue = $routing_information[$field];
-                $timestamp = strtotime($dateValue);
-                if ($timestamp === false && is_string($dateValue)) {
-                    $timestamp = strtotime(str_replace(['T', 'Z'], [' ', ''], $dateValue));
-                }
-                if ($timestamp === false) {
-                    $fieldNameForErr = $field === 'date' ? 'date' : $field;
-                    return response()->json(['errors' => [$field => ["The {$fieldNameForErr} field must be a valid date."]]], 422);
-                }
-                $routing_information[$field] = date('Y-m-d H:i:s', $timestamp);
-            }
-        }
-        return null;
-    }
-    private function getAddressByType(Request $request, string $addressType, string $prefix)
-    {
-        $addressId = $request->input('id') ?? $request->query('id');
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $addressType)->first();
-        }
-
-        if ($address) {
-            return response()->json([
-                "{$prefix}_name" => $address->name,
-                "{$prefix}_name_2" => $address->name_2,
-                "{$prefix}_account" => $address->account,
-                "{$prefix}_address" => $address->address,
-                "{$prefix}_address_line_2" => $address->address_line_2,
-                "{$prefix}_city" => $address->city,
-                "{$prefix}_airport_code" => $address->airport_code,
-                "{$prefix}_post_code" => $address->post_code,
-                "{$prefix}_state" => $address->state,
-                "{$prefix}_country" => $address->country,
-                "{$prefix}_phone" => $address->phone,
-                "{$prefix}_fax" => $address->fax,
-                "{$prefix}_telex" => $address->telex,
-            ], 200);
-        }
-        return response()->json(['error' => 'Address not found'], 404);
     }
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {

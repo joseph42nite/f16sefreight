@@ -58,6 +58,11 @@ export default {
                 uld_infos: [],
             }),
             activeDropdown: null,
+            // Registry of dropdown container DOM nodes handed up by extracted
+            // child components (e.g. AddressBlock). closeAllDropdowns() falls back
+            // to this when a $refs lookup misses. Not reactive on purpose — only
+            // read inside the window-click handler.
+            dropdownRefs: {},
         };
     },
     computed: {
@@ -691,7 +696,7 @@ export default {
             if (this.activeDropdown === 'issuing_loc' || this.activeDropdown === 'issue') {
                 refName = 'dropdownContainer_issue';
             }
-            const container = this.$refs[refName];
+            const container = this.$refs[refName] || this.dropdownRefs[this.activeDropdown];
             if (container && typeof container.contains === 'function') {
                 if (!container.contains(event.target)) {
                     this.activeDropdown = null;
@@ -699,6 +704,9 @@ export default {
             } else {
                 this.activeDropdown = null;
             }
+        },
+        registerDropdownRef(name, el) {
+            this.dropdownRefs[name] = el;
         },
         selectShipper(shipper) {
             if (!shipper) return;
@@ -766,6 +774,19 @@ export default {
         normalizeText(str) {
             if (!str) return '';
             return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        },
+        /**
+         * Resolve a country name (e.g. from OCR) to its select `value` code.
+         * Scans the full `countries` list (no hardcoded length) and returns
+         * '' when there is no match.
+         */
+        countryCodeByName(name) {
+            if (!name) return '';
+            const target = String(name).toLowerCase();
+            const match = (this.countries || []).find(
+                c => c && c.text && c.text.toLowerCase() === target
+            );
+            return match ? match.value : '';
         },
         calculateSimilarity(str1, str2) {
             if (!str1 || !str2) return 0;

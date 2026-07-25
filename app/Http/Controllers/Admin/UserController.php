@@ -7,7 +7,6 @@ use App\User;
 use App\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use App\Company;
 use Illuminate\Support\Facades\Cache;
 
@@ -24,7 +23,7 @@ class UserController extends Controller
     }
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'origin_airport_code' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'max:100'],
@@ -34,9 +33,6 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:4'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
         $current_date = date("Y-m-d");
         $current_date = date("Y-m-d", strtotime($current_date . " +1 week"));
         $user = new User();
@@ -64,7 +60,7 @@ class UserController extends Controller
     }
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'string', 'max:100'],
             'branch_name' => ['nullable', 'max:50'],
@@ -72,9 +68,6 @@ class UserController extends Controller
             'can_send' => ['required'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
         $user = User::find($id);
         $user->name = $request->name;
         $user->company_name = $request->company_name;
@@ -98,13 +91,10 @@ class UserController extends Controller
 
     public function personal_update(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'name' => ['required', 'string', 'max:100'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
         $id = auth()->guard('user-api')->user()->id;
         $user = User::find($id);
         $user->name = $request->name;
@@ -117,13 +107,10 @@ class UserController extends Controller
     }
     public function update_password(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'password' => ['required', 'confirmed', 'min:4'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
         $id = auth()->guard('user-api')->user()->id;
         User::where('id', $id)->update(['password' => Hash::make($request->password)]);
         return json_encode(['status' => true, 'message' => "Password updated successful"]);

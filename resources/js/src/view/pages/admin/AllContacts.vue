@@ -19,7 +19,7 @@
             <!-- Table -->
             <div class="admin-table-wrapper">
               <SkeletonTable v-if="isLoading" :rows="8" :columns="7" />
-              <b-table v-else responsive hover :items="items" :fields="fields" primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage" @filtered="onFiltered" thead-class="text-uppercase">
+              <b-table v-else responsive stacked="md" hover :items="items" :fields="fields" primary-key="id" :filter="filter" :current-page="currentPage" :per-page="perPage" @filtered="onFiltered" thead-class="text-uppercase">
                 <template #cell(index)="data">
                   <span class="font-weight-bold">#{{ data.index + 1 }}</span>
                 </template>
@@ -52,10 +52,11 @@
   </template>
   
   <script>
-  import ApiService from "@/core/services/api.service";
   import SkeletonTable from "../../components/SkeletonTable.vue";
+  import adminListMixin from "@/core/mixins/adminList.mixin";
   export default {
     name: "superadmin-allcontacts",
+    mixins: [adminListMixin],
     data() {
       return {
         fields: [
@@ -67,14 +68,6 @@
           {label:'Message',key:"message"},
           {label:"Action",key:"action"}
           ],
-        items: [],
-        isLoading: false,
-        current_date:'',
-        filter: null,
-        totalRows: 0,
-        currentPage: 1,
-        perPage: 10,
-        pageOptions: [10, 15, 20,{ value: 100, text: "Show a lot" }],
       };
     },
     components: {
@@ -82,34 +75,15 @@
     },
     methods: {
       delete_contacts(id){
-        var proceed = confirm("Are you sure you want to delete this contact?");
-        if(proceed){
-          ApiService.delete(`/delete-contact/${id}`)
-          .then(({ data }) => {
-            this.get_contacts();
-          })
-        }
+        this.confirmRemove(`/delete-contact/${id}`, "Are you sure you want to delete this contact?")
+          .then(removed => { if (removed) this.get_contacts(); });
       },
       get_contacts(){
-        this.items=[];
-        this.isLoading = true;
-        ApiService.get(`/all-contacts/`)
-          .then(({ data }) => {
-            this.items=data;
-            this.totalRows=data.length;
-          })
-          .finally(() => {
-             this.isLoading = false;
-          });
-      },
-       onFiltered(filteredItems) {
-        this.totalRows = filteredItems.length;
-        this.currentPage = 1;
+        return this.loadItems(`/all-contacts/`);
       },
     },
     mounted(){
        this.get_contacts();
-       this.current_date = new Date().toISOString().slice(0, 10);
     },
   };
   </script>

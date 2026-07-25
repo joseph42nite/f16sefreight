@@ -170,6 +170,7 @@
         <b-table
           v-else
           responsive
+          stacked="md"
           hover
           :items="localFilteredItems !== null ? localFilteredItems : items"
           :fields="fields"
@@ -263,7 +264,7 @@
               </b-button>
             </div>
 
-            <!-- FMA (Shown when fna_received is false) -->
+            <!-- FMA / Processed Message (Shown when fna_received is false) -->
             <div v-else class="d-inline-flex align-items-center">
               <b-badge 
                 variant="light-success" 
@@ -271,7 +272,7 @@
                 v-b-tooltip.hover 
                 :title="data.item.fma_reason || 'Approved or accepted by airline'"
               >
-                <i class="fas fa-check-circle mr-1 text-success"></i> FMA
+                <i class="fas fa-check-circle mr-1 text-success"></i> {{ data.item.latest_status || 'FMA' }}
               </b-badge>
 
               <!-- Conditionally show "Rejected" next to FMA in red if the message indicates rejection -->
@@ -406,7 +407,7 @@
                       </b-button>
                     </div>
 
-                    <!-- FMA (Shown when fna_received is false) -->
+                    <!-- FMA / Processed Message (Shown when fna_received is false) -->
                     <div v-else class="d-inline-flex align-items-center justify-content-center">
                       <b-badge 
                         variant="light-success" 
@@ -414,7 +415,7 @@
                         v-b-tooltip.hover 
                         :title="hawb.fma_reason || 'Approved or accepted by airline'"
                       >
-                        <i class="fas fa-check-circle mr-1 text-success"></i> FMA
+                        <i class="fas fa-check-circle mr-1 text-success"></i> {{ hawb.latest_status || 'FMA' }}
                       </b-badge>
 
                       <!-- Conditionally show "Rejected" next to FMA in red if the message indicates rejection -->
@@ -1171,6 +1172,43 @@ export default {
 .mx-datepicker-custom .mx-icon-clear {
   right: 10px !important;
   color: #a1a5b7 !important;
+}
+
+/* Mobile / phone tuning */
+@media (max-width: 767.98px) {
+  /* Stat cards: stack full-width, trim padding, smaller numbers */
+  .stats-card {
+    padding: 1.25rem !important;
+    margin-bottom: 1rem;
+  }
+  .row.mb-5 > [class*="col-"]:last-child .stats-card {
+    margin-bottom: 0;
+  }
+  .stats-value {
+    font-size: 1.75rem;
+  }
+  .stats-icon .font-size-h1 {
+    font-size: 2rem !important;
+  }
+
+  /* Filter panel: lighter padding, spaced-out stacked fields */
+  .filter-panel {
+    padding: 1rem !important;
+  }
+  .filter-panel .row > [class*="col-"] {
+    margin-bottom: 0.85rem;
+  }
+  .filter-panel .row > [class*="col-"]:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Neutralize the heavy horizontal padding inside the card on phones */
+  .admin-filter-row,
+  .admin-table-wrapper,
+  .admin-pagination-wrap {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
 }
 </style>
 

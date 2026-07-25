@@ -33,10 +33,11 @@
       <div class="admin-table-wrapper">
         <SkeletonTable v-if="isLoading" :rows="10" :columns="6" />
         
-        <b-table 
-          v-else 
-          responsive 
-          hover 
+        <b-table
+          v-else
+          responsive
+          stacked="md"
+          hover
           :items="filteredUsers" 
           :fields="fields" 
           primary-key="id" 
@@ -96,8 +97,10 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import SkeletonTable from "../../components/SkeletonTable.vue";
+import adminListMixin from "@/core/mixins/adminList.mixin";
 export default {
   name: "superadminalluser",
+  mixins: [adminListMixin],
   data() {
     return {
       fields: [
@@ -111,16 +114,8 @@ export default {
         // {label:'Plan status',key:"plan_status"},
         {label:"Action",key:"action"}
         ],
-      items: [],
       companies: [],
       selectedCompany: null,
-      isLoading: false,
-      current_date:'',
-      filter: null,
-      totalRows: 0,
-      currentPage: 1,
-      perPage: 10,
-      pageOptions: [10, 15, 20,{ value: 100, text: "Show a lot" }],
     };
   },
   computed: {
@@ -161,13 +156,8 @@ export default {
   },
   methods: {
     delete_user(id){
-      var proceed = confirm("Are you sure you want to proceed?");
-      if(proceed){
-        ApiService.delete(`/superadmin/user/${id}`)
-        .then(({ data }) => {
-          this.get_users();
-        })
-      }
+      this.confirmRemove(`/superadmin/user/${id}`)
+        .then(removed => { if (removed) this.get_users(); });
     },
     get_users(){
       this.items=[];
@@ -198,10 +188,6 @@ export default {
       if (companyByName) return companyByName.name;
       return val;
     },
-     onFiltered(filteredItems) {
-      this.totalRows = filteredItems.length;
-      this.currentPage = 1;
-    },
   },
   components: {
     SkeletonTable
@@ -209,7 +195,6 @@ export default {
   mounted(){
      this.get_users();
      this.get_companies();
-     this.current_date = new Date().toISOString().slice(0, 10);
   },
 };
 </script>

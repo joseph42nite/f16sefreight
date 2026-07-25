@@ -23,6 +23,57 @@ use DOMDocument;
 
 class ConversionController extends Controller
 {
+    // Builds the SpecifiedLogisticsTransportMovement element for one leg of
+    // a (up to 3-leg) itinerary. Each leg's departure location is the
+    // previous leg's arrival location (there's no separate from_2/from_3
+    // column), so route 1 departs from $data['from'] while routes 2 and 3
+    // depart from the previous route's 'to'/'to_2'. Returns null if this
+    // leg has no by/flight (the route wasn't used).
+    private function buildRouteMovementElement(DOMDocument $xml, array $data, int $routeNumber)
+    {
+        $suffix = $routeNumber === 1 ? '' : '_' . $routeNumber;
+        $by = $data['by' . $suffix] ?? null;
+        $flight = $data['flight' . $suffix] ?? null;
+        if (empty($by) || empty($flight)) {
+            return null;
+        }
+
+        $arrivalField = 'to' . $suffix;
+        $departureField = $routeNumber === 1 ? 'from' : ($routeNumber === 2 ? 'to' : 'to_2');
+        $dateField = 'date' . $suffix;
+
+        $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
+        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
+        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
+        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
+        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $by . $flight));
+        $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', (string) $routeNumber));
+
+        // Used Logistics Transport Means
+        $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
+        $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $by));
+        $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
+
+        // Arrival Event
+        $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
+        $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
+        $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($data[$arrivalField], 0, 3)));
+        $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+        $arrivalEvent->appendChild($occurrenceArrivalLocation);
+        $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
+
+        // Departure Event
+        $departureEvent = $xml->createElement('ram:DepartureEvent');
+        $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $data[$dateField])));
+        $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
+        $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($data[$departureField], 0, 3)));
+        $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
+        $departureEvent->appendChild($OccurrenceDepartureLocation);
+        $specifiedLogisticsTransportMovement->appendChild($departureEvent);
+
+        return $specifiedLogisticsTransportMovement;
+    }
+
     public function WayBillConversion($awb_id = "12312345678")
     {
         // Fetch data from the database (this is just sample data for now)
@@ -295,108 +346,11 @@ class ConversionController extends Controller
         $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['destination_airport'], 0, 3)));
         $masterConsignment->appendChild($finalDestinationLocation);
 
-        // ===========First route info=============
-        if (!empty($waybill_data['by']) && !empty($waybill_data['flight'])) {
-            // Create the SpecifiedLogisticsTransportMovement element
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by'] . $waybill_data['flight']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '1'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['from'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // =========== End First route info=============
-        }
-        if (!empty($waybill_data['by_2']) && !empty($waybill_data['flight_2'])) {
-            // ===========Second route info=============
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_2'] . $waybill_data['flight_2']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '2'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by_2']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date_2'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // ===========End Second route info=============
-        }
-        if (!empty($waybill_data['by_3']) && !empty($waybill_data['flight_3'])) {
-            // ===========Third route info=============
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $waybill_data['by_3'] . $waybill_data['flight_3']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '3'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $waybill_data['by_3']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_3'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $waybill_data['date_3'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($waybill_data['to_2'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $masterConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // ===========End Third route info=============
+        foreach ([1, 2, 3] as $routeNumber) {
+            $movement = $this->buildRouteMovementElement($xml, $waybill_data, $routeNumber);
+            if ($movement) {
+                $masterConsignment->appendChild($movement);
+            }
         }
 
         $special_handling_info = $waybill_data['special_handling_info'] ? json_decode($waybill_data['special_handling_info'], true) : [];
@@ -845,108 +799,11 @@ class ConversionController extends Controller
         $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($house_data['destination_airport'], 0, 3)));
         $IncludedHouseConsignment->appendChild($finalDestinationLocation);
 
-        // ===========First route info=============
-        if (!empty($house_data['by']) && !empty($house_data['flight'])) {
-            // Create the SpecifiedLogisticsTransportMovement element
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $house_data['by'] . $house_data['flight']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '1'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $house_data['by']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($house_data['to'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $house_data['date'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($house_data['from'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // =========== End First route info=============
-        }
-        if (!empty($house_data['by_2']) && !empty($house_data['flight_2'])) {
-            // ===========Second route info=============
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $house_data['by_2'] . $house_data['flight_2']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '2'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $house_data['by_2']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($house_data['to_2'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $house_data['date_2'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($house_data['to'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // ===========End Second route info=============
-        }
-        if (!empty($house_data['by_3']) && !empty($house_data['flight_3'])) {
-            // ===========Third route info=============
-            $specifiedLogisticsTransportMovement = $xml->createElement('ram:SpecifiedLogisticsTransportMovement');
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:StageCode', 'Main-Carriage'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ModeCode', 4));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:Mode', 'AIR TRANSPORT'));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:ID', $house_data['by_3'] . $house_data['flight_3']));
-            $specifiedLogisticsTransportMovement->appendChild($xml->createElement('ram:SequenceNumeric', '3'));
-
-            // Used Logistics Transport Means
-            $usedLogisticsTransportMeans = $xml->createElement('ram:UsedLogisticsTransportMeans');
-            $usedLogisticsTransportMeans->appendChild($xml->createElement('ram:Name', $house_data['by_3']));
-            $specifiedLogisticsTransportMovement->appendChild($usedLogisticsTransportMeans);
-
-            // Arrival Event
-            $arrivalEvent = $xml->createElement('ram:ArrivalEvent');
-            $occurrenceArrivalLocation = $xml->createElement('ram:OccurrenceArrivalLocation');
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:ID', substr($house_data['to_3'], 0, 3)));
-            $occurrenceArrivalLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $arrivalEvent->appendChild($occurrenceArrivalLocation);
-            $specifiedLogisticsTransportMovement->appendChild($arrivalEvent);
-
-            // Departure Event
-            $departureEvent = $xml->createElement('ram:DepartureEvent');
-            $departureEvent->appendChild($xml->createElement('ram:ScheduledOccurrenceDateTime', str_replace(' ', 'T', $house_data['date_3'])));
-            $OccurrenceDepartureLocation = $xml->createElement('ram:OccurrenceDepartureLocation');
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:ID', substr($house_data['to_2'], 0, 3)));
-            $OccurrenceDepartureLocation->appendChild($xml->createElement('ram:TypeCode', 'Airport'));
-            $departureEvent->appendChild($OccurrenceDepartureLocation);
-            $specifiedLogisticsTransportMovement->appendChild($departureEvent);
-
-            $IncludedHouseConsignment->appendChild($specifiedLogisticsTransportMovement);
-            // ===========End Third route info=============
+        foreach ([1, 2, 3] as $routeNumber) {
+            $movement = $this->buildRouteMovementElement($xml, $house_data, $routeNumber);
+            if ($movement) {
+                $IncludedHouseConsignment->appendChild($movement);
+            }
         }
 
         $special_handling_info = json_decode($house_data['special_handling_info'], true) ?? [];

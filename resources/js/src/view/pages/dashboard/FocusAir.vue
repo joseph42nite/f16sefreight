@@ -147,32 +147,157 @@
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION START -->
                                 <b-row class="my-4 my-md-10">
                                     <b-col cols="12" md="6">
-                                        <address-block
-                                            title="Shipper"
-                                            dropdown-name="shipper"
-                                            prefix="ship"
-                                            address-key="shipper_address"
-                                            control-class="shipper-form-control"
-                                            search-id="shipper"
-                                            search-placeholder="Search shipper"
-                                            name2-id="shipper-name-2-input"
-                                            name2-extra-class="ship_name_2"
-                                            country-placeholder=" Please select one"
-                                            :form="form"
-                                            :address="form.shipper_address"
-                                            :countries="countries"
-                                            :active-dropdown="activeDropdown"
-                                            :filtered="filteredShippers"
-                                            :show="showShipper"
-                                            :save-checked="form.is_shipper_address_save"
-                                            @update:show="showShipper = $event"
-                                            @update:saveChecked="form.is_shipper_address_save = $event"
-                                            @toggle="toggleDropdown"
-                                            @filter="filterShippers"
-                                            @select="selectShipper"
-                                            @limit="inputLimit"
-                                            @register-ref="registerDropdownRef"
-                                        ></address-block>
+                                        <b-col cols="auto">
+                                            <h4 class="h-color ml-2">
+                                                Shipper
+                                            </h4>
+                                            <div class="d-flex align-items-center pb-2">
+                                                <b-form-group id="fieldset-horizontal"
+                                                label-cols-lg="auto"
+                                                label-for="input-shipper"
+                                                class="align-items-center">
+                                                <template #label>
+                                                    <div class="shipper-toggle-label">
+                                                        <span>Name:</span>
+                                                        <span style="color: red;">*</span>
+                                                    </div>
+                                                </template>
+                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
+                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control shipper-form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                    @input="filterShippers" @focus="toggleDropdown('shipper', true)" />
+
+                                                    <div v-if="activeDropdown === 'shipper' && filteredShippers.length" class="dropdown-options align-items-center">
+                                                        <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
+                                                            {{ shipper.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                    <has-error :form="form" field="ship_name"></has-error>
+                                                </b-form-group>
+                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2" style="color:#355594;stroke:#355594;" @click="showShipper = !showShipper"></b-icon>
+                                            </div>
+                                            <!-- Show Shipper all input field here -->
+                                            <div v-if="showShipper">
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-name-2-input" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>&nbsp;</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="shipper-name-2-input" class="form-control shipper-form-control ship_name_2" v-model="form.shipper_address.ship_name_2" :class="{ 'is-invalid': form.errors.has('ship_name_2') }" autocomplete="off"></b-form-input>
+                                                    <has-error :form="form" field="ship_name_2"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Account:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_account" :class="{ 'is-invalid': form.errors.has('ship_account') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_account"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Address:</span>
+                                                            <span style="color: red;">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address" :class="{ 'is-invalid': form.errors.has('ship_address') }" @keydown="inputLimit($event, 'shipper_address.ship_address', 40)"></b-form-input>
+                                                    <has-error :form="form" field="ship_address"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>&nbsp;</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" v-model="form.shipper_address.ship_address_line_2" :class="{ 'is-invalid': form.errors.has('ship_address_line_2') }" @keydown="inputLimit($event, 'shipper_address.ship_address_line_2', 35)"></b-form-input>
+                                                    <has-error :form="form" field="ship_address_line_2"></has-error>
+                                                </b-form-group>
+                                                
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
+                                                        <template #label>
+                                                            <div class="shipper-toggle-label">
+                                                                <span>City:</span>
+                                                                <span style="color: red;">*</span>
+                                                            </div>
+                                                        </template>
+                                                        <div class="d-flex align-items-center pb-2">
+                                                            <b-form-input id="input-horizontal" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                                            <b-form-input id="input-horizontal" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                                        </div>
+                                                        <div>
+                                                            <has-error :form="form" field="ship_city" :class="{ 'd-block': form.errors.has('ship_city') }"></has-error>
+                                                            <has-error :form="form" field="ship_airport_code" :class="{ 'd-block': form.errors.has('ship_airport_code') }"></has-error>
+                                                        </div>
+                                                    </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Pin code:</span>
+                                                            <span class="text-danger">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_post_code" :class="{ 'is-invalid': form.errors.has('ship_post_code') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_post_code"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>State:</span>
+                                                            <span class="text-danger">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_state" :class="{ 'is-invalid': form.errors.has('ship_state') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_state"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Country:</span>
+                                                            <span style="color: red;">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-select class="form-control shipper-form-control" v-model="form.shipper_address.ship_country" :class="{ 'is-invalid': form.errors.has('ship_country') }">
+                                                        <option value=""> Please select one</option>
+                                                        <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                            {{ country.text }}
+                                                        </option>
+                                                    </b-form-select>
+                                                    <has-error :form="form" field="ship_country"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Phone:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_phone" :class="{ 'is-invalid': form.errors.has('ship_phone') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_phone"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Fax:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_fax" :class="{ 'is-invalid': form.errors.has('ship_fax') }"></b-form-input>
+                                                    <has-error :form="form" field="ship_fax"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Telex:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control shipper-form-control" style="width:200px;" v-model="form.shipper_address.ship_telex"></b-form-input>
+                                                </b-form-group>
+                                                <b-form-checkbox size="sm" class="" style="margin-left: 90px;" v-model="form.is_shipper_address_save"> Save new address to address
+                                                    book</b-form-checkbox>
+                                            </div>
+                                        </b-col>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label="" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mt-2 d-none d-md-block">
@@ -181,31 +306,155 @@
                                         </b-form-group>
                                     </b-col>
                                     <b-col cols="12" md="6" class="mt-6 mt-md-0 mt-lg-0">
-                                        <address-block
-                                            title="Consignee"
-                                            dropdown-name="consignee"
-                                            prefix="cons"
-                                            address-key="consignee_address"
-                                            control-class="consignee-form-control"
-                                            city-control-class="consignee-form-control"
-                                            search-id="consignee"
-                                            search-placeholder="Search consignee"
-                                            name2-id="consignee-name-2-input"
-                                            :form="form"
-                                            :address="form.consignee_address"
-                                            :countries="countries"
-                                            :active-dropdown="activeDropdown"
-                                            :filtered="filteredConsignees"
-                                            :show="showConsignee"
-                                            :save-checked="form.is_consignee_address_save"
-                                            @update:show="showConsignee = $event"
-                                            @update:saveChecked="form.is_consignee_address_save = $event"
-                                            @toggle="toggleDropdown"
-                                            @filter="filterConsignee"
-                                            @select="selectConsignee"
-                                            @limit="inputLimit"
-                                            @register-ref="registerDropdownRef"
-                                        ></address-block>
+                                        <b-col cols="auto">
+                                            <h4 class="h-color ml-2">
+                                                Consignee
+                                            </h4>
+                                            <div class="d-flex align-items-center pb-2">
+                                                <b-form-group id="fieldset-horizontal"
+                                                label-cols-lg="auto"
+                                                label-for="input-shipper"
+                                                class="align-items-center">
+                                                <template #label>
+                                                    <div class="shipper-toggle-label">
+                                                        <span>Name:</span>
+                                                        <span style="color: red;">*</span>
+                                                    </div>
+                                                </template>
+                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_consignee" @click="toggleDropdown('consignee')">
+                                                    <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control consignee-form-control" autocomplete="off"
+                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"
+                                                    @input="filterConsignee" @focus="toggleDropdown('consignee', true)" />
+
+                                                    <div v-if="activeDropdown === 'consignee' && filteredConsignees.length" class="dropdown-options align-items-center">
+                                                        <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
+                                                            {{ consignee.name }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <has-error :form="form" field="cons_name"></has-error>
+                                                </b-form-group>
+                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2" style="color:#355594;stroke:#355594;" @click="showConsignee = !showConsignee"></b-icon>
+                                            </div>
+                                            <!-- Show Consignee all input field here -->
+                                            <div v-if="showConsignee">
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="consignee-name-2-input" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>&nbsp;</span>
+                                                        </div>
+                                                    </template>
+                                                     <b-form-input id="consignee-name-2-input" class="form-control consignee-form-control" v-model="form.consignee_address.cons_name_2" :class="{ 'is-invalid': form.errors.has('cons_name_2') }" autocomplete="off"></b-form-input>
+                                                    <has-error :form="form" field="cons_name_2"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Account:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_account" :class="{ 'is-invalid': form.errors.has('cons_account') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_account"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Address:</span>
+                                                            <span style="color: red;">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address" :class="{ 'is-invalid': form.errors.has('cons_address') }" @keydown="inputLimit($event, 'consignee_address.cons_address', 40)"></b-form-input>
+                                                    <has-error :form="form" field="cons_address"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>&nbsp;</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" v-model="form.consignee_address.cons_address_line_2" :class="{ 'is-invalid': form.errors.has('cons_address_line_2') }" @keydown="inputLimit($event, 'consignee_address.cons_address_line_2', 35)"></b-form-input>
+                                                    <has-error :form="form" field="cons_address_line_2"></has-error>
+                                                </b-form-group>
+                                                    <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="align-items-center">
+                                                        <template #label>
+                                                            <div class="shipper-toggle-label">
+                                                                <span>City:</span>
+                                                                <span style="color: red;">*</span>
+                                                            </div>
+                                                        </template>
+                                                        <div class="d-flex align-items-center pb-2">
+                                                            <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                                            <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                                        </div>
+                                                        <div>
+                                                            <has-error :form="form" field="cons_city" :class="{ 'd-block': form.errors.has('cons_city') }"></has-error>
+                                                            <has-error :form="form" field="cons_airport_code" :class="{ 'd-block': form.errors.has('cons_airport_code') }"></has-error>
+                                                        </div>
+                                                    </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Pin code:</span>
+                                                            <span class="text-danger">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_post_code" :class="{ 'is-invalid': form.errors.has('cons_post_code') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_post_code"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>State:</span>
+                                                            <span class="text-danger">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_state" :class="{ 'is-invalid': form.errors.has('cons_state') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_state"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Country:</span>
+                                                            <span style="color: red;">*</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-select class="form-control consignee-form-control" v-model="form.consignee_address.cons_country" :class="{ 'is-invalid': form.errors.has('cons_country') }">
+                                                        <option value="">Please select one</option>
+                                                        <option v-for="country in countries" :key="country.value" :value="country.value">
+                                                            {{ country.text }}
+                                                        </option>
+                                                    </b-form-select>
+                                                    <has-error :form="form" field="cons_country"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Phone:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_phone" :class="{ 'is-invalid': form.errors.has('cons_phone') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_phone"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Fax:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_fax" :class="{ 'is-invalid': form.errors.has('cons_fax') }"></b-form-input>
+                                                    <has-error :form="form" field="cons_fax"></has-error>
+                                                </b-form-group>
+                                                <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="input-horizontal" class="pb-2 align-items-center">
+                                                    <template #label>
+                                                        <div class="shipper-toggle-label">
+                                                            <span>Telex:</span>
+                                                        </div>
+                                                    </template>
+                                                    <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width:200px;" v-model="form.consignee_address.cons_telex"></b-form-input>
+                                                </b-form-group>
+                                                <b-form-checkbox size="sm" class="" style="margin-left: 90px;" v-model="form.is_consignee_address_save"> Save new address to address book</b-form-checkbox>
+                                            </div>
+                                        </b-col>
                                         <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm
                                             content-cols-lg="auto" label="" label-for="input-horizontal"
                                             class="form-control-sm col-form-label mt-2 d-md-none">
@@ -268,8 +517,8 @@
                                             <b-col cols="12" lg="8" class="mt-6 mt-lg-0">
                                                 <!-- <div class="d-flex flex-column align-items-center"> -->
                                                     <!-- <div class="container"> -->
-                                                        <div class="table-responsive routing-table-wrap">
-                                                        <table class="table routing-table" style="max-width:100%;width:100%;min-width:650px !important;">
+                                                        <div class="table-responsive">
+                                                        <table class="table" style="max-width:100%;width:100%;min-width:650px !important;">
                                                             <thead>
                                                                 <tr class="">
                                                                     <th class="" style="color:#355594; width: 8%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">&nbsp;</th>
@@ -2271,7 +2520,6 @@ import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 // import PageLoader from "../../components/PageLoader.vue";
 import airWayBillMixin from "@/core/mixins/airWayBillMixin";
-import AddressBlock from "@/view/pages/dashboard/components/AddressBlock.vue";
 
 export default {
     name: "FocusAir",
@@ -2612,6 +2860,7 @@ export default {
             this.isConsignmentAdded = false;
 
             // Injected existing extraction pipeline
+            console.log('Processing received payload:', response);
             var awb_number = response.awb_number ? response.awb_number.split("-") : ['', ''];
             this.form.first_box.awb_code = awb_number[0] || '';
             this.form.first_box.awb_no = awb_number[1] || '';
@@ -2673,6 +2922,7 @@ export default {
             if (shipper) {
                 const matchedShipper = this.findMatchingAddress(shipper, this.shippers);
                 if (matchedShipper) {
+                    console.log('Auto-matched shipper (90%+ similarity):', matchedShipper.name);
                     this.selectShipper(matchedShipper);
                 } else {
                     this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -2694,6 +2944,7 @@ export default {
             if (consignee) {
                 const matchedConsignee = this.findMatchingAddress(consignee, this.consignees);
                 if (matchedConsignee) {
+                    console.log('Auto-matched consignee (90%+ similarity):', matchedConsignee.name);
                     this.selectConsignee(matchedConsignee);
                 } else {
                     this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -2791,6 +3042,7 @@ export default {
         },
 
         isGeneratePdf(generateButton) {
+            // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
             const errors = [];
         
             // Check first box
@@ -2848,9 +3100,27 @@ export default {
                 }
             }, 2000);
         },
+        // generateAwbPDF() {
+        //     // const itemId = this.$route.params.id;
+        //     const itemId =  this.existingData.id
+        //     console.log("sdfnjbf",itemId);
+        //     const pdfUrl = `/download-awb-pdf/${itemId}`; // Construct the URL for the PDF
+        //     window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+        // },
+        // generateAwbPDF() {
+        //     if (!this.validateFormFields()) {
+        //         return;
+        //     }
+        //     const itemId = this.$route.params.id;
+        //     console.log("dknfehjf", itemId);
+        //     const pdfUrl = `/download-awb-pdf/${itemId}`;
+        //     console.log("skfnjfer",pdfUrl);
+        //     window.open(pdfUrl, '_blank');
+        // },
         generateAwbPDF(pdf_generate_type) {
-            this.generatePDFAfterSave = '';
+            this.generatePDFAfterSave='';
             if (!this.existingData || !this.existingData.id) {
+                // console.error('Existing data ID is missing. Cannot generate PDF.');
                 return;
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
@@ -2929,8 +3199,15 @@ export default {
         converXml(awb_no){
             ApiService.get(`/user/waybill/${awb_no}`)
                 .then(({ data }) => {
+                    // console.log(data);
                 });
         },
+        // showModal() {
+        //     this.$refs["my-modal"].show();
+        // },
+        // hideModal() {
+        //     this.$refs["my-modal"].hide();
+        // },
         toggleModal() {
             this.$refs["my-modal"].toggle("#toggle-btn");
         },
@@ -3012,8 +3289,10 @@ export default {
                 ApiService.get(`/user/get-shipper-address?id=${this.selectedShipper}`)
                 .then( response => {
                     this.form.shipper_address = response.data; 
+                    // console.log('Shipper', response.data);
                 })
                 .catch(error => {
+                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.shipper_address = {
@@ -3030,8 +3309,10 @@ export default {
                 ApiService.get(`/user/get-consignee-address?id=${this.selectedConsignee}`)
                 .then( response => {
                     this.form.consignee_address = response.data; 
+                    // console.log('Consignee', response.data);
                 })
                 .catch(error => {
+                    // console.error('Error fetching shipper address:', error);
                 });
             } else {
                 this.form.consignee_address = {
@@ -3048,8 +3329,10 @@ export default {
                 ApiService.get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`)
                 .then( response => {
                     this.form.also_notify_address = response.data; 
+                    // console.log('Also Notify address', response.data);
                 })
                 .catch(error => {
+                    // console.error('Error fetching Also notify address address:', error);
                 });
             } else {
                 this.form.also_notify_address = {
@@ -3066,9 +3349,11 @@ export default {
             this.main_error_msg='';
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             // Prepare form data for submission - convert display dates to proper format
+            // const preparedFormData = this.prepareFormDataForSubmission();
             
             if (this.mode === 'add') {
                 // Update the existing form with prepared data
+                // Object.assign(this.form, preparedFormData);
                 this.from= { ...this.form };
                 this.form.post(`/user/create-focusair`)
                 .then(response => {
@@ -3100,6 +3385,7 @@ export default {
                     return;
                 }
                 // Update the existing form with prepared data
+                // Object.assign(this.form, preparedFormData);
                 this.from= { ...this.form };
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
@@ -3143,6 +3429,7 @@ export default {
                     this.data_items = response.data;
                 })
                 .catch(error => {
+                    // console.error("Failed to fetch items:", error);
                 })
                 .finally(() => {
                     this.isFetching = false;
@@ -3157,6 +3444,7 @@ export default {
                             ...this.defaultPaymentInfo,
                             ...(this.existingData.payment_info || {})
                         };
+                        // this.setDefaultValues();
                         this.showAWBSection = true;
                         this.awbError = null;
                         this.openForm('update', this.existingData.id);
@@ -3183,6 +3471,7 @@ export default {
                     this.existingData = response.data;
                     this.showAWBSection = true;
                     this.awbError = null;
+                    // this.openForm('update', this.existingData.id);
                 } else {
                     this.existingData = null;
                     this.showAWBSection = false;
@@ -3190,6 +3479,7 @@ export default {
                 }
             })
             .catch((error) => {
+                // console.error("Error fetching AWB:", error.response || error);
                 this.showAWBSection = false;
                 this.awbError = error.response?.status === 404
                     ? "Air Waybill not found."
@@ -3219,6 +3509,7 @@ export default {
                     this.form.custom_origin = this.existingData;
                     this.form.tableCodes = JSON.parse(this.existingData.special_handling_info);
 
+                    // const specialHandlingCodes = this.form.tableCodes;
                     const specialHandlingCodes = Array.isArray(this.form.tableCodes) ? this.form.tableCodes : [];
 
                     if (specialHandlingCodes.includes("EAW")) {
@@ -3233,6 +3524,7 @@ export default {
 
                     this.form.oci_entries = Array.isArray(this.existingData.other_custom_information) ? this.existingData.other_custom_information : [];
                     
+                    // this.form.payment_info = this.existingData.payment_info || {};
                     this.form.payment_info = {
                         ...this.defaultPaymentInfo,
                         ...(this.existingData.payment_info || {})
@@ -3240,7 +3532,21 @@ export default {
                     this.form.charges = Array.isArray(this.existingData.other_charge)
                     ? this.existingData.other_charge
                     : [];
-                    const entry = this.existingData.consignment_data;
+                    // this.form.entries = Array.isArray(this.existingData.consignment_data)
+                    //     ? this.existingData.consignment_data
+                    //     : [this.existingData.consignment_data];
+                   const entry = this.existingData.consignment_data;
+                    // const parsedEntry = {
+                    //     ...entry,
+                    //     hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
+                    //     itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
+                    //     uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
+                    //     // hsCodes: entry.hs_code && entry.hs_code !== '' ? JSON.parse(entry.hs_code) : [],
+                    //     // itemss: entry.pieces_info && entry.pieces_info !== '' ? JSON.parse(entry.pieces_info) : [],
+                    //     // uld_infos: entry.uld_info && entry.uld_info !== '' ? JSON.parse(entry.uld_info) : []
+
+                    // };
+                    // this.form.entries = [parsedEntry]; 
                     if (entry) {
                         const parsedEntry = {
                             ...entry,
@@ -3249,17 +3555,23 @@ export default {
                             uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
                         };
                         this.form.entries = [parsedEntry];
+                        // console.log("Parsed entry:", parsedEntry);
                     } else {
+                        // console.warn("No consignment data available. Entry is null or undefined.");
                         this.form.entries = []; // Default to an empty array if no data exists
                     }
                     if(!this.form.entries){
                         this.isConsignmentAdded = true;
                     }
+                    // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info);
+                    // this.consignment_list = this.existingData.consignment_data;
                     this.form.consignee_address = this.existingData.way_bill_address;
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
                     this.form.awb_email=this.existingData.awb_email;
                 } else {
+                    // console.error('existingData is not an array:', this.existingData);
+                    // console.log("Add mode activated");
                 }
         },
         handleEditNavigation(id) {
@@ -3287,6 +3599,7 @@ export default {
                 }
                 })
                 .catch(error => {
+                    // console.error("Error fetching agent information:", error);
                 });
         },
         getCountry(){
@@ -3296,6 +3609,7 @@ export default {
                     text: data[key]
                 }));
             }).catch(error => {
+                // console.error("Error fetching countries:", error);
             });
         },
         getOtherChargesCode(){
@@ -3305,6 +3619,7 @@ export default {
                     text: data[key]
                 }));
             }).catch(error => {
+                // console.error("Error fetching countries:", error);
             });
         },
         getOCIData(){
@@ -3324,11 +3639,16 @@ export default {
                 }));
             }
             }).catch(error => {
+                // console.error("Error fetching countries:", error);
                 this.oci_data.oci_custom_info_identifier = []; 
             });
         },
         handleRadioChange(value) {
+            // const selectedCode = this.selectedCode;
+            // this.form.tableCodes = [];
+            // this.form.tableCodes.push(selectedCode);
             
+            // this.form.first_box.awb = false;
 
             if (!Array.isArray(this.form.tableCodes)) {
                 this.form.tableCodes = [];
@@ -3345,6 +3665,7 @@ export default {
                 }
                 this.form.first_box.awb = false;
             }
+            // console.log("Updated Table Codes:", this.form.tableCodes);
         },
         addManualCode() {
             if (!Array.isArray(this.form.tableCodes)) {
@@ -3355,6 +3676,7 @@ export default {
             if (code) {
                 if (!this.form.tableCodes.includes(code)) {
                     this.form.tableCodes.push(code);
+                    // console.log("Table codes:", this.form.tableCodes);
                 } else {
                     alert('This code is already added.');
                 }
@@ -3402,6 +3724,8 @@ export default {
                 this.awb_prefix_message = "";
             }
             if (awb_code && awb_no) {
+                // this.awbError = null;
+                // this.awb_prefix_message = "";
                 this.awbId = `${String(awb_code)}${String(awb_no)}`;
                 this.getAirWayBillForRealod(this.awbId);
                 this.$router.push({ query: { awb_code: String(awb_code), awb_no: String(awb_no) } });
@@ -3417,6 +3741,7 @@ export default {
             if (confirmed) { 
                 this.awbDetails = false;
                 this.showAWBSection = false;
+                // openForm('update', this.existingData.id)
                 this.$router.go(0);
                 this.getAirWayBill(this.awbId);
             }
@@ -3424,6 +3749,7 @@ export default {
         reloadPageWithContent() {
             const awbId = this.awbId;
             if (!awbId) {
+                // console.error('AWB ID is missing');
                 return;
             }
                ApiService.get(`/user/airway-bill/${awbId}`)
@@ -3432,18 +3758,23 @@ export default {
                     if (this.existingData) {
                         this.awbDetails = false;
                         this.openForm('update', this.existingData.id);
+                        // this.$router.push({ path: `/edit-airway-bill/${awbId}` });
+                       
                     }else{
                         this.awbDetails = false;
                     }
                 })
                 .catch(error => {
                     this.existingData = null;
+                    // this.awbError = "No data found for this AWB ID.";
                     this.awbDetails = false;
+                    // console.error("Failed to fetch data for updating:", error);
                 });
         },
 
     },
     mounted(){
+        // this.setDefaultValues();
         this.calculateTotalVolume();
         this.getLocation(); 
         this.fetchAllAddressBook();
@@ -3471,6 +3802,7 @@ export default {
                 this.showAWBSection = false;
             }
         }
+        // console.log("Current User:", this.current_user);
         if(this.current_user)
         this.getAgent(this.current_user.company_name,this.current_user.branch_name);
     },
@@ -3479,11 +3811,28 @@ export default {
             const savedEmail = localStorage.getItem('fna_default_email');
             this.use_my_email = !!(savedEmail && val === savedEmail);
         },
+        // 'consignment_list': function () {
+        //     this.form.totals.total_amount = this.calculateTotalAmount();
+        // },
+        // 'form.entries.dimention_unit': function() {
+        //     this.calculateTotalVolume();
+        // },
+        'agent_information.participate': function(newValue) {
+            // console.log('Participate value changed to:', newValue);
+        },
         '$route.params.id'(newId) {
             if (newId) {
                 this.getAirWayBill(newId);
             }
         },
+        existingData(newData) {
+            // console.log("New data:", newData);
+            if (newData && newData.id) {
+                // this.generateAwbPDF();
+            } else {
+                // console.error('ID is missing in new data, cannot generate PDF.');
+            }
+        }
     },
     created() {
         const id = this.$route.params.id;
@@ -3513,7 +3862,6 @@ export default {
         OcrUploadModal,
         Datepicker,
         DatePicker,
-        AddressBlock,
 
         SideBar,
         // PageLoader
@@ -4352,14 +4700,6 @@ max-width: 100% !important;
     background: #FFFFFF !important;
     box-shadow: 0 4px 12px rgba(53, 85, 148, 0.08) !important;
     border-bottom: none !important;
-}
-
-/* Routing rows have in-cell location dropdowns; on desktop the table fits so we
-   drop the overflow clipping (from .table's rounded corners and .table-responsive's
-   scroll) that was hiding the last row's dropdown. Mobile keeps horizontal scroll. */
-@media (min-width: 992px) {
-    .routing-table-wrap { overflow: visible !important; }
-    .routing-table { overflow: visible !important; }
 }
 </style>
 <style>

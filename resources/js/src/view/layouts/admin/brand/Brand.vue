@@ -2,12 +2,21 @@
   <!-- begin:: Aside -->
   <div>
   <div class="brand flex-column-auto d-flex align-items-center justify-content-between" id="kt_brand" ref="kt_brand">
-    <!-- Logo (hidden on phone — the mobile header already shows it) -->
+    <!-- Mobile close button (on the left in phone view) -->
+    <button
+      id="kt_aside_close_btn"
+      class="btn aside-close-btn d-lg-none"
+      aria-label="Close menu"
+    >
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Logo (desktop only) -->
     <router-link to="/superadmin/all-company" class="brand-logo d-none d-lg-flex align-items-center">
       <img src="/media/assets/logos/white-logo.png" alt="F16s" class="brand-logo-img" />
     </router-link>
 
-    <div class="d-flex align-items-center ml-auto">
+    <div class="d-none d-lg-flex align-items-center ml-auto">
       <!-- Desktop minimize toggle -->
       <div class="brand-tools" v-if="allowMinimize">
         <button
@@ -23,18 +32,8 @@
           </span>
         </button>
       </div>
-
-      <!-- Mobile close button (wired to the offcanvas via id) -->
-      <button
-        id="kt_aside_close_btn"
-        class="btn aside-close-btn d-lg-none"
-        aria-label="Close menu"
-      >
-        <i class="fas fa-times"></i>
-      </button>
     </div>
   </div>
-    <div><hr></div>
   </div>
   <!-- end:: Aside -->
 </template>
@@ -44,8 +43,10 @@
   outline: none;
 }
 .brand {
-  height: auto !important;
-  background-color: #1B2134 !important;
+  min-height: 65px;
+  background-color: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
   padding: 1.25rem 1.25rem;
 }
 .brand-logo-img {

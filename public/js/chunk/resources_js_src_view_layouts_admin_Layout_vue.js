@@ -947,7 +947,7 @@ var render = function render() {
     attrs: {
       id: "kt_brand"
     }
-  }, [_c("router-link", {
+  }, [_vm._m(0), _vm._v(" "), _c("router-link", {
     staticClass: "brand-logo d-none d-lg-flex align-items-center",
     attrs: {
       to: "/superadmin/all-company"
@@ -959,7 +959,7 @@ var render = function render() {
       alt: "F16s"
     }
   })]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex align-items-center ml-auto"
+    staticClass: "d-none d-lg-flex align-items-center ml-auto"
   }, [_vm.allowMinimize ? _c("div", {
     staticClass: "brand-tools"
   }, [_c("button", {
@@ -975,7 +975,7 @@ var render = function render() {
     attrs: {
       src: "media/svg/icons/Navigation/Angle-double-left.svg"
     }
-  })], 1)])]) : _vm._e(), _vm._v(" "), _vm._m(0)])], 1), _vm._v(" "), _vm._m(1)]);
+  })], 1)])]) : _vm._e()])], 1)]);
 };
 var staticRenderFns = [function () {
   var _vm = this,
@@ -989,10 +989,6 @@ var staticRenderFns = [function () {
   }, [_c("i", {
     staticClass: "fas fa-times"
   })]);
-}, function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("div", [_c("hr")]);
 }];
 render._withStripped = true;
 

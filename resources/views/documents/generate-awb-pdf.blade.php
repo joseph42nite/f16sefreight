@@ -1621,13 +1621,27 @@
                                                                     <tr>
                                                                         <td align="right" valign="top">
                                                                             <table cellpadding="0" cellspacing="0" width="100%">
+                                                                                                    {{ $airWayBill->as_agreed==1?'AS AGREED':$airWayBill->total_amount }}
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                    <!-- One -->
+                                                                                    
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td align="right" valign="top">
+                                                                            <table cellpadding="0" cellspacing="0" width="100%">
                                                                                 <tr>
                                                                                     <!-- One -->
                                                                                     <td align="right" valign="top">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->total_amount ?? ''}} 
+                                                                                                    {{ $airWayBill->as_agreed==1?'AS AGREED':$airWayBill->total_amount }}
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1838,7 +1852,7 @@
                                                                                                     @php
                                                                                                         $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment ?? '';
                                                                                                         if ($prepaidTaxType == "PP") {
-                                                                                                            echo $airWayBill->paymentInfo->total_charges_prepaid;
+                                                                                                            echo $airWayBill->as_agreed==1?'AS AGREED':($airWayBill->paymentInfo->total_charges_prepaid ?? '');
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
@@ -1846,7 +1860,7 @@
                                                                                                     @php
                                                                                                         $prepaidTaxType = $airWayBill->paymentInfo->type_of_payment ?? '';
                                                                                                         if ($prepaidTaxType == "CC") {
-                                                                                                            echo $airWayBill->paymentInfo->total_charges_collect;
+                                                                                                            echo $airWayBill->as_agreed==1?'AS AGREED':($airWayBill->paymentInfo->total_charges_collect ?? '');
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
@@ -2277,7 +2291,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $airWayBill->paymentInfo->total_charges_prepaid ?? ''}}
+                                                                                                                {{ $airWayBill->as_agreed==1?'AS AGREED':($airWayBill->paymentInfo->total_charges_prepaid ?? '') }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2286,7 +2300,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $airWayBill->paymentInfo->total_charges_collect ?? ''}}
+                                                                                                                {{ $airWayBill->as_agreed==1?'AS AGREED':($airWayBill->paymentInfo->total_charges_collect ?? '') }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>

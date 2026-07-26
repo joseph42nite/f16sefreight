@@ -151,32 +151,32 @@
                                             <h4 class="h-color ml-2">
                                                 Shipper
                                             </h4>
-                                            <div class="d-flex align-items-center pb-2">
-                                                <b-form-group id="fieldset-horizontal"
-                                                label-cols-lg="auto"
-                                                label-for="input-shipper"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="shipper-toggle-label">
-                                                        <span>Name:</span>
-                                                        <span style="color: red;">*</span>
-                                                    </div>
-                                                </template>
-                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
-                                                    <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control shipper-form-control" autocomplete="off"
-                                                    :class="{ 'is-invalid': form.errors.has('ship_name') }"
-                                                    @input="filterShippers" @focus="toggleDropdown('shipper', true)" />
+                                            <b-form-group id="fieldset-horizontal"
+                                                 label-cols-lg="auto"
+                                                 label-for="input-shipper"
+                                                 class="align-items-center mb-3">
+                                                 <template #label>
+                                                     <div class="shipper-toggle-label">
+                                                         <span>Name:</span>
+                                                         <span style="color: red;">*</span>
+                                                     </div>
+                                                 </template>
+                                                 <div class="shipper-input-icon-row">
+                                                     <div class="custom-dropdown" ref="dropdownContainer_shipper" @click="toggleDropdown('shipper')">
+                                                         <input type="text" v-model="form.shipper_address.ship_name" placeholder="Search shipper" id="shipper" class="form-control shipper-form-control" autocomplete="off"
+                                                         :class="{ 'is-invalid': form.errors.has('ship_name') }"
+                                                         @input="filterShippers" @focus="toggleDropdown('shipper', true)" />
 
-                                                    <div v-if="activeDropdown === 'shipper' && filteredShippers.length" class="dropdown-options align-items-center">
-                                                        <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
-                                                            {{ shipper.name }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                    <has-error :form="form" field="ship_name"></has-error>
-                                                </b-form-group>
-                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2" style="color:#355594;stroke:#355594;" @click="showShipper = !showShipper"></b-icon>
-                                            </div>
+                                                         <div v-if="activeDropdown === 'shipper' && filteredShippers.length" class="dropdown-options align-items-center">
+                                                             <div v-for="(shipper, index) in filteredShippers" :key="shipper.id" @click.stop="selectShipper(shipper)" class="option">
+                                                                 {{ shipper.name }}
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                     <b-icon icon="box-arrow-up-right" aria-hidden="true" style="color:#355594;stroke:#355594;cursor:pointer;font-size:1.2rem;flex-shrink:0;" @click="showShipper = !showShipper"></b-icon>
+                                                 </div>
+                                                 <has-error :form="form" field="ship_name"></has-error>
+                                             </b-form-group>
                                             <!-- Show Shipper all input field here -->
                                             <div v-if="showShipper">
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="shipper-name-2-input" class="pb-2 align-items-center">
@@ -224,10 +224,10 @@
                                                                 <span style="color: red;">*</span>
                                                             </div>
                                                         </template>
-                                                        <div class="d-flex align-items-center pb-2">
-                                                            <b-form-input id="input-horizontal" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
-                                                            <b-form-input id="input-horizontal" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                                        </div>
+                                                         <div class="d-flex align-items-center pb-2 city-airport-row">
+                                                             <b-form-input id="input-horizontal" class="form-control" style="width: 240px" v-model="form.shipper_address.ship_city" :class="{ 'is-invalid': form.errors.has('ship_city') }"></b-form-input>
+                                                             <b-form-input id="input-horizontal" class="ml-3 form-control" style="width: 50px" v-model="form.shipper_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
+                                                         </div>
                                                         <div>
                                                             <has-error :form="form" field="ship_city" :class="{ 'd-block': form.errors.has('ship_city') }"></has-error>
                                                             <has-error :form="form" field="ship_airport_code" :class="{ 'd-block': form.errors.has('ship_airport_code') }"></has-error>
@@ -310,32 +310,32 @@
                                             <h4 class="h-color ml-2">
                                                 Consignee
                                             </h4>
-                                            <div class="d-flex align-items-center pb-2">
-                                                <b-form-group id="fieldset-horizontal"
-                                                label-cols-lg="auto"
-                                                label-for="input-shipper"
-                                                class="align-items-center">
-                                                <template #label>
-                                                    <div class="shipper-toggle-label">
-                                                        <span>Name:</span>
-                                                        <span style="color: red;">*</span>
-                                                    </div>
-                                                </template>
-                                                <div class="custom-dropdown align-items-center" ref="dropdownContainer_consignee" @click="toggleDropdown('consignee')">
-                                                    <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control consignee-form-control" autocomplete="off"
-                                                    :class="{ 'is-invalid': form.errors.has('cons_name') }"
-                                                    @input="filterConsignee" @focus="toggleDropdown('consignee', true)" />
+                                            <b-form-group id="fieldset-horizontal"
+                                                 label-cols-lg="auto"
+                                                 label-for="input-shipper"
+                                                 class="align-items-center mb-3">
+                                                 <template #label>
+                                                     <div class="shipper-toggle-label">
+                                                         <span>Name:</span>
+                                                         <span style="color: red;">*</span>
+                                                     </div>
+                                                 </template>
+                                                 <div class="shipper-input-icon-row">
+                                                     <div class="custom-dropdown" ref="dropdownContainer_consignee" @click="toggleDropdown('consignee')">
+                                                         <input type="text" v-model="form.consignee_address.cons_name" placeholder="Search consignee" id="consignee" class="form-control consignee-form-control" autocomplete="off"
+                                                         :class="{ 'is-invalid': form.errors.has('cons_name') }"
+                                                         @input="filterConsignee" @focus="toggleDropdown('consignee', true)" />
 
-                                                    <div v-if="activeDropdown === 'consignee' && filteredConsignees.length" class="dropdown-options align-items-center">
-                                                        <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
-                                                            {{ consignee.name }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <has-error :form="form" field="cons_name"></has-error>
-                                                </b-form-group>
-                                                <b-icon icon="box-arrow-up-right" aria-hidden="true" class="ml-2" style="color:#355594;stroke:#355594;" @click="showConsignee = !showConsignee"></b-icon>
-                                            </div>
+                                                         <div v-if="activeDropdown === 'consignee' && filteredConsignees.length" class="dropdown-options align-items-center">
+                                                             <div v-for="(consignee, index) in filteredConsignees" :key="consignee.id" @click.stop="selectConsignee(consignee)" class="option">
+                                                                 {{ consignee.name }}
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                     <b-icon icon="box-arrow-up-right" aria-hidden="true" style="color:#355594;stroke:#355594;cursor:pointer;font-size:1.2rem;flex-shrink:0;" @click="showConsignee = !showConsignee"></b-icon>
+                                                 </div>
+                                                 <has-error :form="form" field="cons_name"></has-error>
+                                             </b-form-group>
                                             <!-- Show Consignee all input field here -->
                                             <div v-if="showConsignee">
                                                 <b-form-group id="fieldset-horizontal" label-cols-lg="auto" content-cols-sm content-cols-lg="auto" label-for="consignee-name-2-input" class="pb-2 align-items-center">
@@ -382,10 +382,10 @@
                                                                 <span style="color: red;">*</span>
                                                             </div>
                                                         </template>
-                                                        <div class="d-flex align-items-center pb-2">
-                                                            <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
-                                                            <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('ship_airport_code') }"></b-form-input>
-                                                        </div>
+                                                         <div class="d-flex align-items-center pb-2 city-airport-row">
+                                                             <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                                             <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.ship_airport_code" :class="{ 'is-invalid': form.errors.has('cons_airport_code') }"></b-form-input>
+                                                         </div>
                                                         <div>
                                                             <has-error :form="form" field="cons_city" :class="{ 'd-block': form.errors.has('cons_city') }"></has-error>
                                                             <has-error :form="form" field="cons_airport_code" :class="{ 'd-block': form.errors.has('cons_airport_code') }"></has-error>
@@ -1222,6 +1222,7 @@
                                     </b-row>
                                 </div>
                                 <!-- CONSIGNMENT RATE DESCRIPTION SECTION END HERE -->
+                                <b-form-checkbox size="lg" class="mt-2 text-bold justify-content-lg-start" v-model="form.as_agreed" :value="1" :unchecked-value="0" id="agreed" style="font-size: 16px; font-weight: 600;">As Agreed</b-form-checkbox>
                                 <hr class="hr" />
                                 <div>
                                     <b-row>
@@ -2007,37 +2008,34 @@
                                                 <b-col cols="12">
                                                     <!-- Calculation Table always visible -->
                                                     <div class="d-flex align-items-start py-8">
-                                                        <div class="table-responsive">
-                                                        <table class="table table-sm">
+                                                        <table class="table table-sm" style="width: auto;">
                                                             <thead>
                                                                 <tr style="background-color: #F2F9FF;">
-                                                                    <th class="">Calculated Charges</th>
-                                                                    <th class=""></th>
-                                                                    <th class=""></th>
+                                                                    <th colspan="3" class="py-3 px-4" style="color: #355594; font-weight: 700;">Calculated Charges</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 <tr>
-                                                                    <td class="pt-5 editable-cell" style="vertical-align: middle;">Chargeable Weight</td>
-                                                                    <td class="pt-5 editable-cell">
-                                                                        <input type="text" class="form-control" style="width: 100px;vertical-align: middle;"
+                                                                    <td class="pt-4 pb-2 pr-3 editable-cell" style="vertical-align: middle; white-space: nowrap; width: 1%; font-weight: 600; color: #475569;">Chargeable Weight</td>
+                                                                    <td class="pt-4 pb-2 pr-3 editable-cell" style="width: 1%;">
+                                                                        <input type="text" class="form-control form-control-sm" style="width: 110px; vertical-align: middle;"
                                                                             v-model="other_charges.chargable_weight1" />
                                                                     </td>
+                                                                    <td class="pt-4 pb-2 editable-cell"></td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="editable-cell" style="vertical-align: middle;">Charge</td>
-                                                                    <td class="editable-cell" style="vertical-align: middle;">
-                                                                        <input type="text" class="form-control" style="width: 100px;vertical-align: middle;"
+                                                                    <td class="py-2 pr-3 editable-cell" style="vertical-align: middle; white-space: nowrap; width: 1%; font-weight: 600; color: #475569;">Charge</td>
+                                                                    <td class="py-2 pr-3 editable-cell" style="width: 1%; vertical-align: middle;">
+                                                                        <input type="text" class="form-control form-control-sm" style="width: 110px; vertical-align: middle;"
                                                                             v-model="other_charges.charge" />
                                                                     </td>
-                                                                    <td class="editable-cell mb-2" style="vertical-align: middle;">
-                                                                        <b-button class="show-btn px-5"
+                                                                    <td class="py-2 editable-cell" style="vertical-align: middle;">
+                                                                        <b-button class="show-btn px-4 py-1" style="font-size: 0.85rem;"
                                                                             @click="calculateCharge">Calculate</b-button>
                                                                     </td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
-                                                        </div>
                                                     </div>
                                                 </b-col>
                                                 <b-col cols="12">
@@ -2428,20 +2426,21 @@
                                     </b-tabs>
                                 </div>
                                 <hr class="hr" />
-                                <div class="py-7 bottom-email-section">
+                                <div class="py-6 bottom-email-section mb-6">
                                     <b-row class="justify-content-end">
-                                        <b-col cols="12" md="auto" class="text-right mobile-text-left">
-                                            <div class="d-flex justify-content-end mobile-justify-start mb-2">
+                                        <b-col cols="12" md="auto" class="text-left text-md-right">
+                                            <div class="d-flex justify-content-start justify-content-md-end mb-3">
                                                 <b-form-checkbox size="sm" class="premium-checkbox">Including Cargo Label</b-form-checkbox>
                                             </div>
-                                            <b-form-group id="fieldset-horizontal" label-cols-lg="auto" label-for="input-horizontal" label="Email FNA:" class="form-control-sm col-form-label mb-0">
-                                                <b-form-input id="input-horizontal" v-model="form.awb_email" @input="handleAwbEmailInput" class="form-control-sm" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
-                                                <div class="d-flex justify-content-end mt-1">
+                                            <div class="mb-3">
+                                                <label class="font-weight-600 text-dark mb-1 d-block">Email FNA:</label>
+                                                <b-form-input id="input-horizontal" v-model="form.awb_email" @input="handleAwbEmailInput" class="form-control-sm fna-email-input" style="width: 300px" placeholder="Separate addresses with a semicolon ';'"></b-form-input>
+                                                <div class="d-flex justify-content-start justify-content-md-end mt-2">
                                                     <b-form-checkbox size="sm" v-model="use_my_email" @change="handleUseMyEmailChange" class="premium-checkbox font-size-xs text-muted">
                                                         Use my default FNA email
                                                     </b-form-checkbox>
                                                 </div>
-                                            </b-form-group>
+                                            </div>
                                         </b-col>
                                     </b-row>
                                 </div>
@@ -2684,6 +2683,8 @@ export default {
                 office_function_designator: null,
                 office_company_designator: null,
             },
+            status: '',
+            as_agreed: 0,
             defaultPaymentInfo: {
                 declear_value_carriage: 'NVD',
                 declear_value_customs: 'NCV',
@@ -3569,6 +3570,7 @@ export default {
                     this.form.shipper_address = this.existingData.way_bill_address;
                     this.form.also_notify_address = this.existingData.way_bill_address;
                     this.form.awb_email=this.existingData.awb_email;
+                    this.form.as_agreed=this.existingData.as_agreed;
                 } else {
                     // console.error('existingData is not an array:', this.existingData);
                     // console.log("Add mode activated");
@@ -4304,6 +4306,33 @@ th {
   color: #355594 !important;
 }
 
+.shipper-form-control,
+.consignee-form-control {
+    width: 300px !important;
+    max-width: 100% !important;
+}
+
+.shipper-input-icon-row {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: auto !important;
+    max-width: 100% !important;
+}
+
+.shipper-input-icon-row .custom-dropdown {
+    flex: 0 0 300px !important;
+    width: 300px !important;
+    max-width: 300px !important;
+    display: inline-block !important;
+}
+
+.shipper-input-icon-row .b-icon {
+    flex-shrink: 0 !important;
+    align-self: center !important;
+}
+
     .table-lightweight {
         width: 100% !important;
         border-collapse: separate !important;
@@ -4385,9 +4414,9 @@ th {
         .pane-title { font-size: 1.8rem; } 
         .pane-icon-wrapper { width: 60px; height: 60px; margin-bottom: 1.5rem !important; } 
         .modal-right-pane { flex: 0 0 auto; } 
-        .form-scroll-container { padding: 3rem 2rem; height: auto; max-height: 60vh; } 
         .ultra-close-btn { top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; } 
     }
+
 .awb-flex-row {
     display: flex !important;
     flex-direction: row !important;
@@ -4396,86 +4425,183 @@ th {
     gap: 8px !important;
 }
 
+.city-airport-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.shipper-input-icon-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+.shipper-input-icon-row .custom-dropdown {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+}
+
+.shipper-input-icon-row .b-icon {
+    flex-shrink: 0 !important;
+    align-self: center !important;
+}
+
 @media (max-width: 768px) {
-.shipper-form-control, .consignee-form-control {
-max-width: 100% !important;
-}
-.shipper-toggle-label, .routing-info-label {
-width: 100% !important;
-text-align: start !important;
-margin-bottom: 4px;
-}
-.form-row {
-flex-wrap: wrap !important;
-}
-.responsive-width-60 {
-width: 100% !important;
-}
-.responsive-textarea {
-width: 100% !important;
-}
-.oci-table {
-max-width: 100% !important;
-}
+    .body-color {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 10px !important;
+        padding-bottom: 20px !important;
+    }
 
-/* Broad overrides for inline/fixed width labels and divs inside form groups */
-.form-group:not(.nav-dropdown-group) div[style*="width:"] {
-width: 100% !important;
-max-width: 100% !important;
-justify-content: flex-start !important;
-text-align: left !important;
-margin-bottom: 4px !important;
-}
+    .container {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-top: 16px !important;
+        padding-bottom: 20px !important;
+    }
 
-/* Ensure fixed-width inputs and textareas scale to fit mobile screens */
-textarea[style*="width:"],
-input[style*="width:1000px"],
-input[style*="width: 1000px"],
-input[style*="width:400px"],
-input[style*="width: 400px"] {
-width: 100% !important;
-max-width: 100% !important;
-}
+    .container > .row,
+    .container-fluid > .row,
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
 
-input[style*="width:"],
-select[style*="width:"],
-textarea[style*="width:"],
-.mx-datepicker[style*="width:"] {
-max-width: 100% !important;
-}
+    .shipper-form-control, .consignee-form-control {
+        max-width: 100% !important;
+    }
 
-.form-group:not(.nav-dropdown-group) input,
-.form-group:not(.nav-dropdown-group) select,
-.form-group:not(.nav-dropdown-group) textarea,
-.form-group:not(.nav-dropdown-group) .custom-dropdown,
-.form-group:not(.nav-dropdown-group) .mx-datepicker,
-.form-group:not(.nav-dropdown-group) .form-control {
-width: 100% !important;
-max-width: 100% !important;
-}
+    .shipper-toggle-label, .routing-info-label {
+        width: 100% !important;
+        text-align: start !important;
+        margin-bottom: 4px !important;
+    }
 
-.form-group:not(.nav-dropdown-group) input.awb-code-input {
-    width: 62px !important;
-    max-width: 62px !important;
-}
-.form-group:not(.nav-dropdown-group) input.awb-no-input {
-    width: 100px !important;
-    max-width: 100% !important;
-}
+    .form-row {
+        flex-wrap: wrap !important;
+    }
 
-/* Stack horizontal form-group elements */
-.form-group:not(.nav-dropdown-group) .d-flex {
-    flex-direction: column !important;
-    align-items: stretch !important;
-}
+    .responsive-width-60 {
+        width: 100% !important;
+    }
 
-/* Relocate sibling horizontal margins on mobile stacking */
-.form-group .ml-3,
-.form-group .ml-4,
-.form-group .ml-lg-35 {
-    margin-left: 0 !important;
-    margin-top: 8px !important;
-}
+    .responsive-textarea {
+        width: 100% !important;
+    }
+
+    .oci-table {
+        max-width: 100% !important;
+    }
+
+    /* Broad overrides for inline/fixed width labels and divs inside form groups */
+    .form-group:not(.nav-dropdown-group) div[style*="width:"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        margin-bottom: 4px !important;
+    }
+
+    /* Fix inline margin-left on checkboxes for mobile */
+    .form-group .custom-control[style*="margin-left"],
+    .form-group .b-custom-control[style*="margin-left"],
+    .form-group div[style*="margin-left: 90px"],
+    .form-group div[style*="margin-left: 80px"],
+    .custom-control[style*="margin-left: 90px"],
+    .custom-control[style*="margin-left: 80px"] {
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+    }
+
+    /* Fix total volume and total amount section right margin */
+    .mr-32 {
+        margin-right: 0 !important;
+    }
+
+    /* Ensure fixed-width inputs, selects, textareas scale to fit mobile screens */
+    textarea[style*="width:"],
+    input[style*="width:1000px"],
+    input[style*="width: 1000px"],
+    input[style*="width:500px"],
+    input[style*="width: 500px"],
+    input[style*="width:400px"],
+    input[style*="width: 400px"],
+    input[style*="width:315px"],
+    input[style*="width: 315px"],
+    input[style*="width:300px"],
+    input[style*="width: 300px"],
+    input[style*="width:250px"],
+    input[style*="width: 250px"],
+    select[style*="width:430px"],
+    select[style*="width: 430px"],
+    select[style*="width:315px"],
+    select[style*="width: 315px"],
+    select[style*="width:250px"],
+    select[style*="width: 250px"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    input[style*="width:"],
+    select[style*="width:"],
+    textarea[style*="width:"],
+    .mx-datepicker[style*="width:"] {
+        max-width: 100% !important;
+    }
+
+    .form-group:not(.nav-dropdown-group) input,
+    .form-group:not(.nav-dropdown-group) select,
+    .form-group:not(.nav-dropdown-group) textarea,
+    .form-group:not(.nav-dropdown-group) .custom-dropdown,
+    .form-group:not(.nav-dropdown-group) .mx-datepicker,
+    .form-group:not(.nav-dropdown-group) .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .form-group:not(.nav-dropdown-group) input.awb-code-input {
+        width: 62px !important;
+        max-width: 62px !important;
+    }
+
+    .form-group:not(.nav-dropdown-group) input.awb-no-input {
+        width: 100px !important;
+        max-width: 100% !important;
+    }
+
+    .city-airport-row input:first-child {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        max-width: 100% !important;
+    }
+
+    .city-airport-row input:last-child {
+        width: 65px !important;
+        max-width: 65px !important;
+        flex: 0 0 65px !important;
+        margin-left: 0 !important;
+    }
+
+    /* Stack horizontal form-group elements except flex rows */
+    .form-group:not(.nav-dropdown-group):not(.awb-flex-row):not(.city-airport-row):not(.shipper-input-icon-row) .d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    /* Relocate sibling horizontal margins on mobile stacking */
+    .form-group .ml-3,
+    .form-group .ml-4,
+    .form-group .ml-lg-35 {
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+    }
 
     .mobile-justify-start {
         justify-content: flex-start !important;

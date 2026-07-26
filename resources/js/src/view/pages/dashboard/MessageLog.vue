@@ -54,11 +54,11 @@
                     <div class="mx-2 mx-sm-4">
                         <h4 class="h-color mb-4">Search Waybill Messages</h4>
 
-                        <div class="d-flex align-items-center mb-6 flex-wrap" style="gap: 12px; background: #F8FCFF; border: 1px solid #E6F0FF; padding: 20px 24px; border-radius: 16px; width: fit-content;">
+                        <div class="search-log-container d-flex align-items-center mb-6 flex-wrap" style="gap: 12px; background: #F8FCFF; border: 1px solid #E6F0FF; padding: 20px 24px; border-radius: 16px;">
                             <label class="mb-0 font-weight-bold" style="color: #355594; font-size: 0.95rem;">
                                 Master No: <span class="text-danger">*</span>
                             </label>
-                            <div class="d-flex align-items-center" style="gap: 8px;">
+                            <div class="d-flex align-items-center awb-input-group" style="gap: 8px;">
                                 <b-form-input
                                     v-model="form.masterStart"
                                     class="form-control-custom awb-code-input text-center" id="awb_code"
@@ -73,7 +73,7 @@
                                     placeholder="AWB Number"
                                 />
                             </div>
-                            <div class="d-flex align-items-center" style="gap: 8px;">
+                            <div class="d-flex align-items-center search-btn-group" style="gap: 8px;">
                                 <b-button
                                     class="show-btn"
                                     @click="searchAWB"
@@ -111,85 +111,87 @@
                         
                         <SkeletonTable v-if="isLoading" :rows="10" :columns="5" />
                         <template v-else>
-                            <b-table :items="normalizedItems" :fields="fields" small responsive class="w-100 custom-table">
-                            <!-- Index -->
-                            <template #cell(index)="row">
-                                <span class="font-weight-bold text-muted">{{ (currentPage - 1) * perPage + row.index + 1 }}</span>
-                            </template>
+                            <div class="message-table-wrapper">
+                                <b-table :items="normalizedItems" :fields="fields" small responsive class="w-100 custom-table">
+                                <!-- Index -->
+                                <template #cell(index)="row">
+                                    <span class="font-weight-bold text-muted">{{ (currentPage - 1) * perPage + row.index + 1 }}</span>
+                                </template>
 
-                            <!-- AWB No. -->
-                            <template #cell(id)="row">
-                                <router-link :to="'/edit-airway-bill/' + String(row.item.id)" class="custom-link font-weight-bold" @click.native="getAirWayBill(String(row.item.id))">
-                                    {{ String(row.item.awb_code) }}-{{ String(row.item.awb_no) }}
-                                </router-link>
-                            </template>
+                                <!-- AWB No. -->
+                                <template #cell(id)="row">
+                                    <router-link :to="'/edit-airway-bill/' + String(row.item.id)" class="custom-link font-weight-bold" @click.native="getAirWayBill(String(row.item.id))">
+                                        {{ String(row.item.awb_code) }}-{{ String(row.item.awb_no) }}
+                                    </router-link>
+                                </template>
 
-                            <!-- Destination -->
-                            <template #cell(destination_airport)="row">
-                                <span class="badge badge-light px-2 py-1" style="color: #355594; background: #F0F7FF; border: 1px solid #E6F0FF; font-weight: 600; border-radius: 6px;">
-                                    {{ row.item.destination_airport }}
-                                </span>
-                            </template>
+                                <!-- Destination -->
+                                <template #cell(destination_airport)="row">
+                                    <span class="badge badge-light px-2 py-1" style="color: #355594; background: #F0F7FF; border: 1px solid #E6F0FF; font-weight: 600; border-radius: 6px;">
+                                        {{ row.item.destination_airport }}
+                                    </span>
+                                </template>
 
-                            <!-- Created At -->
-                            <template #cell(created_at)="row">
-                                <span class="text-muted">{{ row.item.created_at }}</span>
-                            </template>
+                                <!-- Created At -->
+                                <template #cell(created_at)="row">
+                                    <span class="text-muted">{{ row.item.created_at }}</span>
+                                </template>
 
-                            <!-- Custom Header for Houseway Column -->
-                            <template #head(houseway)>
-                                <div class="d-flex font-weight-bold" style="color: #8A99AD; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <div class="w-25">House No.</div>
-                                    <div class="w-25">Actions</div>
-                                    <div class="w-25">Place</div>
-                                    <div class="w-25">Date</div>
-                                </div>
-                            </template>
+                                 <!-- Custom Header for Houseway Column -->
+                                 <template #head(houseway)>
+                                     <div class="d-flex font-weight-bold" style="color: #8A99AD; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 280px;">
+                                         <div class="w-25">House No.</div>
+                                         <div class="w-25">Actions</div>
+                                         <div class="w-25">Place</div>
+                                         <div class="w-25">Date</div>
+                                     </div>
+                                 </template>
 
-                            <!-- Houseway Details in Same Row -->
-                            <template #cell(houseway)="row">
-                                <div v-if="row.item.house_way_bills && row.item.house_way_bills.length" class="mb-3">
-                                    <div v-for="(bill, i) in row.item.house_way_bills" :key="i" class="d-flex py-2 house-row border-bottom align-items-center">
-                                        <div class="w-25 font-weight-bold" style="color: #1e3a6e;">{{ bill.id }}</div>
-                                        <div class="w-25 d-flex align-items-center">
-                                            <b-icon icon="pencil" class="text-primary mr-3" style="cursor: pointer; font-size: 1.1rem;" @click="$router.push('/edit-houseway-bill/' + bill.id)"/>
-                                            <b-icon icon="trash" class="text-danger" style="cursor: pointer; font-size: 1.1rem;" @click="handleDeleteHouseBill(bill.id)"/>
+                                <!-- Houseway Details in Same Row -->
+                                <template #cell(houseway)="row">
+                                    <div v-if="row.item.house_way_bills && row.item.house_way_bills.length" class="mb-3">
+                                        <div v-for="(bill, i) in row.item.house_way_bills" :key="i" class="d-flex py-2 house-row border-bottom align-items-center">
+                                            <div class="w-25 font-weight-bold" style="color: #1e3a6e;">{{ bill.id }}</div>
+                                            <div class="w-25 d-flex align-items-center">
+                                                <b-icon icon="pencil" class="text-primary mr-3" style="cursor: pointer; font-size: 1.1rem;" @click="$router.push('/edit-houseway-bill/' + bill.id)"/>
+                                                <b-icon icon="trash" class="text-danger" style="cursor: pointer; font-size: 1.1rem;" @click="handleDeleteHouseBill(bill.id)"/>
+                                            </div>
+                                            <div class="w-25">
+                                                <span class="badge badge-light px-2 py-1" style="color: #475569; background: #F8FCFF; border: 1px solid #E2E8F0; font-weight: 500; border-radius: 6px;">
+                                                    {{ bill.destination_airport_code }}
+                                                </span>
+                                            </div>
+                                            <div class="w-25 text-muted" style="font-size: 0.8rem;">
+                                                {{ bill.formatted_created_at }}
+                                            </div>
                                         </div>
-                                        <div class="w-25">
-                                            <span class="badge badge-light px-2 py-1" style="color: #475569; background: #F8FCFF; border: 1px solid #E2E8F0; font-weight: 500; border-radius: 6px;">
-                                                {{ bill.destination_airport_code }}
-                                            </span>
-                                        </div>
-                                        <div class="w-25 text-muted" style="font-size: 0.8rem;">
-                                            {{ bill.formatted_created_at }}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div v-if="statusResponses && statusResponses.length">
-                                    <div class="d-flex font-weight-bold waybill-status-header">
-                                        <div class="w-25">FNA and FMAs</div>
-                                        <div class="w-25 text-right pr-3">Date</div>
                                     </div>
                                     
-                                    <div class="status-response-container">
-                                        <div v-for="(status,i) in statusResponses" :key="i" class="status-log-item py-2 px-3 mb-2 rounded" style="background: #F8FCFF; border: 1px solid #E6F0FF;">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="status-badge mr-2">{{ i + 1 }}</span>
-                                                    <span class="font-weight-bold" style="color: #355594; font-size: 0.9rem;">{{ status.business_status_code }}</span>
+                                    <div v-if="statusResponses && statusResponses.length">
+                                        <div class="d-flex font-weight-bold waybill-status-header">
+                                            <div class="w-25">FNA and FMAs</div>
+                                            <div class="w-25 text-right pr-3">Date</div>
+                                        </div>
+                                        
+                                        <div class="status-response-container">
+                                            <div v-for="(status,i) in statusResponses" :key="i" class="status-log-item py-2 px-3 mb-2 rounded" style="background: #F8FCFF; border: 1px solid #E6F0FF;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="status-badge mr-2">{{ i + 1 }}</span>
+                                                        <span class="font-weight-bold" style="color: #355594; font-size: 0.9rem;">{{ status.business_status_code }}</span>
+                                                    </div>
+                                                    <span class="text-muted" style="font-size: 0.75rem;">{{ status.formatted_created_at }}</span>
                                                 </div>
-                                                <span class="text-muted" style="font-size: 0.75rem;">{{ status.formatted_created_at }}</span>
-                                            </div>
-                                            <div v-if="status.reason" class="pl-7 mt-1 text-muted" style="font-size: 0.8rem; white-space: pre-line;">
-                                                <b-icon icon="info-circle" class="mr-1" style="color: #355594; opacity: 0.7;"></b-icon>
-                                                <strong>{{ status.condition_code }}:</strong> {{ status.reason }}
+                                                <div v-if="status.reason" class="pl-7 mt-1 text-muted" style="font-size: 0.8rem; white-space: pre-line;">
+                                                    <b-icon icon="info-circle" class="mr-1" style="color: #355594; opacity: 0.7;"></b-icon>
+                                                    <strong>{{ status.condition_code }}:</strong> {{ status.reason }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </template>
-                            </b-table>
+                                </template>
+                                </b-table>
+                            </div>
                         </template>
                         <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="right" class="mt-4 custom-pagination"></b-pagination>
                     </div>
@@ -704,9 +706,86 @@ export default {
     letter-spacing: 0.5px !important;
 }
 
-@media (max-width: 767.98px) {
-  .custom-pagination {
-    justify-content: center !important;
-  }
+.message-table-wrapper {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+@media (max-width: 768px) {
+    .message-table-wrapper {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .message-table-wrapper table,
+    .message-table-wrapper .custom-table,
+    .message-table-wrapper .table {
+        min-width: 650px !important;
+        width: 650px !important;
+    }
+
+    .message-table-wrapper th,
+    .message-table-wrapper td {
+        white-space: nowrap !important;
+    }
+
+    .body-color {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 10px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .container {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-top: 16px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .container > .row,
+    .container-fluid > .row,
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .search-log-container {
+        width: 100% !important;
+        padding: 16px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .awb-input-group {
+        width: 100% !important;
+    }
+
+    .awb-input-group .awb-no-input {
+        flex: 1 1 auto !important;
+        width: auto !important;
+    }
+
+    .search-btn-group {
+        width: 100% !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .search-btn-group .show-btn {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .custom-table {
+        font-size: 0.85rem !important;
+    }
+
+    .custom-pagination {
+        justify-content: center !important;
+    }
 }
 </style>

@@ -1733,4 +1733,52 @@ th {
         margin-bottom: 6px !important;
         display: block !important;
     }
+
+@media (max-width: 768px) {
+    .body-color {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 10px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .container,
+    .container-fluid {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-top: 16px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .container > .row,
+    .container-fluid > .row,
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .ml-4, .ml-3 {
+        margin-left: 0 !important;
+    }
+
+    .mr-16 {
+        margin-right: 0 !important;
+    }
+
+    .table-responsive-wrapper {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block !important;
+    }
+
+    .table-responsive-wrapper table {
+        min-width: 600px !important;
+    }
+
+    .table-responsive-wrapper th,
+    .table-responsive-wrapper td {
+        white-space: nowrap !important;
+    }
+}
 </style>

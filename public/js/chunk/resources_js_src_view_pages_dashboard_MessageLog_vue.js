@@ -386,14 +386,13 @@ var render = function render() {
   }, [_c("h4", {
     staticClass: "h-color mb-4"
   }, [_vm._v("Search Waybill Messages")]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex align-items-center mb-6 flex-wrap",
+    staticClass: "search-log-container d-flex align-items-center mb-6 flex-wrap",
     staticStyle: {
       gap: "12px",
       background: "#F8FCFF",
       border: "1px solid #E6F0FF",
       padding: "20px 24px",
-      "border-radius": "16px",
-      width: "fit-content"
+      "border-radius": "16px"
     }
   }, [_c("label", {
     staticClass: "mb-0 font-weight-bold",
@@ -404,7 +403,7 @@ var render = function render() {
   }, [_vm._v("\n                            Master No: "), _c("span", {
     staticClass: "text-danger"
   }, [_vm._v("*")])]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex align-items-center",
+    staticClass: "d-flex align-items-center awb-input-group",
     staticStyle: {
       gap: "8px"
     }
@@ -454,7 +453,7 @@ var render = function render() {
       expression: "form.masterEnd"
     }
   })], 1), _vm._v(" "), _c("div", {
-    staticClass: "d-flex align-items-center",
+    staticClass: "d-flex align-items-center search-btn-group",
     staticStyle: {
       gap: "8px"
     }
@@ -536,7 +535,9 @@ var render = function render() {
       rows: 10,
       columns: 5
     }
-  }) : [_c("b-table", {
+  }) : [_c("div", {
+    staticClass: "message-table-wrapper"
+  }, [_c("b-table", {
     staticClass: "w-100 custom-table",
     attrs: {
       items: _vm.normalizedItems,
@@ -564,7 +565,7 @@ var render = function render() {
               _vm.getAirWayBill(String(row.item.id));
             }
           }
-        }, [_vm._v("\n                                " + _vm._s(String(row.item.awb_code)) + "-" + _vm._s(String(row.item.awb_no)) + "\n                            ")])];
+        }, [_vm._v("\n                                    " + _vm._s(String(row.item.awb_code)) + "-" + _vm._s(String(row.item.awb_no)) + "\n                                ")])];
       }
     }, {
       key: "cell(destination_airport)",
@@ -578,7 +579,7 @@ var render = function render() {
             "font-weight": "600",
             "border-radius": "6px"
           }
-        }, [_vm._v("\n                                " + _vm._s(row.item.destination_airport) + "\n                            ")])];
+        }, [_vm._v("\n                                    " + _vm._s(row.item.destination_airport) + "\n                                ")])];
       }
     }, {
       key: "cell(created_at)",
@@ -596,7 +597,8 @@ var render = function render() {
             color: "#8A99AD",
             "font-size": "11px",
             "text-transform": "uppercase",
-            "letter-spacing": "0.5px"
+            "letter-spacing": "0.5px",
+            "min-width": "280px"
           }
         }, [_c("div", {
           staticClass: "w-25"
@@ -664,12 +666,12 @@ var render = function render() {
               "font-weight": "500",
               "border-radius": "6px"
             }
-          }, [_vm._v("\n                                            " + _vm._s(bill.destination_airport_code) + "\n                                        ")])]), _vm._v(" "), _c("div", {
+          }, [_vm._v("\n                                                " + _vm._s(bill.destination_airport_code) + "\n                                            ")])]), _vm._v(" "), _c("div", {
             staticClass: "w-25 text-muted",
             staticStyle: {
               "font-size": "0.8rem"
             }
-          }, [_vm._v("\n                                        " + _vm._s(bill.formatted_created_at) + "\n                                    ")])]);
+          }, [_vm._v("\n                                            " + _vm._s(bill.formatted_created_at) + "\n                                        ")])]);
         }), 0) : _vm._e(), _vm._v(" "), _vm.statusResponses && _vm.statusResponses.length ? _c("div", [_c("div", {
           staticClass: "d-flex font-weight-bold waybill-status-header"
         }, [_c("div", {
@@ -718,11 +720,11 @@ var render = function render() {
             attrs: {
               icon: "info-circle"
             }
-          }), _vm._v(" "), _c("strong", [_vm._v(_vm._s(status.condition_code) + ":")]), _vm._v(" " + _vm._s(status.reason) + "\n                                        ")], 1) : _vm._e()]);
+          }), _vm._v(" "), _c("strong", [_vm._v(_vm._s(status.condition_code) + ":")]), _vm._v(" " + _vm._s(status.reason) + "\n                                            ")], 1) : _vm._e()]);
         }), 0)]) : _vm._e()];
       }
     }])
-  })], _vm._v(" "), _c("b-pagination", {
+  })], 1)], _vm._v(" "), _c("b-pagination", {
     staticClass: "mt-4 custom-pagination",
     attrs: {
       "total-rows": _vm.totalRows,

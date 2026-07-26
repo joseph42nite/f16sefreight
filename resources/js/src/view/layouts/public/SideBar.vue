@@ -75,13 +75,13 @@ export default {
             isMobileMenuOpen: false,
             menuItems: [
                 { 
-                    label: "Focus Air", 
+                    label: "FOCUS AIR", 
                     path: "/focus-air", 
                     icon: "/media/assets/ui/side-menu/3.png", 
                     activePaths: ['/focus-air', '/house-way-bill', '/consolidation', '/edit-airway-bill', '/edit-houseway-bill']
                 },
                 { 
-                    label: "Message Log", 
+                    label: "MESSAGE LOG", 
                     path: "/message-log", 
                     icon: "/media/assets/ui/side-menu/4.png", 
                     activePaths: ['/message-log']
@@ -261,9 +261,12 @@ export default {
 
 .mobile-active-label {
     color: #355594;
-    font-weight: 900;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     font-size: 16px;
     margin-right: 20px;
+    text-transform: uppercase;
 }
 
 .mobile-nav-options {
@@ -306,6 +309,7 @@ export default {
     color: #475569;
     font-weight: 600;
     font-size: 15px;
+    text-transform: uppercase !important;
 }
 
 .mobile-opt:hover {

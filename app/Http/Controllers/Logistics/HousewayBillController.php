@@ -978,7 +978,7 @@ class HousewayBillController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $agentId = $user->branch_name;
-        $shippers = SavedAddress::where(function($q) use ($agentId) {
+        $shippers = SavedAddress::where(function ($q) use ($agentId) {
             if ($agentId) {
                 $q->where('agent_id', $agentId)->orWhereNull('agent_id');
             }

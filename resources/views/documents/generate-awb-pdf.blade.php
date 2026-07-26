@@ -1607,7 +1607,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New, Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                    {{ $airWayBill->total_amount ?? ''}}  
+                                                                                                    {{ $airWayBill->as_agreed==1?'AS AGREED':$airWayBill->total_amount }}    
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>

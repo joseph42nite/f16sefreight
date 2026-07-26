@@ -719,7 +719,12 @@ class AirwayBillController extends Controller
         //for status update
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         $status = $request->status;
-        AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email]);
+        $update_arr = [
+            'status' => $status,
+            'as_agreed' => $request->as_agreed ?? 0,
+            'awb_email' => $request->awb_email,
+        ];
+        AirwayBills::where(['id' => $awb_id])->update($update_arr);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
@@ -812,7 +817,9 @@ class AirwayBillController extends Controller
         $status = $request->status;
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         if ($status != 'generate_pdf')
-            AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email]);
+            AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);
+        else
+            AirwayBills::where(['id' => $awb_id])->update(['awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
@@ -879,7 +886,7 @@ class AirwayBillController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $agentId = $user->branch_name;
-        $shippers = SavedAddress::where(function($q) use ($agentId) {
+        $shippers = SavedAddress::where(function ($q) use ($agentId) {
             if ($agentId) {
                 $q->where('agent_id', $agentId)->orWhereNull('agent_id');
             }

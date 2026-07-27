@@ -16,6 +16,11 @@ class HousewayBills extends Model
         return $this->belongsTo(Agent::class);
     }
 
+    public function agentsInfo()
+    {
+        return $this->belongsTo(Agent::class, 'agent_id', 'id');
+    }
+
     public function paymentInfo()
     {
         return $this->hasOne(PaymentInfo::class, 'awb_id', 'id');

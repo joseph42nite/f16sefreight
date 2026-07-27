@@ -213,9 +213,10 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                       {{$houseWayBill->ho_name}}<br>
-                                                                                       {{$houseWayBill->ho_address}}<br>
-                                                                                       {{$houseWayBill->ho_city}},{{$houseWayBill->ho_pincode}},{{$houseWayBill->ho_state}},{{$houseWayBill->ho_country}}
+                                                                                        {{-- Air France<br arai-hidden="true"> 45 Rue de Paris<br arai-hidden="true"> 957 47 Charles de Gaulle <br arai-hidden="true">France --}}
+                                                                                        @if (!empty($houseWayBill->airline_address)) 
+                                                                                            {!! nl2br(str_replace(',', '<br>', $houseWayBill->airline_address ?? '')) !!}
+                                                                                        @endif
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>
@@ -1607,7 +1608,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                                    {{ $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_amount }}  
+                                                                                                    {{ $houseWayBill->total_amount }}  
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1627,7 +1628,7 @@
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
                                                                                                 <td align="right" valign="top" width="80px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;">
-                                                                                                    {{ $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_amount }}
+                                                                                                    {{ $houseWayBill->total_amount }} 
                                                                                                 </td>
                                                                                             </tr>
                                                                                         </table>
@@ -1839,7 +1840,7 @@
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "PP") {
-                                                                                                            echo $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_charges_prepaid;
+                                                                                                            echo $houseWayBill->total_charges_prepaid;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
@@ -1847,7 +1848,7 @@
                                                                                                     @php
                                                                                                         $prepaidTaxType = $houseWayBill->type_of_payment;
                                                                                                         if ($prepaidTaxType == "CC") {
-                                                                                                            echo $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_charges_collect;
+                                                                                                            echo $houseWayBill->total_charges_collect;
                                                                                                         }
                                                                                                     @endphp
                                                                                                 </td>
@@ -2278,7 +2279,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="130px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_charges_prepaid }}
+                                                                                                                {{ $houseWayBill->total_charges_prepaid }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>
@@ -2287,7 +2288,7 @@
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="bottom" height="20px" width="146px" style="font-size: 10px;line-height: 14px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding-right:2px;">
-                                                                                                                {{ $houseWayBill->as_agreed==1?'AS AGREED':$houseWayBill->total_charges_collect }}
+                                                                                                                {{ $houseWayBill->total_charges_collect }}
                                                                                                             </td>
                                                                                                         </tr>  
                                                                                                     </table>

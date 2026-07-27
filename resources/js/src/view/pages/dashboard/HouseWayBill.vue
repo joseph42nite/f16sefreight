@@ -375,8 +375,8 @@
                                                          </div>
                                                      </template>
                                                      <div class="d-flex align-items-center pb-2 city-airport-row">
-                                                         <b-form-input id="input-horizontal" class="form-control consignee-form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
-                                                         <b-form-input id="input-horizontal" class="ml-3 form-control consignee-form-control" style="width: 50px" v-model="form.consignee_address.cons_airport_code" :class="{ 'is-invalid': form.errors.has('cons_airport_code') }"></b-form-input>
+                                                         <b-form-input id="input-horizontal" class="form-control" style="width: 240px" v-model="form.consignee_address.cons_city" :class="{ 'is-invalid': form.errors.has('cons_city') }"></b-form-input>
+                                                         <b-form-input id="input-horizontal" class="ml-3 form-control" style="width: 50px" v-model="form.consignee_address.cons_airport_code" :class="{ 'is-invalid': form.errors.has('cons_airport_code') }"></b-form-input>
                                                      </div>
                                                      <div>
                                                          <has-error :form="form" field="cons_city" :class="{ 'd-block': form.errors.has('cons_city') }"></has-error>
@@ -537,7 +537,7 @@
                                                     </b-form-group>
                                                 </b-col>
                                                 <b-col cols="12" lg="8" class="mt-6 mt-lg-0">
-                                                    <div class="table-responsive">
+                                                    <div class="table-responsive" style="overflow: visible !important;">
                                                         <table class="table" style="max-width:100%;width:100%;min-width:650px !important;">
                                                             <thead>
                                                                 <tr class="">
@@ -550,11 +550,11 @@
                                                                     <th class="" style="color:#355594; width: 5%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;"></th>
                                                                 </tr>
                                                             </thead>
-                                                            <tbody>
-                                                                <tr>
+                                                             <tbody>
+                                                                <tr :class="{ 'active-row': activeDropdown === 'from' || activeDropdown === 'to' }">
                                                                     <td class="editable-cell" style="width: 8%; padding: 8px 6px !important; font-weight: 500; color: #475569;">Routing:<span style="color: red;">*</span></td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_from" @click="toggleDropdown('from')">
+                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" :class="{ 'active': activeDropdown === 'from' }" ref="dropdownContainer_from" @click="toggleDropdown('from')">
                                                                             <input type="text" v-model="form.routing_information.from" placeholder="Search destination" id="from_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('from') }">
                                                                             <div v-if="activeDropdown === 'from' && getFilteredLocations(form.routing_information.from).length" class="dropdown-options">
@@ -568,7 +568,7 @@
                                                                         </div>
                                                                     </td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" ref="dropdownContainer_to" @click="toggleDropdown('to')">
+                                                                        <div style="width: 100%;" class="custom-dropdown align-items-center" :class="{ 'active': activeDropdown === 'to' }" ref="dropdownContainer_to" @click="toggleDropdown('to')">
                                                                             <input type="text" v-model="form.routing_information.to" placeholder="Search destination" id="to_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to') }">
                                                                             <div v-if="activeDropdown === 'to' && getFilteredLocations(form.routing_information.to).length" class="dropdown-options">
@@ -621,11 +621,11 @@
                                                                     </td>
                                                                     <td class="editable-cell" style="width: 5%; padding: 8px 6px !important;">&nbsp;</td>
                                                                 </tr>
-                                                                <tr>
+                                                                <tr :class="{ 'active-row': activeDropdown === 'to2' }">
                                                                     <td style="width: 8%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
                                                                     <td style="width: 21%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to2" @click="toggleDropdown('to2')">
+                                                                        <div style="width: 100%;" class="custom-dropdown" :class="{ 'active': activeDropdown === 'to2' }" ref="dropdownContainer_to2" @click="toggleDropdown('to2')">
                                                                             <input type="text" v-model="form.routing_information.to_2" placeholder="Search destination" id="to2_id" style=""
                                                                             class="form-control" autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_2') }">
                                                                             <div v-if="activeDropdown === 'to2' && getFilteredLocations(form.routing_information.to_2).length" class="dropdown-options">
@@ -660,11 +660,11 @@
                                                                             @change="handleDateChange($event, 'form.routing_information.date_2')"></date-picker>
                                                                     </td>
                                                                 </tr>
-                                                                <tr>
+                                                                <tr :class="{ 'active-row': activeDropdown === 'to3' }">
                                                                     <td style="width: 8%; padding: 8px 6px !important;" class="editable-cell" >&nbsp;</td>
                                                                     <td style="width: 21%; padding: 8px 6px !important;" class="editable-cell">&nbsp;</td>
                                                                     <td class="editable-cell" style="width: 21%; padding: 8px 6px !important;">
-                                                                        <div style="width: 100%;" class="custom-dropdown" ref="dropdownContainer_to3" @click="toggleDropdown('to3')">
+                                                                        <div style="width: 100%;" class="custom-dropdown" :class="{ 'active': activeDropdown === 'to3' }" ref="dropdownContainer_to3" @click="toggleDropdown('to3')">
                                                                             <input type="text" v-model="form.routing_information.to_3" placeholder="Search destination" id="to3_id" style="" class="form-control" 
                                                                                 autocomplete="off" :class="{ 'is-invalid': form.errors.has('to_3') }">
                                                                             <div v-if="activeDropdown === 'to3' && getFilteredLocations(form.routing_information.to_3).length" class="dropdown-options">
@@ -2314,13 +2314,13 @@
                                                 </div>
                                             </div>
                                             <div class="mb-16" style="width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-hawb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click.prevent="handleSaveAndGeneratePDF('download-hawb-pdf')">
                                                     <p class="mb-0 ml-2">House Waybill Pdf file</p>
                                                 </a>
-                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click.prevent="handleSaveAndGeneratePDF('download-multiple-hawb-pdf')">
                                                     <p class="mb-0 ml-2">Multipage House Waybill Pdf</p>
                                                 </a>
-                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click="() => handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
+                                                <a href="#" style="width:fit-content;" class="custom-link mb-0" @click.prevent="handleSaveAndGeneratePDF('download-multiple-both-page-hawb-pdf')">
                                                     <p class="mb-0 ml-2">Multipage House Waybill Pdf with back pages</p>
                                                 </a>
                                             </div>
@@ -3747,11 +3747,24 @@ li {
     border-collapse: separate !important;
     border-spacing: 0 !important;
     border-radius: 12px !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     border: 1px solid rgba(53, 85, 148, 0.08) !important;
     box-shadow: 0 4px 12px rgba(53, 85, 148, 0.02) !important;
     background: #FFFFFF !important;
     max-width: 100%;
+}
+
+.table th:first-child {
+    border-top-left-radius: 12px !important;
+}
+
+.table th:last-child {
+    border-top-right-radius: 12px !important;
+}
+
+tr.active-row {
+    position: relative !important;
+    z-index: 100 !important;
 }
 
 .table th {
@@ -3843,6 +3856,11 @@ th {
   border-radius: 5px;
 }
 
+.custom-dropdown.active,
+.custom-dropdown:focus-within {
+  z-index: 1050 !important;
+}
+
 .dropdown-options {
     position: absolute;
     border: 1px solid #E4E6EF;
@@ -3853,7 +3871,7 @@ th {
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    z-index: 9;
+    z-index: 9999 !important;
     width: 100%;
 }
 

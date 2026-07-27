@@ -76,8 +76,8 @@
                     </div>
                 </template>
                 <div class="d-flex align-items-center pb-2">
-                    <b-form-input :id="idPrefix + '-city-input'" class="form-control" :class="[cityControlClass, { 'is-invalid': form.errors.has(prefix + '_city') }]" style="width: 240px" v-model="address[prefix + '_city']"></b-form-input>
-                    <b-form-input :id="idPrefix + '-airport-input'" class="ml-3 form-control" :class="[cityControlClass, { 'is-invalid': form.errors.has(prefix + '_airport_code') }]" style="width: 50px" v-model="address[prefix + '_airport_code']"></b-form-input>
+                    <b-form-input :id="idPrefix + '-city-input'" class="form-control" :class="{ 'is-invalid': form.errors.has(prefix + '_city') }" style="width: 240px" v-model="address[prefix + '_city']"></b-form-input>
+                    <b-form-input :id="idPrefix + '-airport-input'" class="ml-3 form-control" :class="{ 'is-invalid': form.errors.has(prefix + '_airport_code') }" style="width: 50px" v-model="address[prefix + '_airport_code']"></b-form-input>
                 </div>
                 <div>
                     <has-error :form="form" :field="prefix + '_city'" :class="{ 'd-block': form.errors.has(prefix + '_city') }"></has-error>

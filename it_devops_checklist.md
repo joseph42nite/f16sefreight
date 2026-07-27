@@ -88,6 +88,14 @@ ALTER TABLE house_way_bills
 ```
 A migration (`2026_07_21_000000_add_ho_and_as_agreed_columns_to_house_way_bills_table.php`) now exists for fresh/local environments; the live server still needs the manual step above if the columns aren't already present.
 
+### Table: `air_way_bills` (MAWB as_agreed column)
+```sql
+SHOW COLUMNS FROM air_way_bills LIKE 'as_agreed';
+
+ALTER TABLE air_way_bills ADD COLUMN IF NOT EXISTS as_agreed TINYINT(1) NULL DEFAULT 0;
+```
+A migration (`2026_07_27_000000_add_as_agreed_to_air_way_bills_table.php`) has been added for local/fresh environments.
+
 ---
 
 ## 3. Post-Upgrade Verification

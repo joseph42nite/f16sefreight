@@ -153,7 +153,7 @@ class AirwayBillController extends Controller
         $WayBillAddress->cons_phone = $consignee_address['cons_phone'] ?? null;
         $WayBillAddress->cons_fax = $consignee_address['cons_fax'] ?? null;
         $WayBillAddress->cons_telex = $consignee_address['cons_telex'] ?? null;
-        $WayBillAddress->agent_id = $agent->id;
+        $WayBillAddress->agent_id = $agent->id ?? null;
         $WayBillAddress->save();
 
         //insert address if saved button checked

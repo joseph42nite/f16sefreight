@@ -162,6 +162,8 @@ class GenerateHawbPdfController extends Controller
     }
 
     public function downloadMultipleHawbPdf($hawb_id) {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
         $houseWayBill = $this->loadHawbForMultiple($hawb_id);
         if ($houseWayBill) {
             $this->attachHawbRelatedData($houseWayBill, $hawb_id);
@@ -175,6 +177,8 @@ class GenerateHawbPdfController extends Controller
 
     // This function will work when user click on Generate Multiple PDF file with back page
     public function downloadMultipleWithBackHawbPdf($hawb_id) {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
         $houseWayBill = $this->loadHawbForMultiple($hawb_id);
         if ($houseWayBill) {
             $this->attachHawbRelatedData($houseWayBill, $hawb_id);

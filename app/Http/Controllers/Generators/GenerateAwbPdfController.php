@@ -72,6 +72,8 @@ class GenerateAwbPdfController extends Controller
     }
 
     public function downloadMultipleAwbPdf($id) {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
         $pdfContent = $this->renderMultipleAwbPages($id, false);
 
         $pdf = Pdf::loadHTML($pdfContent)
@@ -83,6 +85,8 @@ class GenerateAwbPdfController extends Controller
 
     // This function will work when user click on Generate Multiple PDF file with back page
     public function downloadMultipleWithBackAwbPdf($id) {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
         $pdfContent = $this->renderMultipleAwbPages($id, true);
 
         $pdf = Pdf::loadHTML($pdfContent)

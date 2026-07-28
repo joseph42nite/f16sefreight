@@ -25,4 +25,10 @@ class SavedAddress extends Model
         'fax',
         'telex',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
+

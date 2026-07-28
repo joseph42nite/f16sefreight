@@ -17,6 +17,7 @@ use App\Http\Controllers\Logistics\GLNResponseController;
 use App\Http\Controllers\Logistics\ConversionController;
 use App\Http\Controllers\Logistics\IMPConversionController;
 use App\Http\Controllers\Logistics\OcrController;
+use App\Http\Controllers\Logistics\AddressBookController;
 use App\Http\Controllers\Data\RateController;
 use App\Http\Controllers\Data\LocationController;
 use App\Http\Controllers\Data\AmsController;
@@ -110,6 +111,10 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/ocr-history', [OcrController::class, 'history']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
     Route::get('/company-templates', [UserController::class, 'getCompanyTemplates']);
+
+    // Address Book Management
+    Route::get('/saved-addresses', [AddressBookController::class, 'index']);
+    Route::put('/saved-addresses/{id}', [AddressBookController::class, 'update']);
 });
 
 // =================superAdmin section==========================

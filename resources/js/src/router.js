@@ -158,6 +158,12 @@ export default new Router({
           component: () => import("@/view/pages/dashboard/XmlView"),
           meta: { userType: 'user' }
         },
+        {
+          name: "Settings",
+          path: "settings",
+          component: () => import("@/view/pages/dashboard/UserSettings"),
+          meta: { userType: 'user' }
+        },
       ]
     },
 

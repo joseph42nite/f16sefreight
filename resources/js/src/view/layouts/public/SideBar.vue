@@ -33,6 +33,21 @@
                     </li>
                 </router-link>
 
+                <!-- Settings -->
+                <router-link to="/settings" custom v-slot="{ navigate }">
+                    <li
+                        class="sidebar__item"
+                        :class="{ 'sidebar__item--active': isActive('/settings') }"
+                        @click="navigate"
+                        role="link"
+                        title="Settings"
+                    >
+                        <div class="sidebar__icon-wrap">
+                            <b-icon icon="gear-fill" font-scale="2.1" style="color: #355594;"></b-icon>
+                        </div>
+                    </li>
+                </router-link>
+
 
                 <!-- Bottom branding -->
                 <li class="sidebar__branding">
@@ -44,7 +59,10 @@
         <!-- Mobile Dropdown Sidebar -->
         <div class="sidebar-mobile d-lg-none" v-click-outside="closeMobileMenu">
             <div class="mobile-nav-trigger" @click="toggleMobileMenu">
-                <img :src="activeItem.icon" class="mobile-active-icon" />
+                <template v-if="activeItem.bIcon">
+                    <b-icon :icon="activeItem.bIcon" font-scale="1.9" style="color: #355594; margin-right: 14px; flex-shrink: 0;"></b-icon>
+                </template>
+                <img v-else :src="activeItem.icon" class="mobile-active-icon" />
                 <span class="mobile-active-label">{{ activeItem.label }}</span>
                 <b-icon icon="chevron-down" class="ml-auto chevron-icon" :class="{ 'rotated': isMobileMenuOpen }"></b-icon>
             </div>
@@ -57,7 +75,8 @@
                         :class="{ active: isActive(item.activePaths) }"
                         @click="navigateMobile(item.path)"
                     >
-                        <img :src="item.icon" class="opt-icon" />
+                        <b-icon v-if="item.bIcon" :icon="item.bIcon" font-scale="1.7" style="color: #355594; margin-right: 14px; flex-shrink: 0;"></b-icon>
+                        <img v-else :src="item.icon" class="opt-icon" />
                         <span class="opt-label">{{ item.label }}</span>
                     </div>
                 </div>
@@ -85,6 +104,12 @@ export default {
                     path: "/message-log", 
                     icon: "/media/assets/ui/side-menu/4.png", 
                     activePaths: ['/message-log']
+                },
+                { 
+                    label: "SETTINGS", 
+                    path: "/settings", 
+                    bIcon: "gear-fill", 
+                    activePaths: ['/settings']
                 },
             ]
         };

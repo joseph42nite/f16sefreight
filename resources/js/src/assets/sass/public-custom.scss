@@ -1650,3 +1650,284 @@ $font-family-inter: 'Inter', sans-serif;
 @media (max-width: 991px) {
     .featured-title { font-size: 1.75rem; }
 }
+
+/* ==========================================================================
+   F16S GLOBAL DASHBOARD DESIGN SYSTEM & REUSABLE UTILITIES
+   ========================================================================== */
+
+/* Brand Color Tokens */
+$brand-blue: #355594;
+$brand-blue-hover: #2a4478;
+$text-secondary-blue: #5A6B8A;
+$text-muted-blue: #8A99B5;
+
+/* 1. Page Header Navigation Component */
+.nav-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: $brand-blue;
+    opacity: 0.6;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.nav-title {
+    color: $brand-blue !important;
+    font-size: 26px !important;
+    line-height: 34px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+    margin-bottom: 0.5rem !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.nav-subtitle {
+    color: $text-secondary-blue !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    margin-bottom: 0 !important;
+}
+
+/* 2. Glassmorphic App Cards & Info Boxes */
+.app-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 244, 255, 0.9) 100%) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(53, 85, 148, 0.12) !important;
+    box-shadow: 0 10px 30px rgba(53, 85, 148, 0.05) !important;
+}
+
+.info-box-brand {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+
+    .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: $text-secondary-blue;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #181C32;
+    }
+}
+
+/* 3. Global Brand Buttons */
+.btn-brand-pill {
+    background-color: $brand-blue !important;
+    border-color: $brand-blue !important;
+    color: #ffffff !important;
+    border-radius: 999px !important;
+    padding: 8px 24px !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    box-shadow: 0 4px 12px rgba(53, 85, 148, 0.2) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+
+    &:hover {
+        background-color: $brand-blue-hover !important;
+        border-color: $brand-blue-hover !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 18px rgba(53, 85, 148, 0.3) !important;
+    }
+}
+
+.btn-brand-outline-pill {
+    background-color: transparent !important;
+    border: 1px solid $brand-blue !important;
+    color: $brand-blue !important;
+    border-radius: 999px !important;
+    padding: 6px 18px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+
+    &:hover {
+        background-color: $brand-blue !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(53, 85, 148, 0.25) !important;
+    }
+}
+
+/* 4. Table & Pagination System */
+.glass-table-wrap {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.custom-pagination {
+    .page-link {
+        background-color: #F8FCFF !important;
+        color: $brand-blue !important;
+        border: 1px solid #E6F0FF !important;
+        border-radius: 10px !important;
+        margin: 0 3px !important;
+        font-weight: 700 !important;
+        font-size: 0.88rem !important;
+        padding: 6px 14px !important;
+        transition: all 0.25s ease !important;
+        box-shadow: none !important;
+    }
+
+    .page-link:hover {
+        background-color: #F0F7FF !important;
+        border-color: $brand-blue !important;
+        color: $brand-blue-hover !important;
+    }
+
+    .page-item.active .page-link {
+        background-color: $brand-blue !important;
+        border-color: $brand-blue !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(53, 85, 148, 0.25) !important;
+    }
+
+    .page-item.disabled .page-link {
+        background-color: #F8FCFF !important;
+        color: #A0AEC0 !important;
+        border-color: #E2E8F0 !important;
+        opacity: 0.6 !important;
+    }
+}
+
+/* 5. Ultra Premium Modal System */
+.ultra-premium-modal {
+    .modal-dialog {
+        max-width: 780px;
+        margin: 1.75rem auto;
+    }
+
+    .modal-content {
+        background: #ffffff !important;
+        border: none !important;
+        border-radius: 24px !important;
+        box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.25) !important;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    .modal-body {
+        padding: 0 !important;
+        background: #ffffff;
+    }
+}
+
+.modal-header-clean {
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 20px 28px !important;
+}
+
+.modal-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(53, 85, 148, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-title-clean {
+    color: $brand-blue;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.modal-subtitle-clean {
+    color: $text-secondary-blue;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 2px;
+}
+
+.modal-close-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: $text-secondary-blue;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.modal-close-btn:hover {
+    background: #f1f5f9;
+    color: $brand-blue;
+    border-color: #cbd5e1;
+}
+
+.modal-body-custom {
+    padding: 24px 28px !important;
+}
+
+.form-field-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $brand-blue;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.custom-form-control {
+    height: 42px;
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1;
+    font-size: 0.92rem;
+    color: $brand-blue-hover;
+    padding: 0 14px;
+    background-color: #ffffff;
+    transition: all 0.15s ease;
+    box-shadow: none !important;
+}
+
+.custom-form-control:focus {
+    border-color: $brand-blue !important;
+    box-shadow: 0 0 0 3px rgba(53, 85, 148, 0.12) !important;
+}
+
+.disabled-control {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: $text-secondary-blue !important;
+    font-weight: 600;
+}
+
+.modal-footer-clean {
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    padding: 16px 28px !important;
+}
+
+
+

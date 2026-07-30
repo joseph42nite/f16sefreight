@@ -331,26 +331,26 @@
       centered
     >
       <!-- Custom Modal Header -->
-      <div class="xml-modal-header">
-        <div class="d-flex align-items-center">
-          <div class="xml-modal-icon mr-3" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
+      <div class="xml-modal-header align-items-center justify-content-between">
+        <div class="d-flex align-items-center pr-2" style="min-width: 0;">
+          <div class="xml-modal-icon mr-3 flex-shrink-0" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
             <i class="fas fa-boxes"></i>
           </div>
-          <div>
-            <h5 class="mb-0 text-white font-weight-bold">Associated House Air Waybills</h5>
-            <div class="d-flex align-items-center mt-1" v-if="selectedMawb">
+          <div style="min-width: 0;">
+            <h5 class="mb-0 text-white font-weight-bold xml-header-title text-truncate">Associated House Air Waybills</h5>
+            <div class="d-flex align-items-center mt-1 flex-wrap" v-if="selectedMawb">
               <span class="xml-awb-badge mr-2"><i class="fas fa-link mr-1"></i>MAWB</span>
               <code class="text-white font-size-sm" style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.82rem;">{{ selectedMawb.awb_code }}-{{ selectedMawb.awb_no }}</code>
             </div>
           </div>
         </div>
-        <button class="xml-close-btn" @click="$bvModal.hide('hawbs-list-modal')">
+        <button class="xml-close-btn flex-shrink-0" @click="$bvModal.hide('hawbs-list-modal')">
           <i class="fas fa-times"></i>
         </button>
       </div>
 
       <!-- Modal Content Area -->
-      <div class="p-6 bg-light" style="min-height: 250px;">
+      <div class="p-3 p-md-6 bg-light" style="min-height: 250px;">
         <div v-if="isHawbsLoading" class="text-center py-10">
           <b-spinner variant="primary" class="mb-3"></b-spinner>
           <p class="text-muted font-weight-bold">Fetching associated House AWBs...</p>
@@ -469,26 +469,28 @@
       centered
     >
       <!-- Custom Modal Header -->
-      <div class="xml-modal-header">
-        <div class="d-flex align-items-center">
-          <div class="xml-modal-icon mr-3">
+      <div class="xml-modal-header flex-wrap flex-md-nowrap">
+        <div class="d-flex align-items-center mb-2 mb-md-0">
+          <div class="xml-modal-icon mr-3 flex-shrink-0">
             <i class="fas fa-file-code"></i>
           </div>
           <div>
-            <h5 class="mb-0 text-white font-weight-bold">XML Message Viewer</h5>
+            <h5 class="mb-0 text-white font-weight-bold xml-header-title">XML Message Viewer</h5>
             <div class="d-flex align-items-center mt-1">
               <span class="xml-awb-badge mr-2"><i class="fas fa-tag mr-1"></i>AWB</span>
               <code class="text-white font-size-sm" style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.82rem;">{{ selectedAwbId }}</code>
             </div>
           </div>
         </div>
-        <div class="d-flex align-items-center">
-          <button class="xml-action-btn mr-2" @click="copyXml" title="Copy to clipboard">
-            <i class="fas fa-copy mr-1"></i> Copy
-          </button>
-          <button class="xml-action-btn xml-action-btn--primary mr-3" @click="downloadXml" title="Download XML">
-            <i class="fas fa-download mr-1"></i> Download
-          </button>
+        <div class="d-flex align-items-center justify-content-between justify-content-md-end w-100 w-md-auto mt-1 mt-md-0 pt-2 pt-md-0 xml-header-actions">
+          <div class="d-flex align-items-center">
+            <button class="xml-action-btn mr-2" @click="copyXml" title="Copy to clipboard">
+              <i class="fas fa-copy mr-1"></i> Copy
+            </button>
+            <button class="xml-action-btn xml-action-btn--primary mr-2 mr-md-3" @click="downloadXml" title="Download XML">
+              <i class="fas fa-download mr-1"></i> Download
+            </button>
+          </div>
           <button class="xml-close-btn" @click="$bvModal.hide('xml-viewer-modal')">
             <i class="fas fa-times"></i>
           </button>
@@ -1241,5 +1243,62 @@ export default {
   margin: 0 !important;
   padding: 0 !important;
   color: inherit !important;
+}
+
+@media (max-width: 767.98px) {
+  .xml-modal-dark .modal-dialog {
+    margin: 0.5rem !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+  .xml-modal-header {
+    padding: 12px 14px !important;
+  }
+  .xml-header-title {
+    font-size: 0.98rem !important;
+  }
+  .xml-modal-icon {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.95rem !important;
+  }
+  .xml-header-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .xml-action-btn {
+    padding: 4px 10px !important;
+    font-size: 0.76rem !important;
+  }
+  .xml-code-scroll {
+    max-height: 55vh !important;
+    padding: 10px 12px !important;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  .xml-modal-dark .xml-code-content,
+  .xml-modal-dark code,
+  .xml-modal-dark pre code {
+    font-size: 0.78rem !important;
+    line-height: 1.5 !important;
+  }
+  .xml-editor-toolbar {
+    padding: 6px 12px !important;
+  }
+  .xml-toolbar-hint {
+    font-size: 0.68rem !important;
+  }
+  /* Table compacting in House XML modal for phone screen */
+  .xml-modal-dark table th,
+  .xml-modal-dark table td {
+    padding: 8px 10px !important;
+    font-size: 0.8rem !important;
+  }
+  .xml-modal-dark .btn-icon-sm {
+    padding: 2px 8px !important;
+    font-size: 0.75rem !important;
+  }
+  .xml-modal-dark .badge {
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
+  }
 }
 </style>

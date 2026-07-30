@@ -1097,21 +1097,28 @@ var render = function render() {
       centered: ""
     }
   }, [_c("div", {
-    staticClass: "xml-modal-header"
+    staticClass: "xml-modal-header align-items-center justify-content-between"
   }, [_c("div", {
-    staticClass: "d-flex align-items-center"
+    staticClass: "d-flex align-items-center pr-2",
+    staticStyle: {
+      "min-width": "0"
+    }
   }, [_c("div", {
-    staticClass: "xml-modal-icon mr-3",
+    staticClass: "xml-modal-icon mr-3 flex-shrink-0",
     staticStyle: {
       background: "rgba(16, 185, 129, 0.2)",
       color: "#10b981"
     }
   }, [_c("i", {
     staticClass: "fas fa-boxes"
-  })]), _vm._v(" "), _c("div", [_c("h5", {
-    staticClass: "mb-0 text-white font-weight-bold"
+  })]), _vm._v(" "), _c("div", {
+    staticStyle: {
+      "min-width": "0"
+    }
+  }, [_c("h5", {
+    staticClass: "mb-0 text-white font-weight-bold xml-header-title text-truncate"
   }, [_vm._v("Associated House Air Waybills")]), _vm._v(" "), _vm.selectedMawb ? _c("div", {
-    staticClass: "d-flex align-items-center mt-1"
+    staticClass: "d-flex align-items-center mt-1 flex-wrap"
   }, [_c("span", {
     staticClass: "xml-awb-badge mr-2"
   }, [_c("i", {
@@ -1125,7 +1132,7 @@ var render = function render() {
       "font-size": "0.82rem"
     }
   }, [_vm._v(_vm._s(_vm.selectedMawb.awb_code) + "-" + _vm._s(_vm.selectedMawb.awb_no))])]) : _vm._e()])]), _vm._v(" "), _c("button", {
-    staticClass: "xml-close-btn",
+    staticClass: "xml-close-btn flex-shrink-0",
     on: {
       click: function click($event) {
         return _vm.$bvModal.hide("hawbs-list-modal");
@@ -1134,7 +1141,7 @@ var render = function render() {
   }, [_c("i", {
     staticClass: "fas fa-times"
   })])]), _vm._v(" "), _c("div", {
-    staticClass: "p-6 bg-light",
+    staticClass: "p-3 p-md-6 bg-light",
     staticStyle: {
       "min-height": "250px"
     }
@@ -1317,15 +1324,15 @@ var render = function render() {
       centered: ""
     }
   }, [_c("div", {
-    staticClass: "xml-modal-header"
+    staticClass: "xml-modal-header flex-wrap flex-md-nowrap"
   }, [_c("div", {
-    staticClass: "d-flex align-items-center"
+    staticClass: "d-flex align-items-center mb-2 mb-md-0"
   }, [_c("div", {
-    staticClass: "xml-modal-icon mr-3"
+    staticClass: "xml-modal-icon mr-3 flex-shrink-0"
   }, [_c("i", {
     staticClass: "fas fa-file-code"
   })]), _vm._v(" "), _c("div", [_c("h5", {
-    staticClass: "mb-0 text-white font-weight-bold"
+    staticClass: "mb-0 text-white font-weight-bold xml-header-title"
   }, [_vm._v("XML Message Viewer")]), _vm._v(" "), _c("div", {
     staticClass: "d-flex align-items-center mt-1"
   }, [_c("span", {
@@ -1341,6 +1348,8 @@ var render = function render() {
       "font-size": "0.82rem"
     }
   }, [_vm._v(_vm._s(_vm.selectedAwbId))])])])]), _vm._v(" "), _c("div", {
+    staticClass: "d-flex align-items-center justify-content-between justify-content-md-end w-100 w-md-auto mt-1 mt-md-0 pt-2 pt-md-0 xml-header-actions"
+  }, [_c("div", {
     staticClass: "d-flex align-items-center"
   }, [_c("button", {
     staticClass: "xml-action-btn mr-2",
@@ -1352,8 +1361,8 @@ var render = function render() {
     }
   }, [_c("i", {
     staticClass: "fas fa-copy mr-1"
-  }), _vm._v(" Copy\n        ")]), _vm._v(" "), _c("button", {
-    staticClass: "xml-action-btn xml-action-btn--primary mr-3",
+  }), _vm._v(" Copy\n          ")]), _vm._v(" "), _c("button", {
+    staticClass: "xml-action-btn xml-action-btn--primary mr-2 mr-md-3",
     attrs: {
       title: "Download XML"
     },
@@ -1362,7 +1371,7 @@ var render = function render() {
     }
   }, [_c("i", {
     staticClass: "fas fa-download mr-1"
-  }), _vm._v(" Download\n        ")]), _vm._v(" "), _c("button", {
+  }), _vm._v(" Download\n          ")])]), _vm._v(" "), _c("button", {
     staticClass: "xml-close-btn",
     on: {
       click: function click($event) {

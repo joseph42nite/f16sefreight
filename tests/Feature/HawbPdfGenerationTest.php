@@ -137,19 +137,114 @@ class HawbPdfGenerationTest extends TestCase
         // state (test order) — this jitter is identical for the old and new controller,
         // so it isn't a refactor signal. A real content change shifts output by far
         // more than the delta (content repeats across 11 pages).
+        //
+        // Rebaselined when Requested Flight/Date started printing "15JUL" instead
+        // of the raw "2026-07-15 10:00:00", and stopped emitting a bare "BA / "
+        // and "CA / " for the second and third legs when no flight is set.
+        // Rebaselined again when the rate grid's header and totals rules were made
+        // continuous and level across the columns. The totals row now fills down
+        // to the foot of the grid, with the totals rules lowered to sit directly above
+        // the totals figures and the dividers meeting the rule above Prepaid.
+        // Rebaselined again for the Charges-at-Destination rule moving to the row
+        // foot, the restored "Created by" footer, and the larger page-2 IATA logo.
+        // Rebaselined again when Pieces/Gross Weight/kg-lb became top-level grid
+        // columns so their dividers span the grid at any content height.
+        // Rebaselined again for the Other PPD|COLL divider spanning its band and the
+        // larger waybill number under Total Collect Charges.
         $single = $this->get("/download-hawb-pdf/{$hawbId}");
         $single->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $single->headers->get('Content-Type'));
-        $this->assertEqualsWithDelta(22322, strlen($single->getContent()), 256);
+        $this->assertEqualsWithDelta(22468, strlen($single->getContent()), 256);
 
         $multiple = $this->get("/download-multiple-hawb-pdf/{$hawbId}");
         $multiple->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multiple->headers->get('Content-Type'));
-        $this->assertEqualsWithDelta(95314, strlen($multiple->getContent()), 256);
+        $this->assertEqualsWithDelta(96931, strlen($multiple->getContent()), 256);
 
         $multipleWithBack = $this->get("/download-multiple-both-page-hawb-pdf/{$hawbId}");
         $multipleWithBack->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multipleWithBack->headers->get('Content-Type'));
-        $this->assertEqualsWithDelta(155306, strlen($multipleWithBack->getContent()), 256);
+        $this->assertEqualsWithDelta(156890, strlen($multipleWithBack->getContent()), 256);
+    }
+
+    // A pieces_info entry missing optional keys (unit, or any dimension) used to
+    // raise "Undefined array key" inside the blade and fail the whole request.
+    public function test_hawb_pdf_renders_when_pieces_info_entries_are_incomplete()
+    {
+        $hawbId = $this->seedHawb();
+
+        ConsignmentData::where('awb_id', $hawbId)->update([
+            'pieces_info' => json_encode([
+                ['pcs' => '6', 'length' => '120', 'width' => '80', 'height' => '95'], // no unit
+                ['pcs' => '4'],                                                        // no dimensions
+            ]),
+        ]);
+
+        $response = $this->get("/download-hawb-pdf/{$hawbId}");
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    // HS codes are stored independently of pieces_info; the blade used to emit
+    // them only inside the pieces_info branch, silently dropping them otherwise.
+    public function test_hawb_pdf_shows_hs_codes_without_pieces_info()
+    {
+        $hawbId = $this->seedHawb();
+
+        ConsignmentData::where('awb_id', $hawbId)->update(['pieces_info' => null]);
+
+        $withoutPiecesInfo = strlen($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+
+        ConsignmentData::where('awb_id', $hawbId)->update(['hs_code' => null]);
+        $withoutEither = strlen($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+
+        $this->assertGreaterThan($withoutEither, $withoutPiecesInfo);
+    }
+
+    // Requested Flight/Date renders one segment per leg as "<carrier><flight> /
+    // <ddMMM>". The second and third legs were previously unreachable because the
+    // controller never selected flight_2/date_2/flight_3/date_3.
+    public function test_hawb_pdf_renders_every_requested_flight_leg()
+    {
+        $hawbId = $this->seedHawb();
+
+        HousewayBills::where('id', $hawbId)->update([
+            'flight_2' => '200', 'date_2' => '2026-08-01 22:15:00',
+            'flight_3' => '300', 'date_3' => '2026-08-02 06:40:00',
+        ]);
+
+        $text = $this->pdfText($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+
+        $this->assertStringContainsString('AA100 / 15JUL', $text);
+        $this->assertStringContainsString('BA200 / 01AUG', $text);
+        $this->assertStringContainsString('CA300 / 02AUG', $text);
+    }
+
+    // With no second or third flight, those segments stay blank rather than
+    // printing a stray carrier code and slash.
+    public function test_hawb_pdf_leaves_unused_flight_legs_blank()
+    {
+        $hawbId = $this->seedHawb();
+
+        $text = $this->pdfText($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+
+        $this->assertStringContainsString('AA100 / 15JUL', $text);
+        $this->assertStringNotContainsString('BA /', $text);
+        $this->assertStringNotContainsString('CA /', $text);
+    }
+
+    // DomPDF compresses page content, so assertions on rendered text need the
+    // stream inflated rather than matched against the raw PDF bytes.
+    private function pdfText(string $pdf): string
+    {
+        $text = '';
+        if (preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdf, $matches)) {
+            foreach ($matches[1] as $stream) {
+                $text .= @gzuncompress($stream) ?: '';
+            }
+        }
+
+        return $text;
     }
 }

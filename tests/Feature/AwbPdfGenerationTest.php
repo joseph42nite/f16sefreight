@@ -115,19 +115,35 @@ class AwbPdfGenerationTest extends TestCase
         // the blade view has no now()/timestamp output). A mismatch means
         // the refactored controller produced different PDF content, not
         // just a different creation-date byte.
+        //
+        // Rebaselined twice since: (1) the HS-code block moved out of the
+        // pieces_info guard — this fixture has hs_code but no pieces_info, so the
+        // two "Hs Code:" lines used to be dropped silently and now render;
+        // (2) Requested Flight/Date switched from a full date to "15JUL".
+        // (3) the AWB blade was restyled to match the HAWB blade (monospace data
+        // font, HAWB font sizes/line-heights, and the shared @page rule).
+        // (4) the rate grid's header and totals rules were made continuous and level.
+        // (5) the totals rules were lowered to sit directly above the totals figures
+        // (pieces, gross weight and the Total/AS AGREED column) at the foot of the grid.
+        // (6) the Charges-at-Destination block's rule moved to the row foot so it
+        // lines up with Total Collect Charges; page-2 IATA logo enlarged.
+        // (7) Pieces/Gross Weight/kg-lb became top-level grid columns so their
+        // dividers are column borders that span the grid at any content height.
+        // (8) the Other PPD|COLL divider now spans its band like WT/VAL, and the
+        // waybill number under Total Collect Charges was enlarged to 13px.
         $single = $this->get("/download-awb-pdf/{$awbId}");
         $single->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $single->headers->get('Content-Type'));
-        $this->assertSame(21686, strlen($single->getContent()));
+        $this->assertSame(22353, strlen($single->getContent()));
 
         $multiple = $this->get("/download-multiple-awb-pdf/{$awbId}");
         $multiple->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multiple->headers->get('Content-Type'));
-        $this->assertSame(92488, strlen($multiple->getContent()));
+        $this->assertSame(95706, strlen($multiple->getContent()));
 
         $multipleWithBack = $this->get("/download-multiple-both-page-awb-pdf/{$awbId}");
         $multipleWithBack->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multipleWithBack->headers->get('Content-Type'));
-        $this->assertSame(151020, strlen($multipleWithBack->getContent()));
+        $this->assertSame(155659, strlen($multipleWithBack->getContent()));
     }
 }

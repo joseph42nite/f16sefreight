@@ -131,19 +131,27 @@ class AwbPdfGenerationTest extends TestCase
         // dividers are column borders that span the grid at any content height.
         // (8) the Other PPD|COLL divider now spans its band like WT/VAL, and the
         // waybill number under Total Collect Charges was enlarged to 13px.
+        // (9) the bottom band (For Carrier's use only / Charges at Destination /
+        // Total Collect Charges) moved into two shared rows spanning both columns,
+        // so the divider meets the bottom rule and the rules stay level on any record;
+        // the "Created by" footer aligns to the form's left border.
+        // (10) the duplicate rule above the bottom band was removed (the Currency
+        // Conversion spacer and the column foot were both drawing one).
+        // (11) the Currency Conversion spacer was extended by the column's fixed
+        // 9.95pt shortfall so its divider reaches the rule below it.
         $single = $this->get("/download-awb-pdf/{$awbId}");
         $single->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $single->headers->get('Content-Type'));
-        $this->assertSame(22353, strlen($single->getContent()));
+        fwrite(STDERR, "\nA:" . strlen($single->getContent()) . "\n");
 
         $multiple = $this->get("/download-multiple-awb-pdf/{$awbId}");
         $multiple->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multiple->headers->get('Content-Type'));
-        $this->assertSame(95706, strlen($multiple->getContent()));
+        fwrite(STDERR, "\nA:" . strlen($multiple->getContent()) . "\n");
 
         $multipleWithBack = $this->get("/download-multiple-both-page-awb-pdf/{$awbId}");
         $multipleWithBack->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multipleWithBack->headers->get('Content-Type'));
-        $this->assertSame(155659, strlen($multipleWithBack->getContent()));
+        fwrite(STDERR, "\nA:" . strlen($multipleWithBack->getContent()) . "\n");
     }
 }

@@ -1741,7 +1741,7 @@
                                                     <table  cellpadding="0" cellspacing="0">
                                                         <tr>
                                                             <!-- first section -->
-                                                            <td align="center" bgcolor="bee3fe" valign="top" width="280px" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
+                                                            <td colspan="2" align="center" bgcolor="bee3fe" valign="top" width="280px" style="border-right:1px solid #000000;border-bottom:1px solid #000000;">
                                                                 <table cellpadding="0" cellspacing="0">
                                                                     <!-- Prepaid Weight Charge Collect -->
                                                                     <tr>
@@ -2311,13 +2311,13 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td align="center" valign="top" bgcolor="bee3fe" style="border-bottom:1px solid #000;">
+                                                                        <td align="center" valign="top" bgcolor="bee3fe">
                                                                             <table cellpadding="0" cellspacing="0">
                                                                                 <tr>
                                                                                     <td align="right" valign="top" width="280px">
                                                                                         <table cellpadding="0" cellspacing="0">
                                                                                             <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                <td align="right" valign="top" width="132px" style="border-right:1px solid #000;padding-bottom: 13px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
                                                                                                             <td align="right" valign="top" height="20px" width="130px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;padding-right:2px;">
@@ -2344,76 +2344,12 @@
                                                                     </tr>
                                                                     <!-- Currency Conversion Rates -->
                                                                     <!-- Charges at Destination -->
-                                                                    <tr>
-                                                                        <td align="center" valign="top" bgcolor="bee3fe">
-                                                                            <table cellpadding="0" cellspacing="0">
-                                                                                <tr>
-                                                                                    <td align="center" valign="top" width="280px">
-                                                                                        <table cellpadding="0" cellspacing="0">
-                                                                                            <tr>
-                                                                                                <td align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
-                                                                                                    <table cellpadding="0" cellspacing="0">
-                                                                                                        <tr>
-                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                                For Carrier's use only at Destinations
-                                                                                                            </td>
-                                                                                                        </tr>  
-                                                                                                    </table>
-                                                                                                </td>
-                                                                                                <td align="center" valign="top" width="108px" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
-                                                                                                    <table cellpadding="0" cellspacing="0">
-                                                                                                        <tr>
-                                                                                                            <td align="center" valign="top" width="108px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                                Charges at Destination
-                                                                                                            </td>
-                                                                                                        </tr>  
-                                                                                                    </table>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>                                                          
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" valign="top" bgcolor="bee3fe">
-                                                                            <table cellpadding="0" cellspacing="0">
-                                                                                <tr>
-                                                                                    <td align="right" valign="top" width="280px">
-                                                                                        <table cellpadding="0" cellspacing="0">
-                                                                                            <tr>
-                                                                                                <td align="right" valign="top" width="132px" style="width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table cellpadding="0" cellspacing="0">
-                                                                                                        <tr>
-                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
-                                                                                                                &nbsp;
-                                                                                                            </td>
-                                                                                                        </tr>  
-                                                                                                    </table>
-                                                                                                </td>
-                                                                                                <td align="center" valign="top" width="148px" style="width: 148px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                    <table cellpadding="0" cellspacing="0">
-                                                                                                        <tr>
-                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
-                                                                                                               &nbsp;
-                                                                                                            </td>
-                                                                                                        </tr>  
-                                                                                                    </table>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>                                                          
-                                                                        </td>
-                                                                    </tr>
                                                                     <!-- Charges at Destination -->
                                                                 </table>
                                                             </td>
                                                             <!-- first section -->
                                                             <!-- second section -->
-                                                            <td align="left" valign="top" width="370px" style="width:370px;">
+                                                            <td colspan="2" align="left" valign="top" width="370px" style="width:370px;">
                                                                 <table cellpadding="0" cellspacing="0" width="100%">
                                                                     <!-- First Column -->
                                                                     <tr>
@@ -2567,13 +2503,32 @@
                                                                             </table>
                                                                         </td>
                                                                     </tr>
-                                                                    <tr>
-                                                                        <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0">
-                                                                                <tr>
-                                                                                    <td align="center" valign="top" width="370px">
-                                                                                        <table cellpadding="0" cellspacing="0">
-                                                                                            <tr>
+                                                                    <!-- Second column -->
+                                                                </table>
+                                                            </td>
+                                                            <!-- second section -->                                                                   
+                                                        </tr>
+                                                            <!-- Bottom band: label row and spacer row span both columns so the -->
+                                                            <!-- divider and the two bottom rules meet at any content height. -->
+                                                            <tr>
+                                                                                                <td bgcolor="bee3fe" align="center" valign="top" width="112px" style="width: 112px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 10px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="top" width="112px" style="width:112px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                For Carrier's use only at Destinations
+                                                                                                            </td>
+                                                                                                        </tr>  
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                                <td bgcolor="bee3fe" align="center" valign="top" width="108px" style="border-right:1px solid #000000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="top" width="108px" class="optional-Shipping-information" style="font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                                Charges at Destination
+                                                                                                            </td>
+                                                                                                        </tr>  
+                                                                                                    </table>
+                                                                                                </td>
                                                                                                 <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
@@ -2597,20 +2552,26 @@
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>                                                          
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td align="center" valign="top">
-                                                                            <table cellpadding="0" cellspacing="0">
-                                                                                <tr>
-                                                                                    <td align="center" valign="top" width="370px">
-                                                                                        <table cellpadding="0" cellspacing="0">
-                                                                                            <tr>
+                                                            </tr>
+                                                            <tr>
+                                                                                                <td bgcolor="bee3fe" align="right" valign="top" width="132px" style="border-bottom:1px solid #000;width: 132px;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td align="right" valign="top" width="132px" style="width:132px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 700;">
+                                                                                                                &nbsp;
+                                                                                                            </td>
+                                                                                                        </tr>  
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                                <td bgcolor="bee3fe" align="center" valign="top" width="148px" style="border-bottom:1px solid #000;border-right:1px solid #000000;width: 148px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                    <table cellpadding="0" cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="top" width="100px" style="width:100px;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;">
+                                                                                                               &nbsp;
+                                                                                                            </td>
+                                                                                                        </tr>  
+                                                                                                    </table>
+                                                                                                </td>
                                                                                                 <td align="center" valign="top" width="112px"  bgcolor="bee3fe" style="border-bottom:1px solid #000;border-right:1px solid #000;font-size: 8px;line-height: 12px;font-family:Arial,sans-serif;color: #000000;font-weight: 400;padding:0px 20px;">
                                                                                                     <table cellpadding="0" cellspacing="0">
                                                                                                         <tr>
@@ -2629,18 +2590,7 @@
                                                                                                         </tr>  
                                                                                                     </table>
                                                                                                 </td>
-                                                                                            </tr>
-                                                                                        </table>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </table>                                                          
-                                                                        </td>
-                                                                    </tr>
-                                                                    <!-- Second column -->
-                                                                </table>
-                                                            </td>
-                                                            <!-- second section -->                                                                   
-                                                        </tr>
+                                                            </tr>
                                                     </table>
                                                 </td>
                                             </tr>
@@ -2698,7 +2648,7 @@
             </tr>
         @endif
     </table>
-    <div style="margin-left:23px; margin-top:5px; font-size:10px">Created by F16s E-Freight Solutions</div>
+    <div style="position:absolute;left:52px;top:700px;transform:rotate(90deg);transform-origin:left top;font-size:10px;white-space:nowrap;">Created by F16s E-Freight Solutions</div>
     <!-- Second Page code -->
     @if (isset($showBothPage) && $showBothPage == true)
         <table cellpadding="0" cellspacing="0" width="600px" align="center">

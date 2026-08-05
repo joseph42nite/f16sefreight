@@ -75,8 +75,14 @@
                     </template>
 
                     <template #cell(action)="data">
-                        <div class="d-flex justify-content-end align-items-center">
-                            <router-link :to="'/superadmin/new-blog/' + data.item.id" class="btn btn-icon btn-light-primary btn-sm mr-2" v-b-tooltip.hover title="Edit Blog">
+                        <div class="d-flex justify-content-end align-items-center" style="gap: 6px;">
+                            <b-button variant="light-info" size="sm" class="btn-icon" @click="copyShareableLink(data.item)" v-b-tooltip.hover title="Copy Shareable Link">
+                                <i class="fas fa-link font-size-sm"></i>
+                            </b-button>
+                            <a :href="'/blog/' + data.item.slug" target="_blank" class="btn btn-icon btn-light-success btn-sm" v-b-tooltip.hover title="View Public Post">
+                                <i class="fas fa-external-link-alt font-size-sm"></i>
+                            </a>
+                            <router-link :to="'/superadmin/new-blog/' + data.item.id" class="btn btn-icon btn-light-primary btn-sm" v-b-tooltip.hover title="Edit Blog">
                                 <i class="fas fa-pen font-size-sm"></i>
                             </router-link>
                             <b-button variant="light-danger" size="sm" class="btn-icon" @click="confirmDelete(data.item)" v-b-tooltip.hover title="Delete">
@@ -138,6 +144,41 @@ export default {
                 month: 'short',
                 day: 'numeric'
             });
+        },
+        copyShareableLink(blog) {
+            const shareableUrl = `${window.location.origin}/blog/${blog.slug}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareableUrl).then(() => {
+                    this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+                        title: 'Link Copied',
+                        variant: 'success',
+                        solid: true,
+                        autoHideDelay: 2000
+                    });
+                }).catch(() => {
+                    this.fallbackCopyText(shareableUrl);
+                });
+            } else {
+                this.fallbackCopyText(shareableUrl);
+            }
+        },
+        fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+                    title: 'Link Copied',
+                    variant: 'success',
+                    solid: true,
+                    autoHideDelay: 2000
+                });
+            } catch (err) {
+                Swal.fire('Shareable Link', text, 'info');
+            }
+            document.body.removeChild(textArea);
         },
         confirmDelete(blog) {
             Swal.fire({

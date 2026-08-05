@@ -3,11 +3,17 @@
         <div class="d-flex align-items-center justify-content-between mb-6">
             <div>
                 <router-link to="/superadmin/all-blogs" class="text-muted font-weight-bold mb-2 d-inline-block"><i class="fas fa-arrow-left mr-2"></i> Back to All Blogs</router-link>
-                <div class="d-flex align-items-center">
-                    <h2 class="font-weight-bolder text-dark mb-0 mr-4">{{ actionLabel }} Editorial Post</h2>
+                <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                    <h2 class="font-weight-bolder text-dark mb-0 mr-3">{{ actionLabel }} Editorial Post</h2>
                     <b-badge :variant="blogData.published_at ? 'success' : 'warning'" class="px-3 py-2 font-weight-bold" style="font-size: 0.85rem;" v-if="blogId">
                         {{ blogData.published_at ? 'Published' : 'Draft' }}
                     </b-badge>
+                    <b-button v-if="blogId && blogData.slug" variant="light-info" size="sm" class="font-weight-bold ml-2" @click="copyShareableLink">
+                        <i class="fas fa-link mr-1"></i> Copy Shareable Link
+                    </b-button>
+                    <a v-if="blogId && blogData.slug" :href="'/blog/' + blogData.slug" target="_blank" class="btn btn-sm btn-light-success font-weight-bold">
+                        <i class="fas fa-external-link-alt mr-1"></i> View Live
+                    </a>
                 </div>
             </div>
             <div class="d-flex" style="gap: 12px;">
@@ -206,6 +212,42 @@ export default {
                 solid: true,
                 autoHideDelay: 1500
             });
+        },
+        copyShareableLink() {
+            if (!this.blogData.slug) return;
+            const shareableUrl = `${window.location.origin}/blog/${this.blogData.slug}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareableUrl).then(() => {
+                    this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+                        title: 'Link Copied',
+                        variant: 'success',
+                        solid: true,
+                        autoHideDelay: 2000
+                    });
+                }).catch(() => {
+                    this.fallbackCopyText(shareableUrl);
+                });
+            } else {
+                this.fallbackCopyText(shareableUrl);
+            }
+        },
+        fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+                    title: 'Link Copied',
+                    variant: 'success',
+                    solid: true,
+                    autoHideDelay: 2000
+                });
+            } catch (err) {
+                Swal.fire('Shareable Link', text, 'info');
+            }
+            document.body.removeChild(textArea);
         },
         removeTakeaway(index) {
             this.blogData.takeaways.splice(index, 1);

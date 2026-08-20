@@ -1,6 +1,6 @@
 # F16s Freight OS — Complete Table Schema & Relational Tree
 
-This document provides a comprehensive column-level schema reference for all **56 database tables** (current and future), tracing foreign key connection links directly.
+This document provides a comprehensive column-level schema reference for all **58 database tables** (current and future), tracing foreign key connection links directly.
 
 > [!IMPORTANT]
 > **This file is the sole owner of schema.** Product rationale, workflows, roles and UI behaviour live in [`PRD.md`](file:///Users/jomygeorge/Desktop/f16sefreight/PRD.md); the ordered build sequence lives in [`implementation_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/implementation_guide.md); interface design lives in [`ui_ux_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/ui_ux_guide.md). Neither of those files may restate a column definition.
@@ -90,9 +90,22 @@ For production and staging deployments, an independent backup helper container r
                      |               |     | ──► customer_lane_stats.customer_id
                      |               |     | ──► customer_cadence_profiles.customer_id
                      |               |     | ──► sales_action_queue.customer_id
+                     |               |     | ──► customer_contacts.customer_id (Cascade delete)
   company_id         | BIGINT        | FK  | ◄── companies.id (Tenant company owning this client)
   name               | VARCHAR(100)  |     |
-  email_domain       | VARCHAR(100)  |     | (Client's corporate domain, captured at onboarding. Matches inbound sender @suffix → customer → sales_id attribution; also powers domain-suffix client search. Distinct from companies.email_domain, which is the tenant's own OAuth-verification domain)
+  email_domain       | VARCHAR(100)  | IDX | (Client's corporate domain, captured at onboarding. THREE jobs:
+                     |               |     |  1. inbound sender @suffix → customer → sales_id attribution
+                     |               |     |  2. domain-suffix client search
+                     |               |     |  3. ** THE CLIENT-GROUP KEY ** — every customers row sharing
+                     |               |     |     (company_id, email_domain) is ONE client company with
+                     |               |     |     multiple branches. The group is DERIVED from this pair;
+                     |               |     |     there is deliberately no parent_customer_id column.
+                     |               |     |     Accepts a comma-separated list where a client uses several
+                     |               |     |     domains (globex.com, globex.co.in), same convention as
+                     |               |     |     companies.email_domain.
+                     |               |     |  Covered by idx_customers_domain (company_id, email_domain).
+                     |               |     |  NOT companies.email_domain — that is the tenant's own
+                     |               |     |  OAuth-verification domain)
   email              | VARCHAR(100)  |     | (Operations/billing email)
   phone              | VARCHAR(30)   |     | (Contact phone number)
   address            | TEXT          |     | (Registered physical office address)
@@ -103,7 +116,11 @@ For production and staging deployments, an independent backup helper container r
   bank_account_no    | VARCHAR(50)   |     | (Encrypted at rest)
   bank_ifsc_code     | VARCHAR(20)   |     | (Encrypted at rest)
   payment_terms_days | INT           |     | (Default credit invoice payment terms e.g., 30)
-  credit_limit       | DECIMAL(15,2) |     | (Maximum allowed accounts receivable outstanding balance)
+  credit_limit       | DECIMAL(15,2) |     | (Maximum allowed AR outstanding. PER BRANCH — the credit gate
+                     |               |     |  blocks on this row's own exposure, never the group total.
+                     |               |     |  Separate GSTINs are separate billing entities; one branch's
+                     |               |     |  overdue invoice must not freeze another branch's cargo.
+                     |               |     |  Group exposure is DISPLAYED as a roll-up, never enforced on)
   default_port_id    | BIGINT        | FK  | ◄── ports.id (Preferred destination port)
   branch_id          | BIGINT        | FK  | ◄── agents_info.id (Auto-resolved proximity branch)
   sales_id           | BIGINT        | FK  | ◄── users.id (Assigned account manager; auto-set on onboarding. Drives the Command-tier client-book sales view; ignored by the Tactical branch-level view)
@@ -144,6 +161,35 @@ For production and staging deployments, an independent backup helper container r
   updated_at      | TIMESTAMP    |     |
 ```
 ```
+
+### 1c. `customer_contacts` (PK: `id`)
+*The per-client address book. Harvested from inbound mail and curated by staff — this is what the AI outreach engine CCs. `inbound_emails.from` is a raw log; **this** is the directory.*
+
+```text
+  Column          | Type          | Key | Connection Links
+  ----------------|---------------|-----|----------------------------------------
+  id              | BIGINT        | PK  |
+  company_id      | BIGINT        | FK  | ◄── companies.id (tenant scope)
+  customer_id     | BIGINT        | FK  | ◄── customers.id (Cascade delete — WHICH BRANCH
+                  |               |     |  of the client group this person belongs to)
+  email           | VARCHAR(255)  | UK  | (Unique per customer_id)
+  name            | VARCHAR(100)  |     | (Parsed from the From header, editable)
+  designation     | VARCHAR(100)  |     | (Free text — 'Logistics Manager')
+  source          | VARCHAR(20)   |     | (inbound_harvest | manual | onboarding)
+  is_primary      | BOOLEAN       |     | (The default To: recipient for this branch)
+  include_in_cc   | BOOLEAN       |     | ** DEFAULT FALSE ** — an address is only CC'd on
+                  |               |     |  outreach after a human ticks it. Harvesting is
+                  |               |     |  automatic; CC'ing never is. See note below
+  verified_at     | TIMESTAMP     |     | (When a human confirmed this is a real contact)
+  last_seen_at    | TIMESTAMP     |     | (Last inbound mail from this address)
+  message_count   | INT           |     | (How often we have heard from them — ranks the list)
+  opted_out_at    | TIMESTAMP     |     | (DPDP / unsubscribe. Non-NULL ⇒ NEVER contacted,
+                  |               |     |  overrides include_in_cc unconditionally)
+  created_at      | TIMESTAMP     |     |
+  updated_at      | TIMESTAMP     |     |
+```
+
+> **Why `include_in_cc` defaults to FALSE.** Harvesting every address ever seen on a `@globex.com` thread will eventually collect someone who has left the company, a personal address, a customs broker, or a competitor who was CC'd once on a quote. Blind-CC'ing that set is a commercial and DPDP-compliance incident. The system builds the list automatically; a human decides who is on it.
 
 ### 2. `agents_info` (PK: `id`)
 ```text
@@ -436,20 +482,33 @@ For production and staging deployments, an independent backup helper container r
 
 ### 10. `mailbox_connections` (PK: `id`)
 ```text
-  Column        | Type         | Key | Connection Links
-  --------------|--------------|-----|----------------------------------------
-  id            | BIGINT       | PK  |
-  agent_id      | BIGINT       | FK  | ◄── agents_info.id (Branch-level tenant isolation)
-  user_id       | BIGINT       | FK  | ◄── users.id (Operator who owns this mailbox)
-  email_address | VARCHAR(100) | UK  |
-  provider      | VARCHAR(20)  |     | (google, microsoft)
-  access_token  | TEXT         |     | (Encrypted at rest)
-  refresh_token | TEXT         |     | (Encrypted at rest)
-  expires_at    | TIMESTAMP    |     |
-  is_active     | BOOLEAN      |     | (false = tier downgrade paused)
-  created_at    | TIMESTAMP    |     |
-  updated_at    | TIMESTAMP    |     |
+  Column                | Type         | Key | Connection Links
+  ----------------------|--------------|-----|----------------------------------------
+  id                    | BIGINT       | PK  |
+  agent_id              | BIGINT       | FK  | ◄── agents_info.id (Branch-level tenant isolation)
+  user_id               | BIGINT       | FK  | ◄── users.id (Operator who owns this mailbox)
+  email_address         | VARCHAR(100) | UK  |
+  provider              | VARCHAR(20)  |     | (google, microsoft)
+  access_token          | TEXT         |     | (Encrypted at rest)
+  refresh_token         | TEXT         |     | (Encrypted at rest)
+  expires_at            | TIMESTAMP    |     |
+  is_active             | BOOLEAN      |     | (false = tier downgrade paused)
+  status                | VARCHAR(20)  |     | (connected, awaiting_admin_consent, reauth_required)
+  sync_cursor           | TEXT         |     | (Graph @odata.deltaLink or Gmail historyId. Seeded by
+                        |              |     |  backfill, rewritten after each successful poll page.
+                        |              |     |  Encrypted at rest — the Graph deltaLink embeds a token)
+  last_synced_at        | TIMESTAMP    |     | (Last successful poll; the floor for cursor-expiry recovery)
+  backfill_status       | VARCHAR(20)  |     | (pending, running, completed, failed. Polling refuses to
+                        |              |     |  start until 'completed' so no gap message is lost)
+  backfill_from         | TIMESTAMP    |     | (Window floor actually requested — default now() - 60 days.
+                        |              |     |  Stored, not derived, so an onboarding can widen the window
+                        |              |     |  and the audit trail records what was really pulled)
+  backfill_completed_at | TIMESTAMP    |     |
+  created_at            | TIMESTAMP    |     |
+  updated_at            | TIMESTAMP    |     |
 ```
+
+**Backfill contract.** On OAuth callback the row is written with `backfill_status = 'pending'` and `backfill_from = now() - 60 days`, and `BackfillMailboxJob` is queued. It pages history into `inbound_emails` with `is_historical = true`, commits the terminal cursor to `sync_cursor`, then sets `backfill_status = 'completed'`. Only then does `mailboxes:poll` pick the connection up. A `failed` backfill is retryable from `MailboxSettings.vue` without re-authorization — the tokens are already valid.
 
 ### 11. `email_threads` (PK: `id`)
 ```text
@@ -488,9 +547,16 @@ For production and staging deployments, an independent backup helper container r
   body_text             | LONGTEXT     |     |
   body_html             | LONGTEXT     |     | (HTMLPurifier sanitized)
   received_at           | TIMESTAMP    |     |
+  is_historical         | BOOLEAN      |     | (true = ingested by the onboarding backfill, not live polling.
+                        |              |     |  Suppresses the SLA countdown, bell notifications and
+                        |              |     |  auto-enquiry proposal. Classification, thread grouping and
+                        |              |     |  sender attribution still run — the flag governs what FIRES,
+                        |              |     |  never what is STORED)
   created_at            | TIMESTAMP    |     |
   updated_at            | TIMESTAMP    |     |
 ```
+
+> **Why a column and not just a `received_at` age test.** "Older than the connection date" is not the same question as "arrived via backfill." A genuinely old message forwarded into the mailbox *after* connection is live mail and must start an SLA clock; a backfilled message that happens to be two days old must not. Only the ingest path knows which is which, so the ingest path records it.
 
 ### 13. `inbound_attachments` (PK: `id`)
 ```text
@@ -509,7 +575,7 @@ For production and staging deployments, an independent backup helper container r
 ```text
   Column        | Type         | Key | Connection Links
   --------------|--------------|-----|----------------------------------------
-  id            | BIGINT       | PK  |
+  id            | BIGINT       | PK  | ──► document_share_links.job_document_id (Cascade delete)
   agent_id      | BIGINT       | FK  | ◄── agents_info.id (Branch-level tenant isolation)
   job_id        | BIGINT       | FK  | ◄── jobs.id (Cascade delete)
   document_type | VARCHAR(50)  |     | (commercial_invoice, packing_list, awb_copy, bl_copy, delivery_order, arrival_notice, cover_letter, other, ...)
@@ -521,6 +587,39 @@ For production and staging deployments, an independent backup helper container r
   created_at    | TIMESTAMP    |     |
   updated_at    | TIMESTAMP    |     |
 ```
+
+### 14a. `document_share_links` (PK: `id`)
+*Tokenised, expiring, revocable public links to a single `job_documents` row — so staff stop downloading and re-attaching the same PDF. Optionally carries a client approve / request-changes decision back into the system.*
+
+```text
+  Column           | Type         | Key | Connection Links
+  -----------------|--------------|-----|----------------------------------------
+  id               | BIGINT       | PK  |
+  agent_id         | BIGINT       | FK  | ◄── agents_info.id (Branch-level isolation)
+  job_document_id  | BIGINT       | FK  | ◄── job_documents.id (Cascade delete)
+  job_id           | BIGINT       | FK  | ◄── jobs.id (Denormalized for scoping/audit)
+  token_hash       | CHAR(64)     | UK  | ** SHA-256 of the token. The raw token exists ONLY in
+                   |              |     |  the URL and is never stored — same discipline as a
+                   |              |     |  password-reset token. Lookup hashes the incoming value
+  created_by       | BIGINT       | FK  | ◄── users.id (Who generated the link)
+  expires_at       | TIMESTAMP    |     | ** NOT NULL ** — every link expires (default +14 days).
+                   |              |     |  An unauthenticated document URL must never be permanent
+  revoked_at       | TIMESTAMP    |     | (Manual kill switch; independent of expiry)
+  requires_approval| BOOLEAN      |     | (false = view only; true = client may Approve / Request changes)
+  approval_status  | VARCHAR(20)  |     | (pending, approved, changes_requested — NULL when
+                   |              |     |  requires_approval = false)
+  approver_name    | VARCHAR(100) |     | (Typed by the client — they are NOT a system user)
+  approver_email   | VARCHAR(255) |     | (Captured for audit; matched against customer_contacts)
+  client_comment   | TEXT         |     | (What they want changed)
+  responded_at     | TIMESTAMP    |     |
+  first_viewed_at  | TIMESTAMP    |     | (Proof the client actually opened it)
+  last_viewed_at   | TIMESTAMP    |     |
+  view_count       | INT          |     |
+  created_at       | TIMESTAMP    |     |
+  updated_at       | TIMESTAMP    |     |
+```
+
+> **A link grants document access without a login, so it is treated as a credential.** 256-bit CSPRNG token, stored only as a hash, mandatory expiry, revocable, rate-limited, served `noindex, nofollow` with no directory listing. It exposes **one document** — never the job, the client's other shipments, or any pricing.
 
 ### 15. `milestone_performance_logs` (PK: `id`)
 ```text
@@ -1028,6 +1127,10 @@ For production and staging deployments, an independent backup helper container r
   customer_id    | BIGINT        | FK  | ◄── customers.id (Cascade delete; NULL = branch action)
   sales_id       | BIGINT        | FK  | ◄── users.id (Command-tier scoping key)
   transport_mode | VARCHAR(10)   |     | (air | sea)
+  audience       | VARCHAR(10)   |     | ** internal | client ** — the structural firewall. An
+                 |               |     |  'internal' row (staff underperformance, our own SLA
+                 |               |     |  failures) can NEVER produce a client draft. Enforced by
+                 |               |     |  CHECK: draft_* columns must be NULL when audience='internal'
   action_type    | VARCHAR(40)   |     | (churn_outreach, rate_renegotiation, consolidation_pitch,
                  |               |     |  collections_call, cross_sell_lane, service_escalation)
   priority_score | DECIMAL(10,3) |     | (impact × urgency ÷ effort)
@@ -1035,6 +1138,17 @@ For production and staging deployments, an independent backup helper container r
   fact_packet    | JSON          |     | (Deterministic inputs handed to Gemma verbatim)
   narrated_text  | TEXT          |     | (Gemma output; NULL ⇒ numbers-only degradation)
   narrated_at    | TIMESTAMP     |     |
+  draft_subject  | VARCHAR(255)  |     | (Client outreach draft — audience='client' only)
+  draft_body     | TEXT          |     | (Professional prose, composed as if written by the rep)
+  draft_to       | JSON          |     | (Resolved primary contact(s) at generation time)
+  draft_cc       | JSON          |     | (customer_contacts where include_in_cc AND NOT opted_out.
+                 |               |     |  Snapshotted at generation — the rep sees exactly who
+                 |               |     |  will receive it before sending)
+  draft_generated_at | TIMESTAMP |     |
+  sent_at        | TIMESTAMP     |     | (NULL until the rep approves and sends)
+  sent_by        | BIGINT        | FK  | ◄── users.id (the rep who actually sent it)
+  sent_thread_key| VARCHAR(255)  |     | ──► email_threads.thread_key (replies land in the inbox,
+                 |               |     |  so the outreach becomes a real two-way conversation)
   status         | VARCHAR(20)   |     | (open, acted, dismissed, expired)
   expires_at     | TIMESTAMP     |     |
   created_at     | TIMESTAMP     |     |
@@ -1322,6 +1436,30 @@ CREATE TABLE partners (
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
 
+-- 1c. customer_contacts (per-client address book; the CC source for sales outreach)
+CREATE TABLE customer_contacts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    company_id BIGINT NOT NULL,
+    customer_id BIGINT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NULL,
+    designation VARCHAR(100) NULL,
+    source VARCHAR(20) NOT NULL DEFAULT 'inbound_harvest', -- inbound_harvest | manual | onboarding
+    is_primary BOOLEAN DEFAULT FALSE,
+    include_in_cc BOOLEAN DEFAULT FALSE, -- harvesting is automatic; CC'ing requires a human tick
+    verified_at TIMESTAMP NULL,
+    last_seen_at TIMESTAMP NULL,
+    message_count INT DEFAULT 0,
+    opted_out_at TIMESTAMP NULL, -- DPDP: non-NULL overrides include_in_cc unconditionally
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_contact_customer_email (customer_id, email),
+    INDEX idx_contacts_tenant_email (company_id, email),
+    INDEX idx_contacts_cc (customer_id, include_in_cc, opted_out_at)
+);
+
 -- 2. agents_info
 CREATE TABLE agents_info (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -1411,6 +1549,13 @@ CREATE TABLE enquiries (
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
     FOREIGN KEY (customer_id) REFERENCES customers(id),
     FOREIGN KEY (sales_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (sent_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_saq_audience CHECK (audience IN ('internal','client')),
+    -- THE FIREWALL: an internal finding can never carry a client-facing draft.
+    CONSTRAINT chk_saq_internal_no_draft CHECK (
+        audience = 'client' OR (draft_subject IS NULL AND draft_body IS NULL
+                                AND draft_to IS NULL AND draft_cc IS NULL)
+    ),
     FOREIGN KEY (ops_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (pricing_id) REFERENCES users(id) ON DELETE SET NULL,
     -- NOTE: reinitiated_from_job_id → jobs(id) is added via ALTER TABLE at the end of this
@@ -1601,6 +1746,12 @@ CREATE TABLE mailbox_connections (
     refresh_token TEXT NULL,                        -- Encrypted at rest
     expires_at TIMESTAMP NULL,
     is_active BOOLEAN DEFAULT TRUE,                 -- false = tier downgrade paused
+    status VARCHAR(20) DEFAULT 'connected',         -- 'connected','awaiting_admin_consent','reauth_required'
+    sync_cursor TEXT NULL,                          -- Graph @odata.deltaLink / Gmail historyId. Encrypted at rest
+    last_synced_at TIMESTAMP NULL,                  -- Floor for recovery when a cursor ages out (410 Gone)
+    backfill_status VARCHAR(20) DEFAULT 'pending',  -- 'pending','running','completed','failed'
+    backfill_from TIMESTAMP NULL,                   -- Window floor requested; default now() - 60 days
+    backfill_completed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
@@ -1645,6 +1796,8 @@ CREATE TABLE inbound_emails (
     body_text LONGTEXT NULL,
     body_html LONGTEXT NULL,                         -- HTMLPurifier sanitized
     received_at TIMESTAMP NULL,
+    is_historical BOOLEAN DEFAULT FALSE,             -- Ingested by onboarding backfill, not live polling.
+                                                     -- Suppresses SLA countdown, notifications, enquiry proposal
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
@@ -1680,6 +1833,39 @@ CREATE TABLE job_documents (
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
     FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+
+-- 14a. document_share_links (tokenised expiring public document links + client approval)
+CREATE TABLE document_share_links (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    agent_id BIGINT NOT NULL,
+    job_document_id BIGINT NOT NULL,
+    job_id BIGINT NOT NULL,
+    token_hash CHAR(64) NOT NULL, -- SHA-256; raw token lives only in the URL
+    created_by BIGINT NOT NULL,
+    expires_at TIMESTAMP NOT NULL, -- mandatory; default +14 days
+    revoked_at TIMESTAMP NULL,
+    requires_approval BOOLEAN DEFAULT FALSE,
+    approval_status VARCHAR(20) NULL, -- pending | approved | changes_requested
+    approver_name VARCHAR(100) NULL,
+    approver_email VARCHAR(255) NULL,
+    client_comment TEXT NULL,
+    responded_at TIMESTAMP NULL,
+    first_viewed_at TIMESTAMP NULL,
+    last_viewed_at TIMESTAMP NULL,
+    view_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (agent_id) REFERENCES agents_info(id),
+    FOREIGN KEY (job_document_id) REFERENCES job_documents(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    UNIQUE KEY uk_share_token (token_hash),
+    INDEX idx_share_job (job_id, created_at),
+    INDEX idx_share_approval (job_id, approval_status),
+    CONSTRAINT chk_share_approval CHECK (
+        approval_status IS NULL OR approval_status IN ('pending','approved','changes_requested')
+    )
 );
 
 -- 15. milestone_performance_logs
@@ -2194,6 +2380,7 @@ CREATE TABLE sales_action_queue (
     customer_id BIGINT NULL,                  -- NULL = branch-level action (Tactical tier)
     transport_mode VARCHAR(10) NOT NULL,
     sales_id BIGINT NULL,                 -- Command-tier scoping: customers.sales_id
+    audience VARCHAR(10) NOT NULL DEFAULT 'internal', -- internal | client (structural firewall)
     action_type VARCHAR(40) NOT NULL,         -- churn_outreach, rate_renegotiation, consolidation_pitch,
                                               -- collections_call, cross_sell_lane, service_escalation
     priority_score DECIMAL(10,3) NOT NULL,    -- impact × urgency ÷ effort
@@ -2201,6 +2388,14 @@ CREATE TABLE sales_action_queue (
     fact_packet JSON NOT NULL,                -- deterministic inputs handed to Gemma verbatim
     narrated_text TEXT NULL,                  -- Gemma output; NULL = numbers-only degradation
     narrated_at TIMESTAMP NULL,
+    draft_subject VARCHAR(255) NULL,          -- client outreach draft; audience='client' only
+    draft_body TEXT NULL,
+    draft_to JSON NULL,
+    draft_cc JSON NULL,                       -- snapshot of opted-in contacts at generation time
+    draft_generated_at TIMESTAMP NULL,
+    sent_at TIMESTAMP NULL,
+    sent_by BIGINT NULL,
+    sent_thread_key VARCHAR(255) NULL,        -- replies return to the unified inbox
     status VARCHAR(20) DEFAULT 'open',        -- open, acted, dismissed, expired
     expires_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

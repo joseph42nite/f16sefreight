@@ -8,7 +8,7 @@ How the product **looks and behaves**. Screens, states, tokens, accessibility, a
 
 | Document | Owns | This file defers to it for |
 |---|---|---|
-| [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md) | Schema — 56 tables, columns, FKs, DDL | Any column name or type |
+| [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md) | Schema — 58 tables, columns, FKs, DDL | Any column name or type |
 | [`PRD.md`](file:///Users/jomygeorge/Desktop/f16sefreight/PRD.md) | Product — **which** screens exist, who sees them, what they do | Roles, tiers, permissions, workflows, formulas |
 | [`implementation_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/implementation_guide.md) | Build order — 8 checkpointed steps | Sequencing |
 | **`ui_ux_guide.md`** *(this file)* | **How** it looks and behaves — tokens, states, layout, accessibility, micro-copy | — |
@@ -28,7 +28,7 @@ How the product **looks and behaves**. Screens, states, tokens, accessibility, a
 6. [State Catalogue](#6-state-catalogue)
 7. [Layout & Responsive](#7-layout--responsive)
 8. [Navigation, Role & Tier Gating](#8-navigation-role--tier-gating)
-9. [Screen Specifications](#9-screen-specifications)
+9. [Experience by Login](#9-experience-by-login)
 10. [Forms & Validation](#10-forms--validation)
 11. [Notifications & Feedback](#11-notifications--feedback)
 12. [Accessibility](#12-accessibility)
@@ -419,233 +419,48 @@ The active portal (`focusair.` / `focussea.`) is shown as a **persistent chip in
 
 ---
 
-## 9. Screen Specifications
+## 9. Experience by Login
 
-### 9.0 Index by login — *start here*
+**One heading per login. Everything that login gets, and how it changes by tier.**
 
-A designer working a single persona should be able to enumerate every screen that login ever sees, at every tier, without reading the rest of this document. `—` = the login does not exist at that tier.
+> **How to read this section.** Each login below is self-contained — landing route, navigation, every screen, tier differences, and what is deliberately absent. Shared mechanics live elsewhere and are referenced, never repeated: **component behaviour** in §5, **loading/empty/error states** in §6, **hide vs lock vs disable** in §8.
+>
+> `PRD.md` §2.3 is the authority on *permissions*. This section is the authority on *what the person actually sees*.
 
-| Login | `core` | `tactical` | `command` |
-|---|---|---|---|
-| **Core user** | §9.9 Focus Air / House Waybill · §9.13 Settings *(mailbox only)* | — *(becomes the 4 roles)* | — |
-| **🎯 Pricing** | — | §9.1 Inbox · §9.2 Kanban *(both views + OLI)* · §9.3 Drawer · §9.9 Documents · §9.11 Directories · §5.6 Bell | + Job Cost Sheet feeds real invoices |
-| **🛠️ Operations** | — | §9.2 Kanban *(own queue)* · §9.1 Inbox · §9.3 Drawer · §9.9 Documents · §9.10 Manifest & cover letters · §9.12 Message log | *unchanged* |
-| **📈 Sales** | — | §9.4 Sales *(branch aggregates, client panels locked)* · §9.11 Directories *(read)* | §9.4 full client book + Outstanding & Credit |
-| **💰 Accounts** | — | — | §9.5 Financials *(7 sub-screens)* · §9.3 Drawer *(cost sheet + `[Finalize]`)* · §9.13 Settings *(finance)* |
-| **🏛️ Boss** | — | §9.6 Boss *(operational panels)* · §9.13 Settings *(tenant)* · read access to §9.1/§9.2 | + financial panels **read-only** |
-| **🔧 Superadmin** | §9.8 Platform portal — identical at every tier | | |
+### 9.0 Login availability at a glance
 
-**Every login also gets:** §9.14 Auth & onboarding · §9.7 Help copilot · §5.6 Bell · global header + search.
+| Login | `core` | `tactical` | `command` | Section |
+|---|:---:|:---:|:---:|---|
+| Core user | ✅ **only login** | — | — | §9.2 |
+| 🎯 Pricing | — | ✅ | ✅ | §9.3 |
+| 🛠️ Operations | — | ✅ | ✅ | §9.4 |
+| 📈 Sales | — | ✅ limited | ✅ full | §9.5 |
+| 💰 Accounts | — | — | ✅ | §9.6 |
+| 🏛️ Boss | — | ✅ limited | ✅ full | §9.7 |
+| 🔧 Superadmin | ✅ | ✅ | ✅ | §9.8 |
 
-> **Reading order for a designer.** Take one row. Open each referenced section. §8 tells you what is hidden, locked or disabled for that login; §6 tells you what every one of those screens does while loading, empty, or forbidden.
+---
 
+### 9.1 Shared foundation — every login gets these
 
-### 9.1 Inbox (`JobInbox.vue`)
-
-```
-┌────┬───────────┬────────────────┬──────────────────────────────┐
-│NAV │ FOLDERS   │ THREADS        │ CONVERSATION            [⿴] │
-│    │           │                │ ──────────────────────────── │
-│    │ Inbox  12 │ ● Globex Corp  │ Globex Corp  ⏱ 08:12 to SLA │
-│    │ Assigned  │   Rate BOM-FRA │ [Classify As… ▾]             │
-│    │ Unassign 4│   ⏱ 12m  📎2   │ [Confirm Shipment][Mark Lost]│
-│    │ Processing│ ───────────────│ ──────────────────────────── │
-│    │ Awaiting  │   Emirates     │  ▸ collapsed history (3)     │
-│    │ Completed │   AIRLINE      │  ● latest message            │
-│    │           │   ⏱ —          │  📎 invoice.pdf  packing.pdf │
-│    │           │                │ ┌──────────────────────────┐ │
-│    │           │                │ │ ✉ Automated greeting     │ │
-│    │           │                │ │ [Accept & Send] [Reject] │ │
-│    │           │                │ └──────────────────────────┘ │
-│    │           │                │ [Reply] [Reply All]          │
-└────┴───────────┴────────────────┴──────────────────────────────┘
-```
-
-**Column 2 — thread row:** unread dot · customer · subject (1 line, ellipsis) · **SLA countdown** · attachment count · classification chip when not `customer_enquiry`. Sorted by `latest_message_received_at`.
-
-**SLA countdown** is live, computed from `sla_policies.max_reply_time_minutes`: `--text-secondary` → `--status-warning` under 25 % remaining → `--status-critical` with `●` when breached. Non-enquiry threads show `—` (no SLA applies).
-
-**Header controls are lifecycle-gated** (`PRD.md` §5.4):
-
-| Lifecycle | Header shows |
-|---|---|
-| Enquiry, unconverted | `[Confirm Shipment]` · `[Mark as Lost]` |
-| Job exists | `[Cancel Shipment]` — **`[Mark as Lost]` is removed, not disabled** |
-
-The swap is one-way and permanent. A removed control cannot be misread as "temporarily unavailable."
-
-**Consent banner** (§11.2) renders inline in the timeline where the message would appear — showing the actual drafted body, not a summary. The operator approves *what will be sent*, not a description of it.
-
-**Keyboard:** `j`/`k` thread down/up · `Enter` open · `c` classify · `r` reply · `e` archive · `Cmd+\` split-pane · `Esc` close drawer.
-
-### 9.2 Kanban (`OpsDashboard.vue`)
-
-**Unassigned Pool scroller** — horizontal, top, `[+]`/`[−]` toggle persisted per user. Collapsed shows a count chip only. Clicking a card opens the assign overlay: `[Assign to Myself]` + staff search **with live OLI beside each name**.
-
-**Process View** — exactly four columns, `vuedraggable`:
+#### App shell
 
 ```
-┌─ Processing 8 ─┬─ Awaiting Customer 3 ─┬─ In Transit 5 ─┬─ Completed 12 ─┐
-│ [card]         │ [card]                │ [card] ⌸       │ [card]         │
+┌──────┬───────────────────────────────────────────────────────┐
+│ NAV  │ HEADER  ✈ FOCUS AIR   [ global search ]    🔔³  ◍ RK  │
+│ 200  ├───────────────────────────────────────────────────────┤
+│ px   │                                                       │
+│      │                     CONTENT REGION                    │
+│      │                                                       │
+└──────┴───────────────────────────────────────────────────────┘
 ```
 
-Column headers carry live counts. **WIP is not limited** — freight volume is externally driven and a cap would hide work rather than prevent it.
+- **Portal chip** (`✈ FOCUS AIR` / `⚓ FOCUS SEA`) is persistent and accented on the sidebar top border. Air and sea figures must never be confusable (§8.4). Boss is the only login that also gets an `Air | Sea | Both` toggle inside its charts.
+- **Global search** — `Cmd/Ctrl + K`. Scoped to what the login may see. Matches enquiry no, job no, AWB/MBL, container, customer name and email domain. Results grouped by type, identifiers in `--font-mono`.
+- **Bell** — §5.6. Same component for every login; contents differ by role.
+- **Avatar menu** — profile, email signature, `/settings/mailboxes`, sign out.
 
-**Staff View** — clearance-date matrix, vertically paginated:
-
-```
-              R. Kumar        P. Sharma       A. Nair
-              (OLI 8.7 🟢)    (OLI 18.5 ●)    (OLI 4.2 🟢)
-─────────────────────────────────────────────────────────
-Mon 12 Jun    [JOBA-0001 ●]   [JOBA-0007 ▲]   —
-Tue 13 Jun    [JOBA-0004 ✓]   [JOBA-0009 ✓]   [JOBS-0002 ✓]
-```
-
-**Magnetic drag-and-drop** — dragging across a column reassigns `ops_id`; across a row sets `planned_clearance_date`; both in one call. The target cell highlights on hover and the card snaps on drop. **Optimistic** with rollback + toast on failure.
-
-**OLI badge** — `< cap` `--status-success`; `≥ cap` `--status-critical` + `●` + `OVERLOADED`, and the assign overlay warns before allowing a further assignment (warns, never blocks — a manager may have context the index does not).
-
-**Filters** — staff · progress/processed · date range with a `[Today]` shortcut. Active filters render as removable chips; the set persists per user across sessions.
-
-**Filtered staff banner** — active count, pending count, and an **idle-duration list** (`JOBA-26-0004 · pending 2h 15m`) sorted longest-first.
-
-### 9.3 Drawer workspace
-
-Tab bar: `Upload` (default) · `Focus Air` · `House Waybill` · `Focus Sea` · `Air Import` · `Job Cost Sheet` · `E-Docket` · `Search`. Tabs render per portal and direction (`PRD.md` §4.4); irrelevant tabs are **absent**, not disabled.
-
-**Upload dropzone** — dashed border, drag-active state, accepts drag from the email thread *and* the OS. On drop: per-file progress → parse status → auto-switch to the populated form. Rejected MIME types fail immediately with the reason.
-
-**Verification form** — extracted values pre-filled, low-confidence fields flagged (§3.3), a persistent count chip `▲ 3 fields need review`, and `Alt+↓` to jump between them. `[Confirm & Approve]` is disabled until every flagged field is visited (visited ≠ changed — confirming a correct extraction is a valid outcome and is what trains `pdf_extraction_corrections`).
-
-**`[View Source Email]`** sits in the drawer toolbar at all times.
-
-### 9.4 Sales dashboard (`SalesDashboard.vue`)
-
-**Chart-first.** Order is fixed and load-bearing:
-
-```
-┌─ TODAY'S ACTIONS ──────────────────────────────── 5 ─┐
-│ ● Globex — 26d since last air shipment (usual 9d)    │
-│   Churn risk AT_RISK · ₹4.2L/yr at stake  [Call]     │
-│ ▲ Initech — DSO 47d vs 30d terms, credit 83% [Chase] │
-└──────────────────────────────────────────────────────┘
-┌─ Tonnage trend ────────┐ ┌─ Win / loss ──────────────┐
-│ (stacked bar, period)  │ │ (donut + loss reasons)    │
-└────────────────────────┘ └───────────────────────────┘
-┌─ Lane / country movement ────────────────────────────┐
-┌─ My Accounts (drill-down table)  🔒 Command ─────────┐
-```
-
-- **Period selector** day / month / year. **No Air/Sea toggle** — the portal fixes the mode (`PRD.md` §2.3.3). The portal chip in the header is the only mode indicator.
-- **Tactical** renders the same chart components over branch aggregates; the My Accounts and Outstanding panels are tier-locked (§5.9).
-- **Unattributed bucket** — a visible row/tab for `sales_id IS NULL`, labelled *"Unattributed — awaiting customer registration"*, so unassigned enquiries are never silently invisible.
-- **Action cards** state the fact, the stake, and one primary verb. Narration (`narrated_text`) renders below the numbers in `--text-secondary`; when NULL the card still renders with numbers only, no error, no placeholder.
-
-### 9.5 Financials (accounts)
-
-Register table → detail drawer. `[Finalize]` and `[Post Ledger]` are **primary + confirmed**, showing the resulting journal lines *before* commit:
-
-```
-Post INV-26-0001 to the ledger?
-  Dr  1200-AR                 ₹1,18,000.00
-  Cr  4000-Freight-Revenue    ₹1,00,000.00
-  Cr  2200-GST-Output           ₹18,000.00
-  ── balanced ✓
-This cannot be undone. Corrections require a credit note.
-                          [Cancel]  [Post to Ledger]
-```
-
-**Unposted queue** rows show blocking validation errors inline as `--status-critical` chips (`Period closed`, `Exchange rate missing`) — the reason is on the row, never behind a click.
-
-**Reconciliation** — two-pane: bank transactions | candidate matches, confidence-ranked. Discrepancies open a popover: `Write-off to Bank Charges` · `Keep as Short-Paid` · `Mark as Discount`, each showing its ledger effect.
-
-**Period control** — open/close/reopen with an audit log beside it. Reopening a closed period requires typing the period name to confirm.
-
-### 9.6 Boss dashboard (`BossDashboard.vue`)
-
-The only **cross-mode** view: every chart carries an explicit `Air | Sea | Both` toggle, defaulting to **Both**. Branch comparison matrix, staff audit, target assigner (progress rings), milestone latency heatmap (`--status-success` → `--status-critical` sequential ramp, **never** red-green diverging), revenue-leakage queue sorted by `delay_days` with `> 7` flagged.
-
-**Staleness banner** above the fold when `financial_snapshots.last_computed_at > 1h`.
-
-Financial panels are **read-only** — no `[Post]`, no `[Finalize]`, no period control (`PRD.md` §2.3.5).
-
-### 9.7 Help copilot & visual reporter
-
-Right-side panel, 380 px, over content. Two **static** quick actions above the input: `[Connect to Support Agent]` · `[Raise a Ticket]`.
-
-- **`[Raise a Ticket]` bypasses the LLM entirely.** Cursor becomes a crosshair, hovered elements outline in `--status-info`, click captures selector + route + console logs + `html2canvas` screenshot → description form → submit. No conversational parsing anywhere in this path.
-- **Answers** render with a `[Take Tour]` button when the retrieved chunk carries step metadata; the tour dims the page and highlights each target in sequence.
-- AI answers are visually distinct from system content — `--status-info` left border and an "AI" label — so model output is never mistaken for authoritative system state.
-
-### 9.8 Superadmin (`admin.f16sefreight.com`)
-
-Visually distinct chrome (darker header, `PLATFORM` chip) so tenant and platform contexts are never confused. Health tiles (AI server / Horizon / queue depth / CPU-RAM) → log tail (monospace, wrapped, search) → failed-job inspector (stack trace + `[Retry]`) → tenant table (tier editor, OCR credit adjuster **with mandatory reason field**) → support desk.
-
-### 9.9 Document forms — Focus Air, House Waybill, Focus Sea
-
-The standalone route (`/focus-air`, `/focus-sea`) and the drawer tab render the **same component**. Standalone gets the full viewport; in the drawer it is the 50 % pane.
-
-**Tab architecture** (Focus Sea, 12 tabs — Focus Air mirrors it with flight fields):
-
-```
-┌─ Header ─────────────────────────────────────────────────────┐
-│ Shipment No JOBS-26-0001 │ Date │ Consol Type │ Cargo Type   │
-│ Job Owner │ Doc User │ Quotation │ ☐ Sub Shipment │ ⏱ 38 min │
-├──────────────────────────────────────────────────────────────┤
-│ Entity │ Shipping │ Routing │ Goods │ Item │ BL │ Container  │
-│ Pick Up │ Charges │ Financials │ Customs │ E-Docket         │
-├──────────────────────────────────────────────────────────────┤
-│                    (active tab body)                         │
-├──────────────────────────────────────────────────────────────┤
-│              [Save] [Save & Close] [Save & New] [Close]      │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- **Tab state** — a tab with validation errors shows `●` in `--status-critical`; a **disabled** tab (§10.5) is greyed with a tooltip giving the reason. Disabled tabs stay visible so the form's full shape is legible.
-- **Entity tab** — paired search + address block. The textarea is read-only until an entity is picked (§10.5).
-- **Item tab** — CBM and chargeable weight compute live and render in `--text-secondary` with a `calculated` chip; they are never directly editable.
-- **Container tab** — ISO 6346 check digit validates on blur; failure shows the expected format inline.
-- **Charges tab** — the buy/sell grid. **Buy-rate columns are absent from the DOM for sales** (§4.3).
-- Session timer and row lock per §10.6.
-
-### 9.10 Manifest filing & cover letters *(operations)*
-
-**`/manifest-filing`** — filter bar (filing type, consol job no, transaction status, custom house, date range, ICEGATE ID) over a results grid; `[Submit CGM Data]` opens a **modal**. The modal's status box is a read-only monospace log that streams validation output; `[Send for Signature]` shows DSC token state. Character limits are hard-enforced per §10.3 — an over-length field blocks submit and names the ICEGATE rule.
-
-**`/cover-letters`** — two-pane: letter metadata (recipient, contact, subject, body) | a **checklist of enclosed documents** pulled from `job_documents`. Checked items assemble the merged packet; the preview pane shows page count before send. `[Generate & Send]` is confirmed and states the recipient.
-
-### 9.11 Customer & partner directories
-
-**`/customers`**, **`/partners`** — searchable tables. Search matches **name or email domain suffix** (`globex.com` finds *Globex Corp*), with the matched domain highlighted in the result row.
-
-| Column | Notes |
-|---|---|
-| Name · Email domain · Default port · Branch | Always |
-| Sales rep | **Command only**; `—` when `sales_id IS NULL` |
-| Credit limit · Payment terms · Outstanding | **Command only**, right-aligned; exposure chip ≥ 80 % |
-
-Detail drawer holds tax/banking fields. **Bank account and IFSC render masked** (`••••4821`) with a reveal action that is audit-logged — they are encrypted at rest and must not be casually visible on screen.
-
-### 9.12 Message log (`/message-log`)
-
-Chronological SITA/IATA Type B transmission audit for one job. Monospace, wrapped, each entry showing direction (`▲ sent` / `▼ received`), message type (`FWB`, `FHL`, `FSU/ARR`), timestamp and raw payload in a collapsible block. Read-only. Filter by type; copy-raw affordance per entry.
-
-### 9.13 Settings
-
-Left sub-nav within `/settings`. **Sections render only for logins that own them** (`PRD.md` §2.3.7) — a section a login cannot own is absent, not disabled.
-
-| Section | Owner | UI notes |
-|---|---|---|
-| Users & designations | Boss | Table + role picker; PIMA address field; designation change warns about access impact |
-| Email triage rules | Boss | Rule list ordered by priority, drag to reorder. Each row shows **hit count, override count and accuracy %** (`1 − overrides/hits`); accuracy < 70 % flags `--status-warning`. `[+ Add Rule]` opens a modal with a **live regex tester** against sample subjects |
-| SLA policies | Boss | Minutes per tier |
-| Workload / OLI | Boss | Complexity coefficients, α, β, urgency multipliers, capacity cap — with a **live worked example** recomputing as values change |
-| Finance | Accounts | Chart of accounts tree, rate cards, bank-to-branch mapping |
-| Mailboxes | Each user | Connected accounts, provider buttons, connection health. On domain rejection show the tenant's allowed suffixes explicitly |
-
-### 9.14 Authentication & onboarding
-
-**Pre-login company selection** — before credentials. Searchable list of registered tenants; the choice binds `company_id`.
+#### Authentication & onboarding
 
 ```
 ┌──────────────────────────────────────┐
@@ -660,14 +475,557 @@ Left sub-nav within `/settings`. **Sections render only for logins that own them
 └──────────────────────────────────────┘
 ```
 
-- **The portal is shown before sign-in**, derived from the subdomain, so a user never authenticates into the wrong mode by accident.
-- Auth errors are **generic** — *"Email or password is incorrect"* — never revealing which was wrong, and never whether an account exists.
+- Company selection precedes credentials and binds `company_id`.
+- **The portal is shown before sign-in**, derived from the subdomain, so nobody authenticates into the wrong mode.
+- Auth errors are generic — *"Email or password is incorrect"* — never revealing which was wrong or whether an account exists.
+- **Registration** requires an origin port via LOCODE search-select (`INMAA — Chennai (sea)`); free text is rejected. PIMA address is assigned by the Boss, not self-serve.
+- **First run** — a new tenant meets an empty inbox, board and directory simultaneously. Each empty state carries its own next action: *"Connect a mailbox to start receiving enquiries"* → `/settings/mailboxes`.
 
-**User registration** — under an existing company. **Origin port is required** and uses a LOCODE search-select showing `INMAA — Chennai (sea)`; free text is not accepted. PIMA address is **not** self-serve (Boss assigns it).
+#### Help copilot
 
-**First-run empty states** matter disproportionately here: a brand-new tenant sees an empty inbox, empty board and empty directories at once. Each carries its own next action — *"Connect a mailbox to start receiving enquiries"* → `/settings/mailboxes`.
+Right panel, 380 px. Two **static** quick actions above the input: `[Connect to Support Agent]` · `[Raise a Ticket]`.
+
+- `[Raise a Ticket]` **bypasses the LLM entirely** — crosshair cursor, hovered elements outline in `--status-info`, click captures selector + route + console logs + `html2canvas` screenshot → description form → submit.
+- Answers carry `[Take Tour]` when the retrieved chunk has step metadata; the tour dims the page and highlights each target in sequence.
+- AI output is visually distinct — `--status-info` left border + "AI" label — so it is never mistaken for authoritative system state.
+
+#### Shared layout skeletons
+
+Three layouts recur across logins. Each login section below states *what it puts in them*.
+
+```
+A · THREE-COLUMN INBOX          B · DRAWER SPLIT (≥1200px)
+┌──┬─────┬──────┬───────────┐   ┌──┬──────────────┬──────────────┐
+│  │Fold-│Thread│Conversa-  │   │▤ │ Conversation │ Drawer   50% │
+│  │ers  │list  │tion       │   │60│         50%  │ [tabs]       │
+└──┴─────┴──────┴───────────┘   └──┴──────────────┴──────────────┘
+
+C · KANBAN
+┌─ Unassigned Pool  [+]/[−] ──────────────────────────────┐
+├─ Processing ─┬─ Awaiting Cust ─┬─ In Transit ─┬─ Done ──┤
+```
 
 ---
+
+### 9.2 🧾 Core User — *the only login on `core`*
+
+**Available:** `core` only. On upgrade to Tactical this login is replaced by the four role logins.
+
+**Lands on** `/focus-air` or `/focus-sea` (whichever the subdomain resolves).
+
+**Navigation** — deliberately minimal. **No role navigation is rendered at all**: there is no inbox, no board, no locked sections implying hidden roles. Role separation is not a feature Core lacks; it is a concept that does not apply.
+
+| Nav item | Route |
+|---|---|
+| Focus Air | `/focus-air` |
+| House Waybill | `/house-waybill` |
+| Focus Sea *(sea portal)* | `/focus-sea` |
+| Settings | `/settings/mailboxes` only |
+
+**Screens**
+
+| Screen | What the Core user gets |
+|---|---|
+| **Document forms** | Full-viewport (no drawer — there is no email thread to split against). Tab architecture per §9.9. Upload → `pdfplumber` coordinate extraction → verify → `[Generate PDF]` |
+| **Upload** | Dropzone accepts PDF/image. **No AI parsing** — a scanned document that needs vision OCR fails with *"Scanned documents need the Tactical plan"* + `UpgradeTeaser` |
+| **Settings** | Mailbox section only, and it is **tier-locked** — shown to advertise the upgrade |
+
+**Absent for this login:** inbox, enquiries, jobs, Kanban, assignment, analytics, financials, bell notifications (nothing generates them).
+
+**Upgrade surface** — because Core is thin by design, the two locked touchpoints (AI parsing, mailbox sync) are the entire upsell. Both use `UpgradeTeaser.vue` (§5.9) and name the plan that unlocks them.
+
+---
+
+### 9.3 🎯 Pricing — *the commercial owner*
+
+**Available:** `tactical`, `command`. **Lands on** `/inbox`.
+
+**Navigation:** Inbox · Kanban · Focus Air / Sea · House Waybill · Customers · Partners · Settings *(read)*
+
+#### Screens
+
+**① Inbox** — layout **A**, the primary workspace.
+
+```
+┌────┬───────────┬────────────────┬──────────────────────────────┐
+│NAV │ FOLDERS   │ THREADS        │ CONVERSATION            [⿴] │
+│    │ Inbox  12 │ ● Globex Corp  │ Globex Corp  ⏱ 08:12 to SLA │
+│    │ Assigned  │   Rate BOM-FRA │ [Classify As… ▾]             │
+│    │ Unassign 4│   ⏱ 12m  📎2   │ [Confirm Shipment][Mark Lost]│
+│    │ Processing│ ───────────────│  ▸ collapsed history (3)     │
+│    │ Awaiting  │   Emirates     │  ● latest message            │
+│    │ Completed │   AIRLINE      │ ┌──────────────────────────┐ │
+│    │           │   ⏱ —          │ │ ✉ Automated greeting     │ │
+│    │           │                │ │ [Accept & Send] [Reject] │ │
+│    │           │                │ └──────────────────────────┘ │
+└────┴───────────┴────────────────┴──────────────────────────────┘
+```
+
+- **Thread row** — unread dot · customer · subject (1 line) · **live SLA countdown** · attachment count · classification chip when not `customer_enquiry`.
+- **SLA countdown** from `sla_policies`: `--text-secondary` → `--status-warning` under 25 % → `--status-critical` + `●` when breached. Non-enquiry threads show `—`.
+- **`[Classify As…]`** — the control that mints `enquiry_no`. Demoting a converted enquiry returns `422` with a link to cancel the job instead.
+- **Branch picker (multi-branch clients)** — when the sender's domain matches **several** branches of one client group, the system does **not** guess. The triage panel shows a required selector listing only that group's branches, each with its sales rep:
+
+  ```
+  ⚠ @globex.com matches 3 branches — select one
+    ○ Globex Chennai   R. Kumar
+    ○ Globex Mumbai    P. Sharma
+    ○ Globex Delhi     R. Kumar
+  ```
+
+  Until chosen, `customer_id` and `sales_id` stay NULL and the enquiry sits in the **Unattributed** bucket. Guessing would assign the enquiry's revenue, tonnage and commission to the wrong rep.
+- **Lifecycle-gated header** — one-way, permanent:
+
+  | Lifecycle | Header |
+  |---|---|
+  | Enquiry, unconverted | `[Confirm Shipment]` · `[Mark as Lost]` |
+  | Job exists | `[Cancel Shipment]` — `[Mark as Lost]` is **removed, not disabled** |
+
+- **`[Confirm Shipment]`** opens a 3-field popover (AWB/MBL · operator — **with live OLI beside each name** · clearance date).
+- **Consent banner** renders the full drafted body inline (§11.2).
+- **Keyboard:** `j`/`k` · `Enter` open · `c` classify · `r` reply · `e` archive · `Cmd+\` split · `Esc` close.
+
+**② Kanban** — layout **C**, *both* views.
+
+*Process View* — four columns, live counts, `vuedraggable`. WIP is **not** limited; freight volume is externally driven and a cap would hide work rather than prevent it.
+
+*Staff View* — the cross-staff clearance matrix pricing uses to balance load:
+
+```
+              R. Kumar        P. Sharma       A. Nair
+              (OLI 8.7 ✓)     (OLI 18.5 ●)    (OLI 4.2 ✓)
+─────────────────────────────────────────────────────────
+Mon 12 Jun    [JOBA-0001 ●]   [JOBA-0007 ▲]   —
+Tue 13 Jun    [JOBA-0004 ✓]   [JOBA-0009 ✓]   [JOBS-0002 ✓]
+```
+
+- **Magnetic drag-and-drop** — across a column reassigns `ops_id`, across a row sets `planned_clearance_date`, both in one call. Optimistic with rollback + toast on failure. **Keyboard alternative required** (§12).
+- **OLI badge** — `≥ cap` renders `--status-critical` + `●` + `OVERLOADED`; the assign overlay **warns but never blocks** (a manager may have context the index lacks).
+- **Unassigned Pool** scroller with `[+]`/`[−]`, persisted per user.
+- **Filters** — staff · progress · date range with `[Today]`; active filters render as removable chips, persisted per user.
+- **Filtered staff banner** — active count, pending count, **idle-duration list** (`JOBA-26-0004 · pending 2h 15m`) sorted longest-first.
+
+**③ Drawer** — layout **B**. Tabs: Upload · Focus Air / Sea · House Waybill · **Job Cost Sheet** · E-Docket · Search. `[View Source Email]` always present in the toolbar.
+
+**④ Document forms** — §9.9. **⑤ Directories** — §9.10.
+
+**⑥ Bell** — reassignment approvals **pinned at top** with inline `[Accept]` / `[Reject]`; withdrawn requests fade out over 200 ms and the list reflows, leaving no tombstone.
+
+#### Tier differences
+
+| | `tactical` | `command` |
+|---|---|---|
+| All of the above | ✅ | ✅ |
+| Job Cost Sheet | Operational estimate | Feeds **real** invoices/vouchers |
+| `[Finalize]` on the cost sheet | ❌ | ❌ — **accounts only**, at every tier |
+
+#### Absent for this login
+
+Analytics dashboards (nav hidden; direct URL redirects to `/inbox`) · `/financials` · `/boss` · ledger posting · other branches.
+
+---
+
+### 9.4 🛠️ Operations — *the executor*
+
+**Available:** `tactical`, `command`. **Lands on** `/kanban`, **filtered to their own queue**.
+
+**Navigation:** Kanban · Inbox · Focus Air / Sea · House Waybill · Manifest Filing · Cover Letters · Message Log
+
+#### Screens
+
+**① Kanban (own queue)** — layout **C**. Same Process View as pricing, but:
+
+- Defaults to `ops_id = me`; **the cross-staff Staff View is absent**, not disabled
+- Cards show **both** the ops and pricing names so collaborators share context
+- Cards carry `✉` mail (all four columns) → `/inbox`, and `⌸` message log (**`In Transit` only**) → `/message-log`. 32 px hit targets, propagation stopped so they never trigger the card's own click
+- Clicking an `In Transit` card opens the drawer **directly on Routing & Voyage/Flight Details**; any other card opens the drawer on the tab matching the current stage
+
+**② Inbox** — layout **A**, but the header carries **no lifecycle controls**: no `[Confirm Shipment]`, no `[Assign Task]`, no `[Mark as Lost]`. Hidden entirely (§8.1 — role forbids ⇒ hide). Their primary tool here is the `[Analyze PDF]` dropzone.
+
+**③ Drawer** — verification is the core loop:
+
+- Low-confidence fields flagged per §3.3, with a persistent count chip `▲ 3 fields need review` and `Alt+↓` to jump between them
+- `[Confirm & Approve]` stays disabled until every flagged field is **visited** — visited ≠ changed; confirming a correct extraction is a valid outcome and is what trains `pdf_extraction_corrections`
+- `[Save Draft]` · `[Generate PDF]`
+
+**④ Claim flow** — claiming from the Unassigned Pool is atomic; losing the race shows a toast *"Already claimed by R. Kumar"* and the card refreshes to its new owner.
+
+**⑤ Handover request** — `[Request handover]` in the drawer stages `pending_ops_id` **without** changing the live assignment; the card shows a `HANDOVER PENDING` chip. `[Withdraw]` reverts it and auto-dissolves the pricing owner's bell notification.
+
+**⑥ Manifest filing & cover letters** — §9.11. **⑦ Message log** — §9.12. **⑧ Document forms** — §9.9.
+
+#### Tier differences
+
+**None.** Operations is identical on Tactical and Command — the upgrade is commercial, not operational. This is worth stating on the upgrade comparison screen so ops staff are not promised a change they will not see.
+
+#### Absent for this login
+
+`[Confirm Shipment]` / `[Assign Task]` · `[Mark as Lost]` · direct reassignment · cross-staff matrix · analytics · financials.
+
+---
+
+### 9.5 📈 Sales — *the account manager*
+
+**Available:** `tactical` (limited), `command` (full). **Lands on** `/sales`.
+
+**Navigation:** Sales · Customers · Partners *(read)*
+
+#### Screen — sales dashboard
+
+**Chart-first.** The order is load-bearing: the ranked worklist sits above the charts, because the dashboard's job is to answer *"what needs me?"* before *"what exists?"*
+
+```
+┌─ TODAY'S ACTIONS ──────────────────────────────── 5 ─┐
+│ ● Globex — 26d since last air shipment (usual 9d)    │
+│   Churn risk AT_RISK · ₹4.2L/yr at stake  [Call]     │
+│ ▲ Initech — DSO 47d vs 30d terms, credit 83% [Chase] │
+└──────────────────────────────────────────────────────┘
+┌─ Tonnage trend ────────┐ ┌─ Win / loss ──────────────┐
+│ (stacked bar, period)  │ │ (donut + loss reasons)    │
+└────────────────────────┘ └───────────────────────────┘
+┌─ Lane / country movement ────────────────────────────┐
+┌─ My Accounts (drill-down)              🔒 Command ───┐
+┌─ Outstanding & Credit                  🔒 Command ───┐
+```
+
+- **Period selector** day / month / year. **No Air/Sea toggle** — the portal fixes the mode; the header chip is the only mode indicator.
+- **Action cards** state fact → stake → one primary verb. `narrated_text` renders below the numbers in `--text-secondary`; when NULL the card still renders with numbers only — **no error, no placeholder** (§6).
+
+##### Card audience — internal vs client
+
+Two visually distinct card types, because confusing them is the one unrecoverable mistake on this screen:
+
+```
+┌─ ⚑ INTERNAL · not client-visible ────────────────────┐
+│ Enquiries on Globex lose 3× more on delay_in_response│
+│ Median first reply 4h 12m vs branch 1h 05m           │
+│                              [View detail]           │   ← no ✉ icon, ever
+└──────────────────────────────────────────────────────┘
+
+┌─ ● CLIENT OUTREACH ──────────────────────────────────┐
+│ Globex — air conversion 31% (was 62%), 3 cancelled   │
+│ ₹4.2L/yr at stake                                    │
+│ Draft ready · To: anita@globex.com  Cc: 2            │
+│                              [View detail]   [✉]     │   ← ✉ opens the editor
+└──────────────────────────────────────────────────────┘
+```
+
+- **Internal cards carry a `⚑ INTERNAL · not client-visible` chip** in `--status-neutral` and **have no mail icon at all** — the affordance is absent, not disabled, because a disabled ✉ still implies "this could be sent."
+- **Client cards** show the resolved recipient count up front, so the rep knows the blast radius before opening anything.
+
+##### Outreach editor (✉ popup)
+
+Modal, 720 px. Opens with the draft fully populated and **entirely editable**.
+
+```
+┌─ Draft message — review before sending ──────────────┐
+│ From  sanjay@f16sfreight.com          (your mailbox) │
+│ To    [anita@globex.com ×]                           │
+│ Cc    [ops@globex.com ×] [ravi@globex.com ×]  [+ Add]│
+│       ⓘ 4 more contacts not CC'd — manage list       │
+│ Subj  [Quick check-in on your Q2 air volumes       ] │
+│ ─────────────────────────────────────────────────────│
+│ Hi Anita,                                            │
+│ I noticed a few of your recent bookings didn't…      │
+│ (fully editable rich text)                           │
+│ ─────────────────────────────────────────────────────│
+│ ⓘ Sends from your mailbox. Replies arrive in your    │
+│   inbox as a normal thread.                          │
+│                        [Discard]  [Send message]     │
+└──────────────────────────────────────────────────────┘
+```
+
+- **Cc chips are removable** and show the snapshot taken at generation. A hint states how many known contacts were **not** included, linking to the contact list — visible without being pushy.
+- **`[Send message]` is the only send path.** No "send all", no bulk action across cards. One client, one deliberate send.
+- On send: dispatches through the rep's own connected mailbox, creates a real `email_threads` row, and the card moves to `acted` with a link to the thread.
+- **AI-drafted content is not visually marked in the editor** — this is the rep's message, sent in their name, and they have read and approved it. The `⚑ AI` treatment (§9.1) applies to *system* output the user is reading, not to a draft they are authoring.
+- **Client Health** always renders as a **labelled component bar**, never a bare number or traffic light (§4.2).
+- **Unattributed bucket** — a visible tab for `sales_id IS NULL`, labelled *"Unattributed — awaiting customer registration"*, so unassigned enquiries are never silently invisible.
+
+#### Tier differences — the sharpest boundary in the product
+
+| | `tactical` | `command` |
+|---|---|---|
+| Scope | Branch aggregate (`agent_id`) | **`sales_id = me`** |
+| Charts | Same components, branch-wide | Same components, re-scoped to own book |
+| Client names | ❌ | ✅ |
+| Per-client revenue & tonnage | ❌ | ✅ |
+| My Accounts grid | 🔒 locked | ✅ |
+| Outstanding & Credit (aged 0–30/31–60/60+) | 🔒 locked | ✅ |
+| Today's Actions | Branch-level variant | Per-client, ranked |
+| AI account summaries | ❌ | ✅ |
+
+Locked panels use `UpgradeTeaser.vue` over a **blurred skeleton, never real data** — blurred pixels are recoverable, and a Tactical tenant must not receive Command figures in the payload at all.
+
+#### Absent for this login — at *every* tier
+
+**Buy-side cost and profit margin.** Stripped **server-side in the API Resource**, not hidden with CSS (§4.3). Also absent: creating/converting/cancelling anything, assigning operators, another rep's clients, the cost sheet, `/financials`.
+
+---
+
+### 9.6 💰 Accounts — *the bookkeeper*
+
+**Available:** `command` **only**. **Lands on** `/financials`.
+
+**Navigation:** Financials *(8 sub-sections)* · Settings → Finance
+
+#### Screens
+
+| Route | Contents |
+|---|---|
+| `/financials` | Invoice & voucher registers · `[Finalize]` / `[Post Ledger]` |
+| `/financials/unposted` | Queue with **blocking errors inline** as `--status-critical` chips (`Period closed`, `Exchange rate missing`) — the reason is on the row, never behind a click |
+| `/financials/reconciliation` | Two-pane: bank transactions │ confidence-ranked candidate matches |
+| `/financials/cass` | Statement upload · variance flags vs estimated vouchers |
+| `/financials/unbilled` | Revenue-leakage queue sorted by `delay_days`, `> 7` flagged. Double-click opens the cost sheet drawer |
+| `/financials/periods` | Open / close / reopen with the audit log alongside |
+| `/financials/reports` | P&L · Balance Sheet · Trial Balance · GST register |
+| `/settings/finance` | Chart of accounts tree · rate cards · bank-to-branch mapping |
+
+**Posting confirmation** shows the resulting journal lines *before* commit:
+
+```
+Post INV-26-0001 to the ledger?
+  Dr  1200-AR                 ₹1,18,000.00
+  Cr  4000-Freight-Revenue    ₹1,00,000.00
+  Cr  2200-GST-Output           ₹18,000.00
+  ── balanced ✓
+This cannot be undone. Corrections require a credit note.
+                          [Cancel]  [Post to Ledger]
+```
+
+- **Reconciliation discrepancies** open a popover — `Write-off to Bank Charges` · `Keep as Short-Paid` · `Mark as Discount` — each showing its ledger effect before commit.
+- **Reopening a closed period** requires typing the period name to confirm.
+- **Drawer** — the only login with `[Finalize]` on the Job Cost Sheet.
+
+#### Tier differences
+
+None to show — the login does not exist below Command. On Tactical, `/financials` is a **tier-locked nav item** for the Boss, not a broken Accounts login.
+
+#### Absent for this login
+
+Triage · quoting · conversion · assignment · cancellation · manifests and waybills · the sales client book · tenant user administration.
+
+---
+
+### 9.7 🏛️ Boss / Director
+
+**Available:** `tactical` (operational), `command` (adds financial read). **Lands on** `/boss`.
+
+**Navigation:** Boss · Financials *(read-only, Command)* · Settings · Inbox & Kanban *(oversight)*
+
+#### Screen — Boss dashboard
+
+**The only cross-mode view.** Every chart carries an explicit `Air | Sea | Both` toggle, defaulting to **Both** — this login is not portal-scoped.
+
+| Panel | Notes |
+|---|---|
+| Branch comparison matrix | Jobs raised / replied / pending / converted, by branch and by staff |
+| Target assigner | Progress rings, revenue or tonnage, per branch or per person |
+| Milestone latency heatmap | **Sequential** `--status-success` → `--status-critical` ramp — never a red-green diverging scale (§12) |
+| Staff workload grid | OLI per operator |
+| Revenue-leakage queue | 🔒 Command · sorted by `delay_days`, `> 7` flagged |
+| Carrier dispute panel | 🔒 Command · CASS + bank mismatches |
+| Weekly Executive Brief | 🔒 Command |
+
+**Staleness banner** above the fold when `financial_snapshots.last_computed_at > 1h` (§3.4).
+
+#### Tier differences
+
+| | `tactical` | `command` |
+|---|---|---|
+| Audit matrix, OLI grid, latency heatmap, targets | ✅ | ✅ |
+| P&L · Balance Sheet · Trial Balance · GST | ❌ locked | ✅ **read-only** |
+| Leakage queue, dispute panel, exec brief | ❌ locked | ✅ |
+| Profit margin on a job | ❌ | ✅ |
+
+#### Absent for this login — deliberately
+
+**`[Post to Ledger]` and period open/close are not rendered at all**, at any tier. The role that sets targets must not book the revenue those targets are measured in. Financial screens are read-only for the Boss: same tables, no commit actions.
+
+---
+
+### 9.8 🔧 Superadmin — the F16s owner
+
+**Available:** every tier — this login administers tiers rather than being subject to one. **Portal:** `admin.f16sefreight.com`.
+
+**Distinct chrome** — darker header and a `PLATFORM` chip, so tenant and platform contexts are never confused.
+
+| Panel | Contents |
+|---|---|
+| Health tiles | AI server (`platform:status:ai_server`) · Horizon · queue depth · CPU/RAM |
+| Log tail | Last 100 lines, monospace, wrapped, searchable |
+| Failed jobs | Stack trace + `[Retry]` |
+| Tenants | Table with tier editor · corporate domain registration |
+| OCR credits | Allowance, overdraft ceiling, one-off top-ups — **mandatory reason field**, written to `ocr_credit_transactions` as `custom_override` |
+| Support desk | `support_tickets` with screenshot viewer, console logs, selector path; `investigating` / `resolved` + developer notes emailed to the reporter |
+| Classification analytics | Rule accuracy, confusion matrix, `[Trigger Pattern Optimization Hook]` |
+| AWB tracking | Cross-tenant, date-filtered, CSV export |
+
+#### Absent for this login — deliberately
+
+**No operational or financial actions on any tenant.** No triage, quoting, conversion, assignment, invoicing, posting or period control. Superadmin sees *that* a tenant's AI server is failing; it does not run their shipments or touch their books.
+
+---
+
+### 9.9 Document forms *(reference — used by Core, Pricing, Operations)*
+
+Standalone route and drawer tab render the **same component**; standalone gets the full viewport.
+
+```
+┌─ Header ─────────────────────────────────────────────────────┐
+│ Shipment No JOBS-26-0001 │ Date │ Consol Type │ Cargo Type   │
+│ Job Owner │ Quotation │ ☐ Sub Shipment │         ⏱ 38 min   │
+├──────────────────────────────────────────────────────────────┤
+│ Entity │ Shipping │ Routing │ Goods │ Item │ BL │ Container  │
+│ Pick Up │ Charges │ Financials │ Customs │ E-Docket          │
+├──────────────────────────────────────────────────────────────┤
+│                    (active tab body)                         │
+├──────────────────────────────────────────────────────────────┤
+│  [Save] [Save & Close] [Save & New] [Generate PDF]           │
+│  [🔗 Generate Link]                              [Close]     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+- **`[🔗 Generate Link]`** sits immediately right of `[Generate PDF]` in **Focus Air, House Waybill and Focus Sea alike**. Disabled until a PDF exists, with the tooltip *"Generate the PDF first."*
+- **Tab state** — validation errors show `●` in `--status-critical`; **disabled** tabs (§10.5) grey out with a tooltip giving the reason, and stay visible so the form's full shape stays legible.
+- **Entity tab** — address textarea is read-only until an entity is selected from the lookup above it.
+- **Item tab** — CBM and chargeable weight compute live, render in `--text-secondary` with a `calculated` chip, never directly editable.
+- **Container tab** — ISO 6346 check digit validates on blur.
+- **Charges tab** — buy-rate columns are **absent from the DOM for sales**.
+- Session timer and row lock per §10.6.
+
+#### `[🔗 Generate Link]` — share instead of re-attaching
+
+Opens a small popover, not a modal — this is a routine action, not a decision:
+
+```
+┌─ Share this document ────────────────────────┐
+│ ⦿ View only                                  │
+│ ○ Ask the client to approve                  │
+│ Expires  [ 14 days ▾ ]   (max 90)            │
+│                    [Cancel]  [Create link]   │
+└──────────────────────────────────────────────┘
+```
+
+On create, the popover becomes the copy state:
+
+```
+┌─ Link ready ─────────────────────────────────┐
+│ https://…/d/9f3c… ·  Expires 18-Jun-2026     │
+│ [📋 Copy]  [✉ Send to client]  [Revoke]      │
+└──────────────────────────────────────────────┘
+```
+
+- **`[✉ Send to client]`** hands the link to the consent engine — it stages the message and the operator approves it in the conversation feed exactly like any other client email (§11.2). **Nothing is sent from this popover directly.**
+- **Existing links are listed under the button**, each showing status, expiry, view count and a `[Revoke]`:
+
+  | Link | Status | Views | |
+  |---|---|---|---|
+  | `…9f3c` *(approval)* | ✓ **Approved** by A. Menon · 12-Jun | 3 | |
+  | `…4b71` *(view)* | ⏱ Expires in 6 days | 0 — **not yet opened** | `[Revoke]` |
+
+- **`0 views` is called out**, not left as a bare zero — "the client has not opened it" is the single most useful fact when chasing an approval, and §4.1 forbids a silent zero standing in for a meaningful state.
+- **Approval outcome renders inline on the form header** so an operator opening the document sees `✓ Client approved · 12-Jun-2026` or `▲ Changes requested` with the client's comment expandable — without going to the inbox.
+
+#### Client-facing document page
+
+The only unauthenticated screen in the product. Deliberately minimal — it must not look like a login-walled app the client is locked out of.
+
+```
+┌──────────────────────────────────────────────────────┐
+│  [tenant logo]        Draft Master Air Waybill       │
+│                       JOBA-26-0001 · Globex Corp     │
+│  ┌────────────────────────────────────────────────┐  │
+│  │              PDF preview (embedded)            │  │
+│  └────────────────────────────────────────────────┘  │
+│  [⤓ Download]                                        │
+│  ─── approval mode only ───────────────────────────  │
+│  Your name  [                              ]         │
+│  [ Request changes ]        [ Approve document ]     │
+└──────────────────────────────────────────────────────┘
+```
+
+- **`[Request changes]`** expands a comment box; the comment is required before submit.
+- After responding, the page shows a confirmation and stays viewable — the client can return to the same URL and see what they approved.
+- **Expired or revoked** shows a plain, non-alarming message with the forwarder's contact: *"This link has expired. Please contact your F16s representative for an updated copy."* No error styling, no branding of failure — an expired link is normal housekeeping, not the client's mistake.
+- Mobile-first: this is the **one** screen a client is likely to open on a phone (§7.1's read-only rule does not apply — approving is a single tap).
+
+### 9.10 Customer & partner directories *(Pricing, Sales, Accounts, Boss)*
+
+Searchable tables; search matches **name or email domain suffix** (`globex.com` finds *Globex Corp*), with the matched domain highlighted in the row.
+
+#### Client groups — branches roll up under one domain
+
+Rows sharing `(company_id, email_domain)` are **one client company with several branches** (`PRD.md` §2.2). The directory groups them visually — there is no separate group entity to navigate to.
+
+```
+▼ @globex.com — Globex Corp                    3 branches
+     ₹12.4L outstanding · 148 t YTD · exposure 71%     ← roll-up, display only
+  ├ Globex Chennai   R. Kumar   GSTIN 33AAA…  ₹4.1L  62% ✓
+  ├ Globex Mumbai    P. Sharma  GSTIN 27AAA…  ₹6.2L  88% ▲
+  └ Globex Delhi     R. Kumar   GSTIN 07AAA…  ₹2.1L  40% ✓
+```
+
+- **Group header** is a collapsible summary row: branch count, combined outstanding, combined tonnage, combined exposure. It is **not selectable as a billing party** — invoices are always raised against a branch.
+- **Credit signals sit on the branch row.** Each branch is gated on its own exposure (§3.4); the group figure is informational. A group at 71 % with one branch at 88 % must show the branch warning — surfacing only the group average would hide the branch that is actually about to be blocked.
+- **Single-branch clients render flat**, with no group header, so the common case gains no extra chrome.
+- Sorting and filtering operate on **branches**; the group header re-summarises whatever is visible.
+
+#### Onboarding — group detection
+
+When a new customer is created and its domain or PAN matches existing rows, an inline notice appears **before save**:
+
+```
+┌─ ℹ Existing client detected ─────────────────────────┐
+│ 2 branches already onboarded under @globex.com       │
+│   Globex Chennai · Globex Mumbai                     │
+│ This will be added as a third branch of the group.   │
+│ Credit limit and payment terms stay per branch.      │
+└──────────────────────────────────────────────────────┘
+```
+
+PAN matching is a **hint, not a rule** — all branches of one Indian entity share a PAN, but international clients may have none. The operator can always proceed regardless.
+
+| Column | Visibility |
+|---|---|
+| Name · Email domain · Default port · Branch | All |
+| Sales rep | **Command**; `—` when `sales_id IS NULL` |
+| Credit limit · Payment terms · Outstanding | **Command**, right-aligned, exposure chip ≥ 80 % |
+
+**Contacts tab** in the customer detail drawer lists `customer_contacts` — email, name, designation, last seen, message count, source. Two controls per row:
+
+| Control | Effect |
+|---|---|
+| **CC toggle** | Sets `include_in_cc`. **Off by default**, with a header note: *"Only ticked contacts are CC'd on outreach."* |
+| **Opt out** | Sets `opted_out_at`. Row greys out permanently; the CC toggle becomes unavailable, not merely off — DPDP erasure is not a preference |
+
+Harvested contacts arrive `unverified` with a `--status-warning` `▲ unverified` chip until someone confirms them, so an auto-collected address is never mistaken for a curated one.
+
+Detail drawer also holds tax and banking fields. **Bank account and IFSC render masked** (`••••4821`) with an audit-logged reveal — they are encrypted at rest and must not be casually readable on screen.
+
+### 9.11 Manifest filing & cover letters *(Operations)*
+
+**`/manifest-filing`** — filter bar (filing type, consol job no, transaction status, custom house, date range, ICEGATE ID) over a results grid. `[Submit CGM Data]` opens a modal whose status box is a read-only monospace log streaming validation output; `[Send for Signature]` shows DSC token state. Character limits are hard-enforced (§10.3) and name the ICEGATE rule.
+
+**`/cover-letters`** — two-pane: letter metadata │ **checklist of enclosed documents** from `job_documents`. Checked items assemble the merged packet; the preview shows page count before send. `[Generate & Send]` is confirmed and names the recipient.
+
+### 9.12 Message log *(Operations)*
+
+Chronological SITA/IATA Type B audit for one job. Monospace, wrapped; each entry shows direction (`▲ sent` / `▼ received`), message type (`FWB`, `FHL`, `FSU/ARR`), timestamp, and raw payload in a collapsible block. Read-only, filterable by type, copy-raw per entry.
+
+### 9.13 Settings *(section visibility follows ownership)*
+
+Left sub-nav within `/settings`. A section a login does not own is **absent, not disabled** (`PRD.md` §2.3.7).
+
+| Section | Owner | UI notes |
+|---|---|---|
+| Users & designations | Boss | Role picker; PIMA field; designation change warns about access impact |
+| Email triage rules | Boss | Priority-ordered, drag to reorder. Each row shows **hit count, override count, accuracy %** (`1 − overrides/hits`); under 70 % flags `--status-warning`. `[+ Add Rule]` opens a modal with a **live regex tester** |
+| SLA policies | Boss | Minutes per tier |
+| Workload / OLI | Boss | Complexity coefficients, α, β, urgency multipliers, cap — with a **live worked example** recomputing as values change |
+| Finance | Accounts | Chart of accounts tree · rate cards · bank-to-branch mapping |
+| Mailboxes | Every user | Connected accounts, provider buttons, health. On domain rejection, show the tenant's allowed suffixes explicitly |
 
 ## 10. Forms & Validation
 

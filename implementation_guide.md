@@ -4,7 +4,7 @@ The ordered developer playbook. Build the platform as **vertical slices in a fix
 
 > [!IMPORTANT]
 > **Companion documents — do not duplicate their content here.**
-> - **Schema (all 56 tables, columns, FKs, indexes, DDL):** [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md)
+> - **Schema (all 58 tables, columns, FKs, indexes, DDL):** [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md)
 > - **Product spec (roles, tiers, workflows, screens, formulas):** [`PRD.md`](file:///Users/jomygeorge/Desktop/f16sefreight/PRD.md)
 > - **Interface spec (tokens, components, states, accessibility):** [`ui_ux_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/ui_ux_guide.md)
 >
@@ -446,6 +446,16 @@ php artisan tinker
 | `POST /api/inbox/threads/{id}/claim` | Atomic claim — `UPDATE … WHERE ops_id IS NULL`; **`409 Conflict`** if zero rows affected |
 | `POST /api/jobs/{id}/reply` | Policy-checked (`$this->authorize('reply', $job)`), sends through the connected mailbox as a threaded reply |
 | `POST /api/jobs/{id}/confirm-notification` | Releases a staged consent-gated draft |
+| `POST /api/documents/{id}/share` | Creates a `document_share_links` row. Body: `requires_approval`, `expires_in_days` (default 14, **max 90**). Returns the raw token **once** — only its SHA-256 is stored |
+| `DELETE /api/documents/share/{id}` | Sets `revoked_at`. Immediate |
+| `POST /api/documents/share/{id}/send` | Hands the link to `ClientNotificationService` as a staged consent message — **does not send** |
+
+**Public, unauthenticated** (separate route group — no `auth`, no tenant scope, rate-limited):
+
+| Endpoint | Behaviour |
+|---|---|
+| `GET /d/{token}` | Hashes the token, looks up by `token_hash`. Rejects revoked/expired with a plain message. Stamps `first_viewed_at`, `last_viewed_at`, increments `view_count`. Serves `noindex, nofollow`. **Returns one document — never the job** |
+| `POST /d/{token}/respond` | Approval mode only. Records `approved` / `changes_requested`, `approver_name`, `approver_email`, `client_comment`, `responded_at`; raises a bell notification to the operator and appends to the job's `email_threads` row |
 
 ### 5.2 Lifecycle — `EnquiryController` / `JobController`
 
@@ -528,8 +538,26 @@ Order matters here more than anywhere else in the build.
    | One lane vocabulary | Buckets use `origin_code`/`dest_code`; `pol_code`/`pod_code` are mapped in at rollup, never mixed into one key |
    | One impact unit | `sales_action_queue.impact_value` is always annualized base currency — tonnage is converted before ranking, or the ordering is meaningless |
 
-5. **Action queue** — populate `sales_action_queue` with `(impact × urgency) / effort` ranking and render the top-5 panel
-6. **Narration last** — only once the numbers are trusted, add `NarrateClientInsightsJob`. Validate Gemma output against the schema, log to `llm_usage_logs`, and **confirm the dashboard still renders correctly with the AI server switched off**
+5. **Action queue** — populate `sales_action_queue` with `(impact × urgency) / effort` ranking and render the top-5 panel. Set `audience` on every row (`internal` | `client`)
+
+6. **Contact directory & client outreach** — `customer_contacts` + drafted emails (`PRD.md` §7.3.7):
+   - Harvest inbound senders in `mailboxes:poll` — upsert address, name, `last_seen_at`, `message_count`. **Never set `include_in_cc` programmatically**
+   - Resolve recipients at draft time: `is_primary` → To; `include_in_cc = true AND opted_out_at IS NULL` → Cc. **Snapshot** into `draft_to` / `draft_cc` so later list edits cannot silently change a pending draft
+   - On send: dispatch via the rep's own `mailbox_connections` row, create an `email_threads` row, store `sent_thread_key`, stamp `sent_at` / `sent_by`
+   - **Tests that must exist:**
+     | Test | Asserts |
+     |---|---|
+     | `AudienceFirewallTest` | Inserting `audience='internal'` **with any `draft_*` column populated is rejected by `chk_saq_internal_no_draft`** — at the database, not the application |
+     | `ContactOptOutTest` | A contact with `opted_out_at` never appears in `draft_cc`, even with `include_in_cc = true` |
+     | `HarvestTest` | Polling never sets `include_in_cc`; harvesting an opted-out address updates recency but does not re-enable it |
+     | `DraftSnapshotTest` | Editing the contact list after generation does not mutate an existing `draft_cc` |
+7. **Document share links** — `document_share_links` (`PRD.md` §5.7):
+   - Token: 256-bit CSPRNG. **Store only `hash('sha256', $token)`**; return the raw value once at creation and never again
+   - `expires_at` is **NOT NULL** — reject any attempt to create a non-expiring link
+   - Public routes live outside the tenant global scope, so the lookup **must** filter on `revoked_at IS NULL AND expires_at > NOW()` explicitly
+   - **Tests:** a revoked link returns 410 · an expired link returns 410 · a valid token exposes **only** its own document and leaks no job or pricing payload · `view_count` increments · an approval response raises the bell and lands on the job's thread
+
+8. **Narration last** — only once the numbers are trusted, add `NarrateClientInsightsJob`. Validate Gemma output against the schema, log to `llm_usage_logs`, and **confirm the dashboard still renders correctly with the AI server switched off**
 
 > Do **not** route these analytics through ChromaDB. Vectors serve the SOP copilot; embeddings cannot compute a trend. Gemma receives a ~600-token fact packet of pre-computed values and may never derive, sum, or compare a figure itself.
 

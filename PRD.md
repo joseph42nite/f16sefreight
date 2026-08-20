@@ -119,6 +119,28 @@ This is the authoritative description of **who can log in, what each login type 
 
 **Client lookup by domain suffix.** The customer search box matches on both company name and `customers.email_domain` (searching `globex.com` or `@globex.com` finds *Globex Corp*), which is what makes manual triage fast.
 
+#### Client groups — one company, several branches
+
+A client company commonly onboards **several branches**, each with its own address, GSTIN and assigned sales rep. Indian GST requires **state-wise registration**, so one legal entity legitimately holds several GSTINs and must be billed as separate entities.
+
+> **The group is `(company_id, email_domain)` — derived, not stored.** Every `customers` row sharing a tenant *and* a corporate domain **is** one client group. There is no `parent_customer_id` and no group table: the domain is the link. This is already backed by the composite index `(company_id, email_domain)` added in Batch 1a, so group queries need no new structure.
+
+```
+@globex.com  ──┬── Globex Chennai   sales_id = R. Kumar   GSTIN 33AAA…
+               ├── Globex Mumbai    sales_id = P. Sharma  GSTIN 27AAA…
+               └── Globex Delhi     sales_id = R. Kumar   GSTIN 07AAA…
+```
+
+**What the group gives you**
+- Selecting a client anywhere in the product (accounts, sales, triage) shows **every onboarded branch under that domain**, so "how is Globex doing?" is answerable without a new entity.
+- Roll-ups — tonnage, revenue, receivables, conversion — aggregate across the group **for visibility**.
+
+**Credit and billing stay per branch.** Each branch carries its own `credit_limit`, `payment_terms_days` and receivables, and the credit gate blocks on **its own** exposure. Separate GSTINs are separate billing entities; one branch's overdue invoice must not freeze another branch's cargo. The group view **displays** the combined exposure without enforcing on it.
+
+**Multi-domain groups.** Where a client uses more than one corporate domain (`globex.com`, `globex.co.in`), `customers.email_domain` accepts a comma-separated list — the same convention already used by `companies.email_domain`. Any listed domain resolves to that branch.
+
+**PAN as a grouping hint.** All branches of one Indian legal entity share a `pan_no` (GSTIN embeds PAN at characters 3–12). Onboarding uses this to **suggest** the existing group when a matching PAN is entered — a convenience, never an enforced rule, since international clients may have no PAN.
+
 > **Two `email_domain` columns, two different jobs — do not confuse them.**
 > `companies.email_domain` = *our* tenant's own domain, used to validate OAuth mailbox connections.
 > `customers.email_domain` = the *client's* domain, used to attribute inbound mail → customer → `sales_id`.
@@ -261,6 +283,7 @@ This split is authoritative; it resolves the earlier ambiguity about what "the a
 | Accounting period open / close | **Accounts only** (Command) | in-app `/financials/periods` |
 | Customer & partner masters | **Boss / Sales** | in-app `/customers`, `/partners` |
 | Mailbox OAuth connections | **Each user**, domain-validated | in-app `/settings/mailboxes` (`MailboxSettings.vue`) |
+| One-time OAuth grant for the whole directory | **Client's own Entra ID / Workspace admin** — not a role in this product | Microsoft/Google consent screen (§5.2.1) |
 
 ### 2.4 Role × Screen Matrix
 
@@ -502,17 +525,90 @@ graph LR
 - **Downgrade:** soft-deactivate (`is_active = false`), preserve encrypted tokens.
 - **UI:** `MailboxSettings.vue` — connected mailbox list, provider connect buttons, connection status alerts.
 
-#### 5.2.2 Background Polling
+**One platform-owned app registration — never the tenant's.** We register a single **multi-tenant** Azure application (`signInAudience: AzureADMultipleOrgs`) in our own directory, and a single Google Cloud OAuth client. A client company never creates an app registration, never generates a client secret, and never pastes an ID into our settings screen. Connecting a mailbox is an *authorization* step, not a *configuration* step.
+
+**Requested scopes — least privilege, and no more:**
+
+| Provider | Scopes | Why each is needed |
+|---|---|---|
+| Microsoft | `offline_access`, `User.Read`, `Mail.Read`, `Mail.Send` | Refresh token; read the signed-in address for domain enforcement; poll and backfill the inbox; thread-aware replies (§5.7) |
+| Google | `openid`, `email`, `gmail.readonly`, `gmail.send` | Same responsibilities on Gmail |
+
+We request **no mailbox write scope beyond sending** — no delete, no folder mutation, no calendar, no contacts. `Mail.Send` / `gmail.send` exist solely to satisfy `POST /api/jobs/{id}/reply`, which must post the reply into the original thread so the conversation stays coherent on the client's side (§5.7).
+
+**The happy path is three clicks:** `[Connect Outlook]` → choose account → `Accept`. The callback validates the returned address against `companies.email_domain`, encrypts and stores the token pair, and enqueues the historical backfill (§5.2.2).
+
+##### Tenant admin consent — the common case, not the exception
+
+Most Microsoft 365 business tenants restrict user consent to *"apps from verified publishers, for selected low-impact permissions."* **`Mail.Read` is not a low-impact permission.** The first operator at a new client will therefore usually hit *"Need admin approval"* rather than the consent screen.
+
+This is a **one-time action per client organisation**, not per user. Their Entra ID admin (Global Administrator, Privileged Role Administrator, or Cloud Application Administrator) opens a single URL and grants consent for the whole directory:
+
+```text
+https://login.microsoftonline.com/organizations/adminconsent
+  ?client_id={our_app_id}
+  &redirect_uri=https://app.f16sefreight.com/oauth/microsoft/admin-consent
+```
+
+Every staff member in that tenant gets the clean three-click flow from then on.
+
+> **This must be a first-class UI state, not an error toast.** `MailboxSettings.vue` renders four distinct connection states — `not_connected`, `awaiting_admin_consent`, `connected`, `reauth_required`. The `awaiting_admin_consent` state shows a plain-language explanation, the generated admin-consent URL with a copy button, and a **"Email this to your IT admin"** action. A client who hits an undiagnosed dead end on their first onboarding screen does not self-serve; they raise a support ticket, and the "3 clicks, no hand-holding" promise is lost on the very first mailbox.
+
+**Publisher verification is a launch prerequisite, not a polish item.** Completing Microsoft publisher verification (Partner Network account linked to the app registration) puts a **Verified** badge on the consent screen and relaxes several default user-consent restrictions. Without it the consent screen carries an unverified-publisher warning that IT departments are trained to refuse.
+
+**Google carries a heavier equivalent.** `gmail.readonly` and `gmail.send` are Google **restricted scopes**: production use requires OAuth app verification *plus* an annual third-party **CASA Tier 2** security assessment. Until that clears, the app is capped at 100 users behind an unverified-app interstitial. Workspace clients can alternatively have their admin install the app domain-wide. **Budget the assessment cost and lead time — this gates Gmail onboarding, not Outlook.**
+
+**Refresh token lifetime.** Microsoft refresh tokens roll on use and expire after **90 days of inactivity**; conditional-access or MFA policy changes on the client side can also invalidate them mid-flight. On any `invalid_grant`, the connection flips to `reauth_required`, sync pauses, and the owning operator is notified in-app — tokens are never silently discarded, and the failure is never allowed to look like "no new mail."
+
+#### 5.2.2 Historical Backfill & Background Polling
+
+##### Initial backfill — the first 60 days
+
+A delta query begins at the moment it is first called. Without an explicit backfill a newly connected mailbox shows an **empty inbox** until the next message happens to arrive, which reads as a broken product on day one and strands every enquiry already in flight at the moment of onboarding.
+
+On successful connection the callback dispatches a queued `BackfillMailboxJob`:
+
+| Provider | Initial request |
+|---|---|
+| Microsoft | `GET /me/mailFolders/inbox/messages/delta?$filter=receivedDateTime ge {window_floor}` — Graph accepts a `receivedDateTime` filter on the *initial* delta request specifically for this scenario, so the history and the terminal `@odata.deltaLink` arrive from one flow |
+| Google | `users.messages.list?q=newer_than:60d`, then capture the mailbox's current `historyId` as the cursor |
+
+- **Window:** 60 days, stored per connection in `mailbox_connections.backfill_from` so the value is auditable and can be widened for a specific onboarding without a code change.
+- **Queued, never inline.** The OAuth callback returns immediately. A busy forwarding desk is plausibly 3,000–10,000 messages over 60 days; holding an HTTP request open for that is not an option.
+- **Throttle discipline.** Graph permits ~4 concurrent requests per mailbox. Use `$select` to fetch only the fields we normalize, group reads with `$batch` (20 per request), and back off on `429` honouring `Retry-After`.
+- **Metadata only.** Attachment binaries are *not* pulled during backfill; the lazy-download rule below applies unchanged. Backfilling 60 days of PDFs would be the single largest storage and ClamAV cost in onboarding, for files most of which are never opened.
+- **Progress is visible.** `backfill_status` (`pending` → `running` → `completed` / `failed`) drives a progress state in `MailboxSettings.vue`. Live polling for that connection does not begin until the cursor is committed, so no message is missed in the gap between backfill and first poll.
+- **Tier-gated** exactly as polling is: backfill runs only for `tactical` and `command` companies.
+
+##### Backfill must not fire live side effects
+
+Replaying 60 days of mail through the unmodified ingest pipeline would start an SLA countdown on every historical thread, propose enquiries from two-month-old messages, and fire a notification per thread — presenting the client, at first login, with thousands of unread items and hundreds of already-breached SLAs. That is a self-inflicted denial of service on the ops team it is meant to serve.
+
+Every row written by the backfill is stamped `inbound_emails.is_historical = true`, and that flag suppresses:
+
+| Suppressed | Still runs |
+|---|---|
+| SLA reply countdown (`sla_policies`) | Classification (`email_classification_rules`) |
+| Bell notifications and assignment alerts | `thread_key` computation and thread grouping |
+| Auto-proposal of enquiries into the operational queue | Sender-domain → `customer_id` / `sales_id` attribution |
+
+Backfilled threads land as `status = 'archived'` — fully searchable, correctly classified, correctly attributed, but outside the operational queue. **A historical thread wakes up naturally:** if a live message arrives on it after connection, that message is not historical, so the SLA clock starts from it, the thread returns to `unread`, and it enters the queue like any other. No special-casing, and no lost continuity on a conversation that straddles the onboarding date.
+
+> **This preserves, rather than contradicts, "nothing is dropped."** Historical mail is ingested in full. The flag governs *what fires*, never *what is stored*.
+
+##### Background polling
 
 `php artisan mailboxes:poll`, scheduled **every minute**:
 
 - Gmail → `/users/me/messages`; Outlook → `/me/mailFolders/inbox/messages`
 - Normalizes headers (from/to, subject, body, attachments), computes the `thread_key`, upserts `email_threads` and `inbound_emails`, indexes `inbound_attachments`
-- **Delta syncing:** Microsoft delta queries and Google history IDs so only *new* mail is fetched — never a full mailbox scan
+- **Delta syncing:** Microsoft delta queries and Google history IDs so only *new* mail is fetched — never a full mailbox scan. The cursor is persisted on `mailbox_connections.sync_cursor`, seeded by the initial backfill and rewritten after every successful page. Polling skips any connection whose `backfill_status` is not `completed`
+- **Cursor expiry:** a `410 Gone` (Microsoft) or an invalid `historyId` (Google) means the cursor has aged out. The connection re-enters a bounded backfill from `last_synced_at` rather than re-scanning the mailbox, and `message_id` uniqueness makes the replay idempotent
 - **Lazy attachments:** binary files are downloaded to storage only when a user actually initiates parsing or opens the extraction tab
 - **Antivirus:** every attachment is streamed through a ClamAV daemon before being persisted
 - **XSS:** `body_html` is sanitized server-side with HTMLPurifier **before** storage
 - Computes the **SLA reply countdown** per thread from the tenant's `sla_policies` tier row
+- **Harvests contacts.** Every inbound sender whose domain matches a `customers.email_domain` is upserted into **`customer_contacts`** — address, parsed display name, `last_seen_at`, incremented `message_count`, `source = 'inbound_harvest'`. **`include_in_cc` is never set automatically**; harvesting builds the directory, a human decides who may be CC'd on outreach (§7.3.7). An address carrying `opted_out_at` is updated for recency but never re-enabled — for live messages only; backfilled rows (`is_historical = true`) start no clock
 
 **Everything is ingested into one unified feed** — customer enquiries and automated airline notices alike. Nothing is dropped; classification decides what reaches the operational queue, not what gets saved.
 
@@ -857,10 +953,44 @@ Pre-defined milestone emails keep clients informed without adding manual workloa
 |---|---|---|
 | `Intake` | *"Hi [Client Contact], I am [User Name], I will be servicing you today to fetch you quick rates."* | — |
 | `AI Extraction` | *"Your extraction is under process powered by f16s."* | — |
-| `Sent to Airline` | *"Please find attached the compiled Master Air Waybill along with all associated House Air Waybills for your shipment."* | Compiled MAWB PDF + every HAWB PDF under the job |
+| **`Generation`** *(draft saved)* | *"Your draft [MAWB / HBL] is ready for review. Please confirm the details or tell us what to change."* | **A secure link, not a file** — see below |
+| `Sent to Airline` | *"Please find attached the compiled Master Air Waybill along with all associated House Air Waybills for your shipment."* | Compiled MAWB PDF + every HAWB PDF under the job *(may also be sent as links)* |
 | Re-initiation | Fresh re-quoted rate after a cancelled shipment | — |
 
 Each renders as a prompt in the conversation feed with **`[Accept & Send]`** / **`[Reject]`**. Endpoint: `POST /api/jobs/{id}/confirm-notification`.
+
+##### Document links instead of attachments
+
+Operations generates a document, clicks **`[Generate Link]`**, and the consent engine stages a message carrying that **link** rather than a file. This removes the download → re-attach → re-send cycle that today repeats on every revision, and it means a corrected document is seen at the *same* URL instead of the client hunting for the newest attachment in a thread.
+
+**What a link is** (`document_share_links`, §10):
+
+| Property | Rule |
+|---|---|
+| Token | 256-bit CSPRNG, stored **only as a SHA-256 hash** — the raw value exists in the URL alone |
+| Expiry | **Mandatory**, default +14 days. An unauthenticated document URL is never permanent |
+| Revocation | `[Revoke]` kills it instantly, independent of expiry |
+| Scope | **Exactly one document.** Never the job, never the client's other shipments, never any pricing |
+| Audit | `first_viewed_at`, `view_count` — proof the client actually opened it |
+| Indexing | Served `noindex, nofollow`, rate-limited, no directory listing |
+
+**Approval mode.** A link created with `requires_approval = true` gives the client two buttons on the document page:
+
+```
+┌─ Draft Master Air Waybill · JOBA-26-0001 ────────────┐
+│                  [ PDF preview ]                     │
+│  Your name  [                    ]                   │
+│  ─────────────────────────────────────────────────── │
+│  [ Request changes ]          [ Approve document ]   │
+└──────────────────────────────────────────────────────┘
+```
+
+- **Approve** → stamps `approved_at`, `approver_name`, `approver_email`; a bell notification tells the operator the draft is cleared to transmit.
+- **Request changes** → captures `client_comment`, sets `changes_requested`, and raises a bell notification carrying the client's words verbatim.
+
+Either response lands on the **existing email thread** for that job, so the approval is part of the conversation rather than a detached event.
+
+> **The client is not a system user.** They never log in, never see a dashboard, and never reach anything but the one document. `approver_name` is typed by them and `approver_email` is captured for audit and matched against `customer_contacts` — it is evidence of who approved, not authentication.
 
 > [!WARNING]
 > **Mandatory operator consent.** The system must **NEVER** auto-dispatch any email or attachment to a client without explicit operator acceptance. This is enforced in `ClientNotificationService`, not just in the UI. Sending the wrong document to a client is unrecoverable.
@@ -1581,14 +1711,68 @@ Hard rules:
 
 ≈600 tokens in, ≈250 out. A 500-client book is roughly **7 minutes** of nightly batch on the `t4g.large` — versus computationally impossible if fed raw rows.
 
-#### 7.3.7 Tier mapping
+#### 7.3.7 Two audiences — internal findings vs client outreach
+
+The engine produces **two kinds of finding**, and they must never mix.
+
+| | **Internal** | **Client** |
+|---|---|---|
+| Example | *"Enquiries handled by R. Kumar lose 3× more often on `delay_in_response`"* · *"Our clearance on this account runs 2.1 days slower than branch median"* | *"Globex's air conversion has fallen to 31 % and three shipments were cancelled this quarter"* |
+| Audience | Sales rep, pricing, Boss | The client, via email |
+| Produces | A dashboard card only | A dashboard card **and a drafted email** |
+| `sales_action_queue.audience` | `internal` | `client` |
+
+> #### 🔒 The firewall
+> **An `internal` finding can never generate a client draft.** This is enforced by a database `CHECK` — `draft_subject`, `draft_body`, `draft_to` and `draft_cc` must all be NULL unless `audience = 'client'` — not by prompt instructions or reviewer diligence.
+>
+> The failure this prevents is unrecoverable: emailing a client that their account is at risk *because our own staff member responds too slowly* discloses an internal performance problem to the counterparty it affects. No amount of drafting care substitutes for making the column combination impossible to store.
+
+##### Client outreach drafts
+
+For `audience = 'client'` rows the engine composes a **ready-to-send professional email**, written in the rep's voice so the client experiences it as a personal message, not an automated report.
+
+**Recipients** are resolved from `customer_contacts` at generation time and **snapshotted** into `draft_to` / `draft_cc`:
+
+```
+To:  primary contact for that branch      (is_primary = true)
+Cc:  customer_contacts WHERE customer_id = ?
+       AND include_in_cc = true
+       AND opted_out_at IS NULL
+```
+
+- **`include_in_cc` defaults to FALSE.** Addresses are harvested automatically from inbound mail; **being CC'd is always a human decision.** Harvesting everything seen on a `@globex.com` thread eventually collects departed staff, personal addresses, customs brokers and competitors CC'd once on a quote.
+- **`opted_out_at` is absolute** — it overrides `include_in_cc` unconditionally (DPDP Act 2023, §9.3).
+- The snapshot means the rep sees **exactly who will receive it** before sending; later contact-list edits never silently change an already-drafted email.
+
+**Content rules** — the draft is assembled from pre-computed facts, with Gemma writing prose only (§7.3.6 still applies — it may not derive, sum or compare):
+
+| Must contain | Must never contain |
+|---|---|
+| The client's own figures (conversion %, cancellations, tonnage trend, lanes) | **Any internal finding** — staff names, our SLA failures, our latency |
+| A specific, factual observation | **Margin, buy-side cost, or another client's data** |
+| One clear ask — a call, a rate review, a volume conversation | Accusatory framing |
+
+> **Tone is a product requirement, not a style preference.** *"Your cancellation rate is unacceptable"* damages a commercial relationship. The same fact framed as *"we've seen three cancellations this quarter against your usual pattern — worth a short call to understand what changed?"* opens one. The draft is a **conversation opener**, and the prompt template must enforce that.
+
+##### Send flow
+
+1. Card appears at the top of the sales dashboard (§7.4)
+2. Rep clicks the ✉ icon → editor popup with subject, body, To/Cc chips
+3. Rep edits freely — **nothing is pre-approved**
+4. `[Send]` dispatches through the rep's own connected mailbox, so it is genuinely from them
+5. **A real `email_threads` row is created** and `sent_thread_key` recorded — replies land in the unified inbox and the outreach becomes a two-way conversation, not a broadcast
+6. `sent_at` / `sent_by` stamped; the card moves to `acted`
+
+> **The existing consent rule applies unchanged** (§5.7): nothing reaches a client without explicit operator approval. This feature drafts; the human sends.
+
+#### 7.3.8 Tier mapping
 
 - **Tactical** — algorithms run at **branch aggregate within the active mode**, no client attribution: lane momentum, branch win rate by lane, loss-reason mix, consolidation candidates, capacity/OLI. Gemma narrates a branch brief.
 - **Command** — the same algorithms partitioned by `customers.sales_id = me`, **plus** cadence/churn, payment behaviour, per-client ops scorecard, whitespace, the NBA queue and per-client talking points.
 
 > Tactical says *the branch's* FRA lane is softening. Command says *which three accounts* caused it and what to say to them.
 
-#### 7.3.8 Build sequence
+#### 7.3.9 Build sequence
 
 1. **Close the recording gaps first** (§7.3.3) — trailing history cannot be reconstructed later.
 2. Ship `CargoDataPromotionService` and the mode-specific regex rule sets; verify lanes land on **lost** enquiries, not just converted ones.
@@ -1623,6 +1807,18 @@ Every Tactical chart re-rendered over the rep's own clients, **plus**:
 - **Client volume & wallet-share leaderboards** — accounts sorted by tonnage alongside billed revenue, exposing *high-volume/low-revenue* accounts (rate renegotiation targets) and *low-volume/high-revenue* accounts (expansion candidates)
 - **AI account tools** — on-demand per-customer summary plus the weekly opportunity/reactivation/churn-risk feed
 - **Today's Actions** — the ranked top-5 from `sales_action_queue`, rendered **above** the charts
+
+#### Multi-branch attribution — what happens when a domain matches several branches
+
+Because the domain is the group key, an inbound sender can legitimately match **more than one** `customers` row. The resolution rule:
+
+| Domain matches | `enquiries.customer_id` / `sales_id` | Operator experience |
+|---|---|---|
+| **Exactly one** branch | Auto-attributed, as today | Nothing changes |
+| **Several** branches (a group) | Left **NULL** — the system does not guess | At triage the operator picks the branch from a dropdown listing **only that group's branches**; selecting it stamps `customer_id` and inherits `sales_id` |
+| **None** | Left NULL | Sits in the shared **Unattributed** bucket until accounts registers the customer |
+
+> **The system never guesses which branch.** Picking wrong assigns the enquiry — and its revenue, tonnage and commission — to the wrong sales rep. A one-click dropdown at triage is cheaper than an attribution dispute at month-end. Until the operator chooses, the enquiry behaves exactly like any other unattributed one, which the Unattributed bucket already handles.
 
 #### Attribution chain — how an AWB traces back to a sales rep
 
@@ -1713,6 +1909,7 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | **LLM prompts** | Bake system prompts and Pydantic schemas into the Ollama `Modelfile` (`ollama create gemma-custom -f ./Modelfile`); use Gemini context caching (300 s TTL) for vision requests. Cuts prompt token cost by up to 80% |
 | **Model residency** | `OLLAMA_KEEP_ALIVE=-1` keeps the model permanently in RAM |
 | **Email sync** | Microsoft delta queries + Google history IDs; attachments downloaded lazily. Keeps `mailboxes:poll` under 1–2 s per run |
+| **Mailbox backfill** | Onboarding-only, on its own Horizon queue so a 10,000-message backfill never starves live polling. `$select` trimmed to normalized fields, `$batch` at 20 reads per request, exponential backoff honouring `Retry-After`, metadata only — no attachment binaries |
 | **Indexing** | Single-column on `inbound_emails.message_id`, `email_threads.thread_key`, `manifest_filings.icegate_id`, `jobs.transport_mode`, `pdf_processing_jobs.status`. Composite on `email_threads(agent_id, status, latest_message_received_at)`, `jobs(agent_id, transport_mode, status)`, `jobs(ops_id, planned_clearance_date)`, `accounts_ledger_entries(agent_id, posting_date, chart_of_account_id)`, `customers(company_id, email_domain)`, `customers(company_id, sales_id)` |
 | **Aggregation** | Never run `COUNT`/`SUM`/`AVG` on live transactional tables for dashboards. Read the funnel views, `financial_snapshots`, or the engine tables — all maintained by background jobs |
 | **N+1 prevention** | Enforce eager loading: `EmailThread::with(['assignedOperator','job'])`, `Job::with(['client','operator','waybill','entities','containers'])`, `Invoice::with(['client','items'])` |
@@ -1804,14 +2001,14 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 
 ## 10. Data Model Inventory
 
-**Full schema, columns, foreign keys, indexes and DDL live in [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md).** This section is the verified inventory only — **56 tables**, grouped by concern. Do not add table definitions here.
+**Full schema, columns, foreign keys, indexes and DDL live in [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md).** This section is the verified inventory only — **58 tables**, grouped by concern. Do not add table definitions here.
 
 | Group | Tables |
 |---|---|
-| **Tenancy & parties** | `companies`, `agents_info`, `users`, `customers`, `partners`, `ports` |
+| **Tenancy & parties** | `companies`, `agents_info`, `users`, `customers`, `customer_contacts`, `partners`, `ports` |
 | **Lifecycle** | `enquiries`, `jobs` |
 | **Mode-specific operations** | `air_shipment_details`, `sea_shipment_details`, `air_way_bills`, `house_way_bills`, `sea_containers`, `sea_container_items` |
-| **Shipment support** | `job_entities`, `job_documents`, `cargo_arrival_notices`, `manifest_filings`, `milestone_performance_logs` |
+| **Shipment support** | `job_entities`, `job_documents`, `document_share_links`, `cargo_arrival_notices`, `manifest_filings`, `milestone_performance_logs` |
 | **Inbox & classification** | `mailbox_connections`, `inbound_emails`, `inbound_attachments`, `email_threads`, `email_classification_rules`, `email_classification_overrides` |
 | **AI / extraction** | `pdf_processing_jobs`, `pdf_extraction_corrections`, `llm_usage_logs`, `ocr_credit_transactions` |
 | **Receivables** | `accounts_invoices`, `accounts_invoice_items`, `accounts_invoice_brokerage_details`, `accounts_invoice_consol_details` |

@@ -93,9 +93,10 @@ No inbound foreign key dependencies; these run absolutely first.
 3. **Alter `companies`** — add `tier`, `email_domain`, `ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit`
 4. **Create `customers`** — including tax/address/banking fields, `payment_terms_days`, `credit_limit`
    - Add composite indexes **`(company_id, email_domain)`** and **`(company_id, sales_id)`**. The first is hit on *every inbound mail*; the second on *every sales-dashboard query*. Adding them later means a table scan on the hottest paths in the product.
-5. **Create `partners`** — airlines, shipping lines, brokers, transporters, vendors
-6. **Alter `users`** — add `origin_port_id`, `pima_address`, `designation`, `signature_text`
-7. **Alter `air_way_bills` & `house_way_bills`** — add `uuid`, `job_id`
+5. **Create `customer_contacts`** — the per-client address book (FK → `companies`, `customers`). Unique `(customer_id, email)`; index `(customer_id, include_in_cc, opted_out_at)` for the outreach CC lookup. **`include_in_cc` defaults to FALSE** — harvesting is automatic, CC'ing is a human decision
+6. **Create `partners`** — airlines, shipping lines, brokers, transporters, vendors
+7. **Alter `users`** — add `origin_port_id`, `pima_address`, `designation`, `signature_text`
+8. **Alter `air_way_bills` & `house_way_bills`** — add `uuid`, `job_id`
 
 **Encrypt at rest:** `bank_account_no` and `bank_ifsc_code` on both `customers` and `partners`, via the Eloquent `encrypted` cast.
 
@@ -131,18 +132,19 @@ No inbound foreign key dependencies; these run absolutely first.
    - Add `idx_jobs_ops_clearance` on `(ops_id, planned_clearance_date)` — the OLI query depends on it
 3. `mailbox_connections`, `inbound_emails`, `inbound_attachments`
 4. **`email_threads`** — FKs to `agents_info`, `users`, **`enquiries`** *and* `jobs`. The thread spans both lifecycles: `enquiry_id` is set at triage, `job_id` added on conversion, and **both stay NULL** for airline/clearance/trucking mail. Include `first_response_at` (first **outbound** reply — distinct from `first_triage_at`, which is internal triage, not a reply)
-5. `job_documents`, `milestone_performance_logs`
-6. **`audit_logs`** — register the append-only `BEFORE UPDATE OR DELETE` trigger here
-7. `sea_containers`, `sea_container_items`, `cargo_arrival_notices`
-8. **`job_entities`** — polymorphic `party_type`/`party_id` → `customers.id` or `partners.id`. Uses a generated virtual column `unique_role_gate` to enforce partial uniqueness on `(job_id, role)` **except** for `notify_party`, which may repeat
-9. `sea_shipment_details` (carrier/haulage FKs → `partners.id`), `air_shipment_details`
-10. `llm_usage_logs`, `pdf_processing_jobs` — **both carry `enquiry_id` *and* `job_id`**. Extraction normally runs pre-conversion at status step 2, so `enquiry_id` is the common case. Without one of them the parsed payload is orphaned and cargo promotion is impossible. Index both
-11. `rate_cards`, `exchange_rates`, `sla_policies`
-12. `manifest_filings`, `approved_drafts_queue`, `operational_cover_letters`
-13. `email_classification_rules`, `email_classification_overrides`
-14. `ocr_credit_transactions` (→ `companies`, `enquiries`, `jobs`), `pdf_extraction_corrections`
-15. `support_tickets`
-16. **`notifications`** — UUID PK, includes the `priority` column so reassignment-approval requests pin to the top of the bell
+5. `job_documents`, then **`document_share_links`** (FK → `job_documents` CASCADE, `jobs`, `users`). `expires_at` is **NOT NULL**; unique on `token_hash`
+6. `milestone_performance_logs`
+7. **`audit_logs`** — register the append-only `BEFORE UPDATE OR DELETE` trigger here
+8. `sea_containers`, `sea_container_items`, `cargo_arrival_notices`
+9. **`job_entities`** — polymorphic `party_type`/`party_id` → `customers.id` or `partners.id`. Uses a generated virtual column `unique_role_gate` to enforce partial uniqueness on `(job_id, role)` **except** for `notify_party`, which may repeat
+10. `sea_shipment_details` (carrier/haulage FKs → `partners.id`), `air_shipment_details`
+11. `llm_usage_logs`, `pdf_processing_jobs` — **both carry `enquiry_id` *and* `job_id`**. Extraction normally runs pre-conversion at status step 2, so `enquiry_id` is the common case. Without one of them the parsed payload is orphaned and cargo promotion is impossible. Index both
+12. `rate_cards`, `exchange_rates`, `sla_policies`
+13. `manifest_filings`, `approved_drafts_queue`, `operational_cover_letters`
+14. `email_classification_rules`, `email_classification_overrides`
+15. `ocr_credit_transactions` (→ `companies`, `enquiries`, `jobs`), `pdf_extraction_corrections`
+16. `support_tickets`
+17. **`notifications`** — UUID PK, includes the `priority` column so reassignment-approval requests pin to the top of the bell
 
 > **Do not defer the analytics columns.** `enquiries.quoted_amount`/`quoted_currency`, `origin_code`/`dest_code`, `cargo_data_source`/`cargo_data_promoted_at`, and `email_threads.first_response_at` ship **now**, with the table. Trailing history cannot be reconstructed later — every day they are missing is a permanently blind day (see `PRD.md` §7.3.3).
 
@@ -197,6 +199,9 @@ Create Eloquent models in the **root `app/` directory under namespace `App`**, m
 
 - **`Enquiry`** — belongsTo `Customer` (client) and `User` (operator, owner); **hasMany `Job`** (one request may confirm as several shipments); hasMany `EmailThread`, `PdfProcessingJob`. Scopes: `scopeLost()`, `scopeConverted()`, `scopeStale()`, `scopeForActivePortal()`
 - **`Job`** — **belongsTo `Enquiry` (required)**; belongsTo `Customer`, `User` as ops user / pending ops user / pricing owner; belongsTo self as parent consolidation; hasOne `SeaShipmentDetail`, hasOne `AirShipmentDetail`; hasMany invoices, vouchers, entities, containers, documents
+- **`Customer`** — belongsTo `Company`; hasMany `CustomerContact`, `Job`, `AccountsInvoice`. Scope `scopeGroup()` returns every customer sharing `(company_id, email_domain)` — the derived client group (`PRD.md` §2.2); there is **no** `parent_customer_id`
+- **`CustomerContact`** — belongsTo `Customer`. Scope `scopeCcEligible()` = `include_in_cc = true AND opted_out_at IS NULL`. **Never** set `include_in_cc` from harvesting code
+- **`DocumentShareLink`** — belongsTo `JobDocument`, `Job`, `User` (creator). Scope `scopeLive()` = `revoked_at IS NULL AND expires_at > now()`. Accessor generates the raw token **once** on create and stores only its SHA-256
 - **`AccountsInvoice`** — belongsTo `Customer` as client, morphTo `billedParty`, belongsTo self as parent (debit/credit notes), hasMany items
 - **`AccountsPurchaseVoucher`** — belongsTo `Partner` as vendor, hasMany items
 

@@ -381,6 +381,8 @@ For production and staging deployments, an independent backup helper container r
   cargo_type                 | VARCHAR(20)  |     | (Authoritative: General, Hazmat, Perishable, ULD, FCL, LCL)
   consol_type                | VARCHAR(20)  |     | (Authoritative: agent_consol, buyers_consol, direct, none)
   delivery_mode              | VARCHAR(20)  |     | (Authoritative: door-to-door, port-to-port, etc.)
+  booking_thru               | VARCHAR(20)  |     | (self, agent — dictates commission routing / profit
+                             |              |     |  share on the Charges tab. Focus Sea header field)
   planned_clearance_date     | DATE         |     | (Clearance schedule tracker)
   awb_number                 | VARCHAR(20)  |     | (AIR only. Sea shipments carry MBL/HBL on
                              |              |     |  sea_shipment_details and never populate this.)
@@ -1608,6 +1610,7 @@ CREATE TABLE jobs (
     cargo_type VARCHAR(20) NULL, -- denormalized from enquiry; operationally authoritative once confirmed
     consol_type VARCHAR(20) NULL,
     delivery_mode VARCHAR(20) NULL,
+    booking_thru VARCHAR(20) NULL, -- self | agent; drives commission routing on the Charges tab
     planned_clearance_date DATE NULL,
     awb_number VARCHAR(20) NULL, -- AIR only. Sea carries MBL/HBL on sea_shipment_details.
     pickup_address VARCHAR(500) NULL,

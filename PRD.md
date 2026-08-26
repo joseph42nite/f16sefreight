@@ -626,7 +626,7 @@ On successful connection the callback dispatches a queued `BackfillMailboxJob`:
 
 Replaying 60 days of mail through the unmodified ingest pipeline would start an SLA countdown on every historical thread, propose enquiries from two-month-old messages, and fire a notification per thread — presenting the client, at first login, with thousands of unread items and hundreds of already-breached SLAs. That is a self-inflicted denial of service on the ops team it is meant to serve.
 
-Every row written by the backfill is stamped `inbound_emails.is_historical = true`, and that flag suppresses:
+Every row written by the backfill is stamped `email_messages.is_historical = true`, and that flag suppresses:
 
 | Suppressed | Still runs |
 |---|---|
@@ -640,10 +640,10 @@ Backfilled threads land as `status = 'archived'` — fully searchable, correctly
 
 ##### Background polling
 
-`php artisan mailboxes:poll`, scheduled **every minute**:
+`php artisan mailboxes:poll`, the **reconciliation sweep every 15 minutes**. Live sync is driven by **push** — Gmail Pub/Sub and Graph change notifications registered at connect time. Polling exists to catch what push missed, not to be the mechanism:
 
 - Gmail → `users.history.list` (mailbox-wide across labels incl. `SENT`); Outlook → `/me/messages/delta` (**not** `/mailFolders/inbox/...`)
-- Normalizes headers (from/to, subject, body, attachments), computes the `thread_key`, upserts `email_threads` and `inbound_emails`, indexes `inbound_attachments`
+- Normalizes headers (from/to, subject, body, attachments), computes the `thread_key`, upserts `email_threads` and `email_messages`, indexes `email_attachments`
 - **Delta syncing:** Microsoft delta queries and Google history IDs so only *new* mail is fetched — never a full mailbox scan. The cursor is persisted on `mailbox_connections.sync_cursor`, seeded by the initial backfill and rewritten after every successful page. Polling skips any connection whose `backfill_status` is not `completed`
 - **Cursor expiry:** a `410 Gone` (Microsoft) or an invalid `historyId` (Google) means the cursor has aged out. The connection re-enters a bounded backfill from `last_synced_at` rather than re-scanning the mailbox, and `message_id` uniqueness makes the replay idempotent
 - **Lazy attachments:** binary files are downloaded to storage only when a user actually initiates parsing or opens the extraction tab
@@ -680,7 +680,7 @@ The portal is intended to **replace** Outlook and Gmail for freight work, not si
 | **Microsoft** | `GET /me/messages/delta` — **mailbox-wide**, not `/mailFolders/inbox/messages/delta`. Covers Inbox and Sent Items under one cursor |
 | **Google** | `users.history.list` is already mailbox-wide across labels including `SENT`. The initial backfill must use `in:anywhere`, **not** the default inbox-scoped query |
 
-Ingested messages carry `inbound_emails.direction` (`inbound` / `outbound`), so a thread shows the true back-and-forth regardless of where each message was typed.
+Ingested messages carry `email_messages.direction` (`inbound` / `outbound`), so a thread shows the true back-and-forth regardless of where each message was typed.
 
 ##### Thread matching — three tiers, native ID first
 
@@ -699,7 +699,7 @@ Tier 1 is what makes the Outlook-typed reply land correctly: Graph returns the s
 A message sent through the portal lands in the user's Sent folder and returns on the next sync. Without a guard it becomes a duplicate.
 
 1. On send, the provider returns its message id — persist it immediately with `sent_via_portal = true`.
-2. `inbound_emails.message_id` is **UNIQUE**, so the echo is an idempotent upsert, not an insert.
+2. `email_messages.message_id` is **UNIQUE**, so the echo is an idempotent upsert, not an insert.
 3. The upsert refreshes delivery metadata but **never** re-fires classification, SLA timers or notifications.
 
 ##### Read and archive state flows both ways
@@ -718,7 +718,7 @@ A message sent through the portal lands in the user's Sent folder and returns on
 | Capability | Notes |
 |---|---|
 | **Compose new** | To a customer, carrier, broker or any address. Optionally linked to an enquiry/job, optionally standalone |
-| **Forward** | Re-attaches original files from `inbound_attachments` — no re-download |
+| **Forward** | Re-attaches original files from `email_attachments` — no re-download |
 | **Cc / Bcc** | Cc contacts resolve from `customer_contacts`; **Bcc is never auto-populated** |
 | **Outbound attachments** | From `job_documents`, from the thread, or uploaded. 25 MB provider cap — larger payloads fall back to a `document_share_links` URL (§5.7) |
 | **Drafts** | Stored **locally**, not via `gmail.compose`. Keeps the scope set narrower and drafts private until sent |
@@ -1599,7 +1599,7 @@ Layers 1–2 are deterministic, unit-testable and reproducible. **Layer 3 is dis
 These cannot be retro-fitted usefully — the models need trailing history, so **every day they are missing is a permanently blind day**:
 
 - 🔴 **`enquiries.quoted_amount` + `quoted_currency`.** `quotation_no` is only a reference string. Without the amount, `lost_reason = 'rates_high'` records *that* we lost on price but never *by how much* — so price elasticity, "how close were we", and any defensible renegotiation target are uncomputable. `rates_high` is the most common loss reason; this is the **highest-value column in this document**.
-- 🔴 **`email_threads.first_response_at`.** The table records `latest_message_received_at` (inbound) and `first_triage_at` (internal triage, *not* a reply), and `inbound_emails` stores inbound mail only — outbound replies are never timestamped. True response latency is therefore unmeasurable, which is exactly the accusation `lost_reason = 'delay_in_response'` makes. **We can currently neither prove nor disprove our own service failures.**
+- 🔴 **`email_threads.first_response_at`.** The table records `latest_message_received_at` (inbound) and `first_triage_at` (internal triage, *not* a reply), and `email_messages` stores inbound mail only — outbound replies are never timestamped. True response latency is therefore unmeasurable, which is exactly the accusation `lost_reason = 'delay_in_response'` makes. **We can currently neither prove nor disprove our own service failures.**
 - 🟡 **`enquiries.origin_code` / `dest_code`** and **`pdf_processing_jobs.enquiry_id`** — without the latter, the extraction is orphaned and no cargo promotion is possible.
 - 🟡 Lower priority: invoices carry no `paid_at` (DSO is derivable through `bank_transactions.matched_invoice_id`, just a heavier join).
 
@@ -2042,13 +2042,14 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | **PDF processing** | Never write uploads to disk on the FastAPI server — `fitz.open(stream=…)` processes the binary buffer in memory, eliminating disk I/O |
 | **LLM prompts** | Bake system prompts and Pydantic schemas into the Ollama `Modelfile` (`ollama create gemma-custom -f ./Modelfile`); use Gemini context caching (300 s TTL) for vision requests. Cuts prompt token cost by up to 80% |
 | **Model residency** | `OLLAMA_KEEP_ALIVE=-1` keeps the model permanently in RAM |
-| **Email sync** | Microsoft delta queries + Google history IDs; attachments downloaded lazily. Keeps `mailboxes:poll` under 1–2 s per run |
+| **Email sync** | **Push-primary** (Pub/Sub / Graph subscriptions), 15-minute reconciliation sweep behind it. Delta cursors + lazy attachments. Minute-polling 1,000 mailboxes would be ~1.44 M mostly-empty calls/day; push cuts that to near zero *and* drops latency from ≤60 s to ~1 s |
 | **Mailbox backfill** | Onboarding-only, on its own Horizon queue so a 10,000-message backfill never starves live polling. `$select` trimmed to normalized fields, `$batch` at 20 reads per request, exponential backoff honouring `Retry-After`, metadata only — no attachment binaries |
-| **Indexing** | Single-column on `inbound_emails.message_id`, `email_threads.thread_key`, `manifest_filings.icegate_id`, `jobs.transport_mode`, `pdf_processing_jobs.status`. Composite on `email_threads(agent_id, status, latest_message_received_at)`, `jobs(agent_id, transport_mode, status)`, `jobs(ops_id, planned_clearance_date)`, `accounts_ledger_entries(agent_id, posting_date, chart_of_account_id)`, `customers(company_id, email_domain)`, `customers(company_id, sales_id)` |
+| **Indexing** | Single-column on `email_messages.message_id`, `email_threads.thread_key`, `manifest_filings.icegate_id`, `jobs.transport_mode`, `pdf_processing_jobs.status`. Composite on `email_threads(agent_id, status, latest_message_received_at)`, `jobs(agent_id, transport_mode, status)`, `jobs(ops_id, planned_clearance_date)`, `accounts_ledger_entries(agent_id, posting_date, chart_of_account_id)`, `customers(company_id, email_domain)`, `customers(company_id, sales_id)` |
 | **Aggregation** | Never run `COUNT`/`SUM`/`AVG` on live transactional tables for dashboards. Read the funnel views, `financial_snapshots`, or the engine tables — all maintained by background jobs |
 | **N+1 prevention** | Enforce eager loading: `EmailThread::with(['assignedOperator','job'])`, `Job::with(['client','operator','waybill','entities','containers'])`, `Invoice::with(['client','items'])` |
 | **Partitioning** | **Do NOT** use MySQL range/list partitioning on InnoDB tables — it does not support foreign keys, and integrity matters more than the marginal scan gain. Rely on snapshots + heavy indexing instead |
-| **Queues** | Dispatch email parsing, PDF compilation, CASS tallies, audit logging and roll-ups to Horizon workers. Target HTTP response under 100 ms |
+| **Queues** | **Seven named queues, priority-ordered** — `notifications` → `sync` → `mail-out` → `documents` → `ocr` → `backfill` → `analytics`. A single shared queue puts a 30 s OCR job in front of a 1 s mail sync and mail arrives minutes late for invisible reasons. Sizing and worker counts in `implementation_guide.md` §4.10. Target HTTP response under 100 ms |
+| **Message bodies** | Offloaded to object storage; only `body_snippet` (500 chars) is inline. At ~50 KB/message × 1,000 mailboxes this is **~900 GB/year** — inline `LONGTEXT` would make backup, restore and any `ALTER` on that table progressively unusable. Thread lists read the snippet; the full body is fetched on open and cached 24 h |
 
 ### 9.2 Security & Tenancy
 
@@ -2143,7 +2144,7 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | **Lifecycle** | `enquiries`, `jobs` |
 | **Mode-specific operations** | `air_shipment_details`, `sea_shipment_details`, `air_way_bills`, `house_way_bills`, `sea_containers`, `sea_container_items` |
 | **Shipment support** | `job_entities`, `job_documents`, `document_share_links`, `cargo_arrival_notices`, `manifest_filings`, `milestone_performance_logs` |
-| **Inbox & classification** | `mailbox_connections`, `inbound_emails`, `inbound_attachments`, `email_threads`, `email_classification_rules`, `email_classification_overrides` |
+| **Inbox & classification** | `mailbox_connections`, `email_messages`, `email_attachments`, `email_threads`, `email_classification_rules`, `email_classification_overrides` |
 | **AI / extraction** | `pdf_processing_jobs`, `pdf_extraction_corrections`, `llm_usage_logs`, `ocr_credit_transactions` |
 | **Receivables** | `accounts_invoices`, `accounts_invoice_items`, `accounts_invoice_brokerage_details`, `accounts_invoice_consol_details` |
 | **Payables** | `accounts_purchase_vouchers`, `accounts_purchase_items` |

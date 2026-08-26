@@ -1025,7 +1025,21 @@ Left sub-nav within `/settings`. A section a login does not own is **absent, not
 | SLA policies | Boss | Minutes per tier |
 | Workload / OLI | Boss | Complexity coefficients, α, β, urgency multipliers, cap — with a **live worked example** recomputing as values change |
 | Finance | Accounts | Chart of accounts tree · rate cards · bank-to-branch mapping |
-| Mailboxes | Every user | Connected accounts, provider buttons, health. On domain rejection, show the tenant's allowed suffixes explicitly |
+| Mailboxes | Every user | Connected accounts, provider buttons, health — five states below |
+
+#### Mailbox connection states (`/settings/mailboxes`)
+
+`mailbox_connections.auth_state` drives this directly. Each state is a **first-class UI state, never an error toast** — a user who hits an undiagnosed dead end on their first onboarding screen raises a ticket instead of self-serving.
+
+| State | Renders |
+|---|---|
+| `not_connected` | `[Connect Outlook]` / `[Connect Gmail]` |
+| `awaiting_admin_consent` | `--status-warning` · plain-language explanation · the generated admin-consent URL with `[Copy]` · **`[Email this to your IT admin]`**. This is the *expected* first outcome for most Microsoft 365 tenants, not a failure |
+| **backfilling** | `--status-info` progress bar: **"Importing history — 1,240 of ~3,500"** from `backfill_processed` / `backfill_estimate`. **The mailbox is usable meanwhile** — messages appear as pages commit, so the screen is never empty |
+| `connected` | `--status-success` · address · last-synced timestamp · `[Disconnect]` |
+| `reauth_required` | `--status-critical` · **"Reconnect required — sync is paused"** · `[Reconnect]`. Never let a broken connection look like "no new mail" |
+
+**Interrupted import recovers silently.** If the client's connection drops mid-backfill the bar simply stops advancing and resumes on the next run from `backfill_page_cursor` — no error, no user action, no restart from zero. If it fails repeatedly, `backfill_attempts` escalates the state to `reauth_required` rather than looping invisibly.
 
 ## 10. Forms & Validation
 

@@ -163,7 +163,7 @@ For production and staging deployments, an independent backup helper container r
 ```
 
 ### 1c. `customer_contacts` (PK: `id`)
-*The per-client address book. Harvested from inbound mail and curated by staff — this is what the AI outreach engine CCs. `inbound_emails.from` is a raw log; **this** is the directory.*
+*The per-client address book. Harvested from inbound mail and curated by staff — this is what the AI outreach engine CCs. `email_messages.from` is a raw log; **this** is the directory.*
 
 ```text
   Column          | Type          | Key | Connection Links
@@ -522,7 +522,7 @@ For production and staging deployments, an independent backup helper container r
   updated_at            | TIMESTAMP    |     |
 ```
 
-**Backfill contract.** On OAuth callback the row is written with `backfill_status = 'pending'` and `backfill_from = now() - 60 days`, and `BackfillMailboxJob` is queued. It pages history into `inbound_emails` with `is_historical = true`, commits the terminal cursor to `sync_cursor`, then sets `backfill_status = 'completed'`. Only then does `mailboxes:poll` pick the connection up. A `failed` backfill is retryable from `MailboxSettings.vue` without re-authorization — the tokens are already valid.
+**Backfill contract.** On OAuth callback the row is written with `backfill_status = 'pending'` and `backfill_from = now() - 60 days`, and `BackfillMailboxJob` is queued. It pages history into `email_messages` with `is_historical = true`, commits the terminal cursor to `sync_cursor`, then sets `backfill_status = 'completed'`. Only then does `mailboxes:poll` pick the connection up. A `failed` backfill is retryable from `MailboxSettings.vue` without re-authorization — the tokens are already valid.
 
 ### 11. `email_threads` (PK: `id`)
 ```text
@@ -535,7 +535,7 @@ For production and staging deployments, an independent backup helper container r
                               |              |     |  lifecycles. NULL together with job_id for airline /
                               |              |     |  clearance / trucking mail, which consumes no enquiry_no)
   job_id                      | BIGINT       | FK  | ◄── jobs.id (added on conversion; NULL pre-conversion)
-  thread_key                  | VARCHAR(255) | UK  | ──► inbound_emails.thread_key
+  thread_key                  | VARCHAR(255) | UK  | ──► email_messages.thread_key
   provider_thread_id          | VARCHAR(255) | IDX | (Gmail threadId / Graph conversationId — matched
                               |              |     |  first, before any header or subject heuristic)
   read_state_synced_at        | TIMESTAMP    |     | (Last push of read/archive state upstream. The
@@ -550,11 +550,12 @@ For production and staging deployments, an independent backup helper container r
   updated_at                  | TIMESTAMP    |     |
 ```
 
-### 12. `inbound_emails` (PK: `id`)
+### 12. `email_messages` (PK: `id`)
+*Every message on a thread, **both directions**. Renamed from `inbound_emails` — the Sent folder is synced too, so this holds the whole conversation. Bodies live in object storage; only a snippet is inline.*
 ```text
   Column                | Type         | Key | Connection Links
   ----------------------|--------------|-----|----------------------------------------
-  id                    | BIGINT       | PK  | ──► inbound_attachments.inbound_email_id
+  id                    | BIGINT       | PK  | ──► email_attachments.email_message_id
   agent_id              | BIGINT       | FK  | ◄── agents_info.id (Branch-level tenant isolation)
   mailbox_connection_id | BIGINT       | FK  | ◄── mailbox_connections.id (Cascade delete)
   thread_key            | VARCHAR(255) | IDX | ──► email_threads.thread_key (Composite index)
@@ -563,16 +564,23 @@ For production and staging deployments, an independent backup helper container r
                         |              |     |  header-chain matching is only the fallback
   direction             | VARCHAR(10)  |     | (inbound | outbound. The Sent folder is synced too, so a
                         |              |     |  reply typed in Outlook appears on the portal thread.
-                        |              |     |  NOTE: makes the table name a slight misnomer — it holds
-                        |              |     |  the whole conversation, not only inbound mail)
+                        |              |     |  Set from the folder/label the message was synced from)
   sent_via_portal       | BOOLEAN      |     | (TRUE when we sent it — set at send time from the provider's
                         |              |     |  returned id, so the sync echo is recognised, not duplicated)
   message_id            | VARCHAR(255) | UK  |
   from                  | VARCHAR(255) |     |
   to                    | VARCHAR(255) |     |
   subject               | VARCHAR(255) |     |
-  body_text             | LONGTEXT     |     |
-  body_html             | LONGTEXT     |     | (HTMLPurifier sanitized)
+  body_snippet          | VARCHAR(500) |     | ** INLINE ** — first ~500 chars, plain text. Thread lists
+                        |              |     |  and search previews read ONLY this, never the full body
+  body_storage_path     | VARCHAR(500) |     | ** OFFLOADED ** — S3 key holding {text, html} as JSON,
+                        |              |     |  HTMLPurifier-sanitised before write. Fetched only when a
+                        |              |     |  user opens the message; cached in Redis 24h.
+                        |              |     |  At ~50KB/mail × 1k mailboxes this is ~900GB/year — inline
+                        |              |     |  LONGTEXT would make backup, restore and any ALTER on this
+                        |              |     |  table progressively unusable
+  body_purge_after      | TIMESTAMP    |     | (DPDP retention — transient mail text purged at 2 years.
+                        |              |     |  Row and metadata survive; only the S3 object is deleted)
   received_at           | TIMESTAMP    |     |
   is_historical         | BOOLEAN      |     | (true = ingested by the onboarding backfill, not live polling.
                         |              |     |  Suppresses the SLA countdown, bell notifications and
@@ -585,12 +593,13 @@ For production and staging deployments, an independent backup helper container r
 
 > **Why a column and not just a `received_at` age test.** "Older than the connection date" is not the same question as "arrived via backfill." A genuinely old message forwarded into the mailbox *after* connection is live mail and must start an SLA clock; a backfilled message that happens to be two days old must not. Only the ingest path knows which is which, so the ingest path records it.
 
-### 13. `inbound_attachments` (PK: `id`)
+### 13. `email_attachments` (PK: `id`)
+*Renamed from `inbound_attachments` — attachments on outbound messages are indexed here too.*
 ```text
   Column           | Type         | Key | Connection Links
   -----------------|--------------|-----|----------------------------------------
   id               | BIGINT       | PK  |
-  inbound_email_id | BIGINT       | FK  | ◄── inbound_emails.id (Cascade delete)
+  email_message_id | BIGINT       | FK  | ◄── email_messages.id (Cascade delete)
   filename         | VARCHAR(255) |     |
   file_path        | VARCHAR(255) |     | (Contains UUID generated string name)
   mime_type        | VARCHAR(50)  |     |
@@ -1819,8 +1828,8 @@ CREATE TABLE email_threads (
     INDEX idx_threads_job (job_id)
 );
 
--- 12. inbound_emails
-CREATE TABLE inbound_emails (
+-- 12. email_messages
+CREATE TABLE email_messages (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     agent_id BIGINT NOT NULL,                       -- Branch-level tenant isolation
     mailbox_connection_id BIGINT NOT NULL,          -- Source mailbox (cascade delete)
@@ -1832,8 +1841,9 @@ CREATE TABLE inbound_emails (
     `from` VARCHAR(255) NOT NULL,
     `to` VARCHAR(255) NULL,
     subject VARCHAR(255) NULL,
-    body_text LONGTEXT NULL,
-    body_html LONGTEXT NULL,                         -- HTMLPurifier sanitized
+    body_snippet VARCHAR(500) NULL, -- inline preview; thread lists read only this
+    body_storage_path VARCHAR(500) NULL, -- S3 key: {text, html} JSON, sanitised. ~900GB/yr at 1k mailboxes
+    body_purge_after TIMESTAMP NULL, -- DPDP: purge the S3 object at 2 years, keep the row
     received_at TIMESTAMP NULL,
     is_historical BOOLEAN DEFAULT FALSE,             -- Ingested by onboarding backfill, not live polling.
                                                      -- Suppresses SLA countdown, notifications, enquiry proposal
@@ -1844,16 +1854,16 @@ CREATE TABLE inbound_emails (
     FOREIGN KEY (thread_key) REFERENCES email_threads(thread_key)
 );
 
--- 13. inbound_attachments
-CREATE TABLE inbound_attachments (
+-- 13. email_attachments
+CREATE TABLE email_attachments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    inbound_email_id BIGINT NOT NULL,
+    email_message_id BIGINT NOT NULL,
     filename VARCHAR(255) NOT NULL,
     file_path VARCHAR(255) NOT NULL, -- contains UUID filename
     mime_type VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (inbound_email_id) REFERENCES inbound_emails(id) ON DELETE CASCADE
+    FOREIGN KEY (email_message_id) REFERENCES email_messages(id) ON DELETE CASCADE
 );
 
 -- 14. job_documents
@@ -2624,7 +2634,7 @@ CREATE TABLE notifications (
 
 -- Single-column indexes
 CREATE INDEX idx_support_tickets_status ON support_tickets (status);
-CREATE INDEX idx_inbound_emails_msg_id ON inbound_emails (message_id);
+CREATE INDEX idx_email_messages_msg_id ON email_messages (message_id);
 CREATE INDEX idx_email_threads_thread_key ON email_threads (thread_key);
 CREATE INDEX idx_manifest_filings_icegate_id ON manifest_filings (icegate_id);
 CREATE INDEX idx_jobs_transport_mode ON jobs (transport_mode);

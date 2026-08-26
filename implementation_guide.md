@@ -130,7 +130,7 @@ No inbound foreign key dependencies; these run absolutely first.
        execution_job_no IS NULL);
      ```
    - Add `idx_jobs_ops_clearance` on `(ops_id, planned_clearance_date)` — the OLI query depends on it
-3. `mailbox_connections`, `inbound_emails`, `inbound_attachments`
+3. `mailbox_connections`, `email_messages`, `email_attachments`
 4. **`email_threads`** — FKs to `agents_info`, `users`, **`enquiries`** *and* `jobs`. The thread spans both lifecycles: `enquiry_id` is set at triage, `job_id` added on conversion, and **both stay NULL** for airline/clearance/trucking mail. Include `first_response_at` (first **outbound** reply — distinct from `first_triage_at`, which is internal triage, not a reply)
 5. `job_documents`, then **`document_share_links`** (FK → `job_documents` CASCADE, `jobs`, `users`). `expires_at` is **NOT NULL**; unique on `token_hash`
 6. `milestone_performance_logs`
@@ -357,12 +357,14 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 
 ### 4.2 `PollMailboxes` daemon
 
-`php artisan mailboxes:poll`, scheduled every minute in `Kernel.php`:
+`php artisan mailboxes:poll`, the **15-minute reconciliation sweep** registered in `Kernel.php` (push is primary — see below):
 
 - Skip connections where `is_active = false` (tier downgrade) or whose company tier is `core`
 - Google API Client + Microsoft Graph; **delta queries / history IDs only** — never a full mailbox scan
 - ⚠️ **Set the Google OAuth consent screen to "In production" on day one.** In *Testing* status refresh tokens expire after **7 days** — this is the single most common false "token storage bug" in Gmail integrations. Publishing is independent of verification; an unverified production app still works, just with the interstitial and the 100-user cap.
 - **Evaluate domain-wide delegation before budgeting CASA** (`PRD.md` §5.2.1) — for Workspace tenants it removes the consent screen, the interstitial, the 100-user cap and the assessment. Both flows must exist regardless, since consumer Gmail cannot use DWD.
+- 🔴 **Push is primary; polling is the safety net.** Register Gmail Pub/Sub (`users.watch()`) and Graph change-notification subscriptions at connect time and drive sync from webhook deliveries. Polling drops to a **reconciliation sweep every 15 minutes**, not every minute — it exists to catch what push missed, not to be the mechanism. At 1,000 mailboxes minute-polling is ~1.44 M calls/day of which the overwhelming majority return nothing; push collapses that to near zero while *improving* latency from ≤60 s to ~1 s.
+- **Both paths converge on the same handler.** A webhook carries a notification, not the message — the handler still reads the delta cursor, so push and poll share one idempotent code path and a lost webhook simply means the sweep picks it up.
 - **Scopes:** Google **`gmail.modify`** + `gmail.send`; Microsoft **`Mail.ReadWrite`** + `Mail.Send` + `offline_access`. Read/write is required because the portal replaces the mail client (`PRD.md` §5.2.3). ⚠️ Still a **restricted** scope requiring CASA — but `gmail.readonly` already was, so widening costs nothing extra in compliance
 - 🔴 **Sync the whole mailbox, not the Inbox folder.** Graph `/me/messages/delta` (**not** `/mailFolders/inbox/messages/delta`); Gmail backfill query `in:anywhere`. A reply typed in Outlook lands in Sent Items only — inbox-scoped sync loses half of every conversation
 - **Thread matching is three-tier:** `provider_thread_id` (Gmail `threadId` / Graph `conversationId`) → `In-Reply-To`/`References` chain → normalised subject + participants within 30 days. **Never let tier 3 override tiers 1–2**
@@ -370,7 +372,7 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 - **Backfill resumes, never restarts:** rewrite `backfill_page_cursor` after **every committed page**, each page in its own transaction. Resume automatically on the next run
 - **Sending is delegated, never app-only.** Replies and outreach go out through the *user's own* mailbox (`users.messages.send` / `/me/sendMail`), so SPF/DKIM/DMARC are the provider's problem, not ours. Set `In-Reply-To` + `References` and pass `threadId` / use `/messages/{id}/reply` so replies stay threaded on the client's side
 - **Transactional mail (tickets, arrival notices) does NOT use this path** — it needs a separate provider and a decided sending domain (`PRD.md` §5.2.1, open item)
-- Compute `thread_key`, upsert `email_threads` / `inbound_emails`, index `inbound_attachments`
+- Compute `thread_key`, upsert `email_threads` / `email_messages`, index `email_attachments`
 - **Lazy attachments** — download binaries only when parsing is actually initiated
 - **ClamAV** scan before any attachment is persisted
 - **HTMLPurifier** on `body_html` before storage
@@ -422,7 +424,7 @@ Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Air
 
 | Command | Cadence | Purpose |
 |---|---|---|
-| `mailboxes:poll` | every minute | Inbox sync |
+| `mailboxes:poll` | **every 15 min** | Reconciliation sweep — the safety net behind push, not the primary mechanism |
 | `mailboxes:sync-read-state` | every 5 min | Push local read/archive changes upstream; **the provider wins any conflict** |
 | `mailboxes:renew-watch` | **daily** | Re-call Gmail `users.watch()` where `watch_expires_at < 48h`. The subscription dies at 7 days **with no error** — a daily cadence survives six failed runs, a weekly one survives none |
 | `enquiries:nudge-stale` | hourly | Bell-nudge pricing to decide on inactive unconfirmed enquiries; debounced via `stale_nudged_at`, cleared on any new client reply |
@@ -437,9 +439,46 @@ Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Air
 - **Cash reconciler** — matches `bank_transactions` credits against outstanding invoices (Level 1: job/AWB regex in the memo; Level 2: amount + client name), computes exchange-rate variance between document and settlement dates using `exchange_rates`, and posts realized FX to `5500-Forex-Gain-Loss`
 - **CASS tally** — compares uploaded statement rows against estimated purchase vouchers, flagging `weight_mismatch` / `rate_mismatch` beyond the configured tolerance (default ±1.0%)
 
+### 4.10 Queue Topology & Throughput
+
+> **This is what decides whether the product feels fast.** Every background job on one queue means a 30-second OCR extraction sits in front of a one-second mail sync, and mail arrives minutes late for reasons the user cannot see. Separate the queues or accept that failure mode.
+
+#### Named queues
+
+| Queue | Carries | Job runtime | Workers | Why isolated |
+|---|---|---|---|---|
+| `sync` | `PollMailboxes`, delta pages, read-state push | 0.2–2 s | **10–20** | Highest volume, most latency-sensitive. Must never queue behind anything slow |
+| `backfill` | `BackfillMailboxJob` pages | 1–5 s | **2–4** | Long-running and bursty at onboarding. Capped deliberately so a new tenant importing 60 days cannot starve live sync |
+| `ocr` | `ProcessPdfOcrJob`, FastAPI/Gemini calls | **5–60 s** | **4–8** | The slowest work in the system. Isolated so it cannot block anything |
+| `mail-out` | Replies, outreach, consent-engine sends | 1–3 s | **4** | User-visible: a send that appears stuck reads as data loss |
+| `documents` | PDF compilation, cover-letter merges | 3–15 s | **2–4** | CPU-heavy |
+| `analytics` | `sales:compute-snapshots`, narration, rollups | minutes | **1–2** | Nightly, entirely latency-insensitive. **Lowest priority** |
+| `notifications` | Soketi pushes, bell writes | < 0.5 s | **4** | Tiny and instant; never behind a heavy job |
+
+**Horizon priority order:** `notifications` → `sync` → `mail-out` → `documents` → `ocr` → `backfill` → `analytics`.
+
+#### Throughput sizing
+
+At **1,000 mailboxes** (50 tenants × 20 staff):
+
+```
+polling      1,000 jobs/min ÷ 60 = ~17 jobs/sec
+round trip   ~300 ms per job
+required     17 × 0.3 ≈ 5 concurrent workers to break even
+provision    10–20  (3–4× headroom absorbs latency spikes and retries)
+```
+
+Neither provider's quota is the constraint at this scale — Gmail runs ~2.9 M units/day against a 1.2 B ceiling, and Graph sees ~200 requests/10 min per tenant against ~10,000. **Worker concurrency is the constraint**, and it is a provisioning decision, not a code one.
+
+#### Ingest volume
+
+50,000 messages/day is ~35 inserts/min — trivial for MySQL. **Storage is the number to plan:** ~2.5 GB/day, ~900 GB/year of message bodies, which is why bodies are offloaded to object storage and only `body_snippet` stays inline.
+
 ### 4.9 Resilience wrapper (applies to every external call)
 
-Wrap FastAPI, Gmail, Graph, Plaid and ICEGATE calls in queue jobs with exponential backoff plus jitter ($2^{\text{attempt}} \times 100\,\text{ms}$, max 5 attempts), a Redis circuit breaker after 5 consecutive failures (fail fast for 15 minutes), and a dead-letter path to `failed_jobs` that notifies branch admins. Write AI-server failures to `platform:status:ai_server`; clear the key on the next success.
+Wrap FastAPI, Gmail, Graph, Plaid and ICEGATE calls in queue jobs with exponential backoff plus jitter ($2^{\text{attempt}} \times 100\,\text{ms}$, max 5 attempts), a Redis circuit breaker after 5 consecutive failures (fail fast for 15 minutes), and a dead-letter path to `failed_jobs` that notifies branch admins.
+
+> 🔴 **Key the breaker per connection, never globally.** `breaker:mailbox:{mailbox_connection_id}` — **not** `breaker:graph`. One tenant hitting a 429 must not stop mail sync for every other tenant on the platform. Widen only deliberately: a *provider-wide* breaker (`breaker:provider:graph`) is justified only on a confirmed provider outage, and should trip on a high threshold across many distinct connections, not on one mailbox failing five times. The AI server keeps its single `platform:status:ai_server` key because it genuinely is one shared dependency. Write AI-server failures to `platform:status:ai_server`; clear the key on the next success.
 
 ✅ **Checkpoint 4**
 ```bash

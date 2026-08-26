@@ -383,6 +383,7 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 Loads rules from `email_classification_rules` into Redis hash maps (synced by a model event on save).
 
 - Match order: domain → subject → body cargo extraction → default `customer_enquiry`
+- 🔴 **Classify `direction = 'inbound'` only.** Outbound messages are stored on the thread and stamp `first_response_at`, but **never** run through the classifier, never mint an `enquiry_no`, never reset `latest_message_received_at` and never clear `stale_nudged_at` (`PRD.md` §5.2.3). A reply quoting the client's own cargo figures matches every extraction pattern — classify it and you mint a second enquiry for a conversation that already has one, inflating the conversion denominator.
 - **Rules are scoped by `transport_mode`** — load only the active portal's set. Air and sea use different units, routing tokens and reference formats (`PRD.md` §5.2.5)
 - **Split the weight regex by label** (`gross`, `chargeable`, `net`, and `cbm` for sea). A single unlabelled pattern takes whichever number matches first and silently records the wrong one
 - Increment `hit_count` on match; write every operator correction to `email_classification_overrides` and increment `override_count`
@@ -604,7 +605,8 @@ Order matters here more than anywhere else in the build.
      |---|---|
      | `AudienceFirewallTest` | Inserting `audience='internal'` **with any `draft_*` column populated is rejected by `chk_saq_internal_no_draft`** — at the database, not the application |
      | `ContactOptOutTest` | A contact with `opted_out_at` never appears in `draft_cc`, even with `include_in_cc = true` |
-     | `HarvestTest` | Polling never sets `include_in_cc`; harvesting an opted-out address updates recency but does not re-enable it |
+     | `OutboundNotClassifiedTest` | A synced Sent-folder message stamps `first_response_at` and stops the SLA clock, but produces **no** classification, **no** `enquiry_no` and does not touch `latest_message_received_at` or `stale_nudged_at` |
+   | `HarvestTest` | Polling never sets `include_in_cc`; harvesting an opted-out address updates recency but does not re-enable it |
    | `SentFolderSyncTest` | A message created in the provider's **Sent** folder (simulating a reply typed in Outlook) is ingested and joins the **existing** thread via `provider_thread_id` |
    | `EchoSuppressionTest` | Sending via the portal then running a sync produces **one** row, not two, and fires no second notification |
    | `BackfillResumeTest` | Killing the backfill mid-run and re-dispatching resumes from `backfill_page_cursor` with no duplicates and no lost pages |

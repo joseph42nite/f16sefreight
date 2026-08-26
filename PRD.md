@@ -682,6 +682,27 @@ The portal is intended to **replace** Outlook and Gmail for freight work, not si
 
 Ingested messages carry `email_messages.direction` (`inbound` / `outbound`), so a thread shows the true back-and-forth regardless of where each message was typed.
 
+##### What runs on which direction
+
+Syncing Sent Items means outbound messages now enter the pipeline. **They must not go through the same processing as inbound mail.**
+
+| Step | `inbound` | `outbound` |
+|---|:---:|:---:|
+| Store on the thread | ✅ | ✅ |
+| **Regex classification** (§5.2.4) | ✅ | ❌ **never** |
+| Mint an `enquiry_no` | ✅ on operator triage | ❌ **never** |
+| Cargo-variable extraction | ✅ | ❌ |
+| Reset `latest_message_received_at` | ✅ | ❌ — that field means *last client message* |
+| **Stamp `first_response_at`** | ❌ | ✅ **this is the point** |
+| Clear `stale_nudged_at` | ✅ | ❌ — our own reply is not client activity |
+| Advance SLA countdown | starts it | **stops it** |
+
+> **Classifying our own outbound mail would corrupt the funnel.** A reply quoting the client's original *"25 pcs, 450 kg, BOM→FRA"* matches every cargo-extraction pattern the engine has. Classify it and you mint a second `enquiry_no` for a conversation that already has one — inflating the denominator of the very conversion metric the `enquiries` table exists to measure.
+>
+> **Outbound is processed for exactly one reason: timestamps.** The first outbound message on a thread stamps `first_response_at` and stops the SLA clock. That is the whole job.
+
+> ✅ **This closes a `🔴` recording gap.** §7.3.3 previously listed `first_response_at` as unfillable because outbound replies were never captured. Syncing Sent Items fills it **automatically and retroactively** — a reply typed in Outlook counts exactly like one sent from the portal, so response latency is finally measurable either way. The `lost_reason = 'delay_in_response'` attribution becomes provable rather than asserted.
+
 ##### Thread matching — three tiers, native ID first
 
 `thread_key` resolution runs in strict order; the first tier that matches wins:
@@ -1599,7 +1620,7 @@ Layers 1–2 are deterministic, unit-testable and reproducible. **Layer 3 is dis
 These cannot be retro-fitted usefully — the models need trailing history, so **every day they are missing is a permanently blind day**:
 
 - 🔴 **`enquiries.quoted_amount` + `quoted_currency`.** `quotation_no` is only a reference string. Without the amount, `lost_reason = 'rates_high'` records *that* we lost on price but never *by how much* — so price elasticity, "how close were we", and any defensible renegotiation target are uncomputable. `rates_high` is the most common loss reason; this is the **highest-value column in this document**.
-- 🔴 **`email_threads.first_response_at`.** The table records `latest_message_received_at` (inbound) and `first_triage_at` (internal triage, *not* a reply), and `email_messages` stores inbound mail only — outbound replies are never timestamped. True response latency is therefore unmeasurable, which is exactly the accusation `lost_reason = 'delay_in_response'` makes. **We can currently neither prove nor disprove our own service failures.**
+- ✅ **`email_threads.first_response_at` — now solved by Sent-folder sync (§5.2.3).** The original problem was that `email_messages` held inbound mail only, so outbound replies were never timestamped and response latency was unmeasurable. Syncing Sent Items captures the first outbound message on every thread **regardless of where it was typed**, so `first_response_at` fills automatically and `lost_reason = 'delay_in_response'` becomes provable. **Outbound messages are stamped but never classified** — see §5.2.3.
 - 🟡 **`enquiries.origin_code` / `dest_code`** and **`pdf_processing_jobs.enquiry_id`** — without the latter, the extraction is orphaned and no cargo promotion is possible.
 - 🟡 Lower priority: invoices carry no `paid_at` (DSO is derivable through `bank_transactions.matched_invoice_id`, just a heavier join).
 
@@ -2076,6 +2097,25 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 - Financial year-end exports `accounts_ledger_entries` and `gst_ledger_entries` to compressed JSON/Parquet in S3 with **Object Lock (WORM)**.
 - `job_documents` stay in hot storage for 12 months, then move to S3 Glacier Flexible Retrieval for 5 years to meet customs statute, before automated purge.
 
+**Mail archival — tiered, automatic, and invisible to the user:**
+
+Message **bodies** live in S3 (§5.2.3) under a lifecycle policy. Nothing is ever moved by hand, and no user action archives anything.
+
+| Age | Storage class | Read latency | Why |
+|---|---|---|---|
+| 0–30 days | **S3 Standard** | instant | The active working set — almost every open is here |
+| 30 days – 1 year | **S3 Standard-IA** | instant | Same latency, ~45% cheaper. Occasional reference reads |
+| 1–2 years | **S3 Glacier Instant Retrieval** | instant | Rarely opened, but must stay instant — an operator chasing an old dispute cannot wait hours |
+| **2 years** | **deleted** | — | `body_purge_after` fires; DPDP transient-text limit |
+
+> **Glacier *Instant* Retrieval, not Flexible.** `job_documents` can tolerate a restore delay because they are legal records fetched deliberately. **Mail cannot** — a thread that takes hours to open is a broken product, and the operator has no way to know in advance which thread they will need.
+
+**What survives the purge.** Only the S3 object is deleted. The `email_messages` row, its `body_snippet`, sender, subject, timestamps, thread linkage and every derived analytic **remain permanently**. A two-year-old thread still shows who wrote to whom, when, and the first 500 characters — enough to reconstruct the commercial history without retaining the full correspondence.
+
+**Why no database archival is needed.** With bodies offloaded, `email_messages` grows at ~27 GB/year (§9.6). There is deliberately **no partitioning, no archive table and no cold-row migration** — those add operational complexity and, on a partitioned InnoDB table, would break foreign-key integrity (§9.1). The composite index `(agent_id, status, latest_message_received_at)` keeps recency queries fast regardless of table depth.
+
+**UI archival is separate and purely a view concern.** `email_threads.status = 'archived'` removes a thread from the default folder. It moves no data, deletes nothing, and is reversible.
+
 **DPDP Act 2023 compliance:** customer/contact PII is anonymized or deleted on request (Right to Erasure) unless retention is legally mandated for tax, accounting or customs audit. Example retention: general-ledger lines **8 fiscal years**; transient email text and support screenshots purged after **2 years**.
 
 ### 9.4 Resilience
@@ -2116,7 +2156,45 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | 5 | Third-party credentials in env: `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET`, `GEMINI_API_KEY` |
 | 6 | **Small increments, verified at each step** |
 
-### 9.6 Testing Requirements
+### 9.6 Infrastructure Sizing
+
+Sized for the **1,000-mailbox reference load** (50 tenants × 20 staff, ~50 messages/mailbox/day ⇒ ~50,000 messages/day). Scale the app tier horizontally; the shape below is what matters.
+
+#### The app tier is memory-bound, not CPU-bound
+
+Queue workers spend almost all their time **waiting on provider HTTP**, not computing. Size for resident PHP processes, not for cores.
+
+```
+sync 10-20 · ocr 4-8 · mail-out 4 · notifications 4
+documents 2-4 · backfill 2-4 · analytics 1-2      ≈ 30-45 workers
++ PHP-FPM web pool 10-20 children
+≈ 50-65 PHP processes × ~70 MB              ≈ 4 GB resident
+```
+
+| Component | Start at | Scale to | Notes |
+|---|---|---|---|
+| **Web + workers** | **`m6g.xlarge`** (4 vCPU, 16 GB) | 2–3× `m6g.xlarge` behind an ALB | Memory-optimised beats compute-optimised — workers block on I/O. **Graviton (ARM) throughout**, matching the AI instance |
+| **Queue workers (split out at scale)** | same host | dedicated `m6g.large` per worker group | Split `ocr` and `analytics` off first — they are the CPU-heavy ones |
+| **MySQL** | **RDS `db.t4g.medium`** (2 vCPU, 4 GB) | `db.m6g.large` → `db.m6g.xlarge` | See storage note below |
+| **Redis** | **ElastiCache `cache.t4g.small`** | `cache.m6g.large` | Queues + cache + locks + body cache |
+| **AI stack** | **`t4g.large`** (2 vCPU, 8 GB) | unchanged | Already specified — Ollama, ChromaDB, FastAPI cohosted over loopback |
+| **Soketi** | container on the web host | own `t4g.small` | Split out only when concurrent sockets get heavy |
+
+#### Database stays small — because bodies are offloaded
+
+| Path | Volume/year | Where |
+|---|---|---|
+| Message **metadata** (headers, ids, snippet) | **~27 GB** | MySQL |
+| Message **bodies** | ~900 GB | **S3** |
+| Attachments & documents | varies | **S3** |
+
+> **This is the whole reason bodies are offloaded (§5.2.3).** Inline `LONGTEXT` would put ~900 GB/year into RDS, and the cost is not storage — it is that backup, restore and any `ALTER` on that table become progressively unusable. At ~27 GB/year of metadata, a `db.t4g.medium` is comfortable for years.
+
+#### Local development
+
+The `docker-compose.yml` stack runs on **8 GB RAM** with worker counts scaled down (`sync 2`, everything else 1). The AI container is the constraint — Gemma 4 E4B needs ~6 GB resident, so run against a shared dev AI instance rather than locally on a laptop under 16 GB.
+
+### 9.7 Testing Requirements
 
 | Suite | File | Asserts |
 |---|---|---|
@@ -2175,7 +2253,7 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 
 1. **`air_import_details`** — required by Segment C.1, not yet in `database_relations_tree.md`.
 2. **`enquiries.quoted_amount` / `quoted_currency`** — highest-value analytics column; must exist before any trailing history accumulates.
-3. **`email_threads.first_response_at`** — without it, response-latency claims are unprovable in either direction.
+3. ~~`email_threads.first_response_at`~~ — **resolved.** Sent-folder sync (§5.2.3) fills it automatically; outbound messages are timestamped but never classified.
 4. **Google restricted-scope verification** (`gmail.readonly` ⇒ CASA) — decide **internal Workspace app vs public listing** before onboarding is built. Weeks-to-months lead time; a calendar item, not a code item.
 5. **System-transactional email sender and its sending domain** — required for ticket mail and arrival notices, which cannot go through a rep's personal mailbox (§5.2.1).
 

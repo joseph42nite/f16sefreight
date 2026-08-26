@@ -37,11 +37,21 @@ class LoginController extends Controller
             User::where('id', $user_data->id)->update(['latest_token' => $token]);
             
             // EAGER CACHED CONFIGURATION
-            $companyName = $user_data->company_name;
+            //
+            // users.company_name stores the company ID, not the name: the admin user form's
+            // dropdown saves companies.id while displaying the name (NewUsers.vue). Looking it
+            // up by name therefore matched nothing and templates_config came back null on every
+            // login. Resolve by id, falling back to name for any older row that holds a literal
+            // name. See docs/plan/CONTEXT.md §6.
+            $companyRef = $user_data->company_name;
             $templatesConfig = Cache::remember(
-                "company_templates_{$companyName}",
+                "company_templates_{$companyRef}",
                 3600,
-                fn() => optional(Company::where('name', $companyName)->first())->templates_config
+                fn() => optional(
+                    is_numeric($companyRef)
+                        ? Company::find($companyRef)
+                        : Company::where('name', $companyRef)->first()
+                )->templates_config
             );
             
             $userDataArray['templates_config'] = $templatesConfig;

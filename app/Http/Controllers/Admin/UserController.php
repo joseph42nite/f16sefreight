@@ -27,7 +27,10 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'origin_airport_code' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'max:100'],
-            'branch_name' => ['nullable', 'max:50'],
+            // Every user has a branch, and therefore a company and a tier — that is what
+            // makes tier resolution total in ProcessPdfOcrJob (guide §4.1.1). Was 'nullable',
+            // which is how branchless users were created in the first place.
+            'branch_name' => ['required', 'integer', 'exists:agents_info,id'],
             'can_send' => ['required'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
@@ -63,7 +66,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['required', 'string', 'max:100'],
-            'branch_name' => ['nullable', 'max:50'],
+            'branch_name' => ['required', 'integer', 'exists:agents_info,id'],
             'plan_expiry_date' => ['required'],
             'can_send' => ['required'],
         ]);

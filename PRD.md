@@ -521,6 +521,18 @@ graph LR
 #### 5.2.1 Mailbox Connection (OAuth)
 
 - Providers: **Google** (Google API Client) and **Microsoft** (Graph API). Tokens stored encrypted at rest in `mailbox_connections`.
+
+##### Two sending paths — do not conflate them
+
+| | **User mailbox** | **System transactional** |
+|---|---|---|
+| Carries | Replies, client outreach (§7.3.7), document links, all consent-engine messages | Ticket confirmations, ticket-resolved mail, arrival notices to consignees not on a thread |
+| Sent via | The rep's own OAuth'd mailbox — Gmail `users.messages.send` / Graph `/me/sendMail` | A transactional provider (SES / Postmark / equivalent) |
+| From address | Genuinely the staff member | See open item below |
+| Deliverability | **SPF/DKIM/DMARC handled by Google/Microsoft** — we never spoof a From through our own SMTP | Requires DNS records on whichever domain is chosen |
+| Threading | `In-Reply-To` + `References` headers and `threadId` (Gmail) / `/messages/{id}/reply` (Graph) so replies stay in one conversation | N/A — one-shot |
+
+> 🔴 **Open decision.** The system-transactional sender is **not yet specified**. Sending an arrival notice from `noreply@f16sefreight.com` on behalf of a tenant costs both deliverability and branding; sending from the tenant's own domain requires them to publish SPF/DKIM records for our provider. Decide before Segment C, where arrival notices become routine.
 - **Domain enforcement (Tactical & Command):** the connecting mailbox address must carry one of the company's registered corporate suffixes from the comma-separated `companies.email_domain` list. Mismatch returns `403`. This prevents staff attaching personal mailboxes to tenant data.
 - **Downgrade:** soft-deactivate (`is_active = false`), preserve encrypted tokens.
 - **UI:** `MailboxSettings.vue` — connected mailbox list, provider connect buttons, connection status alerts.
@@ -556,7 +568,7 @@ Every staff member in that tenant gets the clean three-click flow from then on.
 
 **Publisher verification is a launch prerequisite, not a polish item.** Completing Microsoft publisher verification (Partner Network account linked to the app registration) puts a **Verified** badge on the consent screen and relaxes several default user-consent restrictions. Without it the consent screen carries an unverified-publisher warning that IT departments are trained to refuse.
 
-**Google carries a heavier equivalent.** `gmail.readonly` and `gmail.send` are Google **restricted scopes**: production use requires OAuth app verification *plus* an annual third-party **CASA Tier 2** security assessment. Until that clears, the app is capped at 100 users behind an unverified-app interstitial. Workspace clients can alternatively have their admin install the app domain-wide. **Budget the assessment cost and lead time — this gates Gmail onboarding, not Outlook.**
+**Google carries a heavier equivalent.** `gmail.send` is only a *sensitive* scope, but **`gmail.readonly` is a *restricted* scope** — and one restricted scope is enough: production use requires OAuth app verification *plus* an annual third-party **CASA Tier 2** security assessment. **Sending is not what costs; reading is**, and reading is the product, so there is no scope trade-off available here. Until that clears, the app is capped at 100 users behind an unverified-app interstitial. Workspace clients can alternatively have their admin install the app domain-wide. **Budget the assessment cost and lead time — this gates Gmail onboarding, not Outlook.**
 
 **Refresh token lifetime.** Microsoft refresh tokens roll on use and expire after **90 days of inactivity**; conditional-access or MFA policy changes on the client side can also invalidate them mid-flight. On any `invalid_grant`, the connection flips to `reauth_required`, sync pauses, and the owning operator is notified in-app — tokens are never silently discarded, and the failure is never allowed to look like "no new mail."
 
@@ -2041,6 +2053,8 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 1. **`air_import_details`** — required by Segment C.1, not yet in `database_relations_tree.md`.
 2. **`enquiries.quoted_amount` / `quoted_currency`** — highest-value analytics column; must exist before any trailing history accumulates.
 3. **`email_threads.first_response_at`** — without it, response-latency claims are unprovable in either direction.
+4. **Google restricted-scope verification** (`gmail.readonly` ⇒ CASA) — decide **internal Workspace app vs public listing** before onboarding is built. Weeks-to-months lead time; a calendar item, not a code item.
+5. **System-transactional email sender and its sending domain** — required for ticket mail and arrival notices, which cannot go through a rep's personal mailbox (§5.2.1).
 
 ### Conventions worth restating
 

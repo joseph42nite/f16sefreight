@@ -361,6 +361,9 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 
 - Skip connections where `is_active = false` (tier downgrade) or whose company tier is `core`
 - Google API Client + Microsoft Graph; **delta queries / history IDs only** — never a full mailbox scan
+- **Scopes:** Google `gmail.readonly` + `gmail.send`; Microsoft `Mail.Read` + `Mail.Send` + `offline_access`. ⚠️ `gmail.readonly` is a **restricted** scope requiring CASA assessment — confirm the internal-Workspace-app vs public-listing decision (`PRD.md` §5.2.1) before building the OAuth flow, as it changes onboarding
+- **Sending is delegated, never app-only.** Replies and outreach go out through the *user's own* mailbox (`users.messages.send` / `/me/sendMail`), so SPF/DKIM/DMARC are the provider's problem, not ours. Set `In-Reply-To` + `References` and pass `threadId` / use `/messages/{id}/reply` so replies stay threaded on the client's side
+- **Transactional mail (tickets, arrival notices) does NOT use this path** — it needs a separate provider and a decided sending domain (`PRD.md` §5.2.1, open item)
 - Compute `thread_key`, upsert `email_threads` / `inbound_emails`, index `inbound_attachments`
 - **Lazy attachments** — download binaries only when parsing is actually initiated
 - **ClamAV** scan before any attachment is persisted

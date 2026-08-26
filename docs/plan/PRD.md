@@ -2359,7 +2359,7 @@ The `docker-compose.yml` stack runs on **8 GB RAM** with worker counts scaled do
 | OCR tiering | `PdfOcrTierBranchingTest.php` | Core → `pdfplumber`; Tactical → FastAPI + `llm_usage_logs` row; credit exhaustion halts with `Credits Exhausted` |
 | Tier + mode gating | `TierModeGatingTest.php` | Tactical sales sees no client names and no money; Command sales sees only `sales_id = me`; an air user sees zero sea rows in every engine table |
 | FastAPI | `pytest python/` | Sample AWB and vendor invoice parsing against fixtures |
-| Frontend | `JobInboxDrawer.spec.js` | `isDrawerOpen` starts false; toggling collapses the sidebar to 60 px, hides columns 1–2, and sets column 3 to exactly 50% |
+| Frontend | `npm run test:unit` (Jest 27 + `@vue/vue2-jest`) | Runner and config exist as of 2026-08-26; specs in `tests/js/`. `JobInboxDrawer.spec.js`: `isDrawerOpen` starts false; toggling collapses the sidebar to 60 px, hides columns 1–2, sets column 3 to exactly 50% — **asserted in numbers, not CSS classes**, or the test passes while the layout is visibly wrong. Plus cargo-type locking, chargeable weight, ISO 6346, and that **no margin field reaches a sales payload**. `addressMatching.spec.js` already covers the party matcher, both that OCR noise matches and that a different company does not |
 
 ---
 

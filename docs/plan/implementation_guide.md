@@ -873,7 +873,7 @@ Reads the engine tables and funnel views. **Never aggregates `jobs` live.** Enfo
 11. **`SuperadminMonitor.vue` + `SupportDeskTickets.vue`** — the `admin.` portal
 12. **`MailboxSettings.vue`** — OAuth connection management with domain validation feedback
 
-✅ **Checkpoint 6** — `npm run dev`; walk one enquiry end-to-end in the browser: mail arrives → triage → drawer verification → confirm → Kanban card → cost sheet. Confirm the drawer collapse geometry and that a Tactical login sees no client names.
+✅ **Checkpoint 6** — `npm run test:unit` green (§8.3 — a component is not done until its spec passes), then `npm run dev` and walk one enquiry end-to-end in the browser: mail arrives → triage → drawer verification → confirm → Kanban card → cost sheet. Confirm the drawer collapse geometry and that a Tactical login sees no client names.
 
 ---
 
@@ -999,7 +999,40 @@ Mock parser tests against sample airway bills and vendor invoice texts, assertin
 
 ### 8.3 Frontend tests (`npm run test:unit`)
 
-`JobInboxDrawer.spec.js` — `isDrawerOpen` starts `false`; toggling collapses the sidebar to `60px`, removes columns 1–2 from the DOM, and sets column 3 to exactly `50%`. Plus ApexCharts loading and responsive shift checks.
+> ✅ **The runner exists as of 2026-08-26** — Jest 27 + `@vue/vue2-jest` + `@vue/test-utils@1`, config in `jest.config.js`, specs in `tests/js/**/*.spec.js`. Earlier drafts referenced `npm run test:unit` while no runner, config or script existed. Jest 27 and the Vue 2 line are deliberate pairings; the app bundles with laravel-mix/webpack and Jest transforms independently, so the two need not agree on tooling.
+>
+> ```bash
+> npm run test:unit          # once
+> npm run test:unit:watch    # while working
+> ```
+
+#### When frontend tests run
+
+Step 6 is a long stretch of UI work, and the same rule applies as everywhere else: **a component is not done until its test runs green, and the whole frontend suite runs before the next component starts.** The two suites are independent — `php artisan test` needs MySQL up, `npm run test:unit` needs nothing — so run the JS suite on every save while working, and both before calling a segment finished.
+
+#### What is worth testing, and what is not
+
+| Test | Do not test |
+|---|---|
+| **Pure logic in mixins** — matching, normalisation, chargeable-weight and CBM maths, ISO 6346 check digits, date parsing | That a button renders. It will |
+| **Layout contracts the product depends on** — the drawer geometry below | Styling, spacing, colour |
+| **State machines** — cargo-type conditional locking (§5.8), header button swap at conversion | Anything the backend already asserts |
+| **Guards that prevent damage** — a rejected fuzzy match, a disabled `[Print DO]`, margin absent from a sales payload | Third-party components |
+
+**Start with `airWayBillMixin`** — ✅ `tests/js/addressMatching.spec.js` already covers it (9 assertions). It is pure logic, needs no mounting, and is load-bearing: a false party match silently ships cargo to the wrong consignee, so the spec asserts **both** that OCR noise still matches *and* that a genuinely different company does not.
+
+#### The specs the plan calls for
+
+| Spec | Asserts |
+|---|---|
+| `JobInboxDrawer.spec.js` | `isDrawerOpen` starts `false`; toggling collapses the sidebar to **60 px**, removes columns 1–2 from the DOM, and sets column 3 to exactly **50%**; below 1200 px it stacks full-width with a toggle back to the timeline |
+| `CargoTypeLocking.spec.js` | The §5.8 matrix — `lcl` disables and **clears** the Container tab; `break_bulk` disables Delivery Mode; `fcl` locks it to `fcl` |
+| `ChargeableWeight.spec.js` | `max(gross, volume_cm³ / 6000)`, including the case where volumetric wins |
+| `ContainerCheckDigit.spec.js` | ISO 6346 accepts a valid number and rejects a transposed one |
+| `SalesPayload.spec.js` | **No margin field reaches a sales-facing response at any tier** — belt and braces behind the API Resource, since this is the single rule the product must never break |
+| ApexCharts | Loading state renders, and NULL renders as `—` rather than `0` (`PRD.md` §7.1) |
+
+> ⚠️ **Assert the drawer geometry in numbers, not classes.** `PRD.md` §4.3 specifies 60 px and exactly 50% — a test that only checks a CSS class passes while the layout is visibly wrong, which is the failure the spec exists to catch.
 
 ### 8.4 Audit verification
 

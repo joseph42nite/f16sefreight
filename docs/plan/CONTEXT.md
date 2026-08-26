@@ -208,7 +208,32 @@ No parallel structures. Batch 1a is clear to proceed on this front.
   3. **`saved_addresses.fax`/`.telex` were `INTEGER`** but hold alphanumeric values, contradicting both `phone` (varchar) on the same table and `way_bill_addresses.*_telex` (varchar). SQLite stored `'TLX123'` in an INTEGER column without complaint; MySQL rejects it. Fixed by `2026_07_28_000100` — and `->change()` is exactly why `doctrine/dbal` was needed.
   ⚠️ **Start the database before running anything:** `docker compose up -d db`. Docker Desktop is installed but does not auto-start. Brew also has **MariaDB** — do not use it; it is a third dialect and would reintroduce the drift this switch removed.
 
+- **🧪 Frontend test runner added 2026-08-26 — it did not exist.** Guide §8.3 and PRD §9.7 both referenced `npm run test:unit`, but there was no runner, no config and no script: the same "documented thing with nothing behind it" class as `/settings/workload`. Now Jest 27 + `@vue/vue2-jest` + `@vue/test-utils@1` (the maintained Vue 2 pairing — **not** Jest 29), `jest.config.js`, `babel.config.js`, specs in `tests/js/**/*.spec.js`, scripts `test:unit` and `test:unit:watch`. Jest transforms independently of laravel-mix, so the two need not agree on tooling.
+  First spec is `tests/js/addressMatching.spec.js` — 9 assertions over the `airWayBillMixin` Levenshtein matcher, chosen because it is pure logic needing no component mount **and** load-bearing: it asserts both that OCR noise still matches and that a genuinely different company does **not**, since a false party match silently ships cargo to the wrong consignee.
+  **Two independent suites:** `php artisan test` needs `docker compose up -d db`; `npm run test:unit` needs nothing. Run the JS one on every save during Step 6, both before closing a segment.
+
 - **Dead references found in the live code** (none blocking): `config/auth.php` registers an `admin-api` guard pointing at `App\Admin::class`, which does not exist and has no table — a `roles.role = 'admin'` login 500s. `App\User::GetAssosName()` references a non-existent `App\Association`.
+
+---
+
+## 6a. 🚀 Start here — getting from clone to green
+
+```bash
+export PATH="/usr/local/opt/php@8.2/bin:$PATH"   # system PHP is 8.5; this project cannot use it
+open -a Docker                                    # Docker Desktop does not auto-start
+docker compose up -d db                           # MySQL 8.0 on host port 3307
+
+php artisan migrate                               # 42 migrations, clean on a fresh DB
+php artisan test                                  # 26 passed
+npm run test:unit                                 # 9 passed
+
+php artisan serve                                 # http://127.0.0.1:8000
+npm run watch                                     # webpack, rebuilds on save
+```
+
+**If `php artisan test` cannot connect, the database container is not running.** That is the only common failure, and it looks like a config problem rather than a stopped container.
+
+Then read `implementation_guide.md` §Batch 1a. Two things to settle first, both listed in §7: run the four production checks in §6 before converting `branch_name`, and confirm `stale_enquiry_days` with the business.
 
 ---
 

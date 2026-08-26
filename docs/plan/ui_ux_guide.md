@@ -8,7 +8,7 @@ How the product **looks and behaves**. Screens, states, tokens, accessibility, a
 
 | Document | Owns | This file defers to it for |
 |---|---|---|
-| [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md) | Schema — 58 tables, columns, FKs, DDL | Any column name or type |
+| [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md) | Schema — 59 tables, columns, FKs, DDL | Any column name or type |
 | [`PRD.md`](file:///Users/jomygeorge/Desktop/f16sefreight/PRD.md) | Product — **which** screens exist, who sees them, what they do | Roles, tiers, permissions, workflows, formulas |
 | [`implementation_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/implementation_guide.md) | Build order — 8 checkpointed steps | Sequencing |
 | **`ui_ux_guide.md`** *(this file)* | **How** it looks and behaves — tokens, states, layout, accessibility, micro-copy | — |

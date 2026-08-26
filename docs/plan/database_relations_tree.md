@@ -1,6 +1,6 @@
 # F16s Freight OS — Complete Table Schema & Relational Tree
 
-This document provides a comprehensive column-level schema reference for all **58 database tables** (current and future), tracing foreign key connection links directly.
+This document provides a comprehensive column-level schema reference for all **59 database tables** (current and future), tracing foreign key connection links directly.
 
 > [!IMPORTANT]
 > **This file is the sole owner of schema.** Product rationale, workflows, roles and UI behaviour live in [`PRD.md`](file:///Users/jomygeorge/Desktop/f16sefreight/PRD.md); the ordered build sequence lives in [`implementation_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/implementation_guide.md); interface design lives in [`ui_ux_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/ui_ux_guide.md). Neither of those files may restate a column definition.
@@ -720,6 +720,46 @@ For production and staging deployments, an independent backup helper container r
   created_at             | TIMESTAMP   |     |
   updated_at             | TIMESTAMP   |     |
 ```
+
+### 15b. `tenant_policies` (PK: `id`)
+*Every value `PRD.md` calls "admin-configurable" or "adjustable per branch" that previously had **no storage anywhere** — OLI coefficients (§5.5), undo-send window (§5.2.4), stale-enquiry window (§5.4), CASS tolerances (§6.5). `/settings/workload` was a screen with nothing behind it.*
+
+```text
+  Column                    | Type         | Key | Connection Links
+  --------------------------|--------------|-----|----------------------------------------
+  id                        | BIGINT       | PK  |
+  company_id                | BIGINT       | FK  | ◄── companies.id
+  agent_id                  | BIGINT       | FK  | ◄── agents_info.id (NULL = company-wide;
+                            |              |     |  set = branch override, wins over company)
+  oli_complexity_air_export | DECIMAL(4,2) |     | (all OLI columns: PRD §5.5, Boss-owned)
+  oli_complexity_air_import | DECIMAL(4,2) |     |
+  oli_complexity_sea_export | DECIMAL(4,2) |     |
+  oli_complexity_sea_import | DECIMAL(4,2) |     |
+  oli_dimension_factor      | DECIMAL(4,2) |     | (α — per distinct L×W×H line)
+  oli_house_factor          | DECIMAL(4,2) |     | (β — per HAWB)
+  oli_urgency_today         | DECIMAL(4,2) |     | (clearance today or overdue)
+  oli_urgency_tomorrow      | DECIMAL(4,2) |     |
+  oli_urgency_later         | DECIMAL(4,2) |     |
+  oli_capacity_cap          | DECIMAL(6,2) |     | (above this, assignment warns)
+  undo_send_seconds         | INT          |     | (PRD §5.2.4; 0 = send immediately)
+  stale_enquiry_days        | INT          |     | (PRD §5.4)
+  cass_weight_tolerance_pct | DECIMAL(5,2) |     | (PRD §6.5 — the only BRANCH-level pair,
+  cass_rate_tolerance_pct   | DECIMAL(5,2) |     |  which is why agent_id exists here)
+  policy_scope_gate         | BIGINT       | UK  | (GENERATED STORED = COALESCE(agent_id,0).
+                            |              |     |  Backs UNIQUE(company_id, policy_scope_gate)
+                            |              |     |  so only ONE company-wide row can exist —
+                            |              |     |  a plain UNIQUE would allow many, since both
+                            |              |     |  engines permit repeated NULLs in an index.
+                            |              |     |  Same trick as job_entities.unique_role_gate)
+  created_at                | TIMESTAMP    |     |
+  updated_at                | TIMESTAMP    |     |
+```
+
+> **No `deleted_at`** — `PRD.md` §9.3 names exactly six soft-deleting tables and this is not one. Removing an override means NULLing the column so it falls through to the config default, never deleting the row.
+
+> **Every column is NULLable with no SQL default, deliberately.** NULL means *"inherit from `config/f16s.php`"* — the same pattern `companies.ocr_credits_monthly_allowance` uses. Defaults live in **one** place; this table holds only deliberate overrides. Resolution is always **branch → company → config**.
+>
+> **Not merged with `sla_policies`**, which is keyed by `(company_id, tier)` — a different grain. `max_reply_time_minutes` stays there and must never be duplicated here.
 
 ### 16. `audit_logs` (PK: `id`)
 ```text
@@ -2018,6 +2058,68 @@ CREATE TABLE sla_policies (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+);
+
+-- 15b. tenant_policies
+-- Every knob PRD.md promises is "admin-configurable" or "adjustable per branch" but which
+-- previously had NOWHERE to live: the OLI coefficients (§5.5), the undo-send window (§5.2.4),
+-- the stale-enquiry window (§5.4) and the CASS tolerances (§6.5). /settings/workload was a
+-- screen with no storage behind it, so those numbers would have ended up hardcoded.
+--
+-- EVERY COLUMN IS NULLABLE WITH NO SQL DEFAULT, AND THAT IS DELIBERATE.
+-- NULL means "inherit the default from config/f16s.php" — exactly the pattern
+-- companies.ocr_credits_monthly_allowance already uses. Defaults therefore live in ONE
+-- place (config), and this table stores only deliberate overrides. Putting defaults in
+-- both the config and the DDL would give two sources of truth that drift apart.
+--
+-- SCOPE: agent_id NULL = applies to the whole company. agent_id set = a branch override
+-- that wins over the company row. Resolution is branch → company → config default.
+-- NOT merged with sla_policies: that table is keyed by (company_id, tier), a different
+-- grain. max_reply_time_minutes stays there and must never be duplicated here.
+CREATE TABLE tenant_policies (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    company_id BIGINT NOT NULL,
+    agent_id BIGINT NULL, -- NULL = company-wide; set = branch-level override
+
+    -- Operator Load Index (PRD §5.5). Boss-owned, /settings/workload.
+    oli_complexity_air_export DECIMAL(4,2) NULL,
+    oli_complexity_air_import DECIMAL(4,2) NULL,
+    oli_complexity_sea_export DECIMAL(4,2) NULL,
+    oli_complexity_sea_import DECIMAL(4,2) NULL,
+    oli_dimension_factor      DECIMAL(4,2) NULL, -- alpha, per distinct LxWxH line
+    oli_house_factor          DECIMAL(4,2) NULL, -- beta, per HAWB
+    oli_urgency_today         DECIMAL(4,2) NULL, -- clearance today or overdue
+    oli_urgency_tomorrow      DECIMAL(4,2) NULL,
+    oli_urgency_later         DECIMAL(4,2) NULL,
+    oli_capacity_cap          DECIMAL(6,2) NULL, -- above this, assignment warns
+
+    -- Composer (PRD §5.2.4). 0 is valid and means "send immediately, no undo".
+    undo_send_seconds INT NULL,
+
+    -- Enquiry hygiene (PRD §5.4) — window before enquiries:nudge-stale prompts a decision.
+    stale_enquiry_days INT NULL,
+
+    -- CASS reconciliation (PRD §6.5). The only genuinely BRANCH-level settings here,
+    -- which is why agent_id exists on this table at all.
+    cass_weight_tolerance_pct DECIMAL(5,2) NULL,
+    cass_rate_tolerance_pct   DECIMAL(5,2) NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- NO deleted_at, deliberately. PRD §9.3 names exactly six soft-deleting tables and
+    -- this is not one. Removing an override means setting the COLUMN back to NULL so it
+    -- falls through to the config default — not deleting the row. A soft-deleted policy
+    -- row would also have to be excluded from every resolution query, which is a
+    -- guaranteed source of "why is this branch still on the old tolerance?" bugs.
+    -- Same generated-column trick as job_entities.unique_role_gate, and for the same
+    -- reason: a plain UNIQUE(company_id, agent_id) permits MANY company-wide rows,
+    -- because both MySQL and SQLite allow repeated NULLs in a unique index. Folding
+    -- NULL to 0 makes "one company-wide row per company" enforceable at the database.
+    policy_scope_gate BIGINT GENERATED ALWAYS AS (COALESCE(agent_id, 0)) STORED,
+
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (agent_id) REFERENCES agents_info(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_tenant_policies_scope (company_id, policy_scope_gate)
 );
 
 -- 16. audit_logs

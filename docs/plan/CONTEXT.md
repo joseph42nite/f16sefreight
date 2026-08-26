@@ -78,7 +78,7 @@ Use it when you need what `artisan serve` cannot give you: **MySQL 8** — so th
 | File | Owns |
 |---|---|
 | `PRD.md` | Product — 6 logins, 3 tiers, workflows, formulas, NFRs |
-| `database_relations_tree.md` | **Schema — all 58 tables**, columns, FKs, indexes, runnable DDL |
+| `database_relations_tree.md` | **Schema — all 59 tables**, columns, FKs, indexes, runnable DDL |
 | `implementation_guide.md` | Build order — 8 checkpointed steps |
 | `ui_ux_guide.md` | Interface — tokens, components, states, accessibility, per-login screens |
 
@@ -86,7 +86,7 @@ Naming collision warning: the repo root already has its **own** `implementation.
 
 ### Verified invariants (audited, all passing)
 
-- Relational tree ↔ DDL: **58 tables, 0 mismatches**
+- Relational tree ↔ DDL: **59 tables, 0 mismatches** *(58 originally; `tenant_policies` added 2026-08-26)*
 - Every FK / CHECK / index references a column that exists **in its own table**
 - All cross-document `§` references resolve
 
@@ -188,6 +188,15 @@ No parallel structures. Batch 1a is clear to proceed on this front.
   11. **🔤 Party matching reuses the EXISTING Levenshtein matcher — do not write a new one.** `resources/js/src/core/mixins/airWayBillMixin.js` already has `normalizeText`, `calculateSimilarity` (Levenshtein ratio, short-circuits to 0.95 on containment when `min/max ≥ 0.65`) and `findMatchingAddress` (name **≥0.90** AND address **≥0.85**), already wired into `FocusAir.vue` and `HouseWayBill.vue`. Extracted shipper/consignee are matched against `saved_addresses` (agent-scoped, `AddressBookController`, curated from settings); a match **replaces** the OCR text with the curated record, which is already within every character limit and — the part that matters — **identical on every shipment for that partner**, since free-typed party names are what cause the master/house mismatches customs rejects. Unmatched parties keep OCR text and offer `[Save to address book]`, so the book grows without anyone doing data entry as a chore. ⚠️ **Propose, never silently substitute** — swapping a consignee for a merely similar one ships cargo to the wrong company.
   12. **`awaiting_vision_consent` needs its own expiry.** The 30-minute stale sweep must **exclude** it — an operator may answer an hour later — but the temp PDF waits on disk, so `pdf:expire-vision-consent` cancels and cleans up at 24 h.
 
+- **⚙️ `tenant_policies` added 2026-08-26 — the 59th table.** Four things `PRD.md` promised were "admin-configurable" or "adjustable per branch" had **no storage anywhere in the schema**: the OLI coefficients (§5.5), the undo-send window (§5.2.4), the stale-enquiry window (§5.4) and the CASS tolerances (§6.5). `/settings/workload` was a screen with nothing behind it, so those numbers would have been hardcoded. The legacy `settings` table is unrelated (two columns: `carrier_code`, `user_notice_1`).
+  **Typed columns, not generic key/value** — a key/value bag would fight a schema that validates everything at the database, and these values have real constraints.
+  **Scope:** `agent_id NULL` = company-wide, `agent_id` set = branch override. Only CASS is genuinely branch-level, which is why the column exists at all. `UNIQUE (company_id, policy_scope_gate)` where the gate is `GENERATED … COALESCE(agent_id, 0)` — the same trick as `job_entities.unique_role_gate`, and for the same reason: a plain `UNIQUE(company_id, agent_id)` permits **many** company-wide rows, since both engines allow repeated NULLs in a unique index. Tested, 6 assertions.
+  **No `deleted_at`** — §9.3 names six soft-deleting tables and this is not one. Removing an override means NULLing the column so it falls through to the default, never deleting the row.
+  **Not merged with `sla_policies`**, which is keyed `(company_id, tier)` — a different grain. `max_reply_time_minutes` stays there and must never be duplicated here.
+
+- **📌 One source of truth for every default: `config/f16s.php`.** Every `tenant_policies` column is NULLable with **no SQL default**, so a value exists in exactly one place; putting defaults in both the config and the DDL would give two that drift. Resolution is always **branch → company → config**, the same pattern `companies.ocr_credits_monthly_allowance` already uses. The PRD sections that quote these numbers (§3.4 credits, §5.2.4 undo, §5.4 stale, §5.5 OLI, §6.5 CASS) now each point at the config as the authority, so prose and code cannot silently disagree.
+  ⚠️ **`stale_enquiry_days` is the one invented number** — `PRD.md` §5.4 says only "the tenant's configured stale window" and never states a value. Config carries `7` as a starting point, flagged in both places; confirm with the business before launch.
+
 - **Dead references found in the live code** (none blocking): `config/auth.php` registers an `admin-api` guard pointing at `App\Admin::class`, which does not exist and has no table — a `roles.role = 'admin'` login 500s. `App\User::GetAssosName()` references a non-existent `App\Association`.
 
 ---
@@ -200,7 +209,7 @@ No parallel structures. Batch 1a is clear to proceed on this front.
 
 ### Readiness review — 2026-08-26
 
-A full pass over the planning set against the live codebase. **The plan itself is not the blocker:** the DDL carries 58 tables, every one appears in the Step-1 build order (zero orphans), all seven CHECK constraints are real, and every column the PRD calls un-retrofittable (`quoted_amount`, `origin_code`/`dest_code`, `first_response_at`, `pdf_processing_jobs.enquiry_id`, `cargo_data_source`) genuinely exists. What blocked Batch 1a were reconciliation gaps with this codebase.
+A full pass over the planning set against the live codebase. **The plan itself is not the blocker:** the DDL carries 59 tables, every one appears in the Step-1 build order (zero orphans), all seven CHECK constraints are real, and every column the PRD calls un-retrofittable (`quoted_amount`, `origin_code`/`dest_code`, `first_response_at`, `pdf_processing_jobs.enquiry_id`, `cargo_data_source`) genuinely exists. What blocked Batch 1a were reconciliation gaps with this codebase.
 
 | # | Gap | Status |
 |---|---|---|

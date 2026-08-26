@@ -4,7 +4,7 @@ The ordered developer playbook. Build the platform as **vertical slices in a fix
 
 > [!IMPORTANT]
 > **Companion documents — do not duplicate their content here.**
-> - **Schema (all 58 tables, columns, FKs, indexes, DDL):** [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md)
+> - **Schema (all 59 tables, columns, FKs, indexes, DDL):** [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md)
 > - **Product spec (roles, tiers, workflows, screens, formulas):** [`PRD.md`](file:///Users/jomygeorge/Desktop/f16sefreight/PRD.md)
 > - **Interface spec (tokens, components, states, accessibility):** [`ui_ux_guide.md`](file:///Users/jomygeorge/Desktop/f16sefreight/ui_ux_guide.md)
 >
@@ -175,7 +175,7 @@ No inbound foreign key dependencies; these run absolutely first.
 9. **`job_entities`** — polymorphic `party_type`/`party_id` → `customers.id` or `partners.id`. Uses a generated virtual column `unique_role_gate` to enforce partial uniqueness on `(job_id, role)` **except** for `notify_party`, which may repeat
 10. `sea_shipment_details` (carrier/haulage FKs → `partners.id`), `air_shipment_details`
 11. `llm_usage_logs`, `pdf_processing_jobs` — **both carry `enquiry_id` *and* `job_id`**. Extraction normally runs pre-conversion at status step 2, so `enquiry_id` is the common case. Without one of them the parsed payload is orphaned and cargo promotion is impossible. Index both
-12. `rate_cards`, `exchange_rates`, `sla_policies`
+12. `rate_cards`, `exchange_rates`, `sla_policies`, **`tenant_policies`** — the OLI coefficients, undo-send window, stale-enquiry window and CASS tolerances. Every column NULLable: NULL means *inherit from `config/f16s.php`*, so defaults have one home and this table stores only overrides. Resolution is **branch → company → config**
 13. `manifest_filings`, `approved_drafts_queue`, `operational_cover_letters`
 14. `email_classification_rules`, `email_classification_overrides`
 15. `ocr_credit_transactions` (→ `companies`, `enquiries`, `jobs`), `pdf_extraction_corrections`

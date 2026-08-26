@@ -281,7 +281,7 @@ This split is authoritative; it resolves the earlier ambiguity about what "the a
 | Users, designations, PIMA addresses, branches | **Boss** | in-app `/settings/users` |
 | Email triage rules (`email_classification_rules`) | **Boss** | in-app `/settings/email-triage-rules` |
 | SLA policies (`sla_policies`) | **Boss** | in-app `/settings/sla` |
-| OLI complexity coefficients & capacity caps | **Boss** | in-app `/settings/workload` |
+| OLI complexity coefficients & capacity caps | **Boss** | in-app `/settings/workload` → `tenant_policies` |
 | Chart of accounts, rate cards, bank-to-branch mapping | **Accounts** (Command) | in-app `/settings/finance` |
 | Accounting period open / close | **Accounts only** (Command) | in-app `/financials/periods` |
 | Customer & partner masters | **Boss / Sales** | in-app `/customers`, `/partners` |
@@ -424,6 +424,8 @@ Allowances are **defaults derived from the tier**, held in `config/f16s.php` so 
 | `command` | **2,000** | `−50` | Bigger tenants: several branches, an accounts team, 3–5× the shipments. The 4× step also *reads* as a real upgrade |
 
 > **The ceiling exists to catch abuse and the extreme tail — not to meter ordinary use.** If typical tenants hit it, the number is wrong: a paid feature has become a support ticket, and it will happen mid-shipment against a customs deadline. Size generously, then let real data correct it — `ocr_credit_transactions` gives per-tenant burn after one month. Set the allowance at roughly 2–3× the median and talk to the top decile about a larger plan.
+
+The table above documents the values; **`config/f16s.php` (`credits`) is where they live and is the single source of truth** — the same arrangement as the OLI and CASS defaults (§5.5, §6.5).
 
 **`companies.ocr_credits_monthly_allowance` and `ocr_credits_limit` are NULL by default, and NULL means *"follow the tier."*** A **platform superadmin** may pin either to a per-tenant value from `admin.f16sefreight.com` (§2.3.6); every change requires a reason and is logged to `ocr_credit_transactions` as `custom_override`.
 
@@ -885,7 +887,7 @@ queued ──(scheduled_send_at reached)──► sending ──► sent
 | `failed` | Provider rejected it. `send_error` shown verbatim; retry or discard |
 | `cancelled` | Undone inside the window; never dispatched |
 
-**Undo send — a 15-second hold by default.** Dispatch waits until `scheduled_send_at`; until then `[Undo]` cancels outright. This costs one delayed job and prevents the single most damaging everyday mistake in the product: the wrong document, the wrong client, the wrong rate. It is the same philosophy as the consent engine (§5.7) — **a moment of reversibility in front of an irreversible action** — and it should be configurable per tenant, including to zero.
+**Undo send — a 15-second hold by default.** Dispatch waits until `scheduled_send_at`; until then `[Undo]` cancels outright. This costs one delayed job and prevents the single most damaging everyday mistake in the product: the wrong document, the wrong client, the wrong rate. It is the same philosophy as the consent engine (§5.7) — **a moment of reversibility in front of an irreversible action** — and it is configurable per tenant, including to zero — `config/f16s.php` → `policies.undo_send_seconds`, overridable in `tenant_policies`.
 
 **Drafts autosave every 5 seconds** to local storage keyed by thread. A browser crash mid-composition loses at most five seconds, and the draft is offered back on return.
 
@@ -1067,7 +1069,7 @@ It opens a compact floating popover (three inputs only; a full side panel would 
 
 Submitting sets `enquiries.status = 'lost'`, stamps `lost_at`, halts SLA timers, and moves the card out of the active columns into the Lost/Archived section for Boss aggregations.
 
-**Inactivity nudge — prompting an explicit decision.** An unconfirmed enquiry must not silently rot. `php artisan enquiries:nudge-stale` (hourly) flags enquiries with **no child `jobs` row** and no client mail for the tenant's configured stale window, and pushes a **bell notification to pricing / the job owner** suggesting they mark it Lost with a reason. Debounced via `enquiries.stale_nudged_at`; cleared on any new client reply. This keeps the funnel honest — stale leads get a decision instead of lingering as phantom "open" enquiries.
+**Inactivity nudge — prompting an explicit decision.** An unconfirmed enquiry must not silently rot. `php artisan enquiries:nudge-stale` (hourly) flags enquiries with **no child `jobs` row** and no client mail for the tenant's configured stale window (`tenant_policies.stale_enquiry_days`, defaulting to `config/f16s.php` → `policies.stale_enquiry_days`; ⚠️ **this document has never specified a number — confirm the default with the business before launch**), and pushes a **bell notification to pricing / the job owner** suggesting they mark it Lost with a reason. Debounced via `enquiries.stale_nudged_at`; cleared on any new client reply. This keeps the funnel honest — stale leads get a decision instead of lingering as phantom "open" enquiries.
 
 **Reopen on trailing mail — Lost is reversible.** If the client resumes the conversation on the same thread (or via `POST /api/enquiries/{id}/reopen`), the enquiry **revives in place**: status returns to an active value, `lost_reason` / `lost_at` are cleared, `reopened_at` is stamped, SLA timers resume, and the card returns to the active columns. It **keeps its original `enquiry_no`** — it is the same lead re-awakened, not a new one.
 
@@ -1150,6 +1152,8 @@ counting only jobs with `status NOT IN ('Completed', 'Cancelled')`. *(`Lost` is 
 | Capacity cap | `15.0` | Per-operator, admin-adjustable |
 
 All parameters are admin-configurable at `/settings/workload`; the cap applies to the single formula above.
+
+> **The values in the table above are the *specified* defaults; `config/f16s.php` (`policies.oli`) is where they are *implemented*, and it is the single source of truth.** Per-tenant and per-branch overrides live in `tenant_policies`, whose columns are NULLable — NULL means "inherit the config default". Resolution is always **branch → company → config**. If you change a number, change it in the config and update this table to match.
 
 **Worked example** — an operator holding: one air-export job clearing today with 2 dimension lines and no houses, plus one sea-import consol clearing next week with 4 houses:
 
@@ -1615,7 +1619,7 @@ $$\text{Weight Variance (\%)} = \frac{\text{CASS Chargeable Weight} - \text{AWB 
 
 > **Compare chargeable against chargeable.** Airlines bill on **chargeable** weight, and for light/bulky cargo chargeable exceeds gross (it is `max(gross, volume/6000)`). Comparing the airline's *gross* figure against our *chargeable* figure would therefore report a large variance on every low-density shipment even when the billing is perfectly correct — flooding the review queue with false mismatches. `accounts_cass_statements` stores both `cass_chargeable_weight` and `cass_gross_weight` so the reconciliation compares like with like. Guard the denominator: if `AWB chargeable weight` is `0` or NULL, flag the row `unmatched` rather than computing a variance.
 
-Discrepancies beyond the configured tolerance (default ±1.0% on weight and on rate, adjustable per branch) flag the row `weight_mismatch` or `rate_mismatch` for manager review.
+Discrepancies beyond the configured tolerance (default **±1.0%** on weight and on rate — `config/f16s.php` → `policies.cass`, overridable **per branch** in `tenant_policies`) flag the row `weight_mismatch` or `rate_mismatch` for manager review.
 
 ### 6.6 Import DO Auto-Calculation
 
@@ -2361,7 +2365,7 @@ The `docker-compose.yml` stack runs on **8 GB RAM** with worker counts scaled do
 
 ## 10. Data Model Inventory
 
-**Full schema, columns, foreign keys, indexes and DDL live in [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md).** This section is the verified inventory only — **58 tables**, grouped by concern. Do not add table definitions here.
+**Full schema, columns, foreign keys, indexes and DDL live in [`database_relations_tree.md`](file:///Users/jomygeorge/Desktop/f16sefreight/database_relations_tree.md).** This section is the verified inventory only — **59 tables**, grouped by concern. Do not add table definitions here.
 
 | Group | Tables |
 |---|---|
@@ -2376,7 +2380,7 @@ The `docker-compose.yml` stack runs on **8 GB RAM** with worker counts scaled do
 | **Ledger & tax** | `chart_of_accounts`, `accounting_periods`, `accounts_ledger_entries`, `gst_ledger_entries` |
 | **Reconciliation** | `bank_transactions`, `accounts_cass_statements`, `exchange_rates` |
 | **Queues & documents** | `unposted_transactions_queue`, `approved_drafts_queue`, `operational_cover_letters` |
-| **Pricing & policy** | `rate_cards`, `sla_policies`, `sequence_counters` |
+| **Pricing & policy** | `rate_cards`, `sla_policies`, `tenant_policies`, `sequence_counters` |
 | **Analytics** | `financial_snapshots`, `customer_performance_snapshots`, `customer_lane_stats`, `customer_cadence_profiles`, `sales_action_queue` |
 | **Platform** | `notifications`, `support_tickets`, `audit_logs` |
 

@@ -25,8 +25,8 @@
 | Remote | `git@github.com:joseph42nite/f16sefreight.git` (**only** — not `dkdharmatmaa/f16s_main`) |
 | Branch | `main` |
 | Framework | **Laravel 9.52.21** *(the PRD says "Laravel 7+" — that is stale, ignore it)* |
-| Local DB | **SQLite** — `database/database.sqlite` |
-| Production DB | **MySQL** (user's decision; local/prod differ deliberately) |
+| Local DB | **MySQL 8.0.46** via `docker compose up -d db`, host port **3307** *(switched from SQLite 2026-08-26 — see §6)*. Tests use `f16s_test` on the same server |
+| Production DB | **MySQL** — local now matches it deliberately |
 | Migrations | **`php artisan migrate`** is approved for local dev |
 
 ### ⚠️ PHP version — this will bite you
@@ -201,6 +201,12 @@ No parallel structures. Batch 1a is clear to proceed on this front.
   🔴 **Two ways the suite can be green while production is broken**, both now in guide Step 8:
   1. **Never authenticate tests with `actingAs()`.** It bypasses both JWT and the `Host`-derived portal scope, so `TierModeGatingTest` would pass while air users see sea data live — the precise failure it exists to catch. Send a real token and a real `Host` header through the real middleware.
   2. **Green on SQLite ≠ green on MySQL.** They differ on loose `DECIMAL`/`VARCHAR` typing (matters for the ledger), `TRUNCATE` bypassing DELETE triggers, and FK cascades not firing triggers at all. Run the suite against MySQL 8 via `docker compose` before signing off each segment.
+
+- **🐬 Local switched from SQLite to MySQL 8 on 2026-08-26, and it paid for itself immediately.** `.env` now points at the container (`127.0.0.1:3307`, db `f16s`, user `f16s`); `phpunit.xml` pins `f16s_test` on the same server plus a `JWT_SECRET`. Old `.env` saved as `.env.backup-presql`; `database/database.sqlite` left on disk untouched. **Suite went 18 passed / 6 failed → 26 passed / 0 failed.** Three real defects surfaced in the first hour:
+  1. **`php artisan migrate` had never worked on a fresh database.** `2026_05_16_060000` indexes `air_way_bills.status`, but that column is not added until `2026_07_15_010000` — two months later in the ordering. Hidden because production applies schema as manual SQL and local dev ran against an existing SQLite file that already had the column. **Compounded by MySQL having no transactional DDL**: the partial failure was not rolled back, the migration was not recorded, and re-running failed with `1061 Duplicate key name`. Indexes are now guarded on both column-exists and index-exists, so the migration is re-runnable against a half-applied schema.
+  2. **Guarding alone was half a fix** — the two status indexes were then *silently skipped* on a fresh DB, leaving full table scans on the branch-and-status queries. `2026_07_28_000000` recreates them where the column exists. A silently missing index is a subtler bug than a loud one.
+  3. **`saved_addresses.fax`/`.telex` were `INTEGER`** but hold alphanumeric values, contradicting both `phone` (varchar) on the same table and `way_bill_addresses.*_telex` (varchar). SQLite stored `'TLX123'` in an INTEGER column without complaint; MySQL rejects it. Fixed by `2026_07_28_000100` — and `->change()` is exactly why `doctrine/dbal` was needed.
+  ⚠️ **Start the database before running anything:** `docker compose up -d db`. Docker Desktop is installed but does not auto-start. Brew also has **MariaDB** — do not use it; it is a third dialect and would reintroduce the drift this switch removed.
 
 - **Dead references found in the live code** (none blocking): `config/auth.php` registers an `admin-api` guard pointing at `App\Admin::class`, which does not exist and has no table — a `roles.role = 'admin'` login 500s. `App\User::GetAssosName()` references a non-existent `App\Association`.
 

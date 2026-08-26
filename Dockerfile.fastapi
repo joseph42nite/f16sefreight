@@ -1,0 +1,25 @@
+# F16s Freight OS — Python parsing engine (implementation_guide.md §4.1)
+#
+# Builds the EXISTING service in ./python: FastAPI + pdfplumber coordinate extraction
+# (extract_awb_new.py, ~9k lines). That is the structured-document path PRD §5.1 says
+# to keep — coordinates are the right tool for a fixed AWB layout.
+#
+# Still to be added on top (see guide §4.1): PyMuPDF, google-generativeai, schemas.py,
+# and the /extract-unstructured endpoint. Ollama and ChromaDB are NOT in this image —
+# in production they cohost with it on a dedicated t4g.large over loopback (PRD §9.5),
+# and Gemma needs ~6 GB resident, which PRD §9.6 says not to run on a laptop.
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY python/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY python/ .
+
+EXPOSE 8000
+CMD ["uvicorn", "ocr_server:app", "--host", "0.0.0.0", "--port", "8000"]

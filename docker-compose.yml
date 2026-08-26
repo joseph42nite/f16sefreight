@@ -1,0 +1,129 @@
+# F16s Freight OS — local multi-container stack (implementation_guide.md §0.1)
+#
+# This is ADDITIVE. The existing `php artisan serve` + SQLite workflow still works
+# untouched; nothing here is required for Batch 1a. Use this when you need the parts
+# artisan serve cannot give you: MySQL 8 (for the CHECK constraints and triggers as
+# production will run them), Redis, queues, and WebSockets.
+#
+#   docker compose up -d                  # web, db, redis, soketi, queue
+#   docker compose up -d                  # ...includes ai-server (FastAPI, ./python)
+#
+# Services resolve each other BY NAME on the f16s-network bridge, never by IP.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: f16s-web
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/http.d/default.conf:ro
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks: [f16s-network]
+
+  # Queue workers. The guide (§4.10) specifies SEVEN named queues in priority order;
+  # this single worker consumes them in that order via the comma-separated list, which
+  # is the correct behaviour until Horizon is installed. Horizon is NOT yet a dependency
+  # (composer.json has no laravel/horizon) — when it is added, replace this command with
+  # `php artisan horizon` and move the worker counts into config/horizon.php.
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: f16s-queue
+    working_dir: /var/www
+    command: >
+      php artisan queue:work redis
+      --queue=notifications,sync,mail-out,documents,ocr,backfill,analytics
+      --tries=5 --backoff=1,2,4,8,16 --timeout=120
+    volumes:
+      - .:/var/www
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks: [f16s-network]
+
+  db:
+    image: mysql:8.0
+    container_name: f16s-db
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: f16s
+      MYSQL_USER: f16s
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3307:3306"          # 3307 on the host, so a local MySQL install is not disturbed
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [f16s-network]
+
+  redis:
+    image: redis:7-alpine
+    container_name: f16s-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"          # 6380 on the host, same reason as above
+    volumes:
+      - redis_data:/data
+    networks: [f16s-network]
+
+  soketi:
+    image: quay.io/soketi/soketi:1.6-16-alpine
+    container_name: f16s-soketi
+    environment:
+      SOKETI_DEBUG: "1"
+      SOKETI_DEFAULT_APP_ID: f16s
+      SOKETI_DEFAULT_APP_KEY: f16s-key
+      SOKETI_DEFAULT_APP_SECRET: f16s-secret
+    ports:
+      - "6001:6001"
+      - "9601:9601"
+    networks: [f16s-network]
+
+  # The real parsing service, source in ./python. Today it is FastAPI + pdfplumber
+  # coordinate extraction (/health, /extract) — light enough to run locally.
+  # Ollama and ChromaDB are deliberately NOT here: Gemma needs ~6 GB resident and
+  # PRD §9.6 says to point at a shared dev AI instance rather than run it on a laptop.
+  ai-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: f16s-ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python:/app          # live edits without a rebuild
+      - chroma_data:/chroma
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [f16s-network]
+
+networks:
+  f16s-network:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
+  chroma_data:

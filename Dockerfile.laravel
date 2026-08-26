@@ -1,0 +1,28 @@
+# F16s Freight OS — Laravel container (implementation_guide.md §0.1)
+#
+# PHP 8.2, NOT 8.5. This project cannot run on 8.5: lcobucci/clock requires ~8.1||~8.2
+# and three other packages cap below it. See docs/plan/CONTEXT.md §2.
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache \
+        nginx supervisor bash git curl icu-dev oniguruma-dev libzip-dev \
+        libpng-dev libjpeg-turbo-dev freetype-dev $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring zip exif pcntl bcmath gd intl \
+    && pecl install redis && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS \
+    && mkdir -p /run/nginx /var/log/supervisor
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+# Dependencies are installed at build time from the lockfile; application code is
+# bind-mounted at runtime, so edits are live without a rebuild.
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --no-scripts --prefer-dist --no-autoloader
+
+COPY docker/php/supervisord.conf /etc/supervisord.conf
+
+EXPOSE 80
+CMD ["supervisord", "-c", "/etc/supervisord.conf", "-n"]

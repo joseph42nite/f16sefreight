@@ -301,6 +301,18 @@ Header icon, `--status-critical` dot with count. Panel: 420 px, max 480 px tall,
 
 Cargo (`📦 25 pcs`, `⚖ 450 kg`, `▭ 2.5 CBM`), classification (`AIRLINE`, `CLEARANCE`, `TRUCKING`), attachments (filename + type icon + size), lanes (`INBOM → DEHAM`, mono).
 
+**Attachment chips have three fetch states** (`email_attachments.fetch_state`), because we cache mailbox files rather than archive them (`PRD.md` §9.3):
+
+| State | Chip | On click |
+|---|---|---|
+| `cached` | Normal | Opens instantly from our storage |
+| `evicted` | Normal — **visually identical** | Brief inline spinner while we re-fetch from the mailbox, then opens **in the portal**. Never a redirect out to Gmail/Outlook |
+| `unavailable` | `--status-neutral`, 60% opacity, `▲` | Tooltip: *"Original no longer available in the connected mailbox"* |
+
+> **`evicted` must look exactly like `cached`.** The eviction window is our cost optimisation, not the user's concern — showing it as a distinct state makes a perfectly normal file look broken. The only visible difference is a sub-second spinner.
+>
+> **`unavailable` still shows filename, size, sender and date.** The row is never deleted, so the metadata survives as evidence the document existed. A bare 404 destroys that record.
+
 ### 5.8 The split-pane toggle
 
 Top-right header icon. Active state is visibly pressed. `Ctrl/Cmd + \` toggles.

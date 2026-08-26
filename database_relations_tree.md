@@ -595,13 +595,24 @@ For production and staging deployments, an independent backup helper container r
 
 ### 13. `email_attachments` (PK: `id`)
 *Renamed from `inbound_attachments` — attachments on outbound messages are indexed here too.*
+***We are a cache, not the archive.** These files already live in the user's mailbox permanently. We hold a copy for the active window, then drop the bytes and re-fetch from the provider on demand. Contrast `job_documents`, which we generate ourselves and must retain by statute.*
 ```text
   Column           | Type         | Key | Connection Links
   -----------------|--------------|-----|----------------------------------------
   id               | BIGINT       | PK  |
   email_message_id | BIGINT       | FK  | ◄── email_messages.id (Cascade delete)
   filename         | VARCHAR(255) |     |
-  file_path        | VARCHAR(255) |     | (Contains UUID generated string name)
+  file_path        | VARCHAR(255) |     | (S3 key while cached. NULLED when the cache expires — the
+                   |              |     |  row survives so the attachment still shows on the thread)
+  provider_attachment_id | VARCHAR(255) | | ** RE-FETCH KEY ** — Gmail attachmentId / Graph attachment
+                   |              |     |  id. With the parent's message_id this is enough to pull the
+                   |              |     |  file back from the mailbox on demand, so we never need to
+                   |              |     |  store it permanently
+  cache_expires_at | TIMESTAMP    |     | (Bytes dropped after this. Default +90 days from last access;
+                   |              |     |  any download or preview pushes it out again)
+  fetch_state      | VARCHAR(20)  |     | (cached | evicted | unavailable. 'unavailable' = re-fetch
+                   |              |     |  failed — mailbox disconnected, message deleted, or the
+                   |              |     |  staff member left. The UI must say so rather than 404)
   mime_type        | VARCHAR(50)  |     |
   created_at       | TIMESTAMP    |     |
   updated_at       | TIMESTAMP    |     |
@@ -1859,7 +1870,10 @@ CREATE TABLE email_attachments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email_message_id BIGINT NOT NULL,
     filename VARCHAR(255) NOT NULL,
-    file_path VARCHAR(255) NOT NULL, -- contains UUID filename
+    file_path VARCHAR(255) NULL, -- S3 key while cached; NULL once evicted
+    provider_attachment_id VARCHAR(255) NULL, -- Gmail attachmentId / Graph attachment id — the re-fetch key
+    cache_expires_at TIMESTAMP NULL, -- default +90d from last access
+    fetch_state VARCHAR(20) DEFAULT 'cached', -- cached | evicted | unavailable
     mime_type VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

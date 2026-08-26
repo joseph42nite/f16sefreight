@@ -2070,7 +2070,7 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | **N+1 prevention** | Enforce eager loading: `EmailThread::with(['assignedOperator','job'])`, `Job::with(['client','operator','waybill','entities','containers'])`, `Invoice::with(['client','items'])` |
 | **Partitioning** | **Do NOT** use MySQL range/list partitioning on InnoDB tables — it does not support foreign keys, and integrity matters more than the marginal scan gain. Rely on snapshots + heavy indexing instead |
 | **Queues** | **Seven named queues, priority-ordered** — `notifications` → `sync` → `mail-out` → `documents` → `ocr` → `backfill` → `analytics`. A single shared queue puts a 30 s OCR job in front of a 1 s mail sync and mail arrives minutes late for invisible reasons. Sizing and worker counts in `implementation_guide.md` §4.10. Target HTTP response under 100 ms |
-| **Message bodies** | Offloaded to object storage; only `body_snippet` (500 chars) is inline. At ~50 KB/message × 1,000 mailboxes this is **~900 GB/year** — inline `LONGTEXT` would make backup, restore and any `ALTER` on that table progressively unusable. Thread lists read the snippet; the full body is fetched on open and cached 24 h |
+| **Message bodies & attachments** | **We cache, the provider archives.** Snippet inline forever; bodies and attachments held ~90 days then evicted and **re-fetched from the mailbox on demand** — never deep-linked out to Gmail/Outlook. Turns unbounded growth into a ~220 GB steady state. `job_documents` are the exception: we generated them, no mailbox holds them, and customs statute requires 5 years (§9.3) |
 
 ### 9.2 Security & Tenancy
 
@@ -2097,22 +2097,32 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 - Financial year-end exports `accounts_ledger_entries` and `gst_ledger_entries` to compressed JSON/Parquet in S3 with **Object Lock (WORM)**.
 - `job_documents` stay in hot storage for 12 months, then move to S3 Glacier Flexible Retrieval for 5 years to meet customs statute, before automated purge.
 
-**Mail archival — tiered, automatic, and invisible to the user:**
+**Storage retention splits on provenance — who created the file:**
 
-Message **bodies** live in S3 (§5.2.3) under a lifecycle policy. Nothing is ever moved by hand, and no user action archives anything.
-
-| Age | Storage class | Read latency | Why |
+| Class | Origin | Durable copy exists where? | Our policy |
 |---|---|---|---|
-| 0–30 days | **S3 Standard** | instant | The active working set — almost every open is here |
-| 30 days – 1 year | **S3 Standard-IA** | instant | Same latency, ~45% cheaper. Occasional reference reads |
-| 1–2 years | **S3 Glacier Instant Retrieval** | instant | Rarely opened, but must stay instant — an operator chasing an old dispute cannot wait hours |
-| **2 years** | **deleted** | — | `body_purge_after` fires; DPDP transient-text limit |
+| **Message bodies** (`email_messages`) | The mailbox | **Provider, permanently** | Snippet inline forever; body cached **90 days**, then re-fetched on demand |
+| **Email attachments** (`email_attachments`) | The mailbox | **Provider, permanently** | Cached **90 days from last access**, then bytes dropped and re-fetched on demand |
+| **Generated documents** (`job_documents`) | **We created them** | **Nowhere else** | **Statutory retention — 12 months hot, then Glacier, 5 years total for customs** |
+| Ledger & GST exports | We created them | Nowhere else | 8 fiscal years, S3 Object Lock (WORM) |
 
-> **Glacier *Instant* Retrieval, not Flexible.** `job_documents` can tolerate a restore delay because they are legal records fetched deliberately. **Mail cannot** — a thread that takes hours to open is a broken product, and the operator has no way to know in advance which thread they will need.
+> #### 🔴 The two halves are not interchangeable
+> **Mailbox-origin files can be evicted safely** — Gmail and Outlook keep them indefinitely, so we are a cache in front of a durable store we do not own. Holding a permanent second copy is pure duplicated cost.
+>
+> **Generated documents cannot.** An AWB, HBL, Delivery Order, customs manifest or cover letter **was never in anyone's mailbox** — we produced it. Purging those at 90 days would destroy the only copy of a legal record that Indian customs statute requires for **five years**. Core-tier tenants make this starker still: they have **no mailbox connection at all**, so there is no fallback of any kind.
 
-**What survives the purge.** Only the S3 object is deleted. The `email_messages` row, its `body_snippet`, sender, subject, timestamps, thread linkage and every derived analytic **remain permanently**. A two-year-old thread still shows who wrote to whom, when, and the first 500 characters — enough to reconstruct the commercial history without retaining the full correspondence.
+**Re-fetch, don't redirect.** When a user opens an evicted attachment we pull it back **through the provider API using the stored `provider_attachment_id`** and stream it inside the portal. We deliberately do **not** deep-link them to Gmail or Outlook:
 
-**Why no database archival is needed.** With bodies offloaded, `email_messages` grows at ~27 GB/year (§9.6). There is deliberately **no partitioning, no archive table and no cold-row migration** — those add operational complexity and, on a partitioned InnoDB table, would break foreign-key integrity (§9.1). The composite index `(agent_id, status, latest_message_received_at)` keeps recency queries fast regardless of table depth.
+- A deep link only works if that person happens to be signed into that mailbox in that browser — a consignee, broker or colleague never is.
+- It sends the user **out of the portal**, which contradicts the entire reason the mail workspace exists.
+- Re-fetch is a single API call (~5 quota units) and takes under a second. The user sees a brief spinner, not a context switch.
+
+Re-fetched bytes are re-cached and `cache_expires_at` is pushed out, so anything under active reference stays warm without a policy exception.
+
+**Graceful degradation is mandatory.** Re-fetch fails when the mailbox is disconnected, the staff member has left, or the client deleted the message. On failure the attachment is marked `unavailable` and the UI states plainly *"Original no longer available in the connected mailbox"* — with filename, size, sender and date still visible from the row we never deleted. A 404 or a broken download link is not acceptable: the metadata is evidence that the document existed even when the bytes are gone.
+
+**Cost effect.** Caching 90 days instead of retaining two years turns unbounded growth into a **steady state** — roughly **220 GB** of bodies and attachments rather than ~900 GB/year and climbing. `job_documents` continues to accrue, but it is a fraction of the volume and is a legal obligation rather than a convenience.
+
 
 **UI archival is separate and purely a view concern.** `email_threads.status = 'archived'` removes a thread from the default folder. It moves no data, deletes nothing, and is reversible.
 

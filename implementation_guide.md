@@ -426,6 +426,7 @@ Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Air
 | Command | Cadence | Purpose |
 |---|---|---|
 | `mailboxes:poll` | **every 15 min** | Reconciliation sweep — the safety net behind push, not the primary mechanism |
+| `attachments:evict-cache` | daily | Drop bytes where `cache_expires_at` has passed; set `fetch_state = 'evicted'`. **Never touches `job_documents`** — those are statutory |
 | `mailboxes:sync-read-state` | every 5 min | Push local read/archive changes upstream; **the provider wins any conflict** |
 | `mailboxes:renew-watch` | **daily** | Re-call Gmail `users.watch()` where `watch_expires_at < 48h`. The subscription dies at 7 days **with no error** — a daily cadence survives six failed runs, a weekly one survives none |
 | `enquiries:nudge-stale` | hourly | Bell-nudge pricing to decide on inactive unconfirmed enquiries; debounced via `stale_nudged_at`, cleared on any new client reply |
@@ -605,7 +606,9 @@ Order matters here more than anywhere else in the build.
      |---|---|
      | `AudienceFirewallTest` | Inserting `audience='internal'` **with any `draft_*` column populated is rejected by `chk_saq_internal_no_draft`** — at the database, not the application |
      | `ContactOptOutTest` | A contact with `opted_out_at` never appears in `draft_cc`, even with `include_in_cc = true` |
-     | `OutboundNotClassifiedTest` | A synced Sent-folder message stamps `first_response_at` and stops the SLA clock, but produces **no** classification, **no** `enquiry_no` and does not touch `latest_message_received_at` or `stale_nudged_at` |
+     | `AttachmentRefetchTest` | An evicted attachment re-fetches via `provider_attachment_id` and streams **in-portal**; a disconnected mailbox yields `fetch_state = 'unavailable'` with metadata intact, never a 404 |
+   | `StatutoryRetentionTest` | The eviction job **never** deletes a `job_documents` row or its bytes, at any age |
+   | `OutboundNotClassifiedTest` | A synced Sent-folder message stamps `first_response_at` and stops the SLA clock, but produces **no** classification, **no** `enquiry_no` and does not touch `latest_message_received_at` or `stale_nudged_at` |
    | `HarvestTest` | Polling never sets `include_in_cc`; harvesting an opted-out address updates recency but does not re-enable it |
    | `SentFolderSyncTest` | A message created in the provider's **Sent** folder (simulating a reply typed in Outlook) is ingested and joins the **existing** thread via `provider_thread_id` |
    | `EchoSuppressionTest` | Sending via the portal then running a sync produces **one** row, not two, and fires no second notification |

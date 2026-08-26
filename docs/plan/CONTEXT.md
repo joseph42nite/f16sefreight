@@ -39,7 +39,9 @@ export PATH="/usr/local/opt/php@8.2/bin:$PATH"
 
 Without it, `composer install` fails on platform requirements.
 
-### Running it
+### Running it — two ways, both valid
+
+**Host workflow (default, what the committed `.env` is set up for):**
 
 ```bash
 export PATH="/usr/local/opt/php@8.2/bin:$PATH"
@@ -48,6 +50,15 @@ npm run watch              # webpack, rebuilds on save
 ```
 
 Both verified working. Webpack compiles clean in ~49 s (SCSS deprecation warnings from Bootstrap are noise, not errors).
+
+**Container stack (added 2026-08-26, purely additive — the above still works):**
+
+```bash
+docker compose up -d                  # web, queue, db (MySQL 8), redis, soketi
+docker compose --profile ai up -d     # + ai-server, needs ./python
+```
+
+Use it when you need what `artisan serve` cannot give you: **MySQL 8** — so the 7 CHECK constraints, the generated column and the triggers run exactly as production will — plus Redis, real queues and WebSockets. Host ports are deliberately offset (`db` 3307, `redis` 6380) so a local MySQL or Redis install is not disturbed. Copy `.env.docker.example` over `.env` **only** while using the stack; the committed `.env` stays pointed at SQLite.
 
 ---
 
@@ -91,22 +102,93 @@ Naming collision warning: the repo root already has its **own** `implementation.
 
 40 migrations are already applied locally.
 
-### 🔎 Possible duplication — check before building
+### ✅ Duplication check — resolved 2026-08-26, no duplicates
 
-| Planned table | Existing table | Question |
+| Planned table | Existing table | Verdict |
 |---|---|---|
-| `customer_contacts` | `contacts`, `saved_addresses` | Extend the existing ones instead? |
-| `rate_cards` | `rates` | Same |
-| `partners` | `airlines` | `airlines` is already the carrier list |
+| `customer_contacts` | `contacts`, `saved_addresses` | **Create fresh.** `contacts` is a website contact-form/lead table (`first_name, last_name, email, phone, message`). `saved_addresses` is a per-waybill address store keyed by `awb_id` — closest to `job_entities`, not a customer address book |
+| `rate_cards` | `rates` | **Create fresh.** `rates` is an airline tariff lookup (dest airport, zone, carrier prefix, rate range); `rate_cards` is a per-party charge tariff — different grain |
+| `partners` | `airlines` | **Create fresh; keep both.** Already settled in `PRD.md` §10 — `airlines` is retained for the carrier-domain exclusion list, while accounting/operational carrier records live in `partners` |
 
-Resolve these **before** Batch 1a creates parallel structures.
+No parallel structures. Batch 1a is clear to proceed on this front.
 
 ---
 
 ## 6. Corrections to earlier assumptions
 
 - **`houseway_bills` vs `house_way_bills` was a false alarm.** The table is `house_way_bills` everywhere. Only the migration *filename* and the model *class name* omit the underscore; the model declares `protected $table = 'house_way_bills'`. **No conflict, nothing to fix.**
-- **SQLite is more capable than assumed.** 3.53.4 **enforces CHECK constraints and supports generated columns**, so the schema's 7 CHECKs and `job_entities.unique_role_gate` are genuinely exercised locally. Remaining divergence from MySQL is loose typing on `DECIMAL`/`VARCHAR`, which matters for the ledger but not for early batches.
+- **SQLite is more capable than assumed.** 3.53.4 **enforces CHECK constraints and supports generated columns**, so the schema's 7 CHECKs are genuinely exercised locally. Remaining divergence from MySQL is loose typing on `DECIMAL`/`VARCHAR`, which matters for the ledger but not for early batches.
+  ✅ **Fixed 2026-08-26.** `job_entities.unique_role_gate` previously used `IF(role != 'notify_party', role, NULL)`; `IF()` is MySQL-only and SQLite cannot parse it. Now `CASE WHEN role <> 'notify_party' THEN role END` — ANSI, works on MySQL 8, SQLite 3.31+ and Postgres. Two rules recorded in the DDL alongside it: declare it in the **CREATE**, never a later ALTER (SQLite cannot `ADD COLUMN` a STORED generated column), and **never** swap it for a partial index — SQLite and Postgres support those, MySQL does not, which is the whole reason the generated column exists.
+
+- **🔐 Auth model resolved (2026-08-26): stateless JWT, context per request.** The planning set was written assuming Laravel sessions; this codebase uses `tymon/jwt-auth` with guards selected by the legacy `roles` table. A session-backed `scopeForActivePortal()` would have returned **unfiltered** rows rather than erroring. Resolved as:
+  1. **Portal scope from the request `Host`**, bound per request by `BindPortalScope` middleware on the `api` group — absent in queue/CLI contexts, so daemons pass through unfiltered exactly as intended.
+  2. **Only identity in the JWT.** `designation` and `tier` are re-read per request (Redis-memoized, busted on save), so a demotion or tier downgrade applies immediately instead of at token expiry.
+  3. **Pre-login company selection is UX, not a security binding.** `company_id` derives from `user → branch → company`.
+  Written up in `implementation_guide.md` §3.0/§3.3/§3.6 and `PRD.md` §2.1. The `roles` table (guard selector) and `users.designation` (in-tenant role) are different axes and both survive.
+
+- **Live `users` columns that affect Batch 1a.** `pima_address` **already exists** — the guide's ALTER list has been corrected to drop it.
+  ✅ **`origin_airport_code` vs `origin_port_id` — decided 2026-08-26: keep both.** They are not duplicates. `origin_airport_code` is a bare IATA string on `users` with no FK; `origin_port_id` is a **foreign key into the new `ports` table** (the UN/LOCODE master, which also covers seaports). Add `origin_port_id` **nullable** and leave it empty for now — the port directory is being loaded later, then backfilled from the IATA codes. Registration cannot require it until that data exists.
+
+- **🔎 `users.branch_name` holds an ID, not a name — verified in code, question closed.** The name invites the assumption that it stores a station code like `BLR` or `MAA`. **It does not.** The admin form's "Branch Location" field is a dropdown whose options are built at `resources/js/src/view/pages/admin/NewUsers.vue:241` as `{value: data[i].id, text: data[i].agent_city}` — fed by `BranchController@getCompanyBranch`, which selects only `id` and `agent_city`. **The city is what's displayed; the numeric `agents_info.id` is what's stored.** Every reader confirms it: ~40 call sites do `Agent::where('id', $user->branch_name)` (e.g. `app/Http/Traits/WaybillTrait.php:17`). If the column held `'BLR'` the entire waybill flow would already be broken.
+  It is `VARCHAR` only because the column type was never tightened — validation is `nullable|max:50`, which never required a number.
+  **Real airport codes live elsewhere:** `users.origin_airport_code` (the actual IATA code), `agents_info.office_airport`, `agents_info.agent_city`. If branches should ever be labelled `BLR`/`MAA` in the UI, that is a display concern for those columns — `branch_name` never needs to carry it.
+
+- **✅ Decision: convert `users.branch_name` to `BIGINT UNSIGNED` + FK → `agents_info.id`; keep the column name.** Because the stored values are already IDs, this changes **no data** — it tightens the type to match reality and lets the database enforce that the branch exists. Keeping the name means **zero code churn** across those ~40 call sites; renaming to `agent_id` is an optional later tidy-up, not this migration.
+  **Why it matters:** with a `VARCHAR` column and no FK, MySQL silently coerces text in numeric comparisons — `'3abc'` becomes `3`. A corrupted value would quietly resolve to a *real, different* branch and leak another tenant's data, with nothing raised.
+  **Prerequisite:** `composer require doctrine/dbal`. Laravel 9's `->change()` needs it and it is **not installed** (Laravel 10 dropped the requirement; we are on 9.52).
+  **`NOT NULL`, per the project rule set 2026-08-26: every user has a branch, and therefore a company and a tier.** That is what makes tier resolution total in `ProcessPdfOcrJob` — there is no branchless-user case to design around. Registration now enforces it too: `UserController` validated `branch_name` as `nullable|max:50` (which is how branchless users were created) and is now `required|integer|exists:agents_info,id`.
+  ⚠️ **Backfill before constraining.** Check 3 below counts users with a NULL/empty `branch_name`; assign each a branch first or the migration aborts.
+  **Confirm against production first** — the local DB is empty, so none of this is verified there.
+
+  ```sql
+  -- 1. Any non-numeric branch_name? (must be empty before converting)
+  SELECT id, email, branch_name FROM users
+  WHERE branch_name IS NOT NULL AND branch_name <> ''
+    AND branch_name NOT REGEXP '^[0-9]+$';
+
+  -- 2. Any branch_name pointing at a branch that doesn't exist?
+  SELECT u.id, u.email, u.branch_name FROM users u
+  LEFT JOIN agents_info a ON a.id = CAST(u.branch_name AS UNSIGNED)
+  WHERE u.branch_name IS NOT NULL AND u.branch_name <> '' AND a.id IS NULL;
+
+  -- 3. How many users have no branch at all? (these have no tenant)
+  SELECT COUNT(*) AS no_branch FROM users
+  WHERE branch_name IS NULL OR branch_name = '';
+
+  -- 4. ⚠️ THE DANGEROUS ONE — does company_name disagree with the branch's company?
+  --    The plan switches company resolution from the company_name string to branch->company_id.
+  --    Any row returned here is a user who SILENTLY MOVES TENANT when we flip the switch.
+  SELECT u.id, u.email, u.company_name, a.company_id, c.name AS branch_company
+  FROM users u
+  JOIN agents_info a ON a.id = CAST(u.branch_name AS UNSIGNED)
+  JOIN companies c ON c.id = a.company_id
+  WHERE u.company_name <> CAST(a.company_id AS CHAR)
+    AND u.company_name <> c.name;
+  ```
+
+- **🐞 `users.company_name` has the same shape — and a live bug.** That dropdown also stores the **company ID** (`NewUsers.vue:230`), not the name. But `app/Http/Controllers/Auth/LoginController.php:45` looks it up by name: `Company::where('name', $companyName)`. If the column holds `"3"`, that finds nothing and `templates_config` resolves to **null on every login** — plausibly unnoticed if the config is rarely used. Unverified locally (empty DB); confirm with `SELECT id, email, company_name FROM users LIMIT 20` against production. **The plan already fixes this** by deriving company through `user → branch → company` rather than by string. Keep `company_name` for now (the login cache key uses it), but stop writing new logic against it.
+
+- **🐍 The Python parsing service is in-repo at `python/`** — it was never missing. `ocr_server.py` exposes `GET /health` and `POST /extract`, calling `extract_all_boxes()` from `extract_awb_new.py` with coordinates supplied either by `system_templates` (passed through by `ProcessPdfOcrJob`) or by `boxes_config.json`. `requirements.txt` pins only `pdfplumber`, `fastapi`, `uvicorn`, `python-multipart`. **It is the structured-document path PRD §5.1 says to keep** — the AI paths are additive work, not a replacement. Gap analysis against guide §4.1 is recorded there.
+
+- **⚙️ OCR tier branching & the credit gate — specified 2026-08-26** (`implementation_guide.md` §4.1.1). `PRD.md` §3.3 previously said only "branches on tier"; the mechanism did not exist. Four decisions:
+  1. **Tier resolves `users.branch_name → agents_info.company_id → companies.tier`** — total, because every user has a branch. In a queue worker this must go through `withoutTenantScope()`, and eager-load `User::with('branch.company')` — it runs on every upload.
+  2. **The route is tier × document class, not tier alone.** Core + a structured AWB still uses coordinate extraction free of charge; Core + an *invoice* fails with `failure_code = 'upgrade_required'` and shows the upgrade CTA, because `pdfplumber` has no template for it and would otherwise return a blank form that looks broken.
+  3. **🔒 Vision OCR is OPT-IN — the system never spends a credit on its own** *(owner's decision, and it also dissolved the sequencing problem)*. Invoices and packing lists arrive as scans and photos too, so "no text layer" is common, not exceptional. The first call always runs `allow_vision = false`: if PyMuPDF finds text, Gemma parses it free with no prompt; if not, FastAPI returns `extraction_path = 'none'`, **nothing is reserved and no Gemini call is made**, and the job parks at `status = 'awaiting_vision_consent'` showing page count and cost. Accepting hits `POST /api/pdf-jobs/{id}/authorize-vision`, which reserves under `SELECT … FOR UPDATE` and re-calls with `allow_vision = true`. Declining cancels, having spent nothing.
+     This is the same principle `PRD.md` §5.7 applies to client email — *a moment of reversibility in front of an irreversible act* — and it neatly removes the ordering problem an earlier draft solved with speculative reserve-then-refund: there is now a **human decision** between the two calls, so the round trip does real work. **Refund survives only for the narrow failure case** (Gemini times out after reserving), guarded by `UNIQUE (reverses_transaction_id)` so a retry cannot credit twice.
+  4. **New columns:** `ocr_credit_transactions.pdf_processing_job_id` (which extraction spent the credit — previously unanswerable) and `.reverses_transaction_id`; `pdf_processing_jobs.extraction_path` (`coordinates|text|vision|none`), `.page_count` (vision cost scales with pages, so the prompt can say *"3 pages, 1 credit"*) and `.failure_code` (a code, not a sentence, so tests and UI branch deterministically).
+  5. **🐞 Found while sizing allowances: nothing granted the monthly credits.** `companies.ocr_credits_monthly_allowance` and the `monthly_grant` transaction type both existed, but no command ever applied them — balances only ever decreased, so every tenant would eventually hard-stop and never recover. Added `credits:grant-monthly` (monthly, 1st) to guide §4.7: **resets** to the allowance rather than adding to it, and must be idempotent or a re-run doubles every balance.
+  6. **Tier defaults live in `config/f16s.php` (created 2026-08-26); superadmin can override per tenant.** `core` 0 / `tactical` 500 / `command` 2,000 monthly, with overdraft floors `0` / `−20` / `−50`. Sized from `shipments × client docs × share scanned` (~150/month for a mid-size branch) with ~3× headroom — **the ceiling catches abuse and the tail, it does not meter ordinary use.** `companies.ocr_credits_monthly_allowance` and `.ocr_credits_limit` are now **NULL by default, meaning "follow the tier"**; a non-NULL value is a pinned superadmin override. That distinction is deliberate: an ordinary tenant is lifted automatically on upgrade, while a negotiated allowance is never silently overwritten by a tier change. Recalibrate from `ocr_credit_transactions` after one month of real burn — median × 2–3.
+  7. **⚠️ Prompt-caching claims corrected 2026-08-26.** Three problems in the original text. (a) `PRD.md` §7.3.6 said "cache the system prompt and schema via Ollama `num_ctx`" — **`num_ctx` sets the context-window size and caches nothing**; prefix reuse comes from the Modelfile plus Ollama's KV cache, with `num_ctx` only a prerequisite. (b) `OLLAMA_KEEP_ALIVE=-1` keeps model **weights** resident — that is cold-start load time, **not** prompt caching; the two were conflated. (c) The "up to 80% token cost" claim is **inverted relative to where money is spent**: the text path runs on local Gemma and is free (caching buys latency only), while the vision path's cost is dominated by the **page image**, not the prompt — so caching saves little exactly where the bill is. Gemini context caching also needs two checks against current Google docs before building: a **minimum cacheable size** the schema block may fall under, and the fact that the specified **300 s TTL** is billed by duration, so at realistic density the cache expires between requests — full creation cost, no reuse. **Real vision-cost levers, in order:** the opt-in consent gate, fewer pages, image downscaling.
+  8. **📐 Caching ≠ schema conformance — clarified 2026-08-26.** Prompt caching makes a schema cheaper and faster to **send**; it has no bearing on whether the model **obeys** it. Getting form-ready JSON is three separate mechanisms: **constrain** (Gemini `response_schema`, Ollama `format: <json-schema>`), **validate** (Pydantic — the last line of defence, not the mechanism; it detects a bad payload, it does not prevent one), and **map** (one shared key vocabulary → the Vue forms). The plan previously specified only Pydantic validation, so the constraint step was missing entirely.
+     **The key vocabulary already exists in code:** `extract_all_boxes()` returns `result[box_name]` keyed by the regions in `python/boxes_config.json` — `shipper`, `consignee`, `departure`, `destination`, `transit`, `cargo`, `weight_charge`, `piece_weight` — and `FocusAir.vue` consumes those names. **`/extract-unstructured` must return the same keys**, or `OcrUploadModal.vue` needs two mappers that drift. One shape difference to reconcile: `/extract` returns bare values while the new path returns `{value, confidence}` — unify upward by having `/extract` wrap and stamp `confidence: "high"`, since a coordinate hit is exactly that per `PRD.md` §5.1.
+  9. **🔒 Use schema-constrained decoding, and make every value nullable.** Three levels of "return JSON": a prompt instruction (guarantees nothing), JSON mode (valid syntax, any shape), and **schema-constrained decoding** — Gemini `response_schema`, Ollama `format: <json-schema>` — where the decoder is grammar-constrained so a non-conforming token cannot be sampled. **Use the third on both models.** Caveat: Gemini accepts a stricter OpenAPI-flavoured subset than Ollama, historically awkward with `$ref`/`$defs`, so author one flat schema satisfying the stricter of the two.
+     ⚠️ **The trap:** constrained decoding guarantees shape, not truth. A *required* `gross_weight` forces the model to invent a number when the page does not contain one — converting a visible failure into a silent one on a document that becomes a customs declaration. **So: every value nullable, `confidence` required on every field, enums wherever the value set is closed (`weight_unit`, currency, package type), schema kept flat and one per document type** — Gemma 4 E4B is ~4B params and degrades under a deep grammar. Pydantic still validates afterwards for semantic nonsense (dates in 2085, negative weights); on failure retry **once** with the error, then `extraction_failed` — never loop, since each vision retry is another paid call.
+  10. **📏 Field constraints: enforce FORMAT in the schema, validate LENGTH afterwards.** Consolidated table in guide §4.1.2, sourced from `PRD.md` §5.9 (Cargo-XML) and §5.8 (ICEGATE). **`pattern`/`enum` go in the extraction schema** (MAWB `^\d{3}-\d{8}$`, HAWB alphanumeric ≤20, IMO `^[0-9]{7}$`, HS `^\d{6,10}$`, container 11-char ISO 6346, weight unit `KGS|LBS`, container and cargo type enums) — free accuracy, the model cannot emit an invalid value. **`maxLength` must NOT** — a 35-char cap on a shipper name makes the model silently truncate a 60-char legal name at parse time. Extract full fidelity, validate after, flag orange, let a human abbreviate. Two rules are cross-row rather than per-field: house piece counts must sum to the master exactly, and an IMDG class requires a UN number.
+
+  11. **🔤 Party matching reuses the EXISTING Levenshtein matcher — do not write a new one.** `resources/js/src/core/mixins/airWayBillMixin.js` already has `normalizeText`, `calculateSimilarity` (Levenshtein ratio, short-circuits to 0.95 on containment when `min/max ≥ 0.65`) and `findMatchingAddress` (name **≥0.90** AND address **≥0.85**), already wired into `FocusAir.vue` and `HouseWayBill.vue`. Extracted shipper/consignee are matched against `saved_addresses` (agent-scoped, `AddressBookController`, curated from settings); a match **replaces** the OCR text with the curated record, which is already within every character limit and — the part that matters — **identical on every shipment for that partner**, since free-typed party names are what cause the master/house mismatches customs rejects. Unmatched parties keep OCR text and offer `[Save to address book]`, so the book grows without anyone doing data entry as a chore. ⚠️ **Propose, never silently substitute** — swapping a consignee for a merely similar one ships cargo to the wrong company.
+  12. **`awaiting_vision_consent` needs its own expiry.** The 30-minute stale sweep must **exclude** it — an operator may answer an hour later — but the temp PDF waits on disk, so `pdf:expire-vision-consent` cancels and cleans up at 24 h.
+
+- **Dead references found in the live code** (none blocking): `config/auth.php` registers an `admin-api` guard pointing at `App\Admin::class`, which does not exist and has no table — a `roles.role = 'admin'` login 500s. `App\User::GetAssosName()` references a non-existent `App\Association`.
 
 ---
 
@@ -116,13 +198,56 @@ Resolve these **before** Batch 1a creates parallel structures.
 
 **Next step: Batch 1a** — `sequence_counters` → `ports` → `customers` → `customer_contacts` → `partners`, plus ALTERs to `companies` and `users`. Read `implementation_guide.md` §"Batch 1a" for exact ordering and index requirements.
 
+### Readiness review — 2026-08-26
+
+A full pass over the planning set against the live codebase. **The plan itself is not the blocker:** the DDL carries 58 tables, every one appears in the Step-1 build order (zero orphans), all seven CHECK constraints are real, and every column the PRD calls un-retrofittable (`quoted_amount`, `origin_code`/`dest_code`, `first_response_at`, `pdf_processing_jobs.enquiry_id`, `cargo_data_source`) genuinely exists. What blocked Batch 1a were reconciliation gaps with this codebase.
+
+| # | Gap | Status |
+|---|---|---|
+| 1 | Plan assumed **session auth**; codebase is stateless JWT | ✅ **Resolved** — §6, guide §3.0/§3.3/§3.6, PRD §2.1 |
+| 2 | `users.branch_name` is `VARCHAR`, DDL says `BIGINT` FK | ✅ **Decided** — §6. Values are already IDs; convert + FK, keep the name. Gated on the 4 production checks |
+| 3 | Batch 1a tried to add `pima_address`, which already exists | ✅ **Removed** from guide §Batch 1a·7 |
+| 4 | `unique_role_gate` used MySQL-only `IF()` | ✅ **Fixed** — now `CASE WHEN`, portable |
+| 5 | 3 triggers + 3 views specified in prose, **never authored** | ✅ **Authored + tested** 2026-08-26 — schema doc §Triggers & Views |
+| 6 | 6 DDL blocks are greenfield for tables that already exist | ✅ **Annotated** `⚠️ EXISTS — ALTER only` in the DDL |
+| 7 | Step 0 unbuilt: no docker-compose, no Horizon, no Redis/Soketi wiring | ✅ **Stack written 2026-08-26** — `docker-compose.yml`, `Dockerfile.laravel`, `Dockerfile.fastapi`, `docker/nginx/default.conf`, `.env.docker.example`. `docker compose config` validates. Horizon still not a dependency (a `queue:work` worker stands in) |
+| 8 | ~~No `python/` directory~~ | ✅ **False alarm — corrected 2026-08-26.** `python/` **is** in the repo and always was; an earlier check used a shell glob with no match, which aborted the command before `ls` ran, and the empty output was misread as "missing". Contents: `ocr_server.py`, `extract_awb_new.py` (~9.1k lines), `geo_constants.py`, `boxes_config.json`, `requirements.txt` |
+
+**Frontend stock-take:** Vue 2.7.16 ✅, ApexCharts ✅, Vuex/Router ✅. Still needed later — `vuedraggable`, `driver.js`, `html2canvas`, TipTap v1, `laravel-echo`, `pusher-js`.
+
 ### Open items
 
-1. **§5 duplication check** — `contacts`/`saved_addresses`/`rates`/`airlines` overlap with planned tables. Decide extend-vs-create first.
+1. ~~**§5 duplication check**~~ — **closed 2026-08-26. No duplicates; create all four planned tables fresh.** `contacts` is a website contact-form/lead table (`first_name, last_name, email, phone, message`) — unrelated to a client address book. `saved_addresses` is a per-waybill address store keyed by `awb_id`, closest to `job_entities`, not `customer_contacts`. `rates` is an airline tariff lookup (dest airport, zone, carrier prefix, rate range); `rate_cards` is a per-party charge tariff — different grain. `airlines` was already resolved in `PRD.md` §10: retained for the carrier-domain exclusion list, while accounting/operational carrier records live in `partners`.
 2. **`it_devops_checklist.md` says production migrations are applied as manual SQL, not via Artisan.** Local dev uses Artisan (approved). How schema reaches production is still undecided.
 3. **Google restricted-scope CASA assessment** — deferred by the user to a later stage. Blocks Gmail onboarding at scale (100-user cap until cleared), not local work.
 4. **System-transactional email sender** — undecided; needed before Segment C.
-5. `docs/plan/CONTEXT.md` (this file) and the planning set are committed locally but **1 commit is unpushed**.
+5. ~~1 commit unpushed~~ — the planning set is pushed. Working tree also carries **pre-existing** modifications to `public/*` (webpack build output) and a `package-lock.json` name change, neither authored by this work; they are deliberately left uncommitted.
+6. ~~**Author the 3 triggers and 3 views**~~ — ✅ **done 2026-08-26**, both dialects, SQLite forms tested. Two decisions were deliberately left open inside them: see items 12 and 13.
+7. ~~`origin_airport_code` vs `origin_port_id`~~ — ✅ **closed: keep both.** Different things; `origin_port_id` is an FK into the new `ports` master. Added nullable, backfilled once the port directory is loaded.
+8. ~~`composer require doctrine/dbal`~~ — ✅ **installed 2026-08-26 at `^3.1.4` (resolved 3.10.6).** ⚠️ **Do not let this drift to 4.x.** A bare `composer require doctrine/dbal` pulls 4.4, which Laravel 9 does not support (`^2.13.3|^3.1.4`), and `carbonphp/carbon-doctrine-types` had to be pinned to `^2.0` alongside it — 3.x conflicts with every dbal 3 release. Verified working: `->change()` converted a `varchar` column holding `'3'` to `BIGINT UNSIGNED` holding `3`, which is precisely the `branch_name` migration.
+9. **Run the four production checks** in §6 before converting `branch_name`. The local DB is empty, so nothing is verified against real data. *(Per the owner's standing rule — see the testing block at the top of guide Step 8 — segments are also exercised against seeded test data as they go live.)*
+10. **Two dead references in live code** (non-blocking): `config/auth.php`'s `admin-api` guard → non-existent `App\Admin`; `App\User::GetAssosName()` → non-existent `App\Association`.
+11. ~~Suspected live bug: `users.company_name` lookup~~ — ✅ **fixed 2026-08-26.** `LoginController` looked the company up by *name* while the column stores the company **ID**, so `templates_config` came back null on every login. Now resolves by id with a name fallback for any older row. Lint-clean; still worth confirming the effect against production, since the local DB is empty.
+12. ~~Should the designation trigger cover `jobs.pending_ops_id`?~~ — ✅ **Yes, added 2026-08-26 and tested.** It is promoted straight into `ops_id` on approval, so it carries the same rule; guarding it makes a bad choice fail for the operator who made it rather than for the pricing owner at the accept step.
+13. ~~Does `ysr_funnel_view` mean the calendar year or the fiscal year?~~ — ✅ **Neither is hard-coded: the reader chooses.** The view emits **both**, tagged by a `period_basis` column (`'fiscal'` | `'calendar'`), so a UI toggle is a `WHERE` clause instead of a schema change. The fiscal basis returns the April 1st opening the fiscal year, matching `EnquirySequenceService::fiscalYear()` exactly, so a yearly report and a document number always agree.
+    ⚠️ **`period_basis` must always be in the `WHERE` clause.** Query the view without it and every row comes back twice under two year labels, silently doubling every count. Make it a required repository parameter, not an optional filter.
+14. ~~`deleted_at` does not exist anywhere in the schema~~ — ✅ **Added 2026-08-26** to all seven tables `PRD.md` §9.3 names, and to **no** financial table. All three funnel views now filter `WHERE e.deleted_at IS NULL`. Note `companies` is one of the six live tables, so its `deleted_at` is an **ALTER** in Batch 1a, not a create.
+    **Soft deletes collide with UNIQUE constraints — three cases got three different answers** (full table in the schema doc):
+    - `jobs`/`enquiries` number uniques: ✅ **left alone** — a tombstone holding the number is the product rule ("never recycled"), not a bug.
+    - `job_entities (job_id, unique_role_gate)`: ✅ **fixed** — `deleted_at IS NULL` folded into the generated gate, so a deleted row leaves the index and a replacement shipper can be assigned. Tested.
+    - `mailbox_connections.email_address` (globally unique): ✅ **avoided — this table does not soft-delete.** Removed from `PRD.md` §9.3's list; **do not re-add it, and do not put the trait on that model.** Six tables soft-delete, not seven.
+
+- **🔀 `mailbox_connections` has TWO deactivation axes — corrected 2026-08-26 after a user catch.** A first pass put both a tier downgrade and a user removing their own mailbox on `is_active`. **They are different actors and must not share a column:** a tier downgrade is a **platform superadmin** action on `companies.tier`; removing a mailbox is an **individual user** action in `/settings/mailboxes` (`PRD.md` §2.3.7 assigns them to different owners).
+  | | Tier downgrade | User removal |
+  |---|---|---|
+  | Actor | Superadmin, whole tenant | The mailbox owner, one mailbox |
+  | Column | `is_active = false` | `disconnected_at` / `disconnected_by` + `auth_state='not_connected'` |
+  | Tokens | **Kept** (§3.3: upgrade restores without re-auth) | **Cleared** — consent was withdrawn |
+  | Undo | Automatic on upgrade | Only the user, via fresh OAuth |
+
+  **The bug this prevents:** §3.3 has an upgrade reactivate downgraded mailboxes. Sharing the column means a later upgrade **silently reconnects a mailbox its owner deliberately removed and resumes syncing their mail** — triggered by a billing change, performed by nobody. Restore must read `WHERE is_active = 0 AND disconnected_at IS NULL`, and sync requires **all three** of `is_active = 1`, `disconnected_at IS NULL`, `auth_state = 'connected'`.
+
+- **✅ `mailbox_connections.status` dropped 2026-08-26.** It duplicated `auth_state` (same three values), and two columns describing one fact eventually disagree. `auth_state` survives as the sole connection-state column — it is the one `PRD.md` §5.2.1's four UI states are written against. Also corrected while there: the relational tree said repeated backfill failure sets `auth_state = failed`, which is not one of its values; §5.2.3 specifies `reauth_required`.
 
 ---
 
@@ -135,8 +260,23 @@ Resolve these **before** Batch 1a creates parallel structures.
 | ON DELETE CASCADE | 26 |
 | ON DELETE SET NULL | 25 |
 | UNIQUE | 29 |
-| Generated column | 1 — `job_entities.unique_role_gate` |
-| Triggers | 3 — `audit_logs` append-only; `ops_id`/`pricing_id` designation checks |
+| Generated column | 1 — `job_entities.unique_role_gate` (`CASE WHEN`, portable as of 2026-08-26) |
+| Triggers | **3 rules → 8 MySQL objects / 10 SQLite.** ✅ Authored 2026-08-26 |
+| Views | **3** — `dsr` / `msr` / `ysr` funnel. ✅ Authored 2026-08-26 |
+
+> ✅ **Authored and tested 2026-08-26** — see `database_relations_tree.md` §*Triggers & Views*. An earlier version of this table listed "Triggers | 3" as though the schema already carried them; it did not — `grep -i trigger` returned nothing. Both dialects are now written, and the **SQLite forms were executed against a scratch database with 12 passing behavioural assertions.** The MySQL forms are translations of the same logic and still need a run against MySQL 8.
+>
+> "3 triggers" was always a count of *rules*, not statements — each rule needs a trigger per operation per table, and SQLite needs one per column because it has no procedural `IF`:
+>
+> | Rule | Required by | MySQL | SQLite |
+> |---|---|:---:|:---:|
+> | `audit_logs` append-only | guide §1b·7, Step 8.4 | 2 | 2 |
+> | `jobs.ops_id` / `jobs.pricing_id` designation | guide §3.4 | 2 | 4 |
+> | `accounts_*.created_by` = accounts user | guide §3.4 | 4 | 4 |
+>
+> **Two things the triggers deliberately do not do**, both flagged in the schema doc rather than decided: `jobs.pending_ops_id` is **not** guarded (§3.4 names only `ops_id`/`pricing_id`), and `ysr_funnel_view` uses the **calendar** year while document numbering uses the **fiscal** year.
+>
+> ⚠️ **They will break naive test factories.** Any factory attaching a random user to `ops_id` now fails at the database — mint users with explicit designations. This joins the three `ON DELETE RESTRICT` FKs as the second thing that will surprise you in tests.
 
 ---
 

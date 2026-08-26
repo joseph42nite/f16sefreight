@@ -494,8 +494,9 @@ For production and staging deployments, an independent backup helper container r
   access_token          | TEXT         |     | (Encrypted at rest)
   refresh_token         | TEXT         |     | (Encrypted at rest)
   expires_at            | TIMESTAMP    |     |
-  is_active             | BOOLEAN      |     | (false = tier downgrade paused)
-  status                | VARCHAR(20)  |     | (connected, awaiting_admin_consent, reauth_required)
+  is_active             | BOOLEAN      |     | (SUPERADMIN axis ONLY — false = paused by a tier downgrade
+                        |              |     |  on companies.tier. Tokens KEPT so an upgrade restores sync
+                        |              |     |  without re-auth. NEVER used for a user removing a mailbox)
   sync_cursor           | TEXT         |     | (Graph @odata.deltaLink or Gmail historyId. Seeded by
                         |              |     |  backfill, rewritten after each successful poll page.
                         |              |     |  Encrypted at rest — the Graph deltaLink embeds a token)
@@ -512,7 +513,8 @@ For production and staging deployments, an independent backup helper container r
                         |              |     |  from here instead of restarting from zero
   backfill_processed    | INT          |     | (Messages committed so far — drives the progress bar)
   backfill_estimate     | INT          |     | (Approximate total, for progress display only)
-  backfill_attempts     | INT          |     | (Consecutive failures; backoff, then auth_state=failed)
+  backfill_attempts     | INT          |     | (Consecutive failures; backoff, then auth_state=reauth_required
+                        |              |     |  — `failed` is not a valid auth_state value; see PRD §5.2.3)
   watch_expires_at      | TIMESTAMP    |     | (Gmail users.watch() / Graph subscription expiry. Push dies
                         |              |     |  after ~7 days WITH NO ERROR, so mailboxes:renew-watch runs
                         |              |     |  DAILY and re-subscribes when this is < 48h away)
@@ -523,7 +525,13 @@ For production and staging deployments, an independent backup helper container r
   signature_source      | VARCHAR(20)  |     | (imported | pasted | manual — shown in settings so the
                         |              |     |  user knows whether it will drift from their mail client)
   auth_state            | VARCHAR(30)  |     | (not_connected, awaiting_admin_consent, connected,
-                        |              |     |  reauth_required — drives MailboxSettings.vue directly)
+                        |              |     |  reauth_required — drives MailboxSettings.vue directly.
+                        |              |     |  SOLE connection-state column; a duplicate `status` column
+                        |              |     |  was dropped 2026-08-26)
+  disconnected_at       | TIMESTAMP    |     | (USER axis — stamped when the owning staff member removes
+                        |              |     |  their own mailbox. Tokens are CLEARED. Distinct from
+                        |              |     |  is_active: an upgrade must never undo this)
+  disconnected_by       | BIGINT       | FK  | ◄── users.id
   created_at            | TIMESTAMP    |     |
   updated_at            | TIMESTAMP    |     |
 ```
@@ -803,9 +811,10 @@ For production and staging deployments, an independent backup helper container r
   party_id          | BIGINT      |     | (Polymorphic ID referencing customers.id or partners.id)
   role              | VARCHAR(30) |     | (shipper, consignee, notify_party, origin_agent, dest_agent, selling_agent, customs_broker, transporter, other)
   custom_role_label | VARCHAR(50) |     | (Optional label for custom roles when role = 'other')
-  unique_role_gate  | VARCHAR(30) |     | (GENERATED virtual column — NULL when role = 'notify_party',
+  unique_role_gate  | VARCHAR(50) |     | (GENERATED STORED column — NULL when role = 'notify_party',
                     |             |     |  else = role. Backs a unique index on (job_id, unique_role_gate)
-                    |             |     |  so each role is single-instance EXCEPT notify_party, which may repeat)
+                    |             |     |  so each role is single-instance EXCEPT notify_party, which may repeat.
+                    |             |     |  Expression is CASE WHEN — see the DDL; IF() would be MySQL-only)
   created_at        | TIMESTAMP   |     |
   updated_at        | TIMESTAMP   |     |
 ```
@@ -1437,20 +1446,33 @@ For production and staging deployments, an independent backup helper container r
 
 ## 💾 Raw SQL DDL Script (CREATE TABLE statements & Indexes)
 
-You can run the following SQL script directly in your database to initialize all tables, primary keys, foreign keys, unique keys, and speed indexes in the correct execution priority order:
+> [!WARNING]
+> **Do not run this script as-is. It is a reference schema, not an installer.** Two reasons, both hard:
+>
+> 1. **Six of these tables already exist in the live codebase** — `companies`, `agents_info`, `users`, `air_way_bills`, `house_way_bills`, `pdf_processing_jobs`. Their blocks below are marked **⚠️ EXISTS** and describe the *target* shape, not a table to create. Several already carry far more columns than shown (`agents_info` has 33 live vs. 4 here; `air_way_bills` ~50 vs. 8). Follow the ALTER instructions in `implementation_guide.md` §Batch 1a instead.
+> 2. **This is MySQL dialect; local dev is SQLite.** Inline `INDEX …` inside `CREATE TABLE`, `AUTO_INCREMENT`, and `ON UPDATE CURRENT_TIMESTAMP` are all MySQL-only. Write **Laravel migrations** from this reference — `$table->index(…)` separately, `$table->timestamps()` — and both engines are satisfied from one source.
+>
+> Treat what follows as the authoritative statement of *columns, keys, constraints and indexes*. Treat `implementation_guide.md` as the authority on *how they get applied*.
 
 ```sql
--- 1. companies
+-- 1. companies  ⚠️ EXISTS — ALTER only. Live table has: id, name, created_at, updated_at,
+--    templates_config, in_testing_mode. Batch 1a adds tier, email_domain and the 3 ocr_credits_* columns.
 CREATE TABLE companies (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     tier VARCHAR(30) DEFAULT 'core', -- Platform subscription tier for tenants (core, tactical, command); ignored for client customers
     email_domain VARCHAR(100) NULL, -- Suffix domain for verification
-    ocr_credits_balance INT DEFAULT 0, -- OCR credits balance for platform tenants
-    ocr_credits_monthly_allowance INT DEFAULT 0, -- Monthly quota replenishment for platform tenants
-    ocr_credits_limit INT DEFAULT 0, -- Overdraft credit limit threshold for platform tenants (negative values allowed)
+    ocr_credits_balance INT DEFAULT 0, -- Current balance. Reset monthly by credits:grant-monthly.
+    -- The next two are NULL BY DEFAULT, and NULL is meaningful: "inherit the tier default"
+    -- from config/f16s.php. A non-NULL value is a deliberate SUPERADMIN OVERRIDE pinned to
+    -- this tenant. That distinction is what lets a tier upgrade lift the allowance
+    -- automatically for ordinary tenants, while never silently overwriting a negotiated one.
+    ocr_credits_monthly_allowance INT NULL, -- NULL = tier default; set = pinned override
+    ocr_credits_limit INT NULL,             -- NULL = tier default; set = pinned override.
+                                            -- Overdraft FLOOR, negative by design
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL -- SoftDeletes (PRD §9.3). Financial tables NEVER get this column.
 );
 
 -- 1a. customers
@@ -1526,6 +1548,9 @@ CREATE TABLE customer_contacts (
 );
 
 -- 2. agents_info
+-- ⚠️ EXISTS — NO CHANGE NEEDED. The live table already carries 33 columns (IATA agent codes, HO
+--    address, office designators, participant fields). The 4 below are only the ones this plan
+--    references. Do not create, do not alter, do not drop anything.
 CREATE TABLE agents_info (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     company_id BIGINT NOT NULL,
@@ -1548,7 +1573,10 @@ CREATE TABLE ports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 4. users
+-- 4. users  ⚠️ EXISTS — ALTER only. Batch 1a adds origin_port_id, designation, signature_text.
+--    pima_address ALREADY EXISTS — do not add it. Live table also has origin_airport_code (IATA),
+--    is_active, can_send, latest_token, plan_expiry_date, daily_login_count — all retained.
+--    branch_name is live as VARCHAR but holds agents_info.id; see CONTEXT.md §6 for the conversion.
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     origin_port_id BIGINT NULL,          -- Nullable: set during onboarding, references ports.id (user's designated default origin port)
@@ -1611,6 +1639,7 @@ CREATE TABLE enquiries (
                                          -- are time-sensitive, so a cancelled shipment is re-quoted, never reopened)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL, -- SoftDeletes (PRD §9.3). Financial tables NEVER get this column.
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
     FOREIGN KEY (customer_id) REFERENCES customers(id),
     FOREIGN KEY (sales_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -1676,6 +1705,7 @@ CREATE TABLE jobs (
     completed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL, -- SoftDeletes (PRD §9.3). Financial tables NEVER get this column.
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
     FOREIGN KEY (enquiry_id) REFERENCES enquiries(id) ON DELETE RESTRICT,
     FOREIGN KEY (customer_id) REFERENCES customers(id),
@@ -1738,6 +1768,7 @@ CREATE TABLE sea_shipment_details (
     container_type VARCHAR(20) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL, -- SoftDeletes (PRD §9.3). Financial tables NEVER get this column.
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
     FOREIGN KEY (carrier_id) REFERENCES partners(id),
     FOREIGN KEY (customs_broker_id) REFERENCES partners(id),
@@ -1768,6 +1799,10 @@ CREATE TABLE air_shipment_details (
 );
 
 -- 8. air_way_bills
+-- ⚠️ EXISTS — ALTER only, and this block is STALE. The live PK is `id INTEGER AUTO_INCREMENT`,
+--    NOT VARCHAR(20) of awb_code+awb_no, and the live table carries ~50 columns (routing legs,
+--    handling info, send/status tracking). Batch 1a adds ONLY uuid and job_id.
+--    Anything in the plan that treats air_way_bills.id as the AWB number is wrong against this codebase.
 CREATE TABLE air_way_bills (
     id VARCHAR(20) PRIMARY KEY, -- awb_code + awb_no
     uuid CHAR(36) NULL UNIQUE, -- UUID unique index
@@ -1782,6 +1817,8 @@ CREATE TABLE air_way_bills (
 );
 
 -- 9. house_way_bills
+-- ⚠️ EXISTS — ALTER only. Live PK `id` is VARCHAR (matches), and the table carries ~50 columns
+--    including master_pcs/master_weight and the ho_* block. Batch 1a adds ONLY uuid and job_id.
 CREATE TABLE house_way_bills (
     id VARCHAR(30) PRIMARY KEY,
     uuid CHAR(36) NULL UNIQUE, -- UUID unique index
@@ -1804,8 +1841,11 @@ CREATE TABLE mailbox_connections (
     access_token TEXT NULL,                         -- Encrypted at rest
     refresh_token TEXT NULL,                        -- Encrypted at rest
     expires_at TIMESTAMP NULL,
-    is_active BOOLEAN DEFAULT TRUE,                 -- false = tier downgrade paused
-    status VARCHAR(20) DEFAULT 'connected',         -- 'connected','awaiting_admin_consent','reauth_required'
+    -- SUPERADMIN / platform axis ONLY. false = paused by a tier downgrade, which is a
+    -- platform-level action on companies.tier (PRD §2.3.7). Tokens are KEPT so an upgrade
+    -- restores sync with no re-authorization. NEVER set this to represent a user removing
+    -- their own mailbox — that is the disconnected_at axis below.
+    is_active BOOLEAN DEFAULT TRUE,
     sync_cursor TEXT NULL,                          -- Graph @odata.deltaLink / Gmail historyId. Encrypted at rest
     last_synced_at TIMESTAMP NULL,                  -- Floor for recovery when a cursor ages out (410 Gone)
     backfill_status VARCHAR(20) DEFAULT 'pending',  -- 'pending','running','completed','failed'
@@ -1819,10 +1859,17 @@ CREATE TABLE mailbox_connections (
     signature_html TEXT NULL, -- per-mailbox; overrides users.signature_text
     signature_source VARCHAR(20) NULL, -- imported | pasted | manual
     auth_state VARCHAR(30) DEFAULT 'not_connected', -- not_connected | awaiting_admin_consent | connected | reauth_required
+    -- USER axis. Stamped when the owning staff member removes their own mailbox in
+    -- /settings/mailboxes (PRD §2.3.7 — each user manages their own connection).
+    -- On removal: clear access_token/refresh_token, set auth_state='not_connected',
+    -- stamp these two. The row and its sync history survive for audit.
+    disconnected_at TIMESTAMP NULL,
+    disconnected_by BIGINT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (disconnected_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- 11. email_threads
@@ -2021,6 +2068,7 @@ CREATE TABLE sea_containers (
     seal_number VARCHAR(30) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL, -- SoftDeletes (PRD §9.3). Financial tables NEVER get this column.
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
     FOREIGN KEY (job_id) REFERENCES jobs(id)
 );
@@ -2063,7 +2111,20 @@ CREATE TABLE job_entities (
     custom_role_label VARCHAR(50) NULL, -- Custom role label when role = 'other'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    unique_role_gate VARCHAR(50) GENERATED ALWAYS AS (IF(role != 'notify_party', role, NULL)) STORED,
+    deleted_at TIMESTAMP NULL, -- SoftDeletes (PRD §9.3). Financial tables NEVER get this column.
+    -- Portable generated column. Was IF(role != 'notify_party', role, NULL) — IF() is MySQL-only
+    -- and SQLite cannot parse it. CASE WHEN is ANSI and works on MySQL 8, SQLite 3.31+ and Postgres.
+    -- UNIQUE ignores NULLs on all three, so nulling the gate for notify_party lets those rows repeat
+    -- while every other role stays single-instance per job.
+    -- ⚠️ Declare this in the CREATE, never in a later ALTER: SQLite cannot ADD a STORED generated column.
+    -- ⚠️ Do NOT swap this for a partial index (... WHERE role <> 'notify_party') — SQLite and Postgres
+    --    support those, MySQL does not. This generated column IS the MySQL-portable workaround.
+    -- deleted_at is folded in DELIBERATELY: a soft-deleted row's gate becomes NULL, drops out of
+    -- the unique index, and no longer blocks its replacement. Without this, soft-deleting a shipper
+    -- would permanently prevent assigning a new one — a normal operation, broken by a tombstone.
+    unique_role_gate VARCHAR(50) GENERATED ALWAYS AS (
+        CASE WHEN deleted_at IS NULL AND role <> 'notify_party' THEN role END
+    ) STORED,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
     UNIQUE KEY uq_job_entities_role (job_id, unique_role_gate)
@@ -2536,6 +2597,10 @@ CREATE TABLE llm_usage_logs (
 
 -- 38. pdf_processing_jobs (Logs/Parser records)
 -- Stores unstructured document category drafts parsed via PyMuPDF (text extraction) + Gemma 4 E4B (JSON mapping classification)
+-- ⚠️ EXISTS — ALTER only. Batch 1b adds enquiry_id, job_id, transport_mode. The live table also has
+--    original_filename, temp_file_path, queue_job_id, error_message, started_at, completed_at — all
+--    actively used by app/Jobs/ProcessPdfOcrJob.php. Do NOT drop them; this block omits them only
+--    because the plan does not reference them.
 CREATE TABLE pdf_processing_jobs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -2545,7 +2610,20 @@ CREATE TABLE pdf_processing_jobs (
     transport_mode VARCHAR(10) NULL, -- 'air', 'sea' (query scoping / sequence partitioning)
     document_type VARCHAR(50) NULL, -- MAWB, HAWB, Invoice, Packing List
     extracted_data JSON NULL, -- Structured JSON payload mapped by Gemma 4 / Gemini
-    status VARCHAR(20) DEFAULT 'pending', -- pending, processing, completed, failed
+    status VARCHAR(20) DEFAULT 'pending',
+        -- pending | processing | awaiting_vision_consent | completed | failed | cancelled
+        -- awaiting_vision_consent: no text layer found and vision NOT yet authorised. NOTHING
+        -- has been spent. Waits for the operator (guide §4.1.1). The 30-minute stale sweep must
+        -- NOT touch this state; it gets its own 24h expiry, which also deletes the temp PDF.
+    extraction_path VARCHAR(20) NULL, -- coordinates | text | vision | none
+        -- REPORTED BY FastAPI, never guessed by Laravel: only the parser knows whether the PDF
+        -- had a usable text layer. 'none' = no text layer and vision was not authorised.
+        -- Drives the credit decision (§3.4) and per-document cost analysis.
+    page_count INT NULL, -- vision cost scales with pages; lets the consent prompt say
+                         -- "3 pages, 1 credit" instead of an unexplained number
+    failure_code VARCHAR(30) NULL, -- credits_exhausted | upgrade_required | unsupported_mime
+        -- | extraction_failed | ai_unavailable. A CODE, not a sentence: error_message stays
+        -- free text for humans, but tests and UI branch on this.
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
@@ -2609,13 +2687,20 @@ CREATE TABLE ocr_credit_transactions (
     company_id BIGINT NOT NULL,
     enquiry_id BIGINT NULL, -- OCR credits are usually burned pre-conversion, on the enquiry
     job_id BIGINT NULL,
+    pdf_processing_job_id BIGINT NULL, -- WHICH extraction burned this credit. Without it
+                                       -- "what did we spend this on?" is unanswerable.
     amount INT NOT NULL,
-    transaction_type VARCHAR(30) NOT NULL, -- monthly_grant, purchase, consumption, refund
+    transaction_type VARCHAR(30) NOT NULL, -- monthly_grant, purchase, consumption, refund, custom_override
+    reverses_transaction_id BIGINT NULL UNIQUE, -- refund rows point at the consumption they undo.
+        -- UNIQUE is the whole guard: a retried job physically CANNOT refund the same
+        -- reservation twice. Enforced by the database, not by application care.
     notes VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     FOREIGN KEY (enquiry_id) REFERENCES enquiries(id) ON DELETE SET NULL,
-    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE SET NULL
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE SET NULL,
+    FOREIGN KEY (pdf_processing_job_id) REFERENCES pdf_processing_jobs(id) ON DELETE SET NULL,
+    FOREIGN KEY (reverses_transaction_id) REFERENCES ocr_credit_transactions(id)
 );
 
 -- 43. pdf_extraction_corrections
@@ -2708,6 +2793,423 @@ ALTER TABLE customers ADD CONSTRAINT fk_customers_sales FOREIGN KEY (sales_id) R
 -- Re-quote lineage: a cancelled job spawns a NEW enquiry pointing at its cancelled predecessor.
 ALTER TABLE enquiries ADD CONSTRAINT fk_enq_reinitiated_from_job FOREIGN KEY (reinitiated_from_job_id) REFERENCES jobs(id) ON DELETE SET NULL;
 ```
+
+---
+
+## 🔒 Triggers & Views
+
+*Authored 2026-08-26. Previously specified in prose only — `implementation_guide.md` §1b·7, §3.4 and §1d referenced these, but no statement existed anywhere in this document.*
+
+> ✅ **The SQLite forms below were executed and behaviourally tested, not just written.** 18 assertions, all passing: `UPDATE`/`DELETE`/`DELETE FROM` on `audit_logs` all rejected while `INSERT` still works; an `operations` user accepted on `ops_id` and a `sales` user rejected; an `accounts` user rejected on `pricing_id`; `NULL` accepted (the unassigned pool); reassignment between two operations users accepted; reassignment to sales rejected; an unrelated `UPDATE` on a job **not** re-validating; a day with no enquiries producing no row. Then, after the 2026-08-26 changes: a `sales` user rejected on `pending_ops_id`; a soft-deleted `job_entities` row releasing its unique slot so a replacement shipper is accepted, while a second *live* shipper is still rejected and a second `notify_party` still allowed; a soft-deleted enquiry excluded from the funnel counts; and `ysr_funnel_view` returning both bases correctly — four enquiries under `calendar 2026`, split 2/2 across `fiscal 2025-04-01` and `fiscal 2026-04-01`. The MySQL forms are dialect translations of the same logic and still need running against MySQL 8.
+
+**Three enforcement rules, not three statements.** Each rule needs a trigger per operation per table, and the two engines differ:
+
+| Rule | Required by | MySQL objects | SQLite objects |
+|---|---|:---:|:---:|
+| `audit_logs` is append-only | guide §1b·7, Step 8.4 | 2 | 2 |
+| `jobs.ops_id` / `jobs.pricing_id` carry the right designation | guide §3.4 | 2 | 4 |
+| `accounts_*.created_by` is an accounts user | guide §3.4 | 4 | 4 |
+| | **total** | **8** | **10** |
+
+MySQL can branch inside one trigger body with `IF`; SQLite cannot, so it needs one trigger per column per operation using `WHEN` guards.
+
+### Applying them from Laravel
+
+These cannot go through the schema builder — use `DB::unprepared()` and branch on the driver. Split each MySQL trigger into its own `unprepared()` call and **omit `DELIMITER`**, which is a `mysql` client directive, not SQL, and will fail through PDO.
+
+```php
+$driver = DB::connection()->getDriverName();   // 'mysql' | 'sqlite'
+DB::unprepared($driver === 'mysql' ? $mysqlBody : $sqliteBody);
+```
+
+`down()` is `DROP TRIGGER IF EXISTS <name>;` — identical on both engines.
+
+### A. `audit_logs` — append-only
+
+**MySQL**
+
+```sql
+CREATE TRIGGER trg_audit_logs_no_update
+BEFORE UPDATE ON audit_logs
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'audit_logs is append-only: UPDATE is forbidden';
+END;
+
+CREATE TRIGGER trg_audit_logs_no_delete
+BEFORE DELETE ON audit_logs
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'audit_logs is append-only: DELETE is forbidden';
+END;
+```
+
+**SQLite**
+
+```sql
+CREATE TRIGGER trg_audit_logs_no_update
+BEFORE UPDATE ON audit_logs
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'audit_logs is append-only: UPDATE is forbidden');
+END;
+
+CREATE TRIGGER trg_audit_logs_no_delete
+BEFORE DELETE ON audit_logs
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'audit_logs is append-only: DELETE is forbidden');
+END;
+```
+
+> **Three things these triggers do *not* stop.**
+> 1. **`TRUNCATE TABLE`** — MySQL does not fire `DELETE` triggers on truncate. SQLite's equivalent optimisation is disabled while a trigger exists, so only MySQL is exposed. Grant no `DROP` privilege on this schema to the application user.
+> 2. **Foreign-key cascade deletes** — MySQL does not fire triggers on rows removed by `ON DELETE CASCADE`. ✅ **Verified safe here:** both `audit_logs` FKs (`agent_id`, `user_id`) are plain `RESTRICT`. **If either is ever changed to `CASCADE`, this protection is silently voided.**
+> 3. **`migrate:fresh` / `DROP TABLE`** — intended; local dev must stay resettable.
+>
+> ⚠️ **`audit_logs.updated_at` is dead weight.** It carries `ON UPDATE CURRENT_TIMESTAMP`, which can never fire on a table where `UPDATE` aborts. Harmless, but it advertises a capability the table does not have — consider dropping the column.
+
+### B. `jobs` — designation enforcement on assignment
+
+**MySQL** — one trigger per operation, both columns checked inside. The `UPDATE` form fires only when the column actually changes, so a pre-existing bad row cannot block unrelated edits.
+
+```sql
+CREATE TRIGGER trg_jobs_designation_bi
+BEFORE INSERT ON jobs
+FOR EACH ROW
+BEGIN
+    DECLARE v_desig VARCHAR(20);
+
+    IF NEW.ops_id IS NOT NULL THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.ops_id;
+        IF v_desig IS NULL OR v_desig <> 'operations' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'jobs.ops_id must reference a user with designation = operations';
+        END IF;
+    END IF;
+
+    IF NEW.pricing_id IS NOT NULL THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.pricing_id;
+        IF v_desig IS NULL OR v_desig <> 'pricing' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'jobs.pricing_id must reference a user with designation = pricing';
+        END IF;
+    END IF;
+
+    -- pending_ops_id is promoted straight into ops_id on approval (PRD §5.5), so it carries the
+    -- same rule. Guarding it here surfaces a bad choice to the OPERATOR who made it, rather than
+    -- to the pricing owner at the accept step.
+    IF NEW.pending_ops_id IS NOT NULL THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.pending_ops_id;
+        IF v_desig IS NULL OR v_desig <> 'operations' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'jobs.pending_ops_id must reference a user with designation = operations';
+        END IF;
+    END IF;
+END;
+
+CREATE TRIGGER trg_jobs_designation_bu
+BEFORE UPDATE ON jobs
+FOR EACH ROW
+BEGIN
+    DECLARE v_desig VARCHAR(20);
+
+    IF NEW.ops_id IS NOT NULL
+       AND (OLD.ops_id IS NULL OR NEW.ops_id <> OLD.ops_id) THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.ops_id;
+        IF v_desig IS NULL OR v_desig <> 'operations' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'jobs.ops_id must reference a user with designation = operations';
+        END IF;
+    END IF;
+
+    IF NEW.pricing_id IS NOT NULL
+       AND (OLD.pricing_id IS NULL OR NEW.pricing_id <> OLD.pricing_id) THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.pricing_id;
+        IF v_desig IS NULL OR v_desig <> 'pricing' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'jobs.pricing_id must reference a user with designation = pricing';
+        END IF;
+    END IF;
+
+    IF NEW.pending_ops_id IS NOT NULL
+       AND (OLD.pending_ops_id IS NULL OR NEW.pending_ops_id <> OLD.pending_ops_id) THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.pending_ops_id;
+        IF v_desig IS NULL OR v_desig <> 'operations' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'jobs.pending_ops_id must reference a user with designation = operations';
+        END IF;
+    END IF;
+END;
+```
+
+> **`v_desig IS NULL OR` is not redundant.** In MySQL, `NULL <> 'operations'` evaluates to `NULL`, which is falsy — so a missing user would **pass** the check. The FK makes that unreachable today, but the guard costs nothing and survives a future schema change.
+
+**SQLite** — four triggers; `IS NOT` handles NULL correctly, so no extra guard is needed.
+
+```sql
+CREATE TRIGGER trg_jobs_ops_designation_bi
+BEFORE INSERT ON jobs
+FOR EACH ROW
+WHEN NEW.ops_id IS NOT NULL
+BEGIN
+    SELECT RAISE(ABORT, 'jobs.ops_id must reference a user with designation = operations')
+    WHERE (SELECT designation FROM users WHERE id = NEW.ops_id) IS NOT 'operations';
+END;
+
+CREATE TRIGGER trg_jobs_ops_designation_bu
+BEFORE UPDATE OF ops_id ON jobs
+FOR EACH ROW
+WHEN NEW.ops_id IS NOT NULL
+     AND (OLD.ops_id IS NULL OR NEW.ops_id <> OLD.ops_id)
+BEGIN
+    SELECT RAISE(ABORT, 'jobs.ops_id must reference a user with designation = operations')
+    WHERE (SELECT designation FROM users WHERE id = NEW.ops_id) IS NOT 'operations';
+END;
+
+CREATE TRIGGER trg_jobs_pricing_designation_bi
+BEFORE INSERT ON jobs
+FOR EACH ROW
+WHEN NEW.pricing_id IS NOT NULL
+BEGIN
+    SELECT RAISE(ABORT, 'jobs.pricing_id must reference a user with designation = pricing')
+    WHERE (SELECT designation FROM users WHERE id = NEW.pricing_id) IS NOT 'pricing';
+END;
+
+CREATE TRIGGER trg_jobs_pricing_designation_bu
+BEFORE UPDATE OF pricing_id ON jobs
+FOR EACH ROW
+WHEN NEW.pricing_id IS NOT NULL
+     AND (OLD.pricing_id IS NULL OR NEW.pricing_id <> OLD.pricing_id)
+BEGIN
+    SELECT RAISE(ABORT, 'jobs.pricing_id must reference a user with designation = pricing')
+    WHERE (SELECT designation FROM users WHERE id = NEW.pricing_id) IS NOT 'pricing';
+END;
+
+CREATE TRIGGER trg_jobs_pending_ops_designation_bi
+BEFORE INSERT ON jobs
+FOR EACH ROW
+WHEN NEW.pending_ops_id IS NOT NULL
+BEGIN
+    SELECT RAISE(ABORT, 'jobs.pending_ops_id must reference a user with designation = operations')
+    WHERE (SELECT designation FROM users WHERE id = NEW.pending_ops_id) IS NOT 'operations';
+END;
+
+CREATE TRIGGER trg_jobs_pending_ops_designation_bu
+BEFORE UPDATE OF pending_ops_id ON jobs
+FOR EACH ROW
+WHEN NEW.pending_ops_id IS NOT NULL
+     AND (OLD.pending_ops_id IS NULL OR NEW.pending_ops_id <> OLD.pending_ops_id)
+BEGIN
+    SELECT RAISE(ABORT, 'jobs.pending_ops_id must reference a user with designation = operations')
+    WHERE (SELECT designation FROM users WHERE id = NEW.pending_ops_id) IS NOT 'operations';
+END;
+```
+
+> ✅ **`jobs.pending_ops_id` IS covered — decided 2026-08-26.** §3.4 names only `ops_id` and `pricing_id`, but `pending_ops_id` is promoted straight into `ops_id` on approval (`PRD.md` §5.5), so it carries the same rule. Guarding the staging column means a bad choice fails for the **operator who made it**, at the moment they make it — rather than passing validation, sitting in the pricing owner's bell, and then erroring for *them* at the accept step. Trigger counts are now **3 MySQL / 6 SQLite** for this rule.
+
+> ⚠️ **These triggers will break naive factories and seeders.** Any test that attaches a random user to `ops_id` now fails at the database. Test factories must mint users with explicit designations. Budget for this in Step 8 — alongside the three `ON DELETE RESTRICT` foreign keys, it is the other thing that will surprise you in tests.
+
+### C. `accounts_invoices` / `accounts_purchase_vouchers` — `created_by` is an accounts user
+
+Backs the segregation-of-duties rule (`PRD.md` §2.3.4): pricing edits the cost sheet, **accounts** finalizes and posts it.
+
+**MySQL**
+
+```sql
+CREATE TRIGGER trg_invoices_created_by_bi
+BEFORE INSERT ON accounts_invoices
+FOR EACH ROW
+BEGIN
+    DECLARE v_desig VARCHAR(20);
+    IF NEW.created_by IS NOT NULL THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.created_by;
+        IF v_desig IS NULL OR v_desig <> 'accounts' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'accounts_invoices.created_by must be a user with designation = accounts';
+        END IF;
+    END IF;
+END;
+
+CREATE TRIGGER trg_invoices_created_by_bu
+BEFORE UPDATE ON accounts_invoices
+FOR EACH ROW
+BEGIN
+    DECLARE v_desig VARCHAR(20);
+    IF NEW.created_by IS NOT NULL
+       AND (OLD.created_by IS NULL OR NEW.created_by <> OLD.created_by) THEN
+        SELECT designation INTO v_desig FROM users WHERE id = NEW.created_by;
+        IF v_desig IS NULL OR v_desig <> 'accounts' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'accounts_invoices.created_by must be a user with designation = accounts';
+        END IF;
+    END IF;
+END;
+```
+
+Repeat both verbatim for `accounts_purchase_vouchers`, renaming to `trg_vouchers_created_by_bi` / `_bu` and adjusting the message.
+
+**SQLite**
+
+```sql
+CREATE TRIGGER trg_invoices_created_by_bi
+BEFORE INSERT ON accounts_invoices
+FOR EACH ROW
+WHEN NEW.created_by IS NOT NULL
+BEGIN
+    SELECT RAISE(ABORT, 'accounts_invoices.created_by must be a user with designation = accounts')
+    WHERE (SELECT designation FROM users WHERE id = NEW.created_by) IS NOT 'accounts';
+END;
+
+CREATE TRIGGER trg_invoices_created_by_bu
+BEFORE UPDATE OF created_by ON accounts_invoices
+FOR EACH ROW
+WHEN NEW.created_by IS NOT NULL
+     AND (OLD.created_by IS NULL OR NEW.created_by <> OLD.created_by)
+BEGIN
+    SELECT RAISE(ABORT, 'accounts_invoices.created_by must be a user with designation = accounts')
+    WHERE (SELECT designation FROM users WHERE id = NEW.created_by) IS NOT 'accounts';
+END;
+```
+
+Repeat for `accounts_purchase_vouchers`.
+
+> **`created_by` is nullable on both tables**, so a draft may exist without an author. The trigger only fires when a value is present — it enforces *who*, never *whether*. If an author must always be recorded on a **posted** document, that is an application-layer check on the posting transition, not a column constraint.
+
+---
+
+### D. Funnel views — `dsr` / `msr` / `ysr`
+
+One shape, three grains. Every view is keyed by `(agent_id, transport_mode, period_start)` so air and sea never blend (`PRD.md` §7.3.2), and counts the enquiry in **the period it was raised**, never the period it converted in (`PRD.md` §7.1).
+
+> #### 🔴 A quiet day produces no row at all — this is the design, not a bug
+> `COUNT(*)` inside a `GROUP BY` can never be zero: a group exists only if it has rows. So a day with no enquiries is **absent** from the view rather than present with `0 %`.
+>
+> **The consumer must render a missing period as "—", not as zero.** That satisfies §7.1's rule ("a quiet day is not a bad day") without a calendar spine. If you later want empty periods to appear explicitly, `LEFT JOIN` a date-spine table onto these views — the `CASE WHEN … = 0 THEN NULL` guard below is already written to hold in that case, which is why it is kept despite being unreachable today.
+
+> ✅ **`deleted_at` now exists and the views filter on it.** `PRD.md` §9.3 mandates `SoftDeletes` on seven operational tables; the column was missing from this schema entirely (zero occurrences) until 2026-08-26. It has been added to **six** tables — `jobs`, `enquiries`, `sea_shipment_details`, `job_entities`, `sea_containers` and `companies` — and to **no financial table**, per §9.3's split. `mailbox_connections` was in §9.3's original list but is **deliberately excluded**: it uses `is_active` instead (see the collision table below). Every view below carries `WHERE e.deleted_at IS NULL`; without it a soft-deleted enquiry still counts in the conversion denominator.
+
+> #### ⚠️ Soft deletes collide with UNIQUE constraints — three cases, three different answers
+> A tombstone row still occupies a unique key. Each of these needed a decision, not a blanket rule:
+>
+> | Constraint | Effect of a tombstone | Resolution |
+> |---|---|---|
+> | `jobs (agent_id, execution_job_no)` · `enquiries (agent_id, enquiry_no)` | The number stays consumed | ✅ **Correct as-is — leave it.** "A consumed number is never recycled" is an explicit product rule (`PRD.md` §11) |
+> | `job_entities (job_id, unique_role_gate)` | **Breaks a normal operation** — soft-delete a shipper and you can never assign a new one | ✅ **Fixed in the DDL:** `deleted_at IS NULL` is folded into the generated gate, so a deleted row's gate goes NULL and leaves the index |
+> | `mailbox_connections.email_address` (globally UNIQUE) | Would **break reconnection** — a tombstone permanently blocks that mailbox, for every tenant | ✅ **Avoided — this table does NOT soft-delete.** It carries **two independent deactivation axes** instead; see below. **Do not add `SoftDeletes` to this model** |
+
+#### 🔀 `mailbox_connections` has two deactivation axes — never collapse them
+
+A mailbox stops syncing for two entirely different reasons, driven by **two different actors**. An earlier draft put both on `is_active`; that is a consent bug, not a tidiness issue.
+
+| | **Tier downgrade** | **User removes their mailbox** |
+|---|---|---|
+| Who does it | **Platform superadmin**, on `admin.f16sefreight.com` — sets `companies.tier` (`PRD.md` §2.3.7) | **The owning staff member**, in `/settings/mailboxes` (`PRD.md` §2.3.7) |
+| Scope | Every mailbox in the tenant | One mailbox |
+| Column | `is_active = false` | `disconnected_at` / `disconnected_by` stamped, `auth_state = 'not_connected'` |
+| Tokens | **Kept, encrypted** — §3.3 requires upgrade to restore service without re-auth | **Cleared** — the user withdrew consent; hanging on to a live refresh token afterwards is indefensible |
+| Undo | Automatic on upgrade | **Only the user, by re-running OAuth** |
+
+> 🔴 **The bug this prevents.** `PRD.md` §3.3 says an upgrade reactivates downgraded mailboxes. If a user's own removal were also stored as `is_active = false`, a later upgrade would **silently reconnect a mailbox that person deliberately removed and resume syncing their mail** — an action nobody performed, triggered by a superadmin changing a billing tier. The restore query must therefore be narrow:
+>
+> ```sql
+> -- On tier upgrade: reactivate ONLY downgrade-paused mailboxes.
+> UPDATE mailbox_connections SET is_active = 1
+> WHERE agent_id IN (…) AND is_active = 0 AND disconnected_at IS NULL;
+> ```
+>
+> **Sync runs only when `is_active = 1 AND disconnected_at IS NULL AND auth_state = 'connected'`.** All three, every time.
+
+> **Reconnection does not violate the unique index.** The row is never deleted, so reconnecting is an `UPDATE` of the existing row — fresh tokens, `auth_state = 'connected'`, `disconnected_at` cleared — not a second `INSERT` of the same address.
+
+> ⚠️ **Unrelated, but visible from here: `status` and `auth_state` are duplicates.** Both exist on this table and carry nearly the same value set (`connected`, `awaiting_admin_consent`, `reauth_required`). Two columns that can disagree about the same fact will eventually disagree. `auth_state` is the one referenced by `PRD.md` §5.2.1's four connection states — **drop `status`**, or state plainly what it means that `auth_state` does not.
+>
+> `sea_shipment_details.job_id UNIQUE` is 1-to-1 with its job and dies with it, so a tombstone is harmless in practice — but re-creating details for a job whose row was soft-deleted would fail. Worth knowing before you write that observer.
+
+**MySQL**
+
+```sql
+CREATE VIEW dsr_funnel_view AS
+SELECT
+    e.agent_id,
+    e.transport_mode,
+    DATE(e.created_at)                                              AS period_start,
+    'day'                                                           AS period_grain,
+    COUNT(*)                                                        AS enquiries_raised,
+    -- EXISTS, never a LEFT JOIN: an enquiry may carry SEVERAL threads, and joining
+    -- them would fan out the rows and inflate COUNT(*) — silently corrupting the
+    -- conversion denominator. Confirmed in test: 3 enquiries across 4 threads still
+    -- counted 3 raised / 2 replied, where a LEFT JOIN would have reported 4 raised.
+    SUM(CASE WHEN EXISTS (SELECT 1 FROM email_threads t
+                          WHERE t.enquiry_id = e.id
+                            AND t.first_response_at IS NOT NULL)
+             THEN 1 ELSE 0 END)                                     AS enquiries_replied,
+    SUM(CASE WHEN e.status IN ('new','quoted','awaiting_client')
+             THEN 1 ELSE 0 END)                                     AS enquiries_pending,
+    SUM(CASE WHEN e.status = 'converted' THEN 1 ELSE 0 END)         AS enquiries_converted,
+    SUM(CASE WHEN e.status = 'lost'      THEN 1 ELSE 0 END)         AS enquiries_lost,
+    -- NULL, never 0%, when the denominator is empty (PRD §7.1)
+    CASE WHEN COUNT(*) = 0 THEN NULL
+         ELSE ROUND(SUM(CASE WHEN e.status = 'converted' THEN 1 ELSE 0 END) * 100.0
+                    / COUNT(*), 2)
+    END                                                             AS conversion_rate_pct
+FROM enquiries e
+WHERE e.deleted_at IS NULL          -- soft-deleted enquiries must not inflate the denominator
+GROUP BY e.agent_id, e.transport_mode, DATE(e.created_at);
+```
+
+`msr_funnel_view` and `ysr_funnel_view` are identical except for the period expression, which appears in **both** the `SELECT` and the `GROUP BY`:
+
+| View | `period_start` | `period_grain` |
+|---|---|---|
+| `dsr_funnel_view` | `DATE(e.created_at)` | `'day'` |
+| `msr_funnel_view` | `DATE_FORMAT(e.created_at, '%Y-%m-01')` | `'month'` |
+| `ysr_funnel_view` | *two bases — see below* | `'year'` |
+
+#### `ysr_funnel_view` — the reader chooses the year basis
+
+**Decided 2026-08-26: neither basis is hard-coded.** The view emits **both**, tagged by a `period_basis` column, so a UI toggle becomes a `WHERE` clause rather than a schema change:
+
+```sql
+SELECT * FROM ysr_funnel_view
+WHERE agent_id = ? AND transport_mode = ? AND period_basis = ?;   -- 'fiscal' | 'calendar'
+```
+
+`ysr_funnel_view` therefore carries **one extra column** — `period_basis VARCHAR(8)` — ahead of the shared column list, and is a `UNION ALL` of the same query under two period expressions:
+
+| `period_basis` | MySQL `period_start` | SQLite `period_start` |
+|---|---|---|
+| `'calendar'` | `DATE_FORMAT(e.created_at, '%Y-01-01')` | `strftime('%Y-01-01', e.created_at)` |
+| `'fiscal'` | `DATE_FORMAT(DATE_SUB(e.created_at, INTERVAL 3 MONTH), '%Y-04-01')` | `strftime('%Y-04-01', date(e.created_at, '-3 months'))` |
+
+**The fiscal expression returns the April 1st that opens the fiscal year**, which lines up exactly with `EnquirySequenceService::fiscalYear()` (`PRD.md` §6.3): a March-2026 enquiry yields `2025-04-01` and numbers as `-25-`; an April-2026 enquiry yields `2026-04-01` and numbers as `-26-`. A yearly report and a document number therefore agree, which is the whole point — for Jan–Mar the two bases differ, and that is precisely where reconciliation arguments start.
+
+> **`period_basis` must be in the `WHERE` clause, always.** Query the view without it and every row is returned twice under two different year labels — silently doubling every count. Make it a required parameter in the repository method, not an optional filter.
+
+> The other two grains need no such choice: a day is a day, and fiscal months are ordinary calendar months — only their *grouping into a year* differs.
+
+**SQLite** — same statements, same column list, only the period expression differs:
+
+| View | `period_start` |
+|---|---|
+| `dsr_funnel_view` | `date(e.created_at)` |
+| `msr_funnel_view` | `strftime('%Y-%m-01', e.created_at)` |
+| `ysr_funnel_view` | `strftime('%Y-01-01', e.created_at)` |
+
+Both engines therefore return `period_start` as a real `YYYY-MM-DD` date, so one client formatter serves all three grains.
+
+> 🔴 **`ysr_funnel_view` uses the CALENDAR year — confirm this is intended.** `EnquirySequenceService` numbers documents by **fiscal** year (April–March, `PRD.md` §6.3), so `ENQA-…-26-0001` and a `ysr` row labelled `2026` describe **different twelve-month windows** for the first three months of every calendar year. `PRD.md` §7.1 says only "yearly", so the literal reading is implemented here. **If the Boss's yearly report should align with the fiscal year instead**, swap the period expression to:
+> ```sql
+> -- MySQL
+> DATE_FORMAT(DATE_SUB(e.created_at, INTERVAL 3 MONTH), '%Y-04-01')
+> -- SQLite
+> strftime('%Y-04-01', date(e.created_at, '-3 months'))
+> ```
+> This is left undecided rather than guessed — the two produce different numbers for Jan–Mar, and reconciling a report against a document number is exactly where that bites.
+
+> **Tenant scoping does not reach views.** Laravel global scopes apply to Eloquent models, not to raw view queries. Every read of these views **must** filter `agent_id` (and `transport_mode`) explicitly, or it crosses branches. Treat them like any other raw query.
 
 ---
 

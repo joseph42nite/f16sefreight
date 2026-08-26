@@ -54,6 +54,15 @@ Private bridge network `f16s-network`:
 
 Also create `Dockerfile.laravel` and `Dockerfile.fastapi`.
 
+> ✅ **Built 2026-08-26.** `docker-compose.yml`, `Dockerfile.laravel` (PHP **8.2**, not 8.5 — see `CONTEXT.md` §2), `Dockerfile.fastapi`, `docker/nginx/default.conf`, `docker/php/{supervisord.conf,local.ini}` and `.env.docker.example`. `docker compose config` validates.
+>
+> Three deliberate departures from the text above, each for a reason:
+> - **Host ports are offset** — `db` on `3307`, `redis` on `6380` — so the stack does not collide with a MySQL or Redis already installed on the machine.
+> - **`ai-server` builds the real `./python` service** and starts with the rest of the stack. It is light today (FastAPI + pdfplumber). **Ollama and ChromaDB are deliberately not in that image** — Gemma needs ~6 GB resident, and `PRD.md` §9.6 says to point a laptop at a shared dev AI instance rather than run the model locally.
+> - **A `queue` service runs `queue:work` across all seven named queues in §4.10's priority order**, since `laravel/horizon` is not yet a dependency. Replace the command with `php artisan horizon` when it is.
+>
+> **This is additive.** The `php artisan serve` + SQLite workflow is untouched and remains the default; the committed `.env` still points at SQLite. Reach for the stack when you need MySQL 8 semantics — the CHECK constraints, the generated column and the triggers behaving exactly as production will.
+
 ### 0.2 Production DNS & subdomain routing
 
 CNAME records at the DNS provider (Route 53 / Cloudflare) pointing at the application load balancer:
@@ -91,17 +100,41 @@ Column definitions live in `database_relations_tree.md`. This section fixes only
 
 No inbound foreign key dependencies; these run absolutely first.
 
+> [!IMPORTANT]
+> **Two prerequisites before the first migration in this batch.**
+>
+> 1. **`composer require doctrine/dbal`** — Laravel 9's `->change()` cannot alter a column type without it, and it is **not currently installed**. Step 7 below needs it. (Laravel 10 dropped the requirement; this project is on 9.52.)
+> 2. **Run the four production data checks in `CONTEXT.md` §6** before converting `users.branch_name`. The local SQLite DB is empty, so nothing here is verified against real data.
+>
+> Remember `export PATH="/usr/local/opt/php@8.2/bin:$PATH"` — system PHP is 8.5 and this project cannot run on it.
+
 1. **`sequence_counters`** — must be first; all numbering depends on it
 2. **`ports`** — UN/LOCODE master reference
-3. **Alter `companies`** — add `tier`, `email_domain`, `ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit`
+3. **Alter `companies`** — add `tier`, `email_domain`, `ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit`, **`deleted_at`** (`PRD.md` §9.3 lists `companies` among the soft-deleting tables)
 4. **Create `customers`** — including tax/address/banking fields, `payment_terms_days`, `credit_limit`
    - Add composite indexes **`(company_id, email_domain)`** and **`(company_id, sales_id)`**. The first is hit on *every inbound mail*; the second on *every sales-dashboard query*. Adding them later means a table scan on the hottest paths in the product.
 5. **Create `customer_contacts`** — the per-client address book (FK → `companies`, `customers`). Unique `(customer_id, email)`; index `(customer_id, include_in_cc, opted_out_at)` for the outreach CC lookup. **`include_in_cc` defaults to FALSE** — harvesting is automatic, CC'ing is a human decision
 6. **Create `partners`** — airlines, shipping lines, brokers, transporters, vendors
-7. **Alter `users`** — add `origin_port_id`, `pima_address`, `designation`, `signature_text`
+7. **Alter `users`** — add `origin_port_id`, `designation`, `signature_text`; convert `branch_name` to `BIGINT UNSIGNED` + FK
+   - ⚠️ **`pima_address` already exists on the live table — do NOT add it.** Verified 2026-08-26; adding it again fails the migration.
+   - ✅ **`origin_airport_code` and `origin_port_id` both stay — decided 2026-08-26.** They are different things: `origin_airport_code` is a plain IATA string on `users` with no foreign key; `origin_port_id` is an **FK into the new `ports` table** (step 2 of this batch), which is the UN/LOCODE master covering seaports as well as airports. Add `origin_port_id` **nullable** now and leave it empty — the `ports` directory is being loaded later. Backfill it from `origin_airport_code` once that data lands. **Registration cannot require it until then**, though `PRD.md` §2.2 says it eventually must.
+   - **`branch_name` is live as `VARCHAR` but already stores `agents_info.id`** — verified in code, not assumed (`NewUsers.vue:241` saves the dropdown's `id` while displaying `agent_city`; ~40 readers do `Agent::where('id', $user->branch_name)`). Converting the type therefore changes **no data**. Keep the column *name* — renaming costs ~40 call sites for no functional gain, and the DDL keeps it too.
+     **Why it can't stay `VARCHAR`:** without a numeric type and an FK, MySQL coerces text in numeric comparisons — `'3abc'` → `3`. A corrupted value resolves to a real, *different* branch and leaks another tenant's data silently. This is the isolation column for the entire product.
+     **Make it `NOT NULL`** — project rule, set 2026-08-26: *every user has a branch, and therefore a company and a tier.* That is what makes tier resolution total (§4.1.1) with no "user without a tier" branch to design around.
+     ⚠️ **Backfill before you constrain.** Production check 3 counts users with a NULL or empty `branch_name`; assign each one a branch **first**, or the `NOT NULL` migration aborts. Registration must also start requiring it — `UserController` currently validates `branch_name` as `nullable|max:50`, which is how the NULLs got there.
+   - **Do not** start writing new logic against `users.company_name` — it stores a company **ID** despite the name, and `LoginController.php:45` looks it up by name. Company resolves via `user → branch → company` (§3.0). See `CONTEXT.md` §6.
 8. **Alter `air_way_bills` & `house_way_bills`** — add `uuid`, `job_id`
+   - ⚠️ **Add only those two columns.** The DDL blocks for both tables are stale: the live `air_way_bills` PK is `INTEGER AUTO_INCREMENT` (not `VARCHAR(20)` of `awb_code + awb_no`) and both tables carry ~50 live columns. Anything treating `air_way_bills.id` as the AWB number is wrong against this codebase.
 
 **Encrypt at rest:** `bank_account_no` and `bank_ifsc_code` on both `customers` and `partners`, via the Eloquent `encrypted` cast.
+
+> **Soft deletes:** `deleted_at` was added on 2026-08-26 to **six** tables — `jobs`, `enquiries`, `sea_shipment_details`, `job_entities`, `sea_containers`, `companies` — having been missing from the schema entirely. **No financial table gets one**, per `PRD.md` §9.3.
+> **`mailbox_connections` is deliberately NOT among them.** Its `email_address` is globally unique, so a soft-deleted row would block that mailbox for every tenant forever. It uses **two explicit deactivation columns** instead — and they are not interchangeable:
+> - **`is_active = false`** — a **superadmin** tier downgrade, tenant-wide. Tokens kept, so an upgrade restores sync with no re-auth.
+> - **`disconnected_at` / `disconnected_by`** — the **user** removing their own mailbox. Tokens cleared.
+>
+> Sync requires **all three**: `is_active = 1 AND disconnected_at IS NULL AND auth_state = 'connected'`. The upgrade restore must read `WHERE is_active = 0 AND disconnected_at IS NULL`, or it reconnects mailboxes their owners removed. Do not put the `SoftDeletes` trait on that model.
+> Before adding the trait anywhere in Step 2, read the UNIQUE-collision table in `database_relations_tree.md` §*Triggers & Views*.
 
 ✅ **Checkpoint 1a** — `php artisan migrate:status` shows every batch-1a migration as `Ran`; `php artisan tinker` → `Port::count()` returns `0` without exception.
 
@@ -270,6 +303,25 @@ Relation::morphMap([
 
 Build this **before** any controller, so no endpoint is ever written unprotected. Specification: `PRD.md` §2 and §3.
 
+### 3.0 The auth model — stateless JWT, not sessions *(resolved 2026-08-26)*
+
+> [!IMPORTANT]
+> This codebase authenticates with **`tymon/jwt-auth`**, not Laravel sessions. Earlier drafts of this guide and of `PRD.md` §2.1 described binding context "to the session"; that was written before the codebase was known and **would not work here.** `session()` is empty on every API request, so anything reading it degrades to a silent no-op rather than an error.
+
+**Three rules follow, and everything in §3.1–§3.6 is written against them:**
+
+| # | Rule | Why |
+|---|---|---|
+| 1 | **Portal scope comes from the request `Host`**, resolved per request by middleware — never from a session or a token claim | The subdomain is already on every request. It is also self-correcting: a user legitimately works both portals, and the host they are on *is* the answer |
+| 2 | **Entitlement is resolved per request from the user row; only identity goes in the JWT** | A JWT cannot be revoked before it expires. Bake `tier` or `designation` into it and a Command→Tactical downgrade — or a Boss demoting a user — keeps working for the token's whole lifetime |
+| 3 | **Pre-login company selection is UX, not a security binding** | `company_id` is derived from the authenticated user (`user → branch → company`). The picker may narrow the login form; it must never be what scopes a query |
+
+**The two role systems are different axes and both survive.** The legacy `roles` table (`email → user \| admin \| superAdmin`) selects the *auth guard* — i.e. which model the login resolves to. The new `users.designation` is the *in-tenant role* (`pricing`/`operations`/`sales`/`accounts`/`boss`). `PRD.md` §2.3 is explicit that `superadmin` is platform-level and "not a `designation`", so the two coexist by design.
+
+> **Two dead references to clean up in passing** (neither blocks Batch 1a): `config/auth.php` registers an `admin-api` guard pointing at `App\Admin::class`, which **does not exist** in `app/` and has no `admins` table — any login with `roles.role = 'admin'` 500s. `App\User::GetAssosName()` likewise references a non-existent `App\Association`. Removing the `admin-api` guard also needs the `'admin'` branch dropped from `PasswordResetRequestController.php:29`.
+>
+> `PRD.md` §2.3's note to "migrate `admin → boss`, `documentation → operations`" refers to legacy **`designation`** values. This codebase has no `designation` column at all yet, so there is nothing to migrate — that note is stale here.
+
 ### 3.1 Tenant isolation global scope
 
 A global scope applied automatically, **branching on which column the table carries**:
@@ -287,16 +339,34 @@ A job's branch and its parties are not composite-keyed to the same tenant at the
 
 ### 3.3 Portal scope (deliberately not global)
 
+> 🔴 **Do not implement this against `session()`.** Under stateless JWT (§3.0) the session is always empty, so a session-backed scope returns **unfiltered** rows — air users silently seeing sea data, with no error raised anywhere. Derive the scope from the request `Host`.
+
+`BindPortalScope` middleware, registered on the `api` group, resolves the subdomain once per request and binds it into the container:
+
+```php
+// app/Http/Middleware/BindPortalScope.php
+$scope = match (explode('.', $request->getHost())[0]) {
+    'focusair' => 'air',
+    'focussea' => 'sea',
+    default    => null,          // admin. — and every CLI/queue context — binds nothing
+};
+if ($scope !== null) {
+    app()->instance('active_portal_scope', $scope);
+}
+```
+
 ```php
 public function scopeForActivePortal($query) {
-    if (session()->has('active_portal_scope')) {
-        return $query->where('transport_mode', session('active_portal_scope'));
+    if (app()->bound('active_portal_scope')) {
+        return $query->where('transport_mode', app('active_portal_scope'));
     }
     return $query;
 }
 ```
 
-Chain it explicitly in HTTP controllers (`Job::forActivePortal()->get()`). **Never make it global** — queue workers, WebSocket broadcasts and crons have no session and would be silently mis-filtered.
+Chain it explicitly in HTTP controllers (`Job::forActivePortal()->get()`). **Never make it global** — queue workers, WebSocket broadcasts and crons never run that middleware, so the binding is absent and the scope passes through unfiltered. That is exactly the behaviour the session version was reaching for, achieved without a session.
+
+**Boss users are not portal-scoped** (`PRD.md` §1.3) — they enter through either operational subdomain and compare both modes, so their controllers simply do not chain the scope.
 
 ### 3.4 Role gates
 
@@ -333,11 +403,13 @@ Route::group(['middleware' => 'tier:tactical,command'], ...);  // mailbox sync, 
 Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconciliation, client book
 ```
 
-### 3.6 Session, locks & broadcast authorization
+### 3.6 Request context, locks & broadcast authorization
 
-- Bind `company_id`, `agent_id`, `designation`, `active_portal_scope` and `company.tier` at login; expose `tier` and `designation` on the `currentUser` payload
+- **Resolve entitlement per request; keep the JWT to identity only.** `App\User::getJWTCustomClaims()` stays empty. `company_id`, `agent_id`, `designation` and `tier` are read from the authenticated user each request — `auth()->user()->branch->company_id`, `->branch->company->tier` — memoized in Redis under `user_ctx:{id}` with a short TTL, busted on `User` and `Company` save.
+  **Never put `tier` or `designation` in the token.** See §3.0 rule 2: a downgrade or a demotion would not take effect until the token expired.
+- Expose `tier` and `designation` on the `currentUser` payload returned by login and by the token-verify endpoint, so Vue route guards can read them. The backend re-checks everything regardless.
 - Redis row lock on form open: `Cache::put("shipment_lock:{$jobId}", auth()->id(), now()->addMinutes(45))`, refreshed by `POST /api/jobs/{id}/heartbeat`
-- `Broadcast::channel('branch.{agentId}', …)` must verify the user's branch matches the requested channel
+- `Broadcast::channel('branch.{agentId}', …)` must verify the user's branch matches the requested channel. **Under JWT the broadcast auth route needs the token explicitly** — configure Laravel Echo with an `authEndpoint` plus an `Authorization: Bearer …` header, and put that route behind the `user-api` guard. Echo's default cookie-session auth will not authenticate here.
 
 ✅ **Checkpoint 3** — run `CrossTenantIsolationTest` and `TierModeGatingTest` (Step 8). Both must pass before writing a single controller.
 
@@ -347,22 +419,246 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 
 ### 4.1 Python FastAPI parsing engine (`python/ocr_server.py`)
 
+> ✅ **This service already exists in-repo — you are extending it, not writing it.** Verified 2026-08-26.
+>
+> | In `python/` today | |
+> |---|---|
+> | `ocr_server.py` | FastAPI app. `GET /health` · `POST /extract` (file + `document_type` + optional `coordinates`) |
+> | `extract_awb_new.py` | ~9,100 lines — the pdfplumber coordinate engine, `extract_all_boxes()` |
+> | `geo_constants.py` · `boxes_config.json` | Airport/geo lookups; fallback coordinate templates |
+> | `requirements.txt` | `pdfplumber`, `fastapi`, `uvicorn`, `python-multipart` — **and nothing else yet** |
+>
+> Laravel already calls it: `ProcessPdfOcrJob` posts to `config('services.ocr.url') . '/extract'`, passing coordinates pulled from `system_templates`. **This is the structured-document path `PRD.md` §5.1 says to keep** — the steps below are additive, and `/extract` must keep working unchanged.
+>
+> **What is genuinely missing:** `/extract-unstructured`, PyMuPDF, `google-generativeai`, `schemas.py`, and any Ollama/ChromaDB client.
+>
+> ⚠️ **One existing behaviour contradicts `PRD.md` §9.1.** `ocr_server.py` writes each upload to a `tempfile.NamedTemporaryFile` on disk before parsing, while §9.1 requires the binary buffer be processed **in memory**. pdfplumber accepts a file-like object, so `pdfplumber.open(io.BytesIO(contents))` removes the disk round-trip for the existing path too — not just the new one. Worth fixing while you are in the file.
+
 1. **Dependencies:** add `PyMuPDF` and `google-generativeai` to `requirements.txt`
-2. **Pydantic schemas** (`python/schemas.py`) for Invoice and Packing List, including per-field `confidence` (high / medium / low)
+2. **Getting form-ready JSON is THREE mechanisms, not one.** Prompt caching is none of them — caching makes the schema cheaper to *send*, it does not make the model *obey* it.
+
+   | Layer | Mechanism | Without it |
+   |---|---|---|
+   | **Constrain** | Gemini `response_mime_type: "application/json"` + `response_schema`; Ollama `format: <json-schema>` | The model returns prose, markdown-fenced JSON, or invented field names |
+   | **Validate** | Pydantic schemas in `python/schemas.py` — Invoice, Packing List, per-field `confidence` (high/medium/low) | Malformed payloads reach Laravel and blow up in the Vue form |
+   | **Map** | One shared key vocabulary → `FocusAir.vue` / `FocusSea*.vue` fields | Three codebases invent three sets of names and silently drift |
+
+   **Constrain first.** Pydantic is the last line of defence, not the mechanism — validating after the fact only tells you the model went off-script; it does not stop it.
+
+   ##### Three levels of "force it to return JSON" — use the third
+
+   | Level | How | Guarantees |
+   |---|---|---|
+   | 1. Ask in the prompt | *"Reply with JSON"* | **Nothing.** Usually works, fails unpredictably |
+   | 2. JSON mode | Gemini `response_mime_type: "application/json"` · Ollama `format: "json"` | Valid JSON **syntax** — but any shape. Fields may be renamed, nested differently, or missing |
+   | 3. **Schema-constrained decoding** | Gemini `response_schema` (+ the mime type) · Ollama `format: <json-schema object>` | **The shape.** The decoder is grammar-constrained, so a token that would break the schema is literally not sampleable |
+
+   Use **level 3 on both models.** It is not a prompt hint — it is enforced during generation, so a malformed response is impossible rather than unlikely.
+
+   > ⚠️ **Gemini accepts a subset of JSON Schema (OpenAPI-flavoured) and has historically been restrictive about `$ref`/`$defs`.** Ollama passes the schema through to a GBNF grammar and is more permissive. **Author one flat schema that satisfies the stricter of the two** rather than maintaining separate versions — verify the currently supported subset against Google's docs before building.
+
+   ##### 🔴 Constrained decoding guarantees the shape, NOT the truth
+
+   This is the failure mode to design against. Force a schema with a required `gross_weight` and the model **must** emit one — so when the value is genuinely not on the page, it invents a plausible number rather than admitting it cannot see one. **You have converted a visible failure into a silent one**, which is strictly worse on a document that becomes a customs declaration.
+
+   Four rules that avoid it:
+
+   1. **Every extracted value is nullable.** `"value": {"type": ["string", "null"]}`. An explicit `null` is a correct, useful answer; a hallucinated weight is not.
+   2. **`confidence` is required on every field**, and is the one thing the model may never omit. It drives the orange highlighting (`PRD.md` §5.1) — which only works if low confidence can actually be expressed.
+   3. **Enums wherever the value set is closed** — `weight_unit: ["KGS","LBS"]`, currency, package type. Free accuracy: the model cannot emit `"kilos"` if the grammar has no path to it.
+   4. **Keep the schema flat and small.** Gemma 4 E4B is a ~4B model; a deep, 60-field schema costs context and degrades output quality under grammar constraint. **One schema per document type** — Invoice, Packing List, AWB — never one union schema covering all three.
+
+   ```jsonc
+   // the wrapper every field shares
+   { "value":      { "type": ["string", "null"] },   // null is a legitimate answer
+     "confidence": { "type": "string", "enum": ["high", "medium", "low"] } }  // required
+   ```
+
+   **Then validate with Pydantic anyway.** Constrained decoding cannot catch semantic nonsense — a shipment date in 2085, a negative weight, an IATA code that is three valid letters but not a real airport. On a validation failure, retry **once** with the error appended to the prompt, then give up with `failure_code = 'extraction_failed'`. Do not loop: a small model that failed the schema twice will fail it a third time, and each attempt on the vision path is another paid call.
+
+3. **🔑 `/extract-unstructured` must return the SAME key vocabulary as `/extract`.** This contract already exists in code: `extract_all_boxes()` returns `result[box_name]` keyed by the region names in `boxes_config.json` — `shipper`, `consignee`, `departure`, `destination`, `transit`, `cargo`, `weight_charge`, `piece_weight`. `FocusAir.vue` already consumes those names. **A second endpoint emitting different keys means `OcrUploadModal.vue` needs two mappers, and they will drift the first time either side changes.**
+
+   One shape difference to reconcile deliberately: `/extract` returns bare values, while the new path returns `{value, confidence}`. **Unify upward** — have `/extract` wrap its values too, stamping `confidence: "high"` (a coordinate hit *is* high confidence, exactly as `PRD.md` §5.1 defines it). Then one mapper and one orange-highlight rule serve both paths.
 3. **`/extract-unstructured` endpoint:**
    - `fitz.open(stream=…)` — process the binary buffer **in memory**, never to disk
    - Text-selectable PDF → local **Gemma 4 E4B** via Ollama at `http://<ai-private-ip>:11434`
    - Scanned PDF / image → **Gemini 2.5 Flash** vision fallback, translating foreign documents to standard English
+#### 4.1.2 Field constraints — what the schema enforces, and what it must NOT
+
+*Specified 2026-08-26. Sources: `PRD.md` §5.9 (IATA/Cargo-XML), §5.8 (ICEGATE). This table is the single contract for **both** the extraction schema and form validation — one place, so Python, Laravel and Vue cannot drift.*
+
+> 🔴 **Split format from length. They behave differently and belong in different layers.**
+>
+> | | Goes in the extraction schema? | Why |
+> |---|---|---|
+> | **Format** — `pattern`, `enum` | ✅ **Yes** | The model physically cannot emit `"kilos"` when the grammar only allows `KGS`/`LBS`. Free accuracy, no downside |
+> | **Length** — `maxLength` | ❌ **NO** | A `maxLength: 35` on a shipper name makes the model **silently truncate a 60-character legal name**. You would destroy data at parse time and never know |
+>
+> **Extract at full fidelity; validate afterwards; let the operator resolve.** A name too long for Cargo-XML is a real problem that a human must decide how to abbreviate — it is not the parser's call, and a truncated consignee on a customs declaration is not a recoverable error.
+
+##### Air — Cargo-XML / Cargo-IMP (`PRD.md` §5.9)
+
+| Field | Constraint | Layer |
+|---|---|---|
+| Company name / address **per line** | **35 chars** — the legacy Cargo-IMP line limit | validate + flag |
+| MAWB number | 11 chars, `^\d{3}-\d{8}$` | **schema `pattern`** |
+| HAWB number | ≤ 20, alphanumeric only, no spaces or specials — `^[A-Za-z0-9]{1,20}$` | **schema `pattern`** |
+| ICEGATE ID | ≤ 20 chars | validate |
+| Organisation / agent name | ≤ 50 chars | validate + flag |
+| Shipper & consignee name | ≤ 50 chars per line | validate + flag |
+| Address | ≤ 500 cumulative | validate + flag |
+| Weight unit | `KGS` \| `LBS` | **schema `enum`** |
+| Chargeable weight | `max(gross, volume_cm³ / 6000)` | **computed, never extracted** |
+
+##### Sea — ICEGATE (`PRD.md` §5.8)
+
+| Field | Constraint | Layer |
+|---|---|---|
+| MBL / HBL number | ≤ 20 chars each | validate |
+| Container number | 11 chars, **ISO 6346 check digit** | **schema `pattern`** + check-digit validate |
+| Seal number | ≤ 15 chars | validate |
+| Package code | ≤ 3 chars | validate |
+| Gross weight | 14 digits, 3 decimals | **schema `pattern`** |
+| IMO number | `^[0-9]{7}$` | **schema `pattern`** |
+| HS code | `^\d{6,10}$` | **schema `pattern`** |
+| Container size/type | `20GP` `40GP` `40HC` `20RF` `40RF` `20TK` `40OT` | **schema `enum`** |
+| Cargo type | `liquid_cont` `fcl` `lcl` `break_bulk` `liquid_bulk` `bulk` `ro_ro` | **schema `enum`** |
+| Volume unit | `CBM` \| `CFT` | **schema `enum`** |
+| Piece counts across houses | **must total the master exactly** | cross-row validate, not per-field |
+
+> **Two rules that are not per-field checks and will be missed if this table is read literally:** house piece counts must sum to the master exactly, and an IMDG class **requires** a UN number (`PRD.md` §5.8 tab 4). Both are form-level assertions.
+
+##### Mandatory fields
+
+Required-ness is defined per tab in `PRD.md` §5.8 and §5.9, not here — and **"required on the form" is not "required in the schema."** Every extracted `value` stays nullable (§4.1 above): the model must be able to say *"not on this page"* rather than invent a shipper. The form then blocks submission on a missing mandatory field, which is a **different and later** gate, with a human in front of it.
+
+#### 4.1.3 Party matching — reuse the existing Levenshtein matcher
+
+**Do not write a new one.** `resources/js/src/core/mixins/airWayBillMixin.js` already implements it and `FocusAir.vue` / `HouseWayBill.vue` already use it:
+
+| Function | Behaviour |
+|---|---|
+| `normalizeText(str)` | Lowercase, strip to `[a-z0-9]` |
+| `calculateSimilarity(a, b)` | Levenshtein ratio; short-circuits to `0.95` when one string contains the other and `min/max ≥ 0.65` |
+| `findMatchingAddress(ocrEntity, savedList)` | Name **≥ 0.90** *and* address **≥ 0.85** (or address absent/substring); returns the highest-scoring saved record |
+
+**This is what makes the 35-character problem mostly disappear**, and it is the reason the address book earns its place:
+
+```
+extract shipper/consignee at FULL fidelity
+   └─► findMatchingAddress() against saved_addresses (agent-scoped)
+         ├─ match ≥ 0.90 ──► use the SAVED record
+         │                   Already curated, already within every limit,
+         │                   already spelled consistently. Nothing to flag.
+         └─ no match ─────► keep the OCR text
+                             validate against the tables above
+                             flag violations orange
+                             offer [Save to address book]
+```
+
+A client curates each trading partner **once** in settings, and every future shipment for that partner arrives clean — correct spelling, correct abbreviation, within the line limits, identical every time. That last property matters beyond tidiness: **customs rejects a master/house mismatch**, and free-typed party names are where those mismatches come from.
+
+> **Settings is where the curation happens.** The address book is the existing `saved_addresses` table behind `AddressBookController` (already agent-scoped). The `[Save to address book]` action on an unmatched party is what keeps it growing without anyone doing data entry as a chore — the first shipment for a new partner seeds the record, every later one matches it.
+
+> ⚠️ **Match, then confirm — never silently substitute.** Replacing an extracted consignee with a *similar* saved one is exactly the class of error that ships cargo to the wrong company. Show which saved record matched and at what score, and let the operator reject it. `PRD.md` §5.8 already requires address textareas to be read-only until an entity is chosen from the lookup, for the same reason.
+
 4. **Retain `pdfplumber`** in `extract_awb_new.py` for structured AWBs — coordinate extraction is the correct tool for a fixed layout
-5. **Ollama configuration:** `OLLAMA_KEEP_ALIVE=-1` to pin the model in RAM; bake system prompts and JSON schemas into a custom `Modelfile` (`ollama create gemma-custom -f ./Modelfile`) to eliminate repeated instruction tokens
-6. **Gemini context caching:** 300 s TTL on the large Pydantic schemas and SOP prompt block
+5. **Ollama configuration:** `OLLAMA_KEEP_ALIVE=-1` pins the model **weights** in RAM (kills cold-start load time — *not* prompt caching, a separate thing). Bake system prompts and JSON schemas into a custom `Modelfile` (`ollama create gemma-custom -f ./Modelfile`) so they are neither re-sent nor re-processed, and size `num_ctx` to hold prompt + payload so the prefix cache can actually be reused. **All of this is a latency win — Gemma is local and free, so there is no token bill to cut here.**
+6. **Gemini context caching — measure before you build it.** See the caching note in `PRD.md` §9.1. Two things make the naive version a loss: the cached block (Pydantic schema + SOP prompt) may fall **below Google's minimum cacheable size**, and the specified **300 s TTL** is billed by storage duration, so at realistic upload density the cache expires between nearly every request — creation cost paid, no reuse gained. Verify the current minimum and pricing against Google's docs, then either raise the TTL to match observed density or skip it.
+   **On the vision path the prompt is not the expensive part** — the page image is. The cost levers that matter, in order: the opt-in consent gate (§4.1.1), sending fewer pages, and downscaling images before upload (vision tokens scale with resolution).
 7. **ChromaDB** cohosted on the same instance; embeddings via `nomic-embed-text` queried over loopback
+
+#### 4.1.1 Tier branching & the credit gate — `ProcessPdfOcrJob`
+
+*Specified 2026-08-26. `PRD.md` §3.3 said only "branches on tier"; this is the mechanism.*
+
+**Resolving the tier is a guaranteed three-hop join:**
+
+```
+users.branch_name → agents_info.company_id → companies.tier
+```
+
+**Every user has a branch, and therefore a company and a tier** — a project rule, enforced by `users.branch_name NOT NULL` plus its foreign key (Batch 1a·7). There is no "user without a tier" case to design around, and no fallback to invent.
+
+Two mechanical points, both easy to get wrong:
+- The job runs in a **queue worker with no session**, so it must resolve through `withoutTenantScope()` or the tenant global scope returns nothing and the tier reads as missing.
+- Eager-load the chain (`User::with('branch.company')`) and memoize per company. This runs on every upload; three lazy queries per PDF is a needless N+1 on the hottest background path.
+
+**The route is decided by tier × document class, not tier alone:**
+
+| Tier | Structured (AWB, has a `system_templates` layout) | Unstructured (invoice, packing list) | Scanned / image |
+|---|---|---|---|
+| `core` | `/extract` — coordinates, **free** | ❌ `upgrade_required` | ❌ `upgrade_required` |
+| `tactical` · `command` | `/extract` — coordinates, **free** | `/extract-unstructured` → PyMuPDF + Gemma, **free** | `/extract-unstructured` → Gemini, **1 credit** |
+
+> **A Core tenant uploading an invoice must be told, not silently disappointed.** `pdfplumber` needs a coordinate template, and no template exists for an arbitrary client invoice — so extraction returns an empty form and looks broken. Fail the job **before** processing with `failure_code = 'upgrade_required'` and surface the `UpgradeTeaser.vue` CTA. Core is the upsell tier; this is the moment the upsell happens, and a blank form wastes it.
+
+##### The credit gate: never spend a credit the operator did not authorise
+
+> 🔴 **Vision OCR is opt-in.** When PyMuPDF finds no usable text layer, the job does **not** silently reach for Gemini. It stops, tells the operator *"this looks like a scan — spend 1 credit to read it?"*, and waits. Spending someone's money is exactly the kind of irreversible act `PRD.md` §5.7 already refuses to do without explicit acceptance; a credit is no different from an email.
+
+This also removes the sequencing problem that otherwise dogs the credit gate: Laravel cannot know a PDF is scanned until the parser looks, but with consent in the middle there is a **human decision** between the two calls, so the second round trip is doing real work rather than papering over an ordering bug.
+
+```
+upload
+  └─► /extract-unstructured  (allow_vision = false)
+        ├─ text layer found ──► parse with Gemma ──► completed        ← free, no prompt
+        └─ no text layer ─────► extraction_path = "none"
+                                 status = awaiting_vision_consent      ← NOTHING spent
+                                    │
+                    ┌───────────────┴───────────────┐
+             operator declines                operator accepts
+                    │                               │
+             status = cancelled          reserve 1 credit (FOR UPDATE)
+                                                    │
+                                    /extract-unstructured (allow_vision = true)
+                                                    │
+                                         ├─ ok ──► keep the credit ──► completed
+                                         └─ fail ► REFUND ──► ai_unavailable
+```
+
+1. **First call is always free.** `allow_vision = false`. PyMuPDF either finds text — parsed locally by Gemma, no credit, no prompt — or reports `extraction_path = "none"`.
+2. **`none` parks the job** at `status = 'awaiting_vision_consent'`. No reservation, no Gemini call, nothing spent. The drawer shows the cost and an `[Use 1 credit to read this]` action.
+3. **On acceptance**, `POST /api/pdf-jobs/{id}/authorize-vision`:
+   - Reserve inside one transaction, `SELECT … FOR UPDATE` on the `companies` row. `balance <= limit` → `failure_code = 'credits_exhausted'` + WebSocket recharge alert, **and still no FastAPI call**.
+   - Otherwise decrement, write a `consumption` row carrying `pdf_processing_job_id`, commit, then call with `allow_vision = true`.
+4. **Refund only on failure now** — a timeout, a rejected call, or an open circuit breaker refunds the reservation and sets `failure_code = 'ai_unavailable'`. The speculative-charge case is gone entirely, because nothing is charged speculatively.
+5. **Log** `llm_usage_logs` with the model actually used, tokens and `execution_ms`.
+
+**Double-refund is impossible by construction.** `ocr_credit_transactions.reverses_transaction_id` is `UNIQUE`, so a retried job's second refund violates the constraint rather than quietly crediting twice. Do not rely on an application check — retries are exactly when those get skipped.
+
+> **Core tier never reaches this prompt.** A `core` tenant uploading a scan or an invoice fails at step 0 with `upgrade_required`. Offering to spend credits a tier cannot buy would be a worse experience than the upgrade CTA.
+
+> ⚠️ **`awaiting_vision_consent` needs its own expiry.** The existing scheduler sweeps `pending`/`processing` jobs older than 30 minutes, and it must **not** sweep this state — an operator may reasonably answer an hour later. But the uploaded PDF is sitting in `storage/app/pdf_temp` while it waits, so give the state a longer, explicit window (24 h is sensible) after which the job is cancelled and the temp file deleted. Without that, unanswered prompts silently accumulate files forever.
+
+##### FastAPI request & response contract
+
+The request gains one field; the response **must** report which route actually ran, because Laravel cannot infer it:
+
+```jsonc
+// request  (multipart)
+//   file, document_type, allow_vision: false
+{ "extraction_path": "text",     // "text" | "vision" | "none"
+                                 //   text   → Gemma read it, free
+                                 //   vision → Gemini read it, 1 credit
+                                 //   none   → no text layer AND allow_vision was false;
+                                 //            nothing was spent, ask the operator
+  "page_count": 3,
+  "model": "gemma-custom",
+  "tokens_in": 1840, "tokens_out": 260,
+  "execution_ms": 4120,
+  "fields": { "...": { "value": "...", "confidence": "high" } } }
+```
+
+`page_count` rides along because vision cost scales with pages — it is what lets the prompt say *"3 pages, 1 credit"* and what makes per-document cost analysis possible later.
+
+Without `extraction_path` every extraction bills as vision, and text-selectable PDFs — which `PRD.md` §3.4 promises are free — quietly consume the customer's credits.
 
 ### 4.2 `PollMailboxes` daemon
 
 `php artisan mailboxes:poll`, the **15-minute reconciliation sweep** registered in `Kernel.php` (push is primary — see below):
 
-- Skip connections where `is_active = false` (tier downgrade) or whose company tier is `core`
+- Skip connections where `is_active = false` (superadmin tier downgrade), where `disconnected_at IS NOT NULL` (the user removed their own mailbox), where `auth_state <> 'connected'`, or whose company tier is `core`. **All four conditions, every run** — the first two look alike and are not (`PRD.md` §3.3)
 - Google API Client + Microsoft Graph; **delta queries / history IDs only** — never a full mailbox scan
 - ⚠️ **Set the Google OAuth consent screen to "In production" on day one.** In *Testing* status refresh tokens expire after **7 days** — this is the single most common false "token storage bug" in Gmail integrations. Publishing is independent of verification; an unverified production app still works, just with the interstitial and the 100-user cap.
 - **Evaluate domain-wide delegation before budgeting CASA** (`PRD.md` §5.2.1) — for Workspace tenants it removes the consent screen, the interstitial, the 100-user cap and the assessment. Both flows must exist regardless, since consumer Gmail cannot use DWD.
@@ -431,6 +727,8 @@ Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Air
 | `mailboxes:poll` | **every 15 min** | Reconciliation sweep — the safety net behind push, not the primary mechanism |
 | `mail:dispatch-queued` | every 10 s | Send `email_messages` where `send_state='queued'` and `scheduled_send_at <= now()`. The undo window lives here |
 | `attachments:evict-cache` | daily | Drop bytes where `cache_expires_at` has passed; set `fetch_state = 'evicted'`. **Never touches `job_documents`** — those are statutory |
+| **`credits:grant-monthly`** | **monthly, 1st** | Reset every active tenant's balance to `companies.ocr_credits_monthly_allowance ?? config("f16s.credits.{$tier}.monthly_allowance")` and write a `monthly_grant` row. **NULL on the company means "follow the tier"** — resolve the default, never treat NULL as zero. ⚠️ **Nothing else refills a balance** — without this command credits only ever decrease and every tenant eventually hard-stops. **Reset to the allowance, do not add to it**, so an unused month does not accumulate into an open-ended liability; the negative `ocr_credits_limit` floor is what stops a busy month failing mid-shipment. **Must be idempotent** — skip any company that already has a `monthly_grant` row in the current calendar month, or a re-run doubles everyone's balance |
+| `pdf:expire-vision-consent` | hourly | Cancel `awaiting_vision_consent` jobs older than 24 h and delete their temp PDFs. **The existing 30-minute stale sweep must exclude this state** — an operator may legitimately answer an hour later, and sweeping it would cancel a live prompt |
 | `mailboxes:sync-read-state` | every 5 min | Push local read/archive changes upstream; **the provider wins any conflict** |
 | `mailboxes:renew-watch` | **daily** | Re-call Gmail `users.watch()` where `watch_expires_at < 48h`. The subscription dies at 7 days **with no error** — a daily cadence survives six failed runs, a weekly one survives none |
 | `enquiries:nudge-stale` | hourly | Bell-nudge pricing to decide on inactive unconfirmed enquiries; debounced via `stale_nudged_at`, cleared on any new client reply |
@@ -507,6 +805,8 @@ php artisan tinker
 | `POST /api/inbox/threads/{id}/claim` | Atomic claim — `UPDATE … WHERE ops_id IS NULL`; **`409 Conflict`** if zero rows affected |
 | `POST /api/jobs/{id}/reply` | Policy-checked (`$this->authorize('reply', $job)`), sends through the connected mailbox as a threaded reply |
 | `POST /api/jobs/{id}/confirm-notification` | Releases a staged consent-gated draft |
+| **`POST /api/pdf-jobs/{id}/authorize-vision`** | Operator accepts the credit cost on a job parked at `awaiting_vision_consent`. Reserves 1 credit under `SELECT … FOR UPDATE`, then re-calls FastAPI with `allow_vision = true`. **`422` with `credits_exhausted` if the balance is at or below the overdraft floor — and no FastAPI call is made.** Rejects unless the job is in that exact state, so a double-click cannot charge twice |
+| **`POST /api/pdf-jobs/{id}/decline-vision`** | Operator declines. Sets `cancelled`, deletes the temp PDF. Nothing was ever spent |
 | `POST /api/documents/{id}/share` | Creates a `document_share_links` row. Body: `requires_approval`, `expires_in_days` (default 14, **max 90**). Returns the raw token **once** — only its SHA-256 is stored |
 | `DELETE /api/documents/share/{id}` | Sets `revoked_at`. Immediate |
 | `POST /api/documents/share/{id}/send` | Hands the link to `ClientNotificationService` as a staged consent message — **does not send** |
@@ -641,6 +941,21 @@ Also build: `financial_snapshots` via `snapshots:compute` (30 min), the DSR/MSR/
 
 ## Step 8 — Automated Testing & Audit Verification
 
+> [!IMPORTANT]
+> ### 🧪 Standing rule: every segment gets a full test pass on live test data
+> *Set by the project owner, 2026-08-26.*
+>
+> The suites below are not a one-off gate at the end of the build. **As each segment goes live, it is seeded with realistic test data and put through a complete pass before the next segment starts** — not just the unit tests for the code written that week, but the whole suite, against data that looks like production.
+>
+> | | |
+> |---|---|
+> | **When** | Whenever a segment is live — A (Core Ops), B (Financials), C (Import/Customs) — not deferred to Step 8 |
+> | **With** | Seeded test data covering the awkward cases, not empty tables. The local DB being empty is exactly why several bugs in this plan went unnoticed until 2026-08-26 |
+> | **Scope** | The full suite, every time. Regressions surface in the segment you are *not* working on |
+> | **Blocks** | Starting the next segment |
+>
+> **Seed the cases that actually break things**, not just happy rows: a customer with `credit_limit = 0.00`; a client with zero losses; an enquiry with no `customer_id`; a user with no branch; a job with several `email_threads`; three shipments on one date; an enquiry that was soft-deleted; a mailbox that was disconnected by its user versus one paused by a downgrade. Every one of those is a documented NULL-guard or invariant somewhere in `PRD.md` §7.3.4, and none of them appear in naive seed data.
+
 ### 8.1 Laravel feature tests (`php artisan test`)
 
 | File | Asserts |
@@ -654,7 +969,7 @@ Also build: `financial_snapshots` via `snapshots:compute` (30 min), the DSR/MSR/
 | `TierModeGatingTest.php` | Tactical sales sees no client names and no money; Command sales sees only its own book; air sees zero sea rows |
 | `InvoiceFinalizeTest.php` | Balanced double-entry posting; GST 9+9 intrastate vs 18 IGST; posting to a closed period returns `403`; concurrency locks prevent duplicate invoice numbers |
 | **`SegregationOfDutiesTest.php`** | A `pricing` user gets `403` on `[Finalize]`; an **`admin` user gets `403` on post-to-ledger and on period open/close**; only `accounts` succeeds; `created_by` on a posted invoice always resolves to an accounts user |
-| `PdfOcrTierBranchingTest.php` | Core → `pdfplumber`; Tactical → FastAPI + a `llm_usage_logs` row; credit exhaustion halts with `Credits Exhausted` |
+| `PdfOcrTierBranchingTest.php` | Core + a structured AWB → `/extract`, no credit; **Core + an invoice or scan → `failure_code = 'upgrade_required'` with no FastAPI call at all**; Tactical + a text PDF → Gemma, an `llm_usage_logs` row, **no credit and no prompt**; **Tactical + a scan → `awaiting_vision_consent` with the balance UNCHANGED and no Gemini call**; declining → `cancelled`, still nothing spent; accepting → exactly 1 credit and a `consumption` row carrying `pdf_processing_job_id`; accepting with `balance <= limit` → `credits_exhausted` **before** any FastAPI call; a Gemini timeout after reserving → refund + `ai_unavailable`; **a retried job cannot refund twice — the second attempt violates `UNIQUE (reverses_transaction_id)`**; an unanswered prompt expires at 24 h, cancels, and deletes the temp PDF |
 | `ReassignmentFlowTest.php` | Request pins with elevated priority; **withdraw hard-deletes the notification**; accept promotes pending → live |
 
 ### 8.2 FastAPI tests (`pytest python/`)
@@ -682,9 +997,14 @@ Resolve these before the dependent module starts:
 
 | Item | Blocks |
 |---|---|
+| ~~3 triggers, never authored~~ · ~~3 views, never authored~~ | ✅ **Authored 2026-08-26**, both dialects, SQLite forms behaviourally tested — `database_relations_tree.md` §*Triggers & Views*. **They will break naive test factories:** any factory attaching a random user to `ops_id` now fails at the database |
+| **Load the `ports` UN/LOCODE directory** | Batch 1a·7 leaves `users.origin_port_id` nullable and empty until this data exists; registration cannot require an origin port before then (`PRD.md` §2.2) |
+| ~~`composer require doctrine/dbal`~~ | ✅ **Installed 2026-08-26**, pinned `^3.1.4` with `carbonphp/carbon-doctrine-types:^2.0`. **Never let it drift to 4.x** — Laravel 9 supports `^2.13.3\|^3.1.4` only, and a bare `require` pulls 4.4 |
+| **The 4 production data checks** (`CONTEXT.md` §6) | Batch 1a·7 — the local DB is empty, so the `branch_name` conversion is unverified against real data |
+| **Install `laravel/horizon`** | Step 4. `docker-compose.yml` now runs a plain `queue:work` across the seven named queues in priority order, which is correct but gives no dashboard, no per-queue worker counts and no failed-job inspector (`PRD.md` §2.3.6 expects all three). Swap the `queue` service command to `php artisan horizon` once installed |
 | **`air_import_details` table** is not yet defined in `database_relations_tree.md` | Segment C.1 Air Import — add it there first |
-| `enquiries.quoted_amount` / `quoted_currency` | All price-elasticity and renegotiation analytics |
-| `email_threads.first_response_at` | Any defensible response-latency claim |
+| ~~`enquiries.quoted_amount` / `quoted_currency`~~ | ✅ **Present in the DDL** — verified 2026-08-26 |
+| ~~`email_threads.first_response_at`~~ | ✅ **Present in the DDL**, and filled automatically by Sent-folder sync (`PRD.md` §5.2.3) |
 
 ## 📌 Conventions
 

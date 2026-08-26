@@ -98,11 +98,14 @@ Tenant **Boss / Director** users are deliberately **not portal-scoped**: they en
 
 This is the authoritative description of **who can log in, what each login type is entitled to, and exactly which screens deliver it.**
 
-### 2.1 Authentication & Session Binding
+### 2.1 Authentication & Request Context
 
-1. **Pre-login company selection.** Before credentials are entered, the user picks their company from the registered tenant list. This binds `company_id` to the session.
-2. **Subdomain resolves the portal.** Nginx passes the hostname to Laravel, which binds `active_portal_scope` (`air` | `sea`) — or, on `admin.`, enters the platform-level context with no tenant binding at all.
-3. **Authentication.** On success the session carries: `user_id`, `company_id`, `agent_id` (from `users.branch_name`), `designation`, `active_portal_scope`, and `company.tier`.
+> [!IMPORTANT]
+> **The platform authenticates statelessly (JWT), not by session** — see `implementation_guide.md` §3.0. An earlier draft of this section described binding context "to the session"; that predates knowledge of the codebase. Context is resolved **per request**, and the distinction is load-bearing: a session-backed portal scope silently returns unfiltered rows instead of failing.
+
+1. **Pre-login company selection is a convenience, not a binding.** The user may pick their company from the registered tenant list before entering credentials; it can narrow the login form. **It does not scope any query.** The authoritative `company_id` is derived after authentication from `user → branch → company`.
+2. **Subdomain resolves the portal.** Nginx passes the hostname to Laravel, which resolves `active_portal_scope` (`air` | `sea`) from the host **on every request** — or, on `admin.`, enters the platform-level context with no tenant binding at all.
+3. **Authentication.** On success the request context carries: `user_id`, `company_id`, `agent_id` (from `users.branch_name`), `designation`, `active_portal_scope`, and `company.tier`. **Only identity is carried in the token**; `designation` and `tier` are re-read from the database each request, so a demotion or a tier downgrade takes effect immediately rather than at token expiry.
 4. **The frontend receives `currentUser`** including `user.company.tier` and `user.designation`. Route guards and component-level gates read from it; the backend re-checks everything (the frontend gate is convenience, never security).
 
 *DNS:* the three subdomains are CNAME records at the DNS provider pointing at the application load balancer. Nginx virtual hosts inside the `web` container forward all three to the same Laravel entrypoint.
@@ -258,7 +261,7 @@ Read a `—` as *"this login does not exist yet"*, not a reduced version of itse
 
 **Scope** **cross-tenant, tier-independent** — the only login not scoped by `company_id`, `agent_id`, `transport_mode` or `tier`. Gated by `superadmin` middleware; unreachable by any tenant user at any tier.
 
-**Does** — tenant management (create/edit companies, set `tier`, register corporate domains) · OCR credit administration (allowance, overdraft ceiling, one-off top-ups — **every change needs a reason**, logged to `ocr_credit_transactions` as `custom_override`) · infrastructure health monitor (`platform:status:ai_server`, Horizon, CPU/RAM) · tail log viewer (last 100 lines) · Horizon failed-job inspector + retry · support desk (`support_tickets` → `investigating`/`resolved` with developer notes emailed back) · global AWB tracking + CSV export · classification analytics (accuracy ratios, confusion matrix, optimisation-hook export)
+**Does** — tenant management (create/edit companies, set `tier`, register corporate domains) · **OCR credit administration** — per-tenant monthly allowance, overdraft floor and one-off top-ups. Each tenant shows as either **Tier default** (`NULL` on the row, lifts automatically on upgrade) or **Pinned** (an explicit override that a tier change must never overwrite), with a **[Reset to tier default]** action to clear a pin. Defaults per tier live in `config/f16s.php` — `core` 0, `tactical` 500, `command` 2,000 (§3.4). **Every change needs a reason**, logged to `ocr_credit_transactions` as `custom_override` · infrastructure health monitor (`platform:status:ai_server`, Horizon, CPU/RAM) · tail log viewer (last 100 lines) · Horizon failed-job inspector + retry · support desk (`support_tickets` → `investigating`/`resolved` with developer notes emailed back) · global AWB tracking + CSV export · classification analytics (accuracy ratios, confusion matrix, optimisation-hook export)
 
 **Never** — operate a tenant's business. No triage, quoting, conversion, assignment, invoicing, posting or period control. Superadmin can see *that* a tenant's AI server is down; it does not run their shipments or touch their books.
 
@@ -387,21 +390,46 @@ Gating is applied at **four** independent layers, because any one of them alone 
 2. **Route middleware (`CheckCompanyTier`)** — registered as `'tier'` in `Http/Kernel.php`.
    `Route::group(['middleware' => 'tier:tactical,command'], …)` for mailbox sync and AI extraction; `Route::group(['middleware' => 'tier:command'], …)` for reconciliation and ledger endpoints.
    **Check tier before role.** On `core` every user resolves to the one Core login and all role routes are unreachable, whatever `designation` the row carries; role policies start evaluating at `tactical`, and `accounts` only at `command`. This ordering stops a Core tenant reaching a role-scoped endpoint by setting a designation directly in the database.
-3. **Background jobs** — the `mailboxes:poll` daemon only pulls for connections whose company is `tactical` or `command`. `ProcessPdfOcrJob` branches on tier before choosing an extraction path.
+3. **Background jobs** — the `mailboxes:poll` daemon only pulls for connections whose company is `tactical` or `command`. `ProcessPdfOcrJob` branches on tier before choosing an extraction path — resolved `users.branch_name → agents_info.company_id → companies.tier`, which is **total** because every user has a branch. The route depends on tier **and** document class, and the credit gate reserves before the parse and refunds if the document turned out to be text-selectable. Mechanism in `implementation_guide.md` §4.1.1.
 4. **Frontend** — Vue route guards block `/inbox`, `/financials`, `/sales` client-book widgets and `/boss` for disallowed tiers, rendering a blurred `UpgradeTeaser.vue` lock overlay with a **"Request Upgrade"** CTA that raises a support request to the account administrator.
 
 **Downgrade behaviour:** connected mailboxes are **soft-deactivated** (`mailbox_connections.is_active = false`), pausing sync while keeping tokens encrypted and intact, so an upgrade restores service without re-authorization.
 
+> ⚠️ **A tier downgrade is a *superadmin* action; removing a mailbox is a *user* action. They must never share a column.** `is_active` belongs to the platform axis only. When a staff member removes their own mailbox in `/settings/mailboxes`, that stamps `disconnected_at` / `disconnected_by` and **clears the tokens** instead. Otherwise the upgrade restore above would silently reconnect a mailbox its owner deliberately removed, and resume syncing their mail, on the strength of a billing change. The restore must read `WHERE is_active = 0 AND disconnected_at IS NULL`. Full table in `database_relations_tree.md` §*two deactivation axes*.
+
 ### 3.4 OCR Credit Economy
 
 Text-selectable PDFs are parsed locally on our own hardware and are **free**. Only **vision OCR** (scanned documents and images dispatched to Gemini 2.5 Flash) consumes credits.
+
+> #### 🔒 Vision OCR is opt-in — the system never spends a credit on its own
+> When the parser finds no usable text layer, the job **stops** and asks: *"this looks like a scan — spend 1 credit to read it?"* Nothing is reserved and no vision call is made until the operator accepts. This is the same principle §5.7 applies to client email: **a moment of reversibility in front of an irreversible act.** Money leaving a customer's balance qualifies.
+>
+> The job parks at `pdf_processing_jobs.status = 'awaiting_vision_consent'` with `extraction_path = 'none'`, and the drawer shows the page count and the cost. Declining cancels; accepting reserves the credit and calls again. Flow in `implementation_guide.md` §4.1.1.
+>
+> **This is also why the allowance goes further than a raw scan count suggests** — operators skip documents they do not actually need parsed, which is a choice they never get if the system decides for them.
 
 **Runtime gate** — executed inside a DB transaction with a row-level write lock (`SELECT … FOR UPDATE` on the `companies` row) so concurrent uploads by the same tenant cannot race past the ceiling:
 
 - `ocr_credits_balance > ocr_credits_limit` → proceed, decrement by 1, commit, log to `ocr_credit_transactions`.
 - `balance ≤ limit` → commit, halt the job, set status `failed` with reason **Credits Exhausted**, push a WebSocket recharge alert.
 
-`ocr_credits_limit` is an **overdraft floor** (default `0`, may be set negative per client) — a soft ceiling below zero before background parsing starts failing.
+#### Tier defaults, and overriding them
+
+Allowances are **defaults derived from the tier**, held in `config/f16s.php` so changing them is a deploy rather than a migration:
+
+| Tier | Monthly allowance | Overdraft floor | Why |
+|---|---:|---:|---|
+| `core` | **0** | `0` | Core has no vision path at all — a scan returns `upgrade_required`. Zero is the honest number, not a restriction |
+| `tactical` | **500** | `−20` | ≈3× a normal month for a mid-size branch (~150 shipments × ~2.5 client docs × ~40% scanned ≈ 150 used) |
+| `command` | **2,000** | `−50` | Bigger tenants: several branches, an accounts team, 3–5× the shipments. The 4× step also *reads* as a real upgrade |
+
+> **The ceiling exists to catch abuse and the extreme tail — not to meter ordinary use.** If typical tenants hit it, the number is wrong: a paid feature has become a support ticket, and it will happen mid-shipment against a customs deadline. Size generously, then let real data correct it — `ocr_credit_transactions` gives per-tenant burn after one month. Set the allowance at roughly 2–3× the median and talk to the top decile about a larger plan.
+
+**`companies.ocr_credits_monthly_allowance` and `ocr_credits_limit` are NULL by default, and NULL means *"follow the tier."*** A **platform superadmin** may pin either to a per-tenant value from `admin.f16sefreight.com` (§2.3.6); every change requires a reason and is logged to `ocr_credit_transactions` as `custom_override`.
+
+The distinction is load-bearing: a tenant on the default is **automatically** lifted to `command`'s allowance on upgrade, while a tenant whose allowance was negotiated keeps it — a tier change must never silently overwrite a commercial agreement. The admin screen shows which state each tenant is in, and offers **[Reset to tier default]** to clear a pin.
+
+`ocr_credits_limit` is an **overdraft floor** — a soft ceiling *below* zero before parsing starts failing. It is deliberately negative so a tenant who runs dry can finish the shipment in front of them and be topped up afterwards, rather than hard-stopping at the worst possible moment.
 
 **MIME guard:** every upload is validated by strict server-side MIME sniffing (PHP `finfo_file`, **not** extension checks). HTML, SVG and other unsupported formats are rejected before any processing, closing a parser-exploit vector.
 
@@ -506,7 +534,16 @@ graph LR
 | Text-selectable digital PDF | PyMuPDF → local **Gemma 4 E4B** (Ollama) → JSON | free |
 | Scanned PDF / image (no selectable text) | **Gemini 2.5 Flash** vision OCR | 1 OCR credit |
 
-**Pydantic schemas** (`python/schemas.py`) validate structure, types and confidence metadata before anything returns to Laravel. Every parsed field carries a **confidence score** (high / medium / low) based on whether the value matched exact coordinates or was extrapolated from structure.
+**Schema conformance is enforced twice, and the order matters.** The model is first **constrained** to emit the schema — Gemini `response_schema`, Ollama `format` — and the result is then **validated** by Pydantic (`python/schemas.py`) before anything returns to Laravel. Validation alone is not enough: it detects a malformed payload, it does not prevent one. Every parsed field carries a **confidence score** (high / medium / low) based on whether the value matched exact coordinates or was extrapolated from structure.
+
+> **Prompt caching plays no part in this.** Caching makes a schema cheaper and faster to *send*; it has no bearing on whether the model *obeys* it. The two are unrelated and both are needed — see §9.1.
+
+> #### 🔴 A forced schema can turn a visible failure into a silent one
+> Constrained decoding guarantees the **shape**, never the **truth**. Make `gross_weight` a required field and the model *must* produce one — so when the figure is genuinely absent from the page, it emits a plausible invention instead of nothing. On a document that becomes a customs declaration, a confidently wrong weight is far worse than a blank.
+>
+> **Therefore every extracted value is nullable and every field carries a required `confidence`.** `null` is a legitimate, useful answer. This is also what makes the orange-highlight rule real rather than decorative — an operator can only be warned about a doubtful field if the schema permits doubt to be expressed.
+
+**One key vocabulary for both extraction paths.** The coordinate path already defines it: `boxes_config.json` names the regions (`shipper`, `consignee`, `departure`, `destination`, `transit`, `cargo`, `weight_charge`, `piece_weight`) and `FocusAir.vue` consumes those names. The unstructured path must return the same keys, or the upload modal needs a second mapper that drifts from the first.
 
 **Translation:** foreign-language documents (descriptions, names, addresses) are auto-translated to standard English during LLM processing so the JSON schema stays uniform. The original payload and confidence scores are retained for audit.
 
@@ -515,6 +552,22 @@ graph LR
 > **Why diff at draft-verification, not against final records:** final cargo weight, dimensions and pieces legitimately change later at the warehouse and airline terminal. Comparing against execution records would manufacture false "LLM errors" and poison the accuracy metric.
 
 **UI:** `OcrUploadModal.vue` provides the drag-and-drop handler; extracted fields pre-populate `FocusAir.vue` / `HouseWayBill.vue` inline, with **medium and low confidence fields highlighted orange** to force manual review even when the string format is valid.
+
+##### Party matching against the address book
+
+Before an extracted shipper or consignee reaches the form it is fuzzy-matched against the tenant's saved address book (`saved_addresses`, curated in settings). The existing Levenshtein matcher in `airWayBillMixin.js` requires **name ≥ 0.90 and address ≥ 0.85**; on a match the **saved record is used in place of the OCR text**.
+
+This is the cleanest fix for the IATA line limits (§5.9). A curated record is already correctly spelled, already abbreviated within 35 characters, and — critically — **identical on every shipment for that partner**. Free-typed party names are the usual source of master/house mismatches, and customs rejects those.
+
+An unmatched party keeps its OCR text, is validated against the limits, and offers **`[Save to address book]`** — so the first shipment for a new trading partner seeds the record and every later one matches it, with no data entry as a separate chore.
+
+> **A match is proposed, never silently substituted.** The operator sees which saved record matched and can reject it. Swapping a consignee for a merely *similar* one is how cargo reaches the wrong company.
+
+##### Character limits are validated, never enforced during extraction
+
+Field formats (`enum`, `pattern` — weight unit, IMO, container number, MAWB) **are** enforced in the extraction schema: the model simply cannot emit an invalid value. **Length limits are not.** A `maxLength` on a shipper name would make the model silently truncate a 60-character legal name at parse time, destroying data no one would notice until customs.
+
+Extract at full fidelity, validate against the limits afterwards, and flag violations for a human to abbreviate. The full constraint table — IATA 35-char lines, MAWB/HAWB formats, ICEGATE field lengths — is in `implementation_guide.md` §4.1.2.
 
 ### 5.2 The Unified Inbox
 
@@ -1929,7 +1982,7 @@ Hard rules:
 1. **Every number is pre-computed and passed through verbatim.** Gemma may not derive, sum, or compare.
 2. Output is structured JSON — `{talking_points[], suggested_action, tone}` — validated by Pydantic, the same pattern already used for OCR extraction.
 3. The packet states its `mode`; narration must **never** reference the other transport mode.
-4. Cache the system prompt and schema via Ollama `num_ctx`.
+4. **Reuse the prompt prefix across calls.** ⚠️ *Corrected 2026-08-26 — this previously read "cache the system prompt and schema via Ollama `num_ctx`", which is wrong: `num_ctx` sets the context-window **size** and caches nothing.* Bake the system prompt and schema into the `Modelfile` so they are not re-sent, and rely on Ollama's KV/prefix cache to skip re-processing an identical prefix. Set `num_ctx` large enough to hold prompt + packet, which is a **prerequisite** for that reuse, not the mechanism.
 5. Log tokens to `llm_usage_logs`.
 6. **On failure, degrade to raw indices** — leave `narrated_text` NULL. The numbers are the product; the prose is garnish.
 
@@ -2130,8 +2183,22 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | Area | Approach |
 |---|---|
 | **PDF processing** | Never write uploads to disk on the FastAPI server — `fitz.open(stream=…)` processes the binary buffer in memory, eliminating disk I/O |
-| **LLM prompts** | Bake system prompts and Pydantic schemas into the Ollama `Modelfile` (`ollama create gemma-custom -f ./Modelfile`); use Gemini context caching (300 s TTL) for vision requests. Cuts prompt token cost by up to 80% |
-| **Model residency** | `OLLAMA_KEEP_ALIVE=-1` keeps the model permanently in RAM |
+| **LLM prompts** | Bake system prompts and Pydantic schemas into the Ollama `Modelfile` (`ollama create gemma-custom -f ./Modelfile`) so they are neither re-sent nor re-processed. **This is a latency win, not a cost win** — Gemma runs locally and is free. See the caching note below before implementing Gemini context caching |
+| **Model residency** | `OLLAMA_KEEP_ALIVE=-1` keeps the model **weights** permanently in RAM. This removes model *load* time (seconds per cold call); it is **not** prompt caching and does not reduce prompt processing. The two are separate optimisations and both are worth having |
+
+> #### ⚠️ Where prompt caching actually pays — read before implementing it
+> *Added 2026-08-26.* An earlier version of this table claimed caching "cuts prompt token cost by up to 80%". That figure is misleading here, because **it applies to the path where we spend nothing and barely applies to the path where we do.**
+>
+> | Path | Model | Cost | What caching buys |
+> |---|---|---|---|
+> | Text-selectable PDF | Gemma, local | **free** | **Latency only.** There is no token bill to cut |
+> | Scanned page | Gemini vision | **1 credit** | **Very little.** The input is a page *image*, which dominates the token count; the system prompt and schema are a small fraction of it |
+>
+> **Two things to verify before building the Gemini cache** — both against current Google documentation, not from memory:
+> 1. **Minimum cacheable size.** Context caching only applies above a minimum token count. A Pydantic schema plus an SOP block may well fall *below* it, in which case the cache cannot be created at all.
+> 2. **The 300 s TTL is probably counterproductive.** Cached content is billed by storage duration, so a cache only pays for itself when requests arrive **faster than the TTL expires**. At a realistic upload rate — a handful of scans per tenant per hour — a 5-minute cache expires between nearly every request: full creation cost, near-zero reuse. Either raise the TTL to match real density, or do not cache at all.
+>
+> **The real cost levers on the vision path are elsewhere**, in rough order of impact: the **opt-in consent gate** (§3.4 — by far the largest, since it stops paying to read documents nobody needed), sending **fewer pages**, and **downscaling images** before upload — vision tokens scale with resolution, so a 300 dpi full-page scan costs roughly double a 150 dpi one that is just as legible.
 | **Email sync** | **Push-primary** (Pub/Sub / Graph subscriptions), 15-minute reconciliation sweep behind it. Delta cursors + lazy attachments. Minute-polling 1,000 mailboxes would be ~1.44 M mostly-empty calls/day; push cuts that to near zero *and* drops latency from ≤60 s to ~1 s |
 | **Mailbox backfill** | Onboarding-only, on its own Horizon queue so a 10,000-message backfill never starves live polling. `$select` trimmed to normalized fields, `$batch` at 20 reads per request, exponential backoff honouring `Retry-After`, metadata only — no attachment binaries |
 | **Indexing** | Single-column on `email_messages.message_id`, `email_threads.thread_key`, `manifest_filings.icegate_id`, `jobs.transport_mode`, `pdf_processing_jobs.status`. Composite on `email_threads(agent_id, status, latest_message_received_at)`, `jobs(agent_id, transport_mode, status)`, `jobs(ops_id, planned_clearance_date)`, `accounts_ledger_entries(agent_id, posting_date, chart_of_account_id)`, `customers(company_id, email_domain)`, `customers(company_id, sales_id)` |
@@ -2157,7 +2224,8 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 
 **Soft deletes — a deliberate split:**
 
-- **Operational tables** (`jobs`, `enquiries`, `sea_shipment_details`, `job_entities`, `sea_containers`, `mailbox_connections`, `companies`) use `SoftDeletes`. A model observer dispatches a queued cascade to soft-delete child structures.
+- **Operational tables** (`jobs`, `enquiries`, `sea_shipment_details`, `job_entities`, `sea_containers`, `companies`) use `SoftDeletes`. A model observer dispatches a queued cascade to soft-delete child structures.
+  - ⚠️ **`mailbox_connections` was removed from this list on 2026-08-26 and must not be re-added.** Its `email_address` is *globally* unique, so a soft-deleted row would hold that address forever — blocking the owner, and every other tenant, from ever connecting that mailbox again. It uses **two explicit deactivation columns** instead of a tombstone: `is_active` for a superadmin tier downgrade (tokens kept), and `disconnected_at` / `disconnected_by` for a user removing their own mailbox (tokens cleared). The row always survives for audit, and reconnection is an update of it. See §3.3 and `database_relations_tree.md`.
 - **Financial tables** (`accounts_invoices`, `accounts_purchase_vouchers`, `accounts_ledger_entries`, `gst_ledger_entries`) **must never use soft deletes.** Once committed, financial entries are immutable; corrections happen through credit notes, debit notes, or counter-journal postings.
 - **`audit_logs` is append-only**, enforced by a database-level `BEFORE UPDATE OR DELETE` trigger that halts the operation.
 

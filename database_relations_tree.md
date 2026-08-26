@@ -506,6 +506,11 @@ For production and staging deployments, an independent backup helper container r
                         |              |     |  Stored, not derived, so an onboarding can widen the window
                         |              |     |  and the audit trail records what was really pulled)
   backfill_completed_at | TIMESTAMP    |     |
+  watch_expires_at      | TIMESTAMP    |     | (Gmail users.watch() / Graph subscription expiry. Push dies
+                        |              |     |  after ~7 days WITH NO ERROR, so mailboxes:renew-watch runs
+                        |              |     |  DAILY and re-subscribes when this is < 48h away)
+  auth_state            | VARCHAR(30)  |     | (not_connected, awaiting_admin_consent, connected,
+                        |              |     |  reauth_required — drives MailboxSettings.vue directly)
   created_at            | TIMESTAMP    |     |
   updated_at            | TIMESTAMP    |     |
 ```
@@ -1755,6 +1760,8 @@ CREATE TABLE mailbox_connections (
     backfill_status VARCHAR(20) DEFAULT 'pending',  -- 'pending','running','completed','failed'
     backfill_from TIMESTAMP NULL,                   -- Window floor requested; default now() - 60 days
     backfill_completed_at TIMESTAMP NULL,
+    watch_expires_at TIMESTAMP NULL, -- Gmail watch()/Graph subscription expiry; renewed daily at <48h
+    auth_state VARCHAR(30) DEFAULT 'not_connected', -- not_connected | awaiting_admin_consent | connected | reauth_required
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id),

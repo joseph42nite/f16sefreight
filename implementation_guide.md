@@ -361,6 +361,8 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 
 - Skip connections where `is_active = false` (tier downgrade) or whose company tier is `core`
 - Google API Client + Microsoft Graph; **delta queries / history IDs only** — never a full mailbox scan
+- ⚠️ **Set the Google OAuth consent screen to "In production" on day one.** In *Testing* status refresh tokens expire after **7 days** — this is the single most common false "token storage bug" in Gmail integrations. Publishing is independent of verification; an unverified production app still works, just with the interstitial and the 100-user cap.
+- **Evaluate domain-wide delegation before budgeting CASA** (`PRD.md` §5.2.1) — for Workspace tenants it removes the consent screen, the interstitial, the 100-user cap and the assessment. Both flows must exist regardless, since consumer Gmail cannot use DWD.
 - **Scopes:** Google `gmail.readonly` + `gmail.send`; Microsoft `Mail.Read` + `Mail.Send` + `offline_access`. ⚠️ `gmail.readonly` is a **restricted** scope requiring CASA assessment — confirm the internal-Workspace-app vs public-listing decision (`PRD.md` §5.2.1) before building the OAuth flow, as it changes onboarding
 - **Sending is delegated, never app-only.** Replies and outreach go out through the *user's own* mailbox (`users.messages.send` / `/me/sendMail`), so SPF/DKIM/DMARC are the provider's problem, not ours. Set `In-Reply-To` + `References` and pass `threadId` / use `/messages/{id}/reply` so replies stay threaded on the client's side
 - **Transactional mail (tickets, arrival notices) does NOT use this path** — it needs a separate provider and a decided sending domain (`PRD.md` §5.2.1, open item)
@@ -417,6 +419,7 @@ Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Air
 | Command | Cadence | Purpose |
 |---|---|---|
 | `mailboxes:poll` | every minute | Inbox sync |
+| `mailboxes:renew-watch` | **daily** | Re-call Gmail `users.watch()` where `watch_expires_at < 48h`. The subscription dies at 7 days **with no error** — a daily cadence survives six failed runs, a weekly one survives none |
 | `enquiries:nudge-stale` | hourly | Bell-nudge pricing to decide on inactive unconfirmed enquiries; debounced via `stale_nudged_at`, cleared on any new client reply |
 | `snapshots:compute` | every 30 min | `financial_snapshots` refresh |
 | `sales:compute-snapshots` | nightly | The four analytics engine tables |

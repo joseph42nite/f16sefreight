@@ -570,6 +570,36 @@ Every staff member in that tenant gets the clean three-click flow from then on.
 
 **Google carries a heavier equivalent.** `gmail.send` is only a *sensitive* scope, but **`gmail.readonly` is a *restricted* scope** — and one restricted scope is enough: production use requires OAuth app verification *plus* an annual third-party **CASA Tier 2** security assessment. **Sending is not what costs; reading is**, and reading is the product, so there is no scope trade-off available here. Until that clears, the app is capped at 100 users behind an unverified-app interstitial. Workspace clients can alternatively have their admin install the app domain-wide. **Budget the assessment cost and lead time — this gates Gmail onboarding, not Outlook.**
 
+##### Domain-wide delegation — the Google escape hatch
+
+For tenants on **Google Workspace**, an alternative to public verification: their super admin authorises our service account's client ID and scopes directly in **Admin Console → Security → API Controls → Domain-wide Delegation**. We then impersonate users via signed JWT.
+
+| | OAuth consent (public app) | Domain-wide delegation |
+|---|---|---|
+| Consent screen | Per user | **None** |
+| Unverified-app interstitial | Yes, until verified | **Never appears** |
+| **100-user cap while unverified** | **Applies** | **Does not apply** |
+| CASA Tier 2 assessment | Required | Not triggered — the customer authorises inside their own tenant |
+| Setup | 3 clicks per user | One super-admin action per **tenant** |
+| Works with consumer Gmail | Yes | **No — Workspace only** |
+| Blast radius | One mailbox, user-revocable | **Impersonation across the whole domain** for those scopes |
+
+> **Evaluate this before budgeting CASA.** For a B2B product whose tenants are companies on Workspace, DWD removes both the user cap and the assessment. The objection to expect is the blast radius — a security-conscious admin sees "this app can read any mailbox in our domain" and hesitates. Mitigate by requesting the **narrowest scope set**, documenting it plainly, and offering per-user OAuth as the alternative for tenants who prefer it.
+>
+> Consumer Gmail tenants and non-Workspace domains still need the OAuth path, so **both flows must exist** — DWD is a cost and friction optimisation for the common case, not a replacement.
+
+##### Refresh-token expiry in Testing mode — resolve by publishing
+
+A Google OAuth client in **"Testing"** publishing status issues refresh tokens that **expire after 7 days**, regardless of scope. Every integration hits this during development and misreads it as a token-storage bug.
+
+**The fix is a publishing-status change, not code:** set the OAuth consent screen to **"In production"**. This is independent of verification — an app can be *In production* and *still unverified*, in which case it keeps the interstitial and the 100-user cap but **issues long-lived refresh tokens**. Do this on day one of development.
+
+##### Gmail push subscriptions expire every 7 days
+
+`users.watch()` returns an `expiration` timestamp and Google stops delivering after it. There is no failure signal — push simply goes quiet.
+
+**Renew daily, not weekly.** A scheduled `php artisan mailboxes:renew-watch` runs every 24 h and re-calls `watch()` for any connection whose `watch_expires_at` is **less than 48 h away**. A daily cadence against a 7-day window tolerates six consecutive failed runs before delivery is lost; a weekly cadence tolerates none. Polling remains the fallback, so an expired watch degrades to slower sync rather than no sync.
+
 **Refresh token lifetime.** Microsoft refresh tokens roll on use and expire after **90 days of inactivity**; conditional-access or MFA policy changes on the client side can also invalidate them mid-flight. On any `invalid_grant`, the connection flips to `reauth_required`, sync pauses, and the owning operator is notified in-app — tokens are never silently discarded, and the failure is never allowed to look like "no new mail."
 
 #### 5.2.2 Historical Backfill & Background Polling

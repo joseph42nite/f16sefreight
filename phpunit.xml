@@ -21,8 +21,28 @@
         <server name="APP_ENV" value="testing"/>
         <server name="BCRYPT_ROUNDS" value="4"/>
         <server name="CACHE_DRIVER" value="array"/>
-        <!-- <server name="DB_CONNECTION" value="sqlite"/> -->
-        <!-- <server name="DB_DATABASE" value=":memory:"/> -->
+        <!--
+            Tests run against MySQL 8, NOT SQLite. Local dev used to be SQLite while
+            production is MySQL, and the two disagree on things this schema depends on:
+            loose DECIMAL/VARCHAR typing (the ledger), TRUNCATE bypassing DELETE triggers,
+            and FK cascades not firing triggers at all — which silently voids the
+            audit_logs append-only guarantee. A suite green on SQLite proved nothing
+            about production. See implementation_guide.md Step 8.
+
+            Start the database with:  docker compose up -d db
+        -->
+        <server name="DB_CONNECTION" value="mysql"/>
+        <server name="DB_HOST" value="127.0.0.1"/>
+        <server name="DB_PORT" value="3307"/>
+        <server name="DB_DATABASE" value="f16s_test"/>
+        <server name="DB_USERNAME" value="f16s"/>
+        <server name="DB_PASSWORD" value="secret"/>
+        <!--
+            Six tests failed with "Secret is not set" because the JWT secret is only in
+            .env, which phpunit overrides. This app authenticates with JWT, so tests must
+            carry a secret of their own or every authenticated test fails for the wrong reason.
+        -->
+        <server name="JWT_SECRET" value="testing-only-secret-not-used-anywhere-else"/>
         <server name="MAIL_MAILER" value="array"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>

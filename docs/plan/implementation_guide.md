@@ -10,6 +10,9 @@ The ordered developer playbook. Build the platform as **vertical slices in a fix
 >
 > This file references them by section. It contains no column definitions and no product justification — only *what to build, in what order, and how to prove it worked.*
 
+> [!IMPORTANT]
+> **Read [`CONTEXT.md`](CONTEXT.md) first.** This guide was written before the existing codebase was known, so it reads as greenfield. It is not: 6 of its tables already exist and need ALTER rather than CREATE, and 22 live tables it never mentions must be preserved. `CONTEXT.md` carries the reconciliation.
+
 > [!WARNING]
 > **The one rule that matters most:** keep each change small and run the checkpoint before starting the next step. A half-applied migration batch or an unverified observer compounds faster than any other class of mistake in this codebase.
 

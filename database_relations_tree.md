@@ -506,6 +506,13 @@ For production and staging deployments, an independent backup helper container r
                         |              |     |  Stored, not derived, so an onboarding can widen the window
                         |              |     |  and the audit trail records what was really pulled)
   backfill_completed_at | TIMESTAMP    |     |
+  backfill_page_cursor  | TEXT         |     | ** RESUME POINT ** — Graph @odata.nextLink or Gmail
+                        |              |     |  pageToken, rewritten after EVERY committed page. A
+                        |              |     |  backfill interrupted by a dropped connection resumes
+                        |              |     |  from here instead of restarting from zero
+  backfill_processed    | INT          |     | (Messages committed so far — drives the progress bar)
+  backfill_estimate     | INT          |     | (Approximate total, for progress display only)
+  backfill_attempts     | INT          |     | (Consecutive failures; backoff, then auth_state=failed)
   watch_expires_at      | TIMESTAMP    |     | (Gmail users.watch() / Graph subscription expiry. Push dies
                         |              |     |  after ~7 days WITH NO ERROR, so mailboxes:renew-watch runs
                         |              |     |  DAILY and re-subscribes when this is < 48h away)
@@ -529,6 +536,10 @@ For production and staging deployments, an independent backup helper container r
                               |              |     |  clearance / trucking mail, which consumes no enquiry_no)
   job_id                      | BIGINT       | FK  | ◄── jobs.id (added on conversion; NULL pre-conversion)
   thread_key                  | VARCHAR(255) | UK  | ──► inbound_emails.thread_key
+  provider_thread_id          | VARCHAR(255) | IDX | (Gmail threadId / Graph conversationId — matched
+                              |              |     |  first, before any header or subject heuristic)
+  read_state_synced_at        | TIMESTAMP    |     | (Last push of read/archive state upstream. The
+                              |              |     |  PROVIDER is authoritative on conflict)
   status                      | VARCHAR(20)  |     | (unread, read, replied, archived, updates)
   classification              | VARCHAR(20)  |     | (customer_enquiry, airline, clearance, trucking_road)
   latest_message_received_at  | TIMESTAMP    |     | (Last INBOUND client message)
@@ -547,6 +558,15 @@ For production and staging deployments, an independent backup helper container r
   agent_id              | BIGINT       | FK  | ◄── agents_info.id (Branch-level tenant isolation)
   mailbox_connection_id | BIGINT       | FK  | ◄── mailbox_connections.id (Cascade delete)
   thread_key            | VARCHAR(255) | IDX | ──► email_threads.thread_key (Composite index)
+  provider_thread_id    | VARCHAR(255) | IDX | ** Gmail threadId / Graph conversationId ** — the native
+                        |              |     |  grouping key. PRIMARY input to thread_key resolution;
+                        |              |     |  header-chain matching is only the fallback
+  direction             | VARCHAR(10)  |     | (inbound | outbound. The Sent folder is synced too, so a
+                        |              |     |  reply typed in Outlook appears on the portal thread.
+                        |              |     |  NOTE: makes the table name a slight misnomer — it holds
+                        |              |     |  the whole conversation, not only inbound mail)
+  sent_via_portal       | BOOLEAN      |     | (TRUE when we sent it — set at send time from the provider's
+                        |              |     |  returned id, so the sync echo is recognised, not duplicated)
   message_id            | VARCHAR(255) | UK  |
   from                  | VARCHAR(255) |     |
   to                    | VARCHAR(255) |     |
@@ -1760,6 +1780,10 @@ CREATE TABLE mailbox_connections (
     backfill_status VARCHAR(20) DEFAULT 'pending',  -- 'pending','running','completed','failed'
     backfill_from TIMESTAMP NULL,                   -- Window floor requested; default now() - 60 days
     backfill_completed_at TIMESTAMP NULL,
+    backfill_page_cursor TEXT NULL, -- resume point; rewritten after every committed page
+    backfill_processed INT DEFAULT 0,
+    backfill_estimate INT NULL,
+    backfill_attempts INT DEFAULT 0,
     watch_expires_at TIMESTAMP NULL, -- Gmail watch()/Graph subscription expiry; renewed daily at <48h
     auth_state VARCHAR(30) DEFAULT 'not_connected', -- not_connected | awaiting_admin_consent | connected | reauth_required
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1777,6 +1801,8 @@ CREATE TABLE email_threads (
     job_id BIGINT NULL,     -- Set additionally on conversion; the thread spans BOTH lifecycles.
                             -- Both NULL for airline/clearance/trucking mail — those never become work items.
     thread_key VARCHAR(255) NOT NULL UNIQUE,
+    provider_thread_id VARCHAR(255) NULL, -- native Gmail/Graph thread id; matched before heuristics
+    read_state_synced_at TIMESTAMP NULL,
     status VARCHAR(20) DEFAULT 'unread', -- 'unread', 'read', 'replied', 'archived', 'updates'
     classification VARCHAR(20) DEFAULT 'customer_enquiry', -- 'customer_enquiry', 'airline', etc.
     latest_message_received_at TIMESTAMP NOT NULL, -- Last INBOUND client message
@@ -1799,6 +1825,9 @@ CREATE TABLE inbound_emails (
     agent_id BIGINT NOT NULL,                       -- Branch-level tenant isolation
     mailbox_connection_id BIGINT NOT NULL,          -- Source mailbox (cascade delete)
     thread_key VARCHAR(255) NOT NULL,
+    provider_thread_id VARCHAR(255) NULL, -- Gmail threadId / Graph conversationId; primary thread key
+    direction VARCHAR(10) NOT NULL DEFAULT 'inbound', -- inbound | outbound (Sent folder is synced too)
+    sent_via_portal BOOLEAN DEFAULT FALSE, -- recognise our own sends echoing back through sync
     message_id VARCHAR(255) NOT NULL UNIQUE,
     `from` VARCHAR(255) NOT NULL,
     `to` VARCHAR(255) NULL,

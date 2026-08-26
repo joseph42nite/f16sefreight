@@ -543,10 +543,10 @@ graph LR
 
 | Provider | Scopes | Why each is needed |
 |---|---|---|
-| Microsoft | `offline_access`, `User.Read`, `Mail.Read`, `Mail.Send` | Refresh token; read the signed-in address for domain enforcement; poll and backfill the inbox; thread-aware replies (§5.7) |
-| Google | `openid`, `email`, `gmail.readonly`, `gmail.send` | Same responsibilities on Gmail |
+| Microsoft | `offline_access`, `User.Read`, **`Mail.ReadWrite`**, `Mail.Send` | Refresh token; read the signed-in address for domain enforcement; **mailbox-wide** sync incl. Sent Items; write read/archive state back; compose, reply and forward (§5.2.3) |
+| Google | `openid`, `email`, **`gmail.modify`**, `gmail.send` | Same responsibilities on Gmail |
 
-We request **no mailbox write scope beyond sending** — no delete, no folder mutation, no calendar, no contacts. `Mail.Send` / `gmail.send` exist solely to satisfy `POST /api/jobs/{id}/reply`, which must post the reply into the original thread so the conversation stays coherent on the client's side (§5.7).
+We request **no destructive scope** — no delete, no calendar, no contacts. Read/write is required because the portal *replaces* the mail client: read and archive state must flow back, or the user's real inbox stays cluttered and pulls them out of the portal (§5.2.3). **`gmail.readonly` was already restricted, so widening to `gmail.modify` adds no compliance cost.** `Mail.Send` / `gmail.send` exist solely to satisfy `POST /api/jobs/{id}/reply`, which must post the reply into the original thread so the conversation stays coherent on the client's side (§5.7).
 
 **The happy path is three clicks:** `[Connect Outlook]` → choose account → `Accept`. The callback validates the returned address against `companies.email_domain`, encrypts and stores the token pair, and enqueues the historical backfill (§5.2.2).
 
@@ -612,8 +612,8 @@ On successful connection the callback dispatches a queued `BackfillMailboxJob`:
 
 | Provider | Initial request |
 |---|---|
-| Microsoft | `GET /me/mailFolders/inbox/messages/delta?$filter=receivedDateTime ge {window_floor}` — Graph accepts a `receivedDateTime` filter on the *initial* delta request specifically for this scenario, so the history and the terminal `@odata.deltaLink` arrive from one flow |
-| Google | `users.messages.list?q=newer_than:60d`, then capture the mailbox's current `historyId` as the cursor |
+| Microsoft | `GET /me/messages/delta?$filter=receivedDateTime ge {window_floor}` — **mailbox-wide, not inbox-scoped**, so Sent Items are captured too (§5.2.3) — Graph accepts a `receivedDateTime` filter on the *initial* delta request specifically for this scenario, so the history and the terminal `@odata.deltaLink` arrive from one flow |
+| Google | `users.messages.list?q=in:anywhere newer_than:60d` — **`in:anywhere` is required**, or the default inbox scope silently drops Sent. Then capture the current `historyId` as the cursor |
 
 - **Window:** 60 days, stored per connection in `mailbox_connections.backfill_from` so the value is auditable and can be widened for a specific onboarding without a code change.
 - **Queued, never inline.** The OAuth callback returns immediately. A busy forwarding desk is plausibly 3,000–10,000 messages over 60 days; holding an HTTP request open for that is not an option.
@@ -642,7 +642,7 @@ Backfilled threads land as `status = 'archived'` — fully searchable, correctly
 
 `php artisan mailboxes:poll`, scheduled **every minute**:
 
-- Gmail → `/users/me/messages`; Outlook → `/me/mailFolders/inbox/messages`
+- Gmail → `users.history.list` (mailbox-wide across labels incl. `SENT`); Outlook → `/me/messages/delta` (**not** `/mailFolders/inbox/...`)
 - Normalizes headers (from/to, subject, body, attachments), computes the `thread_key`, upserts `email_threads` and `inbound_emails`, indexes `inbound_attachments`
 - **Delta syncing:** Microsoft delta queries and Google history IDs so only *new* mail is fetched — never a full mailbox scan. The cursor is persisted on `mailbox_connections.sync_cursor`, seeded by the initial backfill and rewritten after every successful page. Polling skips any connection whose `backfill_status` is not `completed`
 - **Cursor expiry:** a `410 Gone` (Microsoft) or an invalid `historyId` (Google) means the cursor has aged out. The connection re-enters a bounded backfill from `last_synced_at` rather than re-scanning the mailbox, and `message_id` uniqueness makes the replay idempotent
@@ -654,7 +654,99 @@ Backfilled threads land as `status = 'archived'` — fully searchable, correctly
 
 **Everything is ingested into one unified feed** — customer enquiries and automated airline notices alike. Nothing is dropped; classification decides what reaches the operational queue, not what gets saved.
 
-#### 5.2.3 The Configurable Regex Classification Engine
+#### 5.2.3 Two-Way Mailbox Sync — the portal as the mail client
+
+The portal is intended to **replace** Outlook and Gmail for freight work, not sit beside them. That imposes four things the earlier inbox-only design cannot deliver.
+
+##### Scopes widen to read/write
+
+| Provider | Scope | Buys |
+|---|---|---|
+| Google | `gmail.modify` *(replaces `gmail.readonly`)* | Mark read, archive, label — state written **back** to Gmail |
+| Google | `gmail.send` | Compose, reply, forward |
+| Microsoft | `Mail.ReadWrite` *(replaces `Mail.Read`)* | Same, on Graph |
+| Microsoft | `Mail.Send` | Same |
+
+> **The marginal compliance cost is zero.** `gmail.readonly` was already a *restricted* scope, so CASA Tier 2 applies either way. Widening to `gmail.modify` buys full read/write parity for nothing extra. **There is no cheaper option that still replaces the mail client.**
+>
+> Still declined: **delete, calendar and contacts.** The portal never destroys mail.
+
+##### Sync the whole mailbox, not just the Inbox
+
+> 🔴 **This is the fix for the requirement that a mail sent from Outlook must appear on the portal thread.** A reply typed in Outlook is written to **Sent Items** and never touches the Inbox — an inbox-scoped delta query cannot see it, and the portal thread would silently lose half the conversation.
+
+| Provider | Sync source |
+|---|---|
+| **Microsoft** | `GET /me/messages/delta` — **mailbox-wide**, not `/mailFolders/inbox/messages/delta`. Covers Inbox and Sent Items under one cursor |
+| **Google** | `users.history.list` is already mailbox-wide across labels including `SENT`. The initial backfill must use `in:anywhere`, **not** the default inbox-scoped query |
+
+Ingested messages carry `inbound_emails.direction` (`inbound` / `outbound`), so a thread shows the true back-and-forth regardless of where each message was typed.
+
+##### Thread matching — three tiers, native ID first
+
+`thread_key` resolution runs in strict order; the first tier that matches wins:
+
+| # | Match on | Reliability |
+|---|---|---|
+| **1** | **`provider_thread_id`** — Gmail `threadId` / Graph `conversationId` | **Authoritative.** The provider already decided the grouping; adopt it |
+| **2** | `In-Reply-To` / `References` header chain against known `message_id`s | Strong — survives cross-provider replies |
+| **3** | Normalised subject *(strip `Re:` / `Fwd:`)* + participant-set overlap, within 30 days | **Heuristic, last resort.** Never overrides tiers 1–2 |
+
+Tier 1 is what makes the Outlook-typed reply land correctly: Graph returns the same `conversationId` for it, so it joins the existing thread with no heuristics involved.
+
+##### Echo suppression — never duplicate our own sends
+
+A message sent through the portal lands in the user's Sent folder and returns on the next sync. Without a guard it becomes a duplicate.
+
+1. On send, the provider returns its message id — persist it immediately with `sent_via_portal = true`.
+2. `inbound_emails.message_id` is **UNIQUE**, so the echo is an idempotent upsert, not an insert.
+3. The upsert refreshes delivery metadata but **never** re-fires classification, SLA timers or notifications.
+
+##### Read and archive state flows both ways
+
+| Action | Effect |
+|---|---|
+| Read in the portal | `users.messages.modify` removes `UNREAD` / `PATCH /me/messages/{id}` sets `isRead` |
+| Read in Gmail/Outlook | Next sync marks it read in the portal |
+| Archived in the portal | Removes the `INBOX` label / moves to Archive |
+| **Conflict** | **The provider wins.** It is the system of record for mailbox state; a stale local flag is corrected on the next sync, never pushed over the top |
+
+> Without this, a rep's real inbox keeps showing hundreds of unread items. They open Gmail to clear it, and once there, they work there. **Read-state sync is what keeps them in the portal.**
+
+##### Full composition — not just replies
+
+| Capability | Notes |
+|---|---|
+| **Compose new** | To a customer, carrier, broker or any address. Optionally linked to an enquiry/job, optionally standalone |
+| **Forward** | Re-attaches original files from `inbound_attachments` — no re-download |
+| **Cc / Bcc** | Cc contacts resolve from `customer_contacts`; **Bcc is never auto-populated** |
+| **Outbound attachments** | From `job_documents`, from the thread, or uploaded. 25 MB provider cap — larger payloads fall back to a `document_share_links` URL (§5.7) |
+| **Drafts** | Stored **locally**, not via `gmail.compose`. Keeps the scope set narrower and drafts private until sent |
+| **Signature** | `users.signature_text`, appended to every outbound message |
+
+##### Interrupted backfill resumes, never restarts
+
+A 60-day historical sync across a large mailbox runs for minutes. A dropped connection mid-way must not discard completed work.
+
+- **`backfill_page_cursor` is rewritten after every committed page** — the Graph `@odata.nextLink` or Gmail `pageToken`. Resume reads from there.
+- Each page commits in **its own transaction**. A crash loses at most one page, and `message_id` uniqueness makes replaying it harmless.
+- `backfill_processed` / `backfill_estimate` drive a real progress bar; `backfill_attempts` drives exponential backoff, and after repeated failure `auth_state` becomes `reauth_required` rather than looping silently.
+- **The mailbox is usable during backfill.** Messages appear as pages commit; the UI shows *"Importing history — 1,240 of ~3,500"* instead of an empty screen.
+- Resume is **automatic** on the next scheduled run. The user does nothing.
+
+##### Token lifecycle
+
+| Event | Handling |
+|---|---|
+| Access token expired | Refresh silently before the call; never surfaced |
+| **Refresh token dies after 7 days (Google)** | Symptom of *Testing* publishing status — fixed by publishing (§5.2.1), not in code |
+| Microsoft refresh, 90-day inactivity | Rolls on use; idle connections are the risk |
+| `invalid_grant` | `auth_state = reauth_required`, sync pauses, owning operator notified in-app. **Tokens are never silently discarded and the failure never looks like "no new mail"** |
+| Password or MFA policy change | Same path as `invalid_grant` |
+| Tenant admin revokes consent | Every connection in that tenant → `awaiting_admin_consent` |
+| Tier downgrade | `is_active = false`; tokens preserved encrypted so an upgrade restores service without re-auth |
+
+#### 5.2.4 The Configurable Regex Classification Engine
 
 A database-driven rule engine (`email_classification_rules`, cached in Redis hash maps) rather than an LLM — it processes up to **10,000 emails/day at zero token cost**.
 
@@ -683,7 +775,7 @@ A database-driven rule engine (`email_classification_rules`, cached in Redis has
 
 **Non-enquiry threads** are saved with **both `enquiry_id` and `job_id` NULL** — no number consumed, no Kanban card, still fully readable in the feed.
 
-#### 5.2.4 Operator Overrides & the Learning Loop
+#### 5.2.5 Operator Overrides & the Learning Loop
 
 An operator can change the classification from the inbox or Kanban dropdown at any time.
 
@@ -701,7 +793,7 @@ An operator can change the classification from the inbox or Kanban dropdown at a
 
 **Rule authoring UI** (`/settings/email-triage-rules`): `[+ Add New Rule]` → Rule Name, Type (`Domain Blocklist` / `Subject Regex` / `Body Regex` / `Destination Keyword`), Pattern, Route To (target classification), Priority. Saving writes the row and dispatches a model event that syncs the Redis cache for zero-latency lookups.
 
-#### 5.2.5 Mode-Specific Rule Sets — Air ≠ Sea
+#### 5.2.6 Mode-Specific Rule Sets — Air ≠ Sea
 
 Rules are **scoped by `transport_mode`**; the polling service loads only the active portal's set. Air and sea speak different languages, quote different units, and convert into different documents — a shared pattern set mis-parses both.
 

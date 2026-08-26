@@ -363,7 +363,11 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 - Google API Client + Microsoft Graph; **delta queries / history IDs only** — never a full mailbox scan
 - ⚠️ **Set the Google OAuth consent screen to "In production" on day one.** In *Testing* status refresh tokens expire after **7 days** — this is the single most common false "token storage bug" in Gmail integrations. Publishing is independent of verification; an unverified production app still works, just with the interstitial and the 100-user cap.
 - **Evaluate domain-wide delegation before budgeting CASA** (`PRD.md` §5.2.1) — for Workspace tenants it removes the consent screen, the interstitial, the 100-user cap and the assessment. Both flows must exist regardless, since consumer Gmail cannot use DWD.
-- **Scopes:** Google `gmail.readonly` + `gmail.send`; Microsoft `Mail.Read` + `Mail.Send` + `offline_access`. ⚠️ `gmail.readonly` is a **restricted** scope requiring CASA assessment — confirm the internal-Workspace-app vs public-listing decision (`PRD.md` §5.2.1) before building the OAuth flow, as it changes onboarding
+- **Scopes:** Google **`gmail.modify`** + `gmail.send`; Microsoft **`Mail.ReadWrite`** + `Mail.Send` + `offline_access`. Read/write is required because the portal replaces the mail client (`PRD.md` §5.2.3). ⚠️ Still a **restricted** scope requiring CASA — but `gmail.readonly` already was, so widening costs nothing extra in compliance
+- 🔴 **Sync the whole mailbox, not the Inbox folder.** Graph `/me/messages/delta` (**not** `/mailFolders/inbox/messages/delta`); Gmail backfill query `in:anywhere`. A reply typed in Outlook lands in Sent Items only — inbox-scoped sync loses half of every conversation
+- **Thread matching is three-tier:** `provider_thread_id` (Gmail `threadId` / Graph `conversationId`) → `In-Reply-To`/`References` chain → normalised subject + participants within 30 days. **Never let tier 3 override tiers 1–2**
+- **Echo suppression:** persist the provider message id at send time with `sent_via_portal = true`; the unique `message_id` makes the Sent-folder echo an idempotent upsert that must **not** re-fire classification, SLA timers or notifications
+- **Backfill resumes, never restarts:** rewrite `backfill_page_cursor` after **every committed page**, each page in its own transaction. Resume automatically on the next run
 - **Sending is delegated, never app-only.** Replies and outreach go out through the *user's own* mailbox (`users.messages.send` / `/me/sendMail`), so SPF/DKIM/DMARC are the provider's problem, not ours. Set `In-Reply-To` + `References` and pass `threadId` / use `/messages/{id}/reply` so replies stay threaded on the client's side
 - **Transactional mail (tickets, arrival notices) does NOT use this path** — it needs a separate provider and a decided sending domain (`PRD.md` §5.2.1, open item)
 - Compute `thread_key`, upsert `email_threads` / `inbound_emails`, index `inbound_attachments`
@@ -419,6 +423,7 @@ Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Air
 | Command | Cadence | Purpose |
 |---|---|---|
 | `mailboxes:poll` | every minute | Inbox sync |
+| `mailboxes:sync-read-state` | every 5 min | Push local read/archive changes upstream; **the provider wins any conflict** |
 | `mailboxes:renew-watch` | **daily** | Re-call Gmail `users.watch()` where `watch_expires_at < 48h`. The subscription dies at 7 days **with no error** — a daily cadence survives six failed runs, a weekly one survives none |
 | `enquiries:nudge-stale` | hourly | Bell-nudge pricing to decide on inactive unconfirmed enquiries; debounced via `stale_nudged_at`, cleared on any new client reply |
 | `snapshots:compute` | every 30 min | `financial_snapshots` refresh |
@@ -561,6 +566,10 @@ Order matters here more than anywhere else in the build.
      | `AudienceFirewallTest` | Inserting `audience='internal'` **with any `draft_*` column populated is rejected by `chk_saq_internal_no_draft`** — at the database, not the application |
      | `ContactOptOutTest` | A contact with `opted_out_at` never appears in `draft_cc`, even with `include_in_cc = true` |
      | `HarvestTest` | Polling never sets `include_in_cc`; harvesting an opted-out address updates recency but does not re-enable it |
+   | `SentFolderSyncTest` | A message created in the provider's **Sent** folder (simulating a reply typed in Outlook) is ingested and joins the **existing** thread via `provider_thread_id` |
+   | `EchoSuppressionTest` | Sending via the portal then running a sync produces **one** row, not two, and fires no second notification |
+   | `BackfillResumeTest` | Killing the backfill mid-run and re-dispatching resumes from `backfill_page_cursor` with no duplicates and no lost pages |
+   | `ReadStateConflictTest` | Local read flag and provider unread flag disagree → provider value wins |
      | `DraftSnapshotTest` | Editing the contact list after generation does not mutate an existing `draft_cc` |
 7. **Document share links** — `document_share_links` (`PRD.md` §5.7):
    - Token: 256-bit CSPRNG. **Store only `hash('sha256', $token)`**; return the raw value once at creation and never again

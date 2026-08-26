@@ -597,6 +597,56 @@ C · KANBAN
 - **Consent banner** renders the full drafted body inline (§11.2).
 - **Keyboard:** `j`/`k` · `Enter` open · `c` classify · `r` reply · `e` archive · `Cmd+\` split · `Esc` close.
 
+##### Composer
+
+```
+┌─ Reply ──────────────────────────────────────────────┐
+│ To  [anita@globex.com ×]              Cc  Bcc        │
+│ ──────────────────────────────────────────────────── │
+│  B  I  U  │ • ≡ │ 🔗 │ ❝ │ ⌫fmt        📎 Attach     │
+│ ──────────────────────────────────────────────────── │
+│ Hi Anita,                                            │
+│ ▸ On 12 Jun, Anita wrote: … (collapsed quote)        │
+│ ──────────────────────────────────────────────────── │
+│ — Sanjay Nair · F16s Freight  (signature preview)    │
+│ Draft saved 3s ago            [Discard]  [Send ▾]    │
+└──────────────────────────────────────────────────────┘
+```
+
+- **Eight controls only** — bold, italic, underline, bulleted list, numbered list, link, blockquote, clear formatting. No fonts, colours, sizes, tables or inline images: every extra control is another way to emit markup that breaks in a client we cannot test.
+- **Quoted original is a collapsed `<blockquote>`**, expandable, never silently removed — the thread is a commercial record.
+- **Signature renders live** below the body, greyed and not editable inline. Editing happens in settings so it cannot be mangled per-message.
+- **`[Send ▾]`** — the caret offers *Send now*, skipping the undo window for users who find the hold irritating.
+- **Autosave indicator** — *"Draft saved 3s ago"* in `--text-secondary`. Silent autosave leaves people unsure whether it is safe to close the tab.
+
+##### Undo-send toast
+
+Replaces the composer immediately after `[Send]`:
+
+```
+┌──────────────────────────────────────────────┐
+│ ✓ Sending to anita@globex.com …    [Undo]  ✕ │
+└──────────────────────────────────────────────┘
+```
+
+Persists for the full 15-second window with a subtle countdown ring. `[Undo]` sets `send_state = 'cancelled'`, **nothing ever leaves**, and the composer reopens with content intact.
+
+> **This is the one exception to the 4-second auto-dismiss rule (§11.1).** A toast that expires before the undo window makes the affordance decorative.
+
+##### Outbox states
+
+A send in flight occupies its own row on the thread, so failure is never silent:
+
+| `send_state` | Renders |
+|---|---|
+| `queued` | `--status-info` · *"Sending in 12s"* · `[Undo]` |
+| `sending` | Inline spinner · *"Sending…"* |
+| `sent` | Normal message, `--status-success` check on hover |
+| `failed` | `--status-critical` · **`send_error` verbatim** · `[Retry]` `[Discard]` |
+| `cancelled` | Not rendered — it never existed |
+
+> **Show the provider's error text, not a paraphrase.** *"Recipient address rejected: mailbox full"* tells the user what to do. *"Failed to send"* does not.
+
 **② Kanban** — layout **C**, *both* views.
 
 *Process View* — four columns, live counts, `vuedraggable`. WIP is **not** limited; freight volume is externally driven and a cap would hide work rather than prevent it.
@@ -1038,6 +1088,7 @@ Left sub-nav within `/settings`. A section a login does not own is **absent, not
 | Workload / OLI | Boss | Complexity coefficients, α, β, urgency multipliers, cap — with a **live worked example** recomputing as values change |
 | Finance | Accounts | Chart of accounts tree · rate cards · bank-to-branch mapping |
 | Mailboxes | Every user | Connected accounts, provider buttons, health — five states below |
+| Signature | Every user | **Per mailbox**, not per user. Same eight-control editor as the composer. `[Import from Gmail]` where available; **`[Paste from your mail client]` is the primary path** because Outlook exposes no signature API. A `signature_source` badge (`imported` / `pasted` / `manual`) warns when it may drift from their mail client |
 
 #### Mailbox connection states (`/settings/mailboxes`)
 

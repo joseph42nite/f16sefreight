@@ -516,6 +516,12 @@ For production and staging deployments, an independent backup helper container r
   watch_expires_at      | TIMESTAMP    |     | (Gmail users.watch() / Graph subscription expiry. Push dies
                         |              |     |  after ~7 days WITH NO ERROR, so mailboxes:renew-watch runs
                         |              |     |  DAILY and re-subscribes when this is < 48h away)
+  signature_html        | TEXT         |     | (PER-MAILBOX signature, overriding users.signature_text.
+                        |              |     |  A user with two connected mailboxes usually needs two.
+                        |              |     |  Imported from Gmail where the scope allows; pasted in
+                        |              |     |  for Outlook, which exposes no signature API)
+  signature_source      | VARCHAR(20)  |     | (imported | pasted | manual — shown in settings so the
+                        |              |     |  user knows whether it will drift from their mail client)
   auth_state            | VARCHAR(30)  |     | (not_connected, awaiting_admin_consent, connected,
                         |              |     |  reauth_required — drives MailboxSettings.vue directly)
   created_at            | TIMESTAMP    |     |
@@ -567,6 +573,18 @@ For production and staging deployments, an independent backup helper container r
                         |              |     |  Set from the folder/label the message was synced from)
   sent_via_portal       | BOOLEAN      |     | (TRUE when we sent it — set at send time from the provider's
                         |              |     |  returned id, so the sync echo is recognised, not duplicated)
+  idempotency_key       | CHAR(36)     | UK  | ** DOUBLE-SEND GUARD ** — minted client-side when the user hits
+                        |              |     |  Send. A retried request (network blip, double-click, queue
+                        |              |     |  redelivery) collides on this UNIQUE key and returns the
+                        |              |     |  original result instead of sending the mail twice. Sending
+                        |              |     |  a client the same message twice is unrecoverable
+  send_state            | VARCHAR(20)  |     | (queued | sending | sent | failed | cancelled. Outbound only;
+                        |              |     |  NULL for inbound. Drives the outbox UI)
+  scheduled_send_at     | TIMESTAMP    |     | ** UNDO WINDOW ** — dispatch is held until this moment
+                        |              |     |  (default +15s). Cancelling inside the window sets
+                        |              |     |  send_state='cancelled' and nothing ever leaves
+  send_attempts         | INT          |     | (Retry counter; exponential backoff)
+  send_error            | VARCHAR(500) |     | (Last provider error, shown verbatim in the outbox)
   message_id            | VARCHAR(255) | UK  |
   from                  | VARCHAR(255) |     |
   to                    | VARCHAR(255) |     |
@@ -1805,6 +1823,8 @@ CREATE TABLE mailbox_connections (
     backfill_estimate INT NULL,
     backfill_attempts INT DEFAULT 0,
     watch_expires_at TIMESTAMP NULL, -- Gmail watch()/Graph subscription expiry; renewed daily at <48h
+    signature_html TEXT NULL, -- per-mailbox; overrides users.signature_text
+    signature_source VARCHAR(20) NULL, -- imported | pasted | manual
     auth_state VARCHAR(30) DEFAULT 'not_connected', -- not_connected | awaiting_admin_consent | connected | reauth_required
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1847,7 +1867,12 @@ CREATE TABLE email_messages (
     thread_key VARCHAR(255) NOT NULL,
     provider_thread_id VARCHAR(255) NULL, -- Gmail threadId / Graph conversationId; primary thread key
     direction VARCHAR(10) NOT NULL DEFAULT 'inbound', -- inbound | outbound (Sent folder is synced too)
-    sent_via_portal BOOLEAN DEFAULT FALSE, -- recognise our own sends echoing back through sync
+    sent_via_portal BOOLEAN DEFAULT FALSE,
+    idempotency_key CHAR(36) NULL, -- UNIQUE; minted client-side, collapses retried sends
+    send_state VARCHAR(20) NULL, -- queued | sending | sent | failed | cancelled (outbound only)
+    scheduled_send_at TIMESTAMP NULL, -- undo-send hold, default +15s
+    send_attempts INT DEFAULT 0,
+    send_error VARCHAR(500) NULL, -- recognise our own sends echoing back through sync
     message_id VARCHAR(255) NOT NULL UNIQUE,
     `from` VARCHAR(255) NOT NULL,
     `to` VARCHAR(255) NULL,

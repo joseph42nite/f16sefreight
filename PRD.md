@@ -689,7 +689,7 @@ Syncing Sent Items means outbound messages now enter the pipeline. **They must n
 | Step | `inbound` | `outbound` |
 |---|:---:|:---:|
 | Store on the thread | ✅ | ✅ |
-| **Regex classification** (§5.2.4) | ✅ | ❌ **never** |
+| **Regex classification** (§5.2.5) | ✅ | ❌ **never** |
 | Mint an `enquiry_no` | ✅ on operator triage | ❌ **never** |
 | Cargo-variable extraction | ✅ | ❌ |
 | Reset `latest_message_received_at` | ✅ | ❌ — that field means *last client message* |
@@ -743,7 +743,7 @@ A message sent through the portal lands in the user's Sent folder and returns on
 | **Cc / Bcc** | Cc contacts resolve from `customer_contacts`; **Bcc is never auto-populated** |
 | **Outbound attachments** | From `job_documents`, from the thread, or uploaded. 25 MB provider cap — larger payloads fall back to a `document_share_links` URL (§5.7) |
 | **Drafts** | Stored **locally**, not via `gmail.compose`. Keeps the scope set narrower and drafts private until sent |
-| **Signature** | `users.signature_text`, appended to every outbound message |
+| **Signature** | `mailbox_connections.signature_html` per mailbox, falling back to `users.signature_text`. Import from Gmail, paste-to-import for Outlook (§5.2.4) |
 
 ##### Interrupted backfill resumes, never restarts
 
@@ -767,7 +767,76 @@ A 60-day historical sync across a large mailbox runs for minutes. A dropped conn
 | Tenant admin revokes consent | Every connection in that tenant → `awaiting_admin_consent` |
 | Tier downgrade | `is_active = false`; tokens preserved encrypted so an upgrade restores service without re-auth |
 
-#### 5.2.4 The Configurable Regex Classification Engine
+#### 5.2.4 The Composer — rich text, signatures and send reliability
+
+##### Email HTML is not web HTML
+
+The single most common way an in-app composer fails: it emits modern CSS that renders perfectly in the preview and breaks in Outlook, which still uses **Word's rendering engine**.
+
+| Rule | Why |
+|---|---|
+| **Inline CSS only** — no `<style>` blocks | Gmail strips `<style>` from many contexts |
+| **Tables for layout**, never flexbox or grid | Word's engine supports neither |
+| **No external stylesheets or web fonts** | Blocked or ignored by most clients |
+| Max content width **~600 px** | Below every common reading-pane width |
+| Web-safe font stacks with fallbacks | Custom fonts silently substitute |
+| Images as **absolute URLs or CID attachments** | Relative paths resolve to nothing |
+| **Always emit a `text/plain` alternative** | `multipart/alternative`. Text-only clients see nothing without it, and HTML-only mail scores worse with spam filters |
+
+##### Toolbar — deliberately small
+
+**Bold · Italic · Underline · bulleted list · numbered list · link · blockquote · clear formatting.**
+
+Nothing else. No fonts, no colours, no sizes, no tables, no inline images. Freight correspondence is plain business prose, and every extra control is another way to emit markup that breaks in a client we cannot test. The quoted original on a reply is a `<blockquote>` the user can collapse — never silently deleted, because the thread is a commercial record.
+
+**Editor:** TipTap (ProseMirror) — the v1 line supports Vue 2.7. It produces a constrained document model rather than raw `contenteditable` HTML, which is what makes the email-safe output rule enforceable instead of aspirational.
+
+##### Paste sanitisation is mandatory, not a nicety
+
+Users paste from Word, Outlook and Excel constantly. That markup carries `mso-` styles, conditional comments, class soup and occasionally absolute positioning — which survives into the sent mail and renders as garbage on the client's screen.
+
+**On paste:** strip all `mso-*` properties, conditional comments (`<!--[if ...]>`), `class` and `id` attributes, `<o:p>` tags and every non-whitelisted style. Keep only the eight formatting primitives above. Run it through **HTMLPurifier server-side as well** — client-side sanitisation is a convenience, not a security boundary (§9.2).
+
+##### Signatures
+
+`users.signature_text` is the user-level default; **`mailbox_connections.signature_html` overrides it per mailbox**, because a user with two connected accounts usually needs two.
+
+| Provider | Import? | Path |
+|---|---|---|
+| **Gmail** | ✅ Yes | `users.settings.sendAs.list` returns the signature HTML per send-as address — but it needs the **`gmail.settings.basic`** scope, which is *another* restricted scope. Compliance cost is unchanged (already restricted), but it is one more permission to justify to an admin |
+| **Outlook / Graph** | ❌ **No API exists** | Outlook signatures live client-side in the roaming signature store. Graph's `mailboxSettings` does not expose them |
+
+> **Because Outlook cannot be imported, import can never be the primary path.** The reliable mechanism for both providers is **paste-to-import**: the user copies their existing signature out of their mail client and pastes it into the settings editor, where it is sanitised exactly like any other paste. Gmail import is offered as a convenience on top, not as the foundation.
+>
+> `signature_source` (`imported` / `pasted` / `manual`) is shown in settings so a user understands whether their signature will drift out of step with their mail client.
+
+##### Send reliability — an outbox, not fire-and-forget
+
+> 🔴 **Sending a client the same message twice is unrecoverable.** A retried request — a network blip, an impatient double-click, a queue redelivery — must never produce two emails.
+
+**Every send carries a client-minted `idempotency_key`.** It is `UNIQUE` on `email_messages`, so a duplicate request collides and returns the original result rather than dispatching again.
+
+**Send is a state machine, not a fire-and-forget call:**
+
+```
+queued ──(scheduled_send_at reached)──► sending ──► sent
+   │                                       │
+   └──► cancelled  (undo window)           └──► failed ──► retry / discard
+```
+
+| State | Meaning |
+|---|---|
+| `queued` | Accepted, inside the undo window, nothing has left |
+| `sending` | Handed to the provider; awaiting confirmation |
+| `sent` | Provider returned a message id — recorded with `sent_via_portal` |
+| `failed` | Provider rejected it. `send_error` shown verbatim; retry or discard |
+| `cancelled` | Undone inside the window; never dispatched |
+
+**Undo send — a 15-second hold by default.** Dispatch waits until `scheduled_send_at`; until then `[Undo]` cancels outright. This costs one delayed job and prevents the single most damaging everyday mistake in the product: the wrong document, the wrong client, the wrong rate. It is the same philosophy as the consent engine (§5.7) — **a moment of reversibility in front of an irreversible action** — and it should be configurable per tenant, including to zero.
+
+**Drafts autosave every 5 seconds** to local storage keyed by thread. A browser crash mid-composition loses at most five seconds, and the draft is offered back on return.
+
+#### 5.2.5 The Configurable Regex Classification Engine
 
 A database-driven rule engine (`email_classification_rules`, cached in Redis hash maps) rather than an LLM — it processes up to **10,000 emails/day at zero token cost**.
 
@@ -796,7 +865,7 @@ A database-driven rule engine (`email_classification_rules`, cached in Redis has
 
 **Non-enquiry threads** are saved with **both `enquiry_id` and `job_id` NULL** — no number consumed, no Kanban card, still fully readable in the feed.
 
-#### 5.2.5 Operator Overrides & the Learning Loop
+#### 5.2.6 Operator Overrides & the Learning Loop
 
 An operator can change the classification from the inbox or Kanban dropdown at any time.
 
@@ -814,7 +883,7 @@ An operator can change the classification from the inbox or Kanban dropdown at a
 
 **Rule authoring UI** (`/settings/email-triage-rules`): `[+ Add New Rule]` → Rule Name, Type (`Domain Blocklist` / `Subject Regex` / `Body Regex` / `Destination Keyword`), Pattern, Route To (target classification), Priority. Saving writes the row and dispatches a model event that syncs the Redis cache for zero-latency lookups.
 
-#### 5.2.6 Mode-Specific Rule Sets — Air ≠ Sea
+#### 5.2.7 Mode-Specific Rule Sets — Air ≠ Sea
 
 Rules are **scoped by `transport_mode`**; the polling service loads only the active portal's set. Air and sea speak different languages, quote different units, and convert into different documents — a shared pattern set mis-parses both.
 

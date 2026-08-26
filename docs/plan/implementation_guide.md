@@ -954,6 +954,27 @@ Also build: `financial_snapshots` via `snapshots:compute` (30 min), the DSR/MSR/
 > | **Scope** | The full suite, every time. Regressions surface in the segment you are *not* working on |
 > | **Blocks** | Starting the next segment |
 >
+> #### What this catches — and what it does not
+>
+> Of the defects found in the 2026-08-26 reconciliation pass, **most would not have been caught by any test suite**, because they were specification gaps rather than behavioural regressions. Worth being clear-eyed about:
+>
+> | Class | Example from this project | Tests catch it? |
+> |---|---|---|
+> | Regression in decided behaviour | A refactor lets `boss` post to the ledger | ✅ **Yes** — this is what tests are for |
+> | Database invariant | Inserting `jobs.status = 'Lost'` | ✅ **Yes**, and the DB enforces it even if the test is deleted |
+> | Edge case with a seeded fixture | `credit_limit = 0.00` → `credit_util` must be NULL | ✅ **Yes** — the whole point of the seeding rule below |
+> | **Something never built** | No command ever granted the monthly OCR allowance | ❌ **No.** Nothing fails; balances just drain forever |
+> | **A screen with no storage** | `/settings/workload` had no table until `tenant_policies` | ❌ **No** |
+> | **Two columns meaning one thing** | `mailbox_connections.status` vs `auth_state` | ❌ **No** |
+> | **A coherent design that is wrong** | One `is_active` flag for both a tier downgrade and a user removing their mailbox — an upgrade then silently reconnects it | ❌ **No**, unless someone already thought of that exact scenario and wrote it |
+>
+> **Tests keep decisions decided. They do not make the decisions.** Reviewing the spec against the code — which is how every item above surfaced — is a separate activity, and no amount of green suites replaces it.
+
+> #### 🔴 Two ways this suite can be green and production still broken
+>
+> 1. **Do not authenticate tests with `actingAs()`.** This app is stateless JWT and resolves portal scope from the request `Host` (§3.0). `actingAs()` bypasses both, so `TierModeGatingTest` would **pass while air users see sea data in production** — the exact failure the test exists to prevent. Tests must send a real token and a real `Host` header, through the same middleware as a live request.
+> 2. **Green on SQLite is not green on MySQL.** Local dev is SQLite, production is MySQL 8, and they differ on loose `DECIMAL`/`VARCHAR` typing (which matters for the ledger), on `TRUNCATE` bypassing DELETE triggers, and on FK cascades not firing triggers at all. **Run the suite against MySQL 8 via `docker compose` before signing off each segment**, not only against the local file.
+
 > **Seed the cases that actually break things**, not just happy rows: a customer with `credit_limit = 0.00`; a client with zero losses; an enquiry with no `customer_id`; a user with no branch; a job with several `email_threads`; three shipments on one date; an enquiry that was soft-deleted; a mailbox that was disconnected by its user versus one paused by a downgrade. Every one of those is a documented NULL-guard or invariant somewhere in `PRD.md` §7.3.4, and none of them appear in naive seed data.
 
 ### 8.1 Laravel feature tests (`php artisan test`)

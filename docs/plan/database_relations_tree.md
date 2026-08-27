@@ -65,6 +65,10 @@ For production and staging deployments, an independent backup helper container r
                                 |              |     | ──► ocr_credit_transactions.company_id
                                 |              |     | ──► sla_policies.company_id
   name                          | VARCHAR(100) |     |
+  code                          | VARCHAR(6)   | UK  | (Company abbreviation. Prefixed to
+                                |              |     |  agents_info.branch_code to form the
+                                |              |     |  {agent_code} in every document number
+                                |              |     |  — PRD §6.3. Unique globally)
   tier                          | VARCHAR(30)  |     | (core, tactical, command)
   email_domain                  | VARCHAR(100) |     | (Verification suffix)
   ocr_credits_balance           | INT          |     | (Remaining vision OCR balance)
@@ -113,8 +117,13 @@ For production and staging deployments, an independent backup helper container r
   pan_no             | VARCHAR(20)   |     | (Permanent Account Number)
   duns_no            | VARCHAR(20)   |     | (Dun & Bradstreet Number for credit checks)
   bank_name          | VARCHAR(100)  |     | (Bank name for invoice settlements)
-  bank_account_no    | VARCHAR(50)   |     | (Encrypted at rest)
-  bank_ifsc_code     | VARCHAR(20)   |     | (Encrypted at rest)
+  bank_account_no    | TEXT          |     | (🔐 Encrypted at rest via the Eloquent `encrypted`
+                     |               |     |  cast. TEXT, NOT VARCHAR — corrected 2026-08-27 after
+                     |               |     |  measuring: a 10-char a/c no encrypts to 200 chars and a
+                     |               |     |  34-char IBAN (ISO 13616 max) to 256, so the VARCHAR(50)
+                     |               |     |  once written here failed on EVERY row and the DDL's
+                     |               |     |  VARCHAR(255) truncated real IBANs by one character)
+  bank_ifsc_code     | TEXT          |     | (🔐 Encrypted at rest. TEXT for the same reason)
   payment_terms_days | INT           |     | (Default credit invoice payment terms e.g., 30)
   credit_limit       | DECIMAL(15,2) |     | (Maximum allowed AR outstanding. PER BRANCH — the credit gate
                      |               |     |  blocks on this row's own exposure, never the group total.
@@ -155,8 +164,10 @@ For production and staging deployments, an independent backup helper container r
   gst_no          | VARCHAR(30)  |     |
   pan_no          | VARCHAR(20)  |     |
   bank_name       | VARCHAR(100) |     |
-  bank_account_no | VARCHAR(50)  |     | (Encrypted at rest)
-  bank_ifsc_code  | VARCHAR(20)  |     | (Encrypted at rest)
+  bank_account_no | TEXT         |     | (🔐 Encrypted at rest. TEXT, not VARCHAR — same
+                  |              |     |  correction as customers, 2026-08-27: a 34-char IBAN
+                  |              |     |  encrypts to 256 chars, one over VARCHAR(255))
+  bank_ifsc_code  | TEXT         |     | (🔐 Encrypted at rest. TEXT for the same reason)
   created_at      | TIMESTAMP    |     |
   updated_at      | TIMESTAMP    |     |
 ```
@@ -289,7 +300,7 @@ For production and staging deployments, an independent backup helper container r
                           |               |     | ──► llm_usage_logs.enquiry_id
                           |               |     | ──► ocr_credit_transactions.enquiry_id
   agent_id                | BIGINT        | FK  | ◄── agents_info.id
-  transport_mode          | VARCHAR(10)   |     | (air, sea — selects the regex rule set AND the conversion
+  transport_mode          | VARCHAR(10)   |     | (air, sea, road — selects the regex rule set AND the conversion
                           |               |     |  target: AIR ⇒ AWB/HAWB, SEA ⇒ MBL/HBL)
   direction               | VARCHAR(10)   |     | (export, import)
   enquiry_no              | VARCHAR(30)   | UK  | (ENQA-26-0001 air | ENQS-26-0001 sea; unique per agent)
@@ -356,7 +367,7 @@ For production and staging deployments, an independent backup helper container r
   enquiry_id                 | BIGINT       | FK  | ◄── enquiries.id (NOT NULL — every job traces to its
                              |              |     |     originating enquiry. "Converted" = a job row exists;
                              |              |     |     do NOT also store enquiries.converted_job_id)
-  transport_mode             | VARCHAR(10)  |     | (air, sea — denormalized from the enquiry for scoping)
+  transport_mode             | VARCHAR(10)  |     | (air, sea, road — denormalized from the enquiry for scoping)
   direction                  | VARCHAR(10)  |     | (export, import)
   execution_job_no           | VARCHAR(30)  | UK  | (JOBA-26-0001 air | JOBS-26-0001 sea; unique per agent)
   job_order_no               | VARCHAR(30)  | UK  | (Client-side reference job order number)
@@ -382,7 +393,7 @@ For production and staging deployments, an independent backup helper container r
   consol_type                | VARCHAR(20)  |     | (Authoritative: agent_consol, buyers_consol, direct, none)
   delivery_mode              | VARCHAR(20)  |     | (Authoritative: door-to-door, port-to-port, etc.)
   booking_thru               | VARCHAR(20)  |     | (self, agent — dictates commission routing / profit
-                             |              |     |  share on the Charges tab. Focus Sea header field)
+                             |              |     |  share on the Charges tab. FocusSea header field)
   planned_clearance_date     | DATE         |     | (Clearance schedule tracker)
   awb_number                 | VARCHAR(20)  |     | (AIR only. Sea shipments carry MBL/HBL on
                              |              |     |  sea_shipment_details and never populate this.)
@@ -870,7 +881,7 @@ For production and staging deployments, an independent backup helper container r
                     |               |     | ──► accounts_invoices.parent_invoice_id (Self-relation)
   agent_id          | BIGINT        | FK  | ◄── agents_info.id
   job_id            | BIGINT        | FK  | ◄── jobs.id (On Delete Restrict)
-  transport_mode    | VARCHAR(10)   |     | (air, sea — inherited from parent jobs.transport_mode; used for scoping/partitioning)
+  transport_mode    | VARCHAR(10)   |     | (air, sea, road — inherited from parent jobs.transport_mode; scoping/partitioning)
   customer_id       | BIGINT        | FK  | ◄── customers.id (Customer debtor; NULLABLE — populated only for customer-billed docs, drives AR/collections/credit which are customer-only)
   billed_party_type | VARCHAR(20)   |     | (Polymorphic bill-to: 'customer' or 'partner')
   billed_party_id   | BIGINT        |     | (Polymorphic ID → customers.id or partners.id — the actual recipient; equals customer_id for customer invoices, a partner for brokerage/consol/agent invoices)
@@ -976,7 +987,7 @@ For production and staging deployments, an independent backup helper container r
                  |             |     | ──► bank_transactions.matched_voucher_id
   agent_id       | BIGINT      | FK  | ◄── agents_info.id
   job_id         | BIGINT      | FK  | ◄── jobs.id (On Delete Restrict)
-  transport_mode | VARCHAR(10) |     | (air, sea — inherited from parent jobs.transport_mode; used for scoping/partitioning)
+  transport_mode | VARCHAR(10) |     | (air, sea, road — inherited from parent jobs.transport_mode; scoping/partitioning)
   vendor_id      | BIGINT      | FK  | ◄── partners.id (Carrier/Vendor Creditor)
   created_by     | BIGINT      | FK  | ◄── users.id
   voucher_no     | VARCHAR(30) | UK  | (Central Counter sequential PV-YY-NNNN)
@@ -1047,8 +1058,11 @@ For production and staging deployments, an independent backup helper container r
   --------------|-------------|-----|----------------------------------------
   id            | BIGINT      | PK  |
   agent_id      | BIGINT      | FK  | ◄── agents_info.id
-  prefix        | VARCHAR(10) |     | (INV, PV, ENQ, JOB, CAN, CL, MF)
-  fiscal_year   | VARCHAR(6)  |     | (Calculated via fiscalYear() GST helper)
+  prefix        | VARCHAR(10) |     | (ENQA, ENQS, JOBA, JOBS, INV, DN, CN,
+                |             |     |  BRK, CSINV, PV, CAN, CL, MF — see PRD §6.3.
+                |             |     |  NOT 'ENQ'/'JOB': air and sea count separately)
+  fiscal_year   | VARCHAR(6)  |     | (FISCAL year via fiscalYear(), April 1 rollover
+                |             |     |  — '26' = FY 2026-27, not calendar 2026)
   current_value | INT         |     | (Increment counter value)
   created_at    | TIMESTAMP   |     |
   updated_at    | TIMESTAMP   |     |
@@ -1149,7 +1163,7 @@ For production and staging deployments, an independent backup helper container r
 ```
 
 ### 36a. `customer_performance_snapshots` (PK: `id`)
-*Sales Intelligence Engine — Layer 1 nightly rollup. **Keyed by `transport_mode`; air and sea rows are never blended.** Written by `php artisan sales:compute-snapshots`; read directly by the sales dashboard (never aggregate `jobs` live).*
+*Sales Intelligence Engine — Layer 1 nightly rollup. **Keyed by `transport_mode`; air, sea and road rows are never blended.** Written by `php artisan sales:compute-snapshots`; read directly by the sales dashboard (never aggregate `jobs` live).*
 
 ```text
   Column                         | Type          | Key | Connection Links
@@ -1157,7 +1171,7 @@ For production and staging deployments, an independent backup helper container r
   id                             | BIGINT        | PK  |
   agent_id                       | BIGINT        | FK  | ◄── agents_info.id
   customer_id                    | BIGINT        | FK  | ◄── customers.id (Cascade delete)
-  transport_mode                 | VARCHAR(10)   | UK  | (air | sea — part of uk_cps_customer_mode_date)
+  transport_mode                 | VARCHAR(10)   | UK  | (air | sea | road — part of uk_cps_customer_mode_date)
   snapshot_date                  | DATE          | UK  |
   tonnage_mtd                    | DECIMAL(14,3) |     | (Gross weight month-to-date, this mode only)
   tonnage_ytd                    | DECIMAL(14,3) |     | (Gross weight year-to-date, this mode only)
@@ -1193,7 +1207,7 @@ For production and staging deployments, an independent backup helper container r
   id                | BIGINT        | PK  |
   agent_id          | BIGINT        | FK  | ◄── agents_info.id
   customer_id       | BIGINT        | FK  | ◄── customers.id (Cascade delete)
-  transport_mode    | VARCHAR(10)   | UK  | (air | sea)
+  transport_mode    | VARCHAR(10)   | UK  | (air | sea | road)
   origin_code       | CHAR(5)       | UK  | (LOCODE)
   dest_code         | CHAR(5)       | UK  | (LOCODE)
   period_month      | DATE          | UK  | (First day of month)
@@ -1217,7 +1231,7 @@ For production and staging deployments, an independent backup helper container r
   id                | BIGINT       | PK  |
   agent_id          | BIGINT       | FK  | ◄── agents_info.id
   customer_id       | BIGINT       | FK  | ◄── customers.id (Cascade delete)
-  transport_mode    | VARCHAR(10)  | UK  | (air rhythm ≠ sea rhythm; uk_ccp_customer_mode)
+  transport_mode    | VARCHAR(10)  | UK  | (air/sea/road rhythms differ; uk_ccp_customer_mode)
   expected_gap_days | DECIMAL(7,2) |     | (MEDIAN inter-shipment gap)
   volatility_mad    | DECIMAL(7,2) |     | (Median absolute deviation)
   last_shipment_at  | TIMESTAMP    |     |
@@ -1240,7 +1254,7 @@ For production and staging deployments, an independent backup helper container r
   agent_id       | BIGINT        | FK  | ◄── agents_info.id
   customer_id    | BIGINT        | FK  | ◄── customers.id (Cascade delete; NULL = branch action)
   sales_id       | BIGINT        | FK  | ◄── users.id (Command-tier scoping key)
-  transport_mode | VARCHAR(10)   |     | (air | sea)
+  transport_mode | VARCHAR(10)   |     | (air | sea | road)
   audience       | VARCHAR(10)   |     | ** internal | client ** — the structural firewall. An
                  |               |     |  'internal' row (staff underperformance, our own SLA
                  |               |     |  failures) can NEVER produce a client draft. Enforced by
@@ -1326,7 +1340,7 @@ For production and staging deployments, an independent backup helper container r
                  |             |     |     document arrives AFTER confirmation. WITHOUT one of
                  |             |     |     these two the parsed payload is orphaned and no cargo
                  |             |     |     promotion is possible
-  transport_mode | VARCHAR(10) |     | (air, sea — used for query scoping and sequence partitioning)
+  transport_mode | VARCHAR(10) |     | (air, sea, road — used for query scoping and sequence partitioning)
   document_type  | VARCHAR(50) |     | (MAWB, HAWB, Invoice, Packing List)
   extracted_data | JSON        |     | (JSON payload mapped by Gemma 4 / Gemini)
   status         | VARCHAR(20) |     | (pending, processing, completed, failed)
@@ -1496,11 +1510,20 @@ For production and staging deployments, an independent backup helper container r
 
 ```sql
 -- 1. companies  ⚠️ EXISTS — ALTER only. Live table has: id, name, created_at, updated_at,
---    templates_config, in_testing_mode. Batch 1a adds tier, email_domain and the 3 ocr_credits_* columns.
+--    templates_config, in_testing_mode. Batch 1a adds tier, email_domain, the 3 ocr_credits_*
+--    columns, deleted_at (migration 2026_08_27_010200) and code (2026_08_27_010300).
 CREATE TABLE companies (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    tier VARCHAR(30) DEFAULT 'core', -- Platform subscription tier for tenants (core, tactical, command); ignored for client customers
+    code VARCHAR(6) NULL UNIQUE, -- Company abbreviation, e.g. 'F16'. Concatenated with
+                                 -- agents_info.branch_code to form {agent_code} in every
+                                 -- document number (PRD §6.3): F16 + BOM -> ENQA-F16BOM-26-0001.
+                                 -- NULLABLE ONLY UNTIL BACKFILLED — must be NOT NULL before
+                                 -- EnquirySequenceService goes live (guide §4.4).
+    tier VARCHAR(30) NOT NULL DEFAULT 'core', -- Platform subscription tier for tenants (core,
+                                 -- tactical, command); ignored for client customers. NOT NULL so
+                                 -- tier resolution stays TOTAL (guide §4.1.1) — there is no
+                                 -- tenant-without-a-tier case to design around.
     email_domain VARCHAR(100) NULL, -- Suffix domain for verification
     ocr_credits_balance INT DEFAULT 0, -- Current balance. Reset monthly by credits:grant-monthly.
     -- The next two are NULL BY DEFAULT, and NULL is meaningful: "inherit the tier default"
@@ -1528,8 +1551,13 @@ CREATE TABLE customers (
     pan_no VARCHAR(20) NULL, -- Permanent Account Number
     duns_no VARCHAR(20) NULL, -- Dun & Bradstreet Number for credit checks
     bank_name VARCHAR(100) NULL, -- Bank name for invoice settlements
-    bank_account_no VARCHAR(255) NULL, -- Encrypted at rest
-    bank_ifsc_code VARCHAR(255) NULL, -- Encrypted at rest
+    -- 🔐 TEXT, not VARCHAR — corrected 2026-08-27 by measuring the encrypted cast:
+    --   10-char account no -> 200 chars | 31-char IBAN -> 228 | 34-char IBAN -> 256
+    -- VARCHAR(255) therefore truncates a legal 34-char IBAN by exactly one character,
+    -- losing the value unrecoverably. Never indexed, so TEXT costs nothing.
+    -- ⚠️ The column type encrypts NOTHING. The `encrypted` cast on the model does.
+    bank_account_no TEXT NULL,
+    bank_ifsc_code TEXT NULL,
     payment_terms_days INT DEFAULT 30, -- Default credit invoice payment terms e.g., 30
     credit_limit DECIMAL(15,2) DEFAULT 0.00, -- Maximum allowed accounts receivable outstanding balance
     default_port_id BIGINT NULL, -- Preferred airport/seaport location
@@ -1556,8 +1584,11 @@ CREATE TABLE partners (
     gst_no VARCHAR(30) NULL,
     pan_no VARCHAR(20) NULL,
     bank_name VARCHAR(100) NULL,
-    bank_account_no VARCHAR(255) NULL, -- Encrypted at rest
-    bank_ifsc_code VARCHAR(255) NULL, -- Encrypted at rest
+    -- 🔐 TEXT, not VARCHAR — see the customers block for the measurements.
+    -- Vendor payouts run through these, so a truncated account no is a payment to nowhere.
+    -- ⚠️ The column type encrypts NOTHING. The `encrypted` cast on the model does.
+    bank_account_no TEXT NULL,
+    bank_ifsc_code TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
@@ -1643,7 +1674,7 @@ CREATE TABLE users (
 CREATE TABLE enquiries (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     agent_id BIGINT NOT NULL,
-    transport_mode VARCHAR(10) NOT NULL, -- 'air', 'sea' — decides the regex rule set AND the conversion target (AWB vs MBL)
+    transport_mode VARCHAR(10) NOT NULL, -- 'air', 'sea', 'road' — decides the regex rule set AND the conversion target (AWB vs MBL)
     direction VARCHAR(10) DEFAULT 'export', -- 'export', 'import'
     enquiry_no VARCHAR(30) NOT NULL, -- ENQA-26-0001 (air) | ENQS-26-0001 (sea)
     quotation_no VARCHAR(30) NULL,
@@ -1695,8 +1726,9 @@ CREATE TABLE enquiries (
     -- to disagree once both are populated. transport_mode stays the column every scoped query and
     -- index reads; the prefix is only ever a display/audit format of the same fact.
     CONSTRAINT chk_enq_mode_prefix CHECK (
-        (transport_mode = 'air' AND enquiry_no LIKE 'ENQA-%') OR
-        (transport_mode = 'sea' AND enquiry_no LIKE 'ENQS-%')
+        (transport_mode = 'air'  AND enquiry_no LIKE 'ENQA-%') OR
+        (transport_mode = 'sea'  AND enquiry_no LIKE 'ENQS-%') OR
+        (transport_mode = 'road' AND enquiry_no LIKE 'ENQR-%')
     ),
     INDEX idx_enq_funnel (agent_id, transport_mode, status, created_at),
     INDEX idx_enq_customer (customer_id, transport_mode, created_at),
@@ -1717,7 +1749,7 @@ CREATE TABLE jobs (
     direction VARCHAR(10) DEFAULT 'export',
     execution_job_no VARCHAR(30) NULL, -- JOBA-26-0001 (air) | JOBS-26-0001 (sea)
     job_order_no VARCHAR(30) NULL,
-    quotation_no VARCHAR(30) NULL, -- Reference to the quotation draft payload; Focus Sea header lookup
+    quotation_no VARCHAR(30) NULL, -- Reference to the quotation draft payload; FocusSea header lookup
     customer_id BIGINT NULL,
     ops_id BIGINT NULL, -- Live operator; assigned by pricing staff; reassignable
     pending_ops_id BIGINT NULL, -- Staged reassignment awaiting pricing-owner approval
@@ -1764,8 +1796,9 @@ CREATE TABLE jobs (
     -- Drift guard: execution_job_no's prefix is generated FROM transport_mode (denormalized from
     -- the parent enquiry at conversion) — this makes the two impossible to disagree.
     CONSTRAINT chk_jobs_mode_prefix CHECK (
-        (transport_mode = 'air' AND execution_job_no LIKE 'JOBA-%') OR
-        (transport_mode = 'sea' AND execution_job_no LIKE 'JOBS-%') OR
+        (transport_mode = 'air'  AND execution_job_no LIKE 'JOBA-%') OR
+        (transport_mode = 'sea'  AND execution_job_no LIKE 'JOBS-%') OR
+        (transport_mode = 'road' AND execution_job_no LIKE 'JOBR-%') OR
         execution_job_no IS NULL
     ),
     INDEX idx_jobs_enquiry (enquiry_id),
@@ -2115,7 +2148,24 @@ CREATE TABLE tenant_policies (
     -- reason: a plain UNIQUE(company_id, agent_id) permits MANY company-wide rows,
     -- because both MySQL and SQLite allow repeated NULLs in a unique index. Folding
     -- NULL to 0 makes "one company-wide row per company" enforceable at the database.
-    policy_scope_gate BIGINT GENERATED ALWAYS AS (COALESCE(agent_id, 0)) STORED,
+    -- ⚠️ VIRTUAL, NOT STORED — corrected 2026-08-27, and this is forced by MySQL, not a
+    -- preference. MySQL 8 REFUSES `ON DELETE CASCADE` on a column that a STORED generated
+    -- column depends on, and agent_id is BOTH the foreign-key column and this gate's base.
+    -- The original `STORED` here therefore could not be created at all:
+    --     ERROR 1215 Cannot add foreign key constraint
+    -- Measured on MySQL 8.0.46:
+    --     STORED  + ON DELETE CASCADE -> 1215 FAILS
+    --     VIRTUAL + ON DELETE CASCADE -> works
+    --     STORED  + RESTRICT          -> works
+    -- VIRTUAL is chosen over dropping the CASCADE because the cascade is the correct
+    -- semantic: an override belonging to a deleted branch is meaningless, and RESTRICT
+    -- would let a stale policy row block deleting the branch itself. Secondary indexes on
+    -- VIRTUAL columns are fully supported (MySQL 5.7.8+), so the UNIQUE below is
+    -- unaffected — and SQLite can ADD COLUMN a virtual generated column, which STORED
+    -- forbids, so this is strictly more portable too.
+    -- NOTE job_entities.unique_role_gate stays STORED and is correct: its base columns are
+    -- `role` and `deleted_at`, neither of which carries a foreign key.
+    policy_scope_gate BIGINT GENERATED ALWAYS AS (COALESCE(agent_id, 0)) VIRTUAL,
 
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     FOREIGN KEY (agent_id) REFERENCES agents_info(id) ON DELETE CASCADE,

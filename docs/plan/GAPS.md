@@ -1,0 +1,93 @@
+# 🕳️ Open Gaps
+
+**Purpose:** every unresolved question, deferred obligation and known defect in one place, so none of them is rediscovered late or shipped by accident.
+**Last updated:** 2026-08-27
+
+> **How to read this.** Each gap says what is wrong, **what breaks if it is not fixed**, and **the latest point it can safely be fixed**. Nothing here is blocking Batch 1a. Several become blocking later, and the "Due by" column is the honest deadline, not a preference.
+>
+> Gaps are resolved by **deciding**, not by discovering. Most of these are decisions nobody has made yet — the code cannot make them, and guessing produces a coherent-looking answer that is wrong (see `CONTEXT.md` §6, the `is_active` mailbox case).
+
+---
+
+## 🔴 Blocking — must be resolved before the named step
+
+| # | Gap | What breaks | Due by |
+|---|---|---|---|
+| 1 | **`users.origin_port_id` has no join path to backfill from — unless the directory load supplies one.** Guide §Batch 1a·7 says fill it from `users.origin_airport_code`, but `ports` has only `locode` and **no IATA column**, so `'BOM'` has nothing to match `'INBOM'`. ⚠️ **Loading `ports` with LOCODEs alone does NOT close this gap.** *(Confirmed with the owner 2026-08-27: `locations` and `ports` are deliberately separate tables — see the Resolved list — and the port data is being fed later.)* | Every user's origin port stays NULL after the directory loads. Registration can never require an origin port, which `PRD.md` §2.2 says it eventually must | **Port directory load** (guide §9) |
+| 1a | **Mitigation, so #1 is not a hard block.** UN/LOCODE is `{2-char country}{3-char location}`, and for airports the 3-char part is *usually* the IATA code — `INBOM`→`BOM`, `INMAA`→`MAA`, `DEHAM`→`HAM`. So `SUBSTRING(locode,3,3)` backfills the large majority automatically | ⚠️ **A heuristic, not an authority.** UN/LOCODE and IATA are maintained by different bodies and do diverge, and a 3-char LOCODE segment can collide with an unrelated city's IATA code. Run it as a **proposal with a review pass**, never a blind `UPDATE` — a wrong origin port silently mis-routes a user's default lane | Same |
+| 2 | **`companies.code` and `agents_info.branch_code` are nullable and empty.** Added 2026-08-27 (`2026_08_27_010300`); no existing row has a value and none could be invented | Every document number formats as `ENQA--26-0001`. Worse, if two branches are ever given the same pair, they emit **byte-identical invoice numbers onto customs paperwork** — counters are scoped per `agent_id`, so nothing downstream catches it | **Step 4.4** (`EnquirySequenceService`) |
+| 3 | **The `encrypted` cast does not exist yet.** `customers.bank_account_no` / `.bank_ifsc_code` are `TEXT` and ready, but **the column type encrypts nothing** — the Eloquent cast does, and that is Step 2 | Any write before the cast lands stores customer **bank details in plaintext**, and existing plaintext rows will not decrypt afterwards | **Step 2**, same commit as the model |
+| 4 | **`ui_ux_guide.md` has never had a reconciliation pass.** The other three planning docs were checked against the codebase; this one has only had its headings read (`CONTEXT.md` §4) | The same class of surprise the other three produced — ~15 places where the doc described something that does not exist. Found during Step 6 instead of before it, when it is expensive | **Before Step 6** |
+| 5 | **MySQL trigger forms had never been executed.** 🟡 **PARTIALLY CLOSED 2026-08-27** — the `audit_logs` append-only pair now runs on MySQL 8.0.46 and is verified refusing UPDATE, single-row DELETE and blanket DELETE (`2026_08_27_021000`). **Still unrun:** the `jobs` designation guards and the `accounts_*.created_by` guards, which land with their tables | Running them immediately exposed gap #20 below, which would have blocked every trigger in the schema | Remaining triggers: with their tables |
+| 20 | 🔴 **Triggers cannot be created at all unless `log_bin_trust_function_creators = 1`.** Binary logging is on by default in MySQL 8, and with this flag at `0` the application user needs `SUPER` to `CREATE TRIGGER` — so every trigger fails with **`ERROR 1419 You do not have the SUPER privilege`**, even though the user holds `ALL PRIVILEGES` on the schema. Found 2026-08-27 the first time a MySQL trigger was actually run. **Fixed locally** by adding `--log-bin-trust-function-creators=1` to the `db` service in `docker-compose.yml` | This blocks **every trigger in the product**, not just `audit_logs` — the append-only audit guard and the `jobs`/`accounts` designation guards that segregation-of-duties depends on. Safe to enable here because every trigger only `SIGNAL`s an error and writes nothing, so there is no binlog-determinism risk of the kind the flag guards against. ⚠️ **Production must have the same setting, or the DBA must grant `SUPER`/`SET_USER_ID` to whoever applies the schema.** This interacts with gap #10 — if production schema is applied as hand-run SQL by a privileged DBA, it may never surface there and will surface on any automated deploy | **Before first production deploy** |
+
+| ~~17~~ | ✅ **CLOSED 2026-08-27** — `2026_08_27_020200_add_deferred_job_foreign_keys` adds both FKs (plus the cyclic `enquiries.reinitiated_from_job_id`) immediately after `jobs` is created, exactly as this gap required. `ON DELETE SET NULL`, not RESTRICT: a waybill is a real document that was really issued and must survive its job record being removed. Verified — `job_id = 999999` is now rejected, and a waybill attached to a deleted job keeps its row with `job_id` nulled. ~~**`air_way_bills.job_id` and `house_way_bills.job_id` have no foreign key.**~~ Added unconstrained on 2026-08-27 because `jobs` does not exist until Batch 1b — verified accepting `999999` today | Waybills can point at jobs that never existed. The window is intentional and short, but **if it is not closed the moment `jobs` is created, it never closes** — nothing later in the plan revisits these columns | **Batch 1b**, immediately after `jobs` |
+| 18 | **`air_way_bills.agent_id` / `house_way_bills.agent_id` are signed `INT` with no FK**, while `agents_info.id` is `BIGINT UNSIGNED`. Neither waybill table carries **any** foreign key today | The same shape of defect as `users.branch_name` before it was converted (`CONTEXT.md` §6): an unconstrained, type-mismatched tenancy column on which MySQL will silently coerce. These are the tables the whole legacy product writes to | Not scheduled — **out of Batch 1a scope** (guide §8 says add only `uuid` and `job_id`). Worth its own migration |
+
+---
+
+## 🔬 Found by testing, fixed — patterns to repeat
+
+| Gap | Finding |
+|---|---|
+| **CHECK constraints were case-INSENSITIVE.** `chk_enq_status` existed, reported present in `information_schema`, and **silently accepted `'Lost'`** — because the columns collate `utf8mb4_unicode_ci`. Fixed 2026-08-27 by forcing `COLLATE utf8mb4_bin` inside the constraint expression (this does **not** change the column's collation, so indexes and queries are unaffected). ⚠️ **Apply the same to every remaining status/enum CHECK** — `chk_jobs_status`, `chk_jobs_mode_prefix`, `chk_saq_audience`, `chk_saq_internal_no_draft`, `chk_share_approval`. **Why it matters:** MySQL's own reads stay case-insensitive so the backend never notices, but the value is serialised to JSON and Vue's `status === 'lost'` is case-sensitive — a `'Lost'` row passes every database check and then fails silently in every frontend guard | `PRD.md`'s first load-bearing rule says the Lost/Cancelled split is *"enforced by DB CHECK, not convention"*. The split itself held (`'Cancelled'` was correctly rejected); the **vocabulary** was only enforced up to casing |
+| **A failing migration leaves a partial, unrecorded schema.** The first `enquiries` run created the table, then a bug in its own verification helper threw — so the migration was not recorded and the retry died on `1050 Table already exists`. Fixed with a `Schema::hasTable` guard + idempotent constraint adds | Exactly the failure `CONTEXT.md` §6 describes for `2026_05_16_060000`. **Every migration that runs more than one DDL statement needs this guard** — MySQL has no transactional DDL |
+| **`email_messages.idempotency_key` was not actually UNIQUE.** The column table marks it `UK` and calls it the ** DOUBLE-SEND GUARD ** — *"a retried request collides on this UNIQUE key... sending a client the same message twice is unrecoverable"* — but the runnable DDL block declares only `idempotency_key CHAR(36) NULL` with the word UNIQUE in a **comment**. Declared properly in `2026_08_27_020500`; verified rejecting a duplicate while still allowing many NULLs for inbound | Without the index the guard did not exist and a double-click sent the client two emails |
+| **The guide ordered `email_messages` BEFORE `email_threads`** (§Batch 1b steps 3 and 4), but `email_messages.thread_key` has an inline FK to `email_threads.thread_key` — messages cannot be created first. No cycle exists, so threads simply build first. Corrected in the guide | The guide's own stated job is *"order and dependency"*, which makes this the one kind of error it should not contain |
+| 🔴 **`tenant_policies` as specified could not be created on MySQL at all.** The DDL pairs `policy_scope_gate ... STORED` with `FOREIGN KEY (agent_id) ... ON DELETE CASCADE`, but MySQL 8 refuses `ON DELETE CASCADE` on a column a **stored** generated column depends on — and `agent_id` is both. Fails with `ERROR 1215 Cannot add foreign key constraint`. Measured 2026-08-27: `STORED+CASCADE` fails, `VIRTUAL+CASCADE` works, `STORED+RESTRICT` works. **Fixed by making the gate `VIRTUAL`**, which keeps the cascade (an override belonging to a deleted branch is meaningless) and still indexes. Schema doc corrected | This is the second table in the schema to use the generated-column trick, and the interaction between it and the FK was never exercised. `job_entities.unique_role_gate` stays `STORED` and is fine — its base columns (`role`, `deleted_at`) carry no FK |
+| **`DB::table('information_schema.table_constraints')` does not work** — the query builder quotes the whole string as one identifier | Use `DB::select()` with raw SQL for any `information_schema` read |
+
+---
+
+## 🟠 Design decisions with no owner yet
+
+| # | Gap | Why it matters | Due by |
+|---|---|---|---|
+| 19 | 🔴 **A user who reconnects after a tier downgrade silently never syncs.** Found by running the scenario, 2026-08-27. Sequence: the user removes their own mailbox (`disconnected_at` set) → superadmin downgrades the tier (`is_active = 0` on every row) → tenant is upgraded again, and the restore correctly **skips** that row because `disconnected_at IS NOT NULL` → the user later reconnects via fresh OAuth, which clears `disconnected_at`, sets `auth_state = 'connected'` and stores new tokens. **`is_active` is still `0`, stale from the old downgrade** — and sync requires all three | The user completes a full OAuth consent flow, the UI shows the mailbox connected, and **no mail ever arrives**, with no error anywhere. The two-axis design is right; what is missing is that the reconnect flow never re-evaluates the platform axis. Fix is in the reconnect handler — set `is_active` from the tenant's CURRENT tier rather than leaving whatever the last downgrade wrote. PRD.md §2.3.7/§3.3 specify each axis separately and never describe them interacting | **Step 5** (mailbox reconnect endpoint) |
+| 6 | **`customers.default_port_id` / `.branch_id` / `.sales_id` are `RESTRICT`.** 🔎 **New evidence 2026-08-27:** `enquiries.sales_id` **is** specified `ON DELETE SET NULL` in the same DDL — strong support for making `customers.sales_id` match. The DDL carries no `ON DELETE` clause so MySQL defaults to it — but `CONTEXT.md` §8's audited inventory counts exactly **3** RESTRICT FKs and names all three, none of them these. That implies `SET NULL` was intended, at least for `sales_id` | A departing sales rep cannot be deleted while they own any client. Arguably correct — but `PRD.md` §2.3.3 has an explicit *Unattributed* bucket for `sales_id IS NULL`, which is evidence SET NULL was the intent. Implemented as RESTRICT because a blocked delete is **loud and reversible** while a silent unassignment is neither | Segment C |
+| 7 | **Nothing enforces one `is_primary` per customer** in `customer_contacts`. Two rows can both claim to be the default `To:` recipient | The outreach draft addresses **whichever row the optimiser returns first** — a client-facing email to the wrong person, with nothing raised. The schema already has the tool (`job_entities.unique_role_gate` is a generated column doing exactly this), but adding it makes an 8th CHECK / 30th UNIQUE and breaks the audited inventory | Segment C outreach |
+| 8 | **`sequence_counters` first-number-of-year deadlock.** `SELECT … FOR UPDATE` on a row that does not exist yet takes a **gap lock**, not a row lock. Two branches minting their first number of a fiscal year concurrently can deadlock | Only on April 1st and only under concurrency — which is exactly when nobody is watching. Fix is an upsert-then-lock, not a schema change; the UNIQUE key already makes it *safe*, just not deadlock-free | **Step 4.4** |
+| 9 | **`stale_enquiry_days = 7` is invented.** `PRD.md` §5.4 says only "the tenant's configured stale window" and never states a value; `config/f16s.php` carries 7 as a placeholder, flagged in both places | An enquiry is nagged about, or isn't, on a number nobody chose | Before launch — **confirm with the business** |
+| 10 | **How schema reaches production is undecided.** `it_devops_checklist.md` says production migrations are applied as **manual SQL**, not Artisan. Local dev uses Artisan (approved) | Everything built here is a Laravel migration. If production is hand-applied SQL, the two drift and the `migrations` table stops describing reality — which is how `2026_05_16_060000` hid a broken ordering for two months (`CONTEXT.md` §6) | Before first production deploy |
+| 11 | **System-transactional email sender undecided.** Needed for ticket mail and arrival notices, which cannot go through a rep's personal mailbox (`PRD.md` §5.2.1) | Segment C has no way to send system mail | **Before Segment C** |
+
+---
+
+## 🟡 Known defects in live code (non-blocking)
+
+| # | Gap | Notes |
+|---|---|---|
+| 12 | **`config/auth.php` registers an `admin-api` guard pointing at `App\Admin::class`, which does not exist** and has no table | Any login with `roles.role = 'admin'` **500s**. Removing the guard also needs the `'admin'` branch dropped from `PasswordResetRequestController.php:29` |
+| 13 | **`App\User::GetAssosName()` references a non-existent `App\Association`** | Dead method; fatal if ever called |
+| 14 | **`locations` table is empty** and populated only by an Excel import | Ties into gap #1 — it is the only IATA mapping in the codebase |
+
+---
+
+## 🔵 External / calendar items
+
+| # | Gap | Notes |
+|---|---|---|
+| 15 | **Google restricted-scope CASA assessment** (`gmail.readonly`) | Deferred by the owner. **Weeks-to-months lead time** — a calendar item, not a code item. Caps Gmail onboarding at 100 users until cleared. Decide *internal Workspace app vs public listing* before onboarding is built |
+| 16 | **DNS CNAMEs for all six subdomains** → the ALB | Owner's to add. Nginx already answers all six names; **nothing local needs them** |
+
+---
+
+## ✅ Resolved (kept so they are not reopened)
+
+| Gap | Resolution |
+|---|---|
+| `{agent_code}` had no source column | **2026-08-27** — `companies.code` + `agents_info.branch_code`, concatenated, no inner separator. `PRD.md` §6.3 corrected |
+| `PRD.md` §5.2.7 vs §6.3 disagreed on number format | **2026-08-27** — §5.2.7's four-part form wins; §6.3 rewritten |
+| `admin.` conflated the platform operator with the tenant's Boss | **2026-08-27** — operator moved to `superadmin.`; `admin.` is the client's Boss, fully tenant-bound. See `CONTEXT.md` §6b |
+| Accounts had no home for cross-mode ledger work | **2026-08-27** — own host `accounts.`, tenant-bound, no portal scope |
+| Road mode deferred, but Batch 1b CHECKs were about to lock it out | **2026-08-27** — mode ships now (`transport_mode`, `ENQR-`/`JOBR-`, both CHECKs); UI stays deferred |
+| `bank_account_no` width: `VARCHAR(50)` vs `VARCHAR(255)` | **2026-08-27** — **both wrong**, measured. 10-char a/c → 200 chars; 34-char IBAN → **256**, one over `VARCHAR(255)`. Now `TEXT`, verified by round-trip |
+| `ports` vs the legacy `locations` table | **2026-08-27, confirmed with the owner** — not duplicates, both kept. `locations` is IATA-keyed, air-only, carries tariff `zone`/`region`, read by `rates` and AWB routing display. `ports` is LOCODE-keyed, covers sea and land, and is the FK target for `users`/`customers`/`rate_cards`. Port data is fed later; see gap #1 for what that load must include |
+
+---
+
+## Operational notes (not gaps, but they bite)
+
+- **New models need `composer dump-autoload`** before tinker's bare-name aliasing finds them. `Port::count()` fails with *Class "Port" not found* until then — recurs at every model checkpoint.
+- **Start the database first:** `docker compose up -d db`. A stopped container looks like a config problem, not a stopped container.
+- **`export PATH="/usr/local/opt/php@8.2/bin:$PATH"`** on every PHP command — system PHP is 8.5 and this project cannot run on it.

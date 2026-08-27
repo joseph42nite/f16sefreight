@@ -60,23 +60,39 @@ companies        (Platform tenant — the forwarding firm subscribing to F16s)
 - **`agent_id` isolates operational and financial records** — `enquiries`, `jobs`, `email_threads`, `accounts_invoices`, `job_documents`, and every analytical table.
 - **`customers.branch_id` is advisory, not a wall.** It records the *managing / proximity branch* used for routing and sales assignment. It is **not** an isolation boundary. (If a tenant later needs hard per-branch client walls, that becomes an explicit product feature, never a silent default.)
 
-### 1.3 The Three Portals
+### 1.3 The Portals
 
-Resolved by subdomain; the hostname binds the session scope.
+Resolved by subdomain; the hostname binds the request scope. **Six hosts, settled 2026-08-27** (owner's decision — an earlier revision of this section had three, conflated the tenant Boss with the platform Superadmin, and put Accounts inside the operational portals).
 
-| Subdomain | Portal | Session binding | Who logs in here |
-|---|---|---|---|
-| `focusair.f16sefreight.com` | **Focus Air** | `active_portal_scope = 'air'` | Pricing, Operations, Sales, Accounts |
-| `focussea.f16sefreight.com` | **Focus Sea** | `active_portal_scope = 'sea'` | Pricing, Operations, Sales, Accounts |
-| `admin.f16sefreight.com` | **Platform Admin** | none — platform level, no tenant | Platform Superadmin only |
+**Two independent bindings**, and keeping them separate is the point:
 
-Tenant **Boss / Director** users are deliberately **not portal-scoped**: they enter through either operational subdomain and see both modes side by side, because their job is cross-mode comparison.
+| | |
+|---|---|
+| **Tenant binding** | Is this request inside one customer's data, or above all of them? |
+| **Portal binding** | `active_portal_scope` — which transport mode's records does it see? |
+
+| Subdomain | Portal | Tenant bound? | `active_portal_scope` | Who logs in here |
+|---|---|---|---|---|
+| `focusair.f16sefreight.com` | **FocusAir** | ✅ yes | `'air'` | Pricing, Operations, Sales |
+| `focussea.f16sefreight.com` | **FocusSea** | ✅ yes | `'sea'` | Pricing, Operations, Sales |
+| `focusroad.f16sefreight.com` | **FocusRoad** | ✅ yes | `'road'` | Pricing, Operations, Sales · *mode live, UI deferred — §11* |
+| `accounts.f16sefreight.com` | **Accounts** | ✅ yes | **none — cross-mode** | Accounts (Command tier only) |
+| `admin.f16sefreight.com` | **Tenant Admin** | ✅ yes | **none — cross-mode** | The onboarded client's **Boss / Director** |
+| `superadmin.f16sefreight.com` | **Platform Admin** | ❌ **no tenant binding** | none | **F16s staff only** — the platform operator |
+
+> 🔒 **`admin.` and `superadmin.` are different people with opposite trust levels. Do not merge them.**
+> `superadmin.` is **F16s's own staff** operating the platform across *every* tenant, which is why it carries no tenant binding at all. `admin.` is the **Boss/Director of a client company we onboarded** — an ordinary tenant user, fully bound to their own `company_id`, who simply is not restricted to one transport mode.
+> An earlier revision of this document used `admin.` for the platform operator. Pointing a tenant's director at a hostname the middleware reads as *"no tenant binding"* would hand them unfiltered cross-tenant rows — a failure that looks fine in testing and leaks in production. The rename to `superadmin.` exists to make that impossible to get wrong by accident.
+
+**Why Accounts has its own host and no portal scope.** There is **one** ledger, not one per mode: invoices, the GST register, bank reconciliation and CASS all span air, sea and road together, so a bank transaction settling one air invoice and one sea invoice has nowhere to live in a mode-scoped portal. A separate origin also makes the product's sharpest control boundary — *pricing edits the cost sheet, only accounts posts it* (§2.3.4) — an isolation the browser enforces, since cookies, storage and CSP are per-origin. A compromised operational session does not reach the financial origin.
+
+**Tenant Boss / Director users are not portal-scoped.** They enter at `admin.` and compare modes side by side, because cross-mode comparison is the job. They remain tenant-bound throughout: no Boss ever sees another company's data.
 
 ### 1.4 Build Segments
 
 | Segment | Scope |
 |---|---|
-| **A — Core Operations OS** | Multi-portal document workspace (Focus Air, Focus Sea), Gmail/Outlook inbox sync, AI/OCR extraction, enquiry→job lifecycle, Kanban operations, role dashboards |
+| **A — Core Operations OS** | Multi-portal document workspace (FocusAir, FocusSea), Gmail/Outlook inbox sync, AI/OCR extraction, enquiry→job lifecycle, Kanban operations, role dashboards |
 | **B — Automated Financials** | Invoices, purchase vouchers, GST register, double-entry ledger, bank (Plaid/Setu) and IATA CASS reconciliation, financial reports |
 | **C — Future Expansion** | Air/Sea import documentation & customs transmission (IGM, CGM/SCMTR, FSU), direct carrier/airline booking integrations |
 
@@ -104,11 +120,11 @@ This is the authoritative description of **who can log in, what each login type 
 > **The platform authenticates statelessly (JWT), not by session** — see `implementation_guide.md` §3.0. An earlier draft of this section described binding context "to the session"; that predates knowledge of the codebase. Context is resolved **per request**, and the distinction is load-bearing: a session-backed portal scope silently returns unfiltered rows instead of failing.
 
 1. **Pre-login company selection is a convenience, not a binding.** The user may pick their company from the registered tenant list before entering credentials; it can narrow the login form. **It does not scope any query.** The authoritative `company_id` is derived after authentication from `user → branch → company`.
-2. **Subdomain resolves the portal.** Nginx passes the hostname to Laravel, which resolves `active_portal_scope` (`air` | `sea`) from the host **on every request** — or, on `admin.`, enters the platform-level context with no tenant binding at all.
+2. **Subdomain resolves the portal.** Nginx passes the hostname to Laravel, which resolves `active_portal_scope` (`air` | `sea` | `road`) from the host **on every request**. Three hosts bind no portal scope and are cross-mode: `accounts.` and `admin.` (both still fully **tenant-bound**), and `superadmin.`, which alone enters the platform-level context with **no tenant binding at all**. See §1.3 — `admin.` is the tenant's Boss, `superadmin.` is F16s staff, and the two must never be conflated.
 3. **Authentication.** On success the request context carries: `user_id`, `company_id`, `agent_id` (from `users.branch_name`), `designation`, `active_portal_scope`, and `company.tier`. **Only identity is carried in the token**; `designation` and `tier` are re-read from the database each request, so a demotion or a tier downgrade takes effect immediately rather than at token expiry.
 4. **The frontend receives `currentUser`** including `user.company.tier` and `user.designation`. Route guards and component-level gates read from it; the backend re-checks everything (the frontend gate is convenience, never security).
 
-*DNS:* the three subdomains are CNAME records at the DNS provider pointing at the application load balancer. Nginx virtual hosts inside the `web` container forward all three to the same Laravel entrypoint.
+*DNS:* the six subdomains are CNAME records at the DNS provider pointing at the application load balancer. Nginx virtual hosts inside the `web` container forward all six to the same Laravel entrypoint.
 
 ### 2.2 Registration & Onboarding
 
@@ -154,7 +170,7 @@ A client company commonly onboards **several branches**, each with its own addre
 
 | Tier | Logins | Who exists |
 |---|:---:|---|
-| **`core`** | **1** | One undifferentiated user. `users.designation` is carried but **inert** — no roles, no inbox, no jobs. Standalone Focus Air / House Waybill with `pdfplumber` only |
+| **`core`** | **1** | One undifferentiated user. `users.designation` is carried but **inert** — no roles, no inbox, no jobs. Standalone FocusAir / House Waybill with `pdfplumber` only |
 | **`tactical`** | **4** | `pricing` · `operations` · `sales` · `boss` — real, distinct logins |
 | **`command`** | **5** | adds `accounts`; upgrades `sales` and `boss` to client-book / financial scope |
 
@@ -331,7 +347,7 @@ Every list query in the system is the intersection of up to four independent fil
 
 1. **Tenant / branch isolation** — a **Laravel Global Scope**, applied automatically, branching on which column the table carries: `agent_id` for operational/financial tables, `company_id` for tenant-wide masters. This is the security boundary.
    - **Escape hatch:** background daemons, console commands, webhooks and supervisors call `withoutTenantScope()` explicitly (e.g. `Job::withoutTenantScope()->find($id)`).
-2. **Portal / mode scoping** — a **named, non-global** scope `scopeForActivePortal()` filtering `transport_mode`, chained explicitly in HTTP controllers. **Deliberately not global**, so queue workers, WebSocket broadcasts and crons — which have no session — are never silently mis-filtered.
+2. **Portal / mode scoping** — a **named, non-global** scope `scopeForActivePortal()` filtering `transport_mode` (`air` | `sea` | `road`), chained explicitly in HTTP controllers. **Deliberately not global**, so queue workers, WebSocket broadcasts and crons — which have no session — are never silently mis-filtered. The same property is what lets the three cross-mode hosts (`accounts.`, `admin.`, `superadmin.`) simply not chain it, rather than needing a bypass: no portal is bound there, so there is nothing to filter by.
 3. **Role scoping** — operators see `ops_id = me`; sales on Command sees `customers.sales_id = me`; pricing and admin see the full branch.
 4. **Tier gating** — the `CheckCompanyTier` middleware plus Vue route guards, implemented against the matrix in §3.2.
 
@@ -447,9 +463,9 @@ The leftmost persistent rail, present on every operational route:
 |---|---|---|---|
 | **Mail / Inbox** | `mailbox` | `/inbox` → `JobInbox.vue` | Pricing, Operations, Boss |
 | **Kanban Board** | `kanban` | `/kanban` → `OpsDashboard.vue` | Pricing, Operations, Boss |
-| **Focus Air** | `file-earmark-text` | standalone MAWB generation | Air portal |
+| **FocusAir** | `file-earmark-text` | standalone MAWB generation | Air portal |
 | **House Waybill** | `file-earmark` | standalone HAWB generation | Air portal |
-| **Focus Sea** | `water` | Master / House / Consol | Sea portal |
+| **FocusSea** | `water` | Master / House / Consol | Sea portal |
 | **Sales** | `graph-up` | `/sales` → `SalesDashboard.vue` | Sales, Admin |
 | **Financials** | `cash` | `/financials` | Accounts (full), Admin (read-only) — hidden below Command |
 | **Boss** | `speedometer` | `/boss` → `BossDashboard.vue` | Admin — Command |
@@ -482,9 +498,9 @@ Closing the drawer reverses the transition.
 | Tab | Component | Purpose |
 |---|---|---|
 | **Upload** *(default)* | dropzone | Drag-and-drop or click-to-select PDFs from the thread or local disk |
-| **Focus Air** | `FocusAir.vue` | MAWB draft verification |
+| **FocusAir** | `FocusAir.vue` | MAWB draft verification |
 | **House Waybill** | `HouseWayBill.vue` | HAWB draft verification |
-| **Focus Sea** | `FocusSeaMaster.vue` / `FocusSeaHouse.vue` / `FocusSeaConsol.vue` | MBL / HBL / consolidation |
+| **FocusSea** | `FocusSeaMaster.vue` / `FocusSeaHouse.vue` / `FocusSeaConsol.vue` | MBL / HBL / consolidation |
 | **Air Import** | `FocusAirImport.vue` | Import consol, arrival notice, DO release |
 | **Job Cost Sheet** | `JobCostSheet.vue` | Buy/sell rates, DO charges, cartage, doc fees |
 | **E-Docket** | document manager | `job_documents` upload & typing |
@@ -958,12 +974,12 @@ Rules are **scoped by `transport_mode`**; the polling service loads only the act
 - **A sea shipment never has air details.** `air_shipment_details` and `sea_shipment_details` are separate 1-to-1 tables; a job populates exactly one. `jobs.awb_number` is **air-only** — sea carries MBL/HBL on `sea_shipment_details` and leaves it NULL. Enforce in the model boot and assert in tests.
 - **Sequence prefixes differ.** The trailing letter is the mode marker — `A` = air, `S` = sea — consistent across both lifecycle stages:
 
-  | | Air | Sea |
-  |---|---|---|
-  | Enquiry (`enquiries.enquiry_no`) | `ENQA-{agent_code}-26-0001` | `ENQS-{agent_code}-26-0001` |
-  | Job (`jobs.execution_job_no`) | `JOBA-{agent_code}-26-0001` | `JOBS-{agent_code}-26-0001` |
+  | | Air | Sea | Road |
+  |---|---|---|---|
+  | Enquiry (`enquiries.enquiry_no`) | `ENQA-{agent_code}-26-0001` | `ENQS-{agent_code}-26-0001` | `ENQR-{agent_code}-26-0001` |
+  | Job (`jobs.execution_job_no`) | `JOBA-{agent_code}-26-0001` | `JOBS-{agent_code}-26-0001` | `JOBR-{agent_code}-26-0001` |
 
-  Each of the four counters increments **independently** in `sequence_counters`. Note that **`JOBS-` is the *sea* prefix** (`JOB` + `S` for sea), not a plural of "job". Any other spelling (e.g. `SSEA-`) is obsolete and must not be reintroduced.
+  Each of the six counters increments **independently** in `sequence_counters`. Note that **`JOBS-` is the *sea* prefix** (`JOB` + `S` for sea), not a plural of "job". Any other spelling (e.g. `SSEA-`) is obsolete and must not be reintroduced. `R` = road, added 2026-08-27 (§11).
 
 ### 5.3 Cargo Data — Declared vs Actual
 
@@ -1278,7 +1294,7 @@ Either response lands on the **existing email thread** for that job, so the appr
 
 **Quick replies:** `[Send Reply]` hits `POST /api/jobs/{id}/reply`. The backend authorizes via policy, retrieves the mailbox connection's credentials, compiles the HTML, and sends through the Gmail or Graph API **as a reply on the original thread** so the conversation stays threaded on the client's side.
 
-### 5.8 Focus Sea — Maritime Operations
+### 5.8 FocusSea — Maritime Operations
 
 Runs under `active_portal_scope = 'sea'`, rendered by `FocusSeaMaster.vue` (master shipments) and `FocusSeaHouse.vue` (house shipments).
 
@@ -1393,9 +1409,9 @@ The same relational fields carry **different companies** depending on document c
 
 **ICEGATE hard limits enforced on submit** — exceeding any of these fails structural validation: MBL 20 chars · HBL 20 chars · container 11 chars (ISO) · seal 15 chars · package code 3 chars · gross weight 14 digits with 3 decimals. Piece counts across houses **must** total the master exactly.
 
-### 5.9 Focus Air — Air Operations
+### 5.9 FocusAir — Air Operations
 
-**Export** uses `FocusAir.vue` (MAWB) and `HouseWayBill.vue` (HAWB), sharing the drawer pattern, the same entity/routing/packing/charges/customs/e-docket tab architecture, and the same footer commit workflow as Focus Sea.
+**Export** uses `FocusAir.vue` (MAWB) and `HouseWayBill.vue` (HAWB), sharing the drawer pattern, the same entity/routing/packing/charges/customs/e-docket tab architecture, and the same footer commit workflow as FocusSea.
 
 **Chargeable weight** for loose cargo:
 
@@ -1553,19 +1569,36 @@ Issued to consignees and brokers on flight/vessel arrival, carrying free storage
 
 All numbers — enquiry, job, invoice, notes, CAN, cover letter, manifest filing — flow through the **single** `sequence_counters` table, scoped `(agent_id, prefix, fiscal_year)`.
 
+**Every number has four hyphen-delimited parts: `{PREFIX}-{agent_code}-{fiscal_year}-{sequence}`.**
+
+| Part | Source | Example |
+|---|---|---|
+| `PREFIX` | Document type; for enquiries and jobs the trailing letter is the mode marker (`A` = air, `S` = sea) | `ENQA` |
+| `agent_code` | `companies.code` + `agents_info.branch_code`, **concatenated with no inner separator** | `F16BOM` |
+| `fiscal_year` | Two-digit **fiscal** year from `fiscalYear()` — **not** the calendar year | `26` |
+| `sequence` | `sequence_counters.current_value`, zero-padded to 4 | `0001` |
+
+> **`26` means FY 2026-27**, which runs 1 April 2026 → 31 March 2027. An enquiry raised in **February 2027 still numbers `26`**, not `27` — that is the calendar-vs-fiscal bug `fiscalYear()` exists to prevent, and it is why counters reset each **April 1st**, not each January.
+
+> **`agent_code` was resolved 2026-08-27** (owner's decision). It is the company abbreviation followed by the branch code, so a number identifies the tenant *and* the branch without a lookup: `ENQA-F16BOM-26-0001` is F16s, Mumbai branch, FY 2026-27, first air enquiry. Two columns rather than one, because the abbreviation belongs to the tenant and the code to the branch; storing the concatenation would duplicate the company part on every branch and let the two disagree. **No inner hyphen** — it would make the number five parts and break every parser and the `chk_enq_mode_prefix` guard.
+> **Uniqueness is load-bearing:** counters are scoped per `agent_id`, so two branches resolving to the same `agent_code` would emit byte-identical invoice numbers onto customs paperwork. `companies.code` is unique globally; `agents_info.branch_code` is unique **within a company**, so `F16BOM` and `ACMBOM` coexist.
+> ⚠️ **Both columns are nullable and empty as of 2026-08-27** (migration `2026_08_27_010300`). They must be **backfilled and tightened to `NOT NULL` before `EnquirySequenceService` goes live** in guide §4.4, or numbers format as `ENQA--26-0001`.
+
 | Document | Format |
 |---|---|
-| Enquiry (air / sea) | `ENQA-26-0001` / `ENQS-26-0001` |
-| Job (air / sea) | `JOBA-26-0001` / `JOBS-26-0001` |
-| Invoice | `INV-26-0001` |
-| Debit note | `DN-26-0001` |
-| Credit note | `CN-26-0001` |
-| Brokerage | `BRK-26-0001` |
-| Consol invoice | `CSINV-26-0001` |
-| Purchase voucher | `PV-26-0001` |
-| Cargo arrival notice | `CAN-26-0001` |
-| Cover letter | `CL-26-0001` |
-| Manifest filing | `MF-26-0001` |
+| Enquiry (air / sea / road) | `ENQA-F16BOM-26-0001` / `ENQS-F16BOM-26-0001` / `ENQR-F16BOM-26-0001` |
+| Job (air / sea / road) | `JOBA-F16BOM-26-0001` / `JOBS-F16BOM-26-0001` / `JOBR-F16BOM-26-0001` |
+| Invoice | `INV-F16BOM-26-0001` |
+| Debit note | `DN-F16BOM-26-0001` |
+| Credit note | `CN-F16BOM-26-0001` |
+| Brokerage | `BRK-F16BOM-26-0001` |
+| Consol invoice | `CSINV-F16BOM-26-0001` |
+| Purchase voucher | `PV-F16BOM-26-0001` |
+| Cargo arrival notice | `CAN-F16BOM-26-0001` |
+| Cover letter | `CL-F16BOM-26-0001` |
+| Manifest filing | `MF-F16BOM-26-0001` |
+
+> **Earlier revisions of this table omitted `agent_code`**, contradicting §5.2.7 which always carried it. §5.2.7 is correct and this table has been brought into line — do not reintroduce the three-part form.
 
 **Concurrency:** every increment runs inside a database transaction holding a row-level write lock:
 
@@ -2397,7 +2430,7 @@ The `docker-compose.yml` stack runs on **8 GB RAM** with worker counts scaled do
 | Item | Status |
 |---|---|
 | **C.2 Direct Carrier & Airline Booking Integration** | Deferred |
-| **Road transport** (`FocusRoadWaybill.vue`, `TruckManifest.vue`) | Deferred — not in current scope |
+| **Road transport — UI only** (`FocusRoadWaybill.vue`, `TruckManifest.vue`) | **Screens deferred. The MODE is live** — decided 2026-08-27. `transport_mode = 'road'`, the `focusroad.` portal, the `ENQR-`/`JOBR-` sequence prefixes and the Batch 1b CHECK constraints all admit road from day one. Rationale: those CHECKs and three analytics UNIQUE keys are authored in Batch 1b, and widening them afterwards is an ALTER against live constraints. Enabling the mode now is nearly free; retrofitting it is not |
 | **Predictive cash-flow modelling & AI risk profiling** | Deferred. Preparation only: keep compiling structured trend tables, and maintain logical separation between debtor identity and numerical payment logs so future exports can be masked (`Client_A`, `Client_B`) |
 
 ### Open schema items to resolve before their module ships

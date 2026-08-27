@@ -77,6 +77,7 @@ Use it when you need what `artisan serve` cannot give you: **MySQL 8** — so th
 
 | File | Owns |
 |---|---|
+| **`GAPS.md`** | **Every open gap, deferred obligation and known defect — with what breaks and when it is due.** Read it before starting any step |
 | `PRD.md` | Product — 6 logins, 3 tiers, workflows, formulas, NFRs |
 | `database_relations_tree.md` | **Schema — all 59 tables**, columns, FKs, indexes, runnable DDL |
 | `implementation_guide.md` | Build order — 8 checkpointed steps |
@@ -259,11 +260,66 @@ Then read `implementation_guide.md` §Batch 1a. Two things to settle first, both
 
 ---
 
+## 6a2. 🐬 MySQL is the only supported engine — owner's decision, 2026-08-27
+
+**The live server is MySQL. SQLite portability is no longer a design constraint.** Local dev, `phpunit.xml` and production all run MySQL 8, so there is one dialect to reason about.
+
+**Nothing built before this date needs reworking** — the portable choices already made (`CASE WHEN` over `IF()`, the generated-column gates) are correct on MySQL anyway. What changes is forward-looking: MySQL-only features may be used freely, and the SQLite caveats scattered through `database_relations_tree.md` are historical notes rather than live requirements.
+
+**Two caveats that still matter, and are MySQL's own, not SQLite's:**
+- **No transactional DDL.** A migration running several DDL statements can still half-apply and not be recorded. Every such migration needs a `Schema::hasTable` guard and idempotent constraint adds.
+- **`log_bin_trust_function_creators = 1`** is required or no trigger can be created (`GAPS.md` #20).
+
+---
+
+## 6b. 🌐 Portal topology — six hosts, settled 2026-08-27
+
+The planning set had **three** subdomains, conflated the tenant Boss with the platform Superadmin, and put Accounts inside the operational portals. All three were wrong. Owner's decision, now reflected in `PRD.md` §1.3/§2.1, `implementation_guide.md` §0.2/§3.3 and `docker/nginx/default.conf`:
+
+| Host | Tenant bound? | `active_portal_scope` | Who |
+|---|---|---|---|
+| `focusair.` | ✅ | `'air'` | Pricing, Operations, Sales |
+| `focussea.` | ✅ | `'sea'` | Pricing, Operations, Sales |
+| `focusroad.` | ✅ | `'road'` | Pricing, Operations, Sales — **mode live, UI deferred** |
+| `accounts.` | ✅ | none — cross-mode | Accounts (Command only) |
+| `admin.` | ✅ | none — cross-mode | **The onboarded client's Boss / Director** |
+| `superadmin.` | ❌ **none** | none | **F16s's own staff** — platform operator |
+
+🔒 **The rename that matters: `admin.` was the platform operator and is now the tenant's Boss; the operator moved to `superadmin.`** They are different people with opposite trust levels — the operator works across every tenant, the Boss inside exactly one. Leaving the Boss on a host the middleware reads as *"no tenant binding"* would return unfiltered cross-tenant rows, and it would look correct in every single-tenant test.
+
+⚠️ **"No portal scope" ≠ "no tenant scope".** `accounts.` and `admin.` bind no portal yet are fully tenant-bound. `BindPortalScope` only ever decides the *mode*; tenant binding always comes from `user → branch → company`, never from the host. Do not let the two collapse into one check.
+
+**Accounts got its own host because there is one ledger, not one per mode** — invoices, GST register, bank reconciliation and CASS all span modes, so a bank transaction settling an air and a sea invoice has no home in a mode-scoped portal. The separate origin also gives browser-enforced isolation (cookies, storage, CSP are per-origin) around the product's sharpest control: pricing edits the cost sheet, **only accounts posts it**.
+
+**Road: the MODE ships now, the UI does not.** `transport_mode = 'road'`, prefixes `ENQR-`/`JOBR-`, and both Batch 1b CHECK constraints admit road from the start. Reason for deciding it now rather than later: `chk_enq_mode_prefix`, `chk_jobs_mode_prefix` and three analytics UNIQUE keys are authored in **Batch 1b — the next batch** — and widening a live CHECK afterwards is an ALTER under load. `FocusRoadWaybill.vue` / `TruckManifest.vue` stay deferred (`PRD.md` §11).
+
+**Still to build** (none of it blocked, all correctly sequenced *after* Batch 1b, which creates the `transport_mode` column it filters on): `BindPortalScope` middleware, `scopeForActivePortal()`, the `FocusSea*.vue` screens. Nginx already answers all six names; **DNS CNAMEs are the owner's to add** and are not needed for local work.
+
+---
+
 ## 7. Where we stopped
 
-**Nothing from the plan has been built yet.** Environment is up, docs are in the repo, schema is audited.
+✅ **BATCH 1a COMPLETE — 2026-08-27.** All 8 steps built, checkpointed and regression-tested. **Checkpoint 1a passes:** every batch-1a migration shows `Ran`, and `Port::count()` returns `0` without exception.
 
-**Next step: Batch 1a** — `sequence_counters` → `ports` → `customers` → `customer_contacts` → `partners`, plus ALTERs to `companies` and `users`. Read `implementation_guide.md` §"Batch 1a" for exact ordering and index requirements.
+| # | Step | Migration |
+|---|---|---|
+| 1 | `sequence_counters` | `2026_08_27_010000` |
+| 2 | `ports` + `App\Port` | `2026_08_27_010100` |
+| 3 | `companies` ALTER | `2026_08_27_010200` |
+| 3a | `{agent_code}` pair — `companies.code` + `agents_info.branch_code` | `2026_08_27_010300` |
+| 4 | `customers` | `2026_08_27_010400` |
+| 5 | `customer_contacts` | `2026_08_27_010500` |
+| 6 | `partners` | `2026_08_27_010600` |
+| 7 | `users` ALTER — `origin_port_id`, `designation`, `signature_text` | `2026_08_27_010700` |
+| 8 | `uuid` + `job_id` on both waybill tables | `2026_08_27_010800` |
+
+**Verified beyond the checkpoint:** every migration rolls back and re-applies cleanly; the full set applies to a **fresh database** in order (34 tables, no partial failures); constraints were tested behaviourally rather than only inspected — the CC gate honours the DPDP opt-out override, the client-group roll-up derives from `(company_id, email_domain)`, both `customers` hot-path indexes are confirmed in use by `EXPLAIN`, and the full `user → branch → company → tier` chain resolves and yields `agent_code`. `php artisan test` **26 passed** and `npm run test:unit` **9 passed** throughout.
+
+**Next: Batch 1b** — `enquiries` must precede `jobs` (`jobs.enquiry_id` is NOT NULL). Read `implementation_guide.md` §"Batch 1b".
+
+🕳️ **Open gaps now live in `GAPS.md`** — 18 items with what breaks and when each is due. **Four come due in Batch 1b or Step 2:** the `encrypted` cast on the bank columns (#3, Step 2 — plaintext until then), the MySQL trigger forms that have never been executed (#5, Batch 1b), the waybill `job_id` FK that must be added the moment `jobs` exists (#17, Batch 1b), and `ui_ux_guide.md`'s missing reconciliation pass (#4, before Step 6).
+
+**Also noted:** new models need `composer dump-autoload` before tinker's bare-name aliasing finds them (`Port::count()` fails with *Class "Port" not found* until then). Bites at every model checkpoint.
 
 ### Readiness review — 2026-08-26
 

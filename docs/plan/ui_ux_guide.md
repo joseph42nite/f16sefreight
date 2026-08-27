@@ -375,7 +375,7 @@ DEFAULT (≥1200px)
 DRAWER OPEN (≥1200px)
 ┌──┬─────────────────────────┬──────────────────────────┐
 │▤ │ Conversation      50%   │ Drawer workspace   50%   │
-│60│                         │ [Upload|Focus Air|Cost]  │
+│60│                         │ [Upload|FocusAir|Cost]  │
 └──┴─────────────────────────┴──────────────────────────┘
    ↑ rail          ↑ Folders + Threads slide off-screen left
 
@@ -421,7 +421,7 @@ Permissions live in `PRD.md` §2.3–2.4. This section is only **how gating appe
 
 ### 8.3 Sidebar by tier
 
-Core renders **no role navigation at all** — a single-user tool shows Focus Air / House Waybill / Settings and nothing else. There is no collapsed "locked" section implying hidden roles, because role separation is not a feature Core is missing; it is a concept that does not apply.
+Core renders **no role navigation at all** — a single-user tool shows FocusAir / House Waybill / Settings and nothing else. There is no collapsed "locked" section implying hidden roles, because role separation is not a feature Core is missing; it is a concept that does not apply.
 
 Tactical and Command render the full rail with tier locks on Command-only items (`/financials`, `/boss`, sales client-book widgets).
 
@@ -529,9 +529,9 @@ C · KANBAN
 
 | Nav item | Route |
 |---|---|
-| Focus Air | `/focus-air` |
+| FocusAir | `/focus-air` |
 | House Waybill | `/house-waybill` |
-| Focus Sea *(sea portal)* | `/focus-sea` |
+| FocusSea *(sea portal)* | `/focus-sea` |
 | Settings | `/settings/mailboxes` only |
 
 **Screens**
@@ -552,7 +552,7 @@ C · KANBAN
 
 **Available:** `tactical`, `command`. **Lands on** `/inbox`.
 
-**Navigation:** Inbox · Kanban · Focus Air / Sea · House Waybill · Customers · Partners · Settings *(read)*
+**Navigation:** Inbox · Kanban · FocusAir / FocusSea · House Waybill · Customers · Partners · Settings *(read)*
 
 #### Screens
 
@@ -667,7 +667,7 @@ Tue 13 Jun    [JOBA-0004 ✓]   [JOBA-0009 ✓]   [JOBS-0002 ✓]
 - **Filters** — staff · progress · date range with `[Today]`; active filters render as removable chips, persisted per user.
 - **Filtered staff banner** — active count, pending count, **idle-duration list** (`JOBA-26-0004 · pending 2h 15m`) sorted longest-first.
 
-**③ Drawer** — layout **B**. Tabs: Upload · Focus Air / Sea · House Waybill · **Job Cost Sheet** · E-Docket · Search. `[View Source Email]` always present in the toolbar.
+**③ Drawer** — layout **B**. Tabs: Upload · FocusAir / FocusSea · House Waybill · **Job Cost Sheet** · E-Docket · Search. `[View Source Email]` always present in the toolbar.
 
 **④ Document forms** — §9.9. **⑤ Directories** — §9.10.
 
@@ -691,7 +691,7 @@ Analytics dashboards (nav hidden; direct URL redirects to `/inbox`) · `/financi
 
 **Available:** `tactical`, `command`. **Lands on** `/kanban`, **filtered to their own queue**.
 
-**Navigation:** Kanban · Inbox · Focus Air / Sea · House Waybill · Manifest Filing · Cover Letters · Message Log
+**Navigation:** Kanban · Inbox · FocusAir / FocusSea · House Waybill · Manifest Filing · Cover Letters · Message Log
 
 #### Screens
 
@@ -949,7 +949,7 @@ Standalone route and drawer tab render the **same component**; standalone gets t
 └──────────────────────────────────────────────────────────────┘
 ```
 
-- **`[🔗 Generate Link]`** sits immediately right of `[Generate PDF]` in **Focus Air, House Waybill and Focus Sea alike**. Disabled until a PDF exists, with the tooltip *"Generate the PDF first."*
+- **`[🔗 Generate Link]`** sits immediately right of `[Generate PDF]` in **FocusAir, House Waybill and FocusSea alike**. Disabled until a PDF exists, with the tooltip *"Generate the PDF first."*
 - **Tab state** — validation errors show `●` in `--status-critical`; **disabled** tabs (§10.5) grey out with a tooltip giving the reason, and stay visible so the form's full shape stays legible.
 - **Entity tab** — address textarea is read-only until an entity is selected from the lookup above it.
 - **Item tab** — CBM and chargeable weight compute live, render in `--text-secondary` with a `calculated` chip, never directly editable.

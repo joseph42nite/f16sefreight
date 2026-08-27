@@ -34,6 +34,10 @@ graph TD
 
 ---
 
+> 🕳️ **Open gaps live in `GAPS.md`** — every unresolved decision, deferred obligation and known defect, each with what breaks and the latest step it can safely be fixed. Check it before starting a step; several items come due mid-build (the `encrypted` cast at Step 2, the document codes at Step 4.4, the `ui_ux_guide.md` reconciliation before Step 6).
+
+---
+
 ## Step 0 — Containerized Infrastructure
 
 Establish consistent environments, multi-portal subdomains, and VM boundaries before any code.
@@ -67,11 +71,20 @@ Also create `Dockerfile.laravel` and `Dockerfile.fastapi`.
 
 CNAME records at the DNS provider (Route 53 / Cloudflare) pointing at the application load balancer:
 
-- `focusair.f16sefreight.com` → binds `active_portal_scope = 'air'`
-- `focussea.f16sefreight.com` → binds `active_portal_scope = 'sea'`
-- `admin.f16sefreight.com` → platform superadmin portal, no tenant binding
+**Six hosts — settled 2026-08-27** (`PRD.md` §1.3). Tenant binding and portal binding are independent axes:
 
-Add Nginx virtual hosts inside the `web` container listening on all three server names and forwarding to the single Laravel entrypoint, so Laravel can bind the session scope from the request host.
+| Host | Tenant bound? | `active_portal_scope` | Who |
+|---|---|---|---|
+| `focusair.f16sefreight.com` | ✅ | `'air'` | Pricing, Operations, Sales |
+| `focussea.f16sefreight.com` | ✅ | `'sea'` | Pricing, Operations, Sales |
+| `focusroad.f16sefreight.com` | ✅ | `'road'` | Pricing, Operations, Sales *(mode live, UI deferred)* |
+| `accounts.f16sefreight.com` | ✅ | none — cross-mode | Accounts (Command only) |
+| `admin.f16sefreight.com` | ✅ | none — cross-mode | **The client tenant's Boss / Director** |
+| `superadmin.f16sefreight.com` | ❌ **none** | none | **F16s's own staff** — platform operator |
+
+> 🔒 **`admin.` ≠ `superadmin.`** `admin.` is an ordinary *tenant* user (the onboarded client's boss), fully bound to their `company_id` and merely unrestricted as to mode. `superadmin.` is F16s staff operating across every tenant, and is the **only** host with no tenant binding. An earlier revision used `admin.` for the platform operator; binding a tenant director to a host the middleware treats as untenanted would return unfiltered cross-tenant rows.
+
+Add Nginx virtual hosts inside the `web` container listening on all six server names and forwarding to the single Laravel entrypoint, so Laravel can bind the request scope from the host.
 
 ### 0.3 AI instance provisioning (AWS EC2)
 
@@ -84,7 +97,7 @@ Add Nginx virtual hosts inside the `web` container listening on all three server
 docker compose up -d
 docker compose ps                                   # all 5 services healthy
 docker compose exec web php artisan migrate:status  # DB container reachable
-dig focusair.f16sefreight.com                       # resolves to the ALB
+dig focusair.f16sefreight.com                       # resolves to the ALB (repeat for all six)
 curl http://ai-server:8000/health                   # from inside the web container
 ```
 
@@ -111,10 +124,24 @@ No inbound foreign key dependencies; these run absolutely first.
 1. **`sequence_counters`** — must be first; all numbering depends on it
 2. **`ports`** — UN/LOCODE master reference
 3. **Alter `companies`** — add `tier`, `email_domain`, `ocr_credits_balance`, `ocr_credits_monthly_allowance`, `ocr_credits_limit`, **`deleted_at`** (`PRD.md` §9.3 lists `companies` among the soft-deleting tables)
+   - ✅ **Built 2026-08-27** — `2026_08_27_010200_add_tenancy_columns_to_companies_table`. Two columns are **`NOT NULL`** where the DDL left it implicit: `tier` (so tier resolution stays total per §4.1.1 — a NULL tier reintroduces the "tenant with no tier" case the whole OCR routing avoids) and `ocr_credits_balance` (a NULL balance is not a number and cannot be debited). `ocr_credits_monthly_allowance` and `ocr_credits_limit` stay **NULL with no SQL default** — NULL means *inherit from `config/f16s.php`*, and a default here would be a second home for the number.
+3a. **Alter `companies` + `agents_info` — the `{agent_code}` pair.** ✅ **Decided and built 2026-08-27** — `2026_08_27_010300_add_document_code_to_companies_and_branches`. Adds `companies.code` (VARCHAR(6), unique globally) and `agents_info.branch_code` (VARCHAR(5), unique **within** a company). Concatenated with no inner separator, they form the `{agent_code}` segment of every document number: `F16` + `BOM` → `ENQA-F16BOM-26-0001`.
+   - **Why it is not in the DDL:** `{agent_code}` appeared in exactly two lines of `PRD.md` (§5.2.7) and had **no column anywhere in the schema**, while §6.3 contradicted it with a shorter three-part form. Resolved by the owner on 2026-08-27 in favour of the four-part form, with the segment sourced from company + branch so a number names the tenant *and* the branch without a lookup. `PRD.md` §6.3 has been corrected to match.
+   - ⚠️ **Both columns are nullable and EMPTY.** Existing rows have no codes and none could be invented. **Backfill and tighten to `NOT NULL` before `EnquirySequenceService` goes live (§4.4)** — until then a number formats as `ENQA--26-0001`. Uniqueness is the load-bearing part: counters are scoped per `agent_id`, so two branches sharing a code emit byte-identical invoice numbers onto customs paperwork.
 4. **Create `customers`** — including tax/address/banking fields, `payment_terms_days`, `credit_limit`
    - Add composite indexes **`(company_id, email_domain)`** and **`(company_id, sales_id)`**. The first is hit on *every inbound mail*; the second on *every sales-dashboard query*. Adding them later means a table scan on the hottest paths in the product.
+   - ✅ **Built 2026-08-27** — `2026_08_27_010400_create_customers_table`. Both indexes verified in use via `EXPLAIN`.
+   - 🔐 **`bank_account_no` / `bank_ifsc_code` are `TEXT`, not `VARCHAR` — a correction, not a preference.** The schema doc gave two different widths (`VARCHAR(50)` in the column table, `VARCHAR(255)` in the DDL) and measurement showed both fail: a 10-char account number encrypts to **200** chars, a 34-char IBAN to **256**. `VARCHAR(50)` breaks on every row; `VARCHAR(255)` truncates a legal maximum-length IBAN by one character and loses it unrecoverably. Verified by round-tripping a 34-char IBAN through the column. Both doc blocks corrected.
+   - ⚠️ **The column type encrypts nothing — the `encrypted` cast on the model does, and the model is Step 2.** Any write before that cast exists stores customer bank details **in plaintext**. Add the cast together with the model.
+   - **FKs declared inline rather than deferred to the Batch 1c cyclic ALTER.** The deferral exists because the greenfield DDL creates `users` *after* `customers`; in this codebase `users` and `agents_info` are live and `ports` was built in step 2, so there is no cycle and integrity is enforced from the first row.
+   - ❓ **Open: `default_port_id` / `branch_id` / `sales_id` are `RESTRICT`** (the DDL carries no `ON DELETE` clause, so MySQL defaults to it). But `CONTEXT.md` §8's inventory counts only **3** RESTRICT FKs and names all three — none of them these — which implies `SET NULL` was intended, at least for `sales_id` (a departing rep should leave the client unattributed, not block the delete). Implemented as RESTRICT because a blocked delete is loud and reversible whereas a silent unassignment is neither. **Decide before Segment C.**
 5. **Create `customer_contacts`** — the per-client address book (FK → `companies`, `customers`). Unique `(customer_id, email)`; index `(customer_id, include_in_cc, opted_out_at)` for the outreach CC lookup. **`include_in_cc` defaults to FALSE** — harvesting is automatic, CC'ing is a human decision
+   - ✅ **Built 2026-08-27** — `2026_08_27_010500_create_customer_contacts_table`. The CC gate was verified behaviourally, not just structurally: four harvested contacts CC nobody until a human ticks the box, and a contact carrying `opted_out_at` drops out of the recipient list **while `include_in_cc` is still 1** — confirming the DPDP override is unconditional (`PRD.md` §7.3.7, §9.3). `idx_contacts_cc` confirmed in use by `EXPLAIN`.
+   - ❓ **Open: nothing enforces one `is_primary` per customer.** The DDL specifies no such constraint, so two rows can both claim to be the default `To:` recipient and the outreach draft addresses whichever the optimiser returns first — a client-facing email to the wrong person, with nothing raised. The schema already has the tool for this (`job_entities.unique_role_gate` uses a generated column for exactly this shape of partial uniqueness), but adding an 8th CHECK/30th UNIQUE would break the audited constraint inventory in `CONTEXT.md` §8, so it is flagged rather than invented. **Decide before Segment C outreach ships.**
 6. **Create `partners`** — airlines, shipping lines, brokers, transporters, vendors
+   - ✅ **Built 2026-08-27** — `2026_08_27_010600_create_partners_table`. 🔐 `bank_account_no`/`bank_ifsc_code` are **`TEXT`**, the same correction applied to `customers` in step 4 (both doc blocks said `VARCHAR`, both widths fail the encrypted cast). Vendor payouts run through these columns, so a truncated account number is a payment to nowhere.
+   - **One table for all nine `partner_type` values, deliberately.** The same company is routinely the co-loader on one shipment and the transporter on another; per-type tables would duplicate the party and split its ledger. **Role belongs to the relationship** (`job_entities.role`, the five party FKs on `sea_shipment_details`), not to the party — `partner_type` is only the primary classification.
+   - **`airlines` stays and is not a duplicate** (`PRD.md` §10): it feeds the email exclusion engine's carrier-*domain* list, while accounting and operational carrier records live here. Do not write new accounting logic against `airlines`.
 7. **Alter `users`** — add `origin_port_id`, `designation`, `signature_text`; convert `branch_name` to `BIGINT UNSIGNED` + FK
    - ⚠️ **`pima_address` already exists on the live table — do NOT add it.** Verified 2026-08-26; adding it again fails the migration.
    - ✅ **`origin_airport_code` and `origin_port_id` both stay — decided 2026-08-26.** They are different things: `origin_airport_code` is a plain IATA string on `users` with no foreign key; `origin_port_id` is an **FK into the new `ports` table** (step 2 of this batch), which is the UN/LOCODE master covering seaports as well as airports. Add `origin_port_id` **nullable** now and leave it empty — the `ports` directory is being loaded later. Backfill it from `origin_airport_code` once that data lands. **Registration cannot require it until then**, though `PRD.md` §2.2 says it eventually must.
@@ -127,6 +154,10 @@ No inbound foreign key dependencies; these run absolutely first.
    - **Do not** start writing new logic against `users.company_name` — it stores a company **ID** despite the name, and `LoginController.php:45` looks it up by name. Company resolves via `user → branch → company` (§3.0). See `CONTEXT.md` §6.
 8. **Alter `air_way_bills` & `house_way_bills`** — add `uuid`, `job_id`
    - ⚠️ **Add only those two columns.** The DDL blocks for both tables are stale: the live `air_way_bills` PK is `INTEGER AUTO_INCREMENT` (not `VARCHAR(20)` of `awb_code + awb_no`) and both tables carry ~50 live columns. Anything treating `air_way_bills.id` as the AWB number is wrong against this codebase.
+   - ✅ **Built 2026-08-27** — `2026_08_27_010800_add_uuid_and_job_id_to_waybill_tables`. Column counts went 47→49 and 53→55; `uuid` is `CHAR(36)` nullable unique, `job_id` `BIGINT UNSIGNED` nullable and indexed.
+   - **Live PKs, measured — the guide previously recorded only the air one:** `air_way_bills.id` is `BIGINT UNSIGNED AUTO_INCREMENT`, but **`house_way_bills.id` is `VARCHAR(50)`** (the DDL says `VARCHAR(30)`). Neither table carries **any foreign key at all** today.
+   - **`uuid` is nullable on purpose.** It is the secure outward-facing tracker reference — sequential ids would let anyone holding one share link enumerate the tenant's whole waybill history — but live rows predate it, so it cannot be `NOT NULL` until a backfill runs. UNIQUE is what matters now: a tracker link must resolve to exactly one document.
+   - 🔴 **`job_id` HAS NO FOREIGN KEY YET — this is a follow-up, not an omission.** `jobs` does not exist until Batch 1b, so the column ships unconstrained (verified: it currently accepts `999999`). **Add the FK in Batch 1b immediately after `jobs` is created**, or these two columns stay unconstrained permanently. See `GAPS.md` #17.
 
 **Encrypt at rest:** `bank_account_no` and `bank_ifsc_code` on both `customers` and `partners`, via the Eloquent `encrypted` cast.
 
@@ -160,19 +191,35 @@ No inbound foreign key dependencies; these run absolutely first.
    - **Also add the mode/prefix drift guard on both tables** — `transport_mode` is the source (known from `active_portal_scope` before any number exists), and `enquiry_no`/`execution_job_no` merely format it visually. A `CHECK` makes the two impossible to disagree:
      ```sql
      ALTER TABLE enquiries ADD CONSTRAINT chk_enq_mode_prefix CHECK (
-       (transport_mode = 'air' AND enquiry_no LIKE 'ENQA-%') OR
-       (transport_mode = 'sea' AND enquiry_no LIKE 'ENQS-%'));
+       (transport_mode = 'air'  AND enquiry_no LIKE 'ENQA-%') OR
+       (transport_mode = 'sea'  AND enquiry_no LIKE 'ENQS-%') OR
+       (transport_mode = 'road' AND enquiry_no LIKE 'ENQR-%'));
      ALTER TABLE jobs ADD CONSTRAINT chk_jobs_mode_prefix CHECK (
-       (transport_mode = 'air' AND execution_job_no LIKE 'JOBA-%') OR
-       (transport_mode = 'sea' AND execution_job_no LIKE 'JOBS-%') OR
+       (transport_mode = 'air'  AND execution_job_no LIKE 'JOBA-%') OR
+       (transport_mode = 'sea'  AND execution_job_no LIKE 'JOBS-%') OR
+       (transport_mode = 'road' AND execution_job_no LIKE 'JOBR-%') OR
        execution_job_no IS NULL);
      ```
    - Add `idx_jobs_ops_clearance` on `(ops_id, planned_clearance_date)` — the OLI query depends on it
-3. `mailbox_connections`, `email_messages`, `email_attachments`
-4. **`email_threads`** — FKs to `agents_info`, `users`, **`enquiries`** *and* `jobs`. The thread spans both lifecycles: `enquiry_id` is set at triage, `job_id` added on conversion, and **both stay NULL** for airline/clearance/trucking mail. Include `first_response_at` (first **outbound** reply — distinct from `first_triage_at`, which is internal triage, not a reply)
+   - ✅ **Steps 1-2 built 2026-08-27** — `2026_08_27_020000_create_enquiries_table`, `2026_08_27_020100_create_jobs_table`, `2026_08_27_020200_add_deferred_job_foreign_keys`.
+   - 🔴 **All four CHECK constraints force `COLLATE utf8mb4_bin`, and this is load-bearing.** The columns collate `utf8mb4_unicode_ci`, which is **case-insensitive**: a plain `status IN (...)` accepts `'Lost'`, `'cancelled'` and `'INTAKE'`. Proven against MySQL 8.0.46 — `chk_enq_status` reported present in `information_schema` while silently admitting `'Lost'`. MySQL's own reads are case-insensitive too so the backend never notices, but the value is serialised to JSON and Vue compares with `===`. **Apply the same to `chk_saq_audience`, `chk_saq_internal_no_draft` and `chk_share_approval`** when those tables are built.
+   - ⚠️ **Every migration running more than one DDL statement needs a `Schema::hasTable` guard and idempotent constraint adds.** The first `enquiries` run created the table then failed in its own verification helper — leaving a partial, *unrecorded* schema, so the retry died on `1061`/`1050`. MySQL has no transactional DDL. Both paths (clean create and recovery) are now verified.
+   - **The deferred FKs are closed in step 2, not later.** `enquiries.reinitiated_from_job_id` is a genuine cycle; `air_way_bills.job_id` / `house_way_bills.job_id` were left unconstrained in Batch 1a·8 and nothing later in the plan revisits them.
+3. `mailbox_connections`, then **`email_threads`**, then `email_messages`, `email_attachments`
+   - ⚠️ **ORDER CORRECTED 2026-08-27 — `email_threads` must precede `email_messages`.** This list previously had messages at step 3 and threads at step 4, but `email_messages.thread_key` carries an inline FK to `email_threads.thread_key`, so messages cannot be created first. No cycle exists (threads reference only `agents_info`, `users`, `enquiries`, `jobs`), so threads simply build first.
+   - ✅ **Built 2026-08-27** — `2026_08_27_020300` … `020600`.
+   - 🔴 **`email_messages.idempotency_key` is declared UNIQUE here, which the DDL block omitted.** The column table marks it `UK` and calls it the double-send guard; the runnable DDL had the word UNIQUE in a *comment* and no constraint. Without it a double-click sends the client the same email twice — which `PRD.md` calls unrecoverable. Verified: a duplicate key is rejected, while many inbound rows still share NULL.
+   - 🔴 **`mailbox_connections` has TWO deactivation axes and they are not interchangeable.** `is_active = 0` is a **superadmin** tier downgrade (tokens KEPT); `disconnected_at`/`_by` is **the user** removing their own mailbox (tokens CLEARED). Restore on upgrade must read `WHERE is_active = 0 AND disconnected_at IS NULL`; sync requires **all three** of `is_active = 1`, `disconnected_at IS NULL`, `auth_state = 'connected'`. Verified end-to-end — the naive `WHERE is_active = 0` restore reconnects a mailbox its owner deliberately removed.
+   - ❓ **New gap found while testing this (GAPS.md #19):** a user who reconnects *after* a downgrade-then-upgrade cycle silently never syncs, because `is_active` stays stale at `0` and the reconnect flow never re-evaluates it. Fix belongs in the Step 5 reconnect endpoint.
+   - **No `SoftDeletes` on `mailbox_connections`** — `email_address` is globally unique, so a tombstone would block that mailbox for every tenant forever. Six tables soft-delete, not seven.
 5. `job_documents`, then **`document_share_links`** (FK → `job_documents` CASCADE, `jobs`, `users`). `expires_at` is **NOT NULL**; unique on `token_hash`
 6. `milestone_performance_logs`
 7. **`audit_logs`** — register the append-only `BEFORE UPDATE OR DELETE` trigger here
+   - ✅ **Built and the MySQL triggers EXECUTED for the first time, 2026-08-27** — `2026_08_27_021000`. Verified on MySQL 8.0.46: `INSERT` allowed; `UPDATE`, single-row `DELETE` and blanket `DELETE` all refused with `ERROR 1644 (45000)`.
+   - 🔴 **`log_bin_trust_function_creators = 1` is REQUIRED or no trigger can be created at all.** Binary logging is on by default in MySQL 8; with the flag at `0` the app user needs `SUPER` to `CREATE TRIGGER` and every trigger fails with `ERROR 1419` — despite holding `ALL PRIVILEGES` on the schema. Added to the `db` service in `docker-compose.yml`. **Production needs the same setting.** See `GAPS.md` #20. This blocks the `jobs` and `accounts_*` designation guards too, not only this one.
+   - **`updated_at` is deliberately omitted** from the table. The DDL carries it with `ON UPDATE CURRENT_TIMESTAMP`, which can never fire where `UPDATE` aborts — the schema doc itself flags it as advertising a capability the table does not have.
+   - ⚠️ **Both FKs must stay `RESTRICT`.** MySQL does not fire triggers for rows removed by `ON DELETE CASCADE`, so changing either to CASCADE silently voids the append-only guarantee while leaving the triggers visibly in place. Confirmed `NO ACTION` on both.
+   - ⚠️ **`TRUNCATE` still bypasses the DELETE trigger** (demonstrated during verification — it is how the test row was removed). The mitigation is a privilege one: **the production application user must not hold `DROP` on this schema.**
 8. `sea_containers`, `sea_container_items`, `cargo_arrival_notices`
 9. **`job_entities`** — polymorphic `party_type`/`party_id` → `customers.id` or `partners.id`. Uses a generated virtual column `unique_role_gate` to enforce partial uniqueness on `(job_id, role)` **except** for `notify_party`, which may repeat
 10. `sea_shipment_details` (carrier/haulage FKs → `partners.id`), `air_shipment_details`
@@ -339,6 +386,16 @@ Provide the escape hatch `withoutTenantScope()` for daemons, console commands, w
 
 A job's branch and its parties are not composite-keyed to the same tenant at the database level. Every `FormRequest`/service **must** assert that each referenced customer or partner shares the acting user's `company_id` before persisting — `jobs.customer_id`, `job_entities.party_id`, `accounts_invoices.billed_party_id`, voucher `vendor_id`.
 
+> 🟡 **Partial groundwork already landed 2026-08-27**, built ahead of order and then paused when work returned to Step 1. It is **additive and inert** — verified: app boots, 127 routes, login unchanged, 26 tests green. Do not rebuild these from scratch:
+> - `config/f16s.php` → **`portals`** — the six-host topology as data; the single source of truth. Nothing else may hardcode a hostname.
+> - `App\Support\Portal` — resolves a portal from the Host's first label, so `focusair.f16sefreight.com`, `focusair.f16s.local` and `focusair.localhost:8000` share one code path. An unknown host **fails closed** (treated as tenant-bound).
+> - `App\Support\UserContext` — per-request `company_id`/`agent_id`/`designation`/`tier`, cache-memoized, **never** from the JWT.
+> - `App\Http\Middleware\BindPortalScope` — registered on the `api` group.
+> - `App\Http\Middleware\EnforcePortalAccess` (`portal`) and `CheckCompanyTier` (`tier`) — registered in `Kernel`, **not yet applied to any route**.
+> - `App\User::branch()` / `->company()` / `->originPort()`, `App\Company::TIERS` / `tierAtLeast()` / `creditAllowance()`. Dead `GetAssosName()` removed (`GAPS.md` #13) — nothing referenced it.
+>
+> **Still to do here:** wire the portal into `LoginController` (the null-portal case must stay byte-identical — the live app logs in at plain `localhost`), the tenant isolation scope (§3.1), role gates (§3.4), and the two Checkpoint-3 tests.
+
 ### 3.3 Portal scope (deliberately not global)
 
 > 🔴 **Do not implement this against `session()`.** Under stateless JWT (§3.0) the session is always empty, so a session-backed scope returns **unfiltered** rows — air users silently seeing sea data, with no error raised anywhere. Derive the scope from the request `Host`.
@@ -348,9 +405,13 @@ A job's branch and its parties are not composite-keyed to the same tenant at the
 ```php
 // app/Http/Middleware/BindPortalScope.php
 $scope = match (explode('.', $request->getHost())[0]) {
-    'focusair' => 'air',
-    'focussea' => 'sea',
-    default    => null,          // admin. — and every CLI/queue context — binds nothing
+    'focusair'  => 'air',
+    'focussea'  => 'sea',
+    'focusroad' => 'road',
+    // accounts. / admin. / superadmin. bind NOTHING — they are cross-mode by design
+    // (one ledger spans every mode; the Boss compares modes). So does every CLI and
+    // queue context, which never runs this middleware at all.
+    default     => null,
 };
 if ($scope !== null) {
     app()->instance('active_portal_scope', $scope);
@@ -368,7 +429,9 @@ public function scopeForActivePortal($query) {
 
 Chain it explicitly in HTTP controllers (`Job::forActivePortal()->get()`). **Never make it global** — queue workers, WebSocket broadcasts and crons never run that middleware, so the binding is absent and the scope passes through unfiltered. That is exactly the behaviour the session version was reaching for, achieved without a session.
 
-**Boss users are not portal-scoped** (`PRD.md` §1.3) — they enter through either operational subdomain and compare both modes, so their controllers simply do not chain the scope.
+**Boss users are not portal-scoped** (`PRD.md` §1.3) — they enter at `admin.` and compare every mode, so their controllers simply do not chain the scope. Same for accounts users on `accounts.`: there is one ledger across all modes.
+
+> ⚠️ **Binding the portal is NOT the same as binding the tenant, and this middleware only does the first.** Five of the six hosts are fully tenant-bound; only `superadmin.` is not. Do not infer "no portal scope" ⇒ "no tenant scope" — `accounts.` and `admin.` bind no portal yet must still filter by `company_id`. Conflating the two is how a client's Boss would end up reading another tenant's books. Tenant binding comes from `user → branch → company` (§3.0), never from the host.
 
 ### 3.4 Role gates
 
@@ -866,8 +929,8 @@ Reads the engine tables and funnel views. **Never aggregates `jobs` live.** Enfo
 2. **`OcrUploadModal.vue`** — drag-and-drop upload, pre-populating `FocusAir.vue` / `HouseWayBill.vue` inline with **medium/low confidence fields highlighted orange**
 3. **`OpsDashboard.vue`** — `vuedraggable` Kanban with the four Process columns, the Staff clearance matrix, the Unassigned Pool scroller (`[+]`/`[-]`), SLA colour coding, magnetic drag-and-drop, triple filters, OLI badges, and the bell ordered `priority DESC, created_at DESC`
 4. **`JobCostSheet.vue`** — buy/sell tables inside the drawer, writing to the accounts tables without touching the legal manifest
-5. **Focus Sea** — `FocusSeaMaster.vue`, `FocusSeaHouse.vue`, `FocusSeaConsol.vue`: 12-tab architecture, ISO 6346 check-digit validation, cargo-type conditional locking, container stuffing grid
-6. **Focus Air** — `FocusAir.vue`, `HouseWayBill.vue`, `FocusAirImport.vue`: IATA 35-char line constraints surfaced inline before EDI submission
+5. **FocusSea** — `FocusSeaMaster.vue`, `FocusSeaHouse.vue`, `FocusSeaConsol.vue`: 12-tab architecture, ISO 6346 check-digit validation, cargo-type conditional locking, container stuffing grid
+6. **FocusAir** — `FocusAir.vue`, `HouseWayBill.vue`, `FocusAirImport.vue`: IATA 35-char line constraints surfaced inline before EDI submission
 7. **`SalesDashboard.vue`** — **chart-first ApexCharts** (tonnage trend, lane/country breakdown, win-loss donut) with tables only as drill-down and a day/month/year selector. The chart components are **shared across tiers — only the query scope changes.** Renders one transport mode at a time, bound to `active_portal_scope`. Surfaces the ranked **"Today's Actions" (top ~5)** *above* the charts. Gate client-book components behind `tier:command`
 8. **`BossDashboard.vue`** — cross-branch, cross-mode comparison, target assigner, executive brief, snapshot staleness banner when `last_computed_at` is over an hour old
 9. **`UpgradeTeaser.vue`** — blurred lock overlay with an "Upgrade Required" CTA over Command-gated surfaces

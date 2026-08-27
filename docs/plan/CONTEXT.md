@@ -90,6 +90,28 @@ Naming collision warning: the repo root already has its **own** `implementation.
 - Every FK / CHECK / index references a column that exists **in its own table**
 - All cross-document `§` references resolve
 
+### How we work — the loop for every step
+
+**`implementation_guide.md` drives; the other three are consulted.** Each owns exactly one thing (`PRD.md` §0), so every question has one authority:
+
+| Question | Authority |
+|---|---|
+| What do I build next, in what order? | `implementation_guide.md` |
+| What columns, types, keys, indexes? | `database_relations_tree.md` |
+| How must it behave, and why? | `PRD.md` |
+| What does it look like, what states? | `ui_ux_guide.md` |
+
+For each step: the **guide** names it → the **schema doc** gives the exact DDL (the guide deliberately carries no column definitions) → the **PRD** gives the behaviour and the reasoning, so an edge case can be judged a bug or intended → the guide's **checkpoint** proves it worked → **tests** before the segment closes.
+
+> **Run the checkpoint before starting the next step.** This is the rule that matters most, and it is why `sequence_counters` is verified before `ports` begins. A half-applied migration batch is the failure mode the guide opens by warning about.
+
+**Two caveats, both learned the hard way in the 2026-08-26/27 pass:**
+
+1. **These docs describe the target state, not what exists.** Roughly fifteen places disagreed with the code — `pima_address` already present, `branch_name` semantics, triggers that existed in prose only, a settings screen with no table, `npm run test:unit` with no runner. They are reconciled now, but keep the habit that found them: **when a doc and the code disagree, the code is authoritative on *what exists* and the doc on *what it should be*** — flag the conflict, never resolve it silently.
+2. **`ui_ux_guide.md` has NOT had the reconciliation pass.** The other three were checked against the codebase; that one has only had its headings read. Give it the same treatment before Step 6 or expect the same class of surprise.
+
+> **What the loop cannot do.** It caught none of the design gaps found this week — a grant command nobody wrote, two columns meaning one thing, a tier upgrade silently reconnecting a mailbox its owner had removed. Following the order keeps the build sound; it does not replace asking *"does this actually make sense"* at each step.
+
 ---
 
 ## 5. How the plan maps onto this codebase

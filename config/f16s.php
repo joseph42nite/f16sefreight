@@ -119,4 +119,99 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Portals — the six subdomains
+    |--------------------------------------------------------------------------
+    |
+    | The SINGLE source of truth for the topology settled 2026-08-27 (PRD.md §1.3,
+    | implementation_guide.md §0.2). BindPortalScope, EnforcePortalAccess and the login
+    | response all read from here — never hardcode a hostname anywhere else.
+    |
+    | TWO INDEPENDENT AXES, and conflating them is the failure this table exists to
+    | prevent:
+    |
+    |   'scope'        which transport mode's records are visible. NULL = cross-mode.
+    |   'tenant_bound' whether the request is inside ONE customer's data.
+    |
+    | ⚠️ NULL scope does NOT mean "no tenant". `accounts` and `admin` bind no transport
+    | mode yet are fully tenant-bound. Only `superadmin` — F16s's own staff — is not.
+    | Letting those two collapse into one check is how a client's Boss ends up reading
+    | another tenant's books.
+    |
+    | 'designations' lists who may enter. NULL means "any authenticated tenant user".
+    | 'guard' names the auth guard: tenant staff authenticate through `user-api`;
+    | only the platform portal uses `superAdmin-api`.
+    |
+    */
+
+    'portals' => [
+
+        'focusair' => [
+            'label'        => 'FocusAir',
+            'scope'        => 'air',
+            'tenant_bound' => true,
+            'guard'        => 'user-api',
+            'designations' => ['pricing', 'operations', 'sales'],
+        ],
+
+        'focussea' => [
+            'label'        => 'FocusSea',
+            'scope'        => 'sea',
+            'tenant_bound' => true,
+            'guard'        => 'user-api',
+            'designations' => ['pricing', 'operations', 'sales'],
+        ],
+
+        // Mode is live from day one; the Vue screens are deferred (PRD.md §11).
+        'focusroad' => [
+            'label'        => 'FocusRoad',
+            'scope'        => 'road',
+            'tenant_bound' => true,
+            'guard'        => 'user-api',
+            'designations' => ['pricing', 'operations', 'sales'],
+        ],
+
+        // No portal scope: there is ONE ledger, and invoices span every mode.
+        // Command tier only — below that there is no ledger to run.
+        'accounts' => [
+            'label'        => 'Accounts',
+            'scope'        => null,
+            'tenant_bound' => true,
+            'guard'        => 'user-api',
+            'designations' => ['accounts'],
+            'min_tier'     => 'command',
+        ],
+
+        // The CLIENT tenant's Boss/Director. An ordinary tenant user, fully bound to
+        // their own company_id, merely unrestricted as to transport mode.
+        // NOT the platform operator — that is `superadmin` below.
+        'admin' => [
+            'label'        => 'Tenant Admin',
+            'scope'        => null,
+            'tenant_bound' => true,
+            'guard'        => 'user-api',
+            'designations' => ['boss'],
+        ],
+
+        // F16s's OWN staff, operating across every tenant. The only entry with
+        // tenant_bound = false, and the only one not on the user-api guard.
+        'superadmin' => [
+            'label'        => 'Platform Admin',
+            'scope'        => null,
+            'tenant_bound' => false,
+            'guard'        => 'superAdmin-api',
+            'designations' => null,
+        ],
+
+    ],
+
+    /*
+    | Hosts that carry no portal prefix — plain `localhost`, `127.0.0.1`, the bare
+    | apex domain. They bind NO portal scope, exactly like a queue worker: the named
+    | scope simply is not chained, so queries pass through unfiltered rather than
+    | being silently mis-filtered. Portal-gated logins are refused there.
+    */
+    'default_portal' => null,
+
 ];

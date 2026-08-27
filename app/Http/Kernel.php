@@ -42,6 +42,11 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:60,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // Resolves the portal from the request Host on EVERY api request — see
+            // guide §3.3. Deliberately on the group rather than a route: it must run
+            // before anything reads active_portal_scope, and it binds nothing when the
+            // host names no portal, so CLI/queue contexts pass through unfiltered.
+            \App\Http\Middleware\BindPortalScope::class,
         ],
     ];
 
@@ -64,5 +69,11 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'openclaw.verify' => \App\Http\Middleware\VerifyOpenClawSignature::class,
+
+        // Multi-portal access control — guide §3.4 / §3.5.
+        // 'portal' gates whether THIS user may enter THIS subdomain (tier before role).
+        // 'tier' gates an individual route group against a list of permitted tiers.
+        'portal' => \App\Http\Middleware\EnforcePortalAccess::class,
+        'tier' => \App\Http\Middleware\CheckCompanyTier::class,
     ];
 }

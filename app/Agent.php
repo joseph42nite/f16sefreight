@@ -18,6 +18,10 @@ class Agent extends Model
     }
     
     protected $fillable = [
+        'company_id',
+        // The short code prefixed by companies.code to form the {agent_code} segment of
+        // every document number (PRD §6.3): F16 + BOM -> ENQA-F16BOM-26-0001.
+        'branch_code',
         'agent_name',
         'agent_address',
         'agent_issue_sign',

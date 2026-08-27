@@ -352,6 +352,12 @@ Relation::morphMap([
 
 ✅ **Checkpoint 2** — `php artisan tinker`: instantiate each model, traverse one relationship in each direction, and confirm a sea job returns `null` for `airShipmentDetails`.
 
+✅ **Built and passed 2026-08-27.** 24 models, 3 enums, 4 observers, the morph map. Suite 62 → 80. Checkpoint verified: the full `user → branch → company → tier` chain, `enquiry ↔ job` both ways, and a sea job returning NULL for `airShipmentDetails`.
+- 🔐 **`GAPS.md` #3 is closed** — `encrypted` casts on `Customer`/`Partner` bank columns and `MailboxConnection` tokens, all `$hidden`. Column holds ciphertext, model reads plaintext, `toArray()` omits them.
+- 🐞 **Found while running the checkpoint: a model does not know its database defaults.** `$job->status` was NULL until refreshed, so `JobObserver` wrote milestone rows with an **empty** `milestone_name` — silently skewing every stage-duration statistic. Fixed with `$attributes` defaults on `Job` and `Enquiry` mirroring the DDL, plus a fallback in the observer. Regression-tested.
+- **`SeaShipmentDetailObserver` holds the 2-second debounce but does not yet dispatch** — `ProcessConsolRollupJob` arrives in Step 4. Deliberately left unwired rather than referencing a class that does not exist.
+- **`Company` and `Agent` needed `$fillable` entries** (`code`, `branch_code`, tier, credits) before anything could be created through Eloquent.
+
 ---
 
 ## Step 3 — Access Control (roles, tenancy, tiers)

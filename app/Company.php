@@ -14,6 +14,12 @@ class Company extends Model
      */
     public const TIERS = ['core', 'tactical', 'command'];
 
+    protected $fillable = [
+        'name', 'code', 'tier', 'email_domain',
+        'ocr_credits_balance', 'ocr_credits_monthly_allowance', 'ocr_credits_limit',
+        'templates_config', 'in_testing_mode',
+    ];
+
     protected $casts = [
         'templates_config' => 'array',
         'deleted_at'       => 'datetime',

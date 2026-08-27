@@ -58,7 +58,19 @@ services:
   db:
     image: mysql:8.0
     container_name: f16s-db
-    command: --default-authentication-plugin=mysql_native_password
+    # log-bin-trust-function-creators is REQUIRED, not a tuning knob.
+    # Binary logging is on by default in MySQL 8, and with this flag at 0 the app user
+    # needs SUPER to CREATE TRIGGER — so every trigger in the schema fails with
+    # "ERROR 1419 You do not have the SUPER privilege". That includes the audit_logs
+    # append-only guards and the jobs/accounts designation guards, i.e. the constraints
+    # the product's segregation-of-duties rules depend on.
+    # Safe here: every trigger only SIGNALs an error and writes nothing, so there is no
+    # binlog-determinism risk of the kind this flag guards against.
+    # ⚠️ Production needs the same setting, or the DBA must grant SUPER/SET_USER_ID to
+    # whoever applies the schema. See GAPS.md.
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --log-bin-trust-function-creators=1
     environment:
       MYSQL_DATABASE: f16s
       MYSQL_USER: f16s

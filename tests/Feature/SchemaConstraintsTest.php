@@ -492,6 +492,154 @@ class SchemaConstraintsTest extends TestCase
         ]));
     }
 
+    // ─── Financial ledger ────────────────────────────────────────────────────
+
+    private function newInvoice(int $jobId, array $overrides = []): int
+    {
+        return DB::table('accounts_invoices')->insertGetId(array_merge([
+            'agent_id' => $this->agentId, 'job_id' => $jobId,
+            'invoice_no' => 'INV-CTCCTB-26-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT),
+            'type' => 'invoice', 'document_date' => now()->toDateString(),
+            'created_at' => now(), 'updated_at' => now(),
+        ], $overrides));
+    }
+
+    /**
+     * Second of the three ON DELETE RESTRICT foreign keys. An invoice is a legal document
+     * that may already be filed for GST and paid; deleting its job would orphan reported
+     * revenue.
+     */
+    public function test_a_job_that_has_been_invoiced_cannot_be_deleted(): void
+    {
+        $job = $this->newJob();
+        $this->newInvoice($job);
+
+        $this->assertRefused('foreign key constraint', fn () => DB::table('jobs')->where('id', $job)->delete());
+    }
+
+    /** Third RESTRICT: a purchase voucher is a real liability owed to a vendor. */
+    public function test_a_job_with_a_purchase_voucher_cannot_be_deleted(): void
+    {
+        $job = $this->newJob();
+
+        $vendor = DB::table('partners')->insertGetId([
+            'company_id' => $this->companyId, 'name' => 'Lufthansa', 'partner_type' => 'airline',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        DB::table('accounts_purchase_vouchers')->insert([
+            'agent_id' => $this->agentId, 'job_id' => $job, 'vendor_id' => $vendor,
+            'voucher_no' => 'PV-CTCCTB-26-0001', 'document_date' => now()->toDateString(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->assertRefused('foreign key constraint', fn () => DB::table('jobs')->where('id', $job)->delete());
+    }
+
+    public function test_an_invoice_number_is_unique_within_a_branch(): void
+    {
+        $job = $this->newJob();
+        $this->newInvoice($job, ['invoice_no' => 'INV-CTCCTB-26-0001']);
+
+        $this->assertRefused('uq_invoice_agent_no', fn () => $this->newInvoice($this->newJob(), ['invoice_no' => 'INV-CTCCTB-26-0001']));
+    }
+
+    /**
+     * Deleting an invoice must take its lines with it — an orphaned charge line would
+     * still be aggregated by the gross-margin and GST-register queries.
+     */
+    public function test_invoice_lines_die_with_their_invoice(): void
+    {
+        $invoice = $this->newInvoice($this->newJob());
+
+        DB::table('accounts_invoice_items')->insert([
+            'invoice_id' => $invoice, 'charge_type' => 'air_freight', 'description' => 'Air freight',
+            'quantity' => 545, 'rate' => 300, 'amount' => 163500, 'net_amount' => 192930,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        DB::table('accounts_invoices')->where('id', $invoice)->delete();
+
+        $this->assertSame(0, DB::table('accounts_invoice_items')->where('invoice_id', $invoice)->count());
+    }
+
+    /** Brokerage/consol details are 1-to-1 with their invoice. */
+    public function test_an_invoice_may_carry_only_one_brokerage_detail_row(): void
+    {
+        $invoice = $this->newInvoice($this->newJob(), ['type' => 'brokerage']);
+
+        $partner = DB::table('partners')->insertGetId([
+            'company_id' => $this->companyId, 'name' => 'Broker Co', 'partner_type' => 'broker',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $detail = fn () => DB::table('accounts_invoice_brokerage_details')->insert([
+            'invoice_id' => $invoice, 'partner_agent_id' => $partner,
+            'brokerage_basis' => 'per_shipment', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $detail();
+
+        $this->assertRefused('invoice_id', $detail);
+    }
+
+    /**
+     * Bank feeds arrive by webhook AND by a scheduled fallback sweep, so the same
+     * transaction routinely arrives twice. Without this guard every swept transaction
+     * would be double-counted into cash.
+     */
+    public function test_the_same_bank_transaction_cannot_be_ingested_twice(): void
+    {
+        $ingest = fn () => DB::table('bank_transactions')->insert([
+            'agent_id' => $this->agentId, 'plaid_transaction_id' => 'plaid-txn-fixed-001',
+            'amount' => 195880.00, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $ingest();
+
+        $this->assertRefused('plaid_transaction_id', $ingest);
+    }
+
+    /** Unmatching a payment must not delete the bank row — the money really moved. */
+    public function test_a_bank_row_survives_the_invoice_it_was_matched_to(): void
+    {
+        $invoice = $this->newInvoice($this->newJob());
+
+        DB::table('bank_transactions')->insert([
+            'agent_id' => $this->agentId, 'matched_invoice_id' => $invoice,
+            'plaid_transaction_id' => 'plaid-txn-fixed-002', 'amount' => 100.00,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        DB::table('accounts_invoices')->where('id', $invoice)->delete();
+
+        $row = DB::table('bank_transactions')->where('plaid_transaction_id', 'plaid-txn-fixed-002')->first();
+
+        $this->assertNotNull($row, 'The bank row should survive its invoice being removed.');
+        $this->assertNull($row->matched_invoice_id);
+    }
+
+    /**
+     * No financial table carries deleted_at (PRD §9.3). Voiding is a STATUS, not a
+     * delete: a void invoice must stay visible in the GST register and the audit trail.
+     */
+    public function test_no_financial_table_has_a_soft_delete_column(): void
+    {
+        $financialTables = [
+            'accounts_invoices', 'accounts_invoice_items', 'accounts_purchase_vouchers',
+            'accounts_purchase_items', 'accounts_ledger_entries', 'gst_ledger_entries',
+            'bank_transactions', 'accounts_cass_statements', 'financial_snapshots',
+            'ocr_credit_transactions',
+        ];
+
+        foreach ($financialTables as $table) {
+            $this->assertFalse(
+                \Illuminate\Support\Facades\Schema::hasColumn($table, 'deleted_at'),
+                "{$table} must not soft-delete — voiding is a status, not a delete."
+            );
+        }
+    }
+
     // ─── Encrypted columns ───────────────────────────────────────────────────
 
     /**

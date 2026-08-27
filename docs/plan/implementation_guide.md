@@ -257,6 +257,12 @@ INSERT INTO jobs (..., status) VALUES (..., 'Lost');  -- must FAIL
 
 **Finally, execute the cyclic constraints** via `ALTER TABLE`: `customers` → `ports` / `agents_info` / `users`, and `enquiries.reinitiated_from_job_id` → `jobs`.
 
+✅ **All four were already in place by the time Batch 1c finished (2026-08-27), so this step is a no-op here.** The three `customers` FKs were declared **inline** in Batch 1a·4 — the deferral is an artifact of the greenfield script ordering, where `users` is created after `customers`, and in this codebase every target already existed. `enquiries.reinitiated_from_job_id` is a genuine cycle and was closed in Batch 1b·2 the moment `jobs` existed, together with the two waybill `job_id` FKs.
+
+✅ **Batch 1c built 2026-08-27** — `2026_08_27_030000` … `030300`. 78 tables total. Checkpoint 1c passes: counts return 0, and deleting an invoiced job fails with `ERROR 1451`, proving RESTRICT is live. Exercised end to end — two revenue lines and one cost line producing a **34.62% gross margin**, and a **balanced** double-entry pair (195,880.00 debit / 195,880.00 credit).
+- ❓ **`chart_of_accounts` was built WITHOUT `parent_account_id`** — see `GAPS.md` #21. The column is named only in step 1 above and appears nowhere in `database_relations_tree.md`.
+- ⚠️ **Remember to migrate `f16s_test` too.** `php artisan migrate` targets `f16s` only; the test database needs `DB_DATABASE=f16s_test php artisan migrate --force` or the new feature tests fail on missing tables.
+
 ✅ **Checkpoint 1c**
 ```bash
 php artisan tinker

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Agent;
 use App\Company;
 use App\Role;
 use App\User;
@@ -32,7 +33,16 @@ class LoginCompanyResolutionTest extends TestCase
         $company->templates_config = json_encode(['ksr' => ['enabled' => true]]);
         $company->save();
 
+        // Every user has a branch — users.branch_name is NOT NULL with an FK to
+        // agents_info as of 2026_08_27_000000. A user without one is not a valid
+        // fixture, because it could not exist in production either.
+        $agent = new Agent();
+        $agent->company_id = $company->id;
+        $agent->agent_name = 'CHENNAI';
+        $agent->save();
+
         $user = new User();
+        $user->branch_name = $agent->id;
         $user->name = 'Ops Ravi';
         $user->email = 'ravi@globex.test';
         $user->password = Hash::make('secret1234');

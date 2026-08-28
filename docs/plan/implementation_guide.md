@@ -954,6 +954,24 @@ Reads the engine tables and funnel views. **Never aggregates `jobs` live.** Enfo
 
 ✅ **Checkpoint 5** — exercise the full lifecycle with `curl`/Postman: triage → convert → cancel → reinitiate. Confirm `409` on double-claim, `422` on demoting a converted enquiry, `422` on cancelling a job with posted invoices.
 
+✅ **§5.2 built and Checkpoint 5 PASSED 2026-08-28.** Suite 143 → 153. Driven over real HTTP with `curl` against `php artisan serve`, and locked in by `LifecycleApiTest` (10 assertions).
+
+```
+ENQA-CRLBOM-26-0001  new       12pcs 450.5kg  INBOM->DEHAM
+JOBA-CRLBOM-26-0001  Intake    enquiry -> converted (JobObserver)
+demote converted     HTTP 422  already_converted
+status               Verification
+cancel               Cancelled  reason=client_cancelled
+reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carried, RATE not
+```
+
+- **`409` on double-claim** comes from `UPDATE … WHERE ops_id IS NULL` — the race is decided in the database. Reading then writing would let two operators both see NULL and the second silently steal the first one's work.
+- **`422` on cancelling with posted financials** is checked before the RESTRICT foreign key fires, so the caller gets a usable error rather than a driver exception.
+- **Re-initiation mints a NEW enquiry number and carries the declared cargo but NOT `quoted_amount`** — the rate is the reason for re-quoting.
+
+> ⚠️ **Never `actingAs()` in these tests.** It bypasses both JWT and the Host-derived portal scope, so the suite would pass while air users saw sea data in production. Every request carries a real bearer token through the real middleware.
+> 🐞 **And the Host must go in an ABSOLUTE URL, not a `Host` header.** Laravel's test client builds `http://localhost/...` from a relative path and Symfony's `Request::create` then overrides `HTTP_HOST` from the URI, silently discarding the header — every request resolves to the null portal and returns `404 Unknown portal`. This cost an hour; it is the kind of failure that looks like a broken portal rather than a broken test.
+
 ---
 
 ## Step 6 — Vue Workspaces

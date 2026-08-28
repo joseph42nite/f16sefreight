@@ -191,3 +191,37 @@ Route::get('/get-public-blog/{slug}', [BlogController::class, 'show']);
 Route::post('/openclaw/webhook', [\App\Http\Controllers\OpenClawController::class, 'webhook'])->middleware('openclaw.verify');
 Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
 Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
+/*
+|--------------------------------------------------------------------------
+| Freight OS — lifecycle (guide §5.2)
+|--------------------------------------------------------------------------
+|
+| 🔴 Every route here is behind `auth:user-api`, and that is load-bearing rather than
+| conventional: TenantScope passes through UNFILTERED when no user is resolved (so that
+| queue workers and console commands are not silently broken), which means an
+| unauthenticated route touching a scoped model returns EVERY tenant's rows. Auth
+| middleware is what closes that.
+|
+| `portal` additionally refuses a user on a subdomain their designation does not belong
+| to, and checks TIER BEFORE ROLE so a Core tenant cannot reach a role-scoped endpoint by
+| writing a designation straight into the database.
+*/
+Route::middleware(['auth:user-api', 'portal'])->group(function () {
+
+    // ── Pre-conversion ──────────────────────────────────────────────────────
+    Route::get('/enquiries', [\App\Http\Controllers\Freight\EnquiryController::class, 'index']);
+    Route::post('/enquiries', [\App\Http\Controllers\Freight\EnquiryController::class, 'store']);
+    Route::post('/enquiries/{enquiry}/lost', [\App\Http\Controllers\Freight\EnquiryController::class, 'markLost']);
+    Route::post('/enquiries/{enquiry}/reopen', [\App\Http\Controllers\Freight\EnquiryController::class, 'reopen']);
+    // The ONLY path that creates a jobs row.
+    Route::post('/enquiries/{enquiry}/convert', [\App\Http\Controllers\Freight\EnquiryController::class, 'convert']);
+
+    // ── Post-conversion ─────────────────────────────────────────────────────
+    Route::get('/jobs', [\App\Http\Controllers\Freight\JobController::class, 'index']);
+    Route::put('/jobs/{job}/status', [\App\Http\Controllers\Freight\JobController::class, 'updateStatus']);
+    Route::post('/jobs/{job}/cancel', [\App\Http\Controllers\Freight\JobController::class, 'cancel']);
+    Route::post('/jobs/{job}/reinitiate', [\App\Http\Controllers\Freight\JobController::class, 'reinitiate']);
+    Route::post('/jobs/{job}/claim', [\App\Http\Controllers\Freight\JobController::class, 'claim']);
+    Route::post('/jobs/{job}/reassign', [\App\Http\Controllers\Freight\JobController::class, 'reassign']);
+    Route::post('/jobs/{job}/reassign/request', [\App\Http\Controllers\Freight\JobController::class, 'requestReassignment']);
+});

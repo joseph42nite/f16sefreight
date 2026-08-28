@@ -37,6 +37,37 @@ How the product **looks and behaves**. Screens, states, tokens, accessibility, a
 
 ---
 
+## 0a. ⚠️ Reconciliation against the codebase — 2026-08-28
+
+**This document had never been checked against the code** (`CONTEXT.md` §4 flagged it; `GAPS.md` #4). The other three planning docs each turned up ~15 discrepancies when they were reconciled. This one is different in kind: **most of what it describes does not exist yet, and the parts that do exist are built on a different foundation than it assumes.**
+
+That is not a criticism of the document — it is a target state, and Step 6 is where it gets built. But four items below are **direct conflicts** with live code, not merely unbuilt work, and building on the assumption they are already true would waste a day each.
+
+### 🔴 Conflicts with what is actually there
+
+| # | The guide says | The code does | Consequence |
+|---|---|---|---|
+| U1 | **A CSS custom-property token system** — `--bg-canvas`, `--status-critical`, etc., in **light and dark** (§2.1–2.2) | Bootstrap 4.5 SCSS variables (`$blue`, `$body-bg`). **Zero design tokens ship** — the only custom properties in `public/common.css` are five from a third-party date-picker. **No dark mode anywhere.** | The token layer must be *created*, not adopted. Every §2/§3/§5 rule depends on it, so this is the first Step 6 task, not a detail |
+| U2 | **System font stack, explicitly** — *"no webfont download on a tool people open all day"* (§2.3) | `resources/sass/_variables.scss` sets `$font-family-sans-serif: 'Nunito'` | A direct contradiction **with a stated rationale**. ⚠️ But see U3 — that file is not even compiled, so **Nunito is named and never fetched**; the app silently falls back to the browser default today |
+| U3 | *(implicit)* a live SCSS pipeline | 🔴 **`resources/sass/` IS NOT IN THE BUILD.** `webpack.mix.js` compiles `resources/css/app.css`, which is **empty** (`@charset` only). Real styling is pre-built, committed `public/vendor.css` + `public/common.css` plus Vue SFC `extractStyles` | **`resources/sass/_variables.scss` is a decoy.** Anyone implementing tokens there would see no effect and lose hours. The pipeline itself needs a decision before any styling work |
+| U4 | Breakpoints `--bp-sm/md/lg/xl` at **768 / 1200 / 1600** (§7.1) | Bootstrap 4 ships `sm/md/lg/xl` at **576 / 768 / 992 / 1200** | **Same names, different values.** A media query written against Bootstrap's `lg` fires at 992px while the guide means 1200px. Rename the guide's tokens (`--bp-*` is already distinct — keep it that way and never mix the two vocabularies) |
+
+### 📋 Unbuilt — expected, listed so the size is honest
+
+**Routes** — 10 of the 13 the guide names do not exist. Present: `/focus-air`, `/message-log`, `/settings`. Missing: `/focus-sea`, `/inbox`, `/kanban`, `/sales`, `/financials`, `/boss`, `/customers`, `/partners`, `/manifest-filing`, `/cover-letters`.
+
+**Components** — 10 of 13 missing. Present: `FocusAir.vue`, `HouseWayBill.vue`, `OcrUploadModal.vue`. Missing: `FocusSeaMaster/House/Consol.vue`, `FocusAirImport.vue`, `UpgradeTeaser.vue`, `SalesDashboard.vue`, `KanbanBoard.vue`, `InboxList.vue`, `CostSheet.vue`, `EDocket.vue`.
+
+**Libraries** — six named across the planning set are not installed: `vuedraggable` (Kanban), `driver.js` (tours), `html2canvas` (bug-report screenshots), TipTap (rich text), `laravel-echo` + `pusher-js` (WebSockets). Present and current: Vue 2.7.16, Vuex, Vue Router, `bootstrap-vue` 2.13, ApexCharts 5.
+
+**Component library** — `bootstrap-vue` is the live one. §5's spec (button heights 28/32/40px, a *ghost* variant, `--status-critical` danger) does not map onto its defaults, so §5 needs either a theme layer over bootstrap-vue or an explicit decision to build the components custom. **Not yet decided.**
+
+### ✅ What holds
+
+Everything in §4 (Data Display Rules), §8.1 (the hide/lock/disable distinction), §10–§13 and the per-login screen inventories in §9 is **design intent with no code to contradict it**. The gating treatments in §8.1 map cleanly onto the role gates and tier middleware already built in Step 3, and §8.2's landing routes map onto the six portals settled in `PRD.md` §1.3.
+
+---
+
 ## 1. Design Principles
 
 Five rules. When they conflict, the earlier one wins.

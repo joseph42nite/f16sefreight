@@ -235,4 +235,16 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'index']);
     Route::post('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'store']);
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
+
+    // ── Financial (guide §5.3) ──────────────────────────────────────────────
+    // 🔒 Gated per action, not per group: viewFinancials admits boss read-only, while
+    // finalizeInvoice and postLedger are `accounts` ONLY — not even the Boss. The role
+    // that sets targets must not book the revenue those targets are measured in.
+    // `tier:command` because below Command there is no ledger to run.
+    Route::middleware('tier:command')->group(function () {
+        Route::get('/invoices', [\App\Http\Controllers\Freight\InvoiceController::class, 'index']);
+        Route::post('/invoices/{invoice}/finalize', [\App\Http\Controllers\Freight\InvoiceController::class, 'finalize']);
+        Route::post('/invoices/{invoice}/post', [\App\Http\Controllers\Freight\InvoiceController::class, 'post']);
+        Route::get('/customers/{customer}/credit', [\App\Http\Controllers\Freight\InvoiceController::class, 'creditStanding']);
+    });
 });

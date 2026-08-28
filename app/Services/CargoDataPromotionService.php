@@ -83,26 +83,17 @@ class CargoDataPromotionService
         DB::transaction(function () use ($enquiry, $updates) {
             $enquiry->forceFill($updates)->saveQuietly();
 
-            // Audit the promotion — the row is append-only at the database, so this
-            // record cannot later be tidied away.
-            //
-            // ⚠️ **Only written when a user is attributable.** `audit_logs.user_id` is
-            // NOT NULL with a foreign key, but promotion runs in a QUEUE WORKER with no
-            // acting user; there is no system-actor row to attribute to and inventing
-            // `user_id = 0` violates the constraint. So an unattended promotion currently
-            // goes unaudited — a real gap, recorded as GAPS.md #22, not a silent choice.
-            $actor = $enquiry->pricing_id ?? $enquiry->ops_id ?? $enquiry->sales_id;
-
-            if ($actor !== null) {
-                DB::table('audit_logs')->insert([
-                    'agent_id'   => $enquiry->agent_id,
-                    'user_id'    => $actor,
-                    'action'     => 'enquiry.cargo_promoted',
-                    'model_type' => 'enquiry',
-                    'model_id'   => $enquiry->id,
-                    'created_at' => now(),
-                ]);
-            }
+            // Audit the promotion. ALWAYS written — attribution falls back to the
+            // tenant's reserved system actor, because an unattended promotion is the
+            // change most worth recording: no human saw it happen (GAPS.md #22, closed
+            // 2026-08-28).
+            app(AuditLogger::class)->record(
+                agentId: $enquiry->agent_id,
+                action: 'enquiry.cargo_promoted',
+                modelType: 'enquiry',
+                modelId: $enquiry->id,
+                userId: $enquiry->pricing_id ?? $enquiry->ops_id ?? $enquiry->sales_id,
+            );
         });
 
         return true;

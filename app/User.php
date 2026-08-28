@@ -22,9 +22,13 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'designation',
+        // Stores the company ID despite the name — legacy, and the login cache key still
+        // uses it. Authoritative company resolution is user -> branch -> company.
+        'company_name',
         'branch_name',
         'origin_port_id',
         'signature_text',
+        'is_active',
     ];
 
     /** In-tenant roles. `superadmin` is NOT here — that is platform-level, not a designation. */
@@ -77,6 +81,23 @@ class User extends Authenticatable implements JWTSubject
             'branch_name',  // users.branch_name -> agents_info.id
             'company_id'    // agents_info.company_id -> companies.id
         );
+    }
+
+    /**
+     * Excludes the tenant's reserved audit actor.
+     *
+     * ⚠️ Use this for every operator picker, assignment list and staff count. The system
+     * user is a real `users` row so `audit_logs.user_id` can keep its foreign key — but
+     * it is not a person, cannot log in, and must never appear as an assignable operator.
+     */
+    public function scopeRealPeople($query)
+    {
+        return $query->where('designation', '!=', \App\Services\SystemActor::DESIGNATION);
+    }
+
+    public function isSystemActor(): bool
+    {
+        return $this->designation === \App\Services\SystemActor::DESIGNATION;
     }
 
     public function originPort()

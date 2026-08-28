@@ -56,7 +56,7 @@
 
 ---
 
-| 22 | 🔴 **`audit_logs` cannot record a system-initiated action.** `user_id` is `NOT NULL` with a foreign key to `users`, but several audited actions run in a **queue worker with no acting user** — cargo promotion after OCR, the monthly credit grant, the stale-enquiry sweep, vision-consent expiry. There is no system-actor row to attribute to, and inventing `user_id = 0` violates the constraint (verified 2026-08-28: `ERROR 1452`) | Today `CargoDataPromotionService` **skips the audit row entirely** when no user is attributable, so an unattended promotion is silently unaudited — precisely the change most worth auditing, since no human saw it happen. Two clean fixes: seed a reserved system user per tenant, or make `user_id` nullable and treat NULL as "system". The second is a one-line migration but weakens a constraint; the first keeps the FK honest. **Decide before Step 5** — every service written after this point will hit the same wall | **Step 5** |
+| ~~22~~ | ✅ **CLOSED 2026-08-28 — owner chose the seeded system actor over a nullable column.** Each tenant gets one reserved `users` row (`designation = 'system'`, `is_active = 0`, unusable password) that automated actions attribute to, so `audit_logs.user_id` keeps its foreign key and every entry stays attributable to a real row. `App\Services\AuditLogger` is now the single write path and **always** writes — falling back to the system actor rather than skipping. One actor per TENANT, not per branch; `audit_logs.agent_id` still records the real branch. It passes no role gate (`'system'` is outside the real set, so every check fails closed with no special-casing) and `User::realPeople()` excludes it from every operator picker. 10 assertions. |
 
 ---
 

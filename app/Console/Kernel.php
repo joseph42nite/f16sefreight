@@ -26,26 +26,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
-        $schedule->call('App\Http\Controllers\CurrencyRateController@getCurrencyRate')->dailyAt('02:00');
-
-        // Cleanup stale OCR jobs stuck in pending/processing for >30 minutes.
-        // FastAPI jobs complete in seconds — anything older than 30 min is genuinely stuck.
-        $schedule->call(function () {
-            $stale = PdfProcessingJob::whereIn('status', ['pending', 'processing'])
-                ->where('created_at', '<', now()->subMinutes(30))
-                ->get();
-
-            foreach ($stale as $job) {
-                Storage::disk('pdf_temp')->delete($job->temp_file_path);
-                $job->update([
-                    'status'        => 'failed',
-                    'error_message' => 'Timed out — cleaned up by scheduler.',
-                    'completed_at'  => now(),
-                ]);
-            }
-        })->everyFifteenMinutes()->name('cleanup-stale-ocr-jobs');
+        // ⚠️ NOTHING ELSE REFILLS AN OCR CREDIT BALANCE. Without this the balance only
+        // ever decreases and every tenant eventually hard-stops (guide §4.7). The command
+        // is idempotent — it skips any company already granted this calendar month — so a
+        // retried deploy or a double-fired scheduler cannot double anyone's credits.
+        $schedule->command('credits:grant-monthly')
+            ->monthlyOn(1, '00:15')
+            ->withoutOverlapping()
+            ->onOneServer();
     }
+
 
     /**
      * Register the commands for the application.

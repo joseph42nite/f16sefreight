@@ -784,6 +784,12 @@ protected function fiscalYear(): string {
 
 Increment inside a transaction holding `SELECT … FOR UPDATE` on the `sequence_counters` row scoped `(agent_id, prefix, fiscal_year)`. **Do not use Redis locks for this** — the database row lock is authoritative. Reserve Redis locks for Plaid webhook deduplication and API idempotency.
 
+✅ **§4.3, §4.4, §4.5 and the `credits:grant-monthly` half of §4.7 built 2026-08-28.** Suite 100 → 117.
+- **`EnquirySequenceService`** closes `GAPS.md` #8: `insertOrIgnore` runs **before** `lockForUpdate()`, so the row always exists and the lock is a row lock, not the gap lock two branches could deadlock on when minting the first number of a fiscal year. It also **refuses to mint** when either document code is missing (#2), naming the branch and column — `ENQA--26-0001` can no longer reach a client.
+- **`credits:grant-monthly`** verified against all three of its rules: NULL allowance resolves from the tier (500 / 2000), a negotiated override survives untouched at 5000, an overdrawn tenant **resets** to full rather than accumulating, and a re-run is a no-op (one `monthly_grant` row per tenant, not two).
+- 🐞 **`PdfProcessingJob` was missing all six Freight OS columns from `$fillable`.** The migration added them in Batch 1b but the model was never updated, so every one was silently dropped on mass assignment and `CargoDataPromotionService` could not find its target. **Adding a column is only half the change.**
+- 🔴 **New gap found (`GAPS.md` #22): `audit_logs` cannot record a system-initiated action.** `user_id` is NOT NULL with an FK, but promotion, the credit grant and the sweeps all run in queue workers with no acting user. Promotion currently skips the audit row rather than violating the constraint — which means the change least witnessed by a human is the one going unaudited. **Decide before Step 5.**
+
 ### 4.5 `CargoDataPromotionService`
 
 Fires on `pdf_processing_jobs.status → 'completed'`.

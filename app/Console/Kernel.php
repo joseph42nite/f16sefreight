@@ -34,6 +34,20 @@ class Kernel extends ConsoleKernel
             ->monthlyOn(1, '00:15')
             ->withoutOverlapping()
             ->onOneServer();
+
+        // ⚠️ awaiting_vision_consent is EXCLUDED from the 30-minute stale sweep — an
+        // operator may legitimately answer an hour later — so it gets its own 24h expiry,
+        // which also deletes the temp PDF still waiting on disk (guide §4.7).
+        $schedule->command('pdf:expire-vision-consent')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // Debounced via stale_nudged_at, cleared on any new client reply.
+        $schedule->command('enquiries:nudge-stale')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
     }
 
 

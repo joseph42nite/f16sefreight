@@ -737,6 +737,13 @@ The request gains one field; the response **must** report which route actually r
 
 Without `extraction_path` every extraction bills as vision, and text-selectable PDFs — which `PRD.md` §3.4 promises are free — quietly consume the customer's credits.
 
+✅ **§4.1.1 (orchestration), §4.6 and §4.9 built 2026-08-28.** Suite 117 → 133. The **Gemini/Ollama HTTP calls themselves are deliberately NOT wired** — everything around them is, so wiring the provider later is a single call site rather than a redesign.
+- **`OcrRoutingService`** — tier × document class. A Core tenant uploading an invoice fails *before* processing with `upgrade_required`; a structured AWB is free at every tier; the first unstructured call **always** has `allow_vision = false`. Tier resolves via `withoutGlobalScopes()`, verified with no authenticated user (a queue worker reading it through the tenant scope would route every upload as Core).
+- **`OcrCreditService`** — reserve under `lockForUpdate`, honour the negative overdraft floor, refund only on post-reservation failure. Verified: a refused reservation does not move the balance, and a **retried refund cannot credit twice** because the UNIQUE index rejects it.
+- **`CircuitBreaker`** — keyed **per connection** (`breaker:mailbox:{id}`), with `platform:status:ai_server` the one deliberate shared key. Verified one mailbox tripping leaves another untouched.
+- **`ClientNotificationService`** — consent enforced **in the service**, not the UI. `release()` refuses without a real operator id, and clears the draft so a second confirm cannot resend.
+- **`pdf:expire-vision-consent`** (hourly, 24h cutoff) and **`enquiries:nudge-stale`** (hourly) scheduled alongside `credits:grant-monthly`.
+
 ### 4.2 `PollMailboxes` daemon
 
 `php artisan mailboxes:poll`, the **15-minute reconciliation sweep** registered in `Kernel.php` (push is primary — see below):

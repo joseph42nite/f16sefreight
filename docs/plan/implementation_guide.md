@@ -976,6 +976,25 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 
 ## Step 6 — Vue Workspaces
 
+> ✅ **FOUNDATION BUILT 2026-08-28 — structure only, no visual design.** Deliberately plain: everything reads from the tokens in `resources/css/app.css`, so the design pass later is changing token values and adding polish, not rewriting markup.
+>
+> **What exists and is proven in a browser:**
+> - `AppShell.vue` — rail + header, role/tier-aware navigation, the §8.4 portal chip and per-portal accent.
+> - `context.module.js` — designation/tier/portal from the login payload, persisted. **Convenience, never security** — every route it guards is re-checked server-side.
+> - `navigation.js` — `visibleNavFor()` implements §8.1's three treatments, and `LANDING_ROUTE` implements §8.2.
+> - `format.js` — §4.4 in one place. A weight is `450.500 kg` everywhere, a date `04-Sep-2026` everywhere.
+> - `EnquiryBoard.vue`, `JobBoard.vue`, `UpgradeTeaser.vue`, `StatusChip.vue`, `Figure.vue`.
+> - A `beforeEach` guard: role-forbidden → the login's landing route; tier-forbidden → `/upgrade`.
+>
+> **Verified live, not asserted:** pricing sees Enquiries + Customers and a `[Confirm shipment]` action; operations sees neither and is redirected from `/enquiries` to `/kanban`; a **tactical** boss sees `Financials 🔒` and the teaser explaining it; a boss is **refused at FocusAir** with `reason: designation`; the air portal lists 3 air enquiries and **excludes the sea one**.
+>
+> 💡 **Local hosts need no `/etc/hosts` edit.** `Portal::fromHost` matches the first label, so `http://focusair.localhost:8000` and `http://admin.localhost:8000` resolve — macOS maps `*.localhost` to 127.0.0.1.
+>
+> 🐞 **Found while building:** dates rendered as raw ISO (`2026-09-03T18:30:00.000000Z`) and weights at one decimal. §4.4 is not cosmetic — a weight shown to one decimal in one table and three in another reads as two different measurements of the same shipment. Centralised in `format.js`.
+>
+> **Still to build:** `/inbox` is currently the enquiry board (mail sync is §4.2, waiting on OAuth); no `/sales`, `/financials`, `/boss`, `/customers`, `/partners`, `/focus-sea`; Kanban is read-only until `vuedraggable` lands; no drawer, split-pane, bell or tours.
+
+
 1. **`JobInbox.vue`** — three-column layout (folders → thread feed → conversation), `[Classify As…]` dropdown, Claim/Take Over toolbar, consent banners for staged client emails, and the **split-pane collapse**: opening the drawer slides the sidebar to a 60 px rail, pushes columns 1–2 off-screen, and gives the conversation and the drawer exactly 50% each. Below 1200 px, collapse to a full-width stacked form with a toggle back to the timeline
 2. **`OcrUploadModal.vue`** — drag-and-drop upload, pre-populating `FocusAir.vue` / `HouseWayBill.vue` inline with **medium/low confidence fields highlighted orange**
 3. **`OpsDashboard.vue`** — `vuedraggable` Kanban with the four Process columns, the Staff clearance matrix, the Unassigned Pool scroller (`[+]`/`[-]`), SLA colour coding, magnetic drag-and-drop, triple filters, OLI badges, and the bell ordered `priority DESC, created_at DESC`

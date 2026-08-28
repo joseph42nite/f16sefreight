@@ -5439,6 +5439,76 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Freight OS screens — STRUCTURE ONLY
+
+   Deliberately plain. Everything reads from the tokens above, so the visual
+   design pass later is changing token values and adding polish, not rewriting
+   markup. No colours, sizes or spacing are hard-coded below.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.fx-page-head  { margin-bottom: var(--space-5); }
+.fx-page-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 var(--space-1); color: var(--text-primary); }
+.fx-page-sub   { color: var(--text-secondary); font-size: .875rem; margin: 0; }
+.fx-muted      { color: var(--text-secondary); font-size: .875rem; }
+.fx-error      { color: var(--status-critical); background: var(--status-critical-subtle);
+                 border: 1px solid var(--status-critical); border-radius: var(--radius-md);
+                 padding: var(--space-3); font-size: .875rem; }
+
+/* §5.3 Tables — dense by default. This is a tool, not a website (§1.1). */
+.fx-table { width: 100%; border-collapse: collapse; background: var(--bg-surface);
+            border: 1px solid var(--border); border-radius: var(--radius-md); font-size: .875rem; }
+.fx-table th, .fx-table td { padding: var(--space-2) var(--space-3); text-align: left;
+                             border-bottom: 1px solid var(--border); }
+.fx-table thead th { background: var(--bg-sunken); color: var(--text-secondary);
+                     font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+.fx-table tbody tr:last-child td { border-bottom: 0; }
+/* §4.4 figures right-align so columns compare down the page, not across it. */
+.fx-num { text-align: right !important; }
+.fx-row-actions { text-align: right; white-space: nowrap; }
+
+/* §5.1 Buttons. `ghost` is the variant bootstrap-vue does not have, so it is ours. */
+.fx-btn { display: inline-flex; align-items: center; height: 32px; padding: 0 var(--space-3);
+          border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+          background: var(--bg-surface); color: var(--text-primary);
+          font-size: .8125rem; cursor: pointer; text-decoration: none;
+          transition: background var(--motion-fast) var(--motion-ease); }
+.fx-btn:hover:not(:disabled) { background: var(--bg-sunken); }
+.fx-btn:disabled { color: var(--text-disabled); cursor: not-allowed; }
+.fx-btn--ghost { border-color: transparent; background: transparent; }
+.fx-btn--ghost:hover:not(:disabled) { border-color: var(--border); background: var(--bg-sunken); }
+
+/* §5.7 Chips — the LABEL always carries the meaning; tone only reinforces it (§1.3). */
+.fx-chip { display: inline-block; padding: 1px var(--space-2); border-radius: 999px;
+           font-size: .75rem; font-weight: 600; text-transform: capitalize;
+           border: 1px solid transparent; }
+.fx-chip--critical { color: var(--status-critical); background: var(--status-critical-subtle); border-color: var(--status-critical); }
+.fx-chip--warning  { color: var(--status-warning);  background: var(--status-warning-subtle);  border-color: var(--status-warning); }
+.fx-chip--success  { color: var(--status-success);  background: var(--status-success-subtle);  border-color: var(--status-success); }
+.fx-chip--info     { color: var(--status-info);     background: var(--status-info-subtle);     border-color: var(--status-info); }
+.fx-chip--neutral  { color: var(--status-neutral);  background: var(--status-neutral-subtle);  border-color: var(--status-neutral); }
+
+/* §5.2 Cards + the Kanban board. vuedraggable is not installed yet, so this is a
+   read-only board — dragging arrives with that dependency. */
+.fx-board { display: flex; gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-3); }
+.fx-board__col { flex: 0 0 216px; background: var(--bg-sunken);
+                 border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2); }
+.fx-board__head { display: flex; justify-content: space-between; align-items: center;
+                  font-size: .75rem; font-weight: 600; text-transform: uppercase;
+                  letter-spacing: .04em; color: var(--text-secondary);
+                  margin: 0 0 var(--space-2); padding: 0 var(--space-1); }
+.fx-board__count { color: var(--text-disabled); }
+.fx-board__empty { text-align: center; padding: var(--space-3) 0; color: var(--text-disabled); }
+.fx-card { background: var(--bg-surface); border: 1px solid var(--border);
+           border-radius: var(--radius-sm); padding: var(--space-2);
+           margin-bottom: var(--space-2); box-shadow: var(--elev-1); }
+.fx-card__no { font-size: .8125rem; font-weight: 600; color: var(--text-primary); }
+.fx-card__meta { font-size: .75rem; color: var(--text-secondary); margin-top: var(--space-1); }
+
+/* §5.9 Tier lock */
+.fx-teaser { max-width: 40rem; }
+.fx-teaser .fx-btn { margin-top: var(--space-4); }
+
 @charset "UTF-8";
 html {
   scroll-behavior: smooth;
@@ -79149,6 +79219,91 @@ label {
 
 .main-hide[data-v-7201f370]{
   overflow-x: hidden;
+}
+
+
+/* Structure only — no visual design. Everything reads from the tokens in
+   resources/css/app.css, so restyling later is changing token values, not markup. */
+.fx-shell { display: flex; min-height: 100vh; background: var(--bg-canvas);
+}
+.fx-rail {
+  width: 208px; flex: 0 0 208px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  border-top: 3px solid var(--portal-accent); /* §8.4 portal accent */
+  display: flex; flex-direction: column;
+  transition: width var(--motion-base) var(--motion-ease);
+}
+.fx-rail.is-collapsed { width: 56px; flex-basis: 56px;
+}
+.fx-rail.is-collapsed .fx-rail__label { display: none;
+}
+.fx-rail__brand {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+.fx-rail__mark { font-weight: 700; letter-spacing: .02em; color: var(--portal-accent);
+}
+.fx-rail__toggle {
+  background: none; border: 0; cursor: pointer;
+  color: var(--text-secondary); padding: var(--space-1);
+}
+.fx-rail__nav { padding: var(--space-2) 0; display: flex; flex-direction: column;
+}
+.fx-rail__item {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  color: var(--text-secondary); text-decoration: none;
+  font-size: .875rem; line-height: 1.4;
+  border-left: 2px solid transparent;
+}
+.fx-rail__item:hover { background: var(--bg-sunken); color: var(--text-primary);
+}
+.fx-rail__item.router-link-active {
+  color: var(--text-primary); font-weight: 600;
+  border-left-color: var(--portal-accent);
+  background: var(--bg-sunken);
+}
+/* §1.3 never signal with colour alone — the lock glyph carries the meaning, the
+   dimming only reinforces it. */
+.fx-rail__item.is-locked { color: var(--text-disabled);
+}
+.fx-body { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0;
+}
+.fx-header {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+.fx-header__spacer { flex: 1 1 auto;
+}
+.fx-header__who { color: var(--text-secondary); font-size: .8125rem; text-transform: capitalize;
+}
+.fx-portal-chip {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--portal-accent);
+  border-radius: var(--radius-sm);
+  color: var(--portal-accent);
+  font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+}
+.fx-main { flex: 1 1 auto; padding: var(--space-5); min-width: 0;
+}
+
+/* §7.1 — below --bp-sm (768px) the product is read-only by design. A 12-tab customs
+   form with 35-character IATA limits cannot be completed accurately on a phone, and a
+   mis-keyed manifest is a rejected filing. */
+@media (max-width: 767px) {
+.fx-rail { position: fixed; z-index: 20; height: 100%; width: 56px; flex-basis: 56px;
+}
+.fx-rail .fx-rail__label { display: none;
+}
+.fx-body { margin-left: 56px;
+}
+.fx-main { padding: var(--space-3);
+}
 }
 
 

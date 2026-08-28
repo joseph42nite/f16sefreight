@@ -1,8 +1,10 @@
 import Vue from "vue";
+import store from "@/core/services/store";
+import { LANDING_ROUTE } from "@/core/config/navigation";
 import Router from "vue-router";
 Vue.use(Router);
 
-export default new Router({
+const router = new Router({
   mode: "history",
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) {
@@ -18,6 +20,42 @@ export default new Router({
     return { x: 0, y: 0 };
   },
   routes: [
+    //-----------Freight OS — the operational shell------------------------------
+    // Its own layout, NOT the public MainLayout: this is the tool, and it must not
+    // carry the marketing header and footer. ui_ux_guide.md §1.1 — density first.
+    {
+      path: "/",
+      component: () => import("@/view/layouts/freight/AppShell"),
+      children: [
+        {
+          path: "inbox",
+          name: "Inbox",
+          component: () => import("@/view/pages/freight/EnquiryBoard"),
+          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+        },
+        {
+          path: "enquiries",
+          name: "Enquiries",
+          component: () => import("@/view/pages/freight/EnquiryBoard"),
+          meta: { userType: 'user', designations: ['pricing'], minTier: 'tactical' }
+        },
+        {
+          path: "kanban",
+          name: "Kanban",
+          component: () => import("@/view/pages/freight/JobBoard"),
+          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+        },
+        {
+          // The tier lock lands here rather than nowhere — §8.1: hiding the item
+          // would hide the reason to upgrade, so the lock must explain itself.
+          path: "upgrade",
+          name: "Upgrade",
+          component: () => import("@/view/pages/freight/UpgradeTeaser"),
+          meta: { userType: 'user' }
+        },
+      ]
+    },
+
     //-----------Main Application Layout (Public & User Dashboard)-------------------
     {
       path: "/",
@@ -282,3 +320,39 @@ export default new Router({
     }
   ],
 });
+
+/**
+ * Route gating — ui_ux_guide.md §8.1.
+ *
+ *   role forbids  -> redirect to this login's landing route (the item was hidden anyway;
+ *                    a direct URL should not 404, it should take you to your work)
+ *   tier forbids  -> redirect to /upgrade, which explains itself
+ *
+ * 🔴 **CONVENIENCE, NEVER SECURITY.** Every route this guards is also gated server-side
+ * by the `portal` middleware and the role gates. Someone bypassing this guard reaches an
+ * endpoint that refuses them — this only spares them the round trip.
+ */
+router.beforeEach((to, from, next) => {
+  const meta = to.meta || {};
+  if (!meta.designations && !meta.minTier) return next();
+
+  const designation = store.getters.designation;
+  const tier = store.getters.tier;
+
+  // Context not resolved yet (a hard refresh before /me returns) — let it through and
+  // let the server decide. Guessing here would bounce a legitimate user to /upgrade.
+  if (!designation && !tier) return next();
+
+  // TIER BEFORE ROLE, matching the server. On core, designation is inert.
+  if (meta.minTier && !store.getters.tierAtLeast(meta.minTier)) {
+    return next({ path: "/upgrade", query: { from: to.path } });
+  }
+
+  if (meta.designations && meta.designations.indexOf(designation) === -1) {
+    return next(LANDING_ROUTE[designation] || "/focus-air");
+  }
+
+  return next();
+});
+
+export default router;

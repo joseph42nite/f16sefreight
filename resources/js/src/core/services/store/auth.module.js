@@ -1,6 +1,8 @@
 import router from "@/router";
 import ApiService from "@/core/services/api.service";
 import JwtService from "@/core/services/jwt.service";
+import { SET_CONTEXT, PURGE_CONTEXT } from "./context.module";
+import { LANDING_ROUTE } from "@/core/config/navigation";
 
 // action types
 export const VERIFY_AUTH = "verifyAuth";
@@ -48,10 +50,21 @@ const actions = {
         context.commit(SET_AUTH, data.user);
         JwtService.saveToken(data.token);
         JwtService.saveRole(data.role);
+
+        // The login response carries `context` (designation, tier) and `portal`
+        // (key, label, scope) — see LoginController. Route guards and the nav rail
+        // read from these. CONVENIENCE ONLY: the server re-checks every request.
+        context.commit(SET_CONTEXT, { context: data.context, portal: data.portal });
+
         if (data.role == "user") {
           JwtService.saveSource(data.user.origin_airport_code);
           context.commit(SET_Source, data.user.origin_airport_code);
-          router.replace(`/focus-air`);
+
+          // §8.2 — land on the route this login actually works from. Pricing starts
+          // in the mail, operations in their queue, accounts in the registers.
+          // Falls back to /focus-air, which is the whole product on the core tier.
+          const designation = (data.context && data.context.designation) || null;
+          router.replace(LANDING_ROUTE[designation] || "/focus-air");
         } else if (data.role == "superAdmin")
           router.replace(`/superadmin/all-users`);
         return data;
@@ -122,6 +135,9 @@ const mutations = {
     state.user.password = password;
   },
   [PURGE_AUTH](state) {
+    // Clear the cached shell shape too, or the next user briefly sees the previous
+    // one's navigation before /me returns.
+    this.commit(PURGE_CONTEXT);
     state.isAuthenticated = false;
     state.user = {};
     state.errors = {};

@@ -8619,6 +8619,169 @@ var KTLayoutSearchOffcanvas = KTLayoutSearch;
 
 /***/ }),
 
+/***/ "./resources/js/src/core/config/navigation.js":
+/*!****************************************************!*\
+  !*** ./resources/js/src/core/config/navigation.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "LANDING_ROUTE": () => (/* binding */ LANDING_ROUTE),
+/* harmony export */   "NAV_ITEMS": () => (/* binding */ NAV_ITEMS),
+/* harmony export */   "visibleNavFor": () => (/* binding */ visibleNavFor)
+/* harmony export */ });
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+/**
+ * The navigation rail, and the landing route for each login.
+ *
+ * Implements ui_ux_guide.md §8.1–8.3. **The three gating treatments are different on
+ * purpose** and this file encodes which applies where:
+ *
+ *   role forbids   -> HIDDEN.   An operations user has no path to [Confirm Shipment];
+ *                               a disabled control just invites "why can't I?" tickets.
+ *   tier forbids   -> LOCKED 🔒. This is the upsell. Hiding it hides the reason to upgrade.
+ *   state forbids  -> DISABLED with a reason. A user can fix a state; not their role.
+ *
+ * `designations: null` means every authenticated tenant user.
+ */
+
+/** §8.2 — where each login lands, and why. */
+const LANDING_ROUTE = {
+  core: "/focus-air",
+  // document generation IS the product at this tier
+  pricing: "/inbox",
+  // the day starts in the mail
+  operations: "/kanban",
+  // the day starts with assigned work
+  sales: "/sales",
+  // Today's Actions is the worklist
+  accounts: "/financials",
+  // the registers
+  boss: "/boss" // oversight
+};
+const NAV_ITEMS = [
+// ── Shared operational surface ────────────────────────────────────────────
+{
+  path: "/inbox",
+  label: "Inbox",
+  icon: "envelope",
+  designations: ["pricing", "operations"],
+  minTier: "tactical"
+}, {
+  path: "/kanban",
+  label: "Kanban",
+  icon: "columns",
+  designations: ["pricing", "operations"],
+  minTier: "tactical"
+}, {
+  path: "/enquiries",
+  label: "Enquiries",
+  icon: "list-ul",
+  designations: ["pricing"],
+  minTier: "tactical"
+},
+// ── Document forms — the only surface Core sees ──────────────────────────
+{
+  path: "/focus-air",
+  label: "FocusAir",
+  icon: "file-earmark-text",
+  designations: null,
+  portals: ["focusair"]
+}, {
+  path: "/focus-sea",
+  label: "FocusSea",
+  icon: "water",
+  designations: null,
+  portals: ["focussea"]
+}, {
+  path: "/house-way-bill",
+  label: "House Waybill",
+  icon: "files",
+  designations: null,
+  portals: ["focusair"]
+},
+// ── Directories ──────────────────────────────────────────────────────────
+{
+  path: "/customers",
+  label: "Customers",
+  icon: "people",
+  designations: ["pricing", "sales", "accounts", "boss"],
+  minTier: "tactical"
+}, {
+  path: "/partners",
+  label: "Partners",
+  icon: "truck",
+  designations: ["pricing", "operations", "accounts", "boss"],
+  minTier: "tactical"
+},
+// ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
+{
+  path: "/sales",
+  label: "Sales",
+  icon: "graph-up",
+  designations: ["sales", "boss"],
+  minTier: "tactical"
+}, {
+  path: "/financials",
+  label: "Financials",
+  icon: "cash",
+  designations: ["accounts", "boss"],
+  minTier: "command"
+}, {
+  path: "/boss",
+  label: "Overview",
+  icon: "speedometer",
+  designations: ["boss"],
+  minTier: "tactical"
+},
+// ── Always last ──────────────────────────────────────────────────────────
+{
+  path: "/settings",
+  label: "Settings",
+  icon: "gear",
+  designations: null
+}];
+
+/**
+ * What the rail should show this user.
+ *
+ * Returns each item with a `locked` flag rather than filtering locked items out — §8.1's
+ * whole point is that a tier-locked item stays VISIBLE. Role-forbidden items are removed
+ * here; tier-forbidden ones come back locked.
+ */
+function visibleNavFor({
+  designation,
+  tier,
+  portalKey,
+  tierAtLeast
+}) {
+  return NAV_ITEMS.filter(item => {
+    // Portal-specific items (FocusAir on air, FocusSea on sea).
+    if (item.portals && portalKey && item.portals.indexOf(portalKey) === -1) return false;
+
+    // Core renders NO role navigation at all — a single-user tool shows the document
+    // forms and settings, and nothing else. There is deliberately no collapsed "locked"
+    // section implying hidden roles: role separation is not a feature Core is missing,
+    // it is a concept that does not apply (§8.3).
+    if (tier === "core") return !item.designations;
+
+    // Role forbids -> hidden.
+    if (item.designations && item.designations.indexOf(designation) === -1) return false;
+    return true;
+  }).map(item => _objectSpread(_objectSpread({}, item), {}, {
+    // Tier forbids -> visible but locked. This is the upsell moment.
+    locked: !tierAtLeast(item.minTier)
+  }));
+}
+
+/***/ }),
+
 /***/ "./resources/js/src/core/plugins/bootstrap-vue.js":
 /*!********************************************************!*\
   !*** ./resources/js/src/core/plugins/bootstrap-vue.js ***!
@@ -8981,6 +9144,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _router__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/router */ "./resources/js/src/router.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _core_services_jwt_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/jwt.service */ "./resources/js/src/core/services/jwt.service.js");
+/* harmony import */ var _context_module__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./context.module */ "./resources/js/src/core/services/store/context.module.js");
+/* harmony import */ var _core_config_navigation__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/config/navigation */ "./resources/js/src/core/config/navigation.js");
+
+
 
 
 
@@ -9029,10 +9196,23 @@ const actions = {
       context.commit(SET_AUTH, data.user);
       _core_services_jwt_service__WEBPACK_IMPORTED_MODULE_2__["default"].saveToken(data.token);
       _core_services_jwt_service__WEBPACK_IMPORTED_MODULE_2__["default"].saveRole(data.role);
+
+      // The login response carries `context` (designation, tier) and `portal`
+      // (key, label, scope) — see LoginController. Route guards and the nav rail
+      // read from these. CONVENIENCE ONLY: the server re-checks every request.
+      context.commit(_context_module__WEBPACK_IMPORTED_MODULE_3__.SET_CONTEXT, {
+        context: data.context,
+        portal: data.portal
+      });
       if (data.role == "user") {
         _core_services_jwt_service__WEBPACK_IMPORTED_MODULE_2__["default"].saveSource(data.user.origin_airport_code);
         context.commit(SET_Source, data.user.origin_airport_code);
-        _router__WEBPACK_IMPORTED_MODULE_0__["default"].replace(`/focus-air`);
+
+        // §8.2 — land on the route this login actually works from. Pricing starts
+        // in the mail, operations in their queue, accounts in the registers.
+        // Falls back to /focus-air, which is the whole product on the core tier.
+        const designation = data.context && data.context.designation || null;
+        _router__WEBPACK_IMPORTED_MODULE_0__["default"].replace(_core_config_navigation__WEBPACK_IMPORTED_MODULE_4__.LANDING_ROUTE[designation] || "/focus-air");
       } else if (data.role == "superAdmin") _router__WEBPACK_IMPORTED_MODULE_0__["default"].replace(`/superadmin/all-users`);
       return data;
     }).catch(error => {
@@ -9105,6 +9285,9 @@ const mutations = {
     state.user.password = password;
   },
   [PURGE_AUTH](state) {
+    // Clear the cached shell shape too, or the next user briefly sees the previous
+    // one's navigation before /me returns.
+    this.commit(_context_module__WEBPACK_IMPORTED_MODULE_3__.PURGE_CONTEXT);
     state.isAuthenticated = false;
     state.user = {};
     state.errors = {};
@@ -9299,6 +9482,121 @@ const OVERRIDE_PAGE_LAYOUT_CONFIG = "overridePageLayoutConfig";
 
 /***/ }),
 
+/***/ "./resources/js/src/core/services/store/context.module.js":
+/*!****************************************************************!*\
+  !*** ./resources/js/src/core/services/store/context.module.js ***!
+  \****************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "PURGE_CONTEXT": () => (/* binding */ PURGE_CONTEXT),
+/* harmony export */   "SET_CONTEXT": () => (/* binding */ SET_CONTEXT),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/**
+ * Request context — designation, tier and active portal.
+ *
+ * Populated from the login response, which carries `context` (designation, tier,
+ * company_id, agent_id) and `portal` (key, label, scope). Persisted to localStorage so a
+ * page refresh does not lose the shell's shape before /me returns.
+ *
+ * 🔴 **THIS IS CONVENIENCE, NEVER SECURITY.** Everything here is re-checked server-side
+ * on every request — the role gates, the tier middleware and the portal middleware all
+ * run regardless of what this store says. A user editing localStorage changes what their
+ * sidebar looks like and nothing else. Never gate a mutation on these values alone.
+ */
+
+const STORAGE_KEY = "f16s_context";
+const SET_CONTEXT = "setContext";
+const PURGE_CONTEXT = "purgeContext";
+const persisted = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+};
+const saved = persisted();
+const state = {
+  designation: saved.designation || null,
+  tier: saved.tier || null,
+  companyId: saved.companyId || null,
+  agentId: saved.agentId || null,
+  portal: saved.portal || null // { key, label, scope }
+};
+
+/** Ascending entitlement. The ORDER is load-bearing — tierAtLeast compares by index. */
+const TIERS = ["core", "tactical", "command"];
+const getters = {
+  designation: state => state.designation,
+  tier: state => state.tier,
+  portal: state => state.portal,
+  /** 'air' | 'sea' | 'road', or null on the cross-mode portals (accounts, admin). */
+  portalScope: state => state.portal ? state.portal.scope : null,
+  portalLabel: state => state.portal ? state.portal.label : null,
+  tierAtLeast: state => required => {
+    if (!required) return true;
+    const have = TIERS.indexOf(state.tier);
+    const need = TIERS.indexOf(required);
+    return have !== -1 && need !== -1 && have >= need;
+  },
+  /**
+   * Mirrors the server gates in AuthServiceProvider.
+   *
+   * ⚠️ TIER IS CHECKED BEFORE ROLE, exactly as the server does. On `core` designation is
+   * inert and nothing role-scoped opens, whatever the column says.
+   */
+  can: (state, getters) => (designations, minTier) => {
+    if (!getters.tierAtLeast(minTier)) return false;
+    if (!designations || designations.length === 0) return true;
+    return designations.indexOf(state.designation) !== -1;
+  }
+};
+const mutations = {
+  [SET_CONTEXT](state, {
+    context,
+    portal
+  }) {
+    state.designation = context && context.designation || null;
+    state.tier = context && context.tier || null;
+    state.companyId = context && context.company_id || null;
+    state.agentId = context && context.agent_id || null;
+    state.portal = portal || null;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        designation: state.designation,
+        tier: state.tier,
+        companyId: state.companyId,
+        agentId: state.agentId,
+        portal: state.portal
+      }));
+    } catch (e) {
+      /* private browsing — the shell still works, it just re-fetches on refresh */
+    }
+  },
+  [PURGE_CONTEXT](state) {
+    state.designation = null;
+    state.tier = null;
+    state.companyId = null;
+    state.agentId = null;
+    state.portal = null;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      /* nothing to clear */
+    }
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  state,
+  getters,
+  mutations
+});
+
+/***/ }),
+
 /***/ "./resources/js/src/core/services/store/htmlclass.module.js":
 /*!******************************************************************!*\
   !*** ./resources/js/src/core/services/store/htmlclass.module.js ***!
@@ -9370,13 +9668,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _auth_module__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./auth.module */ "./resources/js/src/core/services/store/auth.module.js");
-/* harmony import */ var _htmlclass_module__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./htmlclass.module */ "./resources/js/src/core/services/store/htmlclass.module.js");
-/* harmony import */ var _config_module__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./config.module */ "./resources/js/src/core/services/store/config.module.js");
-/* harmony import */ var _breadcrumbs_module__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./breadcrumbs.module */ "./resources/js/src/core/services/store/breadcrumbs.module.js");
-/* harmony import */ var _profile_module__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./profile.module */ "./resources/js/src/core/services/store/profile.module.js");
+/* harmony import */ var _context_module__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./context.module */ "./resources/js/src/core/services/store/context.module.js");
+/* harmony import */ var _htmlclass_module__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./htmlclass.module */ "./resources/js/src/core/services/store/htmlclass.module.js");
+/* harmony import */ var _config_module__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./config.module */ "./resources/js/src/core/services/store/config.module.js");
+/* harmony import */ var _breadcrumbs_module__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./breadcrumbs.module */ "./resources/js/src/core/services/store/breadcrumbs.module.js");
+/* harmony import */ var _profile_module__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./profile.module */ "./resources/js/src/core/services/store/profile.module.js");
 
 
 
@@ -9384,14 +9683,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-vue__WEBPACK_IMPORTED_MODULE_5__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_6__["default"]);
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (new vuex__WEBPACK_IMPORTED_MODULE_6__["default"].Store({
+
+vue__WEBPACK_IMPORTED_MODULE_6__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_7__["default"]);
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (new vuex__WEBPACK_IMPORTED_MODULE_7__["default"].Store({
   modules: {
+    context: _context_module__WEBPACK_IMPORTED_MODULE_1__["default"],
     auth: _auth_module__WEBPACK_IMPORTED_MODULE_0__["default"],
-    htmlClass: _htmlclass_module__WEBPACK_IMPORTED_MODULE_1__["default"],
-    config: _config_module__WEBPACK_IMPORTED_MODULE_2__["default"],
-    breadcrumbs: _breadcrumbs_module__WEBPACK_IMPORTED_MODULE_3__["default"],
-    profile: _profile_module__WEBPACK_IMPORTED_MODULE_4__["default"]
+    htmlClass: _htmlclass_module__WEBPACK_IMPORTED_MODULE_2__["default"],
+    config: _config_module__WEBPACK_IMPORTED_MODULE_3__["default"],
+    breadcrumbs: _breadcrumbs_module__WEBPACK_IMPORTED_MODULE_4__["default"],
+    profile: _profile_module__WEBPACK_IMPORTED_MODULE_5__["default"]
   }
 }));
 
@@ -9591,12 +9892,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
-/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var _core_services_store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/store */ "./resources/js/src/core/services/store/index.js");
+/* harmony import */ var _core_config_navigation__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/config/navigation */ "./resources/js/src/core/config/navigation.js");
+/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
 
 
-vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_1__["default"]);
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (new vue_router__WEBPACK_IMPORTED_MODULE_1__["default"]({
+
+
+vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]);
+const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
   mode: "history",
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) {
@@ -9618,6 +9923,50 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
     };
   },
   routes: [
+  //-----------Freight OS — the operational shell------------------------------
+  // Its own layout, NOT the public MainLayout: this is the tool, and it must not
+  // carry the marketing header and footer. ui_ux_guide.md §1.1 — density first.
+  {
+    path: "/",
+    component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_layouts_freight_AppShell_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/layouts/freight/AppShell */ "./resources/js/src/view/layouts/freight/AppShell.vue")),
+    children: [{
+      path: "inbox",
+      name: "Inbox",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_EnquiryBoard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/EnquiryBoard */ "./resources/js/src/view/pages/freight/EnquiryBoard.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['pricing', 'operations'],
+        minTier: 'tactical'
+      }
+    }, {
+      path: "enquiries",
+      name: "Enquiries",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_EnquiryBoard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/EnquiryBoard */ "./resources/js/src/view/pages/freight/EnquiryBoard.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['pricing'],
+        minTier: 'tactical'
+      }
+    }, {
+      path: "kanban",
+      name: "Kanban",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_JobBoard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobBoard */ "./resources/js/src/view/pages/freight/JobBoard.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['pricing', 'operations'],
+        minTier: 'tactical'
+      }
+    }, {
+      // The tier lock lands here rather than nowhere — §8.1: hiding the item
+      // would hide the reason to upgrade, so the lock must explain itself.
+      path: "upgrade",
+      name: "Upgrade",
+      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_freight_UpgradeTeaser_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/UpgradeTeaser */ "./resources/js/src/view/pages/freight/UpgradeTeaser.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }]
+  },
   //-----------Main Application Layout (Public & User Dashboard)-------------------
   {
     path: "/",
@@ -9915,7 +10264,44 @@ vue__WEBPACK_IMPORTED_MODULE_0__["default"].use(vue_router__WEBPACK_IMPORTED_MOD
     name: "404",
     component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_error_Error-1_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/error/Error-1.vue */ "./resources/js/src/view/pages/error/Error-1.vue"))
   }]
-}));
+});
+
+/**
+ * Route gating — ui_ux_guide.md §8.1.
+ *
+ *   role forbids  -> redirect to this login's landing route (the item was hidden anyway;
+ *                    a direct URL should not 404, it should take you to your work)
+ *   tier forbids  -> redirect to /upgrade, which explains itself
+ *
+ * 🔴 **CONVENIENCE, NEVER SECURITY.** Every route this guards is also gated server-side
+ * by the `portal` middleware and the role gates. Someone bypassing this guard reaches an
+ * endpoint that refuses them — this only spares them the round trip.
+ */
+router.beforeEach((to, from, next) => {
+  const meta = to.meta || {};
+  if (!meta.designations && !meta.minTier) return next();
+  const designation = _core_services_store__WEBPACK_IMPORTED_MODULE_0__["default"].getters.designation;
+  const tier = _core_services_store__WEBPACK_IMPORTED_MODULE_0__["default"].getters.tier;
+
+  // Context not resolved yet (a hard refresh before /me returns) — let it through and
+  // let the server decide. Guessing here would bounce a legitimate user to /upgrade.
+  if (!designation && !tier) return next();
+
+  // TIER BEFORE ROLE, matching the server. On core, designation is inert.
+  if (meta.minTier && !_core_services_store__WEBPACK_IMPORTED_MODULE_0__["default"].getters.tierAtLeast(meta.minTier)) {
+    return next({
+      path: "/upgrade",
+      query: {
+        from: to.path
+      }
+    });
+  }
+  if (meta.designations && meta.designations.indexOf(designation) === -1) {
+    return next(_core_config_navigation__WEBPACK_IMPORTED_MODULE_1__.LANDING_ROUTE[designation] || "/focus-air");
+  }
+  return next();
+});
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (router);
 
 /***/ }),
 

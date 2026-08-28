@@ -229,3 +229,25 @@ body {
 /* §5.9 Tier lock */
 .fx-teaser { max-width: 40rem; }
 .fx-teaser .fx-btn { margin-top: var(--space-4); }
+
+/* Kanban drop zones — a column must stay a target even when empty, or a board with
+   one card has nowhere to drop it. */
+.fx-board__drop { min-height: 56px; }
+.fx-card--ghost { opacity: .4; border-style: dashed; }
+.fx-card { cursor: grab; }
+.fx-card:active { cursor: grabbing; }
+.fx-board__note { font-size: .6875rem; color: var(--text-disabled); margin: var(--space-1) 0 0;
+                  text-align: center; font-style: italic; }
+
+/* §10.1 Forms — labels above their control, never beside. A label to the left of an
+   input reflows unpredictably at the --bp-md breakpoint and misaligns the column. */
+.fx-toolbar { display: flex; gap: var(--space-3); align-items: flex-end;
+              margin-bottom: var(--space-4); flex-wrap: wrap; }
+.fx-field { display: flex; flex-direction: column; gap: var(--space-1); }
+.fx-field__label { font-size: .6875rem; font-weight: 600; text-transform: uppercase;
+                   letter-spacing: .04em; color: var(--text-secondary); }
+.fx-input { height: 32px; padding: 0 var(--space-2);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--bg-surface); color: var(--text-primary);
+            font-family: var(--font-sans); font-size: .8125rem; min-width: 14rem; }
+.fx-input:focus { border-color: var(--border-strong); }

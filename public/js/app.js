@@ -9957,6 +9957,30 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
         minTier: 'tactical'
       }
     }, {
+      path: "customers",
+      name: "Customers",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_DirectoryTable_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/DirectoryTable */ "./resources/js/src/view/pages/freight/DirectoryTable.vue")),
+      props: {
+        endpoint: "/customers"
+      },
+      meta: {
+        userType: 'user',
+        designations: ['pricing', 'sales', 'accounts', 'boss'],
+        minTier: 'tactical'
+      }
+    }, {
+      path: "partners",
+      name: "Partners",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_DirectoryTable_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/DirectoryTable */ "./resources/js/src/view/pages/freight/DirectoryTable.vue")),
+      props: {
+        endpoint: "/partners"
+      },
+      meta: {
+        userType: 'user',
+        designations: ['pricing', 'operations', 'accounts', 'boss'],
+        minTier: 'tactical'
+      }
+    }, {
       // The tier lock lands here rather than nowhere — §8.1: hiding the item
       // would hide the reason to upgrade, so the lock must explain itself.
       path: "upgrade",

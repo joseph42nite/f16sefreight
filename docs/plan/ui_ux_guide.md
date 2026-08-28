@@ -48,8 +48,8 @@ That is not a criticism of the document — it is a target state, and Step 6 is 
 | # | The guide says | The code does | Consequence |
 |---|---|---|---|
 | U1 | **A CSS custom-property token system** — `--bg-canvas`, `--status-critical`, etc., in **light and dark** (§2.1–2.2) | Bootstrap 4.5 SCSS variables (`$blue`, `$body-bg`). **Zero design tokens ship** — the only custom properties in `public/common.css` are five from a third-party date-picker. **No dark mode anywhere.** | The token layer must be *created*, not adopted. Every §2/§3/§5 rule depends on it, so this is the first Step 6 task, not a detail |
-| U2 | **System font stack, explicitly** — *"no webfont download on a tool people open all day"* (§2.3) | `resources/sass/_variables.scss` sets `$font-family-sans-serif: 'Nunito'` | A direct contradiction **with a stated rationale**. ⚠️ But see U3 — that file is not even compiled, so **Nunito is named and never fetched**; the app silently falls back to the browser default today |
-| U3 | *(implicit)* a live SCSS pipeline | 🔴 **`resources/sass/` IS NOT IN THE BUILD.** `webpack.mix.js` compiles `resources/css/app.css`, which is **empty** (`@charset` only). Real styling is pre-built, committed `public/vendor.css` + `public/common.css` plus Vue SFC `extractStyles` | **`resources/sass/_variables.scss` is a decoy.** Anyone implementing tokens there would see no effect and lose hours. The pipeline itself needs a decision before any styling work |
+| U2 | **System font stack, explicitly** — *"no webfont download on a tool people open all day"* (§2.3) | 🔧 **CORRECTED 2026-08-28.** The app loads **two webfont families** — Roboto (400/500/700) and Inter (400/500/600/700), imported via `@fontsource` in `App.vue`, confirmed fetched over the network. `resources/sass/_variables.scss` names Nunito and is a red herring (it is not compiled, U3) | A direct contradiction **with a stated rationale**. An earlier draft of this row said the app "silently falls back to the browser default" — **that was wrong**: seven webfont files are downloaded. Whether to keep them or move to the system stack is a real decision, not a cleanup |
+| U3 | *(implicit)* a live SCSS pipeline | 🔴 **TWO sass directories, and only one is compiled.** `resources/sass/` (root) is **NOT** in the build — `webpack.mix.js` compiles `resources/css/app.css`, which shipped empty. But `resources/js/src/assets/sass/` **IS** compiled, imported by `App.vue` as `assets/sass/style.vue` and emitted through Vue SFC `extractStyles` | **`resources/sass/_variables.scss` is a decoy** — work there has no effect. The live SCSS lives under `resources/js/src/assets/sass/`. Getting these two confused is the single easiest hour to lose on this codebase |
 | U4 | Breakpoints `--bp-sm/md/lg/xl` at **768 / 1200 / 1600** (§7.1) | Bootstrap 4 ships `sm/md/lg/xl` at **576 / 768 / 992 / 1200** | **Same names, different values.** A media query written against Bootstrap's `lg` fires at 992px while the guide means 1200px. Rename the guide's tokens (`--bp-*` is already distinct — keep it that way and never mix the two vocabularies) |
 
 ### 📋 Unbuilt — expected, listed so the size is honest
@@ -94,6 +94,12 @@ That file is what `webpack.mix.js` actually compiles, so that is where styling l
 Hand-build **only** the components §5 is specific about and bootstrap-vue does not do: the *ghost* button variant, status chips carrying `--status-*` semantics, the drawer, and the split-pane toggle. Everything else (forms, tables, modals, dropdowns) uses bootstrap-vue themed by the tokens.
 
 > **The rule this sets:** if the guide and bootstrap-vue disagree on something cosmetic, the guide wins and it is themed. If they disagree on *behaviour or accessibility*, raise it — do not quietly reimplement a component to win a visual argument.
+
+### ⚠️ Open: the app already downloads webfonts
+
+§2.3 mandates a system stack *"no webfont download on a tool people open all day"*, but the app fetches **seven files** — Roboto 400/500/700 and Inter 400/500/600/700, imported in `App.vue`. The token layer defines `--font-sans` as the system stack and applies it to `body`, so **new Freight OS screens use it**; the existing public and admin styling continues to specify Inter and Roboto directly, some with `!important`.
+
+That is a deliberate non-decision for now: ripping the fonts out would restyle the live marketing site and the existing dashboard, which is not a Step 6 concern. **Decide before launch** — either adopt the webfonts in §2.3 and drop the rationale, or migrate the legacy styling to the system stack. Do not leave the document and the product disagreeing.
 
 ### What is deliberately NOT done yet
 

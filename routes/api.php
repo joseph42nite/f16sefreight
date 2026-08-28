@@ -224,4 +224,15 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/jobs/{job}/claim', [\App\Http\Controllers\Freight\JobController::class, 'claim']);
     Route::post('/jobs/{job}/reassign', [\App\Http\Controllers\Freight\JobController::class, 'reassign']);
     Route::post('/jobs/{job}/reassign/request', [\App\Http\Controllers\Freight\JobController::class, 'requestReassignment']);
+
+    // ── Directories ─────────────────────────────────────────────────────────
+    // Tenant-wide, NOT branch-scoped: customers.branch_id is an advisory managing
+    // branch, not an isolation boundary (PRD.md §1.2).
+    Route::get('/customers', [\App\Http\Controllers\Freight\CustomerController::class, 'index']);
+    Route::post('/customers', [\App\Http\Controllers\Freight\CustomerController::class, 'store']);
+    Route::get('/customers/{customer}/group', [\App\Http\Controllers\Freight\CustomerController::class, 'group']);
+
+    Route::get('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'index']);
+    Route::post('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'store']);
+    Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
 });

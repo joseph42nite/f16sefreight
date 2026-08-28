@@ -46,6 +46,20 @@ const router = new Router({
           meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
         },
         {
+          path: "customers",
+          name: "Customers",
+          component: () => import("@/view/pages/freight/DirectoryTable"),
+          props: { endpoint: "/customers" },
+          meta: { userType: 'user', designations: ['pricing', 'sales', 'accounts', 'boss'], minTier: 'tactical' }
+        },
+        {
+          path: "partners",
+          name: "Partners",
+          component: () => import("@/view/pages/freight/DirectoryTable"),
+          props: { endpoint: "/partners" },
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'accounts', 'boss'], minTier: 'tactical' }
+        },
+        {
           // The tier lock lands here rather than nowhere — §8.1: hiding the item
           // would hide the reason to upgrade, so the lock must explain itself.
           path: "upgrade",

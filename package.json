@@ -69,6 +69,7 @@
         "vue2-datepicker": "^3.11.1",
         "vue2-google-maps": "^0.10.7",
         "vue2-perfect-scrollbar": "^1.5.56",
+        "vuedraggable": "^2.24.3",
         "vuejs-datepicker": "^1.6.2",
         "vuelidate": "^0.7.5",
         "vuetify": "^2.7.2",

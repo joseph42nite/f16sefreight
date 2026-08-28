@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MilestonePerformanceLog extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = ['agent_id', 'job_id', 'milestone_name', 'entered_at'];
 
     protected $casts = ['entered_at' => 'datetime'];

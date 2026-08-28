@@ -46,11 +46,12 @@ return [
             'provider' => 'users',
             'hash' => false,
         ],
-        'admin-api' => [
-            'driver' => 'jwt',
-            'provider' => 'admins',
-            'hash' => false,
-        ],
+        // NOTE: an 'admin-api' guard pointing at App\Admin was removed on 2026-08-28.
+        // The class never existed and there is no `admins` table, so any login with
+        // roles.role = 'admin' returned a 500. It is deliberately NOT reinstated:
+        // "admin" now means the CLIENT tenant's Boss (admin.f16sefreight.com), who is an
+        // ordinary `users` row on the user-api guard with designation = 'boss'.
+        // Platform staff are 'superAdmin' below. See PRD §1.3 / CONTEXT §6b.
         'superAdmin-api' => [
             'driver' => 'jwt',
             'provider' => 'superAdmins',
@@ -79,10 +80,6 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\User::class,
-        ],
-        'admins' => [
-            'driver' => 'eloquent',
-            'model' => App\Admin::class,
         ],
         'superAdmins' => [
             'driver' => 'eloquent',

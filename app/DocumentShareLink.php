@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -18,6 +19,8 @@ use Illuminate\Support\Str;
  */
 class DocumentShareLink extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'job_document_id', 'job_id', 'token_hash', 'created_by',
         'expires_at', 'revoked_at', 'requires_approval', 'approval_status',

@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class EmailThread extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'assigned_ops_id', 'enquiry_id', 'job_id',
         'thread_key', 'provider_thread_id', 'read_state_synced_at',

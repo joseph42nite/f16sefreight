@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use App\Enums\EnquiryStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Enquiry extends Model
 {
+    use BelongsToTenant;
+
     use SoftDeletes;
 
     protected $fillable = [

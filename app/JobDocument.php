@@ -2,10 +2,13 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class JobDocument extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'job_id', 'document_type', 'file_name', 'file_path',
         'mime_type', 'file_size', 'uploaded_by',

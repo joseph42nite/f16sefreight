@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -19,6 +20,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TenantPolicy extends Model
 {
+    use BelongsToTenant;
+
+    /** Tenant-WIDE: shared across all of this tenant's branches. */
+    protected string $tenantColumn = 'company_id';
+
     protected $table = 'tenant_policies';
 
     protected $guarded = ['id', 'policy_scope_gate'];

@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class JobEntity extends Model
 {
+    use BelongsToTenant;
+
     use SoftDeletes;
 
     /** `unique_role_gate` is database-generated and must never be written. */

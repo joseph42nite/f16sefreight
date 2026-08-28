@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\User;
-use App\Admin;
 use App\Role;
 use App\SuperAdmin;
 use App\Mail\ResetPasswordMailable;
@@ -24,12 +23,13 @@ class PasswordResetRequestController extends Controller
     public function sendEmail(Request $request)  // this is most important function to send mail and inside of that there are another function
     {
         $userTypeDemo=Role::where([['email',$request->email]])->select('role')->first()->toArray()['role'];
-        if($userTypeDemo=='user')
-        $userType='users';
-        elseif($userTypeDemo=='admin')
-        $userType='admins';
+        // 'admin' is intentionally absent: the App\Admin model and `admins` table never
+        // existed, so this branch always failed. The tenant Boss is an ordinary `users`
+        // row (designation = 'boss'), and platform staff are super_admins.
+        if ($userTypeDemo == 'user')
+            $userType = 'users';
         else
-        $userType='super_admins';
+            $userType = 'super_admins';
         if (!$this->validateEmail($request->email,$userType)) {  // this is validate to fail send mail or true
             return $this->failedResponse();
         }

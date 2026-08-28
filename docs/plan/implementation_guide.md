@@ -490,6 +490,12 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 
 ✅ **Checkpoint 3** — run `CrossTenantIsolationTest` and `TierModeGatingTest` (Step 8). Both must pass before writing a single controller.
 
+✅ **Built and both passing 2026-08-28.** Suite 80 → 100. `TenantScope` + `BelongsToTenant` (17 models), role gates in `AuthServiceProvider`, portal gating wired into `LoginController`, and the dead `admin-api` guard removed.
+- 🔴 **The isolation scope initially checked the WRONG GUARD and would have been INERT in production** — `auth()->hasUser()` resolves the default `web` guard, which is session-based and always empty under JWT, while every controller uses `auth()->guard('user-api')`. Every query would have returned every tenant's rows. Fixed; see `GAPS.md`. **Caught only because the test asserted a count rather than the scope's existence.**
+- ⚠️ **Portal tests must pass the host as a FULL URL.** `withHeader('Host', …)` does not reach `$request->getHost()` in the test client, so such a test silently resolves to the null portal — the permissive path — and passes for the wrong reason.
+- 🔴 **The null-portal login path is asserted unchanged.** The live application signs in at plain `localhost`, which names no portal; that request must behave exactly as it did before portal gating existed.
+- **`admin-api` guard removed** along with the `App\Admin` provider and the `'admin'` branch in `PasswordResetRequestController`. It pointed at a class that never existed, so `roles.role = 'admin'` always 500'd — and leaving a broken guard called `admin-api` is now an active hazard, because "admin" means the **client tenant's Boss**, who is an ordinary `users` row on `user-api`.
+
 ---
 
 ## Step 4 — Core Services & Daemons

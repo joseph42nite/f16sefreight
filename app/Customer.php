@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,6 +19,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Customer extends Model
 {
+    use BelongsToTenant;
+
+    /** Tenant-WIDE: shared across all of this tenant's branches. */
+    protected string $tenantColumn = 'company_id';
+
     protected $fillable = [
         'company_id', 'name', 'email_domain', 'email', 'phone', 'address',
         'gst_no', 'pan_no', 'duns_no',

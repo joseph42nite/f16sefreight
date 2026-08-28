@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class SeaContainer extends Model
 {
+    use BelongsToTenant;
+
     use SoftDeletes;
 
     protected $fillable = ['agent_id', 'job_id', 'container_number', 'seal_number'];

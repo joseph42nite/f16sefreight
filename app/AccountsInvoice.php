@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AccountsInvoice extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'job_id', 'transport_mode', 'customer_id',
         'billed_party_type', 'billed_party_id', 'parent_invoice_id', 'created_by',

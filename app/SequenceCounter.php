@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SequenceCounter extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = ['agent_id', 'prefix', 'fiscal_year', 'current_value'];
 
     protected $casts = ['current_value' => 'integer'];

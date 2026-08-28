@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SeaContainerItem extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = ['agent_id', 'container_id', 'job_id', 'piece_count'];
 
     public function container()

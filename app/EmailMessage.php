@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class EmailMessage extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'mailbox_connection_id', 'thread_key', 'provider_thread_id',
         'direction', 'sent_via_portal', 'idempotency_key', 'send_state',

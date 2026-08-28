@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -23,6 +24,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MailboxConnection extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'user_id', 'email_address', 'provider',
         'access_token', 'refresh_token', 'expires_at', 'is_active',

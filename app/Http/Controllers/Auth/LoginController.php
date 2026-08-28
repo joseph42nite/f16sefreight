@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Role;
 use App\User;
 use App\Company;
+use App\Support\Portal;
+use App\Support\UserContext;
 use Illuminate\Support\Facades\Cache;
 
 class LoginController extends Controller
@@ -57,7 +59,102 @@ class LoginController extends Controller
             $userDataArray['templates_config'] = $templatesConfig;
         }
 
-        return response()->json(['token' => $token, 'user' => $userDataArray, 'role' => $role]);
+        // ── Portal gating — guide §3.4, PRD §1.3 ────────────────────────────────
+        //
+        // 🔴 THE NULL-PORTAL PATH MUST STAY BYTE-IDENTICAL. The live application logs in
+        // at plain `localhost` / the bare apex, which names no portal, and that login has
+        // to keep working exactly as it did before this block existed. Portal rules apply
+        // ONLY when the Host actually names one of the six subdomains.
+        $portal = Portal::fromHost(request()->getHost());
+
+        if ($portal->exists()) {
+            $rejection = $this->rejectIfPortalDisallows($portal, $user_data, $role);
+
+            if ($rejection !== null) {
+                return $rejection;
+            }
+        }
+
+        $payload = [
+            'token' => $token,
+            'user'  => $userDataArray,
+            'role'  => $role,
+        ];
+
+        // Expose tier and designation on the login payload so Vue route guards can read
+        // them (guide §3.6). The backend re-checks everything regardless — the frontend
+        // gate is convenience, never security.
+        if ($user_data instanceof User) {
+            $payload['context'] = UserContext::for($user_data)->toArray();
+        }
+
+        if ($portal->exists()) {
+            $payload['portal'] = [
+                'key'   => $portal->key,
+                'label' => $portal->label(),
+                'scope' => $portal->scope(),
+            ];
+        }
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Decide whether this user may enter this portal. Returns a response to send, or NULL
+     * to continue.
+     *
+     * Order is deliberate and matches EnforcePortalAccess:
+     *   1. guard      — the platform portal is a different auth guard entirely
+     *   2. TIER       — on `core`, designation is inert and no role portal opens
+     *   3. role       — designation must belong on this portal
+     *
+     * Checking tier before role is what stops a Core tenant reaching a role-scoped portal
+     * by writing a designation value directly into the database.
+     */
+    private function rejectIfPortalDisallows(Portal $portal, $user, string $role)
+    {
+        // superadmin. is F16s's own staff on the superAdmin-api guard. admin. is the
+        // CLIENT tenant's Boss — an ordinary user. Conflating them would hand a tenant
+        // director a host the middleware treats as untenanted.
+        if (! $portal->isTenantBound()) {
+            return $role === 'superAdmin'
+                ? null
+                : response()->json([
+                    'error'  => 'This portal is for platform staff.',
+                    'reason' => 'guard',
+                ], 403);
+        }
+
+        if ($role === 'superAdmin') {
+            return response()->json([
+                'error'  => 'Platform staff sign in at the platform portal.',
+                'reason' => 'guard',
+            ], 403);
+        }
+
+        if (! $user instanceof User) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $context = UserContext::for($user);
+
+        if (! $context->tierAtLeast($portal->minTier())) {
+            return response()->json([
+                'error'         => "The {$portal->label()} portal requires the {$portal->minTier()} plan.",
+                'reason'        => 'tier',
+                'current_tier'  => $context->tier,
+                'required_tier' => $portal->minTier(),
+            ], 403);
+        }
+
+        if (! $portal->allowsDesignation($context->designation)) {
+            return response()->json([
+                'error'  => "Your account is not set up for the {$portal->label()} portal.",
+                'reason' => 'designation',
+            ], 403);
+        }
+
+        return null;
     }
 
     public function sendOtp(Request $request)

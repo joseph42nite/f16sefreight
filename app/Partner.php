@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,6 +19,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Partner extends Model
 {
+    use BelongsToTenant;
+
+    /** Tenant-WIDE: shared across all of this tenant's branches. */
+    protected string $tenantColumn = 'company_id';
+
     /**
      * One row can act in several roles across different shipments — the same firm is
      * co-loader on one and transporter on the next. `partner_type` is only the PRIMARY

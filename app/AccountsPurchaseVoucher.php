@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AccountsPurchaseVoucher extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'agent_id', 'job_id', 'transport_mode', 'vendor_id', 'created_by',
         'voucher_no', 'document_date', 'status',

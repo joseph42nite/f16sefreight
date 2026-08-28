@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Concerns\BelongsToTenant;
 use App\Enums\JobStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Job extends Model
 {
+    use BelongsToTenant;
+
     use SoftDeletes;
 
     protected $table = 'jobs';

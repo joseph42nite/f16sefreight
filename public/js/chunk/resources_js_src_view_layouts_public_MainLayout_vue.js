@@ -13,12 +13,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/store/auth.module */ "./resources/js/src/core/services/store/auth.module.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -26,14 +25,14 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   props: {
     showLogin: {
       type: Boolean,
-      "default": false
+      default: false
     },
     showOtp: {
       type: Boolean,
-      "default": false
+      default: false
     }
   },
-  data: function data() {
+  data() {
     return {
       user_form: {
         email: "",
@@ -45,46 +44,44 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     };
   },
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_1__.mapState)({
-    errors: function errors(state) {
-      return state.auth.errors;
-    }
+    errors: state => state.auth.errors
   })), {}, {
     internal_show_login: {
-      get: function get() {
+      get() {
         return this.showLogin;
       },
-      set: function set(val) {
+      set(val) {
         this.$emit('update:showLogin', val);
       }
     },
     internal_show_otp: {
-      get: function get() {
+      get() {
         return this.showOtp;
       },
-      set: function set(val) {
+      set(val) {
         this.$emit('update:showOtp', val);
       }
     }
   }),
   methods: {
-    login: function login() {
-      var _this = this;
+    login() {
       this.loading = true;
-      var _this$user_form = this.user_form,
-        email = _this$user_form.email,
-        password = _this$user_form.password,
-        otp = _this$user_form.otp;
+      const {
+        email,
+        password,
+        otp
+      } = this.user_form;
       this.$store.dispatch(_core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__.LOGIN, {
-        email: email,
-        password: password,
-        otp: otp
-      }).then(function () {
-        _this.internal_show_login = false;
-        _this.internal_show_otp = false;
-      })["catch"](function () {
+        email,
+        password,
+        otp
+      }).then(() => {
+        this.internal_show_login = false;
+        this.internal_show_otp = false;
+      }).catch(() => {
         // Error is handled via mapState errors
-      })["finally"](function () {
-        _this.loading = false;
+      }).finally(() => {
+        this.loading = false;
       });
     }
   }
@@ -103,12 +100,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "Footer",
@@ -130,12 +126,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/store/auth.module */ "./resources/js/src/core/services/store/auth.module.js");
 /* harmony import */ var _view_layouts_public_AuthModals_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/layouts/public/AuthModals.vue */ "./resources/js/src/view/layouts/public/AuthModals.vue");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -144,7 +139,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   components: {
     AuthModals: _view_layouts_public_AuthModals_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
-  data: function data() {
+  data() {
     return {
       show_login_modal: false,
       otp_verification_modal: false,
@@ -152,21 +147,19 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     };
   },
   methods: {
-    hasActiveChildren: function hasActiveChildren(match) {
+    hasActiveChildren(match) {
       return this.$route["path"].indexOf(match) !== -1;
     },
-    firstPopUp: function firstPopUp() {
+    firstPopUp() {
       this.show_login_modal = true;
     },
-    logout: function logout() {
-      this.$store.dispatch(_core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__.LOGOUT).then(function () {
-        return window.location.href = "/";
-      });
+    logout() {
+      this.$store.dispatch(_core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__.LOGOUT).then(() => window.location.href = "/");
     },
-    handleBlogClick: function handleBlogClick(e) {
+    handleBlogClick(e) {
       if (this.$route.path === '/') {
         e.preventDefault();
-        var element = document.getElementById('blogs-section');
+        const element = document.getElementById('blogs-section');
         if (element) {
           element.scrollIntoView({
             behavior: 'smooth'
@@ -176,7 +169,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     }
   },
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["isAuthenticated", "currentUser"])), {}, {
-    logoSrc: function logoSrc() {
+    logoSrc() {
       return "/media/assets/logos/white-logo.png";
     }
   })
@@ -197,12 +190,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _view_layouts_public_Header_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/Header.vue */ "./resources/js/src/view/layouts/public/Header.vue");
 /* harmony import */ var _view_layouts_public_Footer_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/layouts/public/Footer.vue */ "./resources/js/src/view/layouts/public/Footer.vue");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -213,7 +205,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     KTFooter: _view_layouts_public_Footer_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
   methods: {
-    scrollToTop: function scrollToTop() {
+    scrollToTop() {
       window.scrollTo(0, 0);
       document.body.scrollTop = 0;
       document.documentElement.scrollTop = 0;
@@ -249,7 +241,7 @@ var render = function render() {
     },
     model: {
       value: _vm.internal_show_login,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.internal_show_login = $$v;
       },
       expression: "internal_show_login"
@@ -259,7 +251,7 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "ultra-close-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.internal_show_login = false;
       }
     }
@@ -307,7 +299,7 @@ var render = function render() {
   }, [_c("form", {
     staticClass: "ultra-form",
     on: {
-      submit: function submit($event) {
+      submit: function ($event) {
         $event.preventDefault();
         return _vm.login.apply(null, arguments);
       }
@@ -340,7 +332,7 @@ var render = function render() {
       value: _vm.user_form.email
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.user_form, "email", $event.target.value);
       }
@@ -372,7 +364,7 @@ var render = function render() {
       checked: Array.isArray(_vm.user_form.password) ? _vm._i(_vm.user_form.password, null) > -1 : _vm.user_form.password
     },
     on: {
-      change: function change($event) {
+      change: function ($event) {
         var $$a = _vm.user_form.password,
           $$el = $event.target,
           $$c = $$el.checked ? true : false;
@@ -407,7 +399,7 @@ var render = function render() {
       checked: _vm._q(_vm.user_form.password, null)
     },
     on: {
-      change: function change($event) {
+      change: function ($event) {
         return _vm.$set(_vm.user_form, "password", null);
       }
     }
@@ -429,7 +421,7 @@ var render = function render() {
       value: _vm.user_form.password
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.user_form, "password", $event.target.value);
       }
@@ -442,7 +434,7 @@ var render = function render() {
       type: "button"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.showPass = !_vm.showPass;
       }
     }
@@ -458,7 +450,7 @@ var render = function render() {
       to: "/contact-us"
     },
     nativeOn: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.internal_show_login = false;
       }
     }
@@ -488,7 +480,7 @@ var render = function render() {
       to: "/contact-us?modal=query"
     },
     nativeOn: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.internal_show_login = false;
       }
     }
@@ -503,7 +495,7 @@ var render = function render() {
     },
     model: {
       value: _vm.internal_show_otp,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.internal_show_otp = $$v;
       },
       expression: "internal_show_otp"
@@ -513,7 +505,7 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "ultra-close-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.internal_show_otp = false;
       }
     }
@@ -554,7 +546,7 @@ var render = function render() {
   }, [_c("form", {
     staticClass: "ultra-form",
     on: {
-      submit: function submit($event) {
+      submit: function ($event) {
         $event.preventDefault();
         return _vm.login.apply(null, arguments);
       }
@@ -585,7 +577,7 @@ var render = function render() {
       value: _vm.user_form.otp
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.user_form, "otp", $event.target.value);
       }
@@ -878,7 +870,7 @@ var render = function render() {
   }), _vm._v(" "), _c("span", [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1), _vm._v(" "), _c("button", {
     staticClass: "sign-out-btn-premium",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.logout();
       }
     }
@@ -897,7 +889,7 @@ var render = function render() {
       "aria-label": "Sign in to your account"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.firstPopUp("login_signin");
       }
     }
@@ -919,7 +911,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "button-content",
-      fn: function fn() {
+      fn: function () {
         return [_c("div", {
           staticClass: "avatar-wrapper"
         }, [_c("img", {
@@ -951,7 +943,7 @@ var render = function render() {
     }
   }, [_vm._v("Origin: "), _c("strong", [_vm._v(_vm._s(_vm.currentUser.origin_airport_code))])])], 1)]), _vm._v(" "), _c("b-dropdown-divider"), _vm._v(" "), _c("b-dropdown-item", {
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.logout();
       }
     }
@@ -979,7 +971,7 @@ var render = function render() {
       "aria-label": "Sign in to your account"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.firstPopUp("login_signin");
       }
     }
@@ -996,16 +988,16 @@ var render = function render() {
       "show-otp": _vm.otp_verification_modal
     },
     on: {
-      "update:showLogin": function updateShowLogin($event) {
+      "update:showLogin": function ($event) {
         _vm.show_login_modal = $event;
       },
-      "update:show-login": function updateShowLogin($event) {
+      "update:show-login": function ($event) {
         _vm.show_login_modal = $event;
       },
-      "update:showOtp": function updateShowOtp($event) {
+      "update:showOtp": function ($event) {
         _vm.otp_verification_modal = $event;
       },
-      "update:show-otp": function updateShowOtp($event) {
+      "update:show-otp": function ($event) {
         _vm.otp_verification_modal = $event;
       }
     }

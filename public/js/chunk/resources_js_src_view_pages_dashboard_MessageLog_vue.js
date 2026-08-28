@@ -15,12 +15,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -29,7 +28,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MessageLog",
-  data: function data() {
+  data() {
     return {
       form: new Form({
         masterStart: "",
@@ -69,111 +68,96 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)({
     current_user: "currentUser"
   })), {}, {
-    normalizedItems: function normalizedItems() {
-      var _this = this;
+    normalizedItems() {
       if (this.searchPerformed && this.data_items && this.data_items.airway_bill && this.data_items.airway_bill !== null) {
-        var awb = this.data_items.airway_bill;
+        const awb = this.data_items.airway_bill;
         if (!awb.destination_airport) return [];
-        var hwbs = Array.isArray(this.data_items.house_way_bills) ? this.data_items.house_way_bills : [];
+        const hwbs = Array.isArray(this.data_items.house_way_bills) ? this.data_items.house_way_bills : [];
         return [{
           id: awb.id,
           awb_no: awb.awb_no,
           awb_code: awb.awb_code,
           destination_airport: this.getAirportCode(awb.destination_airport),
           created_at: this.formatDate(awb.created_at),
-          house_way_bills: hwbs.filter(function (hwb) {
-            return hwb.destination_airport;
-          }).map(function (hwb) {
-            return _objectSpread(_objectSpread({}, hwb), {}, {
-              destination_airport_code: _this.getAirportCode(hwb.destination_airport),
-              formatted_created_at: _this.formatDate(hwb.created_at)
-            });
-          })
+          house_way_bills: hwbs.filter(hwb => hwb.destination_airport).map(hwb => _objectSpread(_objectSpread({}, hwb), {}, {
+            destination_airport_code: this.getAirportCode(hwb.destination_airport),
+            formatted_created_at: this.formatDate(hwb.created_at)
+          }))
         }];
       } else if (Array.isArray(this.data_items)) {
-        return this.data_items.filter(function (item) {
-          return item.destination_airport;
-        }).map(function (item) {
-          var hwbs = Array.isArray(item.house_way_bills) ? item.house_way_bills : [];
+        return this.data_items.filter(item => item.destination_airport).map(item => {
+          const hwbs = Array.isArray(item.house_way_bills) ? item.house_way_bills : [];
           return _objectSpread(_objectSpread({}, item), {}, {
-            destination_airport: _this.getAirportCode(item.destination_airport),
-            created_at: _this.formatDate(item.created_at),
-            house_way_bills: hwbs.filter(function (hwb) {
-              return hwb.destination_airport;
-            }).map(function (hwb) {
-              return _objectSpread(_objectSpread({}, hwb), {}, {
-                destination_airport_code: _this.getAirportCode(hwb.destination_airport),
-                formatted_created_at: _this.formatDate(hwb.created_at)
-              });
-            })
+            destination_airport: this.getAirportCode(item.destination_airport),
+            created_at: this.formatDate(item.created_at),
+            house_way_bills: hwbs.filter(hwb => hwb.destination_airport).map(hwb => _objectSpread(_objectSpread({}, hwb), {}, {
+              destination_airport_code: this.getAirportCode(hwb.destination_airport),
+              formatted_created_at: this.formatDate(hwb.created_at)
+            }))
           });
         });
       }
       return [];
     },
-    statusResponses: function statusResponses() {
-      var _this2 = this;
+    statusResponses() {
       if (this.data_items && Array.isArray(this.data_items.status_reponse)) {
-        return this.data_items.status_reponse.map(function (status) {
-          return _objectSpread(_objectSpread({}, status), {}, {
-            formatted_created_at: _this2.formatDate(status.created_at)
-          });
-        });
+        return this.data_items.status_reponse.map(status => _objectSpread(_objectSpread({}, status), {}, {
+          formatted_created_at: this.formatDate(status.created_at)
+        }));
       }
       return [];
     }
   }),
   watch: {
-    currentPage: function currentPage(newPage) {
+    currentPage(newPage) {
       if (!this.searchPerformed) {
         this.allAirwayBill(newPage);
       }
     },
-    perPage: function perPage(newPerPage) {
+    perPage(newPerPage) {
       if (!this.searchPerformed) {
         this.currentPage = 1;
         this.allAirwayBill(1);
       }
     },
-    normalizedItems: function normalizedItems(val) {
+    normalizedItems(val) {
       if (this.searchPerformed) {
         this.totalRows = val.length;
       }
     },
-    "$route.params.id": function $routeParamsId(newId) {
+    "$route.params.id"(newId) {
       if (newId) {
         this.getAirWayBill(newId);
         this.getHouseWayBill(newId);
       }
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.allAirwayBill(1);
   },
   methods: {
-    onFiltered: function onFiltered(filteredItems) {
+    onFiltered(filteredItems) {
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
     },
-    onSelect: function onSelect(value) {
+    onSelect(value) {
       if (value) {
         window.location.href = value;
       }
     },
-    getHouseWayBill: function getHouseWayBill(id) {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/houseway-bill/".concat(id)).then(function (response) {
-        _this3.existingData = response.data;
-        _this3.openForm("update", _this3.existingData.id);
-        if (_this3.existingData && _this3.existingData.consignment_data) {
-          _this3.isConsignmentAdded = true;
+    getHouseWayBill(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/houseway-bill/${id}`).then(response => {
+        this.existingData = response.data;
+        this.openForm("update", this.existingData.id);
+        if (this.existingData && this.existingData.consignment_data) {
+          this.isConsignmentAdded = true;
         }
-      })["catch"](function (error) {
+      }).catch(error => {
         console.error("Failed to fetch data for updating:", error);
       });
     },
-    formatDate: function formatDate(dateString) {
-      var date = new Date(dateString);
+    formatDate(dateString) {
+      const date = new Date(dateString);
       return date.toLocaleString("en-GB", {
         day: "2-digit",
         month: "2-digit",
@@ -183,63 +167,58 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         hour12: true
       }).replace(",", "");
     },
-    getAirportCode: function getAirportCode(airport) {
+    getAirportCode(airport) {
       if (!airport) return "";
       return airport.split(",")[0].trim();
     },
-    allAirwayBill: function allAirwayBill() {
-      var _this4 = this;
-      var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+    allAirwayBill(page = 1) {
       this.isLoading = true;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/all-airway-bill", {
         params: {
           page: page,
           perPage: this.perPage
         }
-      }).then(function (response) {
+      }).then(response => {
         if (response.data && response.data.data) {
-          _this4.data_items = response.data.data;
-          _this4.totalRows = response.data.total;
-          _this4.currentPage = response.data.current_page;
+          this.data_items = response.data.data;
+          this.totalRows = response.data.total;
+          this.currentPage = response.data.current_page;
         } else {
-          _this4.data_items = response.data || [];
-          _this4.totalRows = _this4.data_items.length;
+          this.data_items = response.data || [];
+          this.totalRows = this.data_items.length;
         }
-        _this4.filteredData = _this4.data_items;
-      })["catch"](function (error) {
+        this.filteredData = this.data_items;
+      }).catch(error => {
         console.error("Failed to fetch items:", error);
-        _this4.data_items = [];
-        _this4.filteredData = [];
-        _this4.totalRows = 0;
-      })["finally"](function () {
-        _this4.isLoading = false;
+        this.data_items = [];
+        this.filteredData = [];
+        this.totalRows = 0;
+      }).finally(() => {
+        this.isLoading = false;
       });
     },
-    getAirWayBill: function getAirWayBill(id) {
-      var _this5 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/airway-bill/".concat(id)).then(function (response) {
+    getAirWayBill(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/airway-bill/${id}`).then(response => {
         if (response.data && response.data.id == id) {
-          _this5.existingData = response.data;
+          this.existingData = response.data;
         } else {}
-      })["catch"](function (error) {
-        _this5.existingData = null;
+      }).catch(error => {
+        this.existingData = null;
       });
     },
-    handleDeleteHouseBill: function handleDeleteHouseBill(id) {
-      var _this6 = this;
+    handleDeleteHouseBill(id) {
       if (confirm("Are you sure you want to delete this house way bill?")) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"]["delete"]("/user/house-way-bills/".concat(id)).then(function () {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"]["delete"](`/user/house-way-bills/${id}`).then(() => {
           // Clear the cached house way bills
-          _this6.house_way_bills = {};
+          this.house_way_bills = {};
           // Refresh the data
-          _this6.allAirwayBill();
-        })["catch"](function (error) {
+          this.allAirwayBill();
+        }).catch(error => {
           console.error("Failed to delete house way bill:", error);
         });
       }
     },
-    searchAWB: function searchAWB() {
-      var _this7 = this;
+    searchAWB() {
       this.errorMessage = ''; // reset
       this.searchPerformed = false;
       if (!this.form.masterStart || !this.form.masterEnd) {
@@ -250,42 +229,42 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         });
         return;
       }
-      this.form.post("/user/search-airway-bills", {
+      this.form.post(`/user/search-airway-bills`, {
         params: {
           awb_code: this.form.masterStart,
           awb_no: this.form.masterEnd
         }
-      }).then(function (response) {
+      }).then(response => {
         // this.airway_bill = response.data.airway_bill;
         // this.data_items = response.data.house_way_bills;
-        _this7.data_items = response.data;
-        _this7.currentPage = 1;
-        _this7.searchPerformed = true;
-        _this7.totalRows = response.data.length;
+        this.data_items = response.data;
+        this.currentPage = 1;
+        this.searchPerformed = true;
+        this.totalRows = response.data.length;
         // this.form.reset();
-      })["catch"](function (error) {
-        _this7.searchPerformed = true;
+      }).catch(error => {
+        this.searchPerformed = true;
         if (error.response && error.response.data && error.response.data.message) {
-          _this7.errorMessage = error.response.data.message;
+          this.errorMessage = error.response.data.message;
         } else {
-          _this7.errorMessage = 'Something went wrong.';
+          this.errorMessage = 'Something went wrong.';
         }
       });
     },
-    validateAwbCode: function validateAwbCode(value) {
+    validateAwbCode(value) {
       this.form.masterStart = value.replace(/[^0-9]/g, '').slice(0, 3);
       this.validateSearch();
       this.checkEmptyFields();
     },
-    validateAwbNo: function validateAwbNo(value) {
+    validateAwbNo(value) {
       this.form.masterEnd = value.replace(/[^0-9]/g, '').slice(0, 8);
       this.validateSearch();
       this.checkEmptyFields();
     },
-    validateSearch: function validateSearch() {
+    validateSearch() {
       this.isSearchValid = this.form.masterStart.length === 3 && this.form.masterEnd.length === 8;
     },
-    checkEmptyFields: function checkEmptyFields() {
+    checkEmptyFields() {
       // If both fields are empty, reload all data
       if (this.form.masterStart === "" && this.form.masterEnd === "") {
         this.searchPerformed = false;
@@ -294,7 +273,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         this.allAirwayBill(1);
       }
     },
-    clearSearch: function clearSearch() {
+    clearSearch() {
       // Clear the form fields
       this.form.masterStart = "";
       this.form.masterEnd = "";
@@ -422,7 +401,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.masterStart,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "masterStart", $$v);
       },
       expression: "form.masterStart"
@@ -447,7 +426,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.masterEnd,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "masterEnd", $$v);
       },
       expression: "form.masterEnd"
@@ -525,7 +504,7 @@ var render = function render() {
     },
     model: {
       value: _vm.perPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.perPage = $$v;
       },
       expression: "perPage"
@@ -547,21 +526,21 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "cell(index)",
-      fn: function fn(row) {
+      fn: function (row) {
         return [_c("span", {
           staticClass: "font-weight-bold text-muted"
         }, [_vm._v(_vm._s((_vm.currentPage - 1) * _vm.perPage + row.index + 1))])];
       }
     }, {
       key: "cell(id)",
-      fn: function fn(row) {
+      fn: function (row) {
         return [_c("router-link", {
           staticClass: "custom-link font-weight-bold",
           attrs: {
             to: "/edit-airway-bill/" + String(row.item.id)
           },
           nativeOn: {
-            click: function click($event) {
+            click: function ($event) {
               _vm.getAirWayBill(String(row.item.id));
             }
           }
@@ -569,7 +548,7 @@ var render = function render() {
       }
     }, {
       key: "cell(destination_airport)",
-      fn: function fn(row) {
+      fn: function (row) {
         return [_c("span", {
           staticClass: "badge badge-light px-2 py-1",
           staticStyle: {
@@ -583,14 +562,14 @@ var render = function render() {
       }
     }, {
       key: "cell(created_at)",
-      fn: function fn(row) {
+      fn: function (row) {
         return [_c("span", {
           staticClass: "text-muted"
         }, [_vm._v(_vm._s(row.item.created_at))])];
       }
     }, {
       key: "head(houseway)",
-      fn: function fn() {
+      fn: function () {
         return [_c("div", {
           staticClass: "d-flex font-weight-bold",
           staticStyle: {
@@ -613,7 +592,7 @@ var render = function render() {
       proxy: true
     }, {
       key: "cell(houseway)",
-      fn: function fn(row) {
+      fn: function (row) {
         return [row.item.house_way_bills && row.item.house_way_bills.length ? _c("div", {
           staticClass: "mb-3"
         }, _vm._l(row.item.house_way_bills, function (bill, i) {
@@ -637,7 +616,7 @@ var render = function render() {
               icon: "pencil"
             },
             on: {
-              click: function click($event) {
+              click: function ($event) {
                 return _vm.$router.push("/edit-houseway-bill/" + bill.id);
               }
             }
@@ -651,7 +630,7 @@ var render = function render() {
               icon: "trash"
             },
             on: {
-              click: function click($event) {
+              click: function ($event) {
                 return _vm.handleDeleteHouseBill(bill.id);
               }
             }
@@ -733,7 +712,7 @@ var render = function render() {
     },
     model: {
       value: _vm.currentPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.currentPage = $$v;
       },
       expression: "currentPage"

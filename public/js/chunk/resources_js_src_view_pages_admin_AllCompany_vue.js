@@ -18,7 +18,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminallcompany",
   mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_1__["default"]],
-  data: function data() {
+  data() {
     return {
       fields: [{
         label: "Sl",
@@ -36,11 +36,11 @@ __webpack_require__.r(__webpack_exports__);
     SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
   },
   methods: {
-    get_company: function get_company() {
-      return this.loadItems("/superadmin/all-company/0");
+    get_company() {
+      return this.loadItems(`/superadmin/all-company/0`);
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.get_company();
   }
 });
@@ -91,7 +91,7 @@ var render = function render() {
     },
     model: {
       value: _vm.perPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.perPage = $$v;
       },
       expression: "perPage"
@@ -107,7 +107,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filter,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.filter = $$v;
       },
       expression: "filter"
@@ -137,14 +137,14 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "cell(index)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "font-weight-bold"
         }, [_vm._v("#" + _vm._s(data.index + 1))])];
       }
     }, {
       key: "cell(name)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "d-flex align-items-center"
         }, [_c("div", {
@@ -157,7 +157,7 @@ var render = function render() {
       }
     }, {
       key: "cell(action)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("router-link", {
           staticClass: "btn btn-icon btn-light-primary btn-sm",
           attrs: {
@@ -181,7 +181,7 @@ var render = function render() {
     },
     model: {
       value: _vm.currentPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.currentPage = $$v;
       },
       expression: "currentPage"

@@ -13,22 +13,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _blogData__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./blogData */ "./resources/js/src/view/pages/public/blogData.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "BlogPost",
-  metaInfo: function metaInfo() {
-    var siteOrigin = window.location.origin;
-    var imagePath = this.post.image || this.post.image_path || '/media/assets/blog/futuristic-hud-overlays.webp';
-    var absoluteImageUrl = siteOrigin + imagePath;
-    var pageUrl = window.location.href;
-    var schema = {
+  metaInfo() {
+    const siteOrigin = window.location.origin;
+    const imagePath = this.post.image || this.post.image_path || '/media/assets/blog/futuristic-hud-overlays.webp';
+    const absoluteImageUrl = siteOrigin + imagePath;
+    const pageUrl = window.location.href;
+    const schema = {
       "@context": "https://schema.org",
       "@type": "BlogPosting",
       "headline": this.post.title,
@@ -91,7 +90,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       __dangerouslyDisableSanitizers: ['script']
     };
   },
-  data: function data() {
+  data() {
     return {
       readingProgress: 0,
       showShareModal: false,
@@ -104,41 +103,39 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   },
   watch: {
     '$route.params.slug': {
-      handler: function handler(newSlug) {
+      handler(newSlug) {
         this.fetchPost(newSlug);
         window.scrollTo(0, 0);
       },
       immediate: true
     }
   },
-  mounted: function mounted() {
+  mounted() {
     window.addEventListener('scroll', this.updateProgress);
   },
-  destroyed: function destroyed() {
+  destroyed() {
     window.removeEventListener('scroll', this.updateProgress);
   },
   methods: {
-    fetchPost: function fetchPost(slug) {
-      var _this = this;
+    fetchPost(slug) {
       // 1. Immediate fallback lookup
-      var offlinePost = _blogData__WEBPACK_IMPORTED_MODULE_0__.blogs.find(function (b) {
-        return b.slug === slug;
-      });
+      const offlinePost = _blogData__WEBPACK_IMPORTED_MODULE_0__.blogs.find(b => b.slug === slug);
       if (offlinePost) {
         this.setPost(offlinePost);
       }
 
       // 2. Dynamic DB Lookup with override
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/get-public-blog/".concat(slug)).then(function (_ref) {
-        var data = _ref.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/get-public-blog/${slug}`).then(({
+        data
+      }) => {
         if (data.success && data.data) {
-          var item = data.data;
+          const item = data.data;
           // Ensure proper casting of relational arrays
-          var parsedTakeaways = item.takeaways;
+          let parsedTakeaways = item.takeaways;
           if (typeof parsedTakeaways === 'string') {
             parsedTakeaways = JSON.parse(parsedTakeaways);
           }
-          var formattedPost = _objectSpread(_objectSpread({}, item), {}, {
+          const formattedPost = _objectSpread(_objectSpread({}, item), {}, {
             image: item.image_path,
             readTime: item.read_time,
             takeaways: parsedTakeaways || [],
@@ -148,61 +145,54 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
               year: 'numeric'
             })
           });
-          _this.setPost(formattedPost);
+          this.setPost(formattedPost);
         }
-      })["catch"](function () {
+      }).catch(() => {
         console.log("Static fallback content maintained.");
       });
 
       // Fetch related fallback logic, or grab other public ones
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get('/get-public-blogs').then(function (_ref2) {
-        var data = _ref2.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get('/get-public-blogs').then(({
+        data
+      }) => {
         if (data.success && data.data) {
-          var rel = data.data.filter(function (d) {
-            return d.slug !== slug;
-          }).slice(0, 2).map(function (i) {
-            return _objectSpread(_objectSpread({}, i), {}, {
-              image: i.image_path,
-              date: new Date(i.published_at || i.created_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric'
-              })
-            });
-          });
-          if (rel.length > 0) _this.relatedPosts = rel;
+          const rel = data.data.filter(d => d.slug !== slug).slice(0, 2).map(i => _objectSpread(_objectSpread({}, i), {}, {
+            image: i.image_path,
+            date: new Date(i.published_at || i.created_at).toLocaleDateString('en-US', {
+              month: 'short',
+              day: '2-digit',
+              year: 'numeric'
+            })
+          }));
+          if (rel.length > 0) this.relatedPosts = rel;
         }
-      })["catch"](function () {
+      }).catch(() => {
         // final fallback
-        _this.relatedPosts = _blogData__WEBPACK_IMPORTED_MODULE_0__.blogs.filter(function (b) {
-          return b.slug !== slug;
-        }).slice(0, 2);
+        this.relatedPosts = _blogData__WEBPACK_IMPORTED_MODULE_0__.blogs.filter(b => b.slug !== slug).slice(0, 2);
       });
     },
-    setPost: function setPost(p) {
+    setPost(p) {
       this.post = p;
     },
-    updateProgress: function updateProgress() {
-      var scrollH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      var scrolled = window.scrollY;
+    updateProgress() {
+      const scrollH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = window.scrollY;
       this.readingProgress = scrollH > 0 ? scrolled / scrollH * 100 : 0;
     },
-    copyToClipboard: function copyToClipboard() {
-      var _this2 = this;
-      navigator.clipboard.writeText(this.currentUrl).then(function () {
-        _this2.copyStatus = 'Copied!';
-        setTimeout(function () {
-          _this2.copyStatus = 'Copy Link';
+    copyToClipboard() {
+      navigator.clipboard.writeText(this.currentUrl).then(() => {
+        this.copyStatus = 'Copied!';
+        setTimeout(() => {
+          this.copyStatus = 'Copy Link';
         }, 2000);
       });
     },
-    copyFullMessage: function copyFullMessage() {
-      var _this3 = this;
-      var message = "".concat(this.post.title, "\n\n").concat(this.post.excerpt, "\n\nRead more at: ").concat(this.currentUrl);
-      navigator.clipboard.writeText(message).then(function () {
-        _this3.copyMessageStatus = 'Message Copied!';
-        setTimeout(function () {
-          _this3.copyMessageStatus = 'Copy Message for Sharing';
+    copyFullMessage() {
+      const message = `${this.post.title}\n\n${this.post.excerpt}\n\nRead more at: ${this.currentUrl}`;
+      navigator.clipboard.writeText(message).then(() => {
+        this.copyMessageStatus = 'Message Copied!';
+        setTimeout(() => {
+          this.copyMessageStatus = 'Copy Message for Sharing';
         }, 2000);
       });
     }
@@ -330,7 +320,7 @@ var render = function render() {
   }, [_vm._v("Share it with your logistics network.")])]), _vm._v(" "), _c("b-button", {
     staticClass: "hero-btn share-trigger-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.showShareModal = true;
       }
     }
@@ -350,7 +340,7 @@ var render = function render() {
     },
     model: {
       value: _vm.showShareModal,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.showShareModal = $$v;
       },
       expression: "showShareModal"
@@ -463,7 +453,7 @@ var render = function render() {
         cursor: "pointer"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.$router.push("/blog/" + related.slug);
         }
       }

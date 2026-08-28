@@ -17,12 +17,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var quill_dist_quill_snow_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! quill/dist/quill.snow.css */ "./node_modules/quill/dist/quill.snow.css");
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! sweetalert2 */ "./node_modules/sweetalert2/dist/sweetalert2.all.js");
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(sweetalert2__WEBPACK_IMPORTED_MODULE_3__);
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -32,7 +31,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   components: {
     quillEditor: vue_quill_editor__WEBPACK_IMPORTED_MODULE_1__.quillEditor
   },
-  data: function data() {
+  data() {
     return {
       submitting: false,
       selectedFile: null,
@@ -68,66 +67,98 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     };
   },
   computed: {
-    blogId: function blogId() {
+    blogId() {
       return this.$route.params.id || null;
     },
-    actionLabel: function actionLabel() {
+    actionLabel() {
       return this.blogId ? "Update" : "Publish";
     }
   },
-  mounted: function mounted() {
+  mounted() {
     if (this.blogId) {
       this.fetchBlogDetails();
     }
   },
   methods: {
-    addTakeaway: function addTakeaway() {
+    addTakeaway() {
       this.blogData.takeaways.push("");
     },
-    copyLink: function copyLink(path) {
+    copyLink(path) {
       navigator.clipboard.writeText(path);
-      this.$bvToast.toast("Copied \"".concat(path, "\" to clipboard!"), {
+      this.$bvToast.toast(`Copied "${path}" to clipboard!`, {
         title: 'Copied',
         variant: 'info',
         solid: true,
         autoHideDelay: 1500
       });
     },
-    removeTakeaway: function removeTakeaway(index) {
+    copyShareableLink() {
+      if (!this.blogData.slug) return;
+      const shareableUrl = `${window.location.origin}/blog/${this.blogData.slug}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareableUrl).then(() => {
+          this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+            title: 'Link Copied',
+            variant: 'success',
+            solid: true,
+            autoHideDelay: 2000
+          });
+        }).catch(() => {
+          this.fallbackCopyText(shareableUrl);
+        });
+      } else {
+        this.fallbackCopyText(shareableUrl);
+      }
+    },
+    fallbackCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+          title: 'Link Copied',
+          variant: 'success',
+          solid: true,
+          autoHideDelay: 2000
+        });
+      } catch (err) {
+        sweetalert2__WEBPACK_IMPORTED_MODULE_3___default().fire('Shareable Link', text, 'info');
+      }
+      document.body.removeChild(textArea);
+    },
+    removeTakeaway(index) {
       this.blogData.takeaways.splice(index, 1);
     },
-    onFileChange: function onFileChange(e) {
-      var file = e.target.files[0];
+    onFileChange(e) {
+      const file = e.target.files[0];
       if (file) {
         this.previewImage = URL.createObjectURL(file);
       }
     },
-    fetchBlogDetails: function fetchBlogDetails() {
-      var _this = this;
+    fetchBlogDetails() {
       // Backend fetch based on standard internal GET but for specific record
       // Just use our internal endpoint that queries all and filter locally OR fetch by ID.
       // Let's use current system logic if they fetch specific ones.
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-blogs-internal").then(function (_ref) {
-        var data = _ref.data;
-        var target = data.data.find(function (b) {
-          return b.id == _this.blogId;
-        });
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-blogs-internal`).then(({
+        data
+      }) => {
+        const target = data.data.find(b => b.id == this.blogId);
         if (target) {
-          _this.blogData = _objectSpread({}, target);
-          _this.previewImage = target.image_path;
+          this.blogData = _objectSpread({}, target);
+          this.previewImage = target.image_path;
           // Handle array casting validation
           if (typeof target.takeaways === 'string') {
-            _this.blogData.takeaways = JSON.parse(target.takeaways);
+            this.blogData.takeaways = JSON.parse(target.takeaways);
           }
-          if (!Array.isArray(_this.blogData.takeaways)) {
-            _this.blogData.takeaways = [""];
+          if (!Array.isArray(this.blogData.takeaways)) {
+            this.blogData.takeaways = [""];
           }
         }
       });
     },
-    submitPost: function submitPost() {
-      var _this2 = this;
-      var isDraft = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+    submitPost(isDraft = false) {
       if (!this.blogData.title || !this.blogData.content) {
         sweetalert2__WEBPACK_IMPORTED_MODULE_3___default().fire('Hold up', 'Title and Content are mandatory fields.', 'warning');
         return;
@@ -135,7 +166,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       this.submitting = true;
 
       // Use raw FormData to pack images
-      var fd = new FormData();
+      const fd = new FormData();
       fd.append('title', this.blogData.title);
       fd.append('category', this.blogData.category);
       fd.append('read_time', this.blogData.read_time);
@@ -146,41 +177,39 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       fd.append('is_draft', isDraft ? '1' : '0');
 
       // Format takeaways to drop empties and append each element correctly
-      var filteredTakeaways = this.blogData.takeaways.filter(function (t) {
-        return t.trim().length > 0;
-      });
-      filteredTakeaways.forEach(function (t, index) {
-        fd.append("takeaways[".concat(index, "]"), t);
+      const filteredTakeaways = this.blogData.takeaways.filter(t => t.trim().length > 0);
+      filteredTakeaways.forEach((t, index) => {
+        fd.append(`takeaways[${index}]`, t);
       });
       if (this.selectedFile) {
         fd.append('image', this.selectedFile);
       }
-      var url = '/superadmin/create-blog';
+      let url = '/superadmin/create-blog';
       // Laravel PUT trick for multipart data: Laravel doesn't parse native PUT multipart automatically 
       // reliably sometimes, sending POST with _method is widely supported standard.
       if (this.blogId) {
-        url = "/superadmin/edit-blog/".concat(this.blogId);
+        url = `/superadmin/edit-blog/${this.blogId}`;
         fd.append('_method', 'PUT');
       }
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(url, fd, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
-      }).then(function (_ref2) {
-        var data = _ref2.data;
+      }).then(({
+        data
+      }) => {
         sweetalert2__WEBPACK_IMPORTED_MODULE_3___default().fire({
           title: 'Success!',
           text: 'Your editorial changes have been saved.',
           icon: 'success',
           timer: 2000
         });
-        _this2.$router.push('/superadmin/all-blogs');
-      })["catch"](function (err) {
-        var _err$response;
-        var msg = ((_err$response = err.response) === null || _err$response === void 0 || (_err$response = _err$response.data) === null || _err$response === void 0 ? void 0 : _err$response.message) || 'An error occurred while saving the blog post.';
+        this.$router.push('/superadmin/all-blogs');
+      }).catch(err => {
+        const msg = err.response?.data?.message || 'An error occurred while saving the blog post.';
         sweetalert2__WEBPACK_IMPORTED_MODULE_3___default().fire('Error', msg, 'error');
-      })["finally"](function () {
-        _this2.submitting = false;
+      }).finally(() => {
+        this.submitting = false;
       });
     }
   }
@@ -215,9 +244,12 @@ var render = function render() {
   }, [_c("i", {
     staticClass: "fas fa-arrow-left mr-2"
   }), _vm._v(" Back to All Blogs")]), _vm._v(" "), _c("div", {
-    staticClass: "d-flex align-items-center"
+    staticClass: "d-flex align-items-center flex-wrap",
+    staticStyle: {
+      gap: "8px"
+    }
   }, [_c("h2", {
-    staticClass: "font-weight-bolder text-dark mb-0 mr-4"
+    staticClass: "font-weight-bolder text-dark mb-0 mr-3"
   }, [_vm._v(_vm._s(_vm.actionLabel) + " Editorial Post")]), _vm._v(" "), _vm.blogId ? _c("b-badge", {
     staticClass: "px-3 py-2 font-weight-bold",
     staticStyle: {
@@ -226,7 +258,26 @@ var render = function render() {
     attrs: {
       variant: _vm.blogData.published_at ? "success" : "warning"
     }
-  }, [_vm._v("\n                    " + _vm._s(_vm.blogData.published_at ? "Published" : "Draft") + "\n                ")]) : _vm._e()], 1)], 1), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n                    " + _vm._s(_vm.blogData.published_at ? "Published" : "Draft") + "\n                ")]) : _vm._e(), _vm._v(" "), _vm.blogId && _vm.blogData.slug ? _c("b-button", {
+    staticClass: "font-weight-bold ml-2",
+    attrs: {
+      variant: "light-info",
+      size: "sm"
+    },
+    on: {
+      click: _vm.copyShareableLink
+    }
+  }, [_c("i", {
+    staticClass: "fas fa-link mr-1"
+  }), _vm._v(" Copy Shareable Link\n                ")]) : _vm._e(), _vm._v(" "), _vm.blogId && _vm.blogData.slug ? _c("a", {
+    staticClass: "btn btn-sm btn-light-success font-weight-bold",
+    attrs: {
+      href: "/blog/" + _vm.blogData.slug,
+      target: "_blank"
+    }
+  }, [_c("i", {
+    staticClass: "fas fa-external-link-alt mr-1"
+  }), _vm._v(" View Live\n                ")]) : _vm._e()], 1)], 1), _vm._v(" "), _c("div", {
     staticClass: "d-flex",
     staticStyle: {
       gap: "12px"
@@ -238,7 +289,7 @@ var render = function render() {
       disabled: _vm.submitting
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.submitPost(true);
       }
     }
@@ -254,7 +305,7 @@ var render = function render() {
       disabled: _vm.submitting
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.submitPost(false);
       }
     }
@@ -282,7 +333,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.title,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "title", $$v);
       },
       expression: "blogData.title"
@@ -303,7 +354,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.category,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "category", $$v);
       },
       expression: "blogData.category"
@@ -322,7 +373,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.read_time,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "read_time", $$v);
       },
       expression: "blogData.read_time"
@@ -341,7 +392,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.excerpt,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "excerpt", $$v);
       },
       expression: "blogData.excerpt"
@@ -364,7 +415,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.content,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "content", $$v);
       },
       expression: "blogData.content"
@@ -391,7 +442,7 @@ var render = function render() {
       title: "Click to copy"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.copyLink("/services");
       }
     }
@@ -409,7 +460,7 @@ var render = function render() {
       title: "Click to copy"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.copyLink("/solutions");
       }
     }
@@ -427,7 +478,7 @@ var render = function render() {
       title: "Click to copy"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.copyLink("/product-description");
       }
     }
@@ -445,7 +496,7 @@ var render = function render() {
       title: "Click to copy"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.copyLink("/about-us");
       }
     }
@@ -463,7 +514,7 @@ var render = function render() {
       title: "Click to copy"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.copyLink("/contact-us");
       }
     }
@@ -480,7 +531,7 @@ var render = function render() {
     }, [_c("b-input-group", {
       scopedSlots: _vm._u([{
         key: "prepend",
-        fn: function fn() {
+        fn: function () {
           return [_c("b-input-group-text", {
             staticClass: "bg-light font-weight-bold"
           }, [_vm._v(_vm._s(index + 1))])];
@@ -488,13 +539,13 @@ var render = function render() {
         proxy: true
       }, {
         key: "append",
-        fn: function fn() {
+        fn: function () {
           return [_c("b-button", {
             attrs: {
               variant: "light-danger"
             },
             on: {
-              click: function click($event) {
+              click: function ($event) {
                 return _vm.removeTakeaway(index);
               }
             }
@@ -510,7 +561,7 @@ var render = function render() {
       },
       model: {
         value: _vm.blogData.takeaways[index],
-        callback: function callback($$v) {
+        callback: function ($$v) {
           _vm.$set(_vm.blogData.takeaways, index, $$v);
         },
         expression: "blogData.takeaways[index]"
@@ -560,7 +611,7 @@ var render = function render() {
     },
     model: {
       value: _vm.selectedFile,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.selectedFile = $$v;
       },
       expression: "selectedFile"
@@ -579,7 +630,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.meta_title,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "meta_title", $$v);
       },
       expression: "blogData.meta_title"
@@ -598,7 +649,7 @@ var render = function render() {
     },
     model: {
       value: _vm.blogData.meta_description,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.blogData, "meta_description", $$v);
       },
       expression: "blogData.meta_description"

@@ -18,18 +18,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
 /* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
-function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -38,7 +31,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       form: new Form({
         id: '',
@@ -401,109 +394,103 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     };
   },
   methods: {
-    onSelect: function onSelect(value) {
+    onSelect(value) {
       // Redirect to the selected page
       if (value) {
         window.location.href = value; // This will navigate to the selected page
       }
     },
-    generateAwbPDF: function generateAwbPDF() {
-      var awb_code = this.form.awb_code;
-      var awb_no = this.form.awb_no;
-      var pdfUrl = "/download-consolidation-pdf/".concat(String(awb_code), "/").concat(String(awb_no));
+    generateAwbPDF() {
+      const awb_code = this.form.awb_code;
+      const awb_no = this.form.awb_no;
+      const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`;
       window.open(pdfUrl, '_blank');
     },
-    mouseover: function mouseover() {
+    mouseover: function () {
       this.isOpen = true;
     },
-    mouseleave: function mouseleave() {
+    mouseleave: function () {
       this.isOpen = false;
     },
-    manifest_send: function manifest_send() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/manifest-send/".concat(this.form.awb_code).concat(this.form.awb_no)).then(function (response) {});
+    manifest_send() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/manifest-send/${this.form.awb_code}${this.form.awb_no}`).then(response => {});
     },
-    showModal: function showModal() {
+    showModal() {
       this.$refs["my-modal"].show();
     },
-    hideModal: function hideModal() {
+    hideModal() {
       this.$refs["my-modal"].hide();
     },
-    toggleModal: function toggleModal() {
+    toggleModal() {
       this.$refs["my-modal"].toggle("#toggle-btn");
     },
-    handleOk: function handleOk(bvModalEvent) {
+    handleOk(bvModalEvent) {
       bvModalEvent.preventDefault();
     },
     // location
-    getLocation: function getLocation() {
-      var _this = this;
-      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__.loadLocations)().then(function (data) {
-        _this.location = data;
+    getLocation() {
+      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__.loadLocations)().then(data => {
+        this.location = data;
       });
     },
-    getHousewayBills: function getHousewayBills(status) {
-      var _this2 = this;
+    getHousewayBills(status) {
       this.isFetching = true;
       this.data_items = [];
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/get-master-awbs-with-housewaybills").then(function (response) {
-        _this2.data_items = response.data;
-      })["catch"](function (error) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/get-master-awbs-with-housewaybills`).then(response => {
+        this.data_items = response.data;
+      }).catch(error => {
         console.error("Failed to fetch items:", error);
-      })["finally"](function () {
-        _this2.isFetching = false;
+      }).finally(() => {
+        this.isFetching = false;
       });
     },
-    allHousewayBill: function allHousewayBill() {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-master-awbs-with-housewaybills').then(function (response) {
-        _this3.data_items = response.data;
-      })["catch"](function (error) {
+    allHousewayBill() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-master-awbs-with-housewaybills').then(response => {
+        this.data_items = response.data;
+      }).catch(error => {
         console.error("Failed to fetch master AWBs with house waybills:", error);
-        _this3.data_items = [];
+        this.data_items = [];
       });
     },
-    searchWayBills: function searchWayBills() {
-      var _this4 = this;
+    searchWayBills() {
       this.searchPerformed = true;
       this.form.post('/user/search-house-way-bills', {
         awb_no: this.form.awb_no,
         awb_code: this.form.awb_code
-      }).then(function (response) {
+      }).then(response => {
         if (response.data && response.data.length) {
-          var id = "".concat(String(_this4.form.awb_code)).concat(String(_this4.form.awb_no));
-          _this4.getAirWayBill(id);
-          _this4.consolidation = response.data;
-          _this4.hasSearchResults = true;
+          const id = `${String(this.form.awb_code)}${String(this.form.awb_no)}`;
+          this.getAirWayBill(id);
+          this.consolidation = response.data;
+          this.hasSearchResults = true;
         } else {
-          _this4.consolidation = [];
-          _this4.hasSearchResults = false;
+          this.consolidation = [];
+          this.hasSearchResults = false;
         }
-      })["catch"](function (error) {
+      }).catch(error => {
         console.error('Error fetching data:', error);
-        _this4.consolidation = [];
-        _this4.hasSearchResults = false;
+        this.consolidation = [];
+        this.hasSearchResults = false;
       });
     },
-    getAirWayBill: function getAirWayBill(id) {
-      var _this5 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/airway-bill/".concat(id)).then(function (response) {
+    getAirWayBill(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/airway-bill/${id}`).then(response => {
         if (response.data && response.data.id == id) {
-          _this5.existingData = response.data;
+          this.existingData = response.data;
         }
-      })["catch"](function (error) {
-        _this5.existingData = null;
+      }).catch(error => {
+        this.existingData = null;
         console.error("Failed to fetch data for updating:", error);
       });
     },
-    updateform: function updateform(id) {
-      this.form.put("/user/update-consolidation/".concat(this.form.id)).then(function (response) {
+    updateform(id) {
+      this.form.put(`/user/update-consolidation/${this.form.id}`).then(response => {
         // Waybill updated successfully
-      })["catch"](function (error) {
+      }).catch(error => {
         console.error("Error updating waybill:", error);
       });
     },
-    updateHouseWayBill: function updateHouseWayBill() {
-      var _this6 = this;
+    updateHouseWayBill() {
       if (!this.form.id) {
         this.$bvToast.toast('Please select a house waybill to update', {
           title: 'Warning',
@@ -515,7 +502,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       }
 
       // Prepare the data for update
-      var updateData = {
+      const updateData = {
         awb_code: this.form.awb_code,
         awb_no: this.form.awb_no,
         master_origin: this.form.master_origin,
@@ -528,20 +515,20 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         oci_entries: this.form.oci_entries,
         status: 'draft'
       };
-      this.form.put("/user/update-consolidation/".concat(this.form.id), updateData).then(function (response) {
-        _this6.$bvToast.toast('House waybill updated successfully', {
+      this.form.put(`/user/update-consolidation/${this.form.id}`, updateData).then(response => {
+        this.$bvToast.toast('House waybill updated successfully', {
           title: 'Success',
           variant: 'success',
           solid: true,
           autoHideDelay: 3000
         });
         // Refresh the consolidation data
-        _this6.searchWayBills();
+        this.searchWayBills();
         // Clear the form
-        _this6.clearForm();
-      })["catch"](function (error) {
+        this.clearForm();
+      }).catch(error => {
         console.error("Error updating house waybill:", error);
-        _this6.$bvToast.toast('Error updating house waybill. Please try again.', {
+        this.$bvToast.toast('Error updating house waybill. Please try again.', {
           title: 'Error',
           variant: 'danger',
           solid: true,
@@ -549,15 +536,15 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         });
       });
     },
-    cancelUpdate: function cancelUpdate() {
+    cancelUpdate() {
       this.clearForm();
     },
-    addDetailsRow: function addDetailsRow() {
+    addDetailsRow() {
       // This method can be used to add a new house waybill row
       // For now, it will clear the form to allow adding new data
       this.clearForm();
     },
-    clearForm: function clearForm() {
+    clearForm() {
       this.form.id = '';
       this.form.master_origin = '';
       this.form.master_destination = '';
@@ -570,10 +557,8 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       this.form.oci_entries = [];
       this.editIndex = null;
     },
-    editConsolidation: function editConsolidation(id) {
-      var item = this.consolidation.find(function (waybill) {
-        return waybill.id === id;
-      });
+    editConsolidation(id) {
+      const item = this.consolidation.find(waybill => waybill.id === id);
       if (item) {
         this.form.id = String(item.id);
         this.form.master_origin = item.master_origin;
@@ -594,8 +579,8 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
           this.form.tableCodes = [];
         }
         // Scroll to the form section for better UX
-        this.$nextTick(function () {
-          var formElement = document.querySelector('.custom-nav');
+        this.$nextTick(() => {
+          const formElement = document.querySelector('.custom-nav');
           if (formElement) {
             formElement.scrollIntoView({
               behavior: 'smooth'
@@ -612,11 +597,10 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         });
       }
     },
-    deleteConsolidation: function deleteConsolidation(index) {
+    deleteConsolidation(index) {
       this.form.tableCodes.splice(index, 1);
     },
-    openForm: function openForm(mode) {
-      var id = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    openForm(mode, id = null) {
       this.mode = mode;
       if (mode === 'update' && id && this.existingData) {
         this.form.id = String(this.existingData.id);
@@ -641,92 +625,79 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         }
       }
     },
-    getCountry: function getCountry() {
-      var _this7 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-country').then(function (_ref) {
-        var data = _ref.data;
-        _this7.countries = Object.keys(data).map(function (key) {
-          return {
-            value: key,
-            text: data[key]
-          };
-        });
-      })["catch"](function (error) {
+    getCountry() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-country').then(({
+        data
+      }) => {
+        this.countries = Object.keys(data).map(key => ({
+          value: key,
+          text: data[key]
+        }));
+      }).catch(error => {
         console.error("Error fetching countries:", error);
       });
     },
-    getAgent: function getAgent() {
-      var _this8 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/agent-info/").then(function (_ref2) {
-        var data = _ref2.data;
+    getAgent() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/agent-info/`).then(({
+        data
+      }) => {
         if (Array.isArray(data) && data.length > 0) {
-          _this8.agent_information = data[0];
-          _this8.iata_cass = {
-            iata_agent_code: _this8.agent_information.iata_agent_code || null,
-            iata_agent_cass: _this8.agent_information.iata_agent_cass || null
+          this.agent_information = data[0];
+          this.iata_cass = {
+            iata_agent_code: this.agent_information.iata_agent_code || null,
+            iata_agent_cass: this.agent_information.iata_agent_cass || null
           };
         } else {
-          _this8.agent_information = data;
+          this.agent_information = data;
         }
-      })["catch"](function (error) {
+      }).catch(error => {
         console.error("Error fetching agent information:", error);
       });
     },
-    getOCIData: function getOCIData() {
-      var _this9 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-oci-data').then(function (_ref3) {
-        var data = _ref3.data;
+    getOCIData() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-oci-data').then(({
+        data
+      }) => {
         if (data && data.oci_custom_info_identifier) {
-          _this9.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(function (_ref4) {
-            var _ref5 = _slicedToArray(_ref4, 2),
-              key = _ref5[0],
-              value = _ref5[1];
-            return {
-              value: key,
-              text: value
-            };
-          });
+          this.oci_data.oci_custom_info_identifier = Object.entries(data.oci_custom_info_identifier).map(([key, value]) => ({
+            value: key,
+            text: value
+          }));
         } else {
-          _this9.oci_data.oci_custom_info_identifier = [];
+          this.oci_data.oci_custom_info_identifier = [];
         }
         if (data && data.identifiers) {
-          _this9.oci_identifiers.identifiers = Object.entries(data.identifiers).map(function (_ref6) {
-            var _ref7 = _slicedToArray(_ref6, 2),
-              key = _ref7[0],
-              value = _ref7[1];
-            return {
-              value: key,
-              text: value
-            };
-          });
+          this.oci_identifiers.identifiers = Object.entries(data.identifiers).map(([key, value]) => ({
+            value: key,
+            text: value
+          }));
         }
-      })["catch"](function (error) {
+      }).catch(error => {
         console.error("Error fetching countries:", error);
-        _this9.oci_data.oci_custom_info_identifier = [];
+        this.oci_data.oci_custom_info_identifier = [];
       });
     },
-    getHouseWayBill: function getHouseWayBill(id) {
-      var _this0 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get("/user/houseway-bill/".concat(id)).then(function (response) {
-        _this0.existingData = response.data;
-        _this0.openForm('update', String(_this0.existingData.id));
-        if (_this0.existingData && _this0.existingData.consignment_data) {
-          _this0.isConsignmentAdded = true;
+    getHouseWayBill(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/houseway-bill/${id}`).then(response => {
+        this.existingData = response.data;
+        this.openForm('update', String(this.existingData.id));
+        if (this.existingData && this.existingData.consignment_data) {
+          this.isConsignmentAdded = true;
         }
-      })["catch"](function (error) {
+      }).catch(error => {
         console.error("Failed to fetch data for updating:", error);
       });
     },
-    handleRadioChange: function handleRadioChange() {
-      var selectedCode = this.selectedCode;
+    handleRadioChange() {
+      const selectedCode = this.selectedCode;
       this.form.tableCodes = [];
       this.form.tableCodes.push(selectedCode);
     },
-    addManualCode: function addManualCode() {
+    addManualCode() {
       if (!Array.isArray(this.form.tableCodes)) {
         this.form.tableCodes = [];
       }
-      var code = this.selectedCode || this.custom_special_handling_code.trim();
+      const code = this.selectedCode || this.custom_special_handling_code.trim();
       if (code) {
         if (!this.form.tableCodes.includes(code)) {
           this.form.tableCodes.push(code);
@@ -737,26 +708,26 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       this.selectedCode = '';
       this.custom_special_handling_code = '';
     },
-    deleteSplCode: function deleteSplCode(index) {
+    deleteSplCode(index) {
       this.form.tableCodes.splice(index, 1);
     },
-    getOriginCode: function getOriginCode(airportString) {
+    getOriginCode(airportString) {
       if (airportString) {
         return airportString.split(',')[0];
       }
       return '';
     },
-    getDestinationCode: function getDestinationCode(airportString) {
+    getDestinationCode(airportString) {
       if (airportString) {
         return airportString.split(',')[0];
       }
       return '';
     },
-    editOciInfo: function editOciInfo(index) {
+    editOciInfo(index) {
       this.editIndex = index;
       this.oci_info = _objectSpread({}, this.form.oci_entries[index]);
     },
-    addOtherCustomInfo: function addOtherCustomInfo() {
+    addOtherCustomInfo() {
       if (!this.oci_info.info_identifier || !this.oci_info.supplementary_info) {
         alert('Please fill in all fields');
         return;
@@ -768,50 +739,50 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       } else {
         this.form.oci_entries.push(_objectSpread({}, this.oci_info));
       }
-      for (var key in this.oci_info) {
+      for (let key in this.oci_info) {
         if (this.oci_info.hasOwnProperty(key)) {
           this.oci_info[key] = '';
         }
       }
     },
-    deleteOciInfo: function deleteOciInfo(index) {
+    deleteOciInfo(index) {
       if (this.form.oci_entries.length > index) {
         this.form.oci_entries.splice(index, 1);
       }
     },
-    toggleDropdown_departure: function toggleDropdown_departure() {
+    toggleDropdown_departure() {
       this.isDropdownOpen_departure = !this.isDropdownOpen_departure;
     },
-    selectOption_departure: function selectOption_departure(item) {
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
+    selectOption_departure(item) {
+      let source_name = item.destination;
+      let final_set = `${item.iata_code}, ${source_name}`;
       this.form.master_origin = final_set;
       this.isDropdownOpen_departure = false;
     },
-    toggleDropdown_destination: function toggleDropdown_destination() {
+    toggleDropdown_destination() {
       this.isDropdownOpen_destination = !this.isDropdownOpen_destination;
     },
-    selectOption_destination: function selectOption_destination(item) {
-      var source_name = item.destination;
-      var final_set = "".concat(item.iata_code, ", ").concat(source_name);
+    selectOption_destination(item) {
+      let source_name = item.destination;
+      let final_set = `${item.iata_code}, ${source_name}`;
       this.form.master_destination = final_set;
       this.isDropdownOpen_destination = false;
     },
-    closeDropdown_departure: function closeDropdown_departure(event) {
-      var dropdownContainer_to = this.$refs.dropdownContainer_departure;
+    closeDropdown_departure(event) {
+      const dropdownContainer_to = this.$refs.dropdownContainer_departure;
       if (dropdownContainer_to && !dropdownContainer_to.contains(event.target)) {
         this.isDropdownOpen_destination = false;
       }
     },
-    closeDropdown_destination: function closeDropdown_destination(event) {
-      var dropdownContainer_des = this.$refs.dropdownContainer_destination;
+    closeDropdown_destination(event) {
+      const dropdownContainer_des = this.$refs.dropdownContainer_destination;
       if (dropdownContainer_des && !dropdownContainer_des.contains(event.target)) {
         this.isDropdownOpen_departure = false;
       }
     },
-    validateNumericInput: function validateNumericInput(evt, field, maxLength) {
+    validateNumericInput(evt, field, maxLength) {
       evt = evt || window.event;
-      var charCode = evt.which || evt.keyCode;
+      const charCode = evt.which || evt.keyCode;
       if (charCode < 48 || charCode > 57) {
         evt.preventDefault();
       }
@@ -819,9 +790,9 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         evt.preventDefault();
       }
     },
-    formatDate: function formatDate(dateString) {
+    formatDate(dateString) {
       if (!dateString) return 'N/A';
-      var date = new Date(dateString);
+      const date = new Date(dateString);
       return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
@@ -829,12 +800,12 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
         minute: '2-digit'
       });
     },
-    getCurrentUser: function getCurrentUser() {
+    getCurrentUser() {
       // You can get this from your auth store or API
       // For now, returning a placeholder
       return 'Current User';
     },
-    selectAndSearchAwb: function selectAndSearchAwb(item) {
+    selectAndSearchAwb(item) {
       // Fill the search fields with the selected AWB data
       this.form.awb_code = String(item.awb_code);
       this.form.awb_no = String(item.awb_no);
@@ -846,7 +817,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       this.searchWayBills();
 
       // Show a toast notification
-      this.$bvToast.toast("Searching for AWB ".concat(item.awb_code, "-").concat(item.awb_no), {
+      this.$bvToast.toast(`Searching for AWB ${item.awb_code}-${item.awb_no}`, {
         title: 'Search Initiated',
         variant: 'info',
         solid: true,
@@ -854,7 +825,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       });
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.getLocation();
     this.getCountry();
     this.getOCIData();
@@ -863,15 +834,15 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     window.addEventListener('click', this.closeDropdown_departure);
   },
   watch: {
-    '$route.params.id': function $routeParamsId(newId) {
+    '$route.params.id'(newId) {
       if (newId) {
         this.getAirWayBill(newId);
         this.getHouseWayBill(newId);
       }
     }
   },
-  created: function created() {
-    var id = this.$route.params.id;
+  created() {
+    const id = this.$route.params.id;
     if (id) {
       this.isEdit = true;
       this.getAirWayBill(id);
@@ -880,19 +851,15 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     this.getOCIData();
   },
   computed: {
-    filteredLocations_destination: function filteredLocations_destination() {
-      var query = this.form.master_destination.toLowerCase().trim();
+    filteredLocations_destination() {
+      const query = this.form.master_destination.toLowerCase().trim();
       if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
+      return this.location.filter(item => item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query));
     },
-    filteredLocations_departure: function filteredLocations_departure() {
-      var query = this.form.master_origin.toLowerCase().trim();
+    filteredLocations_departure() {
+      const query = this.form.master_origin.toLowerCase().trim();
       if (!query) return this.location;
-      return this.location.filter(function (item) {
-        return item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query);
-      });
+      return this.location.filter(item => item.iata_code.toLowerCase().includes(query) || item.destination.toLowerCase().includes(query));
     }
   },
   components: {
@@ -1008,7 +975,7 @@ var render = function render() {
     },
     model: {
       value: _vm.selectedViewPageOption,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.selectedViewPageOption = $$v;
       },
       expression: "selectedViewPageOption"
@@ -1047,7 +1014,7 @@ var render = function render() {
     }],
     staticClass: "show-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         $event.preventDefault();
         return _vm.getHousewayBills("send");
       }
@@ -1076,8 +1043,9 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "actions",
-      fn: function fn(_ref) {
-        var item = _ref.item;
+      fn: function ({
+        item
+      }) {
         return [_c("div", {
           staticClass: "d-flex flex-column align-items-end"
         }, [_c("p", {
@@ -1109,7 +1077,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "label",
-      fn: function fn() {
+      fn: function () {
         return [_c("span", {
           staticClass: "mr-2"
         }, [_vm._v("Master no:")]), _vm._v(" "), _c("span", {
@@ -1125,7 +1093,7 @@ var render = function render() {
     }
   }, [_c("b-form-input", {
     staticClass: "form-control awb-code-input",
-    "class": {
+    class: {
       "is-invalid": _vm.form.errors.has("awb_code")
     },
     staticStyle: {
@@ -1135,20 +1103,20 @@ var render = function render() {
       id: "input-horizontal"
     },
     on: {
-      keypress: function keypress($event) {
+      keypress: function ($event) {
         return _vm.validateNumericInput($event, "awb_code", 3);
       }
     },
     model: {
       value: _vm.form.awb_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "awb_code", $$v);
       },
       expression: "form.awb_code"
     }
   }), _vm._v(" "), _c("span", [_vm._v("-")]), _vm._v(" "), _c("b-form-input", {
     staticClass: "form-control awb-no-input",
-    "class": {
+    class: {
       "is-invalid": _vm.form.errors.has("awb_no")
     },
     staticStyle: {
@@ -1158,13 +1126,13 @@ var render = function render() {
       id: "input-horizontal-2"
     },
     on: {
-      keypress: function keypress($event) {
+      keypress: function ($event) {
         return _vm.validateNumericInput($event, "awb_no", 8);
       }
     },
     model: {
       value: _vm.form.awb_no,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "awb_no", $$v);
       },
       expression: "form.awb_no"
@@ -1175,7 +1143,7 @@ var render = function render() {
       click: _vm.searchWayBills
     }
   }, [_vm._v("Search")])], 1)])], 1), _vm._v(" "), _c("has-error", {
-    "class": {
+    class: {
       "d-block": _vm.form.errors.has("awb_code")
     },
     attrs: {
@@ -1183,7 +1151,7 @@ var render = function render() {
       field: "awb_code"
     }
   }), _vm._v(" "), _c("has-error", {
-    "class": {
+    class: {
       "d-block": _vm.form.errors.has("awb_no")
     },
     attrs: {
@@ -1218,7 +1186,7 @@ var render = function render() {
       href: "/edit-airway-bill/" + String(_vm.existingData.id)
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.getAirWayBill(String(_vm.existingData.id));
       }
     }
@@ -1229,9 +1197,10 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref2) {
-        var navigate = _ref2.navigate,
-          href = _ref2.href;
+      fn: function ({
+        navigate,
+        href
+      }) {
         return [_c("b-button", {
           staticStyle: {
             background: "#A4D3EE"
@@ -1283,7 +1252,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.id,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "id", $$v);
       },
       expression: "form.id"
@@ -1322,7 +1291,7 @@ var render = function render() {
       value: _vm.form.master_origin
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.form, "master_origin", $event.target.value);
       }
@@ -1334,7 +1303,7 @@ var render = function render() {
       key: index,
       staticClass: "option",
       on: {
-        click: function click($event) {
+        click: function ($event) {
           $event.stopPropagation();
           return _vm.selectOption_departure(item);
         }
@@ -1374,7 +1343,7 @@ var render = function render() {
       value: _vm.form.master_destination
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.form, "master_destination", $event.target.value);
       }
@@ -1386,7 +1355,7 @@ var render = function render() {
       key: index,
       staticClass: "option",
       on: {
-        click: function click($event) {
+        click: function ($event) {
           $event.stopPropagation();
           return _vm.selectOption_destination(item);
         }
@@ -1414,7 +1383,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.pieces,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "pieces", $$v);
       },
       expression: "form.pieces"
@@ -1431,7 +1400,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.pieces,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "pieces", $$v);
       },
       expression: "form.pieces"
@@ -1453,7 +1422,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.gross_weight,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "gross_weight", $$v);
       },
       expression: "form.gross_weight"
@@ -1513,7 +1482,7 @@ var render = function render() {
     },
     model: {
       value: _vm.form.description,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.form, "description", $$v);
       },
       expression: "form.description"
@@ -1537,7 +1506,7 @@ var render = function render() {
     },
     model: {
       value: _vm.selectedCode,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.selectedCode = $$v;
       },
       expression: "selectedCode"
@@ -1571,7 +1540,7 @@ var render = function render() {
     },
     model: {
       value: _vm.custom_special_handling_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.custom_special_handling_code = $$v;
       },
       expression: "custom_special_handling_code"
@@ -1610,7 +1579,7 @@ var render = function render() {
       "font-weight": "500"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         $event.preventDefault();
         return _vm.getHousewayBills("send");
       }
@@ -1682,7 +1651,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.deleteSplCode(index);
         }
       }
@@ -1712,7 +1681,7 @@ var render = function render() {
     staticClass: "form-control",
     model: {
       value: _vm.oci_info.country_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.oci_info, "country_code", $$v);
       },
       expression: "oci_info.country_code"
@@ -1738,12 +1707,12 @@ var render = function render() {
     staticClass: "premium-field-label"
   }, [_vm._v("Information Identifier")]), _vm._v(" "), _c("b-form-select", {
     staticClass: "form-control",
-    "class": {
+    class: {
       "is-invalid": _vm.form.errors.has("info_identifier")
     },
     model: {
       value: _vm.oci_info.info_identifier,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.oci_info, "info_identifier", $$v);
       },
       expression: "oci_info.info_identifier"
@@ -1774,12 +1743,12 @@ var render = function render() {
     staticClass: "premium-field-label"
   }, [_vm._v("Customs Information Identifier")]), _vm._v(" "), _c("b-form-select", {
     staticClass: "form-control",
-    "class": {
+    class: {
       "is-invalid": _vm.form.errors.has("custom_info_identifier")
     },
     model: {
       value: _vm.oci_info.custom_info_identifier,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.oci_info, "custom_info_identifier", $$v);
       },
       expression: "oci_info.custom_info_identifier"
@@ -1817,7 +1786,7 @@ var render = function render() {
     },
     model: {
       value: _vm.oci_info.supplementary_info,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.oci_info, "supplementary_info", $$v);
       },
       expression: "oci_info.supplementary_info"
@@ -1942,7 +1911,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.editOciInfo(index);
         }
       }
@@ -1962,7 +1931,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.deleteOciInfo(index);
         }
       }
@@ -2084,7 +2053,7 @@ var render = function render() {
         "font-scale": "1"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.editConsolidation(item.id);
         }
       }
@@ -2097,7 +2066,7 @@ var render = function render() {
         "font-scale": "1"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.deleteConsolidation(item.id);
         }
       }
@@ -2108,7 +2077,7 @@ var render = function render() {
       }
     }, [_c("router-link", {
       attrs: {
-        to: "/edit-houseway-bill/".concat(item.id)
+        to: `/edit-houseway-bill/${item.id}`
       }
     }, [_vm._v(_vm._s(item.id))])], 1), _vm._v(" "), _c("div", {
       staticStyle: {
@@ -2165,7 +2134,7 @@ var render = function render() {
       id: "manifest-send-btn"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.manifest_send();
       }
     }

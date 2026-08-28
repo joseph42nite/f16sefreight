@@ -16,7 +16,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       user_form: new Form({
         id: "",
@@ -50,24 +50,23 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    toggleDropdown: function toggleDropdown() {
+    toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
-    selectOption: function selectOption(item) {
+    selectOption(item) {
       this.user_form.origin_airport_code = item.iata_code;
-      var source_name = item.destination;
-      var final_set = this.user_form.origin_airport_code + "(" + source_name + ")";
+      let source_name = item.destination;
+      let final_set = this.user_form.origin_airport_code + "(" + source_name + ")";
       this.searchQuery = final_set;
       this.isDropdownOpen = false; // Auto-close after selection
     },
-    closeDropdown: function closeDropdown(event) {
-      var dropdownContainer = this.$refs.dropdownContainer;
+    closeDropdown(event) {
+      const dropdownContainer = this.$refs.dropdownContainer;
       if (dropdownContainer && !dropdownContainer.contains(event.target)) {
         this.isDropdownOpen = false;
       }
     },
-    onSubmit: function onSubmit(evt) {
-      var _this = this;
+    onSubmit(evt) {
       evt.preventDefault();
       this.isSubmitting = true;
       this.savedSuccessfully = false;
@@ -76,54 +75,55 @@ __webpack_require__.r(__webpack_exports__);
         this.user_form.origin_airport_code = this.searchQuery.split('(')[0].trim().toUpperCase();
       }
       if (this.action == 'Add') {
-        this.user_form.post("/superadmin/create-user").then(function (_ref) {
-          var data = _ref.data;
-          _this.$router.push('/superadmin/all-users');
-        })["catch"](function (err) {})["finally"](function () {
-          _this.isSubmitting = false;
+        this.user_form.post(`/superadmin/create-user`).then(({
+          data
+        }) => {
+          this.$router.push('/superadmin/all-users');
+        }).catch(err => {}).finally(() => {
+          this.isSubmitting = false;
         });
       } else {
-        this.user_form.put("/superadmin/edit-user/".concat(this.user_form.id)).then(function (_ref2) {
-          var data = _ref2.data;
-          _this.savedSuccessfully = true;
-          setTimeout(function () {
-            _this.savedSuccessfully = false;
+        this.user_form.put(`/superadmin/edit-user/${this.user_form.id}`).then(({
+          data
+        }) => {
+          this.savedSuccessfully = true;
+          setTimeout(() => {
+            this.savedSuccessfully = false;
           }, 4000);
-        })["catch"](function (err) {})["finally"](function () {
-          _this.isSubmitting = false;
+        }).catch(err => {}).finally(() => {
+          this.isSubmitting = false;
         });
       }
     },
-    getData: function getData(id) {
-      var _this2 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-user/".concat(id)).then(function (_ref3) {
-        var data = _ref3.data;
-        _this2.user_form.fill(data[0]);
-        _this2.searchQuery = data[0].origin_airport_code;
-        _this2.getBranch('edit');
+    getData(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-user/${id}`).then(({
+        data
+      }) => {
+        this.user_form.fill(data[0]);
+        this.searchQuery = data[0].origin_airport_code;
+        this.getBranch('edit');
       });
     },
-    getLocation: function getLocation() {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/get-location").then(function (_ref4) {
-        var data = _ref4.data;
-        _this3.location = data;
+    getLocation() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/get-location`).then(({
+        data
+      }) => {
+        this.location = data;
       });
     },
-    getCompany: function getCompany() {
-      var _this4 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company").then(function (_ref5) {
-        var data = _ref5.data;
-        for (var i = 0; i < data.length; i++) {
-          _this4.all_company.push({
+    getCompany() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-company`).then(({
+        data
+      }) => {
+        for (let i = 0; i < data.length; i++) {
+          this.all_company.push({
             "value": data[i].id,
             "text": data[i].name
           });
         }
       });
     },
-    getBranch: function getBranch(operation) {
-      var _this5 = this;
+    getBranch(operation) {
       if (operation == 'add') {
         this.all_branch = [{
           value: null,
@@ -131,24 +131,25 @@ __webpack_require__.r(__webpack_exports__);
         }];
         this.user_form.branch_name = null;
       }
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/get-company-branch/".concat(this.user_form.company_name)).then(function (_ref6) {
-        var data = _ref6.data;
-        for (var i = 0; i < data.length; i++) {
-          _this5.all_branch.push({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/get-company-branch/${this.user_form.company_name}`).then(({
+        data
+      }) => {
+        for (let i = 0; i < data.length; i++) {
+          this.all_branch.push({
             "value": data[i].id,
             "text": data[i].agent_city
           });
         }
       });
     },
-    normalizer: function normalizer(node) {
+    normalizer(node) {
       return {
         id: node.value,
         label: node.name
       };
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.getLocation();
     this.getCompany();
     if (this.get_item) {
@@ -157,44 +158,44 @@ __webpack_require__.r(__webpack_exports__);
     }
     window.addEventListener('click', this.closeDropdown);
   },
-  beforeDestroy: function beforeDestroy() {
+  beforeDestroy() {
     window.removeEventListener('click', this.closeDropdown);
   },
   computed: {
-    get_item: function get_item() {
+    get_item: function () {
       if (this.$route.params.id) return this.$route.params.id;else return 0;
     },
-    filteredLocations: function filteredLocations() {
+    filteredLocations() {
       if (!this.searchQuery) {
         return this.location.slice(0, 20); // Limit to top 20 to avoid browser lag with 20k records
       }
-      var query = this.searchQuery.toLowerCase();
-      var filtered = this.location.filter(function (item) {
+      const query = this.searchQuery.toLowerCase();
+      const filtered = this.location.filter(item => {
         return item.iata_code.toLowerCase().includes(query) || item.destination && item.destination.toLowerCase().includes(query);
       });
 
       // Sort to prioritize IATA code matches on top
-      filtered.sort(function (a, b) {
-        var aIata = a.iata_code.toLowerCase();
-        var bIata = b.iata_code.toLowerCase();
-        var aDest = (a.destination || "").toLowerCase();
-        var bDest = (b.destination || "").toLowerCase();
+      filtered.sort((a, b) => {
+        const aIata = a.iata_code.toLowerCase();
+        const bIata = b.iata_code.toLowerCase();
+        const aDest = (a.destination || "").toLowerCase();
+        const bDest = (b.destination || "").toLowerCase();
 
         // 1. Exact match on IATA code
-        var aExactIata = aIata === query;
-        var bExactIata = bIata === query;
+        const aExactIata = aIata === query;
+        const bExactIata = bIata === query;
         if (aExactIata && !bExactIata) return -1;
         if (!aExactIata && bExactIata) return 1;
 
         // 2. Starts with IATA code
-        var aStartsIata = aIata.startsWith(query);
-        var bStartsIata = bIata.startsWith(query);
+        const aStartsIata = aIata.startsWith(query);
+        const bStartsIata = bIata.startsWith(query);
         if (aStartsIata && !bStartsIata) return -1;
         if (!aStartsIata && bStartsIata) return 1;
 
         // 3. Starts with destination name
-        var aStartsDest = aDest.startsWith(query);
-        var bStartsDest = bDest.startsWith(query);
+        const aStartsDest = aDest.startsWith(query);
+        const bStartsDest = bDest.startsWith(query);
         if (aStartsDest && !bStartsDest) return -1;
         if (!aStartsDest && bStartsDest) return 1;
         return 0; // maintain relative order
@@ -246,7 +247,7 @@ var render = function render() {
   }, [_c("label", [_vm._v("Full Name "), _c("span", {
     staticClass: "text-danger"
   }, [_vm._v("*")])]), _vm._v(" "), _c("b-form-input", {
-    "class": {
+    class: {
       "is-invalid": _vm.user_form.errors.has("name")
     },
     attrs: {
@@ -256,7 +257,7 @@ var render = function render() {
     },
     model: {
       value: _vm.user_form.name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "name", $$v);
       },
       expression: "user_form.name"
@@ -273,7 +274,7 @@ var render = function render() {
   }, [_c("label", [_vm._v("Email Address "), _c("span", {
     staticClass: "text-danger"
   }, [_vm._v("*")])]), _vm._v(" "), _c("b-form-input", {
-    "class": {
+    class: {
       "is-invalid": _vm.user_form.errors.has("email")
     },
     attrs: {
@@ -284,7 +285,7 @@ var render = function render() {
     },
     model: {
       value: _vm.user_form.email,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "email", $$v);
       },
       expression: "user_form.email"
@@ -306,13 +307,13 @@ var render = function render() {
       options: _vm.all_company
     },
     on: {
-      change: function change($event) {
+      change: function ($event) {
         return _vm.getBranch("add");
       }
     },
     model: {
       value: _vm.user_form.company_name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "company_name", $$v);
       },
       expression: "user_form.company_name"
@@ -333,7 +334,7 @@ var render = function render() {
     },
     model: {
       value: _vm.user_form.branch_name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "branch_name", $$v);
       },
       expression: "user_form.branch_name"
@@ -376,7 +377,7 @@ var render = function render() {
       value: _vm.searchQuery
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.searchQuery = $event.target.value;
       }
@@ -388,7 +389,7 @@ var render = function render() {
       key: index,
       staticClass: "option",
       on: {
-        click: function click($event) {
+        click: function ($event) {
           $event.stopPropagation();
           return _vm.selectOption(item);
         }
@@ -399,7 +400,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "admin-form-group"
   }, [_c("label", [_vm._v("Pima Address")]), _vm._v(" "), _c("b-form-input", {
-    "class": {
+    class: {
       "is-invalid": _vm.user_form.errors.has("pima_address")
     },
     attrs: {
@@ -407,7 +408,7 @@ var render = function render() {
     },
     model: {
       value: _vm.user_form.pima_address,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "pima_address", $$v);
       },
       expression: "user_form.pima_address"
@@ -424,7 +425,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "admin-form-group"
   }, [_c("label", [_vm._v("Access Password")]), _vm._v(" "), _c("b-input-group", [_c("b-form-input", {
-    "class": {
+    class: {
       "is-invalid": _vm.user_form.errors.has("password")
     },
     attrs: {
@@ -433,7 +434,7 @@ var render = function render() {
     },
     model: {
       value: _vm.user_form.password,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "password", $$v);
       },
       expression: "user_form.password"
@@ -443,12 +444,12 @@ var render = function render() {
       variant: "light"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.showpass = !_vm.showpass;
       }
     }
   }, [_c("i", {
-    "class": _vm.showpass ? "fas fa-eye" : "fas fa-eye-slash"
+    class: _vm.showpass ? "fas fa-eye" : "fas fa-eye-slash"
   })])], 1)], 1), _vm._v(" "), _c("has-error", {
     attrs: {
       form: _vm.user_form,
@@ -464,7 +465,7 @@ var render = function render() {
     },
     model: {
       value: _vm.user_form.can_send,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "can_send", $$v);
       },
       expression: "user_form.can_send"
@@ -477,20 +478,20 @@ var render = function render() {
     attrs: {
       value: 1,
       "unchecked-value": 0,
-      "switch": "",
+      switch: "",
       inline: "",
       size: "lg"
     },
     model: {
       value: _vm.user_form.is_active,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.user_form, "is_active", $$v);
       },
       expression: "user_form.is_active"
     }
   }, [_c("span", {
     staticClass: "font-weight-bolder ml-2",
-    "class": _vm.user_form.is_active ? "text-success" : "text-danger"
+    class: _vm.user_form.is_active ? "text-success" : "text-danger"
   }, [_vm._v("\n                        " + _vm._s(_vm.user_form.is_active ? "ACTIVE" : "INACTIVE") + "\n                      ")])])], 1) : _c("div"), _vm._v(" "), _c("button", {
     staticClass: "admin-pill-btn btn-lg",
     attrs: {

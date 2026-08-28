@@ -16,7 +16,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       company_form: new Form({
         id: "",
@@ -36,37 +36,32 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    onSubmit: function onSubmit(evt) {
-      var _this = this;
+    onSubmit(evt) {
       evt.preventDefault();
 
       // Safeguard: Duplicate Key Guard
-      var list = this.company_form.templates_config.allowed_templates || [];
-      var validKeys = list.map(function (x) {
-        return (x.key || '').trim().toLowerCase();
-      }).filter(function (k) {
-        return k !== '';
-      });
+      const list = this.company_form.templates_config.allowed_templates || [];
+      const validKeys = list.map(x => (x.key || '').trim().toLowerCase()).filter(k => k !== '');
       if (new Set(validKeys).size !== validKeys.length) {
         alert("Duplicate Template Keys detected. Please ensure all keys are unique.");
         return;
       }
       if (this.action == "Add") {
-        this.company_form.post("/superadmin/create-company").then(function (_ref) {
-          var data = _ref.data;
-          _this.$router.push("/superadmin/all-company");
-        })["catch"](function (err) {});
+        this.company_form.post(`/superadmin/create-company`).then(({
+          data
+        }) => {
+          this.$router.push("/superadmin/all-company");
+        }).catch(err => {});
       } else {
-        this.company_form.put("/superadmin/edit-company/".concat(this.company_form.id)).then(function (_ref2) {
-          var data = _ref2.data;
+        this.company_form.put(`/superadmin/edit-company/${this.company_form.id}`).then(({
+          data
+        }) => {
           $("#fade").fadeToggle(1000);
-          setTimeout(function () {
-            return $("#fade").fadeToggle(1000);
-          }, 2000);
+          setTimeout(() => $("#fade").fadeToggle(1000), 2000);
         });
       }
     },
-    addTemplateRow: function addTemplateRow() {
+    addTemplateRow() {
       if (!this.company_form.templates_config.allowed_templates) {
         this.company_form.templates_config.allowed_templates = [];
       }
@@ -75,20 +70,18 @@ __webpack_require__.r(__webpack_exports__);
         label: ''
       });
     },
-    removeTemplateRow: function removeTemplateRow(index) {
+    removeTemplateRow(index) {
       this.company_form.templates_config.allowed_templates.splice(index, 1);
     },
-    addTemplateFromPill: function addTemplateFromPill(key) {
+    addTemplateFromPill(key) {
       if (!this.company_form.templates_config.allowed_templates) {
         this.$set(this.company_form.templates_config, 'allowed_templates', []);
       }
 
       // Prevent duplicates
-      var exists = this.company_form.templates_config.allowed_templates.some(function (t) {
-        return t.key === key;
-      });
+      const exists = this.company_form.templates_config.allowed_templates.some(t => t.key === key);
       if (exists) {
-        alert("'".concat(key, "' is already assigned."));
+        alert(`'${key}' is already assigned.`);
         return;
       }
       this.company_form.templates_config.allowed_templates.push({
@@ -96,11 +89,11 @@ __webpack_require__.r(__webpack_exports__);
         label: key.replace(/_/g, ' ').toUpperCase()
       });
     },
-    getData: function getData(id) {
-      var _this2 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company/".concat(id)).then(function (_ref3) {
-        var data = _ref3.data;
-        var payload = data[0];
+    getData(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-company/${id}`).then(({
+        data
+      }) => {
+        const payload = data[0];
         // Ensure we instantiate object shape to protect bindings if remote payload is null
         if (!payload.templates_config) {
           payload.templates_config = {
@@ -111,7 +104,7 @@ __webpack_require__.r(__webpack_exports__);
         } else {
           // LEGACY DEFENSE: Transform string arrays ['ksr'] into object arrays [{key:'ksr', label:'ksr'}]
           if (Array.isArray(payload.templates_config.allowed_templates)) {
-            payload.templates_config.allowed_templates = payload.templates_config.allowed_templates.map(function (item) {
+            payload.templates_config.allowed_templates = payload.templates_config.allowed_templates.map(item => {
               if (typeof item === 'string') {
                 return {
                   key: item,
@@ -124,31 +117,31 @@ __webpack_require__.r(__webpack_exports__);
             payload.templates_config.allowed_templates = [];
           }
         }
-        _this2.company_form.fill(payload);
+        this.company_form.fill(payload);
       });
     },
-    fetchAvailableTemplates: function fetchAvailableTemplates() {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get('/superadmin/available-templates').then(function (_ref4) {
-        var data = _ref4.data;
-        _this3.availableTemplates = data;
+    fetchAvailableTemplates() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get('/superadmin/available-templates').then(({
+        data
+      }) => {
+        this.availableTemplates = data;
       });
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.fetchAvailableTemplates();
     if (this.get_item) {
       this.getData(this.get_item);
       this.action = "Edit";
     }
   },
-  activated: function activated() {
+  activated() {
     // Re-fetch every time the user navigates to this page
     // so newly added system templates appear immediately
     this.fetchAvailableTemplates();
   },
   computed: {
-    get_item: function get_item() {
+    get_item: function () {
       if (this.$route.params.id) return this.$route.params.id;else return 0;
     }
   }
@@ -187,7 +180,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.company_form.errors.has("name")
     },
     attrs: {
@@ -198,7 +191,7 @@ var render = function render() {
     },
     model: {
       value: _vm.company_form.name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.company_form, "name", $$v);
       },
       expression: "company_form.name"
@@ -237,7 +230,7 @@ var render = function render() {
       },
       model: {
         value: row.key,
-        callback: function callback($$v) {
+        callback: function ($$v) {
           _vm.$set(row, "key", $$v);
         },
         expression: "row.key"
@@ -264,7 +257,7 @@ var render = function render() {
       },
       model: {
         value: row.label,
-        callback: function callback($$v) {
+        callback: function ($$v) {
           _vm.$set(row, "label", $$v);
         },
         expression: "row.label"
@@ -278,7 +271,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.removeTemplateRow(index);
         }
       }
@@ -320,7 +313,7 @@ var render = function render() {
         title: "Click to assign to company"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.addTemplateFromPill(code);
         }
       }
@@ -338,7 +331,7 @@ var render = function render() {
   }, [_c("b-form-select", {
     model: {
       value: _vm.company_form.templates_config.default_focus_air,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.company_form.templates_config, "default_focus_air", $$v);
       },
       expression: "company_form.templates_config.default_focus_air"
@@ -368,7 +361,7 @@ var render = function render() {
   }, [_c("b-form-select", {
     model: {
       value: _vm.company_form.templates_config.default_house_air,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.company_form.templates_config, "default_house_air", $$v);
       },
       expression: "company_form.templates_config.default_house_air"

@@ -13,7 +13,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "JosephCard",
-  metaInfo: function metaInfo() {
+  metaInfo() {
     return {
       title: "Joseph | CEO & Founder - F16s E-Freight Solutions",
       meta: [{
@@ -34,7 +34,7 @@ __webpack_require__.r(__webpack_exports__);
       }]
     };
   },
-  data: function data() {
+  data() {
     return {
       phoneNumber: "7011363516",
       emailId: "joseph@f16sefreight.com",
@@ -51,29 +51,29 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   computed: {
-    qrImageUrl: function qrImageUrl() {
-      var encodedUrl = encodeURIComponent(this.shareUrl);
-      return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=".concat(encodedUrl, "&color=355594&bgcolor=ffffff&qzone=2");
+    qrImageUrl() {
+      const encodedUrl = encodeURIComponent(this.shareUrl);
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}&color=355594&bgcolor=ffffff&qzone=2`;
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.shareUrl = window.location.origin + "/joseph-ceo-938204719284";
     document.body.classList.add("digital-card-active");
   },
-  destroyed: function destroyed() {
+  destroyed() {
     document.body.classList.remove("digital-card-active");
   },
   methods: {
-    handleLogoError: function handleLogoError(e) {
+    handleLogoError(e) {
       e.target.src = "/media/assets/logos/blue-logo.png";
     },
-    downloadVcf: function downloadVcf() {
-      var vcard = ["BEGIN:VCARD", "VERSION:3.0", "N:Joseph CEO F16s;;;;", "FN:Joseph CEO F16s", "ORG:F16s E-Freight Solutions", "TITLE:CEO & Founder", "TEL;TYPE=CELL,VOICE:+917011363516", "EMAIL;TYPE=PREF,INTERNET:joseph@f16sefreight.com", "URL:https://f16sefreight.com", "URL;type=LinkedIn:https://www.linkedin.com/in/joseph-george-b99616147/", "X-SOCIALPROFILE;type=linkedin:https://www.linkedin.com/in/joseph-george-b99616147/", "NOTE:Saved from F16s Digital Business Card.", "REV:" + new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z", "END:VCARD"].join("\r\n");
-      var blob = new Blob([vcard], {
+    downloadVcf() {
+      const vcard = ["BEGIN:VCARD", "VERSION:3.0", "N:Joseph CEO F16s;;;;", "FN:Joseph CEO F16s", "ORG:F16s E-Freight Solutions", "TITLE:CEO & Founder", "TEL;TYPE=CELL,VOICE:+917011363516", "EMAIL;TYPE=PREF,INTERNET:joseph@f16sefreight.com", "URL:https://f16sefreight.com", "URL;type=LinkedIn:https://www.linkedin.com/in/joseph-george-b99616147/", "X-SOCIALPROFILE;type=linkedin:https://www.linkedin.com/in/joseph-george-b99616147/", "NOTE:Saved from F16s Digital Business Card.", "REV:" + new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z", "END:VCARD"].join("\r\n");
+      const blob = new Blob([vcard], {
         type: "text/vcard;charset=utf-8;"
       });
-      var link = document.createElement("a");
-      var url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
       link.href = url;
       link.download = "Joseph_CEO_F16s.vcf";
       link.style.display = "none";
@@ -82,14 +82,14 @@ __webpack_require__.r(__webpack_exports__);
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     },
-    openShareModal: function openShareModal() {
+    openShareModal() {
       this.shareModalOpen = true;
       this.copySuccess = false;
     },
-    closeShareModal: function closeShareModal() {
+    closeShareModal() {
       this.shareModalOpen = false;
     },
-    playVideo: function playVideo(type) {
+    playVideo(type) {
       if (type === "walkthrough") {
         this.activeVideoTitle = "F16s Platform Walkthrough";
         this.activeVideoDesc = "Discover how F16s E-Freight Solutions provides direct airline integrations, automated manifest validations, and streamlined digital AWB management.";
@@ -101,28 +101,27 @@ __webpack_require__.r(__webpack_exports__);
       }
       this.videoModalOpen = true;
     },
-    closeVideoModal: function closeVideoModal() {
+    closeVideoModal() {
       this.videoModalOpen = false;
       this.activeYoutubeEmbedUrl = ""; // Instantly silences audio and stops play
     },
-    selectAllText: function selectAllText(event) {
+    selectAllText(event) {
       event.target.select();
     },
-    copyLinkToClipboard: function copyLinkToClipboard() {
-      var _this = this;
+    copyLinkToClipboard() {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(this.shareUrl).then(function () {
-          _this.showCopyFeedback();
-        })["catch"](function () {
-          _this.fallbackCopy();
+        navigator.clipboard.writeText(this.shareUrl).then(() => {
+          this.showCopyFeedback();
+        }).catch(() => {
+          this.fallbackCopy();
         });
       } else {
         this.fallbackCopy();
       }
     },
-    fallbackCopy: function fallbackCopy() {
+    fallbackCopy() {
       try {
-        var input = this.$refs.shareUrlInput;
+        const input = this.$refs.shareUrlInput;
         input.select();
         document.execCommand("copy");
         this.showCopyFeedback();
@@ -130,35 +129,33 @@ __webpack_require__.r(__webpack_exports__);
         console.error("Failed to copy link", err);
       }
     },
-    showCopyFeedback: function showCopyFeedback() {
-      var _this2 = this;
+    showCopyFeedback() {
       this.copySuccess = true;
-      setTimeout(function () {
-        _this2.copySuccess = false;
+      setTimeout(() => {
+        this.copySuccess = false;
       }, 2500);
     },
-    openEmailModal: function openEmailModal() {
+    openEmailModal() {
       this.emailModalOpen = true;
       this.emailCopySuccess = false;
     },
-    closeEmailModal: function closeEmailModal() {
+    closeEmailModal() {
       this.emailModalOpen = false;
     },
-    copyEmailToClipboard: function copyEmailToClipboard() {
-      var _this3 = this;
+    copyEmailToClipboard() {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(this.emailId).then(function () {
-          _this3.showEmailCopyFeedback();
-        })["catch"](function () {
-          _this3.fallbackEmailCopy();
+        navigator.clipboard.writeText(this.emailId).then(() => {
+          this.showEmailCopyFeedback();
+        }).catch(() => {
+          this.fallbackEmailCopy();
         });
       } else {
         this.fallbackEmailCopy();
       }
     },
-    fallbackEmailCopy: function fallbackEmailCopy() {
+    fallbackEmailCopy() {
       try {
-        var input = this.$refs.emailIdInput;
+        const input = this.$refs.emailIdInput;
         input.select();
         document.execCommand("copy");
         this.showEmailCopyFeedback();
@@ -166,11 +163,10 @@ __webpack_require__.r(__webpack_exports__);
         console.error("Failed to copy email", err);
       }
     },
-    showEmailCopyFeedback: function showEmailCopyFeedback() {
-      var _this4 = this;
+    showEmailCopyFeedback() {
       this.emailCopySuccess = true;
-      setTimeout(function () {
-        _this4.emailCopySuccess = false;
+      setTimeout(() => {
+        this.emailCopySuccess = false;
       }, 2500);
     }
   }
@@ -450,7 +446,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "video-card-item",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.playVideo("walkthrough");
       }
     }
@@ -481,7 +477,7 @@ var render = function render() {
   }, [_vm._v("YouTube")])]), _vm._v(" "), _vm._m(5)]), _vm._v(" "), _c("div", {
     staticClass: "video-card-item",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.playVideo("air");
       }
     }
@@ -520,8 +516,9 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref) {
-        var navigate = _ref.navigate;
+      fn: function ({
+        navigate
+      }) {
         return [_c("article", {
           staticClass: "service-product-card-premium",
           staticStyle: {
@@ -577,8 +574,9 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref2) {
-        var navigate = _ref2.navigate;
+      fn: function ({
+        navigate
+      }) {
         return [_c("article", {
           staticClass: "service-product-card-premium is-coming-soon",
           staticStyle: {
@@ -618,8 +616,9 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "default",
-      fn: function fn(_ref3) {
-        var navigate = _ref3.navigate;
+      fn: function ({
+        navigate
+      }) {
         return [_c("article", {
           staticClass: "service-product-card-premium is-coming-soon",
           staticStyle: {
@@ -659,7 +658,7 @@ var render = function render() {
   }, [_vm.shareModalOpen ? _c("div", {
     staticClass: "modal-overlay",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         if ($event.target !== $event.currentTarget) return null;
         return _vm.closeShareModal.apply(null, arguments);
       }
@@ -700,7 +699,7 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("button", {
     staticClass: "copy-btn",
-    "class": {
+    class: {
       "copied-success": _vm.copySuccess
     },
     on: {
@@ -727,7 +726,7 @@ var render = function render() {
   }, [_vm.videoModalOpen ? _c("div", {
     staticClass: "modal-overlay",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         if ($event.target !== $event.currentTarget) return null;
         return _vm.closeVideoModal.apply(null, arguments);
       }
@@ -785,7 +784,7 @@ var render = function render() {
   }, [_vm.emailModalOpen ? _c("div", {
     staticClass: "modal-overlay",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         if ($event.target !== $event.currentTarget) return null;
         return _vm.closeEmailModal.apply(null, arguments);
       }
@@ -838,7 +837,7 @@ var render = function render() {
     staticClass: "email-actions-grid"
   }, [_c("button", {
     staticClass: "email-action-option copy-option",
-    "class": {
+    class: {
       "copied-success": _vm.emailCopySuccess
     },
     on: {

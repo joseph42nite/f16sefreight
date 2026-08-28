@@ -40,7 +40,7 @@ __webpack_require__.r(__webpack_exports__);
     HeroButton: _components_HeroButton_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
     HomeServicesGrid: _components_HomeServicesGrid_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
-  data: function data() {
+  data() {
     return {
       we_offer_section_cards: [{
         titleImgSrc: "/media/assets/vectors/focus-air.svg",
@@ -119,7 +119,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "subtitle",
-      fn: function fn() {
+      fn: function () {
         return [_vm._v("\n                  At F16s E-Freight Solutions, we are dedicated to transforming logistics management by offering seamless, cost-effective digital solutions tailored to meet the needs of small to medium-sized businesses in the logistics and freight forwarding sectors. \n                  "), _c("br"), _c("br"), _vm._v("\n                  With a core focus on accessibility and user-friendliness, we empower businesses by streamlining data transfer, documentation, and tracking processes across air, sea, and road freight modes.\n              ")];
       },
       proxy: true

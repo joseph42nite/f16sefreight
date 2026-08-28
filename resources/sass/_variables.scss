@@ -1,3 +1,12 @@
+// ⚠️ THIS FILE IS NOT COMPILED. Nothing here has any effect.
+//
+// webpack.mix.js builds `resources/css/app.css`, not this directory. Verified
+// 2026-08-28 (ui_ux_guide.md §0a, U3) — `resources/sass/` has never been in the
+// build, which is why the Nunito font named below is never actually fetched.
+//
+// Design tokens live in `resources/css/app.css`. Put styling there.
+// Left in place rather than deleted because it predates this work.
+
 // Body
 $body-bg: #f8fafc;
 

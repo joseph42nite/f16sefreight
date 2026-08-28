@@ -17,54 +17,52 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       items: [],
       loading: true
     };
   },
-  mounted: function mounted() {
+  mounted() {
     this.fetchData();
   },
   methods: {
-    fetchData: function fetchData() {
-      var _this = this;
+    fetchData() {
       this.loading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/system-templates").then(function (_ref) {
-        var data = _ref.data;
-        _this.items = data.templates || [];
-      })["finally"](function () {
-        _this.loading = false;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/system-templates").then(({
+        data
+      }) => {
+        this.items = data.templates || [];
+      }).finally(() => {
+        this.loading = false;
       });
     },
-    formatDate: function formatDate(dateString) {
+    formatDate(dateString) {
       if (!dateString) return "N/A";
-      var d = new Date(dateString);
+      const d = new Date(dateString);
       return d.toLocaleDateString() + " " + d.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit"
       });
     },
-    editRow: function editRow(row) {
-      this.$router.push("/superadmin/edit-template/".concat(row.key));
+    editRow(row) {
+      this.$router.push(`/superadmin/edit-template/${row.key}`);
     },
-    deleteRow: function deleteRow(row) {
-      var _this2 = this;
+    deleteRow(row) {
       sweetalert2__WEBPACK_IMPORTED_MODULE_1___default().fire({
         title: "Delete Master Template?",
-        text: "This will permanently remove the '".concat(row.key, "' definition from physical disk. This cannot be undone."),
+        text: `This will permanently remove the '${row.key}' definition from physical disk. This cannot be undone.`,
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: "Confirm Destroy",
         confirmButtonColor: "#F64E60"
-      }).then(function (result) {
+      }).then(result => {
         if (result.isConfirmed) {
-          _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/superadmin/system-templates/".concat(row.id)).then(function () {
+          _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"](`/superadmin/system-templates/${row.id}`).then(() => {
             sweetalert2__WEBPACK_IMPORTED_MODULE_1___default().fire("Erased!", "Template successfully decommissioned.", "success");
-            _this2.fetchData();
-          })["catch"](function (err) {
-            var _err$response;
-            var msg = ((_err$response = err.response) === null || _err$response === void 0 || (_err$response = _err$response.data) === null || _err$response === void 0 ? void 0 : _err$response.message) || "Failed to perform excision.";
+            this.fetchData();
+          }).catch(err => {
+            const msg = err.response?.data?.message || "Failed to perform excision.";
             sweetalert2__WEBPACK_IMPORTED_MODULE_1___default().fire("Access Blocked", msg, "error");
           });
         }
@@ -139,7 +137,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.editRow(row);
         }
       }
@@ -149,7 +147,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.deleteRow(row);
         }
       }

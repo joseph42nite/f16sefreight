@@ -15,7 +15,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       forget_password: {
         email: '',
@@ -29,30 +29,28 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    ResetPassword: function ResetPassword() {
-      var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post("/ForgotpasswordActual", this.forget_password).then(function (res) {
-        _this.password_changed = true;
-      })["catch"](function (err) {
+    ResetPassword() {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post("/ForgotpasswordActual", this.forget_password).then(res => {
+        this.password_changed = true;
+      }).catch(err => {
         // console.log(err);
       });
     }
   },
-  mounted: function mounted() {
-    var _this2 = this;
+  mounted() {
     this.token = this.$route.params.token;
     this.forget_password.email = this.$route.params.email;
     this.forget_password.userType = this.$route.params.userType;
-    var credintial = {
+    let credintial = {
       "token": this.token,
       "email": this.forget_password.email
     };
-    axios__WEBPACK_IMPORTED_MODULE_0___default().post('/check-forgot-token', credintial).then(function (res) {
+    axios__WEBPACK_IMPORTED_MODULE_0___default().post('/check-forgot-token', credintial).then(res => {
       if (!res.data.status) {
-        _this2.has_error = false;
+        this.has_error = false;
       }
-    })["catch"](function (err) {
-      _this2.has_error = false;
+    }).catch(err => {
+      this.has_error = false;
     });
   }
 });
@@ -96,7 +94,7 @@ var render = function render() {
       autocomplete: "off"
     },
     on: {
-      submit: function submit($event) {
+      submit: function ($event) {
         $event.preventDefault();
         return _vm.ResetPassword.apply(null, arguments);
       }
@@ -105,7 +103,7 @@ var render = function render() {
     staticClass: "form-group"
   }, [_c("span", {
     attrs: {
-      "for": "email"
+      for: "email"
     }
   }, [_vm._v("E-mail")]), _vm._v("   \n                "), _c("input", {
     staticClass: "form-control",
@@ -120,7 +118,7 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("span", {
     attrs: {
-      "for": "password"
+      for: "password"
     }
   }, [_vm._v("Password")]), _vm._v("   \n                "), _c("input", {
     directives: [{
@@ -139,14 +137,14 @@ var render = function render() {
       value: _vm.forget_password.password
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.forget_password, "password", $event.target.value);
       }
     }
   }), _vm._v(" "), _c("span", {
     attrs: {
-      "for": "conform_password"
+      for: "conform_password"
     }
   }, [_vm._v("Confirm Password")]), _vm._v("   \n                "), _c("input", {
     directives: [{
@@ -165,7 +163,7 @@ var render = function render() {
       value: _vm.forget_password.password_confirmation
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.forget_password, "password_confirmation", $event.target.value);
       }

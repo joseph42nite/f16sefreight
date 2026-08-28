@@ -20,7 +20,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminalluser",
   mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_2__["default"]],
-  data: function data() {
+  data() {
     return {
       fields: [{
         label: 'Sl',
@@ -50,25 +50,22 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   computed: {
-    filteredUsers: function filteredUsers() {
-      var _this = this;
+    filteredUsers() {
       if (!this.selectedCompany) {
         return this.items;
       }
-      return this.items.filter(function (item) {
-        var companyObj = _this.companies.find(function (c) {
-          return c.id == _this.selectedCompany;
-        });
-        var companyName = companyObj ? companyObj.name : null;
-        return item.company_name == _this.selectedCompany || companyName && item.company_name === companyName;
+      return this.items.filter(item => {
+        const companyObj = this.companies.find(c => c.id == this.selectedCompany);
+        const companyName = companyObj ? companyObj.name : null;
+        return item.company_name == this.selectedCompany || companyName && item.company_name === companyName;
       });
     },
-    companyOptions: function companyOptions() {
-      var options = [{
+    companyOptions() {
+      const options = [{
         value: null,
         text: "All Companies"
       }];
-      this.companies.forEach(function (company) {
+      this.companies.forEach(company => {
         options.push({
           value: company.id,
           text: company.name
@@ -78,58 +75,52 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   watch: {
-    selectedCompany: function selectedCompany() {
-      var _this2 = this;
+    selectedCompany() {
       this.currentPage = 1;
-      this.$nextTick(function () {
-        if (!_this2.filter) {
-          _this2.totalRows = _this2.filteredUsers.length;
+      this.$nextTick(() => {
+        if (!this.filter) {
+          this.totalRows = this.filteredUsers.length;
         }
       });
     },
-    filter: function filter(newVal) {
+    filter(newVal) {
       if (!newVal) {
         this.totalRows = this.filteredUsers.length;
       }
     }
   },
   methods: {
-    delete_user: function delete_user(id) {
-      var _this3 = this;
-      this.confirmRemove("/superadmin/user/".concat(id)).then(function (removed) {
-        if (removed) _this3.get_users();
+    delete_user(id) {
+      this.confirmRemove(`/superadmin/user/${id}`).then(removed => {
+        if (removed) this.get_users();
       });
     },
-    get_users: function get_users() {
-      var _this4 = this;
+    get_users() {
       this.items = [];
       this.isLoading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-user/0").then(function (_ref) {
-        var data = _ref.data;
-        _this4.items = data;
-        _this4.totalRows = _this4.filteredUsers.length;
-      })["finally"](function () {
-        _this4.isLoading = false;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-user/0`).then(({
+        data
+      }) => {
+        this.items = data;
+        this.totalRows = this.filteredUsers.length;
+      }).finally(() => {
+        this.isLoading = false;
       });
     },
-    get_companies: function get_companies() {
-      var _this5 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company").then(function (_ref2) {
-        var data = _ref2.data;
-        _this5.companies = data;
-      })["catch"](function (err) {
+    get_companies() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-company`).then(({
+        data
+      }) => {
+        this.companies = data;
+      }).catch(err => {
         console.error("Failed to load companies", err);
       });
     },
-    getCompanyDisplayName: function getCompanyDisplayName(val) {
+    getCompanyDisplayName(val) {
       if (!val) return "—";
-      var company = this.companies.find(function (c) {
-        return c.id == val;
-      });
+      const company = this.companies.find(c => c.id == val);
       if (company) return company.name;
-      var companyByName = this.companies.find(function (c) {
-        return c.name === val;
-      });
+      const companyByName = this.companies.find(c => c.name === val);
       if (companyByName) return companyByName.name;
       return val;
     }
@@ -137,7 +128,7 @@ __webpack_require__.r(__webpack_exports__);
   components: {
     SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
-  mounted: function mounted() {
+  mounted() {
     this.get_users();
     this.get_companies();
   }
@@ -191,7 +182,7 @@ var render = function render() {
     },
     model: {
       value: _vm.perPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.perPage = $$v;
       },
       expression: "perPage"
@@ -212,7 +203,7 @@ var render = function render() {
     },
     model: {
       value: _vm.selectedCompany,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.selectedCompany = $$v;
       },
       expression: "selectedCompany"
@@ -232,7 +223,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filter,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.filter = $$v;
       },
       expression: "filter"
@@ -262,14 +253,14 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "cell(index)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "font-weight-bold"
         }, [_vm._v("#" + _vm._s(data.index + 1))])];
       }
     }, {
       key: "cell(name)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "d-flex align-items-center"
         }, [_c("div", {
@@ -282,22 +273,22 @@ var render = function render() {
       }
     }, {
       key: "cell(company_name)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "font-weight-bold text-dark"
         }, [_vm._v(_vm._s(_vm.getCompanyDisplayName(data.item.company_name)))])];
       }
     }, {
       key: "cell(is_active)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "status-badge",
-          "class": data.item.is_active == 1 ? "status-active" : "status-inactive"
+          class: data.item.is_active == 1 ? "status-active" : "status-inactive"
         }, [_vm._v("\n            " + _vm._s(data.item.is_active == 1 ? "Active" : "Inactive") + "\n          ")])];
       }
     }, {
       key: "cell(action)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "d-flex gap-2"
         }, [_c("router-link", {
@@ -310,7 +301,7 @@ var render = function render() {
         })]), _vm._v(" "), _c("button", {
           staticClass: "btn btn-icon btn-light-danger btn-sm",
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.delete_user(data.item["id"]);
             }
           }
@@ -332,7 +323,7 @@ var render = function render() {
     },
     model: {
       value: _vm.currentPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.currentPage = $$v;
       },
       expression: "currentPage"

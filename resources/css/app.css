@@ -1,1 +1,161 @@
 @charset "UTF-8";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   F16s Freight OS — design tokens
+   Implements ui_ux_guide.md §2. Decisions recorded in §0b of that document.
+
+   🔴 THIS FILE IS THE ONE THAT COMPILES.
+   webpack.mix.js builds `resources/css/app.css` -> `public/css/app.css`.
+   `resources/sass/` is NOT in the build and never has been — anything written
+   there has no effect (ui_ux_guide.md §0a, U3). Put styling here.
+
+   WHY CSS CUSTOM PROPERTIES RATHER THAN SCSS VARIABLES
+   SCSS variables are compiled away, so a theme cannot be switched at runtime.
+   Dark mode, and the per-portal accent below, both need values that survive to
+   the browser. Custom properties also let Vue SFC <style> blocks reference the
+   system without importing anything.
+
+   Every value below is from ui_ux_guide.md §2. Do not invent new ones here —
+   add them to the guide first, so the doc stays the source of truth.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── §2.1 Neutrals ───────────────────────────────────────────────────── */
+  --bg-canvas:      #F7F8FA;   /* app background */
+  --bg-surface:     #FFFFFF;   /* cards, panels, drawer */
+  --bg-raised:      #FFFFFF;   /* modals, popovers */
+  --bg-sunken:      #EEF0F4;   /* table headers, wells */
+  --border:         #D8DCE3;
+  --border-strong:  #B4BAC5;   /* focused / active */
+  --text-primary:   #12161C;
+  --text-secondary: #5A6472;   /* labels, meta */
+  --text-disabled:  #9AA2AE;
+
+  /* ── §2.2 Semantic status ────────────────────────────────────────────────
+     Each has a BASE (icon/text/border) and a SUBTLE (fill).
+     Base tokens meet >= 4.5:1 on --bg-surface.
+
+     ⚠️ --status-warning is deliberately dark amber, NOT yellow. Pure yellow
+     cannot reach 4.5:1 on white at any usable size, so yellow appears only as
+     a fill, never as text or an icon. Never "brighten" this. */
+  --status-critical:        #C4342B;  /* overdue, blocked, failed, credit hold */
+  --status-critical-subtle: #FCEBEA;
+  --status-warning:         #9A6400;  /* due tomorrow, low confidence, stale */
+  --status-warning-subtle:  #FDF3E2;
+  --status-success:         #1F7A48;  /* on track, posted, reconciled, sent */
+  --status-success-subtle:  #E9F6EE;
+  --status-info:            #1F5FA8;  /* neutral notice, in progress */
+  --status-info-subtle:     #E8F1FB;
+  --status-neutral:         #5A6472;  /* inactive, cancelled, archived */
+  --status-neutral-subtle:  #EEF0F4;
+
+  /* ── §2.3 Typography ─────────────────────────────────────────────────────
+     A SYSTEM STACK, deliberately: no webfont download on a tool people keep
+     open all day. `resources/sass/_variables.scss` names Nunito, but that file
+     is not compiled, so nothing fetches it today (§0a, U2). */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ── §2.4 Spacing, radius, elevation, motion ─────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --elev-1: 0 1px 2px rgba(18, 22, 28, .06);
+  --elev-2: 0 4px 12px rgba(18, 22, 28, .10);
+  --elev-3: 0 12px 32px rgba(18, 22, 28, .16);
+
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-ease: cubic-bezier(.2, 0, .2, 1);
+
+  /* ── §7.1 Breakpoints ────────────────────────────────────────────────────
+     🔴 DELIBERATELY PREFIXED --bp-*, AND THEY ARE NOT BOOTSTRAP'S.
+     Bootstrap 4 ships sm/md/lg/xl at 576/768/992/1200. Ours are 768/1200/1600.
+     A media query written against Bootstrap's `lg` fires 208px earlier than
+     this one means. Never mix the two vocabularies in one rule (§0a, U4).
+     Reference only — custom properties cannot be used in @media conditions. */
+  --bp-sm:  768px;   /* below: READ-ONLY by design. Document forms unsupported */
+  --bp-md: 1200px;
+  --bp-lg: 1600px;
+
+  /* ── §8.4 Portal identity ────────────────────────────────────────────────
+     Overridden per portal on <body data-portal="..."> so air and sea data can
+     never be mistaken for one another. A user who forgets which portal they
+     are in misreads every figure on screen. */
+  --portal-accent: var(--status-neutral);
+}
+
+/* ── §2.1 Dark theme ──────────────────────────────────────────────────────
+   Only the neutrals change; semantic status keeps its own contrast targets and
+   is re-tuned in the same block when the palette is finalised. Not yet enabled
+   in the UI — the tokens exist so enabling it is a class, not a refactor. */
+:root[data-theme="dark"] {
+  --bg-canvas:      #0E1116;
+  --bg-surface:     #161B22;
+  --bg-raised:      #1C2129;
+  --bg-sunken:      #0A0D11;
+  --border:         #2A313C;
+  --border-strong:  #3A4351;
+  --text-primary:   #E6EAF0;
+  --text-secondary: #9AA5B4;
+  --text-disabled:  #5A6472;
+}
+
+/* ── §8.4 Portal accents ─────────────────────────────────────────────────── */
+body[data-portal="focusair"]  { --portal-accent: #1F5FA8; }
+body[data-portal="focussea"]  { --portal-accent: #0F6E6E; }
+body[data-portal="focusroad"] { --portal-accent: #7A4E1F; }
+body[data-portal="accounts"]  { --portal-accent: #1F7A48; }
+body[data-portal="admin"]     { --portal-accent: #5A3E9A; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Bootstrap-vue bridge
+
+   bootstrap-vue is the live component library — 1,419 usages across 41 files —
+   so it stays, and the tokens drive it rather than replacing it. Only the
+   pieces ui_ux_guide.md §5 is specific about get hand-built on top.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+/* §1.3 Never signal with colour alone — every focus state is visible without
+   relying on hue, for keyboard users and for anyone who cannot distinguish it. */
+:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 2px;
+}
+
+/* §1.5 Keyboard-first: a skip target for the main region. */
+.skip-to-content:not(:focus) {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* §4.1 NULL is not zero — an empty value renders as an em dash, never as 0.
+   Reporting a missing weight as 0 kg is a different claim from not knowing it. */
+.is-empty::after {
+  content: "—";
+  color: var(--text-disabled);
+}
+
+/* §4.4 Identifiers and figures are tabular so columns align down a list —
+   AWB numbers, weights and money are compared vertically far more than read. */
+.numeric, .identifier {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

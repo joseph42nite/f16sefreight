@@ -27,7 +27,7 @@ __webpack_require__.r(__webpack_exports__);
     }]
   },
   components: {},
-  data: function data() {
+  data() {
     return {
       accordions: [{
         title: "Who has access to my company's sensitive data?",
@@ -49,7 +49,7 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    toggleAccordion: function toggleAccordion(index) {
+    toggleAccordion(index) {
       this.accordions[index].isOpen = !this.accordions[index].isOpen;
     }
   }
@@ -262,7 +262,7 @@ var render = function render() {
     return _c("article", {
       key: idx,
       staticClass: "faq-item",
-      "class": {
+      class: {
         "is-open": faq.isOpen
       }
     }, [_c("div", {
@@ -270,10 +270,10 @@ var render = function render() {
       attrs: {
         role: "button",
         "aria-expanded": faq.isOpen.toString(),
-        "aria-controls": "faq-content-".concat(idx)
+        "aria-controls": `faq-content-${idx}`
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.toggleAccordion(idx);
         }
       }
@@ -285,16 +285,16 @@ var render = function render() {
       staticClass: "icon-line horizontal"
     }), _vm._v(" "), _c("div", {
       staticClass: "icon-line vertical",
-      "class": {
+      class: {
         "is-hidden": faq.isOpen
       }
     })])]), _vm._v(" "), _c("b-collapse", {
       attrs: {
-        id: "faq-content-".concat(idx)
+        id: `faq-content-${idx}`
       },
       model: {
         value: faq.isOpen,
-        callback: function callback($$v) {
+        callback: function ($$v) {
           _vm.$set(faq, "isOpen", $$v);
         },
         expression: "faq.isOpen"

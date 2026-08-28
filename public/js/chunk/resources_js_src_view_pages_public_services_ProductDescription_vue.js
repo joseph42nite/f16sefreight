@@ -14,7 +14,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "ProductDescription",
   components: {},
-  data: function data() {
+  data() {
     return {
       products: [{
         title: "AWB Execution Tracker",
@@ -40,11 +40,10 @@ __webpack_require__.r(__webpack_exports__);
       isReady: false
     };
   },
-  mounted: function mounted() {
-    var _this = this;
+  mounted() {
     // Artificial delay to ensure assets are ready and show smooth skeleton
-    setTimeout(function () {
-      _this.isReady = true;
+    setTimeout(() => {
+      this.isReady = true;
     }, 600);
   }
 });

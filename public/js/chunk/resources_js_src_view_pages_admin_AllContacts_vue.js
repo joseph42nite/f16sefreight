@@ -18,7 +18,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadmin-allcontacts",
   mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_1__["default"]],
-  data: function data() {
+  data() {
     return {
       fields: [{
         label: 'Sl',
@@ -47,17 +47,16 @@ __webpack_require__.r(__webpack_exports__);
     SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
   },
   methods: {
-    delete_contacts: function delete_contacts(id) {
-      var _this = this;
-      this.confirmRemove("/delete-contact/".concat(id), "Are you sure you want to delete this contact?").then(function (removed) {
-        if (removed) _this.get_contacts();
+    delete_contacts(id) {
+      this.confirmRemove(`/delete-contact/${id}`, "Are you sure you want to delete this contact?").then(removed => {
+        if (removed) this.get_contacts();
       });
     },
-    get_contacts: function get_contacts() {
-      return this.loadItems("/all-contacts/");
+    get_contacts() {
+      return this.loadItems(`/all-contacts/`);
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.get_contacts();
   }
 });
@@ -99,7 +98,7 @@ var render = function render() {
     },
     model: {
       value: _vm.perPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.perPage = $$v;
       },
       expression: "perPage"
@@ -115,7 +114,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filter,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.filter = $$v;
       },
       expression: "filter"
@@ -145,21 +144,21 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "cell(index)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "font-weight-bold"
         }, [_vm._v("#" + _vm._s(data.index + 1))])];
       }
     }, {
       key: "cell(first_name)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "font-weight-bold text-dark"
         }, [_vm._v(_vm._s(data.item.first_name) + " " + _vm._s(data.item.last_name))])];
       }
     }, {
       key: "cell(message)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "text-wrap text-muted",
           staticStyle: {
@@ -170,11 +169,11 @@ var render = function render() {
       }
     }, {
       key: "cell(action)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("button", {
           staticClass: "btn btn-icon btn-light-danger btn-sm",
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.delete_contacts(data.item["id"]);
             }
           }
@@ -196,7 +195,7 @@ var render = function render() {
     },
     model: {
       value: _vm.currentPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.currentPage = $$v;
       },
       expression: "currentPage"

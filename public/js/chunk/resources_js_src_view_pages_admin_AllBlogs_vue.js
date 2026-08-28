@@ -23,7 +23,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminallblogs",
   mixins: [_core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_3__["default"]],
-  data: function data() {
+  data() {
     return {
       fields: [{
         label: "Cover",
@@ -56,12 +56,10 @@ __webpack_require__.r(__webpack_exports__);
     SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
   methods: {
-    fetchBlogs: function fetchBlogs() {
-      return this.loadItems("/superadmin/all-blogs-internal", function (data) {
-        return data.success ? data.data : [];
-      });
+    fetchBlogs() {
+      return this.loadItems(`/superadmin/all-blogs-internal`, data => data.success ? data.data : []);
     },
-    formatDate: function formatDate(dateString) {
+    formatDate(dateString) {
       if (!dateString) return '';
       return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -69,29 +67,63 @@ __webpack_require__.r(__webpack_exports__);
         day: 'numeric'
       });
     },
-    confirmDelete: function confirmDelete(blog) {
-      var _this = this;
+    copyShareableLink(blog) {
+      const shareableUrl = `${window.location.origin}/blog/${blog.slug}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareableUrl).then(() => {
+          this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+            title: 'Link Copied',
+            variant: 'success',
+            solid: true,
+            autoHideDelay: 2000
+          });
+        }).catch(() => {
+          this.fallbackCopyText(shareableUrl);
+        });
+      } else {
+        this.fallbackCopyText(shareableUrl);
+      }
+    },
+    fallbackCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        this.$bvToast.toast(`Shareable link copied to clipboard!`, {
+          title: 'Link Copied',
+          variant: 'success',
+          solid: true,
+          autoHideDelay: 2000
+        });
+      } catch (err) {
+        sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire('Shareable Link', text, 'info');
+      }
+      document.body.removeChild(textArea);
+    },
+    confirmDelete(blog) {
       sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire({
         title: 'Delete this Blog?',
-        text: "You are about to permanently delete \"".concat(blog.title, "\". This action cannot be undone."),
+        text: `You are about to permanently delete "${blog.title}". This action cannot be undone.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#355594',
         confirmButtonText: 'Yes, delete it!'
-      }).then(function (result) {
+      }).then(result => {
         if (result.isConfirmed) {
-          _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/superadmin/delete-blog/".concat(blog.id)).then(function (response) {
+          _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"](`/superadmin/delete-blog/${blog.id}`).then(response => {
             sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire('Deleted!', 'Successfully removed blog.', 'success');
-            _this.fetchBlogs();
-          })["catch"](function (err) {
+            this.fetchBlogs();
+          }).catch(err => {
             sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire('Error', 'Failed to delete record.', 'error');
           });
         }
       });
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.fetchBlogs();
   }
 });
@@ -142,7 +174,7 @@ var render = function render() {
     },
     model: {
       value: _vm.perPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.perPage = $$v;
       },
       expression: "perPage"
@@ -158,7 +190,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filter,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.filter = $$v;
       },
       expression: "filter"
@@ -190,7 +222,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "cell(image)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "symbol symbol-70 symbol-2by3 shadow-sm overflow-hidden",
           staticStyle: {
@@ -209,7 +241,7 @@ var render = function render() {
       }
     }, {
       key: "cell(title)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", [_c("div", {
           staticClass: "font-weight-bolder text-dark font-size-lg mb-1"
         }, [_vm._v(_vm._s(data.item.title))]), _vm._v(" "), _c("div", {
@@ -223,7 +255,7 @@ var render = function render() {
       }
     }, {
       key: "cell(views_count)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("b-badge", {
           staticClass: "font-weight-bold py-2 px-3",
           attrs: {
@@ -235,7 +267,7 @@ var render = function render() {
       }
     }, {
       key: "cell(status)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("b-badge", {
           attrs: {
             variant: data.item.published_at ? "light-success" : "light-warning"
@@ -244,7 +276,7 @@ var render = function render() {
       }
     }, {
       key: "cell(date)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [data.item.published_at ? _c("span", {
           staticClass: "text-muted"
         }, [_vm._v(_vm._s(_vm.formatDate(data.item.published_at)))]) : _c("span", {
@@ -253,10 +285,13 @@ var render = function render() {
       }
     }, {
       key: "cell(action)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
-          staticClass: "d-flex justify-content-end align-items-center"
-        }, [_c("router-link", {
+          staticClass: "d-flex justify-content-end align-items-center",
+          staticStyle: {
+            gap: "6px"
+          }
+        }, [_c("b-button", {
           directives: [{
             name: "b-tooltip",
             rawName: "v-b-tooltip.hover",
@@ -264,7 +299,44 @@ var render = function render() {
               hover: true
             }
           }],
-          staticClass: "btn btn-icon btn-light-primary btn-sm mr-2",
+          staticClass: "btn-icon",
+          attrs: {
+            variant: "light-info",
+            size: "sm",
+            title: "Copy Shareable Link"
+          },
+          on: {
+            click: function ($event) {
+              return _vm.copyShareableLink(data.item);
+            }
+          }
+        }, [_c("i", {
+          staticClass: "fas fa-link font-size-sm"
+        })]), _vm._v(" "), _c("a", {
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
+          staticClass: "btn btn-icon btn-light-success btn-sm",
+          attrs: {
+            href: "/blog/" + data.item.slug,
+            target: "_blank",
+            title: "View Public Post"
+          }
+        }, [_c("i", {
+          staticClass: "fas fa-external-link-alt font-size-sm"
+        })]), _vm._v(" "), _c("router-link", {
+          directives: [{
+            name: "b-tooltip",
+            rawName: "v-b-tooltip.hover",
+            modifiers: {
+              hover: true
+            }
+          }],
+          staticClass: "btn btn-icon btn-light-primary btn-sm",
           attrs: {
             to: "/superadmin/new-blog/" + data.item.id,
             title: "Edit Blog"
@@ -286,7 +358,7 @@ var render = function render() {
             title: "Delete"
           },
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.confirmDelete(data.item);
             }
           }
@@ -308,7 +380,7 @@ var render = function render() {
     },
     model: {
       value: _vm.currentPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.currentPage = $$v;
       },
       expression: "currentPage"

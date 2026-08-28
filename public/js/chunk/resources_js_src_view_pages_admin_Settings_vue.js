@@ -14,7 +14,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       msg_form: new Form({
         airline: '',
@@ -25,41 +25,41 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    submit: function submit() {
-      var _this = this;
-      this.msg_form.post("/superadmin/add-notice").then(function (_ref) {
-        var data = _ref.data;
+    submit() {
+      this.msg_form.post(`/superadmin/add-notice`).then(({
+        data
+      }) => {
         alert("Added successfull");
-        _this.msg_form.airline = '';
-        _this.msg_form.message = '';
-        _this.get_notice();
+        this.msg_form.airline = '';
+        this.msg_form.message = '';
+        this.get_notice();
       });
     },
-    get_notice: function get_notice() {
-      var _this2 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/get-notice").then(function (_ref2) {
-        var data = _ref2.data;
-        _this2.all_notice = data;
+    get_notice() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/get-notice`).then(({
+        data
+      }) => {
+        this.all_notice = data;
       });
     },
-    get_airline: function get_airline() {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/get-airline-list").then(function (_ref3) {
-        var data = _ref3.data;
-        _this3.all_airline = data;
+    get_airline() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/get-airline-list`).then(({
+        data
+      }) => {
+        this.all_airline = data;
       });
     },
-    delete_notice: function delete_notice(carrier_code) {
-      var _this4 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/superadmin/delete-notice", {
+    delete_notice(carrier_code) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/superadmin/delete-notice`, {
         'carrier_code': carrier_code
-      }).then(function (_ref4) {
-        var data = _ref4.data;
-        _this4.get_notice();
+      }).then(({
+        data
+      }) => {
+        this.get_notice();
       });
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.get_notice();
     this.get_airline();
   }
@@ -93,7 +93,7 @@ var render = function render() {
     staticClass: "admin-form-group mb-0"
   }, [_c("label", {
     attrs: {
-      "for": "user_message"
+      for: "user_message"
     }
   }, [_vm._v("User Message")]), _vm._v(" "), _c("textarea", {
     directives: [{
@@ -111,7 +111,7 @@ var render = function render() {
       value: _vm.msg_form.message
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.msg_form, "message", $event.target.value);
       }
@@ -129,7 +129,7 @@ var render = function render() {
     }],
     staticClass: "form-control custom-select",
     on: {
-      change: function change($event) {
+      change: function ($event) {
         var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
           return o.selected;
         }).map(function (o) {
@@ -180,7 +180,7 @@ var render = function render() {
     }, [_c("button", {
       staticClass: "btn btn-danger btn-sm",
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.delete_notice(notice.carrier_code);
         }
       }

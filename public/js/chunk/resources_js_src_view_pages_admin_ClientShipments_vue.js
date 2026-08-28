@@ -17,18 +17,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(sweetalert2__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
 /* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
@@ -36,7 +29,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "superadminclientshipments",
-  data: function data() {
+  data() {
     return {
       fields: [{
         label: "Sl",
@@ -116,12 +109,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   computed: {
-    companyOptions: function companyOptions() {
-      var options = [{
+    companyOptions() {
+      const options = [{
         value: null,
         text: "All Clients / Companies"
       }];
-      this.companies.forEach(function (company) {
+      this.companies.forEach(company => {
         options.push({
           value: company.id,
           text: company.name
@@ -129,18 +122,18 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       });
       return options;
     },
-    isFiltered: function isFiltered() {
+    isFiltered() {
       return this.filters.company_id !== null || this.filters.origin !== "" || this.filters.destination !== "" || this.filters.dates && this.filters.dates.length > 0 || this.filters.months && this.filters.months.length > 0 || this.filters.fna_status !== null;
     }
   },
   watch: {
-    currentPage: function currentPage() {
+    currentPage() {
       this.fetchShipments();
     },
-    perPage: function perPage() {
+    perPage() {
       this.applyFilters();
     },
-    searchText: function searchText(val) {
+    searchText(val) {
       if (!val || val.trim() === "") {
         this.localFilteredItems = null;
         this.applyFilters();
@@ -148,57 +141,56 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     }
   },
   methods: {
-    fetchCompanies: function fetchCompanies() {
-      var _this = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company").then(function (_ref) {
-        var data = _ref.data;
-        _this.companies = data;
-      })["catch"](function (err) {
+    fetchCompanies() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-company`).then(({
+        data
+      }) => {
+        this.companies = data;
+      }).catch(err => {
         console.error("Failed to load companies", err);
       });
     },
-    fetchShipments: function fetchShipments() {
-      var _this2 = this;
-      var showLoading = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+    fetchShipments(showLoading = true) {
       if (showLoading) {
         this.isLoading = true;
       }
-      var params = _objectSpread(_objectSpread({}, this.filters), {}, {
+      const params = _objectSpread(_objectSpread({}, this.filters), {}, {
         page: this.currentPage,
         per_page: this.perPage,
         search: this.searchText
       });
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/superadmin/client-shipments", {
-        params: params
-      }).then(function (_ref2) {
-        var data = _ref2.data;
-        _this2.localFilteredItems = null;
-        _this2.items = data.shipments;
-        _this2.totalAwb = data.total_awb;
-        _this2.totalHawb = data.total_hawb;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query(`/superadmin/client-shipments`, {
+        params
+      }).then(({
+        data
+      }) => {
+        this.localFilteredItems = null;
+        this.items = data.shipments;
+        this.totalAwb = data.total_awb;
+        this.totalHawb = data.total_hawb;
         if (data.pagination) {
-          _this2.totalRows = data.pagination.total;
+          this.totalRows = data.pagination.total;
         } else {
-          _this2.totalRows = data.shipments.length;
+          this.totalRows = data.shipments.length;
         }
-        var now = new Date();
-        _this2.lastUpdated = now.toLocaleTimeString('en-US', {
+        const now = new Date();
+        this.lastUpdated = now.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           second: '2-digit',
           hour12: true
         });
-      })["catch"](function (err) {
+      }).catch(err => {
         console.error("Failed to load shipments", err);
         if (showLoading) {
           sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire("Error", "Could not retrieve shipments data.", "error");
         }
-      })["finally"](function () {
-        _this2.isLoading = false;
-        _this2.scheduleNextPoll();
+      }).finally(() => {
+        this.isLoading = false;
+        this.scheduleNextPoll();
       });
     },
-    applyFilters: function applyFilters() {
+    applyFilters() {
       this.localFilteredItems = null;
       if (this.currentPage !== 1) {
         this.currentPage = 1;
@@ -206,8 +198,8 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         this.fetchShipments();
       }
     },
-    handleAwbSearch: function handleAwbSearch() {
-      var search = this.searchText ? this.searchText.trim().toLowerCase() : "";
+    handleAwbSearch() {
+      const search = this.searchText ? this.searchText.trim().toLowerCase() : "";
       if (!search) {
         this.localFilteredItems = null;
         this.applyFilters();
@@ -215,10 +207,10 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       }
 
       // Search in currently loaded items first
-      var localMatches = this.items.filter(function (item) {
-        var awbCode = item.awb_code ? String(item.awb_code).toLowerCase() : "";
-        var awbNo = item.awb_no ? String(item.awb_no).toLowerCase() : "";
-        var combined = "".concat(awbCode, "-").concat(awbNo);
+      const localMatches = this.items.filter(item => {
+        const awbCode = item.awb_code ? String(item.awb_code).toLowerCase() : "";
+        const awbNo = item.awb_no ? String(item.awb_no).toLowerCase() : "";
+        const combined = `${awbCode}-${awbNo}`;
         return combined.includes(search) || awbCode.includes(search) || awbNo.includes(search);
       });
       if (localMatches.length > 0) {
@@ -229,41 +221,40 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         this.applyFilters();
       }
     },
-    scheduleNextPoll: function scheduleNextPoll() {
-      var _this3 = this;
+    scheduleNextPoll() {
       this.clearPollTimer();
 
       // Check Operating Hours (10:00 AM to 10:00 PM)
-      var now = new Date();
-      var hour = now.getHours();
-      var isOperatingHours = hour >= 10 && hour < 22;
+      const now = new Date();
+      const hour = now.getHours();
+      const isOperatingHours = hour >= 10 && hour < 22;
 
       // Only poll if tab is active/visible and within operating hours
       if (isOperatingHours && document.visibilityState === "visible") {
-        this.pollTimer = setTimeout(function () {
-          _this3.fetchShipments(false); // Fetch silently in background
+        this.pollTimer = setTimeout(() => {
+          this.fetchShipments(false); // Fetch silently in background
         }, 60000); // 60 seconds
       } else {
         // Check again in 60 seconds even if suspended, to resume when time/visibility changes
-        this.pollTimer = setTimeout(function () {
-          _this3.scheduleNextPoll();
+        this.pollTimer = setTimeout(() => {
+          this.scheduleNextPoll();
         }, 60000);
       }
     },
-    clearPollTimer: function clearPollTimer() {
+    clearPollTimer() {
       if (this.pollTimer) {
         clearTimeout(this.pollTimer);
         this.pollTimer = null;
       }
     },
-    handleVisibilityChange: function handleVisibilityChange() {
+    handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         this.fetchShipments(false); // Fetch immediately upon window focus & resume schedule
       } else {
         this.clearPollTimer(); // Stop timers when invisible
       }
     },
-    resetFilters: function resetFilters() {
+    resetFilters() {
       this.filters = {
         company_id: null,
         origin: "",
@@ -274,7 +265,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       };
       this.fetchShipments();
     },
-    setDateFilterType: function setDateFilterType(type) {
+    setDateFilterType(type) {
       this.dateFilterType = type;
       if (type === 'day') {
         this.filters.months = [];
@@ -283,68 +274,63 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       }
       this.fetchShipments();
     },
-    downloadCsv: function downloadCsv() {
-      var _this4 = this;
-      var isDateFilterActive = this.filters.dates && this.filters.dates.length > 0 || this.filters.months && this.filters.months.length > 0;
+    downloadCsv() {
+      const isDateFilterActive = this.filters.dates && this.filters.dates.length > 0 || this.filters.months && this.filters.months.length > 0;
       if (isDateFilterActive) {
         this.isLoading = true;
-        var params = _objectSpread(_objectSpread({}, this.filters), {}, {
+        const params = _objectSpread(_objectSpread({}, this.filters), {}, {
           search: this.searchText,
-          "export": 'all'
+          export: 'all'
         });
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/superadmin/client-shipments", {
-          params: params
-        }).then(function (_ref3) {
-          var data = _ref3.data;
-          _this4.generateAndDownloadCsv(data.shipments);
-        })["catch"](function (err) {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query(`/superadmin/client-shipments`, {
+          params
+        }).then(({
+          data
+        }) => {
+          this.generateAndDownloadCsv(data.shipments);
+        }).catch(err => {
           console.error("Failed to export shipments", err);
           sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire("Error", "Could not retrieve export data.", "error");
-        })["finally"](function () {
-          _this4.isLoading = false;
+        }).finally(() => {
+          this.isLoading = false;
         });
       } else {
         this.generateAndDownloadCsv(this.items);
       }
     },
-    generateAndDownloadCsv: function generateAndDownloadCsv(items) {
-      var _this5 = this;
-      var headers = ["AWB Number", "Client/Company", "HAWB Count", "Origin", "Destination", "Pieces", "Weight", "Date Sent", "Time Sent", "FNA Status"];
-      var rows = items.map(function (item) {
-        var awb = "".concat(item.awb_code, "-").concat(item.awb_no);
-        var company = item.agents_info && item.agents_info.company_name ? item.agents_info.company_name.name : "";
-        var hawbCount = item.house_way_bills_count || 0;
-        var origin = _this5.getAirportCode(item.departure_airport);
-        var destination = _this5.getAirportCode(item.destination_airport);
-        var pieces = item.consignment_data ? item.consignment_data.pieces : "";
-        var weight = item.consignment_data ? "".concat(item.consignment_data.gross_weight, " ").concat(item.consignment_data.weight_code || 'K') : "";
-        var dateSent = _this5.formatDate(item.created_at);
-        var timeSent = _this5.formatTime(item.created_at);
-        var fnaStatus = item.fna_received ? "FNA Received" : "FMA";
+    generateAndDownloadCsv(items) {
+      const headers = ["AWB Number", "Client/Company", "HAWB Count", "Origin", "Destination", "Pieces", "Weight", "Date Sent", "Time Sent", "FNA Status"];
+      const rows = items.map(item => {
+        const awb = `${item.awb_code}-${item.awb_no}`;
+        const company = item.agents_info && item.agents_info.company_name ? item.agents_info.company_name.name : "";
+        const hawbCount = item.house_way_bills_count || 0;
+        const origin = this.getAirportCode(item.departure_airport);
+        const destination = this.getAirportCode(item.destination_airport);
+        const pieces = item.consignment_data ? item.consignment_data.pieces : "";
+        const weight = item.consignment_data ? `${item.consignment_data.gross_weight} ${item.consignment_data.weight_code || 'K'}` : "";
+        const dateSent = this.formatDate(item.created_at);
+        const timeSent = this.formatTime(item.created_at);
+        const fnaStatus = item.fna_received ? "FNA Received" : "FMA";
         return [awb, company, hawbCount, origin, destination, pieces, weight, dateSent, timeSent, fnaStatus];
       });
-      var csvContent = [headers.join(",")].concat(_toConsumableArray(rows.map(function (row) {
-        return row.map(function (val) {
-          return "\"".concat(String(val).replace(/"/g, '""'), "\"");
-        }).join(",");
-      }))).join("\n");
-      var blob = new Blob([csvContent], {
+      const csvContent = [headers.join(","), ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+      const blob = new Blob([csvContent], {
         type: "text/csv;charset=utf-8;"
       });
-      var link = document.createElement("a");
-      var url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", "shipments_export_".concat(new Date().toISOString().slice(0, 10), ".csv"));
+      link.setAttribute("download", `shipments_export_${new Date().toISOString().slice(0, 10)}.csv`);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     },
-    rowClass: function rowClass(item, type) {
+    rowClass(item, type) {
       if (!item || type !== 'row') return '';
       return item.fna_received ? 'table-row-fna' : '';
     },
-    formatDate: function formatDate(dateString) {
+    formatDate(dateString) {
       if (!dateString) return '—';
       return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -352,7 +338,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         day: 'numeric'
       });
     },
-    formatTime: function formatTime(dateString) {
+    formatTime(dateString) {
       if (!dateString) return '';
       return new Date(dateString).toLocaleTimeString('en-US', {
         hour: 'numeric',
@@ -360,61 +346,59 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         hour12: true
       });
     },
-    getAirportCode: function getAirportCode(val) {
+    getAirportCode(val) {
       if (!val) return "";
       return val.split(',')[0].trim();
     },
-    getAirportName: function getAirportName(val) {
+    getAirportName(val) {
       if (!val) return "";
-      var parts = val.split(',');
+      const parts = val.split(',');
       if (parts.length > 1) {
         return parts.slice(1).join(',').trim();
       }
       return "";
     },
-    viewXml: function viewXml(awbId) {
-      var _this6 = this;
+    viewXml(awbId) {
       this.selectedAwbId = awbId;
       this.xmlContent = "Loading XML content...";
       this.$bvModal.show("xml-viewer-modal");
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/shipment-xml/".concat(awbId)).then(function (response) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/shipment-xml/${awbId}`).then(response => {
         // If response is XML string
-        _this6.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
-      })["catch"](function (err) {
+        this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
+      }).catch(err => {
         console.error("Failed to fetch XML file", err);
-        _this6.xmlContent = "Error: XML file could not be found or retrieved.";
+        this.xmlContent = "Error: XML file could not be found or retrieved.";
       });
     },
-    viewHawbs: function viewHawbs(mawbItem) {
-      var _this7 = this;
+    viewHawbs(mawbItem) {
       this.selectedMawb = mawbItem;
       this.hawbsList = [];
       this.isHawbsLoading = true;
       this.$bvModal.show("hawbs-list-modal");
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/mawb-hawbs/".concat(mawbItem.awb_code, "/").concat(mawbItem.awb_no)).then(function (_ref4) {
-        var data = _ref4.data;
-        _this7.hawbsList = data;
-      })["catch"](function (err) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/mawb-hawbs/${mawbItem.awb_code}/${mawbItem.awb_no}`).then(({
+        data
+      }) => {
+        this.hawbsList = data;
+      }).catch(err => {
         console.error("Failed to fetch HAWBs", err);
         sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire("Error", "Could not retrieve House AWBs.", "error");
-      })["finally"](function () {
-        _this7.isHawbsLoading = false;
+      }).finally(() => {
+        this.isHawbsLoading = false;
       });
     },
-    viewHawbXml: function viewHawbXml(hawbId) {
-      var _this8 = this;
+    viewHawbXml(hawbId) {
       this.selectedAwbId = hawbId;
       this.xmlContent = "Loading HAWB XML content...";
       this.$bvModal.show("xml-viewer-modal");
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/hawb-xml/".concat(hawbId)).then(function (response) {
-        _this8.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
-      })["catch"](function (err) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/hawb-xml/${hawbId}`).then(response => {
+        this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
+      }).catch(err => {
         console.error("Failed to fetch HAWB XML file", err);
-        _this8.xmlContent = "Error: HAWB XML file could not be found or retrieved.";
+        this.xmlContent = "Error: HAWB XML file could not be found or retrieved.";
       });
     },
-    copyXml: function copyXml() {
-      navigator.clipboard.writeText(this.xmlContent).then(function () {
+    copyXml() {
+      navigator.clipboard.writeText(this.xmlContent).then(() => {
         sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire({
           title: "Copied!",
           text: "XML content copied to clipboard.",
@@ -422,34 +406,33 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
           timer: 1500,
           showConfirmButton: false
         });
-      })["catch"](function (err) {
+      }).catch(err => {
         sweetalert2__WEBPACK_IMPORTED_MODULE_2___default().fire("Error", "Failed to copy text.", "error");
       });
     },
-    downloadXml: function downloadXml() {
-      var blob = new Blob([this.xmlContent], {
+    downloadXml() {
+      const blob = new Blob([this.xmlContent], {
         type: "application/xml"
       });
-      var link = document.createElement("a");
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      var isMawb = this.selectedAwbId.includes('-');
-      link.download = isMawb ? "xml_airway_bill_".concat(this.selectedAwbId, ".xml") : "xml_houseway_bill_".concat(this.selectedAwbId, ".xml");
+      const isMawb = this.selectedAwbId.includes('-');
+      link.download = isMawb ? `xml_airway_bill_${this.selectedAwbId}.xml` : `xml_houseway_bill_${this.selectedAwbId}.xml`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     },
-    copyFnaReason: function copyFnaReason(reason) {
-      var _this9 = this;
-      var text = reason || 'Message not specified';
-      navigator.clipboard.writeText(text).then(function () {
-        _this9.$bvToast.toast('Message copied to clipboard', {
+    copyFnaReason(reason) {
+      const text = reason || 'Message not specified';
+      navigator.clipboard.writeText(text).then(() => {
+        this.$bvToast.toast('Message copied to clipboard', {
           title: 'Copied!',
           variant: 'success',
           solid: true,
           autoHideDelay: 2000
         });
-      })["catch"](function () {
-        _this9.$bvToast.toast('Failed to copy text', {
+      }).catch(() => {
+        this.$bvToast.toast('Failed to copy text', {
           title: 'Error',
           variant: 'danger',
           solid: true
@@ -457,13 +440,13 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       });
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.fetchCompanies();
     this.fetchShipments();
     this.scheduleNextPoll();
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
   },
-  beforeDestroy: function beforeDestroy() {
+  beforeDestroy() {
     this.clearPollTimer();
     document.removeEventListener("visibilitychange", this.handleVisibilityChange);
   }
@@ -549,7 +532,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filters.company_id,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.filters, "company_id", $$v);
       },
       expression: "filters.company_id"
@@ -565,14 +548,14 @@ var render = function render() {
       placeholder: "Origin"
     },
     on: {
-      keyup: function keyup($event) {
+      keyup: function ($event) {
         if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
         return _vm.applyFilters.apply(null, arguments);
       }
     },
     model: {
       value: _vm.filters.origin,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.filters, "origin", $$v);
       },
       expression: "filters.origin"
@@ -588,14 +571,14 @@ var render = function render() {
       placeholder: "Dest"
     },
     on: {
-      keyup: function keyup($event) {
+      keyup: function ($event) {
         if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
         return _vm.applyFilters.apply(null, arguments);
       }
     },
     model: {
       value: _vm.filters.destination,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.filters, "destination", $$v);
       },
       expression: "filters.destination"
@@ -624,7 +607,7 @@ var render = function render() {
       variant: _vm.dateFilterType === "day" ? "primary" : "outline-primary"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.setDateFilterType("day");
       }
     }
@@ -637,7 +620,7 @@ var render = function render() {
       variant: _vm.dateFilterType === "month" ? "primary" : "outline-primary"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.setDateFilterType("month");
       }
     }
@@ -660,7 +643,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filters.dates,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.filters, "dates", $$v);
       },
       expression: "filters.dates"
@@ -679,7 +662,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filters.months,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.filters, "months", $$v);
       },
       expression: "filters.months"
@@ -698,7 +681,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filters.fna_status,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.filters, "fna_status", $$v);
       },
       expression: "filters.fna_status"
@@ -758,7 +741,7 @@ var render = function render() {
     },
     model: {
       value: _vm.perPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.perPage = $$v;
       },
       expression: "perPage"
@@ -787,7 +770,7 @@ var render = function render() {
       placeholder: "Search AWB..."
     },
     on: {
-      keyup: function keyup($event) {
+      keyup: function ($event) {
         if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
         return _vm.handleAwbSearch.apply(null, arguments);
       },
@@ -795,7 +778,7 @@ var render = function render() {
     },
     model: {
       value: _vm.searchText,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.searchText = $$v;
       },
       expression: "searchText"
@@ -832,14 +815,14 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "cell(index)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "font-weight-bold"
         }, [_vm._v("#" + _vm._s((_vm.currentPage - 1) * _vm.perPage + data.index + 1))])];
       }
     }, {
       key: "cell(awb_number)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", [_c("span", {
           staticClass: "font-weight-bold text-dark font-size-lg"
         }, [_vm._v(_vm._s(data.item.awb_code) + "-" + _vm._s(data.item.awb_no))]), _vm._v(" "), data.item.agents_info && data.item.agents_info.company_name ? _c("div", {
@@ -850,7 +833,7 @@ var render = function render() {
       }
     }, {
       key: "cell(house_way_bills_count)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("b-badge", {
           directives: [{
             name: "b-tooltip",
@@ -869,7 +852,7 @@ var render = function render() {
             title: "Click to view associated HAWBs"
           },
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.viewHawbs(data.item);
             }
           }
@@ -877,7 +860,7 @@ var render = function render() {
       }
     }, {
       key: "cell(departure_airport)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [data.item.departure_airport ? _c("div", [_c("span", {
           staticClass: "font-weight-bold text-dark"
         }, [_vm._v(_vm._s(_vm.getAirportCode(data.item.departure_airport)))]), _vm._v(" "), _vm.getAirportName(data.item.departure_airport) ? _c("div", {
@@ -899,7 +882,7 @@ var render = function render() {
       }
     }, {
       key: "cell(destination_airport)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [data.item.destination_airport ? _c("div", [_c("span", {
           staticClass: "font-weight-bold text-dark"
         }, [_vm._v(_vm._s(_vm.getAirportCode(data.item.destination_airport)))]), _vm._v(" "), _vm.getAirportName(data.item.destination_airport) ? _c("div", {
@@ -921,21 +904,21 @@ var render = function render() {
       }
     }, {
       key: "cell(pieces)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "font-weight-bolder"
         }, [_vm._v(_vm._s(data.item.consignment_data ? data.item.consignment_data.pieces : "—"))])];
       }
     }, {
       key: "cell(weight)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [data.item.consignment_data ? _c("span", {
           staticClass: "font-weight-bolder"
         }, [_vm._v("\n            " + _vm._s(data.item.consignment_data.gross_weight) + " " + _vm._s(data.item.consignment_data.weight_code || "K") + "\n          ")]) : _c("span", [_vm._v("—")])];
       }
     }, {
       key: "cell(date_sent)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "text-nowrap"
         }, [_c("span", {
@@ -948,7 +931,7 @@ var render = function render() {
       }
     }, {
       key: "cell(fna_status)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [data.item.fna_received ? _c("div", {
           staticClass: "d-inline-flex align-items-center"
         }, [_c("b-badge", {
@@ -984,7 +967,7 @@ var render = function render() {
             title: "Copy FNA Message"
           },
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.copyFnaReason(data.item.fna_reason);
             }
           }
@@ -1041,7 +1024,7 @@ var render = function render() {
             title: "Copy FMA Message"
           },
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.copyFnaReason(data.item.fma_reason);
             }
           }
@@ -1051,7 +1034,7 @@ var render = function render() {
       }
     }, {
       key: "cell(action)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("b-button", {
           staticClass: "btn-icon-sm",
           attrs: {
@@ -1059,7 +1042,7 @@ var render = function render() {
             size: "sm"
           },
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.viewXml(data.item.id);
             }
           }
@@ -1081,7 +1064,7 @@ var render = function render() {
     },
     model: {
       value: _vm.currentPage,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.currentPage = $$v;
       },
       expression: "currentPage"
@@ -1134,7 +1117,7 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.selectedMawb.awb_code) + "-" + _vm._s(_vm.selectedMawb.awb_no))])]) : _vm._e()])]), _vm._v(" "), _c("button", {
     staticClass: "xml-close-btn flex-shrink-0",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.$bvModal.hide("hawbs-list-modal");
       }
     }
@@ -1234,7 +1217,7 @@ var render = function render() {
         title: "Copy FNA Message"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.copyFnaReason(hawb.fna_reason);
         }
       }
@@ -1291,7 +1274,7 @@ var render = function render() {
         title: "Copy FMA Message"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.copyFnaReason(hawb.fma_reason);
         }
       }
@@ -1306,7 +1289,7 @@ var render = function render() {
         size: "sm"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.viewHawbXml(hawb.id);
         }
       }
@@ -1374,7 +1357,7 @@ var render = function render() {
   }), _vm._v(" Download\n          ")])]), _vm._v(" "), _c("button", {
     staticClass: "xml-close-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.$bvModal.hide("xml-viewer-modal");
       }
     }

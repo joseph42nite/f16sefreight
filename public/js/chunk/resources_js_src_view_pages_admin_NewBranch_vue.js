@@ -16,7 +16,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       branch_form: new Form({
         id: "",
@@ -63,73 +63,74 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    onSubmit: function onSubmit(evt) {
-      var _this = this;
+    onSubmit(evt) {
       evt.preventDefault();
       if (this.action == "Add") {
-        this.branch_form.post("/superadmin/create-branch").then(function (_ref) {
-          var data = _ref.data;
-          _this.$router.push("/superadmin/all-branch");
-        })["catch"](function (err) {});
+        this.branch_form.post(`/superadmin/create-branch`).then(({
+          data
+        }) => {
+          this.$router.push("/superadmin/all-branch");
+        }).catch(err => {});
       } else {
-        this.branch_form.put("/superadmin/edit-branch/".concat(this.branch_form.id)).then(function (_ref2) {
-          var data = _ref2.data;
+        this.branch_form.put(`/superadmin/edit-branch/${this.branch_form.id}`).then(({
+          data
+        }) => {
           $("#fade").fadeToggle(1000);
           $("#fade").fadeToggle(1000);
         });
       }
     },
-    getData: function getData(id) {
-      var _this2 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-branch/".concat(id)).then(function (_ref3) {
-        var data = _ref3.data;
-        _this2.branch_form.fill(data[0]);
-        _this2.searchQuery = data[0].agent_issue_loc_code;
+    getData(id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-branch/${id}`).then(({
+        data
+      }) => {
+        this.branch_form.fill(data[0]);
+        this.searchQuery = data[0].agent_issue_loc_code;
       });
     },
-    getCompany: function getCompany() {
-      var _this3 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/all-company").then(function (_ref4) {
-        var data = _ref4.data;
-        for (var i = 0; i < data.length; i++) {
-          _this3.all_company.push({
+    getCompany() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/all-company`).then(({
+        data
+      }) => {
+        for (let i = 0; i < data.length; i++) {
+          this.all_company.push({
             "value": data[i].id,
             "text": data[i].name
           });
         }
       });
     },
-    getLocation: function getLocation() {
-      var _this4 = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/get-location").then(function (_ref5) {
-        var data = _ref5.data;
-        _this4.location = data;
+    getLocation() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/superadmin/get-location`).then(({
+        data
+      }) => {
+        this.location = data;
       });
     },
-    normalizer: function normalizer(node) {
+    normalizer(node) {
       return {
         id: node.value,
         label: node.name
       };
     },
-    selectOption: function selectOption(item) {
+    selectOption(item) {
       if (!item) return;
-      var iata = item.iata_code || '';
-      var dest = item.destination || '';
-      this.branch_form.agent_issue_loc_code = iata + (dest ? ", ".concat(dest, " (").concat(iata, ")") : '');
+      const iata = item.iata_code || '';
+      const dest = item.destination || '';
+      this.branch_form.agent_issue_loc_code = iata + (dest ? `, ${dest} (${iata})` : '');
       this.searchQuery = this.branch_form.agent_issue_loc_code;
     },
-    toggleDropdown: function toggleDropdown() {
+    toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
-    closeDropdown: function closeDropdown(event) {
-      var dropdownContainer = this.$refs.dropdownContainer;
+    closeDropdown(event) {
+      const dropdownContainer = this.$refs.dropdownContainer;
       if (!dropdownContainer.contains(event.target)) {
         this.isDropdownOpen = false;
       }
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.getCompany();
     this.getLocation();
     if (this.get_item) {
@@ -139,22 +140,22 @@ __webpack_require__.r(__webpack_exports__);
     window.addEventListener('click', this.closeDropdown);
   },
   computed: {
-    get_item: function get_item() {
+    get_item: function () {
       if (this.$route.params.id) return this.$route.params.id;else return 0;
     },
-    filteredLocations: function filteredLocations() {
+    filteredLocations() {
       if (!this.searchQuery) {
         return this.location.slice(0, 20); // Limit to top 20 to avoid browser lag with 20k records
       }
-      var query = this.searchQuery.toLowerCase();
-      var filtered = this.location.filter(function (item) {
+      const query = this.searchQuery.toLowerCase();
+      const filtered = this.location.filter(item => {
         return item.iata_code.toLowerCase().includes(query) || item.destination && item.destination.toLowerCase().includes(query);
       });
       return filtered.slice(0, 20);
     }
   },
   watch: {
-    searchQuery: function searchQuery(val) {
+    searchQuery(val) {
       this.branch_form.agent_issue_loc_code = val;
     }
   }
@@ -193,7 +194,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("agent_name")
     },
     attrs: {
@@ -204,7 +205,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.agent_name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "agent_name", $$v);
       },
       expression: "branch_form.agent_name"
@@ -218,7 +219,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("agent_address")
     },
     attrs: {
@@ -229,7 +230,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.agent_address,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "agent_address", $$v);
       },
       expression: "branch_form.agent_address"
@@ -245,7 +246,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("agent_pincode")
     },
     attrs: {
@@ -256,7 +257,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.agent_pincode,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "agent_pincode", $$v);
       },
       expression: "branch_form.agent_pincode"
@@ -270,7 +271,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("agent_city")
     },
     attrs: {
@@ -281,7 +282,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.agent_city,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "agent_city", $$v);
       },
       expression: "branch_form.agent_city"
@@ -301,7 +302,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.company_id,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "company_id", $$v);
       },
       expression: "branch_form.company_id"
@@ -315,7 +316,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("agent_issue_sign")
     },
     attrs: {
@@ -326,7 +327,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.agent_issue_sign,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "agent_issue_sign", $$v);
       },
       expression: "branch_form.agent_issue_sign"
@@ -364,7 +365,7 @@ var render = function render() {
       value: _vm.searchQuery
     },
     on: {
-      input: function input($event) {
+      input: function ($event) {
         if ($event.target.composing) return;
         _vm.searchQuery = $event.target.value;
       }
@@ -376,7 +377,7 @@ var render = function render() {
       key: index,
       staticClass: "option",
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.selectOption(item);
         }
       }
@@ -385,7 +386,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("agent_issue_date")
     },
     attrs: {
@@ -396,7 +397,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.agent_issue_date,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "agent_issue_date", $$v);
       },
       expression: "branch_form.agent_issue_date"
@@ -412,7 +413,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("iata_agent_code")
     },
     attrs: {
@@ -423,7 +424,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.iata_agent_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "iata_agent_code", $$v);
       },
       expression: "branch_form.iata_agent_code"
@@ -437,7 +438,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("iata_agent_cass")
     },
     attrs: {
@@ -448,7 +449,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.iata_agent_cass,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "iata_agent_cass", $$v);
       },
       expression: "branch_form.iata_agent_cass"
@@ -464,7 +465,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("participant_airport")
     },
     attrs: {
@@ -475,7 +476,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.participant_airport,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "participant_airport", $$v);
       },
       expression: "branch_form.participant_airport"
@@ -489,7 +490,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("prticipant_identifer")
     },
     attrs: {
@@ -500,7 +501,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.prticipant_identifer,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "prticipant_identifer", $$v);
       },
       expression: "branch_form.prticipant_identifer"
@@ -516,7 +517,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("participant_code")
     },
     attrs: {
@@ -527,7 +528,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.participant_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "participant_code", $$v);
       },
       expression: "branch_form.participant_code"
@@ -541,7 +542,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("participant_file_reference")
     },
     attrs: {
@@ -552,7 +553,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.participant_file_reference,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "participant_file_reference", $$v);
       },
       expression: "branch_form.participant_file_reference"
@@ -568,7 +569,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("office_airport")
     },
     attrs: {
@@ -579,7 +580,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.office_airport,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "office_airport", $$v);
       },
       expression: "branch_form.office_airport"
@@ -593,7 +594,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("office_function_designator")
     },
     attrs: {
@@ -604,7 +605,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.office_function_designator,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "office_function_designator", $$v);
       },
       expression: "branch_form.office_function_designator"
@@ -620,7 +621,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("office_company_designator")
     },
     attrs: {
@@ -631,7 +632,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.office_company_designator,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "office_company_designator", $$v);
       },
       expression: "branch_form.office_company_designator"
@@ -645,7 +646,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("office_file_reference")
     },
     attrs: {
@@ -656,7 +657,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.office_file_reference,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "office_file_reference", $$v);
       },
       expression: "branch_form.office_file_reference"
@@ -672,7 +673,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("ho_name")
     },
     attrs: {
@@ -683,7 +684,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.ho_name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "ho_name", $$v);
       },
       expression: "branch_form.ho_name"
@@ -697,7 +698,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("ho_address")
     },
     attrs: {
@@ -708,7 +709,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.ho_address,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "ho_address", $$v);
       },
       expression: "branch_form.ho_address"
@@ -724,7 +725,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("ho_city")
     },
     attrs: {
@@ -735,7 +736,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.ho_city,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "ho_city", $$v);
       },
       expression: "branch_form.ho_city"
@@ -749,7 +750,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("ho_pincode")
     },
     attrs: {
@@ -760,7 +761,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.ho_pincode,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "ho_pincode", $$v);
       },
       expression: "branch_form.ho_pincode"
@@ -776,7 +777,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("ho_state")
     },
     attrs: {
@@ -787,7 +788,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.ho_state,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "ho_state", $$v);
       },
       expression: "branch_form.ho_state"
@@ -801,7 +802,7 @@ var render = function render() {
     staticClass: "w-50 mr-2"
   }, [_c("b-form-input", {
     staticClass: "mx-1 input-box",
-    "class": {
+    class: {
       "is-invalid": _vm.branch_form.errors.has("ho_country")
     },
     attrs: {
@@ -812,7 +813,7 @@ var render = function render() {
     },
     model: {
       value: _vm.branch_form.ho_country,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.branch_form, "ho_country", $$v);
       },
       expression: "branch_form.ho_country"

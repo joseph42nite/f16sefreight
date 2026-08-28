@@ -13,17 +13,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _blogData__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./blogData */ "./resources/js/src/view/pages/public/blogData.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "BlogsAndNews",
-  data: function data() {
+  data() {
     return {
       selectedCategory: 'All',
       categories: ['All', 'Air Freight', 'Technology', 'Sea Freight', 'Industry News', 'ERP Solutions'],
@@ -31,49 +30,44 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       featuredPost: {}
     };
   },
-  created: function created() {
+  created() {
     this.loadBlogs();
   },
   methods: {
-    loadBlogs: function loadBlogs() {
-      var _this = this;
+    loadBlogs() {
       // Load fallback initially for zero-content flash
       this.updatePosts(_blogData__WEBPACK_IMPORTED_MODULE_0__.blogs);
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get('/get-public-blogs').then(function (_ref) {
-        var data = _ref.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get('/get-public-blogs').then(({
+        data
+      }) => {
         if (data.success && data.data && data.data.length > 0) {
           // Map dynamic DB entries to frontend key structure
-          var dynamicPosts = data.data.map(function (item) {
-            return _objectSpread(_objectSpread({}, item), {}, {
-              image: item.image_path,
-              // Format backend timestamp to consistent UI display format
-              date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric'
-              })
-            });
-          });
+          const dynamicPosts = data.data.map(item => _objectSpread(_objectSpread({}, item), {}, {
+            image: item.image_path,
+            // Format backend timestamp to consistent UI display format
+            date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
+              month: 'short',
+              day: '2-digit',
+              year: 'numeric'
+            })
+          }));
 
           // Use dynamic data as the source of truth
-          _this.updatePosts(dynamicPosts);
+          this.updatePosts(dynamicPosts);
         }
-      })["catch"](function () {
+      }).catch(() => {
         console.log("Running in offline/fallback mode for blogs.");
       });
     },
-    updatePosts: function updatePosts(postArray) {
+    updatePosts(postArray) {
       this.posts = postArray;
       this.featuredPost = postArray[0] || {};
     }
   },
   computed: {
-    filteredPosts: function filteredPosts() {
-      var _this2 = this;
+    filteredPosts() {
       if (this.selectedCategory === 'All') return this.posts;
-      return this.posts.filter(function (post) {
-        return post.category === _this2.selectedCategory;
-      });
+      return this.posts.filter(post => post.category === this.selectedCategory);
     }
   }
 });
@@ -175,11 +169,11 @@ var render = function render() {
   }, _vm._l(_vm.categories, function (cat) {
     return _c("button", {
       key: cat,
-      "class": ["filter-pill", {
+      class: ["filter-pill", {
         active: _vm.selectedCategory === cat
       }],
       on: {
-        click: function click($event) {
+        click: function ($event) {
           _vm.selectedCategory = cat;
         }
       }

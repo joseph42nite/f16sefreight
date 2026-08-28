@@ -17,23 +17,22 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
+  data() {
     return {
       awb_id: null,
       xml_content: ""
     };
   },
   methods: {
-    getXML: function getXML(awb_id) {
-      var _this = this;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/get-xml/".concat(awb_id)).then(function (response) {
-        _this.xml_content = response.data;
-      })["catch"](function (error) {
+    getXML(awb_id) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/user/get-xml/${awb_id}`).then(response => {
+        this.xml_content = response.data;
+      }).catch(error => {
         console.error(error);
       });
     }
   },
-  mounted: function mounted() {
+  mounted() {
     this.awb_id = this.$route.params.id;
     this.getXML(this.awb_id);
   },

@@ -37,7 +37,7 @@ __webpack_require__.r(__webpack_exports__);
     SectionHeader: _components_SectionHeader_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
     HeroButton: _components_HeroButton_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
-  data: function data() {
+  data() {
     return {
       services: [{
         imgSrc: "/media/assets/illustrations/amico.png",
@@ -103,7 +103,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "title",
-      fn: function fn() {
+      fn: function () {
         return [_vm._v("\n                  Advanced "), _c("span", {
           staticClass: "text-gradient"
         }, [_vm._v("E-Freight & ERP")]), _vm._v(" Solutions for Global Forwarding\n              ")];
@@ -111,7 +111,7 @@ var render = function render() {
       proxy: true
     }, {
       key: "subtitle",
-      fn: function fn() {
+      fn: function () {
         return [_vm._v("\n                  F16s provides the digital backbone for the modern freight industry. From high-speed "), _c("strong", [_vm._v("EDI data transfer")]), _vm._v(" (FWB, FHL, FZB) to comprehensive "), _c("strong", [_vm._v("MAWB & HAWB management")]), _vm._v(", our platform empowers freight forwarders, consolidators, and logistics providers with enterprise-grade automation.\n              ")];
       },
       proxy: true
@@ -177,7 +177,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "subtitle",
-      fn: function fn() {
+      fn: function () {
         return [_vm._v("\n                      Our stable "), _c("strong", [_vm._v("EDI gateway")]), _vm._v(" connects you directly to over 150+ airlines and global customs hubs. Ensure 100% data accuracy for "), _c("strong", [_vm._v("FWB (Master AWB)")]), _vm._v(", "), _c("strong", [_vm._v("FHL (House Manifest)")]), _vm._v(", and "), _c("strong", [_vm._v("FZB (Flight Manifest)")]), _vm._v(" transmissions.\n                      "), _c("br"), _c("br"), _vm._v("\n                      F16s adheres to IATA e-AWB standards, eliminating manual documentation bottlenecks and ensuring seamless "), _c("strong", [_vm._v("MAWB & HAWB")]), _vm._v(" synchronization across your network.\n                  ")];
       },
       proxy: true
@@ -241,7 +241,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "subtitle",
-      fn: function fn() {
+      fn: function () {
         return [_vm._v("\n                      Manage your entire freight operation within a single "), _c("strong", [_vm._v("Logistics ERP")]), _vm._v(" framework. From shipment lifecycle management to financial accounting, F16s provides the tools to track every metric.\n                      "), _c("br"), _c("br"), _vm._v("\n                      Gain real-time visibility into your "), _c("strong", [_vm._v("shipment status")]), _vm._v(", vendor performance, and customer profitability with our advanced analytics dashboard.\n                  ")];
       },
       proxy: true
@@ -298,7 +298,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "subtitle",
-      fn: function fn() {
+      fn: function () {
         return [_vm._v("\n                          We are committed to providing the most reliable and affordable "), _c("strong", [_vm._v("e-freight infrastructure")]), _vm._v(" for the global logistics community. Our mission is to standardize "), _c("strong", [_vm._v("EDI connectivity")]), _vm._v(" and "), _c("strong", [_vm._v("ERP accessibility")]), _vm._v(" for every freight forwarder.\n                          "), _c("br"), _c("br"), _vm._v("\n                          By integrating complex systems into a user-friendly platform, we enable our partners to focus on what matters most: delivering excellence at every step of the supply chain.\n                      ")];
       },
       proxy: true

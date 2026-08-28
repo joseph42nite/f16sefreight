@@ -85,7 +85,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "HomeFaqSection",
-  data: function data() {
+  data() {
     return {
       accordions: [{
         title: "Does F16s support multiple AWB connections?",
@@ -107,7 +107,7 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    toggleAccordion: function toggleAccordion(index) {
+    toggleAccordion(index) {
       this.accordions[index].isOpen = !this.accordions[index].isOpen;
     }
   }
@@ -127,7 +127,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "HomeFeatureGrid",
-  data: function data() {
+  data() {
     return {
       features: [{
         title: "Scalable Architecture",
@@ -168,7 +168,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "HomeHero",
-  data: function data() {
+  data() {
     return {
       currentHeroIndex: 0,
       heroInterval: null,
@@ -190,26 +190,25 @@ __webpack_require__.r(__webpack_exports__);
       }]
     };
   },
-  mounted: function mounted() {
-    var _this = this;
+  mounted() {
     // Preload remaining slides in background (first slide is already in the DOM)
-    this.heroServices.slice(1).forEach(function (service, i) {
-      var img = new Image();
-      img.onload = function () {
-        _this.$set(_this.imagesReady, i + 1, true);
+    this.heroServices.slice(1).forEach((service, i) => {
+      const img = new Image();
+      img.onload = () => {
+        this.$set(this.imagesReady, i + 1, true);
       };
       img.src = service.image;
     });
 
     // Hero slideshow interval
-    this.heroInterval = setInterval(function () {
-      var nextIndex = (_this.currentHeroIndex + 1) % _this.heroServices.length;
-      if (_this.imagesReady[nextIndex]) {
-        _this.currentHeroIndex = nextIndex;
+    this.heroInterval = setInterval(() => {
+      const nextIndex = (this.currentHeroIndex + 1) % this.heroServices.length;
+      if (this.imagesReady[nextIndex]) {
+        this.currentHeroIndex = nextIndex;
       }
     }, 4000);
   },
-  beforeDestroy: function beforeDestroy() {
+  beforeDestroy() {
     if (this.heroInterval) {
       clearInterval(this.heroInterval);
     }
@@ -230,55 +229,52 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _blogData__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../blogData */ "./resources/js/src/view/pages/public/blogData.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "HomeNewsSection",
-  data: function data() {
+  data() {
     return {
       featuredPost: {},
       newsItems: []
     };
   },
-  created: function created() {
+  created() {
     this.loadLiveNews();
   },
   methods: {
-    loadLiveNews: function loadLiveNews() {
-      var _this = this;
+    loadLiveNews() {
       // Step 1: Immediately fill with fallbacks for high-speed visual loading
       this.processPostArray(_blogData__WEBPACK_IMPORTED_MODULE_0__.blogs);
 
       // Step 2: Pull the real data from the DB
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get('/get-public-blogs').then(function (_ref) {
-        var data = _ref.data;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get('/get-public-blogs').then(({
+        data
+      }) => {
         if (data.success && data.data && data.data.length > 0) {
           // Format exact mapping
-          var dynamicPosts = data.data.map(function (item) {
-            return _objectSpread(_objectSpread({}, item), {}, {
-              image: item.image_path,
-              date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric'
-              })
-            });
-          });
+          const dynamicPosts = data.data.map(item => _objectSpread(_objectSpread({}, item), {}, {
+            image: item.image_path,
+            date: new Date(item.published_at || item.created_at).toLocaleDateString('en-US', {
+              month: 'short',
+              day: '2-digit',
+              year: 'numeric'
+            })
+          }));
 
           // Override with live news
-          _this.processPostArray(dynamicPosts);
+          this.processPostArray(dynamicPosts);
         }
-      })["catch"](function () {
+      }).catch(() => {
         // Handled silently by initial fallback assignment
       });
     },
-    processPostArray: function processPostArray(arr) {
+    processPostArray(arr) {
       this.featuredPost = arr[0] || {};
       this.newsItems = arr.slice(1, 5);
     }
@@ -299,23 +295,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "HomePartnersTicker",
-  data: function data() {
+  data() {
     return {
       affiliateImages: ["/media/assets/carriers/air-france.png", "/media/assets/carriers/emirates.png", "/media/assets/carriers/lufthansa.png", "/media/assets/carriers/qatar.png", "/media/assets/carriers/turkish-airlines.png", "/media/assets/carriers/Etihad-airways-logo.png", "/media/assets/carriers/air-india.jpg", "/media/assets/carriers/klm.png"]
     };
   },
   computed: {
-    expandedLogos: function expandedLogos() {
-      var logos = [];
-      for (var i = 0; i < 30; i++) {
+    expandedLogos() {
+      let logos = [];
+      for (let i = 0; i < 30; i++) {
         logos = logos.concat(this.affiliateImages);
       }
       return logos;
     }
   },
   methods: {
-    getLogoClass: function getLogoClass(img) {
-      var lowerImg = img.toLowerCase();
+    getLogoClass(img) {
+      const lowerImg = img.toLowerCase();
       return {
         'is-air-france': lowerImg.includes('air-france'),
         'is-etihad': lowerImg.includes('etihad'),
@@ -340,7 +336,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "HomeStatsSection",
-  data: function data() {
+  data() {
     return {
       animatedStats: {
         awbs: 0,
@@ -377,71 +373,60 @@ __webpack_require__.r(__webpack_exports__);
       }
     };
   },
-  created: function created() {
+  created() {
     this.activeTimers = {};
   },
   methods: {
-    formatStat: function formatStat(value, key) {
+    formatStat(value, key) {
       if (key === 'awbs') {
         return value.toLocaleString('en-IN');
       }
       return value.toLocaleString();
     },
-    animateStat: function animateStat(key) {
-      var _this = this;
-      var target = this.statsData[key].target;
-      var duration = 2000;
-      var steps = duration / 20;
-      var increment = target / steps;
-      var current = 0;
-      this.activeTimers[key] = setInterval(function () {
+    animateStat(key) {
+      const target = this.statsData[key].target;
+      const duration = 2000;
+      const steps = duration / 20;
+      const increment = target / steps;
+      let current = 0;
+      this.activeTimers[key] = setInterval(() => {
         current += increment;
         if (current >= target) {
-          _this.animatedStats[key] = target;
-          if (_this.activeTimers[key]) {
-            clearInterval(_this.activeTimers[key]);
-            delete _this.activeTimers[key];
+          this.animatedStats[key] = target;
+          if (this.activeTimers[key]) {
+            clearInterval(this.activeTimers[key]);
+            delete this.activeTimers[key];
           }
         } else {
-          _this.animatedStats[key] = Math.floor(current);
+          this.animatedStats[key] = Math.floor(current);
         }
       }, 20);
     },
-    isElementInViewport: function isElementInViewport(element) {
+    isElementInViewport(element) {
       if (!element) return false;
-      var rect = element.getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
       return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
     },
-    checkVisibility: function checkVisibility() {
-      var _this2 = this;
-      Object.keys(this.statsData).forEach(function (key) {
-        var element = _this2.$refs["statRef-".concat(key)] ? _this2.$refs["statRef-".concat(key)][0] : null;
-        if (element && !_this2.hasAnimatedStats[key] && _this2.isElementInViewport(element)) {
-          _this2.animateStat(key);
-          _this2.hasAnimatedStats[key] = true;
+    checkVisibility() {
+      Object.keys(this.statsData).forEach(key => {
+        const element = this.$refs[`statRef-${key}`] ? this.$refs[`statRef-${key}`][0] : null;
+        if (element && !this.hasAnimatedStats[key] && this.isElementInViewport(element)) {
+          this.animateStat(key);
+          this.hasAnimatedStats[key] = true;
         }
       });
-      if (!Object.values(this.hasAnimatedStats).every(function (v) {
-        return v;
-      })) {
-        this.animationFrameId = requestAnimationFrame(function () {
-          return _this2.checkVisibility();
-        });
+      if (!Object.values(this.hasAnimatedStats).every(v => v)) {
+        this.animationFrameId = requestAnimationFrame(() => this.checkVisibility());
       }
     }
   },
-  mounted: function mounted() {
-    var _this3 = this;
-    this.animationFrameId = requestAnimationFrame(function () {
-      return _this3.checkVisibility();
-    });
+  mounted() {
+    this.animationFrameId = requestAnimationFrame(() => this.checkVisibility());
   },
-  beforeDestroy: function beforeDestroy() {
+  beforeDestroy() {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     if (this.activeTimers) {
-      Object.values(this.activeTimers).forEach(function (timer) {
-        return clearInterval(timer);
-      });
+      Object.values(this.activeTimers).forEach(timer => clearInterval(timer));
     }
   }
 });
@@ -520,7 +505,7 @@ var render = function render() {
     return _c("article", {
       key: idx,
       staticClass: "faq-item",
-      "class": {
+      class: {
         "is-open": faq.isOpen
       }
     }, [_c("div", {
@@ -528,10 +513,10 @@ var render = function render() {
       attrs: {
         role: "button",
         "aria-expanded": faq.isOpen.toString(),
-        "aria-controls": "faq-content-".concat(idx)
+        "aria-controls": `faq-content-${idx}`
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.toggleAccordion(idx);
         }
       }
@@ -543,16 +528,16 @@ var render = function render() {
       staticClass: "icon-line horizontal"
     }), _vm._v(" "), _c("div", {
       staticClass: "icon-line vertical",
-      "class": {
+      class: {
         "is-hidden": faq.isOpen
       }
     })])]), _vm._v(" "), _c("b-collapse", {
       attrs: {
-        id: "faq-content-".concat(idx)
+        id: `faq-content-${idx}`
       },
       model: {
         value: faq.isOpen,
-        callback: function callback($$v) {
+        callback: function ($$v) {
           _vm.$set(faq, "isOpen", $$v);
         },
         expression: "faq.isOpen"
@@ -641,13 +626,14 @@ var render = function render() {
       },
       scopedSlots: _vm._u([{
         key: "default",
-        fn: function fn(_ref) {
-          var navigate = _ref.navigate;
+        fn: function ({
+          navigate
+        }) {
           return [_c("div", {
             staticClass: "feature-card-wrapper",
             style: feature.link && feature.link !== "#" ? "cursor: pointer;" : "",
             on: {
-              click: function click($event) {
+              click: function ($event) {
                 feature.link && feature.link !== "#" ? navigate($event) : null;
               }
             }
@@ -663,7 +649,7 @@ var render = function render() {
             staticClass: "feature-icon",
             attrs: {
               src: feature.icon,
-              alt: "Icon representing ".concat(feature.title)
+              alt: `Icon representing ${feature.title}`
             }
           })]), _vm._v(" "), _c("h3", {
             staticClass: "feature-title"
@@ -728,7 +714,7 @@ var render = function render() {
     }
   }, [_c("img", {
     key: _vm.heroServices[_vm.currentHeroIndex].image,
-    "class": ["hero-plane", {
+    class: ["hero-plane", {
       "is-tilted-plane": _vm.heroServices[_vm.currentHeroIndex].title === "FOCUS AIR",
       "is-truck-plane": _vm.heroServices[_vm.currentHeroIndex].title === "FOCUS ROAD"
     }],
@@ -840,7 +826,7 @@ var render = function render() {
       cursor: "pointer"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.$router.push("/blog/" + _vm.featuredPost.slug);
       }
     }
@@ -895,7 +881,7 @@ var render = function render() {
         cursor: "pointer"
       },
       on: {
-        click: function click($event) {
+        click: function ($event) {
           return _vm.$router.push("/blog/" + news.slug);
         }
       }
@@ -921,7 +907,7 @@ var render = function render() {
       staticClass: "news-link-simple",
       attrs: {
         to: "/blog/" + news.slug,
-        "aria-label": "Read more about ".concat(news.title)
+        "aria-label": `Read more about ${news.title}`
       }
     }, [_vm._v("Read More")])], 1)])]);
   }), 0)])], 1);
@@ -963,10 +949,10 @@ var render = function render() {
       staticClass: "aff-logo-wrap"
     }, [_c("img", {
       staticClass: "affiliate-logo",
-      "class": _vm.getLogoClass(img),
+      class: _vm.getLogoClass(img),
       attrs: {
         src: img,
-        alt: "Partner airline logo ".concat(idx + 1),
+        alt: `Partner airline logo ${idx + 1}`,
         loading: "lazy"
       }
     })]);
@@ -1038,7 +1024,7 @@ var render = function render() {
   }, _vm._l(_vm.statsData, function (stat, key) {
     return _c("div", {
       key: key,
-      ref: "statRef-".concat(key),
+      ref: `statRef-${key}`,
       refInFor: true,
       staticClass: "stat-minimal-item"
     }, [_c("div", {

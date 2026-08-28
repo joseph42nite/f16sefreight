@@ -13,12 +13,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -26,7 +25,7 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
   components: {
     SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
   },
-  data: function data() {
+  data() {
     return {
       isBusy: false,
       isSaving: false,
@@ -92,31 +91,30 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       editForm: null
     };
   },
-  mounted: function mounted() {
+  mounted() {
     this.fetchSavedAddresses();
   },
   methods: {
-    fetchSavedAddresses: function fetchSavedAddresses() {
-      var _this = this;
-      var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+    fetchSavedAddresses(page = 1) {
       this.isBusy = true;
-      var params = {
+      const params = {
         page: page,
         per_page: this.pagination.per_page,
         search: this.searchQuery,
         address_type: this.filterType
       };
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].query("/user/saved-addresses", {
-        params: params
-      }).then(function (_ref) {
-        var data = _ref.data;
-        _this.isBusy = false;
+        params
+      }).then(({
+        data
+      }) => {
+        this.isBusy = false;
         if (data.user) {
-          _this.userProfile = data.user;
+          this.userProfile = data.user;
         }
         if (data.data) {
-          _this.addressItems = data.data.data || [];
-          _this.pagination = {
+          this.addressItems = data.data.data || [];
+          this.pagination = {
             current_page: data.data.current_page || 1,
             per_page: data.data.per_page || 10,
             total: data.data.total || 0,
@@ -124,32 +122,31 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
             to: data.data.to || 0
           };
         }
-      })["catch"](function (error) {
-        _this.isBusy = false;
-        _this.$bvToast.toast("Failed to load saved addresses.", {
+      }).catch(error => {
+        this.isBusy = false;
+        this.$bvToast.toast("Failed to load saved addresses.", {
           title: "Error",
           variant: "danger",
           solid: true
         });
       });
     },
-    handleSearch: function handleSearch() {
+    handleSearch() {
       this.pagination.current_page = 1;
       this.fetchSavedAddresses(1);
     },
-    clearSearch: function clearSearch() {
+    clearSearch() {
       this.searchQuery = "";
       this.handleSearch();
     },
-    onPageChange: function onPageChange(page) {
+    onPageChange(page) {
       this.fetchSavedAddresses(page);
     },
-    openEditModal: function openEditModal(item) {
+    openEditModal(item) {
       this.editForm = _objectSpread({}, item);
       this.showEditModal = true;
     },
-    saveAddressUpdate: function saveAddressUpdate() {
-      var _this2 = this;
+    saveAddressUpdate() {
       if (!this.editForm || !this.editForm.name || !this.editForm.address || !this.editForm.city || !this.editForm.country) {
         this.$bvToast.toast("Please fill in all required fields (Name, Address, City, Country).", {
           title: "Validation Warning",
@@ -159,30 +156,30 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         return;
       }
       this.isSaving = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].put("/user/saved-addresses/".concat(this.editForm.id), this.editForm).then(function (_ref2) {
-        var data = _ref2.data;
-        _this2.isSaving = false;
-        _this2.showEditModal = false;
-        _this2.$bvToast.toast("Address updated successfully!", {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].put(`/user/saved-addresses/${this.editForm.id}`, this.editForm).then(({
+        data
+      }) => {
+        this.isSaving = false;
+        this.showEditModal = false;
+        this.$bvToast.toast("Address updated successfully!", {
           title: "Success",
           variant: "success",
           solid: true
         });
-        _this2.fetchSavedAddresses(_this2.pagination.current_page);
-      })["catch"](function (error) {
-        var _error$response;
-        _this2.isSaving = false;
-        var msg = ((_error$response = error.response) === null || _error$response === void 0 || (_error$response = _error$response.data) === null || _error$response === void 0 ? void 0 : _error$response.message) || "Failed to update address.";
-        _this2.$bvToast.toast(msg, {
+        this.fetchSavedAddresses(this.pagination.current_page);
+      }).catch(error => {
+        this.isSaving = false;
+        const msg = error.response?.data?.message || "Failed to update address.";
+        this.$bvToast.toast(msg, {
           title: "Error",
           variant: "danger",
           solid: true
         });
       });
     },
-    formatDateTime: function formatDateTime(dateStr) {
+    formatDateTime(dateStr) {
       if (!dateStr) return "-";
-      var d = new Date(dateStr);
+      const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
       return d.toLocaleString("en-US", {
         day: "2-digit",
@@ -343,7 +340,7 @@ var render = function render() {
     },
     model: {
       value: _vm.filterType,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.filterType = $$v;
       },
       expression: "filterType"
@@ -355,14 +352,14 @@ var render = function render() {
       placeholder: "Search name, account, address..."
     },
     on: {
-      keyup: function keyup($event) {
+      keyup: function ($event) {
         if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
         return _vm.handleSearch.apply(null, arguments);
       }
     },
     model: {
       value: _vm.searchQuery,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.searchQuery = $$v;
       },
       expression: "searchQuery"
@@ -410,7 +407,7 @@ var render = function render() {
     },
     scopedSlots: _vm._u([{
       key: "table-busy",
-      fn: function fn() {
+      fn: function () {
         return [_c("div", {
           staticClass: "text-center text-primary py-5"
         }, [_c("b-spinner", {
@@ -420,15 +417,15 @@ var render = function render() {
       proxy: true
     }, {
       key: "cell(address_type)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("span", {
           staticClass: "badge px-3 py-2 font-weight-600 text-uppercase",
-          "class": data.item.address_type === "shipper_address" ? "badge-shipper" : "badge-consignee"
+          class: data.item.address_type === "shipper_address" ? "badge-shipper" : "badge-consignee"
         }, [_vm._v("\n                                " + _vm._s(data.item.address_type === "shipper_address" ? "Shipper" : "Consignee") + "\n                            ")])];
       }
     }, {
       key: "cell(name)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "font-weight-700",
           staticStyle: {
@@ -444,7 +441,7 @@ var render = function render() {
       }
     }, {
       key: "cell(account)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [data.item.account ? _c("span", {
           staticClass: "font-weight-600",
           staticStyle: {
@@ -459,7 +456,7 @@ var render = function render() {
       }
     }, {
       key: "cell(address)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "address-cell"
         }, [_c("div", {
@@ -481,7 +478,7 @@ var render = function render() {
       }
     }, {
       key: "cell(updated_at)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("div", {
           staticClass: "small"
         }, [_c("div", {
@@ -510,14 +507,14 @@ var render = function render() {
       }
     }, {
       key: "cell(actions)",
-      fn: function fn(data) {
+      fn: function (data) {
         return [_c("b-button", {
           staticClass: "btn-brand-outline-pill px-3",
           attrs: {
             size: "sm"
           },
           on: {
-            click: function click($event) {
+            click: function ($event) {
               return _vm.openEditModal(data.item);
             }
           }
@@ -545,7 +542,7 @@ var render = function render() {
     },
     model: {
       value: _vm.pagination.current_page,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.pagination, "current_page", $$v);
       },
       expression: "pagination.current_page"
@@ -561,7 +558,7 @@ var render = function render() {
     },
     model: {
       value: _vm.showEditModal,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.showEditModal = $$v;
       },
       expression: "showEditModal"
@@ -593,7 +590,7 @@ var render = function render() {
       title: "Close"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.showEditModal = false;
       }
     }
@@ -606,7 +603,7 @@ var render = function render() {
     staticClass: "modal-body-custom px-6 py-4"
   }, [_c("b-form", {
     on: {
-      submit: function submit($event) {
+      submit: function ($event) {
         $event.preventDefault();
         return _vm.saveAddressUpdate.apply(null, arguments);
       }
@@ -632,7 +629,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.address_type,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "address_type", $$v);
       },
       expression: "editForm.address_type"
@@ -651,7 +648,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.account,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "account", $$v);
       },
       expression: "editForm.account"
@@ -673,7 +670,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.name,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "name", $$v);
       },
       expression: "editForm.name"
@@ -692,7 +689,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.name_2,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "name_2", $$v);
       },
       expression: "editForm.name_2"
@@ -714,7 +711,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.address,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "address", $$v);
       },
       expression: "editForm.address"
@@ -733,7 +730,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.address_line_2,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "address_line_2", $$v);
       },
       expression: "editForm.address_line_2"
@@ -755,7 +752,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.city,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "city", $$v);
       },
       expression: "editForm.city"
@@ -774,7 +771,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.state,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "state", $$v);
       },
       expression: "editForm.state"
@@ -793,7 +790,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.post_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "post_code", $$v);
       },
       expression: "editForm.post_code"
@@ -815,7 +812,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.country,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "country", $$v);
       },
       expression: "editForm.country"
@@ -834,7 +831,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.airport_code,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "airport_code", $$v);
       },
       expression: "editForm.airport_code"
@@ -853,7 +850,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.phone,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "phone", $$v);
       },
       expression: "editForm.phone"
@@ -872,7 +869,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.fax,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "fax", $$v);
       },
       expression: "editForm.fax"
@@ -891,7 +888,7 @@ var render = function render() {
     },
     model: {
       value: _vm.editForm.telex,
-      callback: function callback($$v) {
+      callback: function ($$v) {
         _vm.$set(_vm.editForm, "telex", $$v);
       },
       expression: "editForm.telex"
@@ -905,7 +902,7 @@ var render = function render() {
       color: "#475569 !important"
     },
     on: {
-      click: function click($event) {
+      click: function ($event) {
         _vm.showEditModal = false;
       }
     }

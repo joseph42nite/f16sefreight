@@ -68,6 +68,39 @@ Everything in §4 (Data Display Rules), §8.1 (the hide/lock/disable distinction
 
 ---
 
+## 0b. ✅ Styling decisions — taken 2026-08-28
+
+The three questions §0a raised (token layer, CSS pipeline, component library) are one decision, and it is now made and implemented. **Recorded here because reversing any of them later means rebuilding screens.**
+
+### 1. The pipeline: `resources/css/app.css`, and nothing else
+
+That file is what `webpack.mix.js` actually compiles, so that is where styling lives. It shipped empty; it now carries the token layer.
+
+`resources/sass/` stays on disk (it predates this work) but is **marked at the top of `_variables.scss` as not compiled**. It was the trap in §0a U3 — a plausible-looking `$body-bg` and `$font-family-sans-serif` that have never had any effect.
+
+### 2. Tokens as CSS custom properties, not SCSS variables
+
+**SCSS variables compile away, so a theme cannot be switched at runtime.** Two things here need values that survive to the browser: dark mode, and the per-portal accent (§8.4) that has to change on the same stylesheet depending on which subdomain you are on. Custom properties also let Vue SFC `<style>` blocks use the system without importing anything.
+
+**60 tokens now ship** — all of §2.1–2.4, plus §7.1's breakpoints as reference values and §8.4's portal accents. Verified present in `public/css/app.css` after a build.
+
+- **Dark mode is structured but not enabled.** `:root[data-theme="dark"]` overrides the neutrals, so turning it on is setting an attribute rather than a refactor.
+- ⚠️ **Breakpoints keep the `--bp-*` prefix deliberately.** Bootstrap 4 ships `sm/md/lg/xl` at 576/768/992/1200; ours are 768/1200/1600. Never mix the vocabularies in one rule — a query against Bootstrap's `lg` fires 208px before this document's (§0a U4).
+
+### 3. bootstrap-vue stays; tokens drive it; only §5's specifics are hand-built
+
+**`bootstrap-vue` has 1,419 usages across 41 files.** Replacing it is not a styling decision, it is a rewrite of the working product. So: it stays for structure and behaviour — and it keeps its accessibility work, which is not free to reproduce — while the tokens theme it.
+
+Hand-build **only** the components §5 is specific about and bootstrap-vue does not do: the *ghost* button variant, status chips carrying `--status-*` semantics, the drawer, and the split-pane toggle. Everything else (forms, tables, modals, dropdowns) uses bootstrap-vue themed by the tokens.
+
+> **The rule this sets:** if the guide and bootstrap-vue disagree on something cosmetic, the guide wins and it is themed. If they disagree on *behaviour or accessibility*, raise it — do not quietly reimplement a component to win a visual argument.
+
+### What is deliberately NOT done yet
+
+No screens, no components, no routes. This is the foundation only — the layer everything in §2, §3 and §5 depends on. Building screens before it existed would have meant restyling them all once it did.
+
+---
+
 ## 1. Design Principles
 
 Five rules. When they conflict, the earlier one wins.

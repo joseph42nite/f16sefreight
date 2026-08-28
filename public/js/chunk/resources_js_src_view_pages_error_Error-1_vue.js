@@ -14,7 +14,7 @@ __webpack_require__.r(__webpack_exports__);
 /* provided dependency */ var process = __webpack_require__(/*! process/browser.js */ "./node_modules/process/browser.js");
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "Error-1",
-  metaInfo: function metaInfo() {
+  metaInfo() {
     return {
       title: "Page Not Found | F16s E-Freight Solutions",
       meta: [{
@@ -23,9 +23,9 @@ __webpack_require__.r(__webpack_exports__);
       }]
     };
   },
-  mounted: function mounted() {},
+  mounted() {},
   computed: {
-    backgroundImage: function backgroundImage() {
+    backgroundImage() {
       return process.env.BASE_URL + "media/error/bg1.jpg";
     }
   }
@@ -52,7 +52,7 @@ var render = function render() {
   }, [_c("div", {
     staticClass: "d-flex flex-row-fluid flex-column bgi-size-cover bgi-position-center bgi-no-repeat p-10 p-sm-30",
     style: {
-      backgroundImage: "url(".concat(_vm.backgroundImage, ")")
+      backgroundImage: `url(${_vm.backgroundImage})`
     }
   }, [_c("h1", {
     staticClass: "font-size-sm-100 font-weight-boldest text-dark-75 mt-15",

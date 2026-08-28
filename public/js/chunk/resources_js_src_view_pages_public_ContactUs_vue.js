@@ -27,7 +27,7 @@ __webpack_require__.r(__webpack_exports__);
     }]
   },
   components: {},
-  data: function data() {
+  data() {
     return {
       productTypeOptions: [{
         value: 'Focus Air - Basic Plan',
@@ -41,12 +41,12 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
-    handleSubmit: function handleSubmit() {
+    handleSubmit() {
       // Handle quote submission logic
       console.log("Form submitted");
     }
   },
-  mounted: function mounted() {
+  mounted() {
     if (this.$route.query.modal === 'quote') {
       this.$bvModal.show('show-quote-modal');
     } else if (this.$route.query.modal === 'query') {
@@ -54,7 +54,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   watch: {
-    '$route.query.modal': function $routeQueryModal(newVal) {
+    '$route.query.modal'(newVal) {
       if (newVal === 'quote') {
         this.$bvModal.show('show-quote-modal');
       } else if (newVal === 'query') {
@@ -268,7 +268,7 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "ultra-close-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.$bvModal.hide("show-query-modal");
       }
     }
@@ -439,7 +439,7 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "ultra-close-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.$bvModal.hide("show-quote-modal");
       }
     }
@@ -487,7 +487,7 @@ var render = function render() {
   }, [_c("form", {
     staticClass: "ultra-form",
     on: {
-      submit: function submit($event) {
+      submit: function ($event) {
         $event.preventDefault();
         return _vm.handleSubmit.apply(null, arguments);
       }
@@ -609,7 +609,7 @@ var render = function render() {
       required: ""
     },
     on: {
-      change: function change($event) {
+      change: function ($event) {
         var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
           return o.selected;
         }).map(function (o) {
@@ -667,7 +667,7 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "ultra-close-btn",
     on: {
-      click: function click($event) {
+      click: function ($event) {
         return _vm.$bvModal.hide("show-feedback-modal");
       }
     }
@@ -782,7 +782,7 @@ var render = function render() {
       required: ""
     },
     on: {
-      change: function change($event) {
+      change: function ($event) {
         var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
           return o.selected;
         }).map(function (o) {

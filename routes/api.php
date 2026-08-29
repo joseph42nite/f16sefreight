@@ -245,6 +245,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::get('/invoices', [\App\Http\Controllers\Freight\InvoiceController::class, 'index']);
         Route::post('/invoices/{invoice}/finalize', [\App\Http\Controllers\Freight\InvoiceController::class, 'finalize']);
         Route::post('/invoices/{invoice}/post', [\App\Http\Controllers\Freight\InvoiceController::class, 'post']);
+        // The journal the post WILL write. `viewFinancials`, so the Boss can read the
+        // consequence of a posting they are not allowed to perform.
+        Route::get('/invoices/{invoice}/posting-preview', [\App\Http\Controllers\Freight\InvoiceController::class, 'postingPreview']);
         Route::get('/customers/{customer}/credit', [\App\Http\Controllers\Freight\InvoiceController::class, 'creditStanding']);
     });
 });

@@ -76,6 +76,10 @@
   --motion-fast: 120ms;
   --motion-base: 200ms;
   --motion-ease: cubic-bezier(.2, 0, .2, 1);
+  /* §2.4 the panel curve is its OWN easing, not --motion-ease. It decelerates to a
+     hard stop (.2,0,0,1) so a drawer reads as arriving at a position rather than
+     drifting into one — a sliding panel that eases out both ends looks unmoored. */
+  --motion-panel: 200ms cubic-bezier(.2, 0, 0, 1);
 
   /* ── §7.1 Breakpoints ────────────────────────────────────────────────────
      🔴 DELIBERATELY PREFIXED --bp-*, AND THEY ARE NOT BOOTSTRAP'S.
@@ -251,3 +255,110 @@ body {
             background: var(--bg-surface); color: var(--text-primary);
             font-family: var(--font-sans); font-size: .8125rem; min-width: 14rem; }
 .fx-input:focus { border-color: var(--border-strong); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §5.4 Drawer — right side, sticky footer, split by default.
+
+   🔴 THE WIDTH RULE IS A WORKING RULE, NOT A COSMETIC ONE. At >= --bp-md the
+   drawer takes 50% and the record behind stays readable, because the whole
+   point of a drawer over a modal is working against BOTH at once. Below that
+   there is not enough room for two useful columns, so it goes full-screen and
+   the split silently stops being a lie.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fx-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 50%; max-width: 960px; min-width: 480px;
+  display: flex; flex-direction: column;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  box-shadow: var(--elev-3);
+  z-index: 30;
+}
+.fx-drawer:focus { outline: none; }
+
+.fx-drawer__head { display: flex; align-items: flex-start; gap: var(--space-3);
+                   padding: var(--space-4); border-bottom: 1px solid var(--border); }
+.fx-drawer__titles { flex: 1 1 auto; min-width: 0; }
+.fx-drawer__title { font-size: 1rem; font-weight: 600; margin: 0; color: var(--text-primary); }
+.fx-drawer__sub { font-size: .8125rem; color: var(--text-secondary); margin: var(--space-1) 0 0; }
+
+.fx-drawer__tabs { display: flex; gap: var(--space-1); padding: 0 var(--space-4);
+                   border-bottom: 1px solid var(--border); overflow-x: auto; }
+.fx-drawer__tab { border: 0; background: none; cursor: pointer;
+                  padding: var(--space-2) var(--space-3);
+                  font-size: .8125rem; color: var(--text-secondary);
+                  border-bottom: 2px solid transparent; white-space: nowrap; }
+.fx-drawer__tab:hover { color: var(--text-primary); }
+.fx-drawer__tab.is-active { color: var(--text-primary); font-weight: 600;
+                            border-bottom-color: var(--portal-accent); }
+
+.fx-drawer__body { flex: 1 1 auto; overflow-y: auto; padding: var(--space-4); }
+
+/* §10.4 the commit actions never scroll away. */
+.fx-drawer__foot { flex: 0 0 auto; display: flex; justify-content: flex-end; gap: var(--space-2);
+                   padding: var(--space-3) var(--space-4);
+                   border-top: 1px solid var(--border); background: var(--bg-surface);
+                   border-radius: 0 0 0 var(--radius-lg); }
+
+.fx-drawer-enter-active, .fx-drawer-leave-active { transition: transform var(--motion-panel); }
+.fx-drawer-enter, .fx-drawer-leave-to { transform: translateX(100%); }
+
+/* §7.1 below --bp-md there is no room for a split — go full-screen rather than
+   squeeze two unusable columns. */
+@media (max-width: 1199px) {
+  .fx-drawer { width: 100%; max-width: none; min-width: 0; border-radius: 0; }
+  .fx-drawer__foot { border-radius: 0; }
+}
+
+/* §1.4 respect a reduced-motion preference — the panel appears, it does not slide. */
+@media (prefers-reduced-motion: reduce) {
+  .fx-drawer-enter-active, .fx-drawer-leave-active { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §9.6 Financials — the AR register and the posting journal.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* §5.3 a selected row carries a 2px --status-info left border, so the row the
+   drawer is showing is identifiable without reading it. */
+.fx-table tbody tr.is-selected td { background: var(--bg-sunken); }
+.fx-table tbody tr.is-selected td:first-child { box-shadow: inset 2px 0 0 var(--status-info); }
+.fx-table tbody tr.is-clickable { cursor: pointer; }
+.fx-table tbody tr.is-clickable:hover td { background: var(--bg-sunken); }
+
+/* The journal preview. Monospaced and column-aligned because it is READ AS
+   ARITHMETIC — the accountant is checking that it balances, not skimming it. */
+.fx-journal { width: 100%; border-collapse: collapse; font-family: var(--font-mono);
+              font-variant-numeric: tabular-nums; font-size: .8125rem;
+              background: var(--bg-sunken); border-radius: var(--radius-sm); }
+.fx-journal td { padding: var(--space-1) var(--space-3); }
+.fx-journal .fx-journal__dc { color: var(--text-secondary); width: 2rem; }
+.fx-journal .fx-journal__amt { text-align: right; white-space: nowrap; }
+.fx-journal tfoot td { border-top: 1px solid var(--border); font-weight: 600; }
+.fx-journal__balanced { color: var(--status-success); }
+.fx-journal__unbalanced { color: var(--status-critical); }
+
+/* A definition grid for the credit standing block. */
+.fx-defs { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4);
+           font-size: .875rem; margin: 0; }
+.fx-defs dt { color: var(--text-secondary); }
+.fx-defs dd { margin: 0; text-align: right; font-family: var(--font-mono);
+              font-variant-numeric: tabular-nums; }
+
+.fx-section { margin-bottom: var(--space-5); }
+.fx-section__title { font-size: .6875rem; font-weight: 600; text-transform: uppercase;
+                     letter-spacing: .04em; color: var(--text-secondary);
+                     margin: 0 0 var(--space-2); }
+
+/* §9.6 the irreversibility warning sits WITH the commit button, not in a tooltip. */
+.fx-warn { font-size: .75rem; color: var(--status-warning);
+           background: var(--status-warning-subtle); border: 1px solid var(--status-warning);
+           border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
+
+.fx-btn--primary { background: var(--portal-accent); border-color: var(--portal-accent); color: #fff; }
+.fx-btn--primary:hover:not(:disabled) { filter: brightness(.92); background: var(--portal-accent); }
+.fx-btn--primary:disabled { opacity: .5; color: #fff; }
+
+.fx-checkbox { display: inline-flex; align-items: center; gap: var(--space-2);
+               font-size: .8125rem; color: var(--text-secondary); }

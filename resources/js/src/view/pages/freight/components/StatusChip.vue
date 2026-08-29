@@ -25,6 +25,23 @@ const TONE = {
   "Airline Confirmed": "success",
   Completed: "success",
   Cancelled: "neutral",
+
+  // §9.6 financial documents. `void` is NEUTRAL, not critical — voiding is a normal
+  // correction, and colouring it as an alarm would make a routine credit note look
+  // like a failure on a register the accountant scans all day.
+  draft: "neutral",
+  finalized: "info",
+  sent: "info",
+  partially_paid: "warning",
+  paid: "success",
+  void: "neutral",
+
+  posted: "success",
+  unposted: "warning",
+
+  // 🔴 A credit hold is the state that stops cargo moving — the strongest tone we have.
+  credit_hold: "critical",
+  within_limit: "success",
 };
 
 export default {

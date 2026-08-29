@@ -60,6 +60,14 @@ const router = new Router({
           meta: { userType: 'user', designations: ['pricing', 'operations', 'accounts', 'boss'], minTier: 'tactical' }
         },
         {
+          // §9.6 — `command` only, and gated per role rather than per group: the Boss
+          // READS the register from admin., accounts WORKS it from accounts.
+          path: "financials",
+          name: "Financials",
+          component: () => import("@/view/pages/freight/Financials"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           // The tier lock lands here rather than nowhere — §8.1: hiding the item
           // would hide the reason to upgrade, so the lock must explain itself.
           path: "upgrade",

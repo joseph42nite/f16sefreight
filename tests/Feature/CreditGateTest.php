@@ -56,7 +56,7 @@ class CreditGateTest extends TestCase
         ]);
     }
 
-    private function invoice(Customer $customer, float $amount, string $status = 'draft'): AccountsInvoice
+    private function invoice(Customer $customer, float $amount, string $status = 'draft', float $tax = 0.0): AccountsInvoice
     {
         $enquiry = Enquiry::create([
             'agent_id' => $this->branch->id, 'transport_mode' => 'air',
@@ -68,7 +68,8 @@ class CreditGateTest extends TestCase
             'agent_id' => $this->branch->id, 'job_id' => $job->id, 'customer_id' => $customer->id,
             'invoice_no' => 'INV-CRDBOM-26-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT),
             'type' => 'invoice', 'document_date' => now()->toDateString(),
-            'status' => $status, 'grand_total' => $amount,
+            'status' => $status, 'subtotal' => $amount - $tax, 'tax_amount' => $tax,
+            'grand_total' => $amount,
         ]);
 
         AccountsInvoiceItem::create([
@@ -278,17 +279,34 @@ class CreditGateTest extends TestCase
             ->assertJsonPath('reason', 'no_open_period');
     }
 
-    /** Posting writes a BALANCED pair — the invariant no constraint can express. */
-    public function test_posting_writes_a_balanced_double_entry_pair(): void
+    /** An open period the posting tests can land in. */
+    private function openPeriod(): void
     {
-        $invoice = $this->invoice($this->customer(null), 195880.00, 'finalized');
-
         \Illuminate\Support\Facades\DB::table('accounting_periods')->insert([
             'agent_id' => $this->branch->id, 'period_name' => 'FY26 Q2',
             'start_date' => now()->startOfYear()->toDateString(),
             'end_date' => now()->endOfYear()->toDateString(),
             'status' => 'open', 'created_at' => now(), 'updated_at' => now(),
         ]);
+    }
+
+    /** The journal actually written for one invoice, keyed by account code. */
+    private function journalOf(AccountsInvoice $invoice): array
+    {
+        return \Illuminate\Support\Facades\DB::table('accounts_ledger_entries as l')
+            ->join('chart_of_accounts as c', 'c.id', '=', 'l.chart_of_account_id')
+            ->where('l.source_type', 'invoice')->where('l.source_id', $invoice->id)
+            ->get(['c.account_code', 'l.debit_amount', 'l.credit_amount'])
+            ->keyBy('account_code')
+            ->map(fn ($r) => ['dr' => (float) $r->debit_amount, 'cr' => (float) $r->credit_amount])
+            ->all();
+    }
+
+    /** Posting writes a BALANCED journal — the invariant no constraint can express. */
+    public function test_posting_writes_a_balanced_journal(): void
+    {
+        $invoice = $this->invoice($this->customer(null), 195880.00, 'finalized');
+        $this->openPeriod();
 
         $this->api($this->accounts)
             ->postJson($this->url("/api/invoices/{$invoice->id}/post"))
@@ -298,11 +316,84 @@ class CreditGateTest extends TestCase
         $entries = \Illuminate\Support\Facades\DB::table('accounts_ledger_entries')
             ->where('source_type', 'invoice')->where('source_id', $invoice->id)->get();
 
-        $this->assertCount(2, $entries);
         $this->assertSame(
             (float) $entries->sum('debit_amount'),
             (float) $entries->sum('credit_amount'),
-            'The pair must balance.'
+            'The journal must balance.'
         );
     }
+
+    /**
+     * 🔴 THE REGRESSION THIS TEST EXISTS FOR. Posting used to credit the GRAND TOTAL to
+     * revenue, so tax collected for the government was booked as our own income. The
+     * journal balanced perfectly while doing it — which is precisely why the balance
+     * assertion above did not catch it. A wrong-account posting balances just as well
+     * as a right one, so the accounts themselves must be asserted.
+     */
+    public function test_gst_is_credited_to_a_liability_and_never_to_revenue(): void
+    {
+        // ₹1,00,000 freight + ₹18,000 GST — the worked example in ui_ux_guide §9.6.
+        $invoice = $this->invoice($this->customer(null), 118000.00, 'finalized', 18000.00);
+        $this->openPeriod();
+
+        $this->api($this->accounts)->postJson($this->url("/api/invoices/{$invoice->id}/post"))->assertOk();
+
+        $journal = $this->journalOf($invoice);
+
+        $this->assertSame(118000.00, $journal['1200-AR']['dr'], 'AR carries the full receivable.');
+        $this->assertSame(100000.00, $journal['4000-Freight-Revenue']['cr'], 'Revenue is the subtotal ONLY.');
+        $this->assertSame(18000.00, $journal['2200-GST-Output']['cr'], 'The tax is a liability.');
+    }
+
+    /**
+     * An export invoice has no output tax AT ALL. A 0.00 row in the GST register is a
+     * filing claim we did not mean to make, so the line is omitted rather than zeroed.
+     */
+    public function test_a_zero_tax_invoice_writes_no_gst_line(): void
+    {
+        $invoice = $this->invoice($this->customer(null), 50000.00, 'finalized', 0.0);
+        $this->openPeriod();
+
+        $this->api($this->accounts)->postJson($this->url("/api/invoices/{$invoice->id}/post"))->assertOk();
+
+        $this->assertArrayNotHasKey('2200-GST-Output', $this->journalOf($invoice));
+    }
+
+    /**
+     * The confirmation the accountant reads must be the SERVER's journal, not the UI's
+     * guess at it — a preview that drifts from the posting code still looks right.
+     */
+    public function test_the_posting_preview_is_the_journal_that_gets_written(): void
+    {
+        $invoice = $this->invoice($this->customer(null), 118000.00, 'finalized', 18000.00);
+        $this->openPeriod();
+
+        $preview = $this->api($this->accounts)
+            ->getJson($this->url("/api/invoices/{$invoice->id}/posting-preview"))
+            ->assertOk()
+            ->assertJsonPath('balanced', true)
+            ->json('lines');
+
+        $this->api($this->accounts)->postJson($this->url("/api/invoices/{$invoice->id}/post"))->assertOk();
+
+        $journal = $this->journalOf($invoice);
+
+        $this->assertCount(count($journal), $preview, 'Same number of lines.');
+        foreach ($preview as $line) {
+            $this->assertSame((float) $line['debit'], $journal[$line['code']]['dr'], $line['code'] . ' debit');
+            $this->assertSame((float) $line['credit'], $journal[$line['code']]['cr'], $line['code'] . ' credit');
+        }
+    }
+
+    /** The Boss may READ the consequence of a posting they are not allowed to perform. */
+    public function test_a_boss_may_read_the_posting_preview_but_not_post(): void
+    {
+        $boss = $this->user('boss');
+        $admin = 'admin.f16sefreight.com'; // where the Boss legitimately works.
+        $invoice = $this->invoice($this->customer(null), 118000.00, 'finalized', 18000.00);
+
+        $this->api($boss)->getJson($this->url("/api/invoices/{$invoice->id}/posting-preview", $admin))->assertOk();
+        $this->api($boss)->postJson($this->url("/api/invoices/{$invoice->id}/post", $admin))->assertForbidden();
+    }
+
 }

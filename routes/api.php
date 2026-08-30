@@ -237,6 +237,13 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
 
     // ── Financial (guide §5.3) ──────────────────────────────────────────────
+    // ── Triage (§5.1). Threads, never individual messages: a conversation is the
+    // unit of work, and classifying one message of five mints a second enquiry.
+    Route::get('/inbox/threads', [\App\Http\Controllers\Freight\EmailInboxController::class, 'index']);
+    Route::get('/inbox/threads/{thread}', [\App\Http\Controllers\Freight\EmailInboxController::class, 'show']);
+    Route::post('/inbox/threads/{thread}/classify', [\App\Http\Controllers\Freight\EmailInboxController::class, 'classify']);
+    Route::post('/inbox/threads/{thread}/claim', [\App\Http\Controllers\Freight\EmailInboxController::class, 'claim']);
+
     // ── Analytics (§5.5). 🔴 Every endpoint reads the funnel views and the engine
     // tables. NOTHING here aggregates `jobs` or `enquiries` live — PRD.md §2242.
     Route::get('/analytics/funnel', [\App\Http\Controllers\Freight\AnalyticsController::class, 'funnel']);

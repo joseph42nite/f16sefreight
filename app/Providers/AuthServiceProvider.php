@@ -37,6 +37,12 @@ class AuthServiceProvider extends ServiceProvider
      */
     private function registerRoleGates(): void
     {
+        // ── The unified inbox ────────────────────────────────────────────────
+        // Both operational roles live here: pricing triages, operations claims and
+        // works. `triage` (below) is what actually gates re-classification, so reading
+        // the inbox is deliberately wider than changing what a thread IS.
+        $this->define('viewInbox', ['pricing', 'operations'], 'tactical');
+
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');
         $this->define('convert',    ['pricing'], 'tactical');

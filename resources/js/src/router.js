@@ -289,7 +289,7 @@ const router = new Router({
         {
           path: "inbox",
           name: "Inbox",
-          component: () => import("@/view/pages/freight/EnquiryBoard"),
+          component: () => import("@/view/pages/freight/JobInbox"),
           meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
         },
         {

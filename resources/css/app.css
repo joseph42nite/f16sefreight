@@ -390,3 +390,81 @@ body {
 .fx-action__facts { margin-top: var(--space-2); max-width: 22rem; }
 .fx-action__impact { margin: var(--space-2) 0 0; font-size: .8125rem;
                      color: var(--text-secondary); }
+
+/* ═══ §9.2 The unified inbox — three columns ═══════════════════════════════
+   folders -> threads -> conversation. An operator triaging fifty conversations a
+   morning needs the LIST to stay put while the conversation changes; a single-pane
+   inbox that navigates away and back loses scroll position on every decision.
+   The grid is what guarantees that, not scroll restoration.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fx-inbox { display: grid; grid-template-columns: 160px 320px minmax(0, 1fr);
+            gap: 0; height: calc(100vh - 105px);
+            border: 1px solid var(--border); border-radius: var(--radius-md);
+            background: var(--bg-surface); overflow: hidden; }
+.fx-inbox__pad { padding: var(--space-4); }
+
+.fx-inbox__folders { border-right: 1px solid var(--border); background: var(--bg-sunken);
+                     padding: var(--space-2) 0; overflow-y: auto; }
+.fx-folder { display: flex; justify-content: space-between; align-items: center; width: 100%;
+             border: 0; background: none; cursor: pointer; text-align: left;
+             padding: var(--space-2) var(--space-3); font-size: .8125rem;
+             color: var(--text-secondary); border-left: 2px solid transparent; }
+.fx-folder:hover { color: var(--text-primary); }
+.fx-folder.is-active { color: var(--text-primary); font-weight: 600;
+                       border-left-color: var(--portal-accent); background: var(--bg-surface); }
+.fx-folder__count { font-family: var(--font-mono); font-size: .75rem; color: var(--text-disabled); }
+
+.fx-inbox__list { border-right: 1px solid var(--border); display: flex; flex-direction: column;
+                  min-width: 0; overflow: hidden; }
+.fx-inbox__search { padding: var(--space-2); border-bottom: 1px solid var(--border); }
+.fx-inbox__search .fx-input { width: 100%; min-width: 0; }
+
+.fx-threads { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1 1 auto; }
+.fx-thread { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
+             cursor: pointer; border-left: 2px solid transparent; }
+.fx-thread:hover { background: var(--bg-sunken); }
+.fx-thread.is-active { background: var(--bg-sunken); border-left-color: var(--status-info); }
+/* §1.3 unread is carried by WEIGHT and a fill, never by colour alone. */
+.fx-thread.is-unread .fx-thread__subject { font-weight: 600; color: var(--text-primary); }
+.fx-thread__row { display: flex; justify-content: space-between; align-items: center;
+                  gap: var(--space-2); }
+.fx-thread__from { font-size: .75rem; color: var(--text-secondary);
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-thread__when { font-size: .6875rem; color: var(--text-disabled); white-space: nowrap; }
+.fx-thread__subject { font-size: .8125rem; color: var(--text-secondary);
+                      margin: var(--space-1) 0; overflow: hidden;
+                      text-overflow: ellipsis; white-space: nowrap; }
+.fx-thread__owner { font-size: .6875rem; color: var(--text-disabled); }
+.fx-thread__owner--free { color: var(--status-warning); font-weight: 600; }
+
+.fx-inbox__convo { display: flex; flex-direction: column; min-width: 0; overflow-y: auto; }
+.fx-convo__head { display: flex; align-items: flex-start; justify-content: space-between;
+                  gap: var(--space-3); padding: var(--space-3) var(--space-4);
+                  border-bottom: 1px solid var(--border); }
+.fx-convo__subject { font-size: .9375rem; font-weight: 600; margin: 0; }
+.fx-convo__meta { font-size: .75rem; color: var(--text-secondary); margin: var(--space-1) 0 0; }
+.fx-convo__actions { display: flex; gap: var(--space-2); align-items: center; flex-shrink: 0; }
+.fx-convo__actions .fx-input { min-width: 10rem; }
+.fx-convo__sla { padding: var(--space-3) var(--space-4); max-width: 22rem;
+                 border-bottom: 1px solid var(--border); }
+
+.fx-messages { list-style: none; margin: 0; padding: var(--space-4); display: grid;
+               gap: var(--space-3); }
+.fx-message { border: 1px solid var(--border); border-radius: var(--radius-sm);
+              padding: var(--space-3); background: var(--bg-surface); }
+/* Ours vs theirs, distinguished by position and border as well as fill. */
+.fx-message--outbound { background: var(--bg-sunken); margin-left: var(--space-6);
+                        border-left: 2px solid var(--portal-accent); }
+.fx-message__head { display: flex; justify-content: space-between; gap: var(--space-2);
+                    font-size: .75rem; color: var(--text-secondary); }
+.fx-message__body { margin: var(--space-2) 0 0; font-size: .875rem; }
+
+/* §7.1 below --bp-md the three columns cannot all be useful — stack them. */
+@media (max-width: 1199px) {
+  .fx-inbox { grid-template-columns: 1fr; height: auto; }
+  .fx-inbox__folders { display: flex; overflow-x: auto; border-right: 0;
+                       border-bottom: 1px solid var(--border); }
+  .fx-folder { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .fx-folder.is-active { border-left-color: transparent; border-bottom-color: var(--portal-accent); }
+  .fx-inbox__list { border-right: 0; border-bottom: 1px solid var(--border); max-height: 20rem; }
+}

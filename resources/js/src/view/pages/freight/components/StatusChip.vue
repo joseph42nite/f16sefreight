@@ -39,6 +39,14 @@ const TONE = {
   posted: "success",
   unposted: "warning",
 
+  // §9.2 inbox classifications. `customer_enquiry` is the only one that becomes work
+  // for pricing, so it is the only one toned as a positive signal; the rest are
+  // operational chatter that must NOT be promoted.
+  customer_enquiry: "info",
+  airline: "neutral",
+  clearance: "neutral",
+  trucking_road: "neutral",
+
   // 🔴 A credit hold is the state that stops cargo moving — the strongest tone we have.
   credit_hold: "critical",
   within_limit: "success",

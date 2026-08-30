@@ -67,7 +67,64 @@ class FreightDemoSeeder extends Seeder
             $this->seedTenant($tenant);
         }
 
+        $this->syncSequenceCounters();
         $this->summary();
+    }
+
+    /**
+     * 🔴 **ADVANCE `sequence_counters` PAST EVERYTHING THIS SEEDER WROTE.**
+     *
+     * The seeder inserts enquiry, job and invoice numbers directly, which leaves the
+     * shared counter at zero while the tables already hold `…-0001` upward. The first
+     * genuine mint then collides — found by promoting a thread in the browser and
+     * getting `1062 Duplicate entry '40-ENQA-DEMOBOM-26-0001'`.
+     *
+     * The UNIQUE key caught it, which is the system working: a duplicate document
+     * number on customs paperwork is not recoverable. But a demo that breaks the
+     * moment you use it is worse than no demo, and the fix belongs here — anything
+     * that writes a number outside `EnquirySequenceService` owes the counter an update.
+     */
+    private function syncSequenceCounters(): void
+    {
+        // April–March, matching EnquirySequenceService::fiscalYear().
+        $fy = now()->month >= 4 ? now()->format('y') : now()->subYear()->format('y');
+
+        $sources = [
+            ['enquiries', 'enquiry_no'],
+            ['jobs', 'job_order_no'],
+            ['accounts_invoices', 'invoice_no'],
+        ];
+
+        foreach (DB::table('agents_info')->pluck('id') as $agentId) {
+            $highest = [];
+
+            foreach ($sources as [$table, $column]) {
+                $rows = DB::table($table)->where('agent_id', $agentId)
+                    ->whereNotNull($column)->pluck($column);
+
+                foreach ($rows as $number) {
+                    // PREFIX-AGENTCODE-YY-NNNN
+                    $parts = explode('-', (string) $number);
+                    if (count($parts) !== 4) {
+                        continue;
+                    }
+
+                    [$prefix, , $year, $seq] = $parts;
+                    if ($year !== $fy) {
+                        continue;
+                    }
+
+                    $highest[$prefix] = max($highest[$prefix] ?? 0, (int) $seq);
+                }
+            }
+
+            foreach ($highest as $prefix => $value) {
+                DB::table('sequence_counters')->updateOrInsert(
+                    ['agent_id' => $agentId, 'prefix' => $prefix, 'fiscal_year' => $fy],
+                    ['current_value' => $value, 'updated_at' => now(), 'created_at' => now()]
+                );
+            }
+        }
     }
 
     /**
@@ -105,6 +162,13 @@ class FreightDemoSeeder extends Seeder
         DB::table('accounts_invoices')->whereIn('agent_id', $branchIds)->delete();
         DB::table('accounting_periods')->whereIn('agent_id', $branchIds)->delete();
         DB::table('chart_of_accounts')->whereIn('agent_id', $branchIds)->delete();
+
+        DB::table('mailbox_connections')->whereIn('agent_id', $branchIds)->delete();
+        $threadKeys = DB::table('email_threads')->whereIn('agent_id', $branchIds)->pluck('thread_key');
+        DB::table('email_attachments')->whereIn('email_message_id',
+            DB::table('email_messages')->whereIn('thread_key', $threadKeys)->pluck('id'))->delete();
+        DB::table('email_messages')->whereIn('thread_key', $threadKeys)->delete();
+        DB::table('email_threads')->whereIn('agent_id', $branchIds)->delete();
 
         DB::table('sea_shipment_details')->whereIn('job_id', $jobIds)->delete();
         DB::table('air_shipment_details')->whereIn('job_id', $jobIds)->delete();
@@ -163,6 +227,7 @@ class FreightDemoSeeder extends Seeder
         foreach ($branches as $branch) {
             $this->seedLifecycle($branch, $customers, $users);
             $this->seedTrailingHistory($branch, $customers[3], $users);
+            $this->seedInbox($branch, $customers, $users);
         }
 
         // Only the Command tenant gets financials — below Command there is no ledger.
@@ -476,6 +541,105 @@ class FreightDemoSeeder extends Seeder
             'pickup_address' => "Plot 14, MIDC Andheri\nMumbai 400093",
             'delivery_address' => "Cargo City Sud, Geb 456\nFrankfurt 60549",
         ]);
+    }
+
+    /**
+     * The unified inbox — threads and their messages.
+     *
+     * ⚠️ **Live mail sync is blocked on the Google CASA assessment (GAPS #15), but the
+     * inbox itself is not.** The threads below are ordinary rows in the same tables
+     * `PollMailboxes` will write to, so the triage surface can be built, used and
+     * tested today; when OAuth clears, the seeder stops being the source and nothing
+     * above it changes.
+     *
+     * The mix is chosen so triage has something to decide:
+     *   - real enquiries, some already promoted, some still unclassified
+     *   - airline and clearance chatter that must NOT become enquiries
+     *   - one thread already replied to, so response latency is measurable
+     *   - several unassigned, so the claim race has something to race for
+     */
+    private function seedInbox(Agent $branch, $customers, array $users): void
+    {
+        // 🔴 `email_messages.mailbox_connection_id` is NOT NULL — every message came
+        // from a specific connected mailbox, and which one is not reconstructable
+        // later. The connection is seeded as `auth_state = 'connected'` but holds no
+        // real tokens: nothing here can actually talk to Gmail, and pretending
+        // otherwise would let a sync job try.
+        $connectionId = DB::table('mailbox_connections')->insertGetId([
+            'agent_id' => $branch->id,
+            'user_id' => $users['pricing']->id,
+            // ⚠️ UNIQUE across the platform — one mailbox belongs to one connection.
+            // A shared per-branch address is also the realistic shape: an operations
+            // desk works a branch inbox, not five personal ones.
+            'email_address' => 'inbox-' . strtolower($branch->branch_code) . '-'
+                               . strtolower(Company::find($branch->company_id)->code) . '@demo.test',
+            'provider' => 'gmail',
+            'is_active' => 1,
+            'auth_state' => 'connected',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $threads = [
+            ['Quote request — 6 pallets INBOM to DEFRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2],
+            ['RE: Rates for Chennai–Dubai, 12 cartons', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4],
+            ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'unread', 0, false, 1],
+            ['Flight EK511 rescheduled to 04-Sep', 'cargo@emirates.test', 'airline', 'unread', 0, false, 1],
+            ['MAWB 176-10000004 — space confirmed', 'bookings@lufthansa.test', 'airline', 'read', 1, false, 3],
+            ['Bill of entry filed — INBOM/2026/0442', 'filings@sharmacha.test', 'clearance', 'unread', 0, false, 2],
+            ['Pickup scheduled 02-Sep, 0900 hrs', 'dispatch@bluedart.test', 'trucking_road', 'read', 1, false, 1],
+            ['Enquiry: FCL Nhava Sheva to Hamburg', 'logistics@globex.test', 'customer_enquiry', 'unread', 0, false, 2],
+        ];
+
+        foreach ($threads as $i => [$subject, $from, $classification, $status, $assigned, $replied, $messages]) {
+            $opened = now()->subDays(9 - $i)->subHours(3);
+            $key = 'thr_' . $branch->id . '_' . $i . '_' . substr(md5($subject . $branch->id), 0, 8);
+
+            DB::table('email_threads')->insert([
+                'agent_id' => $branch->id,
+                // Unassigned rows are the pool — the claim endpoint needs something to claim.
+                'assigned_ops_id' => $assigned ? $users['operations']->id : null,
+                'thread_key' => $key,
+                'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
+                'status' => $status,
+                'classification' => $classification,
+                'latest_message_received_at' => $opened->copy()->addHours($messages),
+                // 🔴 first_response_at is the first OUTBOUND message, and it is what
+                // makes lost_reason = 'delay_in_response' provable. first_triage_at is
+                // internal — somebody looked. Conflating them reports an SLA the client
+                // never experienced, because nothing was actually sent.
+                'first_response_at' => $replied ? $opened->copy()->addMinutes(38) : null,
+                'first_triage_at' => $status === 'unread' ? null : $opened->copy()->addMinutes(12),
+                'created_at' => $opened, 'updated_at' => $opened,
+            ]);
+
+            for ($m = 0; $m < $messages; $m++) {
+                $inbound = $m % 2 === 0;
+
+                DB::table('email_messages')->insert([
+                    'agent_id' => $branch->id,
+                    'mailbox_connection_id' => $connectionId,
+                    'thread_key' => $key,
+                    'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
+                    'direction' => $inbound ? 'inbound' : 'outbound',
+                    'message_id' => '<' . substr(md5($key . $m), 0, 20) . '@mail.test>',
+                    'from' => $inbound ? $from : $users['pricing']->email,
+                    'to' => $inbound ? $users['pricing']->email : $from,
+                    'subject' => $m === 0 ? $subject : 'RE: ' . $subject,
+                    'body_snippet' => $inbound
+                        ? 'Please quote for the shipment described below. Dimensions and packing list attached.'
+                        : 'Thank you for the enquiry — our rate for this lane is attached. Validity 7 days.',
+                    'received_at' => $opened->copy()->addHours($m),
+                    // Outbound mail is STORED but never classified: classifying our own
+                    // reply mints a second enquiry from the same conversation and
+                    // inflates the conversion denominator.
+                    'sent_via_portal' => $inbound ? 0 : 1,
+                    'send_state' => $inbound ? null : 'sent',
+                    'is_historical' => 0,
+                    'created_at' => $opened->copy()->addHours($m),
+                    'updated_at' => $opened->copy()->addHours($m),
+                ]);
+            }
+        }
     }
 
     /**

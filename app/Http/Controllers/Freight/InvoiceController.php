@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Services\CreditGateService;
 use App\Services\EnquirySequenceService;
+use App\Services\LedgerPostingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class InvoiceController extends Controller
     public function __construct(
         private readonly CreditGateService $credit,
         private readonly EnquirySequenceService $sequences,
+        private readonly LedgerPostingService $ledger,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -133,12 +135,7 @@ class InvoiceController extends Controller
             ], 422);
         }
 
-        $period = DB::table('accounting_periods')
-            ->where('agent_id', $invoice->agent_id)
-            ->where('status', 'open')
-            ->whereDate('start_date', '<=', $invoice->document_date)
-            ->whereDate('end_date', '>=', $invoice->document_date)
-            ->first();
+        $period = $this->ledger->openPeriodFor($invoice->agent_id, $invoice->document_date);
 
         if ($period === null) {
             return response()->json([
@@ -148,25 +145,12 @@ class InvoiceController extends Controller
         }
 
         DB::transaction(function () use ($invoice, $period) {
-            foreach ($this->journalLines($invoice) as $line) {
-                DB::table('accounts_ledger_entries')->insert([
-                    'agent_id'             => $invoice->agent_id,
-                    'chart_of_account_id'  => $this->accountId($invoice->agent_id, $line['code'], $line['name']),
-                    'accounting_period_id' => $period->id,
-                    'posting_date'         => now()->toDateString(),
-                    'debit_amount'         => $line['debit'],
-                    'credit_amount'        => $line['credit'],
-                    'source_id'            => $invoice->id,
-                    'source_type'          => 'invoice', // morph key, never a class name
-                    'created_at'           => now(),
-                    'updated_at'           => now(),
-                ]);
-            }
+            $this->ledger->write(
+                $this->ledger->linesForInvoice($invoice),
+                $invoice->agent_id, $period->id, $invoice->id, 'invoice'
+            );
 
             $invoice->update(['is_posted' => true]);
-
-            DB::table('unposted_transactions_queue')
-                ->where('source_type', 'invoice')->where('source_id', $invoice->id)->delete();
 
             $this->audit->record($invoice->agent_id, 'invoice.posted', 'invoice', $invoice->id, auth()->id());
         });
@@ -194,73 +178,15 @@ class InvoiceController extends Controller
      * 🔴 A preview derived client-side can drift from the posting code and still look
      * right. ui_ux_guide §9.6 requires the lines to be shown before commit; showing
      * lines that are not the ones written would be a lie in the one dialog that must
-     * never contain one.
+     * never contain one. Sharing LedgerPostingService is what makes that guarantee
+     * structural rather than a promise to keep two methods in step.
      */
     public function postingPreview(AccountsInvoice $invoice): JsonResponse
     {
         $this->authorize('viewFinancials');
 
-        $lines = $this->journalLines($invoice);
-
-        return response()->json([
-            'lines'    => $lines,
-            'debits'   => round(array_sum(array_column($lines, 'debit')), 2),
-            'credits'  => round(array_sum(array_column($lines, 'credit')), 2),
-            'balanced' => round(array_sum(array_column($lines, 'debit')), 2)
-                       === round(array_sum(array_column($lines, 'credit')), 2),
-        ]);
-    }
-
-    /**
-     * The journal for one invoice — PRD.md §12 (Sales invoice):
-     *
-     *   Dr  1200-AR                grand total
-     *   Cr  4000-Freight-Revenue   subtotal
-     *   Cr  2200-GST-Output        tax
-     *
-     * 🔴 **GST IS A LIABILITY, NOT REVENUE.** Tax collected on behalf of the government
-     * is owed to it. Crediting the grand total to revenue — which this method used to
-     * do — overstates revenue by the tax and leaves the GST liability at zero, so the
-     * P&L, the balance sheet and the GST register all disagree with the invoice. The
-     * ledger still balanced, which is exactly why the balance assertion did not catch
-     * it: a wrong-account posting balances just as well as a right one.
-     *
-     * The GST line is OMITTED when tax is zero rather than written as 0.00 — an export
-     * invoice has no output tax at all, and a zero row in the GST register is a filing
-     * claim we did not mean to make.
-     *
-     * @return list<array{code: string, name: string, debit: float, credit: float}>
-     */
-    private function journalLines(AccountsInvoice $invoice): array
-    {
-        $subtotal = round((float) $invoice->subtotal, 2);
-        $tax = round((float) $invoice->tax_amount, 2);
-        $total = round((float) $invoice->grand_total, 2);
-
-        $lines = [
-            ['code' => '1200-AR', 'name' => 'Accounts Receivable', 'debit' => $total, 'credit' => 0.0],
-            ['code' => '4000-Freight-Revenue', 'name' => 'Freight Revenue', 'debit' => 0.0, 'credit' => $subtotal],
-        ];
-
-        if ($tax > 0) {
-            $lines[] = ['code' => '2200-GST-Output', 'name' => 'GST Output', 'debit' => 0.0, 'credit' => $tax];
-        }
-
-        return $lines;
-    }
-
-    /**
-     * Resolve one account, creating it on first use so posting is never blocked by
-     * missing setup. A real chart is configured in /settings/finance by accounts.
-     */
-    private function accountId(int $agentId, string $code, string $name): int
-    {
-        $id = DB::table('chart_of_accounts')
-            ->where('agent_id', $agentId)->where('account_code', $code)->value('id');
-
-        return $id ?: DB::table('chart_of_accounts')->insertGetId([
-            'agent_id' => $agentId, 'account_code' => $code, 'account_name' => $name,
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
+        return response()->json(
+            $this->ledger->summarise($this->ledger->linesForInvoice($invoice))
+        );
     }
 }

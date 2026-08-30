@@ -249,5 +249,16 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // consequence of a posting they are not allowed to perform.
         Route::get('/invoices/{invoice}/posting-preview', [\App\Http\Controllers\Freight\InvoiceController::class, 'postingPreview']);
         Route::get('/customers/{customer}/credit', [\App\Http\Controllers\Freight\InvoiceController::class, 'creditStanding']);
+
+        // ── The buy side. Same segregation: viewFinancials reads, postLedger commits.
+        Route::get('/vouchers', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'index']);
+        Route::get('/vouchers/{voucher}/posting-preview', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'postingPreview']);
+        Route::post('/vouchers/{voucher}/post', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'post']);
+
+        // ── Bank reconciliation. `reconcile` is accounts-only; the Boss reads only.
+        Route::get('/reconciliation', [\App\Http\Controllers\Freight\ReconciliationController::class, 'index']);
+        Route::get('/reconciliation/{transaction}/candidates', [\App\Http\Controllers\Freight\ReconciliationController::class, 'candidates']);
+        Route::post('/reconciliation/{transaction}/match', [\App\Http\Controllers\Freight\ReconciliationController::class, 'match']);
+        Route::post('/reconciliation/{transaction}/unmatch', [\App\Http\Controllers\Freight\ReconciliationController::class, 'unmatch']);
     });
 });

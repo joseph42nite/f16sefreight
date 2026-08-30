@@ -397,7 +397,7 @@ body {
    inbox that navigates away and back loses scroll position on every decision.
    The grid is what guarantees that, not scroll restoration.
    ═══════════════════════════════════════════════════════════════════════════ */
-.fx-inbox { display: grid; grid-template-columns: 160px 320px minmax(0, 1fr);
+.fx-inbox { display: grid; grid-template-columns: 220px 320px minmax(0, 1fr);
             gap: 0; height: calc(100vh - 105px);
             border: 1px solid var(--border); border-radius: var(--radius-md);
             background: var(--bg-surface); overflow: hidden; }
@@ -467,4 +467,46 @@ body {
   .fx-folder { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; }
   .fx-folder.is-active { border-left-color: transparent; border-bottom-color: var(--portal-accent); }
   .fx-inbox__list { border-right: 0; border-bottom: 1px solid var(--border); max-height: 20rem; }
+}
+
+/* ═══ §9.2 The split-pane collapse ═════════════════════════════════════════
+   Folders and threads slide off-screen LEFT; the conversation and the workspace
+   take 50% each; the app rail drops to 60px.
+
+   🔴 THE POINT IS THAT BOTH STAY VISIBLE. Verification happens WHILE reading the
+   email that carried the document — an operator checks a consignee name against
+   the message that stated it. A workspace covering the conversation makes them
+   memorise it instead, and a mis-keyed consignee is a rejected filing.
+
+   The two columns collapse to zero width rather than `display: none`, so the
+   change is a transition rather than a jump, and `overflow: hidden` clips their
+   content as they go. Animating the track list keeps the conversation's own box
+   continuous, which is what lets its scroll position be restored into it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fx-inbox { transition: grid-template-columns var(--motion-panel),
+                        margin-right var(--motion-panel); }
+.fx-inbox.is-split { grid-template-columns: 0 0 minmax(0, 1fr); }
+.fx-inbox.is-split .fx-inbox__folders,
+.fx-inbox.is-split .fx-inbox__list { border-right: 0; }
+
+/* Reserve exactly what the drawer occupies. If the two ever disagree the
+   conversation is either clipped by the panel or floats short of it — and both
+   read as a rendering bug rather than a layout constant being wrong. */
+.fx-inbox.is-split { margin-right: clamp(480px, 50vw, 960px); }
+
+/* 60px rail while split: 208px of navigation is not worth the conversation width
+   it costs. Signalled by a body class so the shell needs no knowledge of the inbox. */
+body.fx-split .fx-rail { width: 60px; flex-basis: 60px; }
+body.fx-split .fx-rail__label { display: none; }
+
+/* §7.1 below --bp-md the drawer is already full-screen, so reserving a strip would
+   push the conversation behind a panel that covers it anyway. [← Back to timeline]
+   in the drawer footer is the way out. */
+@media (max-width: 1199px) {
+  .fx-inbox.is-split { margin-right: 0; }
+}
+
+/* §1.4 respect reduced motion — the panes arrive, they do not slide. */
+@media (prefers-reduced-motion: reduce) {
+  .fx-inbox { transition: none; }
 }

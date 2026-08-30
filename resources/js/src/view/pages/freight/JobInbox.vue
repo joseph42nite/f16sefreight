@@ -1,5 +1,5 @@
 <template>
-  <div class="fx-inbox">
+  <div class="fx-inbox" :class="{ 'is-split': workspace }">
     <!--
       §9.2 THREE COLUMNS: folders -> threads -> conversation. The shape matters — an
       operator triaging fifty conversations a morning needs the list to stay put while
@@ -54,7 +54,7 @@
       </ul>
     </section>
 
-    <section class="fx-inbox__convo" aria-label="Conversation">
+    <section ref="convo" class="fx-inbox__convo" aria-label="Conversation">
       <p v-if="!active" class="fx-muted fx-inbox__pad">Select a conversation.</p>
 
       <template v-else>
@@ -84,6 +84,16 @@
             <select v-if="canTriage" v-model="pending" class="fx-input" :disabled="busy" @change="classify">
               <option v-for="c in CLASSIFICATIONS" :key="c" :value="c">{{ c.replace(/_/g, " ") }}</option>
             </select>
+
+            <!--
+              §9.2 the split-pane. Opening the workspace slides the folder and thread
+              columns off-screen LEFT and gives the conversation and the workspace 50%
+              each — because verification happens WHILE reading the email that carried
+              the document. A workspace that covers the conversation makes the operator
+              memorise a consignee name instead of checking it, and a mis-keyed
+              consignee is a rejected filing.
+            -->
+            <button class="fx-btn fx-btn--primary" @click="openWorkspace">Open workspace</button>
           </div>
         </header>
 
@@ -117,6 +127,63 @@
         </ol>
       </template>
     </section>
+
+    <FxDrawer
+      :open="workspace && !!active"
+      :title="active ? (active.subject || 'Workspace') : ''"
+      :subtitle="active ? active.from : null"
+      :tabs="WORKSPACE_TABS"
+      :active-tab="tab"
+      @tab="tab = $event"
+      @close="closeWorkspace"
+    >
+      <template v-if="active">
+        <section v-if="tab === 'enquiry'">
+          <p v-if="!active.enquiry" class="fx-muted">
+            Not promoted to an enquiry yet. Classifying this as a customer enquiry mints
+            a number — that is what turns a conversation into work.
+          </p>
+          <dl v-else class="fx-defs">
+            <dt>Enquiry</dt>
+            <dd class="identifier">{{ active.enquiry.enquiry_no }}</dd>
+            <dt>Status</dt>
+            <dd><StatusChip :value="active.enquiry.status" /></dd>
+          </dl>
+        </section>
+
+        <section v-else-if="tab === 'timing'">
+          <!--
+            §4.2 the pair that must never be conflated. A time against "first triaged"
+            with a dash against "first replied" means somebody looked and the client is
+            still waiting — which is exactly what lost_reason = 'delay_in_response'
+            later has to be provable from.
+          -->
+          <dl class="fx-defs">
+            <dt>Last inbound</dt>
+            <dd><Figure :value="active.latest_message_received_at" kind="dateTime" /></dd>
+            <dt>First triaged</dt>
+            <dd><Figure :value="active.first_triage_at" kind="dateTime" /></dd>
+            <dt>First replied</dt>
+            <dd><Figure :value="active.first_response_at" kind="dateTime" /></dd>
+            <dt>Messages</dt>
+            <dd>{{ active.message_count }}</dd>
+          </dl>
+        </section>
+
+        <!--
+          Upload, the document forms, the cost sheet and the e-docket are Step 6 items
+          2, 4, 5 and 6. Named rather than hidden: an empty panel reads as broken,
+          where a named one reads as unfinished.
+        -->
+        <section v-else class="fx-muted">
+          <p>{{ tabLabel }} is not built yet — it lands with Step 6 item {{ tabStep }}.</p>
+        </section>
+      </template>
+
+      <template #footer>
+        <button class="fx-btn" @click="closeWorkspace">← Back to timeline</button>
+      </template>
+    </FxDrawer>
   </div>
 </template>
 
@@ -125,12 +192,23 @@ import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
 
+/* §740's tab set. The two carrying real data today come first; the rest name the
+   Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */
+const WORKSPACE_TABS = [
+  { key: "enquiry", label: "Enquiry" },
+  { key: "timing", label: "Timing" },
+  { key: "upload", label: "Upload", step: 2 },
+  { key: "cost", label: "Cost sheet", step: 4 },
+  { key: "docket", label: "E-Docket", step: 4 },
+];
+
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip },
+  components: { Figure, StatusChip, FxDrawer },
   data: () => ({
     folders: [
       { key: "all", label: "All" },
@@ -145,7 +223,8 @@ export default {
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
-    CLASSIFICATIONS,
+    workspace: false, tab: "enquiry",
+    CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
     ...mapGetters(["designation"]),
@@ -153,11 +232,72 @@ export default {
     canTriage() {
       return this.designation === "pricing";
     },
+    tabLabel() {
+      const t = WORKSPACE_TABS.find((x) => x.key === this.tab);
+      return t ? t.label : this.tab;
+    },
+    tabStep() {
+      const t = WORKSPACE_TABS.find((x) => x.key === this.tab);
+      return t ? t.step : null;
+    },
   },
   created() {
     this.load();
   },
+  /* Leaving the inbox with the workspace open would strand the body class and collapse
+     the rail on every other screen. */
+  beforeDestroy() {
+    document.body.classList.remove("fx-split");
+  },
   methods: {
+    /**
+     * 🔴 THE CONVERSATION'S SCROLL POSITION SURVIVES THE TRANSITION (§9.2).
+     *
+     * The pane is re-laid-out from fluid width to 50%, which resets scrollTop. Losing
+     * the reader's place halfway down a long thread is, in the guide's words, the
+     * fastest way to make the feature feel broken — and it is worse than that here,
+     * because the operator opened the workspace to transcribe something they were
+     * looking at.
+     *
+     * The 60px rail is the AppShell's business, not this page's: a body class is the
+     * smallest signal that crosses that boundary without inventing shared state.
+     */
+    setSplit(open) {
+      const pane = this.$refs.convo;
+      const top = pane ? pane.scrollTop : 0;
+
+      this.workspace = open;
+      document.body.classList.toggle("fx-split", open);
+
+      /* ⚠️ Restored TWICE, and the second one is the one that matters.
+         The pane changes width across the transition, so content reflows for the
+         whole 200ms and the browser keeps re-deriving scrollTop underneath us.
+         Setting it once on $nextTick lands mid-flight and drifts — measured at
+         420 -> 434.5. The nextTick pass keeps the jump invisible; the settle pass
+         puts it exactly back. */
+      const restore = () => {
+        if (this.$refs.convo) this.$refs.convo.scrollTop = top;
+      };
+
+      this.$nextTick(restore);
+
+      /* transitionend, with a timer fallback: under prefers-reduced-motion there is
+         no transition to end, and the event would never arrive. */
+      const inbox = this.$el;
+      const settle = (e) => {
+        if (e && e.target !== inbox) return;
+        inbox.removeEventListener("transitionend", settle);
+        restore();
+      };
+      inbox.addEventListener("transitionend", settle);
+      setTimeout(settle, 320);
+    },
+    openWorkspace() {
+      this.setSplit(true);
+    },
+    closeWorkspace() {
+      this.setSplit(false);
+    },
     select(key) {
       this.folder = key;
       this.load();
@@ -196,6 +336,7 @@ export default {
     },
     open(thread) {
       this.actionError = null;
+      this.tab = "enquiry";
       ApiService.get("/inbox/threads/" + thread.id)
         .then(({ data }) => {
           this.active = data.thread;

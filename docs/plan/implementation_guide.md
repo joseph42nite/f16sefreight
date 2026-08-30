@@ -954,6 +954,25 @@ Reads the engine tables and funnel views. **Never aggregates `jobs` live.** Enfo
 
 ✅ **Checkpoint 5** — exercise the full lifecycle with `curl`/Postman: triage → convert → cancel → reinitiate. Confirm `409` on double-claim, `422` on demoting a converted enquiry, `422` on cancelling a job with posted invoices.
 
+✅ **STEP 5 COMPLETE — Checkpoint 5 RE-RUN AND PASSED 2026-08-30**, now covering the whole layer (§5.1–§5.6) rather than §5.2 alone. Suite 153 → 255. Driven over real HTTP with `curl` against `php artisan serve`.
+
+```
+1. TRIAGE      thread 142 -> ENQA-DEMOBOM-26-0544        (promotion mints the number)
+2. CLAIM       first 200, second HTTP 409 already_claimed
+3. CONVERT     HTTP 201  ENQA-DEMOBOM-26-0544 -> JOBA-DEMOBOM-26-0544
+4. DEMOTE      HTTP 422  has_job
+5. CANCEL      HTTP 200  Cancelled / client_cancelled
+6. REINITIATE  HTTP 201  ENQA-DEMOBOM-26-0545 from_job=1297, quoted_amount ABSENT
+7. CANCEL with a posted invoice -> HTTP 422 has_posted_financials
+```
+
+- **`quoted_amount` is absent from the re-initiated enquiry, not null-valued** — the rate is the reason for re-quoting, so it is never carried.
+- **Step 4 is the §5.1 addition to this checkpoint.** Demotion is refused once a job exists because a shipment is already moving against that enquiry.
+
+🐞 **Found while running it, twice:** the checkpoint script read `["id"]` and `["quoted_amount"]` off the convert and reinitiate responses, which actually wrap their payloads (`{"job": {...}}`, `{"enquiry": {...}}`) and name the job number `execution_job_no`. Worth knowing before writing any client against these endpoints.
+
+🐞 **`REDIS_PORT` was 6379 while docker-compose publishes 6380, and `REDIS_CLIENT` was `phpredis` with no such extension installed.** Every Redis call threw *"Please make sure the PHP Redis extension is installed"* — which surfaces as a dead queue, an inert circuit breaker and OCR credit reservations that cannot take a lock, none of which name Redis in their own error. `predis/predis` was already a dependency. Fixed in `.env`, `.env.example` and `phpunit.xml`.
+
 ✅ **§5.2 built and Checkpoint 5 PASSED 2026-08-28.** Suite 143 → 153. Driven over real HTTP with `curl` against `php artisan serve`, and locked in by `LifecycleApiTest` (10 assertions).
 
 ```

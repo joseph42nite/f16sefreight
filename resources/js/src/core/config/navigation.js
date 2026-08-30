@@ -14,7 +14,7 @@
 
 /** §8.2 — where each login lands, and why. */
 export const LANDING_ROUTE = {
-  core: "/focus-air", // document generation IS the product at this tier
+  core: "/master-airway-bill", // document generation IS the product at this tier
   pricing: "/inbox", // the day starts in the mail
   operations: "/kanban", // the day starts with assigned work
   sales: "/sales", // Today's Actions is the worklist
@@ -29,9 +29,16 @@ export const NAV_ITEMS = [
   { path: "/enquiries", label: "Enquiries", icon: "list-ul", designations: ["pricing"], minTier: "tactical" },
 
   // ── Document forms — the only surface Core sees ──────────────────────────
-  { path: "/focus-air", label: "FocusAir", icon: "file-earmark-text", designations: null, portals: ["focusair"] },
-  { path: "/focus-sea", label: "FocusSea", icon: "water", designations: null, portals: ["focussea"] },
+  // 🔴 **FocusAir and FocusSea are PRODUCT names, not page names.** FocusAir is the
+  // whole air portal — the thing the branch bought. The page inside it is the master
+  // document, exactly as its sibling is the house document. Labelling the page
+  // "FocusAir" made the product look like a single form.
+  { path: "/master-airway-bill", label: "Master Airway Bill", icon: "file-earmark-text", designations: null, portals: ["focusair"] },
   { path: "/house-way-bill", label: "House Waybill", icon: "files", designations: null, portals: ["focusair"] },
+  // Sea's master/house/consol forms are not built yet. PRD.md §468 makes FocusSea a
+  // nav GROUP (Master / House / Consol) rather than one item, so this resolves into
+  // three entries when those land — the same correction, applied to sea.
+  { path: "/focus-sea", label: "FocusSea", icon: "water", designations: null, portals: ["focussea"] },
 
   // ── Directories ──────────────────────────────────────────────────────────
   { path: "/customers", label: "Customers", icon: "people", designations: ["pricing", "sales", "accounts", "boss"], minTier: "tactical" },

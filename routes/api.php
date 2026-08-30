@@ -117,6 +117,19 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::put('/saved-addresses/{id}', [AddressBookController::class, 'update']);
 });
 
+// ── Platform monitoring & support desk (§5.6) ───────────────────────────────
+// 🔒 superadmin ONLY — F16s's own staff, not a client's Boss. Those are different
+// portals precisely so this surface is unreachable from a tenant login.
+Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'admin'], function () {
+    Route::get('/health', [\App\Http\Controllers\Platform\AdminHealthController::class, 'health']);
+    Route::get('/logs', [\App\Http\Controllers\Platform\AdminHealthController::class, 'logs']);
+    Route::get('/classification-overrides/export', [\App\Http\Controllers\Platform\AdminHealthController::class, 'classificationOverrides']);
+
+    Route::get('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'index']);
+    Route::get('/tickets/{ticket}', [\App\Http\Controllers\Platform\SupportTicketController::class, 'show']);
+    Route::patch('/tickets/{ticket}', [\App\Http\Controllers\Platform\SupportTicketController::class, 'update']);
+});
+
 // =================superAdmin section==========================
 //superAdmin login and register
 Route::post('superadmin/register', [SuperAdminController::class, 'register']);
@@ -237,6 +250,10 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
 
     // ── Financial (guide §5.3) ──────────────────────────────────────────────
+    // ── Support reporting (§5.6). The REPORTER is an ordinary tenant user
+    // (PRD.md §5.10); only the desk that works the queue is superadmin-only.
+    Route::post('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'store']);
+
     // ── Triage (§5.1). Threads, never individual messages: a conversation is the
     // unit of work, and classifying one message of five mints a second enquiry.
     Route::get('/inbox/threads', [\App\Http\Controllers\Freight\EmailInboxController::class, 'index']);

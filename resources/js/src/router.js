@@ -119,8 +119,13 @@ const router = new Router({
 
         // User Dashboard Pages
         {
-          name: "Focus Air",
-          path: "focus-air",
+          // The MASTER air waybill form. `focus-air` stays as an alias because eight
+          // legacy files link to it (header, footer, sidebar, the auth landing
+          // fallback) — renaming the path would break every one of them for a label
+          // change. New links use the canonical path.
+          name: "Master Airway Bill",
+          path: "master-airway-bill",
+          alias: "focus-air",
           component: () => import("@/view/pages/dashboard/FocusAir"),
           meta: { userType: 'user' }
         },

@@ -237,6 +237,16 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
 
     // ── Financial (guide §5.3) ──────────────────────────────────────────────
+    // ── Analytics (§5.5). 🔴 Every endpoint reads the funnel views and the engine
+    // tables. NOTHING here aggregates `jobs` or `enquiries` live — PRD.md §2242.
+    Route::get('/analytics/funnel', [\App\Http\Controllers\Freight\AnalyticsController::class, 'funnel']);
+
+    // The sales cockpit. Tactical reports at branch level with NO client attribution;
+    // Command partitions the same numbers by customers.sales_id. That gap is the upsell.
+    Route::get('/sales/dashboard', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'dashboard']);
+    Route::get('/sales/actions', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'actions']);
+    Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);
+
     // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
     // Command-tier report — a Tactical branch still files with customs.
     Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);

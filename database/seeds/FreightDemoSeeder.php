@@ -162,6 +162,7 @@ class FreightDemoSeeder extends Seeder
 
         foreach ($branches as $branch) {
             $this->seedLifecycle($branch, $customers, $users);
+            $this->seedTrailingHistory($branch, $customers[3], $users);
         }
 
         // Only the Command tenant gets financials — below Command there is no ledger.
@@ -345,6 +346,87 @@ class FreightDemoSeeder extends Seeder
         }
     }
 
+    /**
+     * Fourteen months of air shipments on a ~9-day rhythm for ONE client, then silence.
+     *
+     * 🔴 **WITHOUT THIS THE ENGINE HAS NOTHING TO MEASURE AND EVERY INDEX IS NULL.**
+     * The guard rails require >= 5 distinct shipment days before a cadence profile is
+     * emitted and >= 5 closed enquiries before a win rate is, and they are right to:
+     * one loss out of one enquiry is a 100% service-loss rate. But a demo where every
+     * figure is correctly NULL demonstrates the guard rails and nothing else.
+     *
+     * The gap at the end is deliberate — it reproduces the PRD's own worked example:
+     * *"Globex normally ships air every 9 days; it has been 26."* That is what makes
+     * the churn action fire, with real arithmetic behind it rather than a seeded row
+     * in `sales_action_queue` pretending an engine ran.
+     */
+    private function seedTrailingHistory(Agent $branch, Customer $customer, array $users): void
+    {
+        $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
+        $lanes = self::AIR_LANES;
+        $seq = 500;
+
+        // ~9-day rhythm with jitter, stopping 26 days ago: overdue_ratio ≈ 2.9 -> DORMANT.
+        $day = 430;
+        $i = 0;
+
+        while ($day > 26) {
+            [$origin, $dest] = $lanes[$i % count($lanes)];
+            $when = now()->subDays($day);
+
+            // Mostly won, some lost — enough closed enquiries to clear the win-rate
+            // and loss-split minimums, with a loss mix that makes the split meaningful.
+            $lostReason = match ($i % 7) {
+                3 => 'rates_high',
+                6 => 'delay_in_response',
+                default => null,
+            };
+            $status = $lostReason ? 'lost' : 'converted';
+
+            $enquiry = Enquiry::create([
+                'agent_id' => $branch->id, 'transport_mode' => 'air', 'direction' => 'export',
+                'enquiry_no' => sprintf('ENQA-%s-%s-%04d', $agentCode, $when->format('y'), ++$seq),
+                'customer_id' => $customer->id,
+                'sales_id' => $users['sales']->id, 'pricing_id' => $users['pricing']->id,
+                'status' => $status,
+                'origin_code' => $origin, 'dest_code' => $dest,
+                'extracted_pieces' => 8 + ($i % 5),
+                'extracted_weight' => round(400 + (($i % 9) * 60), 3),
+                'cargo_description' => 'Machine parts', 'cargo_type' => 'general',
+                'cargo_data_source' => 'regex',
+                'quoted_amount' => round(92000 + (($i % 6) * 8000), 2), 'quoted_currency' => 'INR',
+                'lost_reason' => $lostReason,
+                'lost_at' => $lostReason ? $when : null,
+                'created_at' => $when, 'updated_at' => $when,
+            ]);
+
+            if ($status === 'converted') {
+                $job = Job::create([
+                    'agent_id' => $branch->id, 'enquiry_id' => $enquiry->id,
+                    'transport_mode' => 'air', 'direction' => 'export',
+                    'job_order_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
+                    'customer_id' => $customer->id, 'ops_id' => $users['operations']->id,
+                    'pricing_id' => $users['pricing']->id, 'status' => 'Completed',
+                    'cargo_type' => 'general', 'completed_at' => $when->copy()->addDays(4),
+                    'created_at' => $when, 'updated_at' => $when,
+                ]);
+
+                DB::table('air_shipment_details')->insert([
+                    'job_id' => $job->id,
+                    'flight_number' => 'EK511', 'carrier_name' => 'Emirates SkyCargo',
+                    'pol_code' => $origin, 'pod_code' => $dest,
+                    'piece_count' => 8 + ($i % 5),
+                    'gross_weight' => round(400 + (($i % 9) * 60), 3),
+                    'chargeable_weight' => round(420 + (($i % 9) * 60), 3),
+                    'created_at' => $when, 'updated_at' => $when,
+                ]);
+            }
+
+            $day -= 8 + ($i % 4);   // 8–11 days: a real rhythm, not a metronome
+            $i++;
+        }
+    }
+
     /** Tier 3 data — the authoritative figures billing and manifests read. */
     private function seedShipmentDetails(Job $job, string $mode, string $origin, string $dest, int $i): void
     {
@@ -422,9 +504,14 @@ class FreightDemoSeeder extends Seeder
         ];
 
         foreach ($plan as [$ci, $amount, $status, $paid]) {
-            $job = $jobs[$n % max($jobs->count(), 1)] ?? null;
+            // 🐞 An invoice must hang off a job belonging to ITS OWN customer. An
+            // earlier version cycled through every job in the branch, so invoices
+            // landed on other clients' shipments — which made the rollup compute
+            // revenue and credit utilisation against (customer, mode) pairs that had
+            // no invoices at all, and every money figure came back 0.00.
+            $job = $jobs->firstWhere('customer_id', $customers[$ci]->id);
             if ($job === null) {
-                return;
+                continue;
             }
 
             $tax = round($amount * 0.18, 2);

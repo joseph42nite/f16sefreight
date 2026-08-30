@@ -20,64 +20,6 @@ const router = new Router({
     return { x: 0, y: 0 };
   },
   routes: [
-    //-----------Freight OS — the operational shell------------------------------
-    // Its own layout, NOT the public MainLayout: this is the tool, and it must not
-    // carry the marketing header and footer. ui_ux_guide.md §1.1 — density first.
-    {
-      path: "/",
-      component: () => import("@/view/layouts/freight/AppShell"),
-      children: [
-        {
-          path: "inbox",
-          name: "Inbox",
-          component: () => import("@/view/pages/freight/EnquiryBoard"),
-          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
-        },
-        {
-          path: "enquiries",
-          name: "Enquiries",
-          component: () => import("@/view/pages/freight/EnquiryBoard"),
-          meta: { userType: 'user', designations: ['pricing'], minTier: 'tactical' }
-        },
-        {
-          path: "kanban",
-          name: "Kanban",
-          component: () => import("@/view/pages/freight/JobBoard"),
-          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
-        },
-        {
-          path: "customers",
-          name: "Customers",
-          component: () => import("@/view/pages/freight/DirectoryTable"),
-          props: { endpoint: "/customers" },
-          meta: { userType: 'user', designations: ['pricing', 'sales', 'accounts', 'boss'], minTier: 'tactical' }
-        },
-        {
-          path: "partners",
-          name: "Partners",
-          component: () => import("@/view/pages/freight/DirectoryTable"),
-          props: { endpoint: "/partners" },
-          meta: { userType: 'user', designations: ['pricing', 'operations', 'accounts', 'boss'], minTier: 'tactical' }
-        },
-        {
-          // §9.6 — `command` only, and gated per role rather than per group: the Boss
-          // READS the register from admin., accounts WORKS it from accounts.
-          path: "financials",
-          name: "Financials",
-          component: () => import("@/view/pages/freight/Financials"),
-          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
-        },
-        {
-          // The tier lock lands here rather than nowhere — §8.1: hiding the item
-          // would hide the reason to upgrade, so the lock must explain itself.
-          path: "upgrade",
-          name: "Upgrade",
-          component: () => import("@/view/pages/freight/UpgradeTeaser"),
-          meta: { userType: 'user' }
-        },
-      ]
-    },
-
     //-----------Main Application Layout (Public & User Dashboard)-------------------
     {
       path: "/",
@@ -328,6 +270,85 @@ const router = new Router({
       name: "Deepanjan COO Card",
       component: () => import("@/view/pages/public/DeepanjanCard.vue"),
       meta: { logo: 'none' }
+    },
+
+    //-----------Freight OS — the operational shell------------------------------
+    // Its own layout, NOT the public MainLayout: this is the tool, and it must not
+    // carry the marketing header and footer. ui_ux_guide.md §1.1 — density first.
+    //
+    // 🔴 **THIS BLOCK MUST STAY BELOW THE PUBLIC ROUTES AND ABOVE THE `*` CATCH-ALL.**
+    // Its parent path is "/", and vue-router takes the FIRST match — so registering it
+    // first shadowed the public "/" entirely, which is where the LOGIN PAGE lives. The
+    // result was an empty operational shell with core-tier navigation and no way to
+    // sign in: every screen looked broken because nobody could authenticate. Below the
+    // public block, "/" resolves to the login and "/inbox" still resolves here.
+    {
+      path: "/",
+      component: () => import("@/view/layouts/freight/AppShell"),
+      children: [
+        {
+          path: "inbox",
+          name: "Inbox",
+          component: () => import("@/view/pages/freight/EnquiryBoard"),
+          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+        },
+        {
+          path: "enquiries",
+          name: "Enquiries",
+          component: () => import("@/view/pages/freight/EnquiryBoard"),
+          meta: { userType: 'user', designations: ['pricing'], minTier: 'tactical' }
+        },
+        {
+          path: "kanban",
+          name: "Kanban",
+          component: () => import("@/view/pages/freight/JobBoard"),
+          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+        },
+        {
+          path: "customers",
+          name: "Customers",
+          component: () => import("@/view/pages/freight/DirectoryTable"),
+          props: { endpoint: "/customers" },
+          meta: { userType: 'user', designations: ['pricing', 'sales', 'accounts', 'boss'], minTier: 'tactical' }
+        },
+        {
+          path: "partners",
+          name: "Partners",
+          component: () => import("@/view/pages/freight/DirectoryTable"),
+          props: { endpoint: "/partners" },
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'accounts', 'boss'], minTier: 'tactical' }
+        },
+        {
+          path: "sales",
+          name: "Sales",
+          component: () => import("@/view/pages/freight/SalesDashboard"),
+          meta: { userType: 'user', designations: ['sales', 'boss'], minTier: 'tactical' }
+        },
+        {
+          // Cross-mode oversight. No portal scope, so the funnel shows air and sea
+          // side by side rather than one at a time.
+          path: "boss",
+          name: "Overview",
+          component: () => import("@/view/pages/freight/BossDashboard"),
+          meta: { userType: 'user', designations: ['boss'], minTier: 'tactical' }
+        },
+        {
+          // §9.6 — `command` only, and gated per role rather than per group: the Boss
+          // READS the register from admin., accounts WORKS it from accounts.
+          path: "financials",
+          name: "Financials",
+          component: () => import("@/view/pages/freight/Financials"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
+          // The tier lock lands here rather than nowhere — §8.1: hiding the item
+          // would hide the reason to upgrade, so the lock must explain itself.
+          path: "upgrade",
+          name: "Upgrade",
+          component: () => import("@/view/pages/freight/UpgradeTeaser"),
+          meta: { userType: 'user' }
+        },
+      ]
     },
 
     {

@@ -362,3 +362,31 @@ body {
 
 .fx-checkbox { display: inline-flex; align-items: center; gap: var(--space-2);
                font-size: .8125rem; color: var(--text-secondary); }
+
+/* ═══ §7.4 Sales cockpit ═══════════════════════════════════════════════════ */
+
+/* Stat tiles. Deliberately plain — the figures carry the page, not the frames. */
+.fx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+            gap: var(--space-3); }
+.fx-tile { background: var(--bg-surface); border: 1px solid var(--border);
+           border-radius: var(--radius-md); padding: var(--space-3); }
+.fx-tile__label { display: block; font-size: .6875rem; font-weight: 600;
+                  text-transform: uppercase; letter-spacing: .04em;
+                  color: var(--text-secondary); margin-bottom: var(--space-1); }
+.fx-tile__value { font-size: 1.125rem; font-family: var(--font-mono);
+                  font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+/* The ranked worklist. Numbered, because rank IS the information — an unordered
+   list of "actions" is a to-do list, and the whole point is which one comes first. */
+.fx-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.fx-action { background: var(--bg-surface); border: 1px solid var(--border);
+             border-left: 3px solid var(--portal-accent);
+             border-radius: var(--radius-sm); padding: var(--space-3); }
+.fx-action__head { display: flex; align-items: center; justify-content: space-between;
+                   gap: var(--space-2); }
+.fx-action__score { font-family: var(--font-mono); font-size: .8125rem;
+                    color: var(--text-secondary); }
+.fx-action__text { margin: var(--space-2) 0 0; font-size: .875rem; }
+.fx-action__facts { margin-top: var(--space-2); max-width: 22rem; }
+.fx-action__impact { margin: var(--space-2) 0 0; font-size: .8125rem;
+                     color: var(--text-secondary); }

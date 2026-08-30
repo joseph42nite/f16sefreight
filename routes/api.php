@@ -237,6 +237,13 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
 
     // ── Financial (guide §5.3) ──────────────────────────────────────────────
+    // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
+    // Command-tier report — a Tactical branch still files with customs.
+    Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);
+    // A DRY RUN. Read-only and open to everyone who may view the manifest.
+    Route::get('/jobs/{job}/manifest-check', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'check']);
+    Route::post('/jobs/{job}/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'store']);
+
     // 🔒 Gated per action, not per group: viewFinancials admits boss read-only, while
     // finalizeInvoice and postLedger are `accounts` ONLY — not even the Boss. The role
     // that sets targets must not book the revenue those targets are measured in.

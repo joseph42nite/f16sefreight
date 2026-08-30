@@ -46,6 +46,16 @@ class AuthServiceProvider extends ServiceProvider
         $this->define('requestReassignment', ['operations'],      'tactical');
         $this->define('assignOperator',      ['pricing', 'boss'], 'tactical');
 
+        // ── Customs & manifests — guide §5.4 ─────────────────────────────────
+        // 🔒 OPERATIONS transmits. `documentation` is a legacy designation VALUE, not
+        // a login: document work is done by the same operations user who executes the
+        // shipment (PRD.md §2.3), so there is no separate filing role to grant.
+        // Pricing and boss may READ a filing — seeing that a consignee name is eight
+        // characters too long is how it gets fixed in the address book rather than at
+        // the gateway — but neither may transmit one.
+        $this->define('fileManifest', ['operations'],                      'tactical');
+        $this->define('viewManifest', ['operations', 'pricing', 'boss'],   'tactical');
+
         // ── Analytics — explicitly 403 for operations and pricing ────────────
         $this->define('viewAnalytics', ['sales', 'boss', 'accounts'], 'tactical');
         $this->define('viewSales',     ['sales', 'boss'],             'tactical');

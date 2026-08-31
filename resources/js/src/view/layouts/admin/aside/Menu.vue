@@ -1,6 +1,46 @@
 <template>
   <ul class="menu-nav">
     <router-link
+      to="/superadmin/monitor"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <i class="menu-icon fas fa-heartbeat"></i>
+          <span class="menu-text">Platform monitor</span>
+        </a>
+      </li>
+    </router-link>
+
+    <router-link
+      to="/superadmin/support-desk"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <i class="menu-icon fas fa-life-ring"></i>
+          <span class="menu-text">Support desk</span>
+        </a>
+      </li>
+    </router-link>
+
+    <router-link
       to="/superadmin/all-company"
       v-slot="{ href, navigate, isActive, isExactActive }"
      >

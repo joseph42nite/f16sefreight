@@ -54,6 +54,16 @@ const TONE = {
   medium: "warning",
   low: "critical",
 
+  // §5.6 platform health. `up` is neutral, not success-green: a monitor whose normal
+  // state is a wall of green trains the eye to stop reading it, and the one red card
+  // then has to compete with four greens for attention.
+  up: "neutral",
+  down: "critical",
+
+  // Support desk. `investigating` is warning — somebody is waiting on it.
+  investigating: "warning",
+  resolved: "success",
+
   // 🔴 A credit hold is the state that stops cargo moving — the strongest tone we have.
   credit_hold: "critical",
   within_limit: "success",

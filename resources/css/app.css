@@ -701,3 +701,15 @@ body.fx-split .fx-rail__label { display: none; }
    so the grid does not reflow when data arrives. */
 .fx-chart__empty { display: flex; align-items: center; justify-content: center;
                    min-height: 260px; text-align: center; margin: 0; }
+
+/* ═══ §5.6 Platform monitor ════════════════════════════════════════════════ */
+/* The superadmin layout is the legacy Metronic theme, so these screens scope their
+   own tokens rather than assuming the freight shell's. */
+.fx-admin { color: var(--text-primary); font-family: var(--font-sans); padding: var(--space-4); }
+.fx-tile__detail { font-size: .6875rem; margin: var(--space-1) 0 0; }
+.fx-log { background: var(--bg-sunken); border: 1px solid var(--border);
+          border-radius: var(--radius-sm); padding: var(--space-3);
+          font-family: var(--font-mono); font-size: .6875rem; line-height: 1.5;
+          max-height: 24rem; overflow: auto; white-space: pre-wrap;
+          word-break: break-word; margin-top: var(--space-3); }
+.fx-ticket__selector { font-size: .6875rem; margin-top: 2px; }

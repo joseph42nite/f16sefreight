@@ -180,6 +180,21 @@ const router = new Router({
       component: () => import("@/view/layouts/admin/Layout"),
       children: [
         {
+          // §5.6 — the platform monitor and the support desk. Both read endpoints
+          // behind the `superAdmin-api` guard, so they are unreachable from any
+          // tenant login however the URL is typed.
+          path: "monitor",
+          name: "superadmin-monitor",
+          component: () => import("@/view/pages/admin/SuperadminMonitor.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          path: "support-desk",
+          name: "superadmin-supportdesk",
+          component: () => import("@/view/pages/admin/SupportDeskTickets.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "all-users",
           name: "superadmin-allusers",
           component: () => import("@/view/pages/admin/AllUsers.vue"),

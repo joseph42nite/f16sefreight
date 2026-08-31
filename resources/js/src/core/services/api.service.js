@@ -65,6 +65,18 @@ const ApiService = {
   },
 
   /**
+   * PATCH — a PARTIAL update.
+   *
+   * `update()` sends PUT, which means "replace the resource with this". A status
+   * transition sends one field and means "change this one thing", and the Freight OS
+   * endpoints validate accordingly: a PUT carrying only `status` would read as a
+   * request to blank every other column.
+   */
+  patch(resource, slug, params) {
+    return Vue.axios.patch(`${resource}/${slug}`, params);
+  },
+
+  /**
    * Send the PUT HTTP request
    * @param resource
    * @param params

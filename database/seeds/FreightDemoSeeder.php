@@ -67,8 +67,35 @@ class FreightDemoSeeder extends Seeder
             $this->seedTenant($tenant);
         }
 
+        $this->seedPlatformStaff();
         $this->syncSequenceCounters();
         $this->summary();
+    }
+
+    /**
+     * One F16s staff account for the `superadmin.` portal.
+     *
+     * ⚠️ **NOT a tenant user, and not on the `users` table at all.** Superadmin lives on
+     * `super_admins` behind its own JWT guard — that separation is the reason a client's
+     * Boss on `admin.` can never reach the platform monitor, however the URL is typed
+     * (CONTEXT.md §6b). Seeded here only so the monitor and support desk are walkable.
+     */
+    private function seedPlatformStaff(): void
+    {
+        \App\SuperAdmin::updateOrCreate(
+            ['email' => 'staff@f16s.test'],
+            ['name' => 'F16s Staff', 'password' => Hash::make(self::PASSWORD)]
+        );
+
+        // 🔴 The SAME `roles` row mechanism every login uses. `LoginController` builds
+        // the guard name as `roles.role . '-api'`, so `superAdmin` here resolves to the
+        // `superAdmin-api` guard and the shared /api/login endpoint works for platform
+        // staff too. Without this row the account exists and cannot sign in — the
+        // credentials are correct and the response is a bare 401.
+        DB::table('roles')->updateOrInsert(
+            ['email' => 'staff@f16s.test'],
+            ['role' => 'superAdmin', 'updated_at' => now(), 'created_at' => now()]
+        );
     }
 
     /**
@@ -155,6 +182,15 @@ class FreightDemoSeeder extends Seeder
 
         // Children first — several of these FKs are RESTRICT precisely so a real
         // liability cannot be orphaned, and they will refuse a parent-first delete.
+        // 🔴 Purchase vouchers FIRST. `accounts_purchase_vouchers.job_id` is one of the
+        // schema's three ON DELETE RESTRICT keys — a voucher is money owed to a vendor
+        // against a shipment, so the database refuses to let a job be deleted out from
+        // under one. It caught this purge the moment the cost sheet started creating
+        // vouchers, which is the constraint doing exactly its job.
+        $voucherIds = DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branchIds)->pluck('id');
+        DB::table('accounts_purchase_items')->whereIn('purchase_voucher_id', $voucherIds)->delete();
+        DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branchIds)->delete();
+
         DB::table('accounts_invoice_items')->whereIn('invoice_id', $invoiceIds)->delete();
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
         DB::table('unposted_transactions_queue')->whereIn('agent_id', $branchIds)->delete();
@@ -750,8 +786,10 @@ class FreightDemoSeeder extends Seeder
 
         $this->command->table(['Tier', 'Email', 'Designation'], $rows);
 
+        $this->command->line('  Platform staff (superadmin. portal, separate guard): staff@f16s.test');
+        $this->command->newLine();
         $this->command->line('  Hosts (macOS maps *.localhost to 127.0.0.1 — no /etc/hosts edit needed):');
-        foreach (['focusair', 'focussea', 'accounts', 'admin'] as $host) {
+        foreach (['focusair', 'focussea', 'accounts', 'admin', 'superadmin'] as $host) {
             $this->command->line("    http://{$host}.localhost:8000");
         }
         $this->command->newLine();

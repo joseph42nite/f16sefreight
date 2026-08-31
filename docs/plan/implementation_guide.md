@@ -1015,7 +1015,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 
 ---
 
-#### Step 6 progress — items 1, 2, 3, 4, 5, 7 and 9 complete; 6 and 8 partly
+#### Step 6 progress — items 1, 2, 3, 4, 5, 7, 9 and 11 complete; 6 and 8 partly
 
 | # | Item | State |
 |---|---|---|
@@ -1029,7 +1029,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 | 8 | `BossDashboard.vue` | 🟡 cross-branch × cross-mode comparison + the funnel with the fiscal/calendar selector. **Target assigner blocked on GAPS #33** (no targets table); executive brief and latency heatmap still to build |
 | 9 | `UpgradeTeaser.vue` | ✅ |
 | 10 | Copilot · VisualReporter · tours | ⬜ (ticket API exists — §5.6) |
-| 11 | Superadmin screens | ⬜ (health/logs/desk API exists — §5.6) |
+| 11 | Superadmin screens | ✅ `SuperadminMonitor.vue` (health, per-queue depth, log tail, classification export) · `SupportDeskTickets.vue` (cross-tenant queue, forward-only transitions) |
 | 12 | `MailboxSettings.vue` | ⬜ blocked with §4.2 on GAPS #15 |
 
 **Components added since the foundation note:** `FxDrawer.vue` (§5.4, focus restored to the trigger on close) · `OcrUploadModal.vue` · `BellPanel.vue` · `Financials.vue` · `SalesDashboard.vue` · `BossDashboard.vue` · `DirectoryTable.vue`.

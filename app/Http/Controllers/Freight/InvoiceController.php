@@ -9,6 +9,7 @@ use App\Services\AuditLogger;
 use App\Services\CreditGateService;
 use App\Services\EnquirySequenceService;
 use App\Services\LedgerPostingService;
+use App\Services\GstSplitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ class InvoiceController extends Controller
         private readonly CreditGateService $credit,
         private readonly EnquirySequenceService $sequences,
         private readonly LedgerPostingService $ledger,
+        private readonly GstSplitService $gst,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -150,6 +152,8 @@ class InvoiceController extends Controller
                 $invoice->agent_id, $period->id, $invoice->id, 'invoice'
             );
 
+            $this->writeGstRegister($invoice);
+
             $invoice->update(['is_posted' => true]);
 
             $this->audit->record($invoice->agent_id, 'invoice.posted', 'invoice', $invoice->id, auth()->id());
@@ -168,6 +172,57 @@ class InvoiceController extends Controller
             'branch'   => $this->credit->check($customer),
             // Displayed, never enforced on — see CreditGateService.
             'group'    => $this->credit->groupExposure($customer),
+        ]);
+    }
+
+    /**
+     * The GST register row — PRD.md §7, for GSTR-1.
+     *
+     * 🔴 **WRITTEN ONLY WHEN THE SPLIT IS DETERMINABLE.** CGST+SGST and IGST total the
+     * same amount, so an undeterminable split does not affect what the client is billed
+     * — but filing it under the wrong heads means the customer cannot claim the input
+     * credit they actually paid. A row is better absent from the register (visible, and
+     * fixable before filing) than present and wrong (invisible until they complain).
+     *
+     * The blocker is that our own GSTIN has no column anywhere in the schema — see
+     * GstSplitService and GAPS.md #36.
+     */
+    private function writeGstRegister(AccountsInvoice $invoice): void
+    {
+        $tax = round((float) $invoice->tax_amount, 2);
+
+        $counterparty = $invoice->customer_id !== null
+            ? Customer::withoutTenantScope()->find($invoice->customer_id)?->gst_no
+            : null;
+
+        // 🔴 THE COLUMN DOES NOT EXIST YET (GAPS #36). Guarded rather than assumed, so
+        // this code is ready the day `agents_info.gst_no` lands and returns NULL —
+        // which `GstSplitService` reports as `supplier_gstin_missing` — until then.
+        // Querying it unguarded is exactly the mistake this gap describes, and it took
+        // down six unrelated tests with a 500.
+        $supplier = \Illuminate\Support\Facades\Schema::hasColumn('agents_info', 'gst_no')
+            ? DB::table('agents_info')->where('id', $invoice->agent_id)->value('gst_no')
+            : null;
+
+        $split = $this->gst->split($tax, $counterparty, $supplier);
+
+        if (! $split['determinable'] || $split['kind'] === 'none') {
+            return;
+        }
+
+        $companyId = DB::table('agents_info')->where('id', $invoice->agent_id)->value('company_id');
+
+        DB::table('gst_ledger_entries')->insert([
+            'agent_id'     => $invoice->agent_id,
+            // GSTR-1 is filed per GSTIN, which is a COMPANY concept — the ledger stays
+            // per branch. Both columns exist precisely because they differ.
+            'company_id'   => $companyId,
+            'voucher_id'   => $invoice->id,
+            'voucher_type' => 'invoice',
+            'cgst_amount'  => $split['cgst'],
+            'sgst_amount'  => $split['sgst'],
+            'igst_amount'  => $split['igst'],
+            'created_at'   => now(), 'updated_at' => now(),
         ]);
     }
 

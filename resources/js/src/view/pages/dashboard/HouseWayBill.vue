@@ -2356,6 +2356,7 @@
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
+import { checkAll } from "@/core/config/iata";
 import { loadLocations } from "@/core/services/location.cache";
 import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
@@ -2851,38 +2852,59 @@ export default {
         },
         //end of file upload code
 
+        /**
+         * Stop a keystroke that would take a field past its Cargo-IMP limit.
+         *
+         * 🔴 **THE SAME DEFECT AS `inputLimit` IN FocusAir.vue, COPY-PASTED UNDER A
+         * DIFFERENT NAME** — which is why fixing it in one file was not enough. It
+         * stripped every character outside /[a-zA-Z0-9 ,\-_]/ from the STORED value
+         * ("Müller & Co." became "Mller Co") and ran `substring(0, maxLength)` on it on
+         * every keydown, cutting a pasted or OCR-populated legal name down silently.
+         *
+         * implementation_guide.md §4.1.2: *"you would destroy data and never know."* A
+         * mangled consignee reads perfectly well, which is what makes it survive a
+         * proofread and fail at customs instead.
+         *
+         * The harmless half survives — refusing a keystroke at the limit, which the
+         * operator can see. Anything already in the field is left alone and reported by
+         * `iataViolations()` before submission.
+         */
         limitInput(event, fieldPath, maxLength) {
-            const allowedChars = /^[a-zA-Z0-9 ,\-_]+$/;
-            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight'];
-
-            if (allowedKeys.includes(event.key)) {
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+            if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
                 return;
             }
-            const fields = fieldPath.split(".");
-            let input = this.form;
-            
-            for (let i = 0; i < fields.length; i++) {
-                if (input[fields[i]] === undefined) {
-                    return; // Stop if any level is undefined
-                }
-                if (i === fields.length - 1) {
-                    input = input[fields[i]];
-                } else {
-                    input = input[fields[i]];
-                }
-            }
-            if (typeof input !== "string") return;
-            input = input.split('').filter(char => allowedChars.test(char)).join('');
 
-            // Prevent typing beyond maxLength
-            if (input.length >= maxLength) {
+            const fields = fieldPath.split(".");
+            let value = this.form;
+            for (let i = 0; i < fields.length; i++) {
+                if (value[fields[i]] === undefined) return;
+                value = value[fields[i]];
+            }
+
+            if (typeof value !== "string") return;
+
+            if (value.length >= maxLength) {
                 event.preventDefault();
             }
-            let obj = this.form;
-            for (let i = 0; i < fields.length - 1; i++) {
-                obj = obj[fields[i]];
-            }
-            obj[fields[fields.length - 1]] = input.substring(0, maxLength);
+        },
+
+        /**
+         * Every IATA / Cargo-IMP violation on this house waybill — guide §4.1.2.
+         *
+         * ⚠️ A HAWB number has its OWN rule: up to 20 characters, letters and digits
+         * only. A hyphen or a space in one is an EDI transmission error, not a
+         * cosmetic issue — and it is the field most likely to be typed by hand.
+         */
+        iataViolations() {
+            const values = Object.assign(
+                {},
+                this.form.shipper_address || {},
+                this.form.consignee_address || {},
+                { hawb_number: (this.form.first_box || {}).hawb_no || '' }
+            );
+
+            return checkAll(values).map((v) => `${v.field.replace(/_/g, ' ')} — ${v.message}`);
         },
 
         isGeneratePdf(generateButton) {
@@ -3042,6 +3064,15 @@ export default {
             return formData;
         },
         onSubmit() {
+            // ⚠️ Checked BEFORE the request, not after. An over-long line is an EDI
+            // transmission error the server would accept and the gateway would refuse,
+            // so stopping here is the only place it costs nothing.
+            const iata = this.iataViolations();
+            if (iata.length > 0) {
+                this.main_error_msg = iata.join('<br>');
+                return;
+            }
+
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             this.main_error_msg='';
             // this.form.agent_head_office.ho_name=this.agent_information.ho_name;

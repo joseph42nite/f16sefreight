@@ -109,6 +109,18 @@
 
 ---
 
+## 🧪 Defects found by testing, fixed (kept so the reasoning is not lost)
+
+| Found | Defect | Resolution |
+|---|---|---|
+| **2026-08-31**, Step 8.1 `EnquirySequenceConcurrencyTest` | **`EnquirySequenceService::increment()` deadlocked under concurrency** — six of eight parallel minters died with `SQLSTATE 40001`. The shape was insertOrIgnore → `lockForUpdate` → update. On an EXISTING row `insertOrIgnore` takes a **shared** lock to check the duplicate key, and `FOR UPDATE` must then upgrade S→X; every concurrent minter held S and waited for X. Not occasional — **reliable** whenever two people create a document at the same moment. Integrity was never at risk (no duplicate number was ever issued); **availability** was: the second user simply got a 500 | Replaced with a single atomic `UPDATE … SET current_value = LAST_INSERT_ID(current_value + 1)`, which takes X directly and has no upgrade to deadlock on, plus an insert-then-retry path for the first number of a fiscal year. `useReadPdo: false` on the read-back is **required**, not stylistic — `LAST_INSERT_ID()` is per-connection state and a replica would return another connection's value |
+
+⚠️ **Why no test caught this earlier:** every prior test minted numbers *sequentially*. A sequential loop passes against an implementation with no locking whatsoever, so the entire suite was blind to the one property the lock exists to provide. The guide's word for §8.1 is *"parallel"*, and it has to be taken literally — the test now spawns real OS processes.
+
+⚠️ **`artisan tinker --execute` is unusable as a subprocess** — PsySH opens TTY mode and aborts with *"TTY mode requires /dev/tty to be read/writable"* when stdout is a pipe. Children failed silently and the assertion passed vacuously on the few that survived. Concurrency children now run `tests/Support/mint_sequence.php`, which boots the framework and nothing else, and they must be handed the **test** database explicitly (`artisan` reads `.env`, which is the development database).
+
+---
+
 ## Operational notes (not gaps, but they bite)
 
 - **New models need `composer dump-autoload`** before tinker's bare-name aliasing finds them. `Port::count()` fails with *Class "Port" not found* until then — recurs at every model checkpoint.

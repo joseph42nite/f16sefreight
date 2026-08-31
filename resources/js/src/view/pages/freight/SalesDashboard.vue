@@ -235,13 +235,21 @@ export default {
     },
     tiles() {
       const b = this.branch || {};
-      return [
+      const tiles = [
         { label: "Tonnage MTD", value: b.tonnage_mtd, kind: "weight" },
         { label: "Tonnage YTD", value: b.tonnage_ytd, kind: "weight" },
         { label: "Shipments MTD", value: b.shipment_count_mtd, kind: "count" },
         { label: "Enquiries MTD", value: b.enquiry_count_mtd, kind: "count" },
-        { label: "Revenue MTD", value: b.revenue_mtd, kind: "currency" },
       ];
+
+      /* 🔴 The revenue tile appears only when the SERVER sent revenue. Below Command it
+         omits the key entirely (§7.4 — money is the upsell), so the tile is driven by
+         what arrived rather than by a tier check repeated here. One rule, one place. */
+      if ("revenue_mtd" in b) {
+        tiles.push({ label: "Revenue MTD", value: b.revenue_mtd, kind: "currency" });
+      }
+
+      return tiles;
     },
   },
   created() {

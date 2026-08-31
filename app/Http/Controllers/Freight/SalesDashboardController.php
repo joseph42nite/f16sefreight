@@ -54,7 +54,7 @@ class SalesDashboardController extends Controller
             'tier'      => $context->tier,
             'mode'      => $mode,
             'scope'     => $isCommand ? 'my_book' : 'branch',
-            'branch'    => $this->branchScoreboard($context->agentId, $mode),
+            'branch'    => $this->branchScoreboard($context->agentId, $mode, $isCommand),
             'staleness' => $this->staleness($context->agentId, $mode),
         ];
 
@@ -287,7 +287,7 @@ class SalesDashboardController extends Controller
      * engine tables is that this query touches four small rows per customer per mode
      * instead of every job the branch has ever run.
      */
-    private function branchScoreboard(?int $agentId, ?string $mode): array
+    private function branchScoreboard(?int $agentId, ?string $mode, bool $withMoney = true): array
     {
         $latest = DB::table('customer_performance_snapshots')
             ->where('agent_id', $agentId)
@@ -297,8 +297,10 @@ class SalesDashboardController extends Controller
         if ($latest === null) {
             // No rollup has run. NOT zeroes — "nothing computed yet" and "a branch that
             // shipped nothing" are different facts, and zeroes would read as the second.
-            return ['snapshot_date' => null, 'tonnage_mtd' => null, 'tonnage_ytd' => null,
-                    'shipment_count_mtd' => null, 'enquiry_count_mtd' => null, 'revenue_mtd' => null];
+            $empty = ['snapshot_date' => null, 'tonnage_mtd' => null, 'tonnage_ytd' => null,
+                      'shipment_count_mtd' => null, 'enquiry_count_mtd' => null];
+
+            return $withMoney ? $empty + ['revenue_mtd' => null] : $empty;
         }
 
         $row = DB::table('customer_performance_snapshots')
@@ -311,14 +313,25 @@ class SalesDashboardController extends Controller
                          SUM(revenue_mtd) AS revenue_mtd')
             ->first();
 
-        return [
+        $scoreboard = [
             'snapshot_date'      => $latest,
             'tonnage_mtd'        => (float) $row->tonnage_mtd,
             'tonnage_ytd'        => (float) $row->tonnage_ytd,
             'shipment_count_mtd' => (int) $row->shipment_count_mtd,
             'enquiry_count_mtd'  => (int) $row->enquiry_count_mtd,
-            'revenue_mtd'        => (float) $row->revenue_mtd,
         ];
+
+        // 🔴 **MONEY IS COMMAND-ONLY IN THE SALES COCKPIT.** PRD.md §7.4's Tactical list
+        // is tonnage, shipment counts, conversion, loss mix, lanes and staff load —
+        // revenue appears nowhere in it, and the note beneath states the rep cannot see
+        // "any client's revenue or tonnage, or who owes money".
+        //
+        // Omitted from the payload rather than zeroed or hidden in the component: money
+        // IS the upsell, and a Tactical response carrying a revenue figure gives away
+        // the thing Command is sold for. Caught by Checkpoint 7, which asks for
+        // "branch aggregates with no client names and no money" — the second clause is
+        // the one that is easy to read past.
+        return $withMoney ? $scoreboard + ['revenue_mtd' => (float) $row->revenue_mtd] : $scoreboard;
     }
 
     /**

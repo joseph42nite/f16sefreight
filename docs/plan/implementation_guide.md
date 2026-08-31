@@ -1183,6 +1183,24 @@ components.
 
 ✅ **Checkpoint 7** — verify tier + mode gating end-to-end: a Tactical sales user sees branch aggregates with no client names and no money; a Command sales user sees only `customers.sales_id = me`; an **air** sales user sees **zero** sea rows in every engine table, and vice versa.
 
+✅ **CHECKPOINT 7 PASSED 2026-08-31** — encoded as `Checkpoint7GatingTest` (7 assertions) rather than eyeballed, because two of the three clauses are invisible when they fail: **a leaked client name looks like data, and a blended mode looks like a bigger number.**
+
+🐞 **The checkpoint caught a real defect on its first run.** A Tactical sales user was
+receiving `revenue_mtd`. The clause that is easy to read past is *"and no money"* —
+PRD §7.4's Tactical list is tonnage, shipment counts, conversion, loss mix, lanes and
+staff load, and revenue appears **nowhere** in it, with the note beneath stating the rep
+cannot see "any client's revenue or tonnage, or who owes money".
+
+Money is now OMITTED from the payload below Command rather than zeroed or hidden in the
+component — money IS the upsell, and a Tactical response carrying a revenue figure gives
+away the thing Command is sold for. The Vue tile is driven by whether the key arrived,
+so the rule lives in one place.
+
+**Mode isolation is asserted per engine table, not spot-checked on one screen:**
+`customer_performance_snapshots` (via the book), `customer_lane_stats` (via the charts),
+`sales_action_queue`, and the funnel views — each proven to return exactly one row from
+`focusair.` and exactly the other from `focussea.`.
+
 ---
 
 ## Step 8 — Automated Testing & Audit Verification

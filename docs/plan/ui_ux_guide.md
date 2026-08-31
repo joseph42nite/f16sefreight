@@ -54,11 +54,33 @@ That is not a criticism of the document — it is a target state, and Step 6 is 
 
 ### 📋 Unbuilt — expected, listed so the size is honest
 
-**Routes** — 10 of the 13 the guide names do not exist. Present: `/focus-air`, `/message-log`, `/settings`. Missing: `/focus-sea`, `/inbox`, `/kanban`, `/sales`, `/financials`, `/boss`, `/customers`, `/partners`, `/manifest-filing`, `/cover-letters`.
+> 🔧 **This was a snapshot taken 2026-08-28 and is superseded — see the re-audit below.**
+> The original text is kept because the *shape* of the gap it described was right; the
+> counts are not, and a stale inventory read as current is worse than none.
 
-**Components** — 10 of 13 missing. Present: `FocusAir.vue`, `HouseWayBill.vue`, `OcrUploadModal.vue`. Missing: `FocusSeaMaster/House/Consol.vue`, `FocusAirImport.vue`, `UpgradeTeaser.vue`, `SalesDashboard.vue`, `KanbanBoard.vue`, `InboxList.vue`, `CostSheet.vue`, `EDocket.vue`.
+**Routes** *(2026-08-28)* — 10 of the 13 the guide names do not exist. Present: `/focus-air`, `/message-log`, `/settings`. Missing: `/focus-sea`, `/inbox`, `/kanban`, `/sales`, `/financials`, `/boss`, `/customers`, `/partners`, `/manifest-filing`, `/cover-letters`.
 
-**Libraries** — six named across the planning set are not installed: `vuedraggable` (Kanban), `driver.js` (tours), `html2canvas` (bug-report screenshots), TipTap (rich text), `laravel-echo` + `pusher-js` (WebSockets). Present and current: Vue 2.7.16, Vuex, Vue Router, `bootstrap-vue` 2.13, ApexCharts 5.
+**Components** *(2026-08-28)* — 10 of 13 missing. Present: `FocusAir.vue`, `HouseWayBill.vue`, `OcrUploadModal.vue`. Missing: `FocusSeaMaster/House/Consol.vue`, `FocusAirImport.vue`, `UpgradeTeaser.vue`, `SalesDashboard.vue`, `KanbanBoard.vue`, `InboxList.vue`, `CostSheet.vue`, `EDocket.vue`.
+
+**Libraries** *(2026-08-28)* — six named across the planning set are not installed: `vuedraggable` (Kanban), `driver.js` (tours), `html2canvas` (bug-report screenshots), TipTap (rich text), `laravel-echo` + `pusher-js` (WebSockets). Present and current: Vue 2.7.16, Vuex, Vue Router, `bootstrap-vue` 2.13, ApexCharts 5.
+
+#### 🔧 Re-audit — 2026-08-31
+
+**Routes — 8 of the 13 now exist.** Added: `/inbox` (a real three-column inbox, not the enquiry board), `/kanban`, `/customers`, `/partners`, `/financials`, `/sales`, `/boss`, `/upgrade`. Still missing: `/focus-sea`, `/manifest-filing`, `/cover-letters`.
+
+🔴 **`/focus-air` was renamed `/master-airway-bill`** (owner's instruction, 2026-08-31): *FocusAir is the product — the whole air portal — and the page inside it is the master document, exactly as its sibling is the house document.* The old path stays as a route **alias** because eight legacy files link to it. Sea has the same problem and is deliberately untouched: §9.2 makes FocusSea a nav **group** (Master / House / Consol), so it resolves into three entries when those forms are built.
+
+**Components** — added: `AppShell.vue`, `JobInbox.vue`, `JobBoard.vue`, `EnquiryBoard.vue`, `DirectoryTable.vue`, `Financials.vue`, `SalesDashboard.vue`, `BossDashboard.vue`, `UpgradeTeaser.vue`, `FxDrawer.vue`, `BellPanel.vue`, `OcrUploadModal.vue`, `StatusChip.vue`, `Figure.vue`. Still missing: the FocusSea trio, `FocusAirImport.vue`, `CostSheet.vue`, `EDocket.vue`.
+
+⚠️ **The library row above was WRONG about two of the six.** Measured 2026-08-31 against `package.json` *and* `node_modules`:
+
+| Library | State |
+|---|---|
+| `vuedraggable` ^2.24.3 | ✅ **installed** — the row claimed otherwise, and the Kanban has used it since 2026-08-29 |
+| `apexcharts` ^5.0.0 | ✅ installed (the row said so) — **but nothing imports it yet**; `/sales` and `/boss` render tables and tiles, not charts |
+| `driver.js` · `html2canvas` · TipTap · `laravel-echo` · `pusher-js` | ⬜ genuinely absent |
+
+**The consequence of the two WebSocket libraries being absent:** the bell **polls** on open rather than receiving a push. §5.6 describes it pushed live via Soketi; that arrives with `laravel-echo` + `pusher-js`, and until then a notification appears when the panel is next opened, not the instant it is raised.
 
 **Component library** — `bootstrap-vue` is the live one. §5's spec (button heights 28/32/40px, a *ghost* variant, `--status-critical` danger) does not map onto its defaults, so §5 needs either a theme layer over bootstrap-vue or an explicit decision to build the components custom. **Not yet decided.**
 

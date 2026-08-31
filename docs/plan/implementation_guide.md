@@ -1011,7 +1011,39 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 >
 > 🐞 **Found while building:** dates rendered as raw ISO (`2026-09-03T18:30:00.000000Z`) and weights at one decimal. §4.4 is not cosmetic — a weight shown to one decimal in one table and three in another reads as two different measurements of the same shipment. Centralised in `format.js`.
 >
-> **Still to build:** `/inbox` is currently the enquiry board (mail sync is §4.2, waiting on OAuth); no `/sales`, `/financials`, `/boss`, `/customers`, `/partners`, `/focus-sea`; Kanban is read-only until `vuedraggable` lands; no drawer, split-pane, bell or tours.
+> **Superseded by the item-by-item progress below (2026-08-31).** The foundation note above describes 2026-08-28; four of the twelve items are now done.
+
+---
+
+#### Step 6 progress — items 1, 2, 3 and 9 complete
+
+| # | Item | State |
+|---|---|---|
+| 1 | `JobInbox.vue` | ✅ three columns, triage, claim, **split-pane collapse** |
+| 2 | `OcrUploadModal.vue` | 🟡 modal + confidence highlighting built; **pre-population of the legacy `FocusAir.vue` form still to do**, and end-to-end extraction is blocked by GAPS #29 |
+| 3 | `OpsDashboard.vue` | ✅ four Process columns, Staff matrix, Unassigned Pool, filters, OLI badges, **bell** |
+| 4 | `JobCostSheet.vue` | ⬜ next |
+| 5–6 | FocusSea / FocusAir forms | ⬜ |
+| 7–8 | Sales / Boss dashboards | 🟡 screens exist and read live endpoints; **ApexCharts not wired** — tables and tiles only |
+| 9 | `UpgradeTeaser.vue` | ✅ |
+| 10 | Copilot · VisualReporter · tours | ⬜ (ticket API exists — §5.6) |
+| 11 | Superadmin screens | ⬜ (health/logs/desk API exists — §5.6) |
+| 12 | `MailboxSettings.vue` | ⬜ blocked with §4.2 on GAPS #15 |
+
+**Components added since the foundation note:** `FxDrawer.vue` (§5.4, focus restored to the trigger on close) · `OcrUploadModal.vue` · `BellPanel.vue` · `Financials.vue` · `SalesDashboard.vue` · `BossDashboard.vue` · `DirectoryTable.vue`.
+
+**Services added for these screens:** `ExtractionNormaliser` (§4.1.2 "unify upward") · `OperatorLoadService` (the single OLI formula) · `BellNotificationService`.
+
+🐞 **Four defects found only by rendering the screens, none caught by tests:**
+
+1. **The login page was unreachable.** The freight `AppShell` was registered first at `path: "/"` and vue-router takes the first match, so it shadowed the public `/` where Sign In lives. Every screen looked broken because nobody could authenticate. The block must stay **below** the public routes and **above** the `*` catch-all.
+2. **The seeder wrote our job number into the client's column.** `execution_job_no` is ours (`JOBA-…`); `job_order_no` is the client's own reference. Every Kanban card rendered `—`.
+3. **No seeded job had a `planned_clearance_date`**, so the Staff matrix had zero rows and every SLA bar was "later" — the whole urgency dimension was invisible, including the OLI multiplier.
+4. **The inbox list showed our own address as the sender**, because it took `from` off the latest message rather than the first inbound one.
+
+📋 **Verifying in the headless browser pane:** it runs with `document.hidden = true`, which freezes `requestAnimationFrame` and leaves Vue transitions stuck on `v-enter`. A drawer will *measure* as off-screen while being positioned correctly. Check `requestAnimationFrame` actually fires before treating a stuck transition as an application bug.
+
+💡 **Demo data:** `php artisan db:seed --class='\FreightDemoSeeder'` then `php artisan sales:compute-snapshots`. Two tenants (Command + Tactical), five designations each, password `demo1234`, e.g. `demo-pricing@demo.test`. Idempotent; identity and `audit_logs` survive a re-run.
 
 
 1. **`JobInbox.vue`** — three-column layout (folders → thread feed → conversation), `[Classify As…]` dropdown, Claim/Take Over toolbar, consent banners for staged client emails, and the **split-pane collapse**: opening the drawer slides the sidebar to a 60 px rail, pushes columns 1–2 off-screen, and gives the conversation and the drawer exactly 50% each. Below 1200 px, collapse to a full-width stacked form with a toggle back to the timeline

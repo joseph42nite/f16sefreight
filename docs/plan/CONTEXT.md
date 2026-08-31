@@ -299,6 +299,54 @@ The planning set had **three** subdomains, conflated the tenant Boss with the pl
 
 ## 7. Where we stopped
 
+> ⚠️ **This section is the hand-off note. If it disagrees with the code, the code is
+> right and this is stale — fix it in the same commit that made it stale.**
+
+### 📍 Current position — 2026-08-31
+
+**Steps 1–5 are COMPLETE. Step 6 is in progress: 4 of its 12 items are done.**
+
+| Step | State |
+|---|---|
+| 1 · Schema | ✅ Batches 1a, 1b, 1c **and 1d** (1d built early — see below) + the three funnel views |
+| 2 · Models & observers | ✅ |
+| 3 · Access control | ✅ portals, tiers, role gates, tenant scope |
+| 4 · Services & daemons | 🟡 all built **except `PollMailboxes` (§4.2)** — blocked on GAPS #15 |
+| 5 · REST API | ✅ §5.1–§5.6. **Checkpoint 5 re-run and passed 2026-08-30** over real HTTP |
+| 6 · Vue workspaces | 🔨 items 1, 2, 3, 9 done. **Next: item 4, `JobCostSheet.vue`** |
+| 7 · Analytics | 🟡 Layer 1 rollup (`sales:compute-snapshots`) built early; Layer 3 narration deliberately unwired |
+| 8 · Testing | `php artisan test` **288 passed** · `npm run test:unit` **9 passed** |
+
+**Baseline to keep green: 288 + 9.** It was 26 + 9 when this document was written.
+
+📌 **Two things were built out of guide order, both deliberately and both flagged at the
+time:**
+
+- **Batch 1d** (analytics tables + funnel views) — the guide schedules it at Step 7, but
+  §5.5 two steps earlier is *specified to read those tables* and forbidden from
+  aggregating live (`PRD.md` §2242). The guide's own rule and its own ordering
+  disagree; the rule won.
+- **`sales:compute-snapshots`** — without it every analytics table stays empty and the
+  dashboards demonstrate only their own guard rails.
+
+🕳️ **`GAPS.md` now holds 31 items.** The ones that block work rather than merely await a
+deadline: **#29** (`requirements.txt` pins three versions that were never published, so
+the OCR service cannot be installed at all), **#24** (`bank_transactions` cannot support
+the matching engine PRD §6.4 specifies), **#26** (the ICEGATE wire format is documented
+nowhere), **#15** (the Google CASA assessment — weeks to months, and it gates the entire
+inbox).
+
+🎮 **A walkable demo exists.** `php artisan db:seed --class='\FreightDemoSeeder'` then
+`php artisan sales:compute-snapshots`. Two tenants, five designations each, password
+`demo1234` — e.g. `demo-pricing@demo.test` at `focusair.localhost:8000`. Idempotent, and
+identity rows plus `audit_logs` survive a re-run (the append-only trigger refuses to let
+a seeder erase an audit trail — it caught an earlier version of the purge doing exactly
+that).
+
+---
+
+### History
+
 ✅ **BATCH 1a COMPLETE — 2026-08-27.** All 8 steps built, checkpointed and regression-tested. **Checkpoint 1a passes:** every batch-1a migration shows `Ran`, and `Port::count()` returns `0` without exception.
 
 | # | Step | Migration |
@@ -315,9 +363,9 @@ The planning set had **three** subdomains, conflated the tenant Boss with the pl
 
 **Verified beyond the checkpoint:** every migration rolls back and re-applies cleanly; the full set applies to a **fresh database** in order (34 tables, no partial failures); constraints were tested behaviourally rather than only inspected — the CC gate honours the DPDP opt-out override, the client-group roll-up derives from `(company_id, email_domain)`, both `customers` hot-path indexes are confirmed in use by `EXPLAIN`, and the full `user → branch → company → tier` chain resolves and yields `agent_code`. `php artisan test` **26 passed** and `npm run test:unit` **9 passed** throughout.
 
-**Next: Batch 1b** — `enquiries` must precede `jobs` (`jobs.enquiry_id` is NOT NULL). Read `implementation_guide.md` §"Batch 1b".
+*(At the time: next was Batch 1b — `enquiries` must precede `jobs`, since `jobs.enquiry_id` is NOT NULL.)*
 
-🕳️ **Open gaps now live in `GAPS.md`** — 18 items with what breaks and when each is due. **Four come due in Batch 1b or Step 2:** the `encrypted` cast on the bank columns (#3, Step 2 — plaintext until then), the MySQL trigger forms that have never been executed (#5, Batch 1b), the waybill `job_id` FK that must be added the moment `jobs` exists (#17, Batch 1b), and `ui_ux_guide.md`'s missing reconciliation pass (#4, before Step 6).
+🕳️ **Open gaps live in `GAPS.md`** — 18 items at the time of writing, 31 today. **Four come due in Batch 1b or Step 2:** the `encrypted` cast on the bank columns (#3, Step 2 — plaintext until then), the MySQL trigger forms that have never been executed (#5, Batch 1b), the waybill `job_id` FK that must be added the moment `jobs` exists (#17, Batch 1b), and `ui_ux_guide.md`'s missing reconciliation pass (#4, before Step 6).
 
 **Also noted:** new models need `composer dump-autoload` before tinker's bare-name aliasing finds them (`Port::count()` fails with *Class "Port" not found* until then). Bites at every model checkpoint.
 

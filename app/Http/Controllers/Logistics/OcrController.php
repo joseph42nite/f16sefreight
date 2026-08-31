@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Services\ExtractionNormaliser;
 
 class OcrController extends Controller
 {
@@ -95,6 +96,24 @@ class OcrController extends Controller
             // Re-mapping for original Vue frontend response compatibility expecting "data" wrapper
             $response['data']         = $job->extracted_data;
             $response['completed_at'] = $job->completed_at;
+
+            // ── §4.1.2 rule 3, "unify upward" ────────────────────────────────
+            // `fields` carries the SAME extraction in one shape — {value, confidence}
+            // for every field, whichever extractor produced it. `data` is left exactly
+            // as it was so the legacy FocusAir.vue mapping keeps working; the new
+            // upload modal reads `fields` and needs no knowledge of which path ran.
+            //
+            // 🔴 One mapper, or they drift. The guide is explicit that two shapes mean
+            // two mappers, and they diverge the first time either side changes.
+            $normaliser = app(ExtractionNormaliser::class);
+            $fields = $normaliser->normalise(
+                is_array($job->extracted_data) ? $job->extracted_data : [],
+                $job->document_type === 'unstructured' ? 'model' : 'coordinates'
+            );
+
+            $response['fields'] = $fields;
+            // The operator's worklist: everything below `high`, dot-pathed.
+            $response['needs_review'] = $normaliser->needsReview($fields);
         }
 
         if ($job->status === 'failed') {

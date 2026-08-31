@@ -47,6 +47,13 @@ const TONE = {
   clearance: "neutral",
   trucking_road: "neutral",
 
+  // §5.1 extraction confidence. `high` is NOT success-green: the operator still has
+  // to check it, and a green chip invites them not to. Medium and low are the ones
+  // that must catch the eye.
+  high: "neutral",
+  medium: "warning",
+  low: "critical",
+
   // 🔴 A credit hold is the state that stops cargo moving — the strongest tone we have.
   credit_hold: "critical",
   within_limit: "success",

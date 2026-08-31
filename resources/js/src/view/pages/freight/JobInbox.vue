@@ -93,6 +93,10 @@
               memorise a consignee name instead of checking it, and a mis-keyed
               consignee is a rejected filing.
             -->
+            <!-- PRD §2.3 puts the [Analyze PDF] dropzone on /inbox: the attachment
+                 that needs extracting arrived on this thread. -->
+            <button class="fx-btn" @click="ocrOpen = true">Analyze PDF</button>
+
             <button class="fx-btn fx-btn--primary" @click="openWorkspace">Open workspace</button>
           </div>
         </header>
@@ -127,6 +131,8 @@
         </ol>
       </template>
     </section>
+
+    <OcrUploadModal :open="ocrOpen" @close="ocrOpen = false" @extracted="onExtracted" />
 
     <FxDrawer
       :open="workspace && !!active"
@@ -170,6 +176,29 @@
           </dl>
         </section>
 
+        <section v-else-if="tab === 'extraction'">
+          <p v-if="!extracted" class="fx-muted">
+            Nothing extracted yet. <strong>Analyze PDF</strong> reads a document and
+            marks every field the extractor was unsure of.
+          </p>
+          <template v-else>
+            <p v-if="extracted.needsReview.length" class="fx-warn" role="status">
+              {{ extracted.needsReview.length }} field(s) still need checking before this
+              reaches a document.
+            </p>
+            <dl class="fx-defs">
+              <template v-for="(node, key) in extracted.fields">
+                <dt v-if="node && node.confidence" :key="key + '-k'">{{ String(key).replace(/_/g, " ") }}</dt>
+                <dd v-if="node && node.confidence" :key="key + '-v'">
+                  <span v-if="node.value">{{ node.value }}</span>
+                  <span v-else class="is-empty" aria-label="Not found on the page"></span>
+                  <StatusChip v-if="node.confidence !== 'high'" :value="node.confidence" />
+                </dd>
+              </template>
+            </dl>
+          </template>
+        </section>
+
         <!--
           Upload, the document forms, the cost sheet and the e-docket are Step 6 items
           2, 4, 5 and 6. Named rather than hidden: an empty panel reads as broken,
@@ -193,6 +222,7 @@ import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
+import OcrUploadModal from "@/view/pages/freight/components/OcrUploadModal.vue";
 
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
 
@@ -201,6 +231,7 @@ const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_r
 const WORKSPACE_TABS = [
   { key: "enquiry", label: "Enquiry" },
   { key: "timing", label: "Timing" },
+  { key: "extraction", label: "Extraction" },
   { key: "upload", label: "Upload", step: 2 },
   { key: "cost", label: "Cost sheet", step: 4 },
   { key: "docket", label: "E-Docket", step: 4 },
@@ -208,7 +239,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer },
+  components: { Figure, StatusChip, FxDrawer, OcrUploadModal },
   data: () => ({
     folders: [
       { key: "all", label: "All" },
@@ -223,7 +254,7 @@ export default {
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
-    workspace: false, tab: "enquiry",
+    workspace: false, tab: "enquiry", ocrOpen: false, extracted: null,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
@@ -291,6 +322,17 @@ export default {
       };
       inbox.addEventListener("transitionend", settle);
       setTimeout(settle, 320);
+    },
+    /**
+     * The operator ACCEPTED an extraction. Nothing is written to a document here —
+     * §Step 6.2's pre-population of FocusAir.vue / HouseWayBill.vue is still to come,
+     * and quietly stuffing values into a legal document on arrival would make the
+     * confidence highlighting decorative.
+     */
+    onExtracted(payload) {
+      this.extracted = payload;
+      this.setSplit(true);
+      this.tab = "extraction";
     },
     openWorkspace() {
       this.setSplit(true);

@@ -286,9 +286,10 @@ class JobCostSheetController extends Controller
             'agent_id' => $job->agent_id, 'job_id' => $job->id,
             'transport_mode' => $job->transport_mode, 'customer_id' => $job->customer_id,
             'created_by' => auth()->id(),
-            // Numbered at creation because the column is NOT NULL — see GAPS.md #27,
-            // which is the open question of whether a draft should consume a number.
-            'invoice_no' => 'DRAFT-' . $job->id . '-' . now()->format('YmdHis'),
+            // A PLACEHOLDER, not a number: the column is NOT NULL and UNIQUE per branch
+            // (GAPS.md #27), so a draft cannot be left blank. Finalization replaces this
+            // with a real sequence number — see AccountsInvoice::needsNumber().
+            'invoice_no' => AccountsInvoice::placeholderNumber($job->id),
             'type' => 'invoice', 'document_date' => now()->toDateString(),
             'status' => 'draft', 'currency' => 'INR',
         ]);

@@ -172,7 +172,7 @@ class JobController extends Controller
             $this->audit->record($job->agent_id, 'job.reinitiated', 'enquiry', $enquiry->id, auth()->id());
 
             return $enquiry;
-        });
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         return response()->json(['enquiry' => $enquiry, 'from_job' => $job->execution_job_no], 201);
     }

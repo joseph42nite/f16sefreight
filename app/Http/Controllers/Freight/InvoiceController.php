@@ -94,8 +94,19 @@ class InvoiceController extends Controller
         }
 
         DB::transaction(function () use ($invoice, $subtotal, $tax, $grandTotal) {
+            // ⚠️ Re-read before deciding. This closure is REPLAYED on a deadlock, and the
+            // failed attempt left its rolled-back values on the model in memory — without
+            // this, a retry would keep a number whose reservation was rolled back with it.
+            $invoice->refresh();
+
             $invoice->update([
-                'invoice_no'  => $invoice->invoice_no ?: $this->sequences->next($invoice->agent_id, 'INV'),
+                // 🔴 NOT `?:`. A draft's placeholder is truthy, so `?:` kept it and the
+                // invoice was issued to the client numbered `DRAFT-…` — the sequence
+                // service was never called for INV at all. Caught by
+                // InvoiceFinalizeTest; see AccountsInvoice::DRAFT_NUMBER_PREFIX.
+                'invoice_no'  => $invoice->needsNumber()
+                    ? $this->sequences->next($invoice->agent_id, 'INV')
+                    : $invoice->invoice_no,
                 'subtotal'    => $subtotal,
                 'tax_amount'  => $tax,
                 'grand_total' => $grandTotal,
@@ -103,7 +114,7 @@ class InvoiceController extends Controller
             ]);
 
             $this->audit->record($invoice->agent_id, 'invoice.finalized', 'invoice', $invoice->id, auth()->id());
-        });
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         return response()->json($invoice->fresh());
     }

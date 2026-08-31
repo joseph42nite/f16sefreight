@@ -78,7 +78,7 @@ class EnquiryController extends Controller
             $this->audit->record($agentId, 'enquiry.created', 'enquiry', $enquiry->id, auth()->id());
 
             return $enquiry;
-        });
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         return response()->json($enquiry, 201);
     }
@@ -179,7 +179,7 @@ class EnquiryController extends Controller
             $this->audit->record($enquiry->agent_id, 'enquiry.converted', 'job', $job->id, auth()->id());
 
             return $job;
-        });
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         return response()->json([
             'job'     => $job,

@@ -109,11 +109,24 @@
 
 ---
 
+## 🔴 Doc vs code — needs your call
+
+| # | Disagreement | Detail |
+|---|---|---|
+| 37 | **Posting to a closed accounting period: `403` or `422`?** | `implementation_guide.md` §8.1 and `PRD.md` §2391 both say **403**. `InvoiceController::post()` returns **422** with `reason: no_open_period`, and `CreditGateTest` already asserts 422. Not picked silently. Either reading is defensible — 403 says *you may not*, 422 says *this document cannot be posted as it stands* — and the rest of the controller's refusals (`already_posted`, `not_draft`, `credit_limit_exceeded`) are all 422, which is the argument for leaving it. Meanwhile `InvoiceFinalizeTest` asserts only what both agree on: it is **refused**, the reason is `no_open_period`, and **no ledger row is written**. Say which, and it becomes one assertion |
+
+⚠️ Note the guide's wording is *"posting to a **closed** period"*, and the existing coverage was for a period that does not exist **at all**. Those are different code paths: an implementation checking `whereNotNull` instead of `status = 'open'` passes the old test and still posts into a filed month. Both are now covered.
+
+---
+
 ## 🧪 Defects found by testing, fixed (kept so the reasoning is not lost)
 
 | Found | Defect | Resolution |
 |---|---|---|
 | **2026-08-31**, Step 8.1 `EnquirySequenceConcurrencyTest` | **`EnquirySequenceService::increment()` deadlocked under concurrency** — six of eight parallel minters died with `SQLSTATE 40001`. The shape was insertOrIgnore → `lockForUpdate` → update. On an EXISTING row `insertOrIgnore` takes a **shared** lock to check the duplicate key, and `FOR UPDATE` must then upgrade S→X; every concurrent minter held S and waited for X. Not occasional — **reliable** whenever two people create a document at the same moment. Integrity was never at risk (no duplicate number was ever issued); **availability** was: the second user simply got a 500 | Replaced with a single atomic `UPDATE … SET current_value = LAST_INSERT_ID(current_value + 1)`, which takes X directly and has no upgrade to deadlock on, plus an insert-then-retry path for the first number of a fiscal year. `useReadPdo: false` on the read-back is **required**, not stylistic — `LAST_INSERT_ID()` is per-connection state and a replica would return another connection's value |
+
+| **2026-08-31**, Step 8.1 `InvoiceFinalizeTest` | **Finalized invoices kept their draft placeholder as their permanent number.** A draft is created as `DRAFT-{job}-{timestamp}` because `invoice_no` is NOT NULL and UNIQUE per branch (#27). `finalize()` then minted with `$invoice->invoice_no ?: $sequences->next(...)` — and the placeholder is **truthy**, so the real number was never minted. `EnquirySequenceService` was never called for `INV` at all, contradicting §8.1's *"all generation routes through EnquirySequenceService"*. The number reaching the client and GSTR-1 was `DRAFT-280-20260831204454` | `AccountsInvoice::needsNumber()` + `DRAFT_NUMBER_PREFIX` — one place defines what a placeholder is, and `placeholderNumber()` is what creates one. Tests must assert the number **starts `INV-`**, not merely that it is non-empty or stable: the previous test asserted stability and passed against the placeholder |
+| **2026-08-31**, same file | **A second, different deadlock on the INSERT path** — the first number of a `(branch, prefix, fiscal year)`. Concurrent `INSERT IGNORE` of a row that does not exist contends on the gap's insert-intention lock. Reachable on **April 1st and the first document of every new branch**. It passed in isolation and failed only in the full suite, because an earlier run had left the counter row behind | Retry — but **at the transaction boundary, not inside it.** A deadlock aborts the entire transaction, so retrying inside a caller's transaction fails as *"There is no active transaction"* and buries the real cause. `increment()` now rethrows when `DB::transactionLevel() > 0`, and all five minting call sites pass `EnquirySequenceService::DEADLOCK_ATTEMPTS` to `DB::transaction()`. `finalize()` also `refresh()`es inside the closure — a replay would otherwise keep a number whose reservation was rolled back with the attempt |
 
 ⚠️ **Why no test caught this earlier:** every prior test minted numbers *sequentially*. A sequential loop passes against an implementation with no locking whatsoever, so the entire suite was blind to the one property the lock exists to provide. The guide's word for §8.1 is *"parallel"*, and it has to be taken literally — the test now spawns real OS processes.
 

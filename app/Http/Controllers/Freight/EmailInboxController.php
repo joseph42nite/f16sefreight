@@ -153,7 +153,7 @@ class EmailInboxController extends Controller
             $thread->first_triage_at = $thread->first_triage_at ?: now();
             $thread->status = 'triaged';
             $thread->save();
-        });
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));
     }

@@ -21,6 +21,32 @@ class AccountsInvoice extends Model
 {
     use BelongsToTenant;
 
+    /**
+     * The placeholder a draft carries before it is numbered.
+     *
+     * 🔴 `invoice_no` is NOT NULL with no default and `uq_invoice_agent_no` is UNIQUE on
+     * `(agent_id, invoice_no)` (GAPS.md #27), so a draft cannot simply be left blank —
+     * two unnumbered drafts on one branch would collide on the empty string. It therefore
+     * carries a placeholder, and the placeholder must be RECOGNISABLE: it is truthy, so
+     * any `?: $sequences->next(...)` silently keeps it and the invoice goes to the client
+     * bearing `DRAFT-…` as its permanent number. That defect shipped; `needsNumber()`
+     * exists so the check lives in one place rather than being re-derived per caller.
+     */
+    public const DRAFT_NUMBER_PREFIX = 'DRAFT-';
+
+    /** True when this invoice has no REAL sequence number yet. */
+    public function needsNumber(): bool
+    {
+        return blank($this->invoice_no)
+            || str_starts_with($this->invoice_no, self::DRAFT_NUMBER_PREFIX);
+    }
+
+    /** The placeholder a new draft is created with — unique per job. */
+    public static function placeholderNumber(int $jobId): string
+    {
+        return self::DRAFT_NUMBER_PREFIX . $jobId . '-' . now()->format('YmdHis');
+    }
+
     protected $fillable = [
         'agent_id', 'job_id', 'transport_mode', 'customer_id',
         'billed_party_type', 'billed_party_id', 'parent_invoice_id', 'created_by',

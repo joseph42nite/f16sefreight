@@ -6,6 +6,7 @@ use App\Agent;
 use App\Company;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\SpawnsChildProcesses;
 use Tests\TestCase;
 
 /**
@@ -23,6 +24,8 @@ use Tests\TestCase;
  */
 class EnquirySequenceConcurrencyTest extends TestCase
 {
+    use SpawnsChildProcesses;
+
     private Company $company;
     private Agent $branch;
 
@@ -55,44 +58,21 @@ class EnquirySequenceConcurrencyTest extends TestCase
     {
         $agentId = $this->branch->id;
 
-        // 🔴 The children must be pointed at the TEST database explicitly. `artisan`
-        // reads `.env` — the development database — where this branch does not exist.
-        // Real environment variables win over dotenv, so this redirects them.
-        $env = 'DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=' . config('database.connections.mysql.port')
-            . ' DB_DATABASE=' . config('database.connections.mysql.database')
-            . ' DB_USERNAME=' . config('database.connections.mysql.username')
-            . ' DB_PASSWORD=' . config('database.connections.mysql.password');
-
         // Each child mints THREE times rather than once. Eight processes each minting a
         // single number may well not overlap at all — most of a child's life is framework
         // boot. Minting repeatedly keeps every child inside the contended section at the
         // same time, which is the only condition under which a missing lock shows itself.
         $script = base_path('tests/Support/mint_sequence.php');
 
-        $procs = [];
-        $pipes = [];
+        $commands = array_fill(0, 8, sprintf('%s php %s %d ENQA 3',
+            $this->childEnv(), escapeshellarg($script), $agentId));
 
-        for ($i = 0; $i < 8; $i++) {
-            $cmd = sprintf('%s php %s %d ENQA 3', $env, escapeshellarg($script), $agentId);
-
-            $procs[$i] = proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes[$i], base_path());
-        }
+        [$outputs, $stderr] = $this->runInParallel($commands);
 
         $numbers = [];
-        $stderr = '';
         $raw = '';
 
-        foreach ($procs as $i => $proc) {
-            if (! is_resource($proc)) {
-                continue;
-            }
-
-            $out = stream_get_contents($pipes[$i][1]);
-            $stderr .= stream_get_contents($pipes[$i][2]);
-            fclose($pipes[$i][1]);
-            fclose($pipes[$i][2]);
-            proc_close($proc);
-
+        foreach ($outputs as $i => $out) {
             $raw .= "--- child {$i} ---\n" . $out;
             preg_match_all('/ENQA-SEQBOM-\d{2}-\d{4}/', $out, $m);
             $numbers = array_merge($numbers, $m[0]);

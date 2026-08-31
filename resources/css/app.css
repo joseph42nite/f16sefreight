@@ -552,3 +552,67 @@ body.fx-split .fx-rail__label { display: none; }
    states the level in words. */
 .fx-extract tbody tr.is-review td { background: var(--status-warning-subtle); }
 .fx-extract tbody tr.is-review td:first-child { box-shadow: inset 3px 0 0 var(--status-warning); }
+
+/* ═══ §5.5 Kanban — pool, four columns, staff matrix ═══════════════════════ */
+
+.fx-segment { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm);
+              overflow: hidden; align-self: flex-end; }
+.fx-segment__btn { border: 0; background: var(--bg-surface); cursor: pointer;
+                   padding: 0 var(--space-3); height: 32px; font-size: .8125rem;
+                   color: var(--text-secondary); }
+.fx-segment__btn.is-active { background: var(--bg-sunken); color: var(--text-primary); font-weight: 600; }
+
+/* Active filters, visible and removable. A filter you cannot see is one you forget
+   you set — and then the board looks wrong rather than filtered. */
+.fx-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4);
+            align-items: center; }
+.fx-chip--removable { cursor: pointer; border-style: solid; }
+
+/* The Unassigned Pool: a horizontal scroller pinned above the board, collapsible to
+   reclaim height. Persisted per user, because a pool that re-expands on every visit
+   gets collapsed once and then resented. */
+.fx-pool { border: 1px solid var(--border); border-radius: var(--radius-md);
+           background: var(--bg-surface); margin-bottom: var(--space-4); }
+.fx-pool__head { display: flex; align-items: center; gap: var(--space-2);
+                 padding: var(--space-2) var(--space-3); }
+.fx-pool__title { font-size: .75rem; font-weight: 600; text-transform: uppercase;
+                  letter-spacing: .04em; color: var(--text-secondary); margin: 0; }
+.fx-pool__scroller { display: flex; gap: var(--space-2); overflow-x: auto;
+                     padding: 0 var(--space-3) var(--space-3); align-items: flex-start; }
+.fx-card--pool { flex: 0 0 15rem; display: flex; flex-direction: column; gap: var(--space-2);
+                 margin-bottom: 0; cursor: default; }
+
+/* Four columns, so each is wide enough for the card anatomy §5.5 specifies. */
+.fx-board__col--wide { flex: 1 1 0; min-width: 15rem; }
+
+.fx-card__top { display: flex; align-items: center; justify-content: space-between;
+                gap: var(--space-2); }
+.fx-card__tags { display: flex; flex-wrap: wrap; gap: var(--space-2);
+                 font-size: .6875rem; color: var(--text-secondary); margin-top: var(--space-1); }
+.fx-card__owners { display: flex; justify-content: space-between; gap: var(--space-2);
+                   font-size: .6875rem; color: var(--text-disabled); margin-top: var(--space-1); }
+
+/* 🔴 SLA COLOURING USES THE SAME URGENCY BANDS AS THE OLI MULTIPLIER — one rule, so
+   the board and the load index can never disagree about what "urgent" means. A card
+   the board paints red must be a card the index weighted ×3.
+
+   §1.3 the bar is an EDGE, not a fill, and the clearance date is always printed —
+   the colour reinforces a date the operator can read. */
+.fx-card--today    { box-shadow: inset 3px 0 0 var(--status-critical), var(--elev-1); }
+.fx-card--tomorrow { box-shadow: inset 3px 0 0 var(--status-warning), var(--elev-1); }
+.fx-card--later    { box-shadow: var(--elev-1); }
+
+/* The cross-staff clearance matrix. */
+.fx-matrix-wrap { overflow-x: auto; }
+.fx-matrix th, .fx-matrix td { vertical-align: top; }
+.fx-matrix thead th { text-transform: none; font-size: .8125rem; letter-spacing: 0; }
+.fx-matrix__job { display: inline-block; background: var(--bg-sunken);
+                  border: 1px solid var(--border); border-radius: var(--radius-sm);
+                  padding: 1px var(--space-2); margin: 0 var(--space-1) var(--space-1) 0;
+                  font-size: .6875rem; }
+
+/* §9.3 the OLI badge. At or over the cap: critical AND the word OVERLOADED, because
+   a number alone does not tell a manager what the number means. */
+.fx-oli { display: block; font-family: var(--font-mono); font-size: .6875rem;
+          font-weight: 400; color: var(--text-secondary); margin-top: 2px; }
+.fx-oli.is-over { color: var(--status-critical); font-weight: 700; }

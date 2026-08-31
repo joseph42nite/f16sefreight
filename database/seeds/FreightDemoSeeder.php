@@ -91,7 +91,7 @@ class FreightDemoSeeder extends Seeder
 
         $sources = [
             ['enquiries', 'enquiry_no'],
-            ['jobs', 'job_order_no'],
+            ['jobs', 'execution_job_no'],
             ['accounts_invoices', 'invoice_no'],
         ];
 
@@ -394,12 +394,20 @@ class FreightDemoSeeder extends Seeder
                     'enquiry_id' => $enquiry->id,
                     'transport_mode' => $mode,
                     'direction' => 'export',
-                    'job_order_no' => sprintf('%s-%s-%s-%04d', $jPrefix, $agentCode, now()->format('y'), $seq[$mode]),
+                    // execution_job_no is OUR number (JOBA-…). job_order_no is the
+                    // CLIENT's own reference — a different fact, often absent, and
+                    // never ours to invent.
+                    'execution_job_no' => sprintf('%s-%s-%s-%04d', $jPrefix, $agentCode, now()->format('y'), $seq[$mode]),
                     'customer_id' => $customer->id,
                     'ops_id' => $users['operations']->id,
                     'pricing_id' => $users['pricing']->id,
                     // A spread across the board so the Kanban has cards in every column.
                     'status' => ['Verification', 'PDF Generated', 'Airline Confirmed'][$i % 3],
+                    // A spread of clearance dates so the Staff matrix has rows and the
+                    // board's SLA bars actually fire: one clearing today (urgency ×3),
+                    // one tomorrow (×2), one later (×1). Without dates every card is
+                    // "later" and the whole urgency dimension is invisible.
+                    'planned_clearance_date' => now()->addDays([0, 1, 5][$i % 3])->toDateString(),
                     'cargo_type' => $mode === 'sea' ? 'fcl' : 'general',
                     'awb_number' => $mode === 'air' ? '176-' . str_pad((string) (10000000 + $i), 8, '0', STR_PAD_LEFT) : null,
                     'created_at' => now()->subDays(max($daysAgo, 1)),
@@ -469,7 +477,7 @@ class FreightDemoSeeder extends Seeder
                 $job = Job::create([
                     'agent_id' => $branch->id, 'enquiry_id' => $enquiry->id,
                     'transport_mode' => 'air', 'direction' => 'export',
-                    'job_order_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
+                    'execution_job_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
                     'customer_id' => $customer->id, 'ops_id' => $users['operations']->id,
                     'pricing_id' => $users['pricing']->id, 'status' => 'Completed',
                     'cargo_type' => 'general', 'completed_at' => $when->copy()->addDays(4),
@@ -708,7 +716,7 @@ class FreightDemoSeeder extends Seeder
             AccountsInvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'charge_type' => $job->transport_mode === 'air' ? 'air_freight' : 'ocean_freight',
-                'description' => 'Freight charges — ' . $job->job_order_no,
+                'description' => 'Freight charges — ' . $job->execution_job_no,
                 'quantity' => 1, 'rate' => $amount, 'amount' => $amount,
                 'tax_percentage' => 18.00, 'tax_amount' => $tax,
                 'net_amount' => round($amount + $tax, 2),

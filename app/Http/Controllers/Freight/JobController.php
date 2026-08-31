@@ -31,6 +31,20 @@ class JobController extends Controller
         $jobs = Job::forActivePortal()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->boolean('mine'), fn ($q) => $q->where('ops_id', auth()->id()))
+            // The Unassigned Pool: PRD §5.5's scroller, and the only place a job with
+            // no operator is actionable.
+            ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('ops_id'))
+            ->when($request->filled('ops_id'), fn ($q) => $q->where('ops_id', $request->integer('ops_id')))
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('planned_clearance_date', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('planned_clearance_date', '<=', $request->date('to')))
+            // PRD §5.5 card anatomy needs BOTH names — "so collaborators share context".
+            // Eager-loaded: a 50-card board would otherwise be 100 extra queries.
+            ->with([
+                'opsUser:id,name',
+                'pricingOwner:id,name',
+                'customer:id,name',
+                'enquiry:id,extracted_pieces,extracted_weight,origin_code,dest_code',
+            ])
             ->latest()
             ->paginate(50);
 

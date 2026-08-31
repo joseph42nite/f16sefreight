@@ -3,52 +3,182 @@
     <header class="fx-page-head">
       <h1 class="fx-page-title">Kanban</h1>
       <p class="fx-page-sub">
-        Confirmed shipments on <strong>{{ portalLabel || 'all modes' }}</strong>.
-        Drag a card to move it through the lifecycle.
+        Confirmed shipments on <strong>{{ portalLabel || "all modes" }}</strong>.
       </p>
     </header>
+
+    <!-- ── View switch. Staff View is ABSENT for operations, not disabled (§9.4). ── -->
+    <div class="fx-toolbar">
+      <div class="fx-segment" role="tablist" aria-label="Board view">
+        <button
+          class="fx-segment__btn" :class="{ 'is-active': view === 'process' }"
+          role="tab" :aria-selected="String(view === 'process')" @click="view = 'process'"
+        >Process</button>
+        <button
+          v-if="canBalance"
+          class="fx-segment__btn" :class="{ 'is-active': view === 'staff' }"
+          role="tab" :aria-selected="String(view === 'staff')" @click="switchToStaff"
+        >Staff</button>
+      </div>
+
+      <label class="fx-field">
+        <span class="fx-field__label">Operator</span>
+        <select v-model="filters.opsId" class="fx-input" @change="load">
+          <option value="">Everyone</option>
+          <option value="__mine">Mine</option>
+          <option v-for="o in operators" :key="o.id" :value="String(o.id)">{{ o.name }}</option>
+        </select>
+      </label>
+
+      <label class="fx-field">
+        <span class="fx-field__label">Stage</span>
+        <select v-model="filters.stage" class="fx-input" @change="load">
+          <option value="">All</option>
+          <option v-for="s in STATUSES" :key="s" :value="s">{{ s }}</option>
+        </select>
+      </label>
+
+      <label class="fx-field">
+        <span class="fx-field__label">Clears from</span>
+        <input v-model="filters.from" class="fx-input" type="date" @change="load" />
+      </label>
+      <label class="fx-field">
+        <span class="fx-field__label">to</span>
+        <input v-model="filters.to" class="fx-input" type="date" @change="load" />
+      </label>
+
+      <button class="fx-btn" @click="today">Today</button>
+    </div>
+
+    <!-- Active filters as removable chips — a filter you cannot see is a filter you
+         forget you set, and then the board looks wrong rather than filtered. -->
+    <div v-if="activeChips.length" class="fx-chips">
+      <button v-for="c in activeChips" :key="c.key" class="fx-chip fx-chip--info fx-chip--removable" @click="clearFilter(c.key)">
+        {{ c.label }} ✕
+      </button>
+      <button class="fx-btn fx-btn--ghost" @click="clearAll">Clear all</button>
+    </div>
 
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
-    <div v-else class="fx-board">
-      <section v-for="col in columns" :key="col" class="fx-board__col">
-        <h2 class="fx-board__head">
-          {{ col }}
-          <span class="fx-board__count">{{ (grouped[col] || []).length }}</span>
-        </h2>
+    <template v-else>
+      <!-- ── The Unassigned Pool (PRD §5.5) ──────────────────────────────── -->
+      <section class="fx-pool" :class="{ 'is-collapsed': poolCollapsed }">
+        <header class="fx-pool__head">
+          <button class="fx-btn fx-btn--ghost" @click="togglePool">
+            {{ poolCollapsed ? "[+]" : "[−]" }}
+          </button>
+          <h2 class="fx-pool__title">Unassigned pool</h2>
+          <span class="fx-board__count">{{ pool.length }}</span>
+        </header>
 
-        <!--
-          §8.1 STATE FORBIDS -> DISABLED WITH A REASON. Cancelled is a terminal state
-          reached only through POST /jobs/{id}/cancel, which requires a reason and
-          refuses when posted invoices exist. Dropping a card into it would bypass both,
-          so the column takes no drops and says why.
-        -->
-        <draggable
-          :list="grouped[col] || []"
-          :group="{ name: 'jobs', pull: !isTerminal(col), put: !isTerminal(col) }"
-          class="fx-board__drop"
-          ghost-class="fx-card--ghost"
-          :disabled="!canMove"
-          @change="(e) => onChange(e, col)"
-        >
-          <article v-for="job in grouped[col] || []" :key="job.id" class="fx-card">
-            <div class="identifier fx-card__no">{{ job.execution_job_no || '—' }}</div>
-            <div class="fx-card__meta">
-              <span v-if="job.planned_clearance_date">
-                clears <Figure :value="job.planned_clearance_date" kind="date" />
-              </span>
-              <span v-else class="is-empty" aria-label="No clearance date"></span>
-            </div>
+        <div v-if="!poolCollapsed" class="fx-pool__scroller">
+          <p v-if="!pool.length" class="fx-muted">Nothing waiting. Every job has an operator.</p>
+          <article v-for="job in pool" :key="job.id" class="fx-card fx-card--pool">
+            <div class="identifier fx-card__no">{{ job.execution_job_no || "—" }}</div>
+            <StatusChip :value="job.status" />
+            <button class="fx-btn" :disabled="busy" @click="claim(job)">Assign to myself</button>
           </article>
-        </draggable>
-
-        <p v-if="!(grouped[col] || []).length" class="fx-muted fx-board__empty">—</p>
-        <p v-if="isTerminal(col)" class="fx-board__note">
-          Set from the job, not by dragging
-        </p>
+        </div>
       </section>
-    </div>
+
+      <!-- ── Perspective A — Process View, 4 columns exactly (PRD §5.5) ──── -->
+      <div v-if="view === 'process'" class="fx-board">
+        <section v-for="col in PROCESS" :key="col.key" class="fx-board__col fx-board__col--wide">
+          <h2 class="fx-board__head">
+            {{ col.label }}
+            <span class="fx-board__count">{{ (grouped[col.key] || []).length }}</span>
+          </h2>
+
+          <draggable
+            :list="grouped[col.key] || []"
+            :group="{ name: 'jobs', pull: !col.terminal, put: !col.terminal }"
+            class="fx-board__drop"
+            ghost-class="fx-card--ghost"
+            :disabled="!canMove"
+            @change="(e) => onMove(e, col)"
+          >
+            <article
+              v-for="job in grouped[col.key] || []"
+              :key="job.id"
+              class="fx-card"
+              :class="'fx-card--' + urgency(job)"
+            >
+              <div class="fx-card__top">
+                <span class="identifier fx-card__no">{{ job.execution_job_no || "—" }}</span>
+                <!-- The stage badge: the fine status the four columns group over. -->
+                <StatusChip :value="job.status" />
+              </div>
+
+              <div v-if="job.awb_number" class="identifier fx-card__meta">{{ job.awb_number }}</div>
+
+              <!-- Cargo tags, from the enquiry's regex-extracted figures. -->
+              <div v-if="job.enquiry" class="fx-card__tags">
+                <span v-if="job.enquiry.extracted_pieces">📦 {{ job.enquiry.extracted_pieces }} pcs</span>
+                <span v-if="job.enquiry.extracted_weight">
+                  ⚖ <Figure :value="job.enquiry.extracted_weight" kind="weight" />
+                </span>
+                <span v-if="job.enquiry.origin_code" class="identifier">
+                  {{ job.enquiry.origin_code }} → {{ job.enquiry.dest_code }}
+                </span>
+              </div>
+
+              <div class="fx-card__meta">
+                <span v-if="job.planned_clearance_date">
+                  clears <Figure :value="job.planned_clearance_date" kind="date" />
+                </span>
+                <span v-else class="is-empty" aria-label="No clearance date"></span>
+              </div>
+
+              <!-- BOTH names — §5.5: "so collaborators share context". -->
+              <div class="fx-card__owners">
+                <span>ops {{ job.ops_user ? job.ops_user.name : "—" }}</span>
+                <span>pricing {{ job.pricing_owner ? job.pricing_owner.name : "—" }}</span>
+              </div>
+            </article>
+          </draggable>
+
+          <p v-if="col.terminal" class="fx-board__note">Set from the job, not by dragging</p>
+        </section>
+      </div>
+
+      <!-- ── Perspective B — the cross-staff clearance matrix ─────────────── -->
+      <div v-else class="fx-matrix-wrap">
+        <table class="fx-table fx-matrix">
+          <thead>
+            <tr>
+              <th scope="col">Clears</th>
+              <th v-for="o in staff" :key="o.id" scope="col">
+                {{ o.name }}
+                <!--
+                  §9.3 OLI badge: at or over the cap it is critical AND says OVERLOADED.
+                  §1.3 never colour alone — the word carries the meaning.
+                -->
+                <span class="fx-oli" :class="{ 'is-over': o.overloaded }">
+                  OLI {{ Number(o.oli).toFixed(1) }}
+                  <template v-if="o.overloaded"> ● OVERLOADED</template>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="day in matrixDays" :key="day">
+              <th scope="row"><Figure :value="day" kind="date" /></th>
+              <td v-for="o in staff" :key="o.id">
+                <span v-for="job in matrixCell(day, o.id)" :key="job.id" class="fx-matrix__job identifier">
+                  {{ job.execution_job_no || job.id }}
+                </span>
+                <span v-if="!matrixCell(day, o.id).length" class="is-empty" aria-label="Nothing scheduled"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="fx-muted fx-board__note">
+          The cap warns; it never blocks. A manager may have context the index lacks.
+        </p>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -57,94 +187,214 @@ import { mapGetters } from "vuex";
 import draggable from "vuedraggable";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
-/* Mirrors App\Enums\JobStatus exactly. 'Lost' is deliberately absent — it is an
-   enquiry state, never a job one, and the database CHECK refuses it here. */
-const COLUMNS = [
-  "Intake",
-  "AI Extraction",
-  "Verification",
-  "Generation",
-  "PDF Generated",
-  "Sent to Airline",
-  "Airline Confirmed",
-  "Completed",
+/* Mirrors App\Enums\JobStatus. 'Lost' is deliberately absent — it is an enquiry state,
+   never a job one, and the database CHECK refuses it here. */
+const STATUSES = [
+  "Intake", "AI Extraction", "Verification", "Generation",
+  "PDF Generated", "Sent to Airline", "Airline Confirmed", "Completed", "Cancelled",
 ];
 
-/* Cancelled is reachable only through the cancel endpoint, which demands a reason and
-   refuses when financial documents are posted. It is shown so the board is complete,
-   but it accepts no drops. */
-const TERMINAL = ["Cancelled"];
+/**
+ * PRD §5.5: "Process View (4 columns, exactly)" —
+ * Processing → Awaiting Customer → In Transit → Completed.
+ *
+ * ❓ The PRD names the four columns and names the nine statuses, but never maps one to
+ * the other. The grouping below is INFERRED and flagged in GAPS.md #31. The genuinely
+ * ambiguous member is `PDF Generated`: a generated draft is what a customer approves,
+ * so it sits in Awaiting Customer — but it could equally be the tail of Processing.
+ *
+ * `entry` is the status a DROP sets. A column is a group, so dropping into it has to
+ * choose one, and the first stage of the group is the only defensible choice: it means
+ * "this shipment has reached this phase", not "it has finished it".
+ */
+const PROCESS = [
+  { key: "processing", label: "Processing", entry: "Intake",
+    statuses: ["Intake", "AI Extraction", "Verification", "Generation"] },
+  { key: "awaiting", label: "Awaiting Customer", entry: "PDF Generated",
+    statuses: ["PDF Generated"] },
+  { key: "transit", label: "In Transit", entry: "Sent to Airline",
+    statuses: ["Sent to Airline", "Airline Confirmed"] },
+  { key: "done", label: "Completed", entry: "Completed", terminal: true,
+    statuses: ["Completed", "Cancelled"] },
+];
+
+const POOL_KEY = "f16s_kanban_pool_collapsed";
+const FILTER_KEY = "f16s_kanban_filters";
 
 export default {
   name: "JobBoard",
-  components: { draggable, Figure },
-  data: () => ({ rows: [], loading: true, error: null }),
+  components: { draggable, Figure, StatusChip },
+  data: () => ({
+    rows: [], pool: [], staff: [], operators: [],
+    view: "process", loading: true, busy: false, error: null,
+    poolCollapsed: false,
+    filters: { opsId: "", stage: "", from: "", to: "" },
+    STATUSES, PROCESS,
+  }),
   computed: {
-    ...mapGetters(["portalLabel", "can"]),
-    columns: () => COLUMNS.concat(TERMINAL),
+    ...mapGetters(["portalLabel", "can", "designation"]),
     canMove() {
-      // Both roles that work the board may move a card. Re-checked server-side.
       return this.can(["pricing", "operations"], "tactical");
+    },
+    /* §9.4 — the cross-staff matrix is ABSENT for operations, not disabled. */
+    canBalance() {
+      return this.designation === "pricing" || this.designation === "boss";
     },
     grouped() {
       const out = {};
-      this.columns.forEach((c) => {
-        out[c] = [];
-      });
+      PROCESS.forEach((c) => { out[c.key] = []; });
       this.rows.forEach((job) => {
-        (out[job.status] = out[job.status] || []).push(job);
+        const col = PROCESS.find((c) => c.statuses.indexOf(job.status) !== -1);
+        if (col) out[col.key].push(job);
       });
       return out;
     },
+    activeChips() {
+      const chips = [];
+      if (this.filters.opsId) {
+        const name = this.filters.opsId === "__mine"
+          ? "Mine"
+          : (this.operators.find((o) => String(o.id) === this.filters.opsId) || {}).name;
+        chips.push({ key: "opsId", label: "Operator: " + (name || this.filters.opsId) });
+      }
+      if (this.filters.stage) chips.push({ key: "stage", label: "Stage: " + this.filters.stage });
+      if (this.filters.from) chips.push({ key: "from", label: "From " + this.filters.from });
+      if (this.filters.to) chips.push({ key: "to", label: "To " + this.filters.to });
+      return chips;
+    },
+    /* Rows of the matrix: every distinct clearance date in the current result set. */
+    matrixDays() {
+      const days = {};
+      this.rows.forEach((j) => { if (j.planned_clearance_date) days[j.planned_clearance_date.slice(0, 10)] = true; });
+      return Object.keys(days).sort();
+    },
   },
   created() {
+    this.restore();
     this.load();
   },
   methods: {
-    isTerminal: (col) => TERMINAL.indexOf(col) !== -1,
-
+    /* Persisted per user, per §9.3 — a board that forgets its filters on every visit
+       gets its filters set once and then abandoned. */
+    restore() {
+      try {
+        this.poolCollapsed = localStorage.getItem(POOL_KEY) === "1";
+        const saved = JSON.parse(localStorage.getItem(FILTER_KEY));
+        if (saved) this.filters = Object.assign(this.filters, saved);
+      } catch (e) { /* a corrupt preference must not stop the board rendering */ }
+    },
+    persist() {
+      try {
+        localStorage.setItem(POOL_KEY, this.poolCollapsed ? "1" : "0");
+        localStorage.setItem(FILTER_KEY, JSON.stringify(this.filters));
+      } catch (e) { /* private mode — the board still works, it just forgets */ }
+    },
+    togglePool() {
+      this.poolCollapsed = !this.poolCollapsed;
+      this.persist();
+    },
+    today() {
+      const d = new Date().toISOString().slice(0, 10);
+      this.filters.from = d;
+      this.filters.to = d;
+      this.load();
+    },
+    clearFilter(key) {
+      this.filters[key] = "";
+      this.load();
+    },
+    clearAll() {
+      this.filters = { opsId: "", stage: "", from: "", to: "" };
+      this.load();
+    },
+    query() {
+      const p = [];
+      if (this.filters.opsId === "__mine") p.push("mine=1");
+      else if (this.filters.opsId) p.push("ops_id=" + this.filters.opsId);
+      if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
+      if (this.filters.from) p.push("from=" + this.filters.from);
+      if (this.filters.to) p.push("to=" + this.filters.to);
+      return p.length ? "?" + p.join("&") : "";
+    },
     load() {
       this.loading = true;
-      ApiService.get("/jobs")
-        .then(({ data }) => {
-          this.rows = data.data || [];
-        })
-        .catch((e) => {
-          this.error = this.readable(e);
-        })
-        .finally(() => {
-          this.loading = false;
-        });
-    },
+      this.persist();
 
+      Promise.all([
+        ApiService.get("/jobs" + this.query()),
+        /* The pool is a SEPARATE query on purpose: it must not disappear because a
+           stage filter excluded it. An operator filters to find work, and the pool is
+           where unclaimed work lives. */
+        ApiService.get("/jobs?unassigned=1"),
+      ])
+        .then(([board, pool]) => {
+          this.rows = board.data.data || [];
+          this.pool = pool.data.data || [];
+          this.error = null;
+        })
+        .catch((e) => { this.error = this.readable(e); })
+        .finally(() => { this.loading = false; });
+    },
+    switchToStaff() {
+      this.view = "staff";
+      if (this.staff.length) return;
+
+      ApiService.get("/jobs/staff-load")
+        .then(({ data }) => {
+          this.staff = data.operators || [];
+          this.operators = this.staff.map((o) => ({ id: o.id, name: o.name }));
+        })
+        .catch((e) => { this.error = this.readable(e); });
+    },
+    matrixCell(day, opsId) {
+      return this.rows.filter(
+        (j) => j.ops_id === opsId && (j.planned_clearance_date || "").slice(0, 10) === day
+      );
+    },
+    /* SLA colouring, from the same urgency bands the OLI multiplier uses — one rule,
+       so the board and the load index cannot disagree about what "urgent" means. */
+    urgency(job) {
+      if (!job.planned_clearance_date) return "later";
+      const d = new Date(job.planned_clearance_date);
+      d.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const days = Math.round((d - today) / 86400000);
+      if (days <= 0) return "today";
+      if (days === 1) return "tomorrow";
+      return "later";
+    },
+    claim(job) {
+      this.busy = true;
+      ApiService.post(`/jobs/${job.id}/claim`, {})
+        .then(() => this.load())
+        /* 409 is a real outcome, not a failure: someone got there first. */
+        .catch((e) => { this.error = this.readable(e); this.load(); })
+        .finally(() => { this.busy = false; });
+    },
     /**
      * A card landed in a new column.
      *
-     * The server is the authority: on any failure the board reloads rather than trying
-     * to reverse the move locally. An optimistic UI that guesses wrong leaves the
+     * The server is the authority: on any failure the board reloads rather than
+     * reversing the move locally. An optimistic UI that guesses wrong leaves the
      * operator looking at a status the shipment does not have.
      */
-    onChange(event, column) {
+    onMove(event, column) {
       if (!event.added) return;
 
       const job = event.added.element;
       const previous = job.status;
 
-      ApiService.put(`/jobs/${job.id}/status`, { status: column })
-        .then(({ data }) => {
-          job.status = data.status;
-          this.error = null;
-        })
+      ApiService.put(`/jobs/${job.id}/status`, { status: column.entry })
+        .then(({ data }) => { job.status = data.status; this.error = null; })
         .catch((e) => {
           job.status = previous;
           this.error = this.readable(e);
-          this.load(); // resync from the source of truth
+          this.load();
         });
     },
-
-    /* §11.3 — surface the server's reason. The API returns a `reason` code precisely
-       so the UI can be specific rather than saying "something went wrong". */
     readable(e) {
       const d = (e.response && e.response.data) || {};
       return d.error || d.message || "Something went wrong.";

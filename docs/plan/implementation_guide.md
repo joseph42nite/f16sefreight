@@ -1063,6 +1063,33 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 
 ✅ **Checkpoint 6** — `npm run test:unit` green (§8.3 — a component is not done until its spec passes), then `npm run dev` and walk one enquiry end-to-end in the browser: mail arrives → triage → drawer verification → confirm → Kanban card → cost sheet. Confirm the drawer collapse geometry and that a Tactical login sees no client names.
 
+✅ **CHECKPOINT 6 PASSED 2026-08-31.** `npm run test:unit` 31 passed · `php artisan test` 342 passed. Walked in a real browser, not asserted:
+
+```
+1. TRIAGE      airline thread -> customer_enquiry -> ENQA-DEMOBOM-26-0544 minted
+               first_triage_at stamped · first_response_at STILL NULL (nothing sent)
+2. DRAWER      folders 220->0 · threads 320->0 · rail 208->60 · drawer 640 = 50% of 1280
+3. CONVERT     HTTP 201 -> JOBA-DEMOBOM-26-0544, status Intake
+4. KANBAN      card appears in BOTH the Unassigned Pool and Processing — correct, the
+               pool is a separate query so a stage filter cannot hide unclaimed work
+5. COST SHEET  450.5 x 210 x 1.18 = INR 111,633.90, computed server-side
+               margin percent renders an EM DASH — NULL, not -100%, on an unbilled job
+6. TACTICAL    tact-sales@demo.test: no client names anywhere on the page, no accounts
+               grid, and the sub-header states why ("Client attribution needs Command")
+```
+
+🐞 **The check that nearly passed for the wrong reason.** Both tenants reported an
+identical 25,194.500 kg, because the seeder generated the same deterministic figures for
+each. Isolation *was* working — different `agent_id`, different `company_id`, and the
+query scopes by branch — but **with identical data a cross-tenant leak looks exactly
+like correct output.** The seeder now scales the Tactical tenant to 0.37, so the two
+read 25,194.500 kg and 9,321.966 kg and a leak is visible at a glance rather than
+provable only by reading SQL.
+
+⚠️ **Not covered by this checkpoint, and not claimed:** mail does not actually *arrive* —
+`PollMailboxes` (§4.2) is blocked on GAPS #15, so step 1 starts from a seeded thread. The
+drawer's verification tabs (Upload, document forms, e-docket) are named placeholders.
+
 ---
 
 ## Step 7 — Analytics & Sales Intelligence

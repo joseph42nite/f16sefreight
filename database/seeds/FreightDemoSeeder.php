@@ -48,10 +48,18 @@ class FreightDemoSeeder extends Seeder
 {
     private const PASSWORD = 'demo1234';
 
-    /** Two tenants: one on Command, one on Tactical, so the tier locks are visible. */
+    /**
+     * Two tenants: one on Command, one on Tactical, so the tier locks are visible.
+     *
+     * ⚠️ `scale` exists so the two tenants produce VISIBLY DIFFERENT figures. With
+     * identical deterministic data, a cross-tenant leak looks exactly like correct
+     * output — both tenants reported 25,194.500 kg and the only way to tell isolation
+     * was working was to read the query. Different magnitudes make a leak obvious at a
+     * glance, which is the whole point of having two tenants in a demo.
+     */
     private const TENANTS = [
-        ['code' => 'DEMO', 'name' => 'Demo Freight Pvt Ltd', 'tier' => 'command',  'domain' => 'demofreight.test'],
-        ['code' => 'TACT', 'name' => 'Tactical Cargo Co',    'tier' => 'tactical', 'domain' => 'tacticalcargo.test'],
+        ['code' => 'DEMO', 'name' => 'Demo Freight Pvt Ltd', 'tier' => 'command',  'domain' => 'demofreight.test', 'scale' => 1.0],
+        ['code' => 'TACT', 'name' => 'Tactical Cargo Co',    'tier' => 'tactical', 'domain' => 'tacticalcargo.test', 'scale' => 0.37],
     ];
 
     private const DESIGNATIONS = ['pricing', 'operations', 'sales', 'accounts', 'boss'];
@@ -261,8 +269,8 @@ class FreightDemoSeeder extends Seeder
         $this->seedPeriod($branches->first());
 
         foreach ($branches as $branch) {
-            $this->seedLifecycle($branch, $customers, $users);
-            $this->seedTrailingHistory($branch, $customers[3], $users);
+            $this->seedLifecycle($branch, $customers, $users, $tenant['scale']);
+            $this->seedTrailingHistory($branch, $customers[3], $users, $tenant['scale']);
             $this->seedInbox($branch, $customers, $users);
         }
 
@@ -375,7 +383,7 @@ class FreightDemoSeeder extends Seeder
      * and the boards hold different work. A demo where both portals show the same rows
      * proves nothing about the thing the portals exist to do.
      */
-    private function seedLifecycle(Agent $branch, $customers, array $users): void
+    private function seedLifecycle(Agent $branch, $customers, array $users, float $scale = 1.0): void
     {
         $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
         $seq = ['air' => 0, 'sea' => 0];
@@ -406,7 +414,7 @@ class FreightDemoSeeder extends Seeder
                     'origin_code' => $origin,
                     'dest_code' => $dest,
                     'extracted_pieces' => 6 + $i,
-                    'extracted_weight' => round(320.5 + ($i * 47.25), 3),
+                    'extracted_weight' => round((320.5 + ($i * 47.25)) * $scale, 3),
                     'extracted_volume' => round(1.8 + ($i * 0.35), 3),
                     'cargo_description' => ['Machine parts', 'Textiles', 'Pharma (temp-controlled)', 'Auto components'][$i % 4],
                     'cargo_type' => $mode === 'sea' ? 'fcl' : 'general',
@@ -450,7 +458,7 @@ class FreightDemoSeeder extends Seeder
                     'updated_at' => now()->subDays(max($daysAgo, 1)),
                 ]);
 
-                $this->seedShipmentDetails($job, $mode, $origin, $dest, $i);
+                $this->seedShipmentDetails($job, $mode, $origin, $dest, $i, $scale);
             }
         }
     }
@@ -469,7 +477,7 @@ class FreightDemoSeeder extends Seeder
      * the churn action fire, with real arithmetic behind it rather than a seeded row
      * in `sales_action_queue` pretending an engine ran.
      */
-    private function seedTrailingHistory(Agent $branch, Customer $customer, array $users): void
+    private function seedTrailingHistory(Agent $branch, Customer $customer, array $users, float $scale = 1.0): void
     {
         $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
         $lanes = self::AIR_LANES;
@@ -500,7 +508,7 @@ class FreightDemoSeeder extends Seeder
                 'status' => $status,
                 'origin_code' => $origin, 'dest_code' => $dest,
                 'extracted_pieces' => 8 + ($i % 5),
-                'extracted_weight' => round(400 + (($i % 9) * 60), 3),
+                'extracted_weight' => round((400 + (($i % 9) * 60)) * $scale, 3),
                 'cargo_description' => 'Machine parts', 'cargo_type' => 'general',
                 'cargo_data_source' => 'regex',
                 'quoted_amount' => round(92000 + (($i % 6) * 8000), 2), 'quoted_currency' => 'INR',
@@ -525,8 +533,8 @@ class FreightDemoSeeder extends Seeder
                     'flight_number' => 'EK511', 'carrier_name' => 'Emirates SkyCargo',
                     'pol_code' => $origin, 'pod_code' => $dest,
                     'piece_count' => 8 + ($i % 5),
-                    'gross_weight' => round(400 + (($i % 9) * 60), 3),
-                    'chargeable_weight' => round(420 + (($i % 9) * 60), 3),
+                    'gross_weight' => round((400 + (($i % 9) * 60)) * $scale, 3),
+                    'chargeable_weight' => round((420 + (($i % 9) * 60)) * $scale, 3),
                     'created_at' => $when, 'updated_at' => $when,
                 ]);
             }
@@ -537,14 +545,14 @@ class FreightDemoSeeder extends Seeder
     }
 
     /** Tier 3 data — the authoritative figures billing and manifests read. */
-    private function seedShipmentDetails(Job $job, string $mode, string $origin, string $dest, int $i): void
+    private function seedShipmentDetails(Job $job, string $mode, string $origin, string $dest, int $i, float $scale = 1.0): void
     {
         $common = [
             'job_id' => $job->id,
             'piece_count' => 6 + $i,
-            'gross_weight' => round(320.5 + ($i * 47.25), 3),
-            'chargeable_weight' => round(340.0 + ($i * 47.25), 3),
-            'volume_cbm' => round(1.8 + ($i * 0.35), 3),
+            'gross_weight' => round((320.5 + ($i * 47.25)) * $scale, 3),
+            'chargeable_weight' => round((340.0 + ($i * 47.25)) * $scale, 3),
+            'volume_cbm' => round((1.8 + ($i * 0.35)) * $scale, 3),
             'created_at' => now(), 'updated_at' => now(),
         ];
 

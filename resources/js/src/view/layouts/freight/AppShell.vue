@@ -45,6 +45,8 @@
 
         <div class="fx-header__spacer"></div>
 
+        <BellPanel />
+
         <span class="fx-header__who">
           {{ designation }}<template v-if="tier"> · {{ tier }}</template>
         </span>
@@ -60,9 +62,11 @@
 <script>
 import { mapGetters } from "vuex";
 import { visibleNavFor } from "@/core/config/navigation";
+import BellPanel from "@/view/pages/freight/components/BellPanel.vue";
 
 export default {
   name: "AppShell",
+  components: { BellPanel },
   data: () => ({ collapsed: false }),
   computed: {
     ...mapGetters(["designation", "tier", "portal", "tierAtLeast"]),

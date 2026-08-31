@@ -237,6 +237,16 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/jobs/{job}/claim', [\App\Http\Controllers\Freight\JobController::class, 'claim']);
     // The cross-staff clearance matrix. 🔒 pricing/boss only — PRD §9.4 says the
     // matrix is ABSENT for operations, not disabled.
+    // The handover lifecycle. Operations ASKS; pricing or boss ANSWERS; only the
+    // requester may withdraw. Each ending dissolves the bell row rather than
+    // marking it resolved — see BellNotificationService.
+    Route::post('/jobs/{job}/reassign/withdraw', [\App\Http\Controllers\Freight\JobController::class, 'withdrawReassignment']);
+    Route::post('/jobs/{job}/reassign/resolve', [\App\Http\Controllers\Freight\JobController::class, 'resolveReassignment']);
+
+    // The bell itself.
+    Route::get('/notifications', [\App\Http\Controllers\Freight\NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Freight\NotificationController::class, 'markRead']);
+
     Route::get('/jobs/staff-load', [\App\Http\Controllers\Freight\JobController::class, 'staffLoad']);
     Route::post('/jobs/{job}/reassign', [\App\Http\Controllers\Freight\JobController::class, 'reassign']);
     Route::post('/jobs/{job}/reassign/request', [\App\Http\Controllers\Freight\JobController::class, 'requestReassignment']);

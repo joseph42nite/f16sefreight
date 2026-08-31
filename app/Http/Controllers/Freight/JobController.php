@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Job;
 use App\Services\AuditLogger;
 use App\Services\OperatorLoadService;
+use App\Services\BellNotificationService;
 use App\Services\EnquirySequenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -232,7 +233,112 @@ class JobController extends Controller
             'pending_ops_requested_at' => now(),
         ]);
 
+        // 🔔 PINNED, because an approval is a request for a DECISION, not an FYI. It
+        // sorts above every routine alert until somebody answers it.
+        if ($job->pricing_id !== null) {
+            app(BellNotificationService::class)->notify(
+                $job->agent_id,
+                $job->pricing_id,
+                BellNotificationService::REASSIGNMENT,
+                [
+                    'job_id'       => $job->id,
+                    'job_no'       => $job->execution_job_no,
+                    'from_ops_id'  => $job->ops_id,
+                    'to_ops_id'    => $data['ops_id'],
+                    'requested_by' => auth()->id(),
+                ],
+                BellNotificationService::PRIORITY_APPROVAL
+            );
+        }
+
         return response()->json($job->fresh(), 202);
+    }
+
+    /**
+     * Withdraw a staged handover.
+     *
+     * 🔴 **The notification is HARD-DELETED so it auto-dissolves** from the pricing
+     * owner's bell (ui_ux_guide §5.6) — no "cancelled" tombstone. A bell is a list of
+     * things still needing a decision; a resolved-but-visible row is a decision the
+     * owner re-makes every time they look, and after a few of those they stop reading
+     * the bell entirely.
+     *
+     * 🔒 Only the operator who ASKED may withdraw. Letting anyone withdraw would let
+     * an operator quietly cancel a colleague's request and keep work that was being
+     * handed away.
+     */
+    public function withdrawReassignment(Job $job): JsonResponse
+    {
+        $this->authorize('requestReassignment');
+
+        if ($job->pending_ops_id === null) {
+            return response()->json([
+                'error'  => 'There is no handover staged on this job.',
+                'reason' => 'nothing_pending',
+            ], 422);
+        }
+
+        if ((int) $job->pending_ops_requested_by !== (int) auth()->id()) {
+            return response()->json([
+                'error'  => 'Only the operator who requested this handover can withdraw it.',
+                'reason' => 'not_requester',
+            ], 403);
+        }
+
+        $job->update([
+            'pending_ops_id'           => null,
+            'pending_ops_requested_by' => null,
+            'pending_ops_requested_at' => null,
+        ]);
+
+        $dissolved = app(BellNotificationService::class)->dissolveReassignment($job->id);
+
+        return response()->json(['job' => $job->fresh(), 'notifications_dissolved' => $dissolved]);
+    }
+
+    /**
+     * Approve or refuse a staged handover — the bell's inline [Accept] / [Reject].
+     *
+     * 🔒 `assignOperator` — pricing or boss. Operations may ASK; only the owner grants.
+     * That asymmetry is the whole reason a handover is staged rather than applied.
+     *
+     * Either answer dissolves the notification: the decision has been made, and a bell
+     * row that outlives its decision is one the owner has to re-read and re-dismiss.
+     */
+    public function resolveReassignment(Request $request, Job $job): JsonResponse
+    {
+        $this->authorize('assignOperator');
+
+        $data = $request->validate(['decision' => 'required|string|in:accept,reject']);
+
+        if ($job->pending_ops_id === null) {
+            return response()->json([
+                'error'  => 'There is no handover staged on this job.',
+                'reason' => 'nothing_pending',
+            ], 422);
+        }
+
+        $accepted = $data['decision'] === 'accept';
+
+        $job->update([
+            // 🔴 The live assignment only moves on ACCEPT. A rejected request leaves the
+            // job exactly where it was — staging exists so a request cannot move work
+            // on its own.
+            'ops_id'                   => $accepted ? $job->pending_ops_id : $job->ops_id,
+            'pending_ops_id'           => null,
+            'pending_ops_requested_by' => null,
+            'pending_ops_requested_at' => null,
+        ]);
+
+        app(BellNotificationService::class)->dissolveReassignment($job->id);
+
+        $this->audit->record(
+            $job->agent_id,
+            $accepted ? 'job.handover_accepted' : 'job.handover_rejected',
+            'job', $job->id, auth()->id()
+        );
+
+        return response()->json($job->fresh());
     }
 
     /**

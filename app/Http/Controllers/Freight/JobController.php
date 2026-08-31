@@ -10,6 +10,7 @@ use App\Enums\TransportMode;
 use App\Http\Controllers\Controller;
 use App\Job;
 use App\Services\AuditLogger;
+use App\Services\OperatorLoadService;
 use App\Services\EnquirySequenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -218,5 +219,45 @@ class JobController extends Controller
         ]);
 
         return response()->json($job->fresh(), 202);
+    }
+
+    /**
+     * The Staff View — the cross-staff clearance matrix pricing uses to balance load.
+     *
+     * 🔒 `assignOperator` — pricing and boss. Operations does NOT get this: PRD.md §9.4
+     * says the cross-staff matrix is ABSENT for them, not disabled. An executor seeing
+     * every colleague's load invites informal reassignment around the person whose job
+     * it is to balance it.
+     *
+     * ⚠️ Operators with NO open jobs are included at OLI 0.0. They are the whole point
+     * of the view — an idle operator missing from the matrix is capacity nobody can see.
+     */
+    public function staffLoad(OperatorLoadService $load): JsonResponse
+    {
+        $this->authorize('assignOperator');
+
+        $context = \App\Support\UserContext::for(auth()->id() ? auth()->user() : null);
+        $agentId = $context->agentId;
+
+        $totals = $load->forBranch($agentId);
+        $policy = $load->policy($agentId);
+
+        $operators = \App\User::where('branch_name', $agentId)
+            ->whereIn('designation', ['operations', 'pricing'])
+            ->where('is_active', 1)
+            ->get(['id', 'name', 'designation']);
+
+        return response()->json([
+            'capacity_cap' => $policy['capacity_cap'],
+            'operators' => $operators->map(fn ($u) => [
+                'id'          => $u->id,
+                'name'        => $u->name,
+                'designation' => $u->designation,
+                'oli'         => $totals[$u->id]['oli'] ?? 0.0,
+                'jobs'        => $totals[$u->id]['jobs'] ?? 0,
+                // The badge the UI colours. Warns; never blocks.
+                'overloaded'  => ($totals[$u->id]['oli'] ?? 0.0) >= $policy['capacity_cap'],
+            ])->sortBy('oli')->values(),
+        ]);
     }
 }

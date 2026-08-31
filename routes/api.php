@@ -235,6 +235,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/jobs/{job}/cancel', [\App\Http\Controllers\Freight\JobController::class, 'cancel']);
     Route::post('/jobs/{job}/reinitiate', [\App\Http\Controllers\Freight\JobController::class, 'reinitiate']);
     Route::post('/jobs/{job}/claim', [\App\Http\Controllers\Freight\JobController::class, 'claim']);
+    // The cross-staff clearance matrix. 🔒 pricing/boss only — PRD §9.4 says the
+    // matrix is ABSENT for operations, not disabled.
+    Route::get('/jobs/staff-load', [\App\Http\Controllers\Freight\JobController::class, 'staffLoad']);
     Route::post('/jobs/{job}/reassign', [\App\Http\Controllers\Freight\JobController::class, 'reassign']);
     Route::post('/jobs/{job}/reassign/request', [\App\Http\Controllers\Freight\JobController::class, 'requestReassignment']);
 

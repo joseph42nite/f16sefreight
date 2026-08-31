@@ -296,6 +296,14 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'show']);
     Route::post('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'save']);
 
+    // ── Consolidation (§5.8). The routing cascade and the piece reconciliation are
+    // customs concerns, not display ones — see ConsolidationService.
+    Route::get('/jobs/unassociated', [\App\Http\Controllers\Freight\ConsolidationController::class, 'unassociated']);
+    Route::get('/jobs/{master}/consol', [\App\Http\Controllers\Freight\ConsolidationController::class, 'show']);
+    Route::post('/jobs/{master}/link-hbl', [\App\Http\Controllers\Freight\ConsolidationController::class, 'link']);
+    Route::delete('/jobs/{master}/link-hbl/{house}', [\App\Http\Controllers\Freight\ConsolidationController::class, 'unlink']);
+    Route::post('/jobs/{master}/stuff', [\App\Http\Controllers\Freight\ConsolidationController::class, 'stuff']);
+
     // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
     // Command-tier report — a Tactical branch still files with customs.
     Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);

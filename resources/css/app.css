@@ -685,3 +685,9 @@ body.fx-split .fx-rail__label { display: none; }
 /* A tab the cargo-type matrix has switched off. §8.1: state forbids -> DISABLED with a
    reason, and the reason is printed inside the tab rather than left to a tooltip. */
 .fx-drawer__tab.is-locked { color: var(--text-disabled); cursor: not-allowed; }
+
+/* The stuffing matrix: a numeric cell inside a table, sized to its column. */
+.fx-input--cell { min-width: 0; width: 5rem; text-align: right;
+                  font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+/* Over-allocation is refused server-side; this is how the operator sees it coming. */
+.fx-over { color: var(--status-critical); font-weight: 700; }

@@ -332,6 +332,12 @@ const router = new Router({
           meta: { userType: 'user' }
         },
         {
+          path: "focus-sea/consol",
+          name: "Consolidation",
+          component: () => import("@/view/pages/freight/FocusSeaConsol"),
+          meta: { userType: 'user' }
+        },
+        {
           path: "sales",
           name: "Sales",
           component: () => import("@/view/pages/freight/SalesDashboard"),

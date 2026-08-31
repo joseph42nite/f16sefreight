@@ -38,7 +38,8 @@ export const NAV_ITEMS = [
   // Sea's master/house/consol forms are not built yet. PRD.md §468 makes FocusSea a
   // nav GROUP (Master / House / Consol) rather than one item, so this resolves into
   // three entries when those land — the same correction, applied to sea.
-  { path: "/focus-sea", label: "FocusSea", icon: "water", designations: null, portals: ["focussea"] },
+  { path: "/focus-sea", label: "Master Bill of Lading", icon: "water", designations: null, portals: ["focussea"] },
+  { path: "/focus-sea/consol", label: "Consolidation", icon: "boxes", designations: null, portals: ["focussea"] },
 
   // ── Directories ──────────────────────────────────────────────────────────
   { path: "/customers", label: "Customers", icon: "people", designations: ["pricing", "sales", "accounts", "boss"], minTier: "tactical" },

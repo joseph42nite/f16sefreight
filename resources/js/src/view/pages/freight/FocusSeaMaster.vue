@@ -68,8 +68,11 @@
       </nav>
 
       <section class="fx-form">
+        <!-- 1 · Entity — the HBL/MBL party mapping (§5.8). -->
+        <EntityPanel v-if="tab === 'entity'" :key="jobId" :job-id="jobId" />
+
         <!-- 2 · Shipping details -->
-        <div v-if="tab === 'shipping'" class="fx-grid">
+        <div v-else-if="tab === 'shipping'" class="fx-grid">
           <Field v-model="form.vessel_name" label="Vessel name" :disabled="!canWrite" />
           <Field v-model="form.voyage_no" label="Voyage no" :disabled="!canWrite" />
           <Field v-model="form.vessel_flag" label="Flag" :disabled="!canWrite" />
@@ -226,10 +229,11 @@
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Field from "@/view/pages/freight/components/Field.vue";
+import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
 
 /* PRD §5.8 — twelve tabs, in the document's own order. */
 const TABS = [
-  { n: 1, key: "entity", label: "Entity", source: "job_entities" },
+  { n: 1, key: "entity", label: "Entity" },
   { n: 2, key: "shipping", label: "Shipping Dtls." },
   { n: 3, key: "routing", label: "Routing" },
   { n: 4, key: "goods", label: "Goods Dtls." },
@@ -245,7 +249,7 @@ const TABS = [
 
 export default {
   name: "FocusSeaMaster",
-  components: { Field },
+  components: { Field, EntityPanel },
   data: () => ({
     jobs: [], jobId: "", jobNo: null,
     form: {}, containers: [], locking: {}, vocab: { cargo_types: [], container_types: [] },

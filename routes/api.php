@@ -304,6 +304,12 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::delete('/jobs/{master}/link-hbl/{house}', [\App\Http\Controllers\Freight\ConsolidationController::class, 'unlink']);
     Route::post('/jobs/{master}/stuff', [\App\Http\Controllers\Freight\ConsolidationController::class, 'stuff']);
 
+    // ── Parties on a shipment (§5.8 tab 1). The HBL/MBL mapping is enforced here:
+    // the same role means a DIFFERENT company on each document.
+    Route::get('/jobs/{job}/entities', [\App\Http\Controllers\Freight\JobEntityController::class, 'index']);
+    Route::post('/jobs/{job}/entities', [\App\Http\Controllers\Freight\JobEntityController::class, 'store']);
+    Route::delete('/jobs/{job}/entities/{entityId}', [\App\Http\Controllers\Freight\JobEntityController::class, 'destroy']);
+
     // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
     // Command-tier report — a Tactical branch still files with customs.
     Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);

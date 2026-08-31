@@ -2510,6 +2510,7 @@ import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
 import { loadLocations } from "@/core/services/location.cache";
+import { checkAll } from "@/core/config/iata";
 import "vue2-datepicker/index.css";
 import debounce from 'lodash.debounce';
 
@@ -3009,38 +3010,69 @@ export default {
             }
         },
 
+        /**
+         * Stop a keystroke that would take a field past its Cargo-IMP limit.
+         *
+         * 🔴 **THIS USED TO DESTROY DATA SILENTLY, TWICE OVER**, and both are now gone:
+         *
+         *   1. it stripped every character outside /[a-zA-Z0-9 ,\-_]/ from the stored
+         *      value, so "Müller & Co." became "Mller Co" — a mangled legal consignee
+         *      name, rewritten without a word to the operator
+         *   2. it ran `substring(0, maxLength)` on the stored value on EVERY keydown,
+         *      so a 60-character name arriving by paste or OCR was cut to 35 the moment
+         *      the field was next touched
+         *
+         * implementation_guide.md §4.1.2 is explicit about why that is wrong:
+         * *"a maxLength on a shipper name makes the model silently truncate a
+         * 60-character legal name — you would destroy data and never know."* A
+         * truncated consignee on a customs declaration is not recoverable, and only a
+         * human knows the correct short form of a legal name.
+         *
+         * What survives is the harmless half: refusing a keystroke once the field is at
+         * its limit. The operator SEES typing stop. Anything already in the field —
+         * pasted, extracted, or loaded — is left exactly as it is and reported by
+         * `iataViolations` at the generate gate instead.
+         */
         inputLimit(event, fieldPath, maxLength) {
-            const allowedChars = /^[a-zA-Z0-9 ,\-_]+$/;
-            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight'];
-
-            if (allowedKeys.includes(event.key)) {
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+            if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
                 return;
             }
-            const fields = fieldPath.split(".");
-            let input = this.form;
-            
-            for (let i = 0; i < fields.length; i++) {
-                if (input[fields[i]] === undefined) {
-                    return; // Stop if any level is undefined
-                }
-                if (i === fields.length - 1) {
-                    input = input[fields[i]];
-                } else {
-                    input = input[fields[i]];
-                }
-            }
-            if (typeof input !== "string") return;
-            input = input.split('').filter(char => allowedChars.test(char)).join('');
 
-            // Prevent typing beyond maxLength
-            if (input.length >= maxLength) {
+            const fields = fieldPath.split(".");
+            let value = this.form;
+            for (let i = 0; i < fields.length; i++) {
+                if (value[fields[i]] === undefined) return;
+                value = value[fields[i]];
+            }
+
+            if (typeof value !== "string") return;
+
+            // Refuse the keystroke; never rewrite what is already there.
+            if (value.length >= maxLength) {
                 event.preventDefault();
             }
-            let obj = this.form;
-            for (let i = 0; i < fields.length - 1; i++) {
-                obj = obj[fields[i]];
-            }
-            obj[fields[fields.length - 1]] = input.substring(0, maxLength);
+        },
+
+        /**
+         * Every IATA / Cargo-IMP violation on the form — guide §4.1.2.
+         *
+         * Surfaced at the generate gate rather than blocked at the keyboard, because
+         * the operator is the one who must decide HOW to abbreviate. Reporting all of
+         * them at once matters too: fixing one, regenerating, and being told about the
+         * next is four round trips through a form this size.
+         */
+        iataViolations() {
+            const values = Object.assign(
+                {},
+                this.form.shipper_address || {},
+                this.form.consignee_address || {},
+                { awb_number: this.form.first_box
+                    ? [this.form.first_box.awb_code, this.form.first_box.awb_no].filter(Boolean).join('-')
+                    : '' }
+            );
+
+            return checkAll(values).map((v) => `${v.field.replace(/_/g, ' ')} — ${v.message}`);
         },
 
         isGeneratePdf(generateButton) {
@@ -3069,6 +3101,14 @@ export default {
             // Check if there are any entries in the consignment
             if (this.form.entries.length === 0) {
             
+        }
+
+        // ⚠️ IATA limits are checked HERE — before EDI submission — not at the
+        // keyboard. A line over 35 characters is an EDI transmission error, not a
+        // truncation, so it must stop a generate rather than quietly reshape a name.
+        const iata = this.iataViolations();
+        if (iata.length > 0) {
+            errors.push(...iata);
         }
 
         if (errors.length > 0) {

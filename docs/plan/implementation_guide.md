@@ -1028,7 +1028,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 | 7 | `SalesDashboard.vue` | ✅ chart-first — tonnage area, lane bars, win/loss donut — over `/sales/charts`, which reads only engine tables and the funnel views |
 | 8 | `BossDashboard.vue` | 🟡 cross-branch × cross-mode comparison + the funnel with the fiscal/calendar selector. **Target assigner blocked on GAPS #33** (no targets table); executive brief and latency heatmap still to build |
 | 9 | `UpgradeTeaser.vue` | ✅ |
-| 10 | Copilot · VisualReporter · tours | ⬜ (ticket API exists — §5.6) |
+| 10 | Copilot · VisualReporter · tours | 🟡 `VisualReporter.vue` complete — element picking, deterministic capture, console recorder, `html2canvas`. **Screenshot upload blocked on GAPS #35**; the RAG help copilot needs vector infrastructure that does not exist; Driver.js tours not started |
 | 11 | Superadmin screens | ✅ `SuperadminMonitor.vue` (health, per-queue depth, log tail, classification export) · `SupportDeskTickets.vue` (cross-tenant queue, forward-only transitions) |
 | 12 | `MailboxSettings.vue` | ⬜ blocked with §4.2 on GAPS #15 |
 

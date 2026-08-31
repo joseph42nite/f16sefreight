@@ -1,9 +1,10 @@
 {
-    "/js/app.js": "/js/app.js?id=91f2f906bcc77c3ee70a7230e0d29e1f",
-    "/js/manifest.js": "/js/manifest.js?id=59d0d95e064bd48cd0499ac0c1abf9b4",
+    "/js/app.js": "/js/app.js?id=13e98e22dd9f8774f5a8c02884fac29d",
+    "/js/manifest.js": "/js/manifest.js?id=51eb4570c83e29fc5164e4c5d57f287b",
+    "/js/chunk/html2canvas.js": "/js/chunk/html2canvas.js?id=26ccbcaa02a89ece052e0950259d69ef",
     "/vendor.css": "/vendor.css?id=2e85f30ebd66129fdcb06b817d4a0893",
     "/vendor.js": "/vendor.js?id=5bfd4f17d5373ace88631cf934ea46f5",
     "/common.css": "/common.css?id=99d083b404c8730d02eff918def4bca5",
     "/js/chunk/common.js": "/js/chunk/common.js?id=4fc5d6da46bad6e099305a0f7fc83485",
-    "/css/app.css": "/css/app.css?id=775ddb3739643264fec62da2d7e77e44"
+    "/css/app.css": "/css/app.css?id=c1d8a22ffa80880c056d3fa0666d5af5"
 }

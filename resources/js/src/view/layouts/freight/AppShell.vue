@@ -45,6 +45,7 @@
 
         <div class="fx-header__spacer"></div>
 
+        <VisualReporter />
         <BellPanel />
 
         <span class="fx-header__who">
@@ -63,10 +64,11 @@
 import { mapGetters } from "vuex";
 import { visibleNavFor } from "@/core/config/navigation";
 import BellPanel from "@/view/pages/freight/components/BellPanel.vue";
+import VisualReporter from "@/view/pages/freight/components/VisualReporter.vue";
 
 export default {
   name: "AppShell",
-  components: { BellPanel },
+  components: { BellPanel, VisualReporter },
   data: () => ({ collapsed: false }),
   computed: {
     ...mapGetters(["designation", "tier", "portal", "tierAtLeast"]),

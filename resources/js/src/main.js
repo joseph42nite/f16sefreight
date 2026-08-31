@@ -8,6 +8,7 @@ import router from "./router";
 window.$ = window.jQuery = require("jquery");
 import store from "@/core/services/store";
 import VueApexCharts from "vue-apexcharts";
+import consoleRecorder from "@/core/services/console.recorder";
 import ApiService from "@/core/services/api.service";
 import JwtService from "@/core/services/jwt.service";
 import { VERIFY_AUTH } from "@/core/services/store/auth.module";
@@ -37,6 +38,10 @@ Vue.directive('click-outside', {
 import { Form, HasError, AlertError } from "vform";
 window.Form = Form;
 Vue.component("apexchart", VueApexCharts);
+
+// Start recording console errors immediately — a bug report is only as good as the
+// logs that were captured BEFORE somebody thought to file one.
+consoleRecorder.install();
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
 

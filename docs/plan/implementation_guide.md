@@ -1015,14 +1015,14 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 
 ---
 
-#### Step 6 progress — items 1, 2, 3 and 9 complete
+#### Step 6 progress — items 1, 2, 3, 4 and 9 complete
 
 | # | Item | State |
 |---|---|---|
 | 1 | `JobInbox.vue` | ✅ three columns, triage, claim, **split-pane collapse** |
 | 2 | `OcrUploadModal.vue` | 🟡 modal + confidence highlighting built; **pre-population of the legacy `FocusAir.vue` form still to do**, and end-to-end extraction is blocked by GAPS #29 |
 | 3 | `OpsDashboard.vue` | ✅ four Process columns, Staff matrix, Unassigned Pool, filters, OLI badges, **bell** |
-| 4 | `JobCostSheet.vue` | ⬜ next |
+| 4 | `JobCostSheet.vue` | ✅ buy/sell tables in the drawer, margin gated, locks on finalization |
 | 5–6 | FocusSea / FocusAir forms | ⬜ |
 | 7–8 | Sales / Boss dashboards | 🟡 screens exist and read live endpoints; **ApexCharts not wired** — tables and tiles only |
 | 9 | `UpgradeTeaser.vue` | ✅ |

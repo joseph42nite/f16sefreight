@@ -176,6 +176,15 @@
           </dl>
         </section>
 
+        <!-- §6.7 — the cost sheet, decoupled from the manifest. -->
+        <section v-else-if="tab === 'cost'">
+          <p v-if="!active.enquiry" class="fx-muted">
+            No enquiry on this conversation yet, so there is no job to cost.
+          </p>
+          <CostSheet v-else-if="jobId" :job-id="jobId" />
+          <p v-else class="fx-muted">This enquiry has not been converted to a job yet.</p>
+        </section>
+
         <section v-else-if="tab === 'extraction'">
           <p v-if="!extracted" class="fx-muted">
             Nothing extracted yet. <strong>Analyze PDF</strong> reads a document and
@@ -223,6 +232,7 @@ import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import OcrUploadModal from "@/view/pages/freight/components/OcrUploadModal.vue";
+import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
 
@@ -233,13 +243,13 @@ const WORKSPACE_TABS = [
   { key: "timing", label: "Timing" },
   { key: "extraction", label: "Extraction" },
   { key: "upload", label: "Upload", step: 2 },
-  { key: "cost", label: "Cost sheet", step: 4 },
+  { key: "cost", label: "Cost sheet" },
   { key: "docket", label: "E-Docket", step: 4 },
 ];
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, OcrUploadModal },
+  components: { Figure, StatusChip, FxDrawer, OcrUploadModal, CostSheet },
   data: () => ({
     folders: [
       { key: "all", label: "All" },
@@ -254,7 +264,7 @@ export default {
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
-    workspace: false, tab: "enquiry", ocrOpen: false, extracted: null,
+    workspace: false, tab: "enquiry", ocrOpen: false, extracted: null, jobId: null,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
@@ -384,6 +394,18 @@ export default {
           this.active = data.thread;
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
+          this.jobId = null;
+
+          /* The cost sheet hangs off the JOB, not the thread. A converted enquiry has
+             one; an unconverted one does not, and saying so beats an empty table. */
+          if (data.thread.enquiry && data.thread.enquiry.status === "converted") {
+            ApiService.get("/jobs?enquiry_id=" + data.thread.enquiry.id)
+              .then(({ data: jobs }) => {
+                const rows = jobs.data || [];
+                this.jobId = rows.length ? rows[0].id : null;
+              })
+              .catch(() => { this.jobId = null; });
+          }
         })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },

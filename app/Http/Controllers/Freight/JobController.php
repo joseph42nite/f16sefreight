@@ -36,6 +36,8 @@ class JobController extends Controller
             // no operator is actionable.
             ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('ops_id'))
             ->when($request->filled('ops_id'), fn ($q) => $q->where('ops_id', $request->integer('ops_id')))
+            // The inbox drawer resolves a thread's enquiry to its job for the cost sheet.
+            ->when($request->filled('enquiry_id'), fn ($q) => $q->where('enquiry_id', $request->integer('enquiry_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('planned_clearance_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('planned_clearance_date', '<=', $request->date('to')))
             // PRD §5.5 card anatomy needs BOTH names — "so collaborators share context".

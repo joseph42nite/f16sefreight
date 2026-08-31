@@ -52,6 +52,16 @@ class AuthServiceProvider extends ServiceProvider
         $this->define('requestReassignment', ['operations'],      'tactical');
         $this->define('assignOperator',      ['pricing', 'boss'], 'tactical');
 
+        // ── The Job Cost Sheet — PRD.md §6.7 ─────────────────────────────────
+        // Pricing owns the rates; accounts finalizes them. Operations never touches
+        // money, and SALES never sees the buy side at all (§2.3.4 / §7.2).
+        $this->define('viewCostSheet', ['pricing', 'accounts', 'boss'], 'tactical');
+        $this->define('editCostSheet', ['pricing', 'accounts'],         'tactical');
+
+        // 🔴 The margin is sell − buy, so seeing it IS seeing the buy rate. Sales is
+        // excluded at every tier — PRD.md §7.2 marks that row "❌ never".
+        $this->define('viewMargin',    ['pricing', 'accounts', 'boss'], 'tactical');
+
         // ── Customs & manifests — guide §5.4 ─────────────────────────────────
         // 🔒 OPERATIONS transmits. `documentation` is a legacy designation VALUE, not
         // a login: document work is done by the same operations user who executes the

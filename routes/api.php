@@ -284,6 +284,13 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/sales/actions', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'actions']);
     Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);
 
+    // ── The Job Cost Sheet (§6.7). Tactical, because a cost sheet is operational
+    // pricing work — the LEDGER it eventually feeds is what needs Command.
+    // 🔴 Nothing here writes to a manifest table: rates move, declarations do not.
+    Route::get('/jobs/{job}/cost-sheet', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'show']);
+    Route::post('/jobs/{job}/cost-sheet/lines', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'storeLine']);
+    Route::delete('/jobs/{job}/cost-sheet/{side}/{lineId}', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'destroyLine']);
+
     // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
     // Command-tier report — a Tactical branch still files with customs.
     Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);

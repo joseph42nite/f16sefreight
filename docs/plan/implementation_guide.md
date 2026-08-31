@@ -1150,6 +1150,37 @@ Order matters here more than anywhere else in the build.
 
 Also build: `financial_snapshots` via `snapshots:compute` (30 min), the DSR/MSR/YSR funnel views, and the P&L / Balance Sheet / Trial Balance reports with strict period lockout.
 
+✅ **THE "ALSO BUILD" LINE IS DONE — 2026-08-31.** Funnel views shipped with Batch 1d;
+`snapshots:compute` and the three reports land here.
+
+```
+trial-balance   balanced TRUE   dr 377,600 = cr 377,600
+profit-and-loss revenue 320,000 · expense 0 · net 320,000 · margin 100%
+balance-sheet   assets 377,600 − liabilities 57,600 = equity 320,000
+```
+
+🔴 **The GST fix is visible here for the first time.** Revenue reads **320,000, not
+377,600** — the 57,600 of output tax sits in liabilities. This is the report that would
+have displayed the earlier posting defect as inflated income, and it is the reason
+`assets − liabilities` now equals the P&L net exactly.
+
+⚠️ **Strict period lockout means a report runs over a PERIOD, never a date range.** A
+P&L for "1–15 August" is a number nobody can reconcile against anything they have filed,
+and it gets believed because it looks like a report. Entries are scoped by
+`accounting_period_id`, **not** by posting date — an entry posted late but belonging to
+an earlier period appears in THAT period's report, which is why the ledger carries the
+period as a foreign key at all.
+
+⚠️ **These reports read the ledger directly, and that is correct.** §2242 forbids live
+aggregation for DASHBOARDS; a trial balance is an audit artefact whose whole purpose is
+to prove the ledger balances, so reading a pre-aggregate would defeat it.
+
+**Still open in Step 7:** items 6 (contact directory + outreach) and 8 (Gemma narration)
+— 6 is blocked with §4.2 on GAPS #15, and 8 is deliberately last. Of the §7.3.4 guard
+rails, CHS weight re-normalisation and the inverted `ops_health` are not yet
+implemented; `client_health_score` stays NULL rather than being computed from partial
+components.
+
 ✅ **Checkpoint 7** — verify tier + mode gating end-to-end: a Tactical sales user sees branch aggregates with no client names and no money; a Command sales user sees only `customers.sales_id = me`; an **air** sales user sees **zero** sea rows in every engine table, and vice versa.
 
 ---

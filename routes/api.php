@@ -332,6 +332,14 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // The journal the post WILL write. `viewFinancials`, so the Boss can read the
         // consequence of a posting they are not allowed to perform.
         Route::get('/invoices/{invoice}/posting-preview', [\App\Http\Controllers\Freight\InvoiceController::class, 'postingPreview']);
+        // ── Financial reports (§6.8). Strict period lockout: a report runs over a
+        // PERIOD, never a free date range — half a period is a number nobody can
+        // reconcile against anything they have filed.
+        Route::get('/reports/periods', [\App\Http\Controllers\Freight\FinancialReportController::class, 'periods']);
+        Route::get('/reports/profit-and-loss', [\App\Http\Controllers\Freight\FinancialReportController::class, 'profitAndLoss']);
+        Route::get('/reports/balance-sheet', [\App\Http\Controllers\Freight\FinancialReportController::class, 'balanceSheet']);
+        Route::get('/reports/trial-balance', [\App\Http\Controllers\Freight\FinancialReportController::class, 'trialBalance']);
+
         Route::get('/customers/{customer}/credit', [\App\Http\Controllers\Freight\InvoiceController::class, 'creditStanding']);
 
         // ── The buy side. Same segregation: viewFinancials reads, postLedger commits.

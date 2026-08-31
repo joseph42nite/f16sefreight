@@ -1025,7 +1025,8 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 | 4 | `JobCostSheet.vue` | ✅ buy/sell tables in the drawer, margin gated, locks on finalization |
 | 5 | FocusSea forms | ✅ `FocusSeaMaster.vue` (12 tabs, cargo-type matrix, ISO 6346) · `FocusSeaConsol.vue` (roll-up, routing cascade, stuffing) · the Entity panel enforces the HBL/MBL party mapping, so master and house are **one form reading its own document kind** rather than two components |
 | 6 | FocusAir forms | 🟡 IATA constraints surfaced and the silent-truncation defect fixed in BOTH live forms (`FocusAir.vue`, `HouseWayBill.vue`). **`FocusAirImport.vue` does not exist yet** — it belongs to Segment C air import |
-| 7–8 | Sales / Boss dashboards | 🟡 screens exist and read live endpoints; **ApexCharts not wired** — tables and tiles only |
+| 7 | `SalesDashboard.vue` | ✅ chart-first — tonnage area, lane bars, win/loss donut — over `/sales/charts`, which reads only engine tables and the funnel views |
+| 8 | `BossDashboard.vue` | 🟡 funnel table with the fiscal/calendar selector; **cross-branch comparison and the target assigner still to build** |
 | 9 | `UpgradeTeaser.vue` | ✅ |
 | 10 | Copilot · VisualReporter · tours | ⬜ (ticket API exists — §5.6) |
 | 11 | Superadmin screens | ⬜ (health/logs/desk API exists — §5.6) |

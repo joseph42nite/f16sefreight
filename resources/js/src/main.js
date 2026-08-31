@@ -7,6 +7,7 @@ import App from "./App.vue";
 import router from "./router";
 window.$ = window.jQuery = require("jquery");
 import store from "@/core/services/store";
+import VueApexCharts from "vue-apexcharts";
 import ApiService from "@/core/services/api.service";
 import JwtService from "@/core/services/jwt.service";
 import { VERIFY_AUTH } from "@/core/services/store/auth.module";
@@ -35,6 +36,7 @@ Vue.directive('click-outside', {
 
 import { Form, HasError, AlertError } from "vform";
 window.Form = Form;
+Vue.component("apexchart", VueApexCharts);
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
 

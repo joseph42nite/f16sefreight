@@ -5,6 +5,11 @@
    */
 
 /*!
+ * ApexCharts v5.13.0
+ * (c) 2018-2026 ApexCharts
+ */
+
+/*!
  * jQuery JavaScript Library v3.7.1
  * https://jquery.com/
  *

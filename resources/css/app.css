@@ -691,3 +691,13 @@ body.fx-split .fx-rail__label { display: none; }
                   font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 /* Over-allocation is refused server-side; this is how the operator sees it coming. */
 .fx-over { color: var(--status-critical); font-weight: 700; }
+
+/* ═══ §7.4 Charts — chart-first, tables as drill-down ══════════════════════ */
+.fx-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+             gap: var(--space-3); }
+.fx-chart { background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: var(--space-3); min-width: 0; }
+/* §4.1 an empty series is not a chart of zeroes — the message occupies the same box
+   so the grid does not reflow when data arrives. */
+.fx-chart__empty { display: flex; align-items: center; justify-content: center;
+                   min-height: 260px; text-align: center; margin: 0; }

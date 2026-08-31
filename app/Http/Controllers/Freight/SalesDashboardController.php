@@ -155,6 +155,36 @@ class SalesDashboardController extends Controller
         return response()->json(['accounts' => $this->clientBook($context, $mode, 200)]);
     }
 
+    /**
+     * The three chart series — guide Step 6 item 7, PRD.md §7.4.
+     *
+     * 🔴 **EVERY SERIES COMES FROM A PRE-COMPUTED TABLE OR A VIEW.** Tonnage and lanes
+     * from `customer_lane_stats`, the funnel from `*_funnel_view`. Nothing here touches
+     * `jobs` — PRD.md §2242, and the rule the whole engine exists to honour.
+     *
+     * ⚠️ **The same components serve both tiers; only the SCOPE changes.** Tactical
+     * charts the branch, Command charts the rep's own book. Two sets of chart code
+     * would drift, and the tier difference is a WHERE clause, not a different picture.
+     */
+    public function charts(Request $request): JsonResponse
+    {
+        $this->authorize('viewSales');
+
+        $context = UserContext::for(auth()->user());
+        $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : null;
+
+        $grain = $request->string('grain', 'month')->toString();
+        $grain = in_array($grain, ['day', 'month', 'year'], true) ? $grain : 'month';
+
+        return response()->json([
+            'grain'   => $grain,
+            'scope'   => $context->tier === 'command' ? 'my_book' : 'branch',
+            'tonnage' => $this->tonnageSeries($context, $mode),
+            'lanes'   => $this->laneSeries($context, $mode),
+            'funnel'  => $this->funnelSeries($context, $mode, $grain, $request),
+        ]);
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────
 
     /**
@@ -247,6 +277,104 @@ class SalesDashboardController extends Controller
             ])
             ->map(fn ($r) => (array) $r)
             ->all();
+    }
+
+    /**
+     * Tonnage and shipment counts by month.
+     *
+     * ⚠️ Months with no shipments are ABSENT, not zero-filled. A gap in a trend line is
+     * "we have no data for that month"; a zero is "we moved nothing", and on a lane
+     * chart those read as opposite commercial stories. The client draws the gap.
+     */
+    private function tonnageSeries(UserContext $context, ?string $mode): array
+    {
+        return DB::table('customer_lane_stats as l')
+            ->join('customers as c', 'c.id', '=', 'l.customer_id')
+            ->where('l.agent_id', $context->agentId)
+            ->when($mode !== null, fn ($q) => $q->where('l.transport_mode', $mode))
+            ->when($this->scopedToRep($context), fn ($q) => $q->where('c.sales_id', $context->userId))
+            ->selectRaw('l.period_month, SUM(l.tonnage) AS tonnage, SUM(l.shipment_count) AS shipments')
+            ->groupBy('l.period_month')
+            ->orderBy('l.period_month')
+            ->limit(36)
+            ->get()
+            ->map(fn ($r) => [
+                'period'    => $r->period_month,
+                'tonnage'   => round((float) $r->tonnage, 3),
+                'shipments' => (int) $r->shipments,
+            ])
+            ->all();
+    }
+
+    /**
+     * Lane mix — top lanes by TONNAGE, not by shipment count.
+     *
+     * ⚠️ Ten courier-sized shipments on one lane are not the commercial exposure of one
+     * full container on another, and this chart is read as exposure. Ranking by count
+     * would put the busiest lane first rather than the biggest one.
+     */
+    private function laneSeries(UserContext $context, ?string $mode): array
+    {
+        return DB::table('customer_lane_stats as l')
+            ->join('customers as c', 'c.id', '=', 'l.customer_id')
+            ->where('l.agent_id', $context->agentId)
+            ->when($mode !== null, fn ($q) => $q->where('l.transport_mode', $mode))
+            ->when($this->scopedToRep($context), fn ($q) => $q->where('c.sales_id', $context->userId))
+            ->selectRaw("CONCAT(l.origin_code, ' → ', l.dest_code) AS lane,
+                         SUM(l.tonnage) AS tonnage, SUM(l.shipment_count) AS shipments")
+            ->groupBy('lane')
+            ->orderByDesc('tonnage')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => [
+                'lane'      => $r->lane,
+                'tonnage'   => round((float) $r->tonnage, 3),
+                'shipments' => (int) $r->shipments,
+            ])
+            ->all();
+    }
+
+    /**
+     * Won / lost / still open, from the funnel views.
+     *
+     * 🔴 The yearly view REQUIRES a basis — it is a UNION over fiscal and calendar, and
+     * querying it without one counts every enquiry twice.
+     */
+    private function funnelSeries(UserContext $context, ?string $mode, string $grain, Request $request): array
+    {
+        $view = ['day' => 'dsr_funnel_view', 'month' => 'msr_funnel_view', 'year' => 'ysr_funnel_view'][$grain];
+
+        $rows = DB::table($view)
+            ->where('agent_id', $context->agentId)
+            ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
+            ->when($grain === 'year', fn ($q) => $q->where('period_basis', $request->string('basis', 'fiscal')))
+            ->orderByDesc('period_start')
+            ->limit(24)
+            ->get();
+
+        return [
+            'periods' => $rows->reverse()->values()->map(fn ($r) => [
+                'period'    => $r->period_start,
+                'raised'    => (int) $r->enquiries_raised,
+                'converted' => (int) $r->enquiries_converted,
+                'lost'      => (int) $r->enquiries_lost,
+                'pending'   => (int) $r->enquiries_pending,
+                // §7.1 NULL, never 0% — carried to the wire so the chart can show a gap.
+                'conversion_rate_pct' => $r->conversion_rate_pct === null ? null : (float) $r->conversion_rate_pct,
+            ])->all(),
+            // The donut totals across the window.
+            'totals' => [
+                'converted' => (int) $rows->sum('enquiries_converted'),
+                'lost'      => (int) $rows->sum('enquiries_lost'),
+                'pending'   => (int) $rows->sum('enquiries_pending'),
+            ],
+        ];
+    }
+
+    /** A sales REP is scoped to their own book; a boss is not. */
+    private function scopedToRep(UserContext $context): bool
+    {
+        return $context->tier === 'command' && $context->designation === 'sales';
     }
 
     /**

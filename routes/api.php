@@ -281,6 +281,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // The sales cockpit. Tactical reports at branch level with NO client attribution;
     // Command partitions the same numbers by customers.sales_id. That gap is the upsell.
     Route::get('/sales/dashboard', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'dashboard']);
+    Route::get('/sales/charts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'charts']);
     Route::get('/sales/actions', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'actions']);
     Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);
 

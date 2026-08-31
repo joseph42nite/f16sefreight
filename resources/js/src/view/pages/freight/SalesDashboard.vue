@@ -22,6 +22,26 @@
       Figures are {{ staleness.age_minutes }} minutes old. The rollup is overdue.
     </p>
 
+    <div class="fx-toolbar">
+      <label class="fx-field">
+        <span class="fx-field__label">Period</span>
+        <select v-model="grain" class="fx-input" @change="loadCharts">
+          <option value="day">Daily</option>
+          <option value="month">Monthly</option>
+          <option value="year">Yearly</option>
+        </select>
+      </label>
+      <!-- 🔴 The yearly funnel is a UNION over two bases; asking without one counts
+           every enquiry twice. So the control only exists where the choice does. -->
+      <label v-if="grain === 'year'" class="fx-field">
+        <span class="fx-field__label">Year basis</span>
+        <select v-model="basis" class="fx-input" @change="loadCharts">
+          <option value="fiscal">Fiscal (Apr–Mar)</option>
+          <option value="calendar">Calendar</option>
+        </select>
+      </label>
+    </div>
+
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
@@ -60,6 +80,37 @@
             </p>
           </li>
         </ol>
+      </section>
+
+      <!--
+        §7.4 CHART-FIRST, tables as drill-down. The charts answer "what is happening";
+        the grid below answers "to which account". A rep opening this screen should see
+        the shape of the month before they see a row.
+      -->
+      <section v-if="charts" class="fx-section fx-charts">
+        <FxChart
+          title="Tonnage & shipments"
+          type="line"
+          :series="tonnageSeries"
+          :options="tonnageOptions"
+          empty-message="No lane statistics yet. They appear after the first rollup that finds a converted enquiry with a lane."
+        />
+
+        <FxChart
+          title="Top lanes by tonnage"
+          type="bar"
+          :series="laneSeries"
+          :options="laneOptions"
+          empty-message="No lanes recorded yet."
+        />
+
+        <FxChart
+          title="Win / loss"
+          type="donut"
+          :series="funnelSeries"
+          :options="funnelOptions"
+          empty-message="No closed enquiries in this window."
+        />
       </section>
 
       <section class="fx-section">
@@ -110,15 +161,75 @@
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import FxChart from "@/view/pages/freight/components/FxChart.vue";
 
 export default {
   name: "SalesDashboard",
-  components: { Figure, StatusChip },
+  components: { Figure, StatusChip, FxChart },
   data: () => ({
     loading: true, error: null,
     scope: null, mode: null, branch: {}, book: [], staleness: null, actions: [],
+    charts: null, grain: "month", basis: "fiscal",
   }),
   computed: {
+    /* ⚠️ Months with no shipments are ABSENT from the payload, not zero-filled — a gap
+       means "no data", a zero means "we moved nothing", and on a tonnage chart those
+       read as opposite commercial stories. */
+    tonnageSeries() {
+      const rows = (this.charts && this.charts.tonnage) || [];
+      if (!rows.length) return [];
+      return [{ name: "Tonnage (kg)", data: rows.map((r) => r.tonnage) }];
+    },
+    tonnageOptions() {
+      const rows = (this.charts && this.charts.tonnage) || [];
+      return {
+        chart: { type: "area" },
+        stroke: { width: 2, curve: "straight" },
+        fill: { opacity: 0.15 },
+        /* Categories rather than a datetime axis: the series is already bucketed by
+           month server-side, and a datetime axis would interpolate the gaps that mean
+           "no data" into a line implying zero. */
+        xaxis: { categories: rows.map((r) => String(r.period).slice(0, 7)) },
+        yaxis: { decimalsInFloat: 0 },
+      };
+    },
+
+    /* Ranked by TONNAGE, not shipment count: ten courier-sized shipments on one lane
+       are not the commercial exposure of one full container on another. */
+    laneSeries() {
+      const rows = (this.charts && this.charts.lanes) || [];
+      if (!rows.length) return [];
+      return [{ name: "Tonnage (kg)", data: rows.map((r) => r.tonnage) }];
+    },
+    laneOptions() {
+      const rows = (this.charts && this.charts.lanes) || [];
+      return {
+        chart: { type: "bar" },
+        /* Horizontal, because "INBOM → DEHAM" rotates to unreadability on a vertical
+           axis. */
+        plotOptions: { bar: { horizontal: true, barHeight: "60%" } },
+        xaxis: { categories: rows.map((r) => r.lane) },
+      };
+    },
+
+    funnelSeries() {
+      const t = (this.charts && this.charts.funnel && this.charts.funnel.totals) || {};
+      const values = [t.converted || 0, t.lost || 0, t.pending || 0];
+      /* An all-zero donut renders as an empty ring that looks broken. Report nothing
+         and let FxChart say so in words instead. */
+      return values.some((v) => v > 0) ? values : [];
+    },
+    funnelOptions() {
+      const token = (n, f) => (getComputedStyle(document.documentElement).getPropertyValue(n) || "").trim() || f;
+      return {
+        chart: { type: "donut" },
+        labels: ["Converted", "Lost", "Still open"],
+        colors: [token("--status-success", "#1F7A48"), token("--status-critical", "#C4342B"),
+                 token("--status-neutral", "#5A6472")],
+        legend: { position: "bottom" },
+      };
+    },
+
     modeLabel() {
       return this.mode ? this.mode + " only" : "all modes";
     },
@@ -134,6 +245,7 @@ export default {
     },
   },
   created() {
+    this.loadCharts();
     Promise.all([
       ApiService.get("/sales/dashboard"),
       // The actions call is allowed to fail without taking the page down — a ranked
@@ -153,6 +265,18 @@ export default {
         this.error = d.error || d.message || "Something went wrong.";
       })
       .finally(() => { this.loading = false; });
+  },
+  methods: {
+    loadCharts() {
+      let url = "/sales/charts?grain=" + this.grain;
+      if (this.grain === "year") url += "&basis=" + this.basis;
+
+      ApiService.get(url)
+        .then(({ data }) => { this.charts = data; })
+        /* Charts failing must not take the worklist down with it: Today's Actions is
+           the part a rep acts on, and it comes from a different call. */
+        .catch(() => { this.charts = null; });
+    },
   },
 };
 </script>

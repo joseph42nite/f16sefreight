@@ -291,6 +291,11 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/jobs/{job}/cost-sheet/lines', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'storeLine']);
     Route::delete('/jobs/{job}/cost-sheet/{side}/{lineId}', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'destroyLine']);
 
+    // ── FocusSea (§5.8). The cargo-type matrix and ISO 6346 are enforced here,
+    // not in the Vue watcher — see SeaShipmentController.
+    Route::get('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'show']);
+    Route::post('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'save']);
+
     // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
     // Command-tier report — a Tactical branch still files with customs.
     Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);

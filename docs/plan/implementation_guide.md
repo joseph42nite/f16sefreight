@@ -1015,7 +1015,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 
 ---
 
-#### Step 6 progress — items 1, 2, 3, 4 and 9 complete
+#### Step 6 progress — items 1, 2, 3, 4, 9 complete; 5 partly
 
 | # | Item | State |
 |---|---|---|
@@ -1023,7 +1023,8 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 | 2 | `OcrUploadModal.vue` | 🟡 modal + confidence highlighting built; **pre-population of the legacy `FocusAir.vue` form still to do**, and end-to-end extraction is blocked by GAPS #29 |
 | 3 | `OpsDashboard.vue` | ✅ four Process columns, Staff matrix, Unassigned Pool, filters, OLI badges, **bell** |
 | 4 | `JobCostSheet.vue` | ✅ buy/sell tables in the drawer, margin gated, locks on finalization |
-| 5–6 | FocusSea / FocusAir forms | ⬜ |
+| 5 | FocusSea forms | 🟡 `FocusSeaMaster.vue` — 12 tabs, cargo-type matrix, ISO 6346, container grid. **House and Consol still to build** |
+| 6 | FocusAir forms | ⬜ (legacy `FocusAir.vue` / `HouseWayBill.vue` still in use) |
 | 7–8 | Sales / Boss dashboards | 🟡 screens exist and read live endpoints; **ApexCharts not wired** — tables and tiles only |
 | 9 | `UpgradeTeaser.vue` | ✅ |
 | 10 | Copilot · VisualReporter · tours | ⬜ (ticket API exists — §5.6) |

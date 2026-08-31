@@ -663,3 +663,25 @@ body.fx-split .fx-rail__label { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .fx-bell-row-leave-active, .fx-bell-row-move { transition: none; }
 }
+
+/* ═══ §5.8 Document forms ══════════════════════════════════════════════════ */
+.fx-form { background: var(--bg-surface); border: 1px solid var(--border);
+           border-top: 0; border-radius: 0 0 var(--radius-md) var(--radius-md);
+           padding: var(--space-4); }
+.fx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+           gap: var(--space-3); }
+.fx-form__foot { display: flex; justify-content: flex-end; align-items: center;
+                 gap: var(--space-3); margin-top: var(--space-4); }
+
+/* A derived value the operator cannot type — shown in the same box as an input so the
+   form reads as one thing, but visibly inert. */
+.fx-input--static { display: inline-flex; align-items: center; color: var(--text-secondary);
+                    background: var(--bg-sunken); }
+
+.fx-field__hint { font-size: .6875rem; color: var(--text-disabled); }
+/* §1.3 an error states the rule in words; the colour only reinforces it. */
+.fx-field__error { font-size: .6875rem; color: var(--status-critical); font-weight: 600; }
+
+/* A tab the cargo-type matrix has switched off. §8.1: state forbids -> DISABLED with a
+   reason, and the reason is printed inside the tab rather than left to a tooltip. */
+.fx-drawer__tab.is-locked { color: var(--text-disabled); cursor: not-allowed; }

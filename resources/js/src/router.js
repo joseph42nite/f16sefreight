@@ -324,6 +324,14 @@ const router = new Router({
           meta: { userType: 'user', designations: ['pricing', 'operations', 'accounts', 'boss'], minTier: 'tactical' }
         },
         {
+          // FocusSea's master document. §9.2 makes FocusSea a nav GROUP once the
+          // house and consol forms exist; this is the first of the three.
+          path: "focus-sea",
+          name: "Master Bill of Lading",
+          component: () => import("@/view/pages/freight/FocusSeaMaster"),
+          meta: { userType: 'user' }
+        },
+        {
           path: "sales",
           name: "Sales",
           component: () => import("@/view/pages/freight/SalesDashboard"),

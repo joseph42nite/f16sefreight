@@ -185,6 +185,99 @@ class SalesDashboardController extends Controller
         ]);
     }
 
+    /**
+     * Cross-branch, cross-mode comparison — the Boss view. PRD.md §7.4.
+     *
+     * 🔒 `viewSales` plus a Boss-only check: this is the one screen that deliberately
+     * crosses BOTH partitions the rest of the product maintains. A rep is scoped to
+     * their book and a portal is scoped to its mode; the Boss is scoped to neither,
+     * because "air is soft this month but sea is carrying it" is a sentence only
+     * somebody seeing both can say.
+     *
+     * ⚠️ Still TENANT-bound. `admin.` has no PORTAL scope; it has never had a licence
+     * to read another company's branches, and conflating the two is how a client's
+     * Boss would end up reading a competitor's books (CONTEXT.md §6b).
+     */
+    public function branches(): JsonResponse
+    {
+        $this->authorize('viewSales');
+
+        $context = UserContext::for(auth()->user());
+
+        if ($context->designation !== 'boss') {
+            return response()->json([
+                'error'  => 'The cross-branch view is the Boss dashboard. A rep sees their own book.',
+                'reason' => 'designation',
+            ], 403);
+        }
+
+        $branchIds = DB::table('agents_info')->where('company_id', $context->companyId)->pluck('id');
+        $latest = DB::table('customer_performance_snapshots')
+            ->whereIn('agent_id', $branchIds)->max('snapshot_date');
+
+        if ($latest === null) {
+            return response()->json([
+                'as_of'    => null,
+                'branches' => [],
+                'reason'   => 'never_computed',
+            ]);
+        }
+
+        $rows = DB::table('customer_performance_snapshots as s')
+            ->join('agents_info as a', 'a.id', '=', 's.agent_id')
+            ->whereIn('s.agent_id', $branchIds)
+            ->where('s.snapshot_date', $latest)
+            ->selectRaw('s.agent_id, a.agent_name, a.branch_code, s.transport_mode,
+                         SUM(s.tonnage_mtd) AS tonnage_mtd,
+                         SUM(s.tonnage_ytd) AS tonnage_ytd,
+                         SUM(s.shipment_count_mtd) AS shipments_mtd,
+                         SUM(s.revenue_mtd) AS revenue_mtd,
+                         SUM(s.outstanding_60_plus) AS overdue_60_plus,
+                         COUNT(*) AS clients')
+            ->groupBy('s.agent_id', 'a.agent_name', 'a.branch_code', 's.transport_mode')
+            ->orderBy('a.branch_code')
+            ->get();
+
+        // Shaped branch-major with a cell per mode, because the question the screen
+        // answers is "how is Chennai doing, air versus sea" — not "list every pair".
+        $branches = [];
+        foreach ($rows as $r) {
+            $branches[$r->agent_id] ??= [
+                'agent_id' => $r->agent_id,
+                'name'     => $r->agent_name,
+                'code'     => $r->branch_code,
+                'modes'    => [],
+                'totals'   => ['tonnage_ytd' => 0.0, 'revenue_mtd' => 0.0, 'overdue_60_plus' => 0.0],
+            ];
+
+            $branches[$r->agent_id]['modes'][$r->transport_mode] = [
+                'tonnage_mtd'     => round((float) $r->tonnage_mtd, 3),
+                'tonnage_ytd'     => round((float) $r->tonnage_ytd, 3),
+                'shipments_mtd'   => (int) $r->shipments_mtd,
+                'revenue_mtd'     => round((float) $r->revenue_mtd, 2),
+                'overdue_60_plus' => round((float) $r->overdue_60_plus, 2),
+                'clients'         => (int) $r->clients,
+            ];
+
+            $branches[$r->agent_id]['totals']['tonnage_ytd'] += (float) $r->tonnage_ytd;
+            $branches[$r->agent_id]['totals']['revenue_mtd'] += (float) $r->revenue_mtd;
+            $branches[$r->agent_id]['totals']['overdue_60_plus'] += (float) $r->overdue_60_plus;
+        }
+
+        return response()->json([
+            'as_of'    => $latest,
+            'modes'    => $rows->pluck('transport_mode')->unique()->values(),
+            'branches' => array_values(array_map(function ($b) {
+                $b['totals'] = array_map(fn ($v) => round($v, 2), $b['totals']);
+                return $b;
+            }, $branches)),
+            // ❓ PRD §2.3 gives the Boss a "target assigner (revenue or tonnage)", but
+            // no targets table exists in the schema doc. Reported as unavailable rather
+            // than faked with a hard-coded goal — see GAPS.md #33.
+            'targets'  => ['available' => false, 'reason' => 'no_targets_table'],
+        ]);
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────
 
     /**

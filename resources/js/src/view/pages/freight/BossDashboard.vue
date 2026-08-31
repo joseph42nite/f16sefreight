@@ -8,6 +8,60 @@
       </p>
     </header>
 
+    <!-- ── Cross-branch, cross-mode ─────────────────────────────────────── -->
+    <section v-if="branches.length" class="fx-section">
+      <h2 class="fx-section__title">
+        Branches — as of <Figure :value="asOf" kind="date" />
+      </h2>
+
+      <div class="fx-matrix-wrap">
+        <table class="fx-table fx-matrix">
+          <thead>
+            <tr>
+              <th scope="col">Branch</th>
+              <th v-for="m in modes" :key="m" class="fx-num" scope="col">{{ m }} tonnage YTD</th>
+              <th class="fx-num" scope="col">Revenue MTD</th>
+              <th class="fx-num" scope="col">Overdue 60+</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in branches" :key="b.agent_id">
+              <th scope="row">{{ b.name }} <span class="fx-muted identifier">{{ b.code }}</span></th>
+              <td v-for="m in modes" :key="m" class="fx-num">
+                <!--
+                  🔴 A branch that does not run this mode has NO CELL, not a zero.
+                  "We do not do sea here" and "we moved no sea this month" are
+                  different facts, and a zero asserts the second.
+                -->
+                <Figure v-if="b.modes[m]" :value="b.modes[m].tonnage_ytd" kind="weight" />
+                <span v-else class="is-empty" aria-label="This branch does not run this mode"></span>
+              </td>
+              <td class="fx-num"><Figure :value="b.totals.revenue_mtd" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num" :class="{ 'fx-over': b.totals.overdue_60_plus > 0 }">
+                <Figure :value="b.totals.overdue_60_plus" kind="currency" currency-code="INR" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!--
+        ❓ PRD §2.3 gives the Boss a target assigner (revenue or tonnage), and no
+        targets table exists in the schema. Said plainly rather than shown as progress
+        against an invented goal — a dashboard measuring against a fabricated target is
+        worse than one that admits it has none. GAPS #33.
+      -->
+      <p v-if="targets && !targets.available" class="fx-muted fx-board__note">
+        Target assignment is not available — the schema has no targets table (GAPS #33).
+      </p>
+    </section>
+
+    <p v-else-if="branchesReason === 'never_computed'" class="fx-warn" role="status">
+      No rollup has run, so there is nothing to compare. This is not branches that
+      shipped nothing — it is branches nobody has computed.
+      Run <code>sales:compute-snapshots</code>.
+    </p>
+
     <div class="fx-toolbar">
       <label class="fx-field">
         <span class="fx-field__label">Grain</span>
@@ -83,11 +137,28 @@ import Figure from "@/view/pages/freight/components/Figure.vue";
 export default {
   name: "BossDashboard",
   components: { Figure },
-  data: () => ({ periods: [], loading: true, error: null, grain: "month", basis: "fiscal" }),
+  data: () => ({
+    periods: [], loading: true, error: null, grain: "month", basis: "fiscal",
+    branches: [], modes: [], asOf: null, targets: null, branchesReason: null,
+  }),
   created() {
     this.load();
+    this.loadBranches();
   },
   methods: {
+    loadBranches() {
+      ApiService.get("/sales/branches")
+        .then(({ data }) => {
+          this.branches = data.branches || [];
+          this.modes = data.modes || [];
+          this.asOf = data.as_of;
+          this.targets = data.targets;
+          this.branchesReason = data.reason || null;
+        })
+        /* The funnel below is the rest of the page — a failing comparison must not
+           take it down with it. */
+        .catch(() => { this.branches = []; });
+    },
     load() {
       this.loading = true;
       let url = "/analytics/funnel?grain=" + this.grain;

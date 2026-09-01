@@ -313,6 +313,15 @@ const router = new Router({
           meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
         },
         {
+          // §4.2 — connecting the mailbox the Inbox reads from. Same tier gate as the
+          // Inbox itself: there is no reason to let a Core tenant connect a mailbox whose
+          // messages they will never be shown.
+          path: "mailboxes",
+          name: "Mailboxes",
+          component: () => import("@/view/pages/freight/MailboxSettings"),
+          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+        },
+        {
           path: "enquiries",
           name: "Enquiries",
           component: () => import("@/view/pages/freight/EnquiryBoard"),

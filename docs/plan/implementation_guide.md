@@ -1080,7 +1080,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 | 9 | `UpgradeTeaser.vue` | ✅ |
 | 10 | Copilot · VisualReporter · tours | 🟡 `VisualReporter.vue` complete — element picking, deterministic capture, console recorder, `html2canvas`. **Screenshot upload blocked on GAPS #35**; the RAG help copilot needs vector infrastructure that does not exist; Driver.js tours not started |
 | 11 | Superadmin screens | ✅ `SuperadminMonitor.vue` (health, per-queue depth, log tail, classification export) · `SupportDeskTickets.vue` (cross-tenant queue, forward-only transitions) |
-| 12 | `MailboxSettings.vue` | ⬜ blocked with §4.2 on GAPS #15 |
+| 12 | `MailboxSettings.vue` | ✅ **built 2026-09-01** — connected list with the three states separated (`disconnected` / `paused` / `auth_state`), Sync now, and a confirmed Disconnect that says it ERASES credentials. Gmail is shown **disabled with its reason** rather than omitted: a feature that is silently absent reads as one the product cannot do |
 
 **Components added since the foundation note:** `FxDrawer.vue` (§5.4, focus restored to the trigger on close) · `OcrUploadModal.vue` · `BellPanel.vue` · `Financials.vue` · `SalesDashboard.vue` · `BossDashboard.vue` · `DirectoryTable.vue`.
 

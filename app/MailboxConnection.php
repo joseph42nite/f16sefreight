@@ -32,6 +32,13 @@ class MailboxConnection extends Model
         'sync_cursor', 'last_synced_at', 'auth_state',
         'signature_html', 'signature_source',
         'disconnected_at', 'disconnected_by',
+        // ⚠️ Added 2026-09-01 with the sync service. These columns existed in the schema
+        // from the start but were missing here — the same omission that silently dropped
+        // every write on PdfProcessingJob and User. **Adding a column is only half the
+        // change.** Without them, `backfill_page_cursor` would never persist and a long
+        // mailbox would restart from the top on every run, forever.
+        'backfill_status', 'backfill_from', 'backfill_completed_at', 'backfill_page_cursor',
+        'backfill_processed', 'backfill_estimate', 'backfill_attempts', 'watch_expires_at',
     ];
 
     protected $casts = [

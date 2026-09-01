@@ -111,6 +111,13 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/ocr-history', [OcrController::class, 'history']);
     // 🔒 The single point at which an OCR credit is ever spent — see OcrController::consent.
     Route::post('/ocr-consent/{jobId}', [OcrController::class, 'consent']);
+
+    // ── Mailbox connections (guide §4.2) ─────────────────────────────────────
+    // The callback is registered OUTSIDE this group — it has no bearer token.
+    Route::get('/mailboxes', [\App\Http\Controllers\Freight\MailboxController::class, 'index']);
+    Route::post('/mailboxes/connect', [\App\Http\Controllers\Freight\MailboxController::class, 'connect']);
+    Route::post('/mailboxes/{mailbox}/disconnect', [\App\Http\Controllers\Freight\MailboxController::class, 'disconnect']);
+    Route::post('/mailboxes/{mailbox}/sync', [\App\Http\Controllers\Freight\MailboxController::class, 'syncNow']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
     Route::get('/company-templates', [UserController::class, 'getCompanyTemplates']);
 
@@ -204,6 +211,11 @@ Route::get('/get-public-blog/{slug}', [BlogController::class, 'show']);
 
 // OpenClaw Integration Routes
 Route::post('/openclaw/webhook', [\App\Http\Controllers\OpenClawController::class, 'webhook'])->middleware('openclaw.verify');
+
+// 🔴 UNAUTHENTICATED BY NECESSITY. Microsoft redirects a BROWSER here with no
+// Authorization header, so the acting user is carried in `state` — a random key into a
+// short-lived cache entry, consumed on use. See MailboxController::callback.
+Route::get('/user/mailboxes/callback', [\App\Http\Controllers\Freight\MailboxController::class, 'callback']);
 Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
 Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
 /*

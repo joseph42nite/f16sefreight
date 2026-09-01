@@ -174,6 +174,41 @@ placeholder.
 
 ---
 
+## 🟢 Built 2026-09-01 — Microsoft Graph mailbox ingestion
+
+Mail ingestion did not exist in any form: only `MailboxConnection` (the model), no poll
+command, no OAuth, no provider SDK, nothing scheduled. Every `email_threads` row came from
+the seeder. The downstream half — `RegexClassificationService`, `EmailInboxController`,
+`JobInbox.vue` — was built and had nothing feeding it.
+
+| Piece | Note |
+|---|---|
+| `MailProviderContract` + `NormalisedMessage` | The interface exists from the first line, **before** there are two providers. Everything hard about ingestion is provider-agnostic; only the delta cursor and the wire shape are not, so Gmail lands as a second implementation rather than a rewrite |
+| `GraphMailProvider` | `/me/messages/delta`, **never** `/mailFolders/inbox/...` — a reply typed in Outlook lands in Sent Items only, and an inbox-scoped sync loses half of every conversation *and* every measurement of response latency |
+| `ThreadMatcher` | The three tiers, in strict order, tier 3 never overriding 1–2 |
+| `MessageIngestor` | Echo suppression via the UNIQUE `message_id`; each message in its OWN transaction so a page of 50 failing on the 49th does not roll back 48 and make the run unable to progress |
+| `MailboxSyncService` | Token refresh with skew; cursor persisted after **every** page |
+| `PollMailboxes` | 15 minutes, not 1 — push is primary. Four skip conditions, every run |
+| `MailboxController` | OAuth connect/callback/disconnect/sync-now |
+| `MailboxSettings.vue` | Step 6 item 12 |
+
+🔴 **DELEGATED permissions, not application permissions.** App-only `Mail.ReadWrite` reads
+EVERY mailbox in the tenant — HR and finance included — and would need an Exchange
+Application Access Policy plus removal of any unscoped Entra grant (a permission held both
+unscoped and resource-scoped ends up with no scoping at all). Delegated access is bounded by
+the user who consented, which is the boundary the product already wants.
+
+🔴 **The OAuth callback cannot be authenticated.** Microsoft redirects a browser with no
+`Authorization` header, so the acting user rides in `state` — a random key into a 10-minute
+cache entry, consumed on use. Anything guessable there would let someone attach a mailbox
+they control to another tenant.
+
+🐞 **Found by its own test: the participant check was trivially satisfied.** Tier 3 compares
+participant sets, but the connected mailbox is on EVERY message — so the intersection was
+never empty and tier 3 degraded to subject-only matching. Two different clients' "Quote
+request" threads merged into one, which is a confidentiality failure, not a tidiness one.
+Fixed by comparing counterparties with our own address removed.
+
 ## 🧪 Defects found by testing, fixed (kept so the reasoning is not lost)
 
 | Found | Defect | Resolution |

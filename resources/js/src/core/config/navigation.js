@@ -51,6 +51,7 @@ export const NAV_ITEMS = [
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
   // ── Always last ──────────────────────────────────────────────────────────
+  { path: "/mailboxes", label: "Mailboxes", icon: "envelope-gear", designations: ["pricing", "operations"], minTier: "tactical" },
   { path: "/settings", label: "Settings", icon: "gear", designations: null },
 ];
 

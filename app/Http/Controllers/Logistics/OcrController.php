@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use App\Services\ExtractionNormaliser;
+use App\Services\VisionConsentService;
 
 class OcrController extends Controller
 {
@@ -116,11 +117,93 @@ class OcrController extends Controller
             $response['needs_review'] = $normaliser->needsReview($fields);
         }
 
+        // 🔴 The consent prompt has to carry its PRICE. "This document needs vision — 1
+        // credit" is a decision; an unexplained yes/no is a dark pattern, and an operator
+        // who cannot see what they are spending will either always accept or never will.
+        if ($job->status === 'awaiting_vision_consent') {
+            $response['page_count'] = $job->page_count;
+            $response['credit_cost'] = \App\Services\OcrCreditService::VISION_COST;
+        }
+
         if ($job->status === 'failed') {
             $response['error'] = $job->error_message;
+            // A CODE the UI branches on — `upgrade_required` is an upsell, not an error,
+            // and `credits_exhausted` is a top-up. Both read as "it broke" without this.
+            $response['failure_code'] = $job->failure_code;
         }
 
         return response()->json($response);
+    }
+
+    /**
+     * Answer a vision-consent prompt.
+     * POST /api/user/ocr-consent/{jobId}  { "decision": "accept" | "decline" }
+     *
+     * 🔒 **The only way a credit is ever spent.** Everything upstream of this — upload,
+     * the free text attempt, parking at `awaiting_vision_consent` — costs nothing. This
+     * endpoint is the single point where a named human authorises money to be spent, and
+     * it is deliberately explicit rather than a flag on the upload: a checkbox ticked once
+     * and forgotten is not consent.
+     *
+     * ⚠️ Ownership is enforced the same way `status()` does it. A consent prompt names a
+     * client's document, and answering someone else's is spending someone else's credits.
+     */
+    public function consent(Request $request, int $jobId, VisionConsentService $consent)
+    {
+        $data = $request->validate([
+            'decision' => ['required', 'string', 'in:' . VisionConsentService::ACCEPT . ',' . VisionConsentService::DECLINE],
+        ]);
+
+        $extraction = PdfProcessingJob::where('id', $jobId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $user = Auth::user();
+
+        $result = $data['decision'] === VisionConsentService::ACCEPT
+            ? $consent->accept($extraction, $user)
+            : $consent->decline($extraction, $user);
+
+        if (! $result['ok']) {
+            return response()->json([
+                'status'     => false,
+                'job_id'     => $extraction->id,
+                'job_status' => $result['status'],
+                'reason'     => $result['reason'],
+                'error'      => $this->consentRefusalMessage($result['reason']),
+            ], 422);
+        }
+
+        // 🔴 Dispatch AFTER the credit is reserved and committed, never inside the same
+        // breath. A worker that picked the job up before the reservation landed would call
+        // the paid endpoint against a balance nobody had checked.
+        if ($result['status'] === 'processing') {
+            ProcessPdfOcrJob::dispatch($extraction->id, true)->onQueue('pdf_processing');
+        }
+
+        return response()->json([
+            'status'     => true,
+            'job_id'     => $extraction->id,
+            'job_status' => $result['status'],
+            'msg'        => $result['status'] === 'processing'
+                ? 'Vision extraction authorised. One credit reserved.'
+                : 'Vision extraction declined. No credit was spent.',
+        ], 202);
+    }
+
+    /** A sentence for the operator; `reason` stays the code the UI branches on. */
+    private function consentRefusalMessage(?string $reason): string
+    {
+        switch ($reason) {
+            case VisionConsentService::NOT_AWAITING:
+                return 'This document is not waiting for a vision decision. It may have been answered already, or expired.';
+            case VisionConsentService::CREDITS_EXHAUSTED:
+                return 'Your OCR credit balance is exhausted. Nothing was spent and no extraction was run.';
+            case VisionConsentService::NO_TENANT:
+                return 'This account is not attached to a company, so no credit balance can be resolved.';
+            default:
+                return 'The vision decision could not be applied.';
+        }
     }
 
     /**

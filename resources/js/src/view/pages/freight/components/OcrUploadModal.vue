@@ -45,6 +45,39 @@
           </p>
         </div>
 
+        <!-- ── Awaiting vision consent ────────────────────────────────────── -->
+        <!--
+          🔒 §4.1.1 — THE ONLY PLACE THE PRODUCT ASKS TO SPEND MONEY. Nothing above this
+          point cost anything, and nothing below it happens until somebody answers.
+
+          ⚠️ The price is stated before the buttons, not after. An operator who cannot see
+          what a click costs will either always accept or never accept, and both make the
+          prompt pointless.
+        -->
+        <div v-else-if="phase === 'consent'" class="fx-drop">
+          <p class="fx-drop__lead">This document has no readable text</p>
+          <p class="fx-muted">{{ filename }}</p>
+
+          <p class="fx-warn" role="status">
+            It looks like a scan, so reading it needs vision OCR.
+            <strong>{{ creditCost }} credit{{ creditCost === 1 ? "" : "s" }}</strong><template v-if="pageCount">, {{ pageCount }} page{{ pageCount === 1 ? "" : "s" }}</template>.
+            Nothing has been charged yet.
+          </p>
+
+          <div class="fx-drop__actions">
+            <button class="fx-btn fx-btn--primary" :disabled="deciding" @click="decide('accept')">
+              {{ deciding ? "Working…" : "Use vision (" + creditCost + " credit)" }}
+            </button>
+            <button class="fx-btn fx-btn--ghost" :disabled="deciding" @click="decide('decline')">
+              Don't read it
+            </button>
+          </div>
+
+          <p class="fx-muted fx-drop__note">
+            Declining costs nothing. If nobody answers, this is cancelled after 24 hours.
+          </p>
+        </div>
+
         <!-- ── Failed ─────────────────────────────────────────────────────── -->
         <div v-else-if="phase === 'failed'" class="fx-drop">
           <p class="fx-error" role="alert">{{ error }}</p>
@@ -130,6 +163,9 @@ export default {
   data: () => ({
     phase: "idle", dragging: false, filename: null,
     jobId: null, fields: {}, review: [], error: null, poller: null,
+    // Vision consent (§4.1.1). `deciding` guards the buttons: the answer spends money,
+    // and a double-click must not become two attempts to spend it.
+    pageCount: null, creditCost: 1, deciding: false,
   }),
   computed: {
     /* Flattened to dot-paths so a nested region reports the FIELD, not the box —
@@ -205,6 +241,19 @@ export default {
               this.fields = data.fields || {};
               this.review = data.needs_review || [];
               this.phase = "done";
+            } else if (data.job_status === "awaiting_vision_consent") {
+              /* 🔴 Stop polling and ASK. Without this branch the modal sits on
+                 "Reading the document…" forever while the job waits for an answer
+                 nobody is being asked for — which is what it did before consent
+                 existed. */
+              this.stopPolling();
+              this.pageCount = data.page_count || null;
+              this.creditCost = data.credit_cost || 1;
+              this.phase = "consent";
+            } else if (data.job_status === "cancelled") {
+              this.stopPolling();
+              this.phase = "failed";
+              this.error = data.error || "This extraction was cancelled.";
             } else if (data.job_status === "failed") {
               this.stopPolling();
               this.phase = "failed";
@@ -221,6 +270,27 @@ export default {
     stopPolling() {
       if (this.poller) { clearInterval(this.poller); this.poller = null; }
     },
+    /* Answer the consent prompt. Accepting resumes polling because the extraction goes
+       back to work; declining is terminal and says so rather than looping. */
+    decide(decision) {
+      this.deciding = true;
+
+      ApiService.post("/user/ocr-consent/" + this.jobId, { decision })
+        .then(({ data }) => {
+          if (data.job_status === "processing") {
+            this.phase = "processing";
+            this.poll();
+          } else {
+            this.phase = "failed";
+            this.error = "Vision extraction was declined. Nothing was charged.";
+          }
+        })
+        .catch((e) => {
+          this.phase = "failed";
+          this.error = this.messageFor(e);
+        })
+        .finally(() => { this.deciding = false; });
+    },
     accept() {
       /* Values only — the parent form takes them; the confidence travelled with the
          review list so the form can keep marking them. */
@@ -232,6 +302,9 @@ export default {
       this.error = null;
       this.filename = null;
       this.jobId = null;
+      this.pageCount = null;
+      this.creditCost = 1;
+      this.deciding = false;
     },
     close() {
       this.stopPolling();

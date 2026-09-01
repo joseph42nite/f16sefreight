@@ -109,6 +109,8 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1');
     Route::get('/ocr-status/{jobId}', [OcrController::class, 'status']);
     Route::get('/ocr-history', [OcrController::class, 'history']);
+    // 🔒 The single point at which an OCR credit is ever spent — see OcrController::consent.
+    Route::post('/ocr-consent/{jobId}', [OcrController::class, 'consent']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
     Route::get('/company-templates', [UserController::class, 'getCompanyTemplates']);
 

@@ -119,6 +119,53 @@
 
 ---
 
+## 🟢 Built 2026-09-01 — the vision-consent path
+
+The consent path existed on paper and in two services, but **nothing wired it to a human**.
+`OcrRoutingService` and `OcrCreditService` were built and unit-tested; the live flow
+(`OcrController::extract` → `ProcessPdfOcrJob`) called `/extract` with coordinates every
+time and never consulted either. There was no accept/decline endpoint, no route, and no UI.
+A scanned PDF parked at `awaiting_vision_consent` and was cancelled 24h later by the
+sweeper — **vision OCR could never run**, and `OcrCreditService::reserve()` had no caller a
+user could reach. Nothing errored; the operator saw a job that quietly never finished.
+
+Now built:
+
+| Piece | Note |
+|---|---|
+| `VisionConsentService` | The ONLY place a parked extraction leaves `awaiting_vision_consent`. `accept()` reserves then releases; `decline()` cancels with **no `failure_code`** — booking a decline as a failure puts cautious operators in an error dashboard and teaches them not to decline |
+| `POST /api/user/ocr-consent/{jobId}` | The single point at which a credit is ever spent. Ownership enforced as `status()` does it — answering someone else's prompt spends someone else's credits |
+| Routing wired into `ProcessPdfOcrJob` | Tier gate now runs for real: Core + unstructured fails with `upgrade_required` **before** any call. The worker parks on `extraction_path = 'none'` and refunds a failed paid run |
+| Consent phase in `OcrUploadModal.vue` | The prompt states its price before the buttons. Without this branch the modal sat on *"Reading the document…"* forever |
+
+🔴 **`isStructured()` had to change, or wiring the router in would have broken the live AWB
+upload.** It matched a hardcoded list of three document CLASSES (`MAWB`, `HAWB`, `AWB`), but
+the running product uploads a `system_templates` KEY — `ksr` — which `ProcessPdfOcrJob` has
+always resolved to coordinates. Judged by the list alone every existing upload becomes
+"unstructured": Core tenants would start getting `upgrade_required` for documents that used
+to extract free. A document is now structured when a coordinate template **exists** for it,
+which is the rule the code already relied on.
+
+⚠️ **No schema change was needed and none was made.** There is no
+`credit_transaction_id` on `pdf_processing_jobs`: `ocr_credit_transactions.pdf_processing_job_id`
+already records which extraction burned a credit, so the reservation is findable from the
+extraction, and a mirror column would be a second place for the same fact to be wrong.
+Consent attribution (who said yes, when) goes to `audit_logs`.
+
+⚠️ **A zero balance is NOT exhausted.** The tier floor is negative on purpose (tactical
+−20, command −50) so a busy month finishes its shipments rather than failing mid-document.
+Read quickly this looks like a gate that does not work; `VisionConsentTest` asserts the
+overdraft explicitly so nobody "fixes" it.
+
+🔵 **Gemma and Gemini are deliberately absent from all of this.** `VisionConsentService`
+decides whether money may be spent and hands off; which engine runs and how its output is
+shaped belongs to `ProcessPdfOcrJob` and the FastAPI service, and arrives with **gap #29**.
+Until then an accepted prompt reserves a credit, calls an unreachable service, refunds, and
+lands on `ai_unavailable` — which is the designed behaviour for an unavailable model, not a
+placeholder.
+
+---
+
 ## 🧪 Defects found by testing, fixed (kept so the reasoning is not lost)
 
 | Found | Defect | Resolution |

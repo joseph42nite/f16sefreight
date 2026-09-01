@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Company;
+use App\SystemTemplate;
 use App\User;
 
 /**
@@ -43,6 +44,9 @@ class OcrRoutingService
     /** @var array<int,string> memoized per company — this runs on every upload */
     private array $tierCache = [];
 
+    /** @var array<string,bool> memoized template lookups — see isStructured() */
+    private array $templateCache = [];
+
     /**
      * Resolve the tenant tier for the uploading user.
      *
@@ -68,9 +72,32 @@ class OcrRoutingService
             ->whereKey($companyId)->value('tier');
     }
 
+    /**
+     * Does this document class have a coordinate template?
+     *
+     * 🔴 **A named list alone is wrong, and wiring it in unchanged would have broken the
+     * live AWB upload.** `STRUCTURED_TYPES` names three document CLASSES, but the running
+     * product uploads a `system_templates` KEY — `ksr` and friends — which
+     * `ProcessPdfOcrJob` has always resolved to coordinates. Judged by the list alone, every
+     * existing production upload becomes "unstructured": Core tenants would start getting
+     * `upgrade_required` for documents that used to extract for free, and everyone else
+     * would be sent to a text parser for a form that has exact coordinates.
+     *
+     * So the real definition is the one the code already relied on — a document is
+     * structured when a coordinate template EXISTS for it. The constant stays as the
+     * classes that are structured by definition even before a template row is seeded.
+     */
     public function isStructured(?string $documentType): bool
     {
-        return in_array(strtoupper((string) $documentType), self::STRUCTURED_TYPES, true);
+        if (blank($documentType)) {
+            return false;
+        }
+
+        if (in_array(strtoupper($documentType), self::STRUCTURED_TYPES, true)) {
+            return true;
+        }
+
+        return $this->templateCache[$documentType] ??= SystemTemplate::where('key', $documentType)->exists();
     }
 
     /**

@@ -743,3 +743,20 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
                      border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .fx-reporter__text { min-height: 5rem; padding: var(--space-2); height: auto;
                      font-family: var(--font-sans); width: 100%; }
+
+/* ── Extraction panel ──────────────────────────────────────────────────────
+   Three numbered steps in the order the operator works: what you gave it, what
+   you overrode, what it concluded. The result sits LAST because it is the thing
+   being committed — and because precedence has to be visible at the point of
+   commitment, not remembered from a rule. */
+.fx-extract__step { margin-bottom: var(--space-5); }
+.fx-extract__h { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text-secondary); margin: 0 0 var(--space-2); }
+.fx-drop--slim { padding: var(--space-4); }
+.fx-extract__docs td { vertical-align: middle; }
+.fx-extract__paste { width: 100%; font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: .8125rem; }
+
+/* 🔴 The override is the one thing that silently outranks everything else, so it is
+   the one thing marked. If every source were styled, the exception would not read as one. */
+.fx-extract__override { font-weight: 600; color: var(--status-warning); }

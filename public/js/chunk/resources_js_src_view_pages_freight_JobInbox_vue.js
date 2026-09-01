@@ -16,7 +16,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 /* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
-/* harmony import */ var _view_pages_freight_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/OcrUploadModal.vue */ "./resources/js/src/view/pages/freight/components/OcrUploadModal.vue");
+/* harmony import */ var _view_pages_freight_components_ExtractionPanel_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/ExtractionPanel.vue */ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue");
 /* harmony import */ var _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/pages/freight/components/CostSheet.vue */ "./resources/js/src/view/pages/freight/components/CostSheet.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -66,7 +66,7 @@ const WORKSPACE_TABS = [{
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
     FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
-    OcrUploadModal: _view_pages_freight_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+    ExtractionPanel: _view_pages_freight_components_ExtractionPanel_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
     CostSheet: _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
   },
   data: () => ({
@@ -103,7 +103,6 @@ const WORKSPACE_TABS = [{
     timer: null,
     workspace: false,
     tab: "extraction",
-    ocrOpen: false,
     extracted: null,
     jobId: null,
     CLASSIFICATIONS,
@@ -207,10 +206,19 @@ const WORKSPACE_TABS = [{
      * and quietly stuffing values into a legal document on arrival would make the
      * confidence highlighting decorative.
      */
+    /**
+     * The operator has chosen what to take from where. Held, not written.
+     *
+     * ⚠️ Still nothing is pushed into FocusAir.vue / HouseWayBill.vue — that is Step 6.2.
+     * Quietly stuffing values into a legal document would make the confidence marking
+     * decorative, which is the one thing it must not be.
+     */
     onExtracted(payload) {
       this.extracted = payload;
-      this.setSplit(true);
+    },
+    openExtraction() {
       this.tab = "extraction";
+      this.setSplit(true);
     },
     /* ⚠️ A raw ISO string is not a date to a reader. The API sends
        2026-08-30T10:28:47.000000Z; a person needs 30 Aug 2026, 10:28. */
@@ -468,10 +476,10 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=script&lang=js":
-/*!*******************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=script&lang=js ***!
-  \*******************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js":
+/*!********************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js ***!
+  \********************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -480,206 +488,275 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 
-/* The box vocabulary from python/boxes_config.json — the same names FocusAir.vue
-   already consumes, so nothing here needs a second mapping. */
-const LABELS = {
-  awb_number: "AWB number",
-  shipper: "Shipper",
-  consignee: "Consignee",
-  departure: "Departure",
-  destination: "Destination",
-  transit: "Transit",
-  cargo: "Cargo",
-  weight_charge: "Weight charge",
-  piece_weight: "Pieces / weight",
-  chrg_code: "Charge code"
+/**
+ * The parts a shipment is assembled from.
+ *
+ * Exactly the three the operator asked to choose between — parties, cargo, notify — not a
+ * row per field. A picker with twenty entries is a form, and the operator already has one.
+ */
+const GROUPS = [{
+  key: "parties",
+  label: "Shipper & consignee",
+  paths: ["shipper", "consignee"]
+}, {
+  key: "cargo",
+  label: "Cargo — pieces, dimensions, description",
+  paths: ["cargo", "piece_weight", "dimensions", "goods"]
+}, {
+  key: "notify",
+  label: "Notify party",
+  paths: ["also_notify", "notify"]
+}];
+
+/** What a pasted line may be called. Lower-cased, punctuation-insensitive. */
+const PASTE_KEYS = {
+  shipper: ["shipper", "consignor", "exporter"],
+  consignee: ["consignee", "importer", "buyer"],
+  notify: ["notify", "notify party", "also notify"],
+  pieces: ["pieces", "pcs", "packages", "no of pieces"],
+  weight: ["weight", "gross weight", "kg", "gross"],
+  dimensions: ["dimensions", "dims", "size", "measurement"],
+  goods: ["goods", "description", "commodity", "nature of goods"]
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  name: "OcrUploadModal",
+  name: "ExtractionPanel",
   components: {
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
-  props: {
-    open: {
-      type: Boolean,
-      default: false
-    }
-  },
   data: () => ({
-    phase: "idle",
+    GROUPS,
     dragging: false,
-    filename: null,
-    jobId: null,
-    fields: {},
-    review: [],
-    error: null,
-    poller: null,
-    // Vision consent (§4.1.1). `deciding` guards the buttons: the answer spends money,
-    // and a double-click must not become two attempts to spend it.
-    pageCount: null,
-    creditCost: 1,
-    deciding: false
+    documents: [],
+    /** group key -> document uid. One source per group, deliberately. */
+    assignment: {},
+    pasted: "",
+    seq: 0
   }),
   computed: {
-    /* Flattened to dot-paths so a nested region reports the FIELD, not the box —
-       "shipper.name is low" is actionable, "shipper is low" is not. */
-    rows() {
+    /* Honest about GAPS #38: only the coordinate path is deployed, so anything that is
+       not an airway bill will fail at the parser. Saying so beats letting it look broken. */
+    unstructuredWarning() {
+      return this.documents.length > 0;
+    },
+    pastedFields() {
+      return this.parsePaste(this.pasted).found;
+    },
+    pastedUnknown() {
+      return this.parsePaste(this.pasted).unknown;
+    },
+    /**
+     * 🔴 The whole point of the panel. For each group: which source won, and what it says.
+     * Text beats documents, always — resolved here rather than at apply time so the
+     * operator sees the outcome before committing it.
+     */
+    resolved() {
+      const out = {};
+      GROUPS.forEach(g => {
+        const fromText = this.groupFromPaste(g);
+        if (fromText) {
+          out[g.key] = {
+            source: "text",
+            summary: fromText,
+            fields: this.pastedFields
+          };
+          return;
+        }
+        const uid = this.assignment[g.key];
+        const doc = this.documents.find(d => d.uid === uid);
+        if (!doc || doc.state !== "ready") {
+          out[g.key] = {
+            source: null,
+            summary: null,
+            fields: null
+          };
+          return;
+        }
+        out[g.key] = {
+          source: doc.name,
+          summary: this.summarise(g, doc.fields),
+          fields: doc.fields
+        };
+      });
+      return out;
+    },
+    anyResolved() {
+      return GROUPS.some(g => this.resolved[g.key].source !== null);
+    },
+    /* Medium counts as unsure: a field the extractor was only fairly sure of is exactly
+       the one that produces a plausible-looking wrong consignee. */
+    lowConfidence() {
       const out = [];
-      const walk = (obj, prefix) => {
-        Object.keys(obj).forEach(key => {
-          const node = obj[key];
-          const path = prefix ? prefix + "." + key : key;
-          if (node && typeof node === "object" && "confidence" in node) {
-            out.push({
-              path,
-              label: LABELS[path] || path.replace(/[._]/g, " "),
-              value: node.value,
-              confidence: node.confidence
-            });
-          } else if (node && typeof node === "object") {
-            walk(node, path);
-          }
+      GROUPS.forEach(g => {
+        const r = this.resolved[g.key];
+        if (!r.fields || r.source === "text") return;
+        g.paths.forEach(p => {
+          const node = r.fields[p];
+          if (node && node.confidence && node.confidence !== "high") out.push(p);
         });
+      });
+      return out;
+    },
+    payload() {
+      const fields = {};
+      GROUPS.forEach(g => {
+        const r = this.resolved[g.key];
+        if (!r.source) return;
+        g.paths.forEach(p => {
+          const node = (r.fields || {})[p];
+          if (node !== undefined) fields[p] = node;
+        });
+      });
+      return {
+        fields,
+        overrides: this.pastedFields,
+        resolved: this.resolved
       };
-      walk(this.fields, "");
-      /* Fields needing review first: the list is a worklist, not a record layout. */
-      return out.sort((a, b) => (a.confidence === "high") - (b.confidence === "high"));
     }
-  },
-  beforeDestroy() {
-    this.stopPolling();
   },
   methods: {
     onDrop(e) {
       this.dragging = false;
-      const file = e.dataTransfer.files[0];
-      if (file) this.upload(file);
+      this.add([...e.dataTransfer.files]);
     },
     onPick(e) {
-      const file = e.target.files[0];
-      if (file) this.upload(file);
+      this.add([...e.target.files]);
+    },
+    add(files) {
+      files.filter(f => f.type === "application/pdf").forEach(file => this.upload(file));
     },
     upload(file) {
-      if (file.type !== "application/pdf") {
-        this.phase = "failed";
-        this.error = "That is not a PDF. Extraction reads PDFs only.";
-        return;
-      }
-      this.filename = file.name;
-      this.phase = "uploading";
-      this.error = null;
+      const uid = ++this.seq;
+      this.documents.push({
+        uid,
+        name: file.name,
+        state: "reading",
+        fields: null,
+        error: null,
+        jobId: null
+      });
       const form = new FormData();
       form.append("upload_file", file);
       form.append("type", "ksr");
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/upload-awb-file", form).then(({
         data
       }) => {
-        this.jobId = data.job_id || data.data;
-        this.phase = "processing";
-        this.poll();
-      }).catch(e => {
-        this.phase = "failed";
-        this.error = this.messageFor(e);
-      });
+        const doc = this.documents.find(d => d.uid === uid);
+        doc.jobId = data.job_id || data.data;
+        this.poll(uid);
+      }).catch(e => this.fail(uid, this.messageFor(e)));
     },
-    /* Polled, not pushed: the job runs on the `ocr` queue and there is no socket yet.
-       2s is slow enough not to hammer the API and fast enough to feel responsive
-       against a 5-60s extraction. */
-    poll() {
-      this.stopPolling();
-      this.poller = setInterval(() => {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/ocr-status/" + this.jobId).then(({
+    /* Polled per document. Each has its own timer so a slow scan does not hold up a
+       fast one — the operator can assign the first while the second is still reading. */
+    poll(uid) {
+      const doc = this.documents.find(d => d.uid === uid);
+      const timer = setInterval(() => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/ocr-status/" + doc.jobId).then(({
           data
         }) => {
           if (data.job_status === "completed") {
-            this.stopPolling();
-            this.fields = data.fields || {};
-            this.review = data.needs_review || [];
-            this.phase = "done";
-          } else if (data.job_status === "awaiting_vision_consent") {
-            /* 🔴 Stop polling and ASK. Without this branch the modal sits on
-               "Reading the document…" forever while the job waits for an answer
-               nobody is being asked for — which is what it did before consent
-               existed. */
-            this.stopPolling();
-            this.pageCount = data.page_count || null;
-            this.creditCost = data.credit_cost || 1;
-            this.phase = "consent";
-          } else if (data.job_status === "cancelled") {
-            this.stopPolling();
-            this.phase = "failed";
-            this.error = data.error || "This extraction was cancelled.";
-          } else if (data.job_status === "failed") {
-            this.stopPolling();
-            this.phase = "failed";
-            this.error = data.error || "The document could not be read.";
+            clearInterval(timer);
+            doc.fields = data.fields || {};
+            doc.state = "ready";
+          } else if (data.job_status === "failed" || data.job_status === "cancelled") {
+            clearInterval(timer);
+            this.fail(uid, data.error || "could not be read");
           }
         }).catch(e => {
-          this.stopPolling();
-          this.phase = "failed";
-          this.error = this.messageFor(e);
+          clearInterval(timer);
+          this.fail(uid, this.messageFor(e));
         });
       }, 2000);
+      doc.timer = timer;
     },
-    stopPolling() {
-      if (this.poller) {
-        clearInterval(this.poller);
-        this.poller = null;
-      }
+    fail(uid, message) {
+      const doc = this.documents.find(d => d.uid === uid);
+      if (!doc) return;
+      doc.state = "failed";
+      doc.error = message;
     },
-    /* Answer the consent prompt. Accepting resumes polling because the extraction goes
-       back to work; declining is terminal and says so rather than looping. */
-    decide(decision) {
-      this.deciding = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/ocr-consent/" + this.jobId, {
-        decision
-      }).then(({
-        data
-      }) => {
-        if (data.job_status === "processing") {
-          this.phase = "processing";
-          this.poll();
-        } else {
-          this.phase = "failed";
-          this.error = "Vision extraction was declined. Nothing was charged.";
+    /** Which group this document currently supplies, if any. */
+    groupsFrom(uid) {
+      const found = GROUPS.find(g => this.assignment[g.key] === uid);
+      return found ? found.key : "";
+    },
+    /** Assigning a group to a document takes it away from whichever had it. */
+    assign(groupKey, uid) {
+      const next = _objectSpread({}, this.assignment);
+      Object.keys(next).forEach(k => {
+        if (next[k] === uid) delete next[k];
+      });
+      if (groupKey) next[groupKey] = uid;
+      this.assignment = next;
+    },
+    /** `Label: value` per line. Anything unrecognised is reported, never guessed at. */
+    parsePaste(text) {
+      const found = {};
+      const unknown = [];
+      String(text || "").split(/\r?\n/).forEach(line => {
+        const m = line.match(/^\s*([^:]{1,40}):\s*(.+?)\s*$/);
+        if (!m) {
+          if (line.trim()) unknown.push(line.trim().slice(0, 30));
+          return;
         }
-      }).catch(e => {
-        this.phase = "failed";
-        this.error = this.messageFor(e);
-      }).finally(() => {
-        this.deciding = false;
+        const label = m[1].trim().toLowerCase();
+        const key = Object.keys(PASTE_KEYS).find(k => PASTE_KEYS[k].includes(label));
+        if (!key) {
+          unknown.push(m[1].trim());
+          return;
+        }
+
+        // Typed by a person, so it is authoritative by definition — not a guess to score.
+        found[key] = {
+          value: m[2].trim(),
+          confidence: "high"
+        };
       });
+      return {
+        found,
+        unknown
+      };
     },
-    accept() {
-      /* Values only — the parent form takes them; the confidence travelled with the
-         review list so the form can keep marking them. */
-      this.$emit("extracted", {
-        fields: this.fields,
-        needsReview: this.review
+    /** What the paste contributes to this group, as a one-line summary. */
+    groupFromPaste(group) {
+      const f = this.pastedFields;
+      const parts = [];
+      if (group.key === "parties") {
+        if (f.shipper) parts.push(f.shipper.value);
+        if (f.consignee) parts.push("→ " + f.consignee.value);
+      } else if (group.key === "cargo") {
+        if (f.pieces) parts.push(f.pieces.value + " pcs");
+        if (f.weight) parts.push(f.weight.value + " kg");
+        if (f.dimensions) parts.push(f.dimensions.value);
+        if (f.goods) parts.push(f.goods.value);
+      } else if (group.key === "notify") {
+        if (f.notify) parts.push(f.notify.value);
+      }
+      return parts.length ? parts.join(" · ") : null;
+    },
+    summarise(group, fields) {
+      const parts = [];
+      group.paths.forEach(p => {
+        const node = fields[p];
+        const value = node && typeof node === "object" ? node.value : node;
+        if (value) parts.push(String(value));
       });
-      this.close();
-    },
-    reset() {
-      this.phase = "idle";
-      this.error = null;
-      this.filename = null;
-      this.jobId = null;
-      this.pageCount = null;
-      this.creditCost = 1;
-      this.deciding = false;
-    },
-    close() {
-      this.stopPolling();
-      this.reset();
-      this.$emit("close");
+      return parts.length ? parts.join(" · ") : null;
     },
     messageFor(e) {
       const d = e.response && e.response.data || {};
-      return d.error || d.message || "Something went wrong.";
+      return d.error || d.message || "something went wrong";
     }
+  },
+  beforeDestroy() {
+    this.documents.forEach(d => d.timer && clearInterval(d.timer));
   }
 });
 
@@ -865,9 +942,7 @@ var render = function render() {
   }), 0) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
     on: {
-      click: function ($event) {
-        _vm.ocrOpen = true;
-      }
+      click: _vm.openExtraction
     }
   }, [_vm._v("Analyze PDF")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
@@ -912,17 +987,7 @@ var render = function render() {
     })], 1)]), _vm._v(" "), _c("p", {
       staticClass: "fx-message__body"
     }, [_vm._v(_vm._s(m.body_snippet))])]);
-  }), 0)]], 2), _vm._v(" "), _c("OcrUploadModal", {
-    attrs: {
-      open: _vm.ocrOpen
-    },
-    on: {
-      close: function ($event) {
-        _vm.ocrOpen = false;
-      },
-      extracted: _vm.onExtracted
-    }
-  }), _vm._v(" "), _c("FxDrawer", {
+  }), 0)]], 2), _vm._v(" "), _c("FxDrawer", {
     attrs: {
       open: _vm.workspace && !!_vm.active,
       title: _vm.active ? _vm.active.subject || "Workspace" : "",
@@ -936,10 +1001,10 @@ var render = function render() {
       },
       close: _vm.closeWorkspace
     },
-    scopedSlots: _vm._u([_vm.active ? {
+    scopedSlots: _vm._u([{
       key: "meta",
       fn: function () {
-        return [_c("div", {
+        return [_vm.active ? _c("div", {
           staticClass: "fx-drawer__facts"
         }, [_vm.active.enquiry ? [_c("span", {
           staticClass: "identifier"
@@ -955,10 +1020,10 @@ var render = function render() {
           attrs: {
             title: _vm.timingDetail
           }
-        }, [_vm._v(_vm._s(_vm.timing.label))]) : _vm._e()], 2)];
+        }, [_vm._v(_vm._s(_vm.timing.label))]) : _vm._e()], 2) : _vm._e()];
       },
       proxy: true
-    } : null, {
+    }, {
       key: "footer",
       fn: function () {
         return [_c("button", {
@@ -969,7 +1034,7 @@ var render = function render() {
         }, [_vm._v("← Back to timeline")])];
       },
       proxy: true
-    }], null, true)
+    }])
   }, [_vm._v(" "), _vm.active ? [_vm.tab === "cost" ? _c("section", [!_vm.active.enquiry ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n          No enquiry on this conversation yet, so there is no job to cost.\n        ")]) : _vm.jobId ? _c("CostSheet", {
@@ -978,31 +1043,11 @@ var render = function render() {
     }
   }) : _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [!_vm.extracted ? _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("\n          Nothing extracted yet. "), _c("strong", [_vm._v("Analyze PDF")]), _vm._v(" reads a document and\n          marks every field the extractor was unsure of.\n        ")]) : [_vm.extracted.needsReview.length ? _c("p", {
-    staticClass: "fx-warn",
-    attrs: {
-      role: "status"
+  }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [_c("ExtractionPanel", {
+    on: {
+      apply: _vm.onExtracted
     }
-  }, [_vm._v("\n            " + _vm._s(_vm.extracted.needsReview.length) + " field(s) still need checking before this\n            reaches a document.\n          ")]) : _vm._e(), _vm._v(" "), _c("dl", {
-    staticClass: "fx-defs"
-  }, [_vm._l(_vm.extracted.fields, function (node, key) {
-    return [node && node.confidence ? _c("dt", {
-      key: key + "-k"
-    }, [_vm._v(_vm._s(String(key).replace(/_/g, " ")))]) : _vm._e(), _vm._v(" "), node && node.confidence ? _c("dd", {
-      key: key + "-v"
-    }, [node.value ? _c("span", [_vm._v(_vm._s(node.value))]) : _c("span", {
-      staticClass: "is-empty",
-      attrs: {
-        "aria-label": "Not found on the page"
-      }
-    }), _vm._v(" "), node.confidence !== "high" ? _c("StatusChip", {
-      attrs: {
-        value: node.confidence
-      }
-    }) : _vm._e()], 1) : _vm._e()];
-  })], 2)]], 2) : _vm._e()] : _vm._e()], 2)], 1);
+  })], 1) : _vm._e()] : _vm._e()], 2)], 1);
 };
 var staticRenderFns = [];
 render._withStripped = true;
@@ -1459,10 +1504,10 @@ render._withStripped = true;
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=template&id=0171b6ef":
-/*!******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=template&id=0171b6ef ***!
-  \******************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28 ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -1473,37 +1518,14 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _vm.open ? _c("div", {
-    staticClass: "fx-modal",
-    attrs: {
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-label": "Extract from PDF"
-    },
-    on: {
-      keydown: function ($event) {
-        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "esc", 27, $event.key, ["Esc", "Escape"])) return null;
-        return _vm.close.apply(null, arguments);
-      }
-    }
-  }, [_c("div", {
-    staticClass: "fx-modal__panel"
-  }, [_c("header", {
-    staticClass: "fx-modal__head"
-  }, [_c("h2", {
-    staticClass: "fx-modal__title"
-  }, [_vm._v("Extract from a document")]), _vm._v(" "), _c("button", {
-    staticClass: "fx-btn fx-btn--ghost",
-    attrs: {
-      "aria-label": "Close"
-    },
-    on: {
-      click: _vm.close
-    }
-  }, [_vm._v("✕")])]), _vm._v(" "), _c("div", {
-    staticClass: "fx-modal__body"
-  }, [_vm.phase === "idle" ? _c("div", {
-    staticClass: "fx-drop",
+  return _c("div", {
+    staticClass: "fx-extract"
+  }, [_c("section", {
+    staticClass: "fx-extract__step"
+  }, [_c("h3", {
+    staticClass: "fx-extract__h"
+  }, [_vm._v("1 · Documents")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-drop fx-drop--slim",
     class: {
       "is-over": _vm.dragging
     },
@@ -1523,114 +1545,120 @@ var render = function render() {
     }
   }, [_c("p", {
     staticClass: "fx-drop__lead"
-  }, [_vm._v("Drop a PDF here")]), _vm._v(" "), _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("or")]), _vm._v(" "), _c("label", {
+  }, [_vm._v("Drop PDFs here")]), _vm._v(" "), _c("label", {
     staticClass: "fx-btn"
-  }, [_vm._v("\n          Choose a file\n          "), _c("input", {
+  }, [_vm._v("\n        Choose files\n        "), _c("input", {
     staticClass: "fx-drop__input",
     attrs: {
       type: "file",
-      accept: "application/pdf"
+      accept: "application/pdf",
+      multiple: ""
     },
     on: {
       change: _vm.onPick
     }
   })]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-drop__note"
-  }, [_vm._v("PDF only, up to 25 MB.")])]) : _vm.phase === "uploading" || _vm.phase === "processing" ? _c("div", {
-    staticClass: "fx-drop"
-  }, [_c("p", {
-    staticClass: "fx-drop__lead"
-  }, [_vm._v(_vm._s(_vm.phase === "uploading" ? "Uploading…" : "Reading the document…"))]), _vm._v(" "), _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v(_vm._s(_vm.filename))]), _vm._v(" "), _vm.phase === "processing" ? _c("p", {
-    staticClass: "fx-muted fx-drop__note"
-  }, [_vm._v("\n          This usually takes a few seconds. Long or scanned documents take longer.\n        ")]) : _vm._e()]) : _vm.phase === "consent" ? _c("div", {
-    staticClass: "fx-drop"
-  }, [_c("p", {
-    staticClass: "fx-drop__lead"
-  }, [_vm._v("This document has no readable text")]), _vm._v(" "), _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v(_vm._s(_vm.filename))]), _vm._v(" "), _c("p", {
+  }, [_vm._v("\n        Several documents are normal — an invoice for the parties, a packing list for the\n        cargo. Say what to take from each.\n      ")])]), _vm._v(" "), _vm.unstructuredWarning ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n          It looks like a scan, so reading it needs vision OCR.\n          "), _c("strong", [_vm._v(_vm._s(_vm.creditCost) + " credit" + _vm._s(_vm.creditCost === 1 ? "" : "s"))]), _vm.pageCount ? [_vm._v(", " + _vm._s(_vm.pageCount) + " page" + _vm._s(_vm.pageCount === 1 ? "" : "s"))] : _vm._e(), _vm._v(".\n          Nothing has been charged yet.\n        ")], 2), _vm._v(" "), _c("div", {
-    staticClass: "fx-drop__actions"
-  }, [_c("button", {
-    staticClass: "fx-btn fx-btn--primary",
-    attrs: {
-      disabled: _vm.deciding
-    },
-    on: {
-      click: function ($event) {
-        return _vm.decide("accept");
-      }
-    }
-  }, [_vm._v("\n            " + _vm._s(_vm.deciding ? "Working…" : "Use vision (" + _vm.creditCost + " credit)") + "\n          ")]), _vm._v(" "), _c("button", {
-    staticClass: "fx-btn fx-btn--ghost",
-    attrs: {
-      disabled: _vm.deciding
-    },
-    on: {
-      click: function ($event) {
-        return _vm.decide("decline");
-      }
-    }
-  }, [_vm._v("\n            Don't read it\n          ")])]), _vm._v(" "), _c("p", {
-    staticClass: "fx-muted fx-drop__note"
-  }, [_vm._v("\n          Declining costs nothing. If nobody answers, this is cancelled after 24 hours.\n        ")])]) : _vm.phase === "failed" ? _c("div", {
-    staticClass: "fx-drop"
-  }, [_c("p", {
-    staticClass: "fx-error",
-    attrs: {
-      role: "alert"
-    }
-  }, [_vm._v(_vm._s(_vm.error))]), _vm._v(" "), _c("button", {
-    staticClass: "fx-btn",
-    on: {
-      click: _vm.reset
-    }
-  }, [_vm._v("Try another file")])]) : [_vm.review.length ? _c("p", {
-    staticClass: "fx-warn",
-    attrs: {
-      role: "status"
-    }
-  }, [_vm._v("\n          " + _vm._s(_vm.review.length) + " field" + _vm._s(_vm.review.length === 1 ? "" : "s") + " need checking before\n          this is used. They are marked below.\n        ")]) : _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("Every field came back at high confidence. Check it anyway.")]), _vm._v(" "), _c("table", {
-    staticClass: "fx-table fx-extract"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._v("\n      Only airway bills extract today. An invoice or packing list needs the unstructured\n      parser, which is not deployed yet — those rows will read as failed, and the paste\n      box below is the way through until it is.\n    ")]) : _vm._e(), _vm._v(" "), _vm.documents.length ? _c("table", {
+    staticClass: "fx-table fx-extract__docs"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.documents, function (doc) {
     return _c("tr", {
-      key: row.path,
-      class: {
-        "is-review": row.confidence !== "high"
-      }
-    }, [_c("td", [_vm._v(_vm._s(row.label))]), _vm._v(" "), _c("td", [row.value ? _c("span", [_vm._v(_vm._s(row.value))]) : _c("span", {
-      staticClass: "is-empty",
+      key: doc.uid
+    }, [_c("td", [_vm._v(_vm._s(doc.name))]), _vm._v(" "), _c("td", [_c("StatusChip", {
       attrs: {
-        "aria-label": "Not found on the page"
+        value: doc.state
       }
-    })]), _vm._v(" "), _c("td", [_c("StatusChip", {
+    }), _vm._v(" "), doc.error ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e()], 1), _vm._v(" "), _c("td", [_c("select", {
+      staticClass: "fx-input",
       attrs: {
-        value: row.confidence
+        disabled: doc.state !== "ready"
+      },
+      domProps: {
+        value: _vm.groupsFrom(doc.uid)
+      },
+      on: {
+        change: function ($event) {
+          return _vm.assign($event.target.value, doc.uid);
+        }
       }
-    })], 1)]);
-  }), 0)])]], 2), _vm._v(" "), _c("footer", {
-    staticClass: "fx-modal__foot"
-  }, [_c("button", {
-    staticClass: "fx-btn",
+    }, [_c("option", {
+      attrs: {
+        value: ""
+      }
+    }, [_vm._v("— nothing —")]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
+      return _c("option", {
+        key: g.key,
+        domProps: {
+          value: g.key
+        }
+      }, [_vm._v(_vm._s(g.label))]);
+    })], 2)])]);
+  }), 0)]) : _vm._e()]), _vm._v(" "), _c("section", {
+    staticClass: "fx-extract__step"
+  }, [_c("h3", {
+    staticClass: "fx-extract__h"
+  }, [_vm._v("2 · Paste anything specific")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.pasted,
+      expression: "pasted"
+    }],
+    staticClass: "fx-input fx-extract__paste",
+    attrs: {
+      rows: "5",
+      placeholder: "Shipper: Globex Exports Pvt Ltd&#10;Pieces: 14&#10;Weight: 698.5&#10;Dimensions: 120x80x90&#10;Goods: Machine parts"
+    },
+    domProps: {
+      value: _vm.pasted
+    },
     on: {
-      click: _vm.close
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.pasted = $event.target.value;
+      }
     }
-  }, [_vm._v("Cancel")]), _vm._v(" "), _vm.phase === "done" ? _c("button", {
+  }), _vm._v(" "), _vm._m(1), _vm._v(" "), _vm.pasted && _vm.pastedUnknown.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      Not recognised, so not used:\n      "), _c("strong", [_vm._v(_vm._s(_vm.pastedUnknown.join(", ")))])]) : _vm._e()]), _vm._v(" "), _c("section", {
+    staticClass: "fx-extract__step"
+  }, [_c("h3", {
+    staticClass: "fx-extract__h"
+  }, [_vm._v("3 · What will be used")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.GROUPS, function (g) {
+    return _c("tr", {
+      key: g.key
+    }, [_c("td", [_vm._v(_vm._s(g.label))]), _vm._v(" "), _c("td", [_vm.resolved[g.key].source === "text" ? _c("span", {
+      staticClass: "fx-extract__override"
+    }, [_vm._v("\n              pasted text\n            ")]) : _vm.resolved[g.key].source ? _c("span", [_vm._v(_vm._s(_vm.resolved[g.key].source))]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [_vm.resolved[g.key].summary ? _c("span", [_vm._v(_vm._s(_vm.resolved[g.key].summary))]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])])]);
+  }), 0)]), _vm._v(" "), _vm.lowConfidence.length ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      " + _vm._s(_vm.lowConfidence.length) + " field(s) the extractor was unsure of:\n      " + _vm._s(_vm.lowConfidence.join(", ")) + ". Check them before this reaches a document.\n    ")]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: !_vm.anyResolved
+    },
     on: {
-      click: _vm.accept
+      click: function ($event) {
+        return _vm.$emit("apply", _vm.payload);
+      }
     }
-  }, [_vm._v("Use these values")]) : _vm._e()])])]) : _vm._e();
+  }, [_vm._v("Use these details")])])]);
 };
 var staticRenderFns = [function () {
   var _vm = this,
@@ -1639,15 +1667,37 @@ var staticRenderFns = [function () {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Field")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Value")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("State")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Confidence")])])]);
+  }, [_vm._v("Take from it")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      One "), _c("code", [_vm._v("Label: value")]), _vm._v(" per line. Whatever is recognised here overrides the\n      documents.\n    ")]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Part")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Source")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Value")])])]);
 }];
 render._withStripped = true;
 
@@ -1730,18 +1780,18 @@ component.options.__file = "resources/js/src/view/pages/freight/components/CostS
 
 /***/ }),
 
-/***/ "./resources/js/src/view/pages/freight/components/OcrUploadModal.vue":
-/*!***************************************************************************!*\
-  !*** ./resources/js/src/view/pages/freight/components/OcrUploadModal.vue ***!
-  \***************************************************************************/
+/***/ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue":
+/*!****************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/ExtractionPanel.vue ***!
+  \****************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _OcrUploadModal_vue_vue_type_template_id_0171b6ef__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./OcrUploadModal.vue?vue&type=template&id=0171b6ef */ "./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=template&id=0171b6ef");
-/* harmony import */ var _OcrUploadModal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./OcrUploadModal.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=script&lang=js");
+/* harmony import */ var _ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ExtractionPanel.vue?vue&type=template&id=fa6bcd28 */ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28");
+/* harmony import */ var _ExtractionPanel_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ExtractionPanel.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js");
 /* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
@@ -1751,9 +1801,9 @@ __webpack_require__.r(__webpack_exports__);
 /* normalize component */
 ;
 var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
-  _OcrUploadModal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
-  _OcrUploadModal_vue_vue_type_template_id_0171b6ef__WEBPACK_IMPORTED_MODULE_0__.render,
-  _OcrUploadModal_vue_vue_type_template_id_0171b6ef__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  _ExtractionPanel_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__.render,
+  _ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
   false,
   null,
   null,
@@ -1763,7 +1813,7 @@ var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__
 
 /* hot reload */
 if (false) { var api; }
-component.options.__file = "resources/js/src/view/pages/freight/components/OcrUploadModal.vue"
+component.options.__file = "resources/js/src/view/pages/freight/components/ExtractionPanel.vue"
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
 
 /***/ }),
@@ -1798,18 +1848,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=script&lang=js":
-/*!***************************************************************************************************!*\
-  !*** ./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=script&lang=js ***!
-  \***************************************************************************************************/
+/***/ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js":
+/*!****************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js ***!
+  \****************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_OcrUploadModal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./OcrUploadModal.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=script&lang=js");
- /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_OcrUploadModal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ExtractionPanel.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
@@ -1845,18 +1895,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=template&id=0171b6ef":
-/*!*********************************************************************************************************!*\
-  !*** ./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=template&id=0171b6ef ***!
-  \*********************************************************************************************************/
+/***/ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28":
+/*!**********************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28 ***!
+  \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_OcrUploadModal_vue_vue_type_template_id_0171b6ef__WEBPACK_IMPORTED_MODULE_0__.render),
-/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_OcrUploadModal_vue_vue_type_template_id_0171b6ef__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_OcrUploadModal_vue_vue_type_template_id_0171b6ef__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./OcrUploadModal.vue?vue&type=template&id=0171b6ef */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/OcrUploadModal.vue?vue&type=template&id=0171b6ef");
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ExtractionPanel.vue?vue&type=template&id=fa6bcd28 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28");
 
 
 /***/ })

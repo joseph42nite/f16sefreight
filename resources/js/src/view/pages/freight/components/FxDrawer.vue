@@ -36,7 +36,14 @@
         while the drawer is open — and the reader has to remember to look. The header is
         where a record identifies itself.
       -->
-      <div v-if="$slots.meta" class="fx-drawer__meta">
+      <!--
+        🔴 `$scopedSlots`, NOT `$slots`. In Vue 2, `this.$slots` is captured once and does
+        not re-evaluate on re-render, so a slot whose content is conditional silently
+        vanishes — or worse, goes STALE and keeps rendering the previous record's values.
+        That is what made every thread's header read as the first one opened, which looked
+        exactly like "every enquiry is Lost". `$scopedSlots` is rebuilt each render.
+      -->
+      <div v-if="$scopedSlots.meta" class="fx-drawer__meta">
         <slot name="meta" />
       </div>
 
@@ -65,7 +72,7 @@
         button that scrolls out of sight on a long journal is a button that gets
         clicked from memory rather than from reading.
       -->
-      <footer v-if="$slots.footer" class="fx-drawer__foot">
+      <footer v-if="$scopedSlots.footer" class="fx-drawer__foot">
         <slot name="footer" />
       </footer>
     </aside>

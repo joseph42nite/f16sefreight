@@ -1498,7 +1498,7 @@ var render = function render() {
     on: {
       click: _vm.close
     }
-  }, [_vm._v("✕")])]), _vm._v(" "), _vm.$slots.meta ? _c("div", {
+  }, [_vm._v("✕")])]), _vm._v(" "), _vm.$scopedSlots.meta ? _c("div", {
     staticClass: "fx-drawer__meta"
   }, [_vm._t("meta")], 2) : _vm._e(), _vm._v(" "), _vm.tabs.length > 1 ? _c("nav", {
     staticClass: "fx-drawer__tabs",
@@ -1525,7 +1525,7 @@ var render = function render() {
     }, [_vm._v(_vm._s(t.label))]);
   }), 0) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "fx-drawer__body"
-  }, [_vm._t("default")], 2), _vm._v(" "), _vm.$slots.footer ? _c("footer", {
+  }, [_vm._t("default")], 2), _vm._v(" "), _vm.$scopedSlots.footer ? _c("footer", {
     staticClass: "fx-drawer__foot"
   }, [_vm._t("footer")], 2) : _vm._e()]) : _vm._e()]);
 };

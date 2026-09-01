@@ -94,8 +94,13 @@
               consignee is a rejected filing.
             -->
             <!-- PRD §2.3 puts the [Analyze PDF] dropzone on /inbox: the attachment
-                 that needs extracting arrived on this thread. -->
-            <button class="fx-btn" @click="ocrOpen = true">Analyze PDF</button>
+                 that needs extracting arrived on this thread.
+                 🔴 It opens the WORKSPACE, not a modal. Extraction is sustained work
+                 against several documents while reading the mail that carried them —
+                 §5.5's own test for a drawer over a modal. A modal would also cover the
+                 conversation, making the operator memorise a consignee instead of
+                 checking it, and a mis-keyed consignee is a rejected filing. -->
+            <button class="fx-btn" @click="openExtraction">Analyze PDF</button>
 
             <button class="fx-btn fx-btn--primary" @click="openWorkspace">Open workspace</button>
           </div>
@@ -132,7 +137,6 @@
       </template>
     </section>
 
-    <OcrUploadModal :open="ocrOpen" @close="ocrOpen = false" @extracted="onExtracted" />
 
     <FxDrawer
       :open="workspace && !!active"
@@ -148,8 +152,15 @@
         Timing each used to be a tab; both were always true and never changed while the
         drawer was open, so the click bought nothing.
       -->
-      <template v-if="active" #meta>
-        <div class="fx-drawer__facts">
+      <!--
+        🔴 The `v-if` lives on the DIV, never on the `<template #meta>`. A conditional
+        v-slot template compiles into `$scopedSlots` instead of `$slots`, so FxDrawer's
+        `v-if="$slots.meta"` went stale: the header kept the FIRST thread's enquiry and
+        stopped updating when you clicked another one — which reads as "every enquiry is
+        Lost" if the first one you opened happened to be.
+      -->
+      <template #meta>
+        <div v-if="active" class="fx-drawer__facts">
           <template v-if="active.enquiry">
             <span class="identifier">{{ active.enquiry.enquiry_no }}</span>
             <StatusChip :value="active.enquiry.status" />
@@ -178,28 +189,8 @@
         </section>
 
         <section v-else-if="tab === 'extraction'">
-          <p v-if="!extracted" class="fx-muted">
-            Nothing extracted yet. <strong>Analyze PDF</strong> reads a document and
-            marks every field the extractor was unsure of.
-          </p>
-          <template v-else>
-            <p v-if="extracted.needsReview.length" class="fx-warn" role="status">
-              {{ extracted.needsReview.length }} field(s) still need checking before this
-              reaches a document.
-            </p>
-            <dl class="fx-defs">
-              <template v-for="(node, key) in extracted.fields">
-                <dt v-if="node && node.confidence" :key="key + '-k'">{{ String(key).replace(/_/g, " ") }}</dt>
-                <dd v-if="node && node.confidence" :key="key + '-v'">
-                  <span v-if="node.value">{{ node.value }}</span>
-                  <span v-else class="is-empty" aria-label="Not found on the page"></span>
-                  <StatusChip v-if="node.confidence !== 'high'" :value="node.confidence" />
-                </dd>
-              </template>
-            </dl>
-          </template>
+          <ExtractionPanel @apply="onExtracted" />
         </section>
-
       </template>
 
       <template #footer>
@@ -215,7 +206,7 @@ import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
-import OcrUploadModal from "@/view/pages/freight/components/OcrUploadModal.vue";
+import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue";
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
@@ -248,7 +239,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, OcrUploadModal, CostSheet },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet },
   data: () => ({
     folders: [
       { key: "all", label: "All" },
@@ -263,7 +254,7 @@ export default {
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
-    workspace: false, tab: "extraction", ocrOpen: false, extracted: null, jobId: null,
+    workspace: false, tab: "extraction", extracted: null, jobId: null,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
@@ -373,10 +364,19 @@ export default {
      * and quietly stuffing values into a legal document on arrival would make the
      * confidence highlighting decorative.
      */
+    /**
+     * The operator has chosen what to take from where. Held, not written.
+     *
+     * ⚠️ Still nothing is pushed into FocusAir.vue / HouseWayBill.vue — that is Step 6.2.
+     * Quietly stuffing values into a legal document would make the confidence marking
+     * decorative, which is the one thing it must not be.
+     */
     onExtracted(payload) {
       this.extracted = payload;
-      this.setSplit(true);
+    },
+    openExtraction() {
       this.tab = "extraction";
+      this.setSplit(true);
     },
     /* ⚠️ A raw ISO string is not a date to a reader. The API sends
        2026-08-30T10:28:47.000000Z; a person needs 30 Aug 2026, 10:28. */

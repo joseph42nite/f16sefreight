@@ -6,6 +6,30 @@
       panel is laid out in that order: what you gave it, what you overrode, what it
       concluded. Precedence is SHOWN at the bottom rather than left to be reasoned about.
     -->
+    <!--
+      🔴 THE TARGET IS CHOSEN FIRST, because it decides everything after it: which endpoint
+      saves the draft, which key names the payload uses, and which form the operator is sent
+      to. Extracting first and asking afterwards would mean re-shaping a payload that has
+      already been built.
+    -->
+    <section class="fx-extract__step">
+      <h3 class="fx-extract__h">Extract into</h3>
+
+      <div class="fx-extract__target">
+        <label v-for="t in TARGETS" :key="t.key" class="fx-radio">
+          <input type="radio" :value="t.key" v-model="target" />
+          <span>{{ t.label }}</span>
+        </label>
+
+        <template v-if="target === 'mawb'">
+          <input v-model="awbCode" class="fx-input fx-extract__num" maxlength="3" placeholder="176" aria-label="Airline prefix" />
+          <span class="fx-muted">—</span>
+          <input v-model="awbNo" class="fx-input fx-extract__num" maxlength="8" placeholder="10000008" aria-label="AWB serial" />
+        </template>
+        <input v-else v-model="hawbNo" class="fx-input" placeholder="House AWB number" aria-label="House AWB number" />
+      </div>
+    </section>
+
     <section class="fx-extract__step">
       <h3 class="fx-extract__h">1 · Documents</h3>
 
@@ -38,6 +62,7 @@
           <tr>
             <th scope="col">Document</th>
             <th scope="col">State</th>
+            <th scope="col"><span class="fx-sr-only">Actions</span></th>
             <th scope="col">Take from it</th>
           </tr>
         </thead>
@@ -47,6 +72,31 @@
             <td>
               <StatusChip :value="doc.state" />
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
+            </td>
+            <td>
+              <!--
+                🔴 EXTRACTION IS EXPLICIT. Reading on drop spends time (and, on a scan, a
+                credit) against a file the operator may have picked by mistake — and they
+                cannot tell it was the wrong one until after it has been read. Staged first,
+                read on request, replaceable until then.
+              -->
+              <button
+                v-if="doc.state === 'staged'"
+                class="fx-btn"
+                @click="extract(doc.uid)"
+              >Extract</button>
+              <button
+                v-else-if="doc.state === 'reading'"
+                class="fx-btn"
+                disabled
+              >Reading…</button>
+              <button
+                v-else
+                class="fx-btn fx-btn--ghost"
+                @click="extract(doc.uid)"
+              >Re-extract</button>
+
+              <button class="fx-btn fx-btn--ghost" @click="remove(doc.uid)">Remove</button>
             </td>
             <td>
               <!--
@@ -131,11 +181,57 @@
         {{ lowConfidence.join(", ") }}. Check them before this reaches a document.
       </p>
 
-      <button
-        class="fx-btn fx-btn--primary"
-        :disabled="!anyResolved"
-        @click="$emit('apply', payload)"
-      >Use these details</button>
+      <!--
+        ⚠️ Named BEFORE the save button, not after a failure. The endpoint skips an
+        incomplete shipper without a word and rejects an incomplete consignee outright —
+        after the waybill shell has already been written. The operator should know which
+        parts will not land while they can still paste them.
+      -->
+      <p v-for="row in incomplete" :key="row.party" class="fx-warn" role="status">
+        <strong>{{ row.party }}</strong> will not be saved — no
+        {{ row.missing.join(", ") }}. Add
+        <code>{{ row.party }} {{ row.missing[0] }}:</code> above, or fill it on the form
+        afterwards.
+      </p>
+
+      <p v-if="saveError" class="fx-error" role="alert">{{ saveError }}</p>
+
+      <div class="fx-extract__actions">
+        <!--
+          🔴 SAVED AS A DRAFT, never further. The draft is a working document the operator
+          opens and completes; the AWB form owns rates, charges and the commercial fields
+          extraction never sees. Writing a finished waybill from a scan would put a machine
+          reading on a document that goes to an airline and to customs.
+        -->
+        <button
+          class="fx-btn fx-btn--primary"
+          :disabled="!canSave || saving"
+          @click="saveDraft"
+        >{{ saving ? "Saving…" : "Save as draft" }}</button>
+
+        <template v-if="draftUrl">
+          <a class="fx-btn" :href="draftUrl">Open in {{ targetLabel }} →</a>
+
+          <!--
+            ⚠️ The PDF is generated FROM THE SAVED DRAFT, not from what is on screen. A PDF
+            built from unsaved values is a document nobody can reproduce afterwards.
+          -->
+          <button class="fx-btn" @click="$emit('generate-pdf', draftIdentity)">
+            Generate PDF
+          </button>
+        </template>
+      </div>
+
+      <p v-if="draftUrl" class="fx-muted">
+        Saved as a draft. Open it to add rates and charges — extraction never supplies
+        those.
+      </p>
+
+      <p v-if="!canSave" class="fx-muted">
+        {{ target === "mawb"
+            ? "Enter the airline prefix and serial to save a draft."
+            : "Enter the house AWB number to save a draft." }}
+      </p>
     </section>
   </div>
 </template>
@@ -143,6 +239,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { buildPayload, createEndpoint, formRoute, TARGETS } from "@/core/config/awbMapping";
 
 /**
  * The parts a shipment is assembled from.
@@ -157,14 +254,48 @@ const GROUPS = [
 ];
 
 /** What a pasted line may be called. Lower-cased, punctuation-insensitive. */
+/**
+ * What a pasted line may be called. Lower-cased, punctuation-insensitive.
+ *
+ * 🔴 **A party needs more than a name.** `create-focusair` requires address, city, state,
+ * post code and country before it will store a consignee at all — and it SKIPS a shipper
+ * silently unless name, city and country are present. A paste of "Shipper: Globex" alone
+ * therefore saves nothing, which is why every party has its parts here.
+ */
 const PASTE_KEYS = {
   shipper: ["shipper", "consignor", "exporter"],
+  shipper_address: ["shipper address", "consignor address"],
+  shipper_city: ["shipper city", "consignor city"],
+  shipper_state: ["shipper state"],
+  shipper_post_code: ["shipper postcode", "shipper post code", "shipper pin", "shipper zip"],
+  shipper_country: ["shipper country"],
+
   consignee: ["consignee", "importer", "buyer"],
+  consignee_address: ["consignee address", "importer address"],
+  consignee_city: ["consignee city"],
+  consignee_state: ["consignee state"],
+  consignee_post_code: ["consignee postcode", "consignee post code", "consignee zip"],
+  consignee_country: ["consignee country"],
+
   notify: ["notify", "notify party", "also notify"],
+  notify_address: ["notify address"],
+  notify_city: ["notify city"],
+  notify_state: ["notify state"],
+  notify_post_code: ["notify postcode", "notify post code", "notify zip"],
+  notify_country: ["notify country"],
+
   pieces: ["pieces", "pcs", "packages", "no of pieces"],
   weight: ["weight", "gross weight", "kg", "gross"],
+  volume: ["volume", "cbm", "total volume"],
   dimensions: ["dimensions", "dims", "size", "measurement"],
   goods: ["goods", "description", "commodity", "nature of goods"],
+};
+
+/** What each party must carry before the endpoint will store it. */
+const PARTY_REQUIRED = {
+  shipper: ["address", "city", "state", "post_code", "country"],
+  consignee: ["address", "city", "state", "post_code", "country"],
+  notify: ["address", "city", "state", "post_code", "country"],
 };
 
 export default {
@@ -172,6 +303,10 @@ export default {
   components: { StatusChip },
   data: () => ({
     GROUPS,
+    TARGETS,
+    target: "mawb",
+    awbCode: "", awbNo: "", hawbNo: "",
+    saving: false, saveError: null, draftUrl: null,
     dragging: false,
     documents: [],
     /** group key -> document uid. One source per group, deliberately. */
@@ -227,6 +362,61 @@ export default {
     anyResolved() {
       return GROUPS.some((g) => this.resolved[g.key].source !== null);
     },
+    /**
+     * 🔴 Parties that will NOT be stored, and what they are missing.
+     *
+     * Saying so beats the alternative measured on the first run: the shipper was dropped
+     * silently, the consignee 422'd, and the AWB shell had already been written — an error
+     * response with a half-created document behind it (GAPS #42).
+     */
+    incomplete() {
+      const out = [];
+      const f = this.flatFields;
+
+      Object.keys(PARTY_REQUIRED).forEach((party) => {
+        if (!f[party]) return;
+
+        const missing = PARTY_REQUIRED[party]
+          .filter((part) => !f[party + "_" + part])
+          .map((part) => part.replace(/_/g, " "));
+
+        if (missing.length) out.push({ party, missing });
+      });
+
+      return out;
+    },
+    targetLabel() {
+      const t = TARGETS.find((x) => x.key === this.target);
+      return t ? t.label : this.target;
+    },
+    /* A draft needs a NUMBER before anything else — it is the document's identity and,
+       for a master, its primary key. Extraction can be empty; the number cannot. */
+    canSave() {
+      return this.target === "mawb"
+        ? /^\d{3}$/.test(this.awbCode) && /^\d{8}$/.test(this.awbNo)
+        : String(this.hawbNo).trim().length > 0;
+    },
+    draftIdentity() {
+      return this.target === "mawb"
+        ? { target: "mawb", awbCode: this.awbCode, awbNo: this.awbNo }
+        : { target: "hawb", hawbNo: this.hawbNo };
+    },
+    /** Every resolved field, flattened — what the mapper turns into a payload. */
+    flatFields() {
+      const out = {};
+
+      GROUPS.forEach((g) => {
+        const r = this.resolved[g.key];
+        if (!r.source) return;
+
+        Object.keys(r.fields || {}).forEach((k) => { out[k] = r.fields[k]; });
+      });
+
+      // The paste wins over anything a document said, at the field level too.
+      Object.keys(this.pastedFields).forEach((k) => { out[k] = this.pastedFields[k]; });
+
+      return out;
+    },
     /* Medium counts as unsure: a field the extractor was only fairly sure of is exactly
        the one that produces a plausible-looking wrong consignee. */
     lowConfidence() {
@@ -269,12 +459,37 @@ export default {
       this.add([...e.target.files]);
     },
     add(files) {
-      files.filter((f) => f.type === "application/pdf").forEach((file) => this.upload(file));
+      files.filter((f) => f.type === "application/pdf").forEach((file) => {
+        // Staged, not read. The file is held until the operator asks for it — see the
+        // Extract button.
+        this.documents.push({
+          uid: ++this.seq, name: file.name, file,
+          state: "staged", fields: null, error: null, jobId: null,
+        });
+      });
     },
-    upload(file) {
-      const uid = ++this.seq;
+    extract(uid) {
+      const doc = this.documents.find((d) => d.uid === uid);
+      if (!doc) return;
 
-      this.documents.push({ uid, name: file.name, state: "reading", fields: null, error: null, jobId: null });
+      doc.state = "reading";
+      doc.error = null;
+      this.upload(doc);
+    },
+    remove(uid) {
+      const doc = this.documents.find((d) => d.uid === uid);
+      if (doc && doc.timer) clearInterval(doc.timer);
+
+      // Whatever it was supplying is no longer supplied by anything.
+      const next = { ...this.assignment };
+      Object.keys(next).forEach((k) => { if (next[k] === uid) delete next[k]; });
+      this.assignment = next;
+
+      this.documents = this.documents.filter((d) => d.uid !== uid);
+    },
+    upload(doc) {
+      const uid = doc.uid;
+      const file = doc.file;
 
       const form = new FormData();
       form.append("upload_file", file);
@@ -282,8 +497,8 @@ export default {
 
       ApiService.post("/user/upload-awb-file", form)
         .then(({ data }) => {
-          const doc = this.documents.find((d) => d.uid === uid);
-          doc.jobId = data.job_id || data.data;
+          const d = this.documents.find((x) => x.uid === uid);
+          d.jobId = data.job_id || data.data;
           this.poll(uid);
         })
         .catch((e) => this.fail(uid, this.messageFor(e)));
@@ -391,6 +606,36 @@ export default {
       });
 
       return parts.length ? parts.join(" · ") : null;
+    },
+    /**
+     * Create the draft through the SAME endpoint the form uses.
+     *
+     * ⚠️ Not a private "import" route. A draft written by a path the form does not use
+     * would skip its validation and its job linking, and would drift the first time either
+     * changed. This is the ordinary create, with fewer fields filled in.
+     */
+    saveDraft() {
+      this.saving = true;
+      this.saveError = null;
+
+      // 🔴 Incomplete parties are REMOVED, not sent hopefully. A consignee missing its
+      // post code makes the whole request 422 — and by then the waybill shell exists.
+      // Dropping it saves the rest of the draft and leaves the party for the form.
+      const fields = { ...this.flatFields };
+
+      this.incomplete.forEach((row) => { delete fields[row.party]; });
+
+      const payload = buildPayload(this.target, fields, {
+        awbCode: this.awbCode, awbNo: this.awbNo, hawbNo: this.hawbNo,
+      });
+
+      ApiService.post(createEndpoint(this.target), payload)
+        .then(() => {
+          this.draftUrl = formRoute(this.target);
+          this.$emit("apply", { fields: this.flatFields, identity: this.draftIdentity });
+        })
+        .catch((e) => { this.saveError = this.messageFor(e); })
+        .finally(() => { this.saving = false; });
     },
     messageFor(e) {
       const d = (e.response && e.response.data) || {};

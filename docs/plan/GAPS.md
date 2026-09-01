@@ -105,6 +105,19 @@ save. Not to be confused for the real link.
 
 ---
 
+## 🔴 FocusAir — found 2026-09-01 by saving a draft through the real endpoint
+
+| # | Finding | Detail |
+|---|---|---|
+| 45 | 🔴 **CARGO CANNOT BE SAVED ON ANY AIRWAY BILL.** `ConsignmentData` writes `agent_id`, and `way_bill_consignment_data` **has no such column** — no migration has ever created it (`2024_09_18_193957_create_consignment_data_table` does not, and nothing since adds it). Every save carrying `entries` dies with *"Unknown column 'agent_id' in 'field list'"* | Measured: a complete draft POST returned **500**, having already written the waybill and both addresses. The live form does send `entries` (`FocusAir.vue:2601`), so this is the ordinary path — pieces, gross weight, goods description and every dimension line. ⚠️ Either the production database carries a hand-added column this repo cannot rebuild, or the consignment section has never worked; both need checking before anyone relies on a rebuilt environment |
+| 46 | ⚠️ **A party is dropped SILENTLY when incomplete, or rejects the whole request.** `store()` saves a shipper only when name **and** city **and** country are present — otherwise it skips it without a word. A consignee with only a name reaches its validator, which requires address, city, state, post code and country, and **422s the entire request** — after the waybill shell has been written (GAPS #42) | This is what extraction actually produces: a scan or a pasted line usually yields a NAME. So the honest shape is to report what will not be stored *before* saving, and to send only the parties that are complete. `ExtractionPanel` now does both |
+
+⚠️ **Consequence for the extraction → draft flow:** a draft assembled from a document can
+save its waybill and its parties, but **not its cargo**, until #45 is resolved. That is the
+single blocker on "extract, save as draft, open the form".
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

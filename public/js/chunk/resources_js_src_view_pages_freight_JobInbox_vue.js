@@ -488,11 +488,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/awbMapping */ "./resources/js/src/core/config/awbMapping.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -517,14 +519,45 @@ const GROUPS = [{
 }];
 
 /** What a pasted line may be called. Lower-cased, punctuation-insensitive. */
+/**
+ * What a pasted line may be called. Lower-cased, punctuation-insensitive.
+ *
+ * 🔴 **A party needs more than a name.** `create-focusair` requires address, city, state,
+ * post code and country before it will store a consignee at all — and it SKIPS a shipper
+ * silently unless name, city and country are present. A paste of "Shipper: Globex" alone
+ * therefore saves nothing, which is why every party has its parts here.
+ */
 const PASTE_KEYS = {
   shipper: ["shipper", "consignor", "exporter"],
+  shipper_address: ["shipper address", "consignor address"],
+  shipper_city: ["shipper city", "consignor city"],
+  shipper_state: ["shipper state"],
+  shipper_post_code: ["shipper postcode", "shipper post code", "shipper pin", "shipper zip"],
+  shipper_country: ["shipper country"],
   consignee: ["consignee", "importer", "buyer"],
+  consignee_address: ["consignee address", "importer address"],
+  consignee_city: ["consignee city"],
+  consignee_state: ["consignee state"],
+  consignee_post_code: ["consignee postcode", "consignee post code", "consignee zip"],
+  consignee_country: ["consignee country"],
   notify: ["notify", "notify party", "also notify"],
+  notify_address: ["notify address"],
+  notify_city: ["notify city"],
+  notify_state: ["notify state"],
+  notify_post_code: ["notify postcode", "notify post code", "notify zip"],
+  notify_country: ["notify country"],
   pieces: ["pieces", "pcs", "packages", "no of pieces"],
   weight: ["weight", "gross weight", "kg", "gross"],
+  volume: ["volume", "cbm", "total volume"],
   dimensions: ["dimensions", "dims", "size", "measurement"],
   goods: ["goods", "description", "commodity", "nature of goods"]
+};
+
+/** What each party must carry before the endpoint will store it. */
+const PARTY_REQUIRED = {
+  shipper: ["address", "city", "state", "post_code", "country"],
+  consignee: ["address", "city", "state", "post_code", "country"],
+  notify: ["address", "city", "state", "post_code", "country"]
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "ExtractionPanel",
@@ -533,6 +566,14 @@ const PASTE_KEYS = {
   },
   data: () => ({
     GROUPS,
+    TARGETS: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS,
+    target: "mawb",
+    awbCode: "",
+    awbNo: "",
+    hawbNo: "",
+    saving: false,
+    saveError: null,
+    draftUrl: null,
     dragging: false,
     documents: [],
     /** group key -> document uid. One source per group, deliberately. */
@@ -590,6 +631,62 @@ const PASTE_KEYS = {
     anyResolved() {
       return GROUPS.some(g => this.resolved[g.key].source !== null);
     },
+    /**
+     * 🔴 Parties that will NOT be stored, and what they are missing.
+     *
+     * Saying so beats the alternative measured on the first run: the shipper was dropped
+     * silently, the consignee 422'd, and the AWB shell had already been written — an error
+     * response with a half-created document behind it (GAPS #42).
+     */
+    incomplete() {
+      const out = [];
+      const f = this.flatFields;
+      Object.keys(PARTY_REQUIRED).forEach(party => {
+        if (!f[party]) return;
+        const missing = PARTY_REQUIRED[party].filter(part => !f[party + "_" + part]).map(part => part.replace(/_/g, " "));
+        if (missing.length) out.push({
+          party,
+          missing
+        });
+      });
+      return out;
+    },
+    targetLabel() {
+      const t = _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS.find(x => x.key === this.target);
+      return t ? t.label : this.target;
+    },
+    /* A draft needs a NUMBER before anything else — it is the document's identity and,
+       for a master, its primary key. Extraction can be empty; the number cannot. */
+    canSave() {
+      return this.target === "mawb" ? /^\d{3}$/.test(this.awbCode) && /^\d{8}$/.test(this.awbNo) : String(this.hawbNo).trim().length > 0;
+    },
+    draftIdentity() {
+      return this.target === "mawb" ? {
+        target: "mawb",
+        awbCode: this.awbCode,
+        awbNo: this.awbNo
+      } : {
+        target: "hawb",
+        hawbNo: this.hawbNo
+      };
+    },
+    /** Every resolved field, flattened — what the mapper turns into a payload. */
+    flatFields() {
+      const out = {};
+      GROUPS.forEach(g => {
+        const r = this.resolved[g.key];
+        if (!r.source) return;
+        Object.keys(r.fields || {}).forEach(k => {
+          out[k] = r.fields[k];
+        });
+      });
+
+      // The paste wins over anything a document said, at the field level too.
+      Object.keys(this.pastedFields).forEach(k => {
+        out[k] = this.pastedFields[k];
+      });
+      return out;
+    },
     /* Medium counts as unsure: a field the extractor was only fairly sure of is exactly
        the one that produces a plausible-looking wrong consignee. */
     lowConfidence() {
@@ -630,26 +727,50 @@ const PASTE_KEYS = {
       this.add([...e.target.files]);
     },
     add(files) {
-      files.filter(f => f.type === "application/pdf").forEach(file => this.upload(file));
-    },
-    upload(file) {
-      const uid = ++this.seq;
-      this.documents.push({
-        uid,
-        name: file.name,
-        state: "reading",
-        fields: null,
-        error: null,
-        jobId: null
+      files.filter(f => f.type === "application/pdf").forEach(file => {
+        // Staged, not read. The file is held until the operator asks for it — see the
+        // Extract button.
+        this.documents.push({
+          uid: ++this.seq,
+          name: file.name,
+          file,
+          state: "staged",
+          fields: null,
+          error: null,
+          jobId: null
+        });
       });
+    },
+    extract(uid) {
+      const doc = this.documents.find(d => d.uid === uid);
+      if (!doc) return;
+      doc.state = "reading";
+      doc.error = null;
+      this.upload(doc);
+    },
+    remove(uid) {
+      const doc = this.documents.find(d => d.uid === uid);
+      if (doc && doc.timer) clearInterval(doc.timer);
+
+      // Whatever it was supplying is no longer supplied by anything.
+      const next = _objectSpread({}, this.assignment);
+      Object.keys(next).forEach(k => {
+        if (next[k] === uid) delete next[k];
+      });
+      this.assignment = next;
+      this.documents = this.documents.filter(d => d.uid !== uid);
+    },
+    upload(doc) {
+      const uid = doc.uid;
+      const file = doc.file;
       const form = new FormData();
       form.append("upload_file", file);
       form.append("type", "ksr");
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/upload-awb-file", form).then(({
         data
       }) => {
-        const doc = this.documents.find(d => d.uid === uid);
-        doc.jobId = data.job_id || data.data;
+        const d = this.documents.find(x => x.uid === uid);
+        d.jobId = data.job_id || data.data;
         this.poll(uid);
       }).catch(e => this.fail(uid, this.messageFor(e)));
     },
@@ -749,6 +870,41 @@ const PASTE_KEYS = {
         if (value) parts.push(String(value));
       });
       return parts.length ? parts.join(" · ") : null;
+    },
+    /**
+     * Create the draft through the SAME endpoint the form uses.
+     *
+     * ⚠️ Not a private "import" route. A draft written by a path the form does not use
+     * would skip its validation and its job linking, and would drift the first time either
+     * changed. This is the ordinary create, with fewer fields filled in.
+     */
+    saveDraft() {
+      this.saving = true;
+      this.saveError = null;
+
+      // 🔴 Incomplete parties are REMOVED, not sent hopefully. A consignee missing its
+      // post code makes the whole request 422 — and by then the waybill shell exists.
+      // Dropping it saves the rest of the draft and leaves the party for the form.
+      const fields = _objectSpread({}, this.flatFields);
+      this.incomplete.forEach(row => {
+        delete fields[row.party];
+      });
+      const payload = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.buildPayload)(this.target, fields, {
+        awbCode: this.awbCode,
+        awbNo: this.awbNo,
+        hawbNo: this.hawbNo
+      });
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.createEndpoint)(this.target), payload).then(() => {
+        this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.formRoute)(this.target);
+        this.$emit("apply", {
+          fields: this.flatFields,
+          identity: this.draftIdentity
+        });
+      }).catch(e => {
+        this.saveError = this.messageFor(e);
+      }).finally(() => {
+        this.saving = false;
+      });
     },
     messageFor(e) {
       const d = e.response && e.response.data || {};
@@ -1524,6 +1680,103 @@ var render = function render() {
     staticClass: "fx-extract__step"
   }, [_c("h3", {
     staticClass: "fx-extract__h"
+  }, [_vm._v("Extract into")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-extract__target"
+  }, [_vm._l(_vm.TARGETS, function (t) {
+    return _c("label", {
+      key: t.key,
+      staticClass: "fx-radio"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.target,
+        expression: "target"
+      }],
+      attrs: {
+        type: "radio"
+      },
+      domProps: {
+        value: t.key,
+        checked: _vm._q(_vm.target, t.key)
+      },
+      on: {
+        change: function ($event) {
+          _vm.target = t.key;
+        }
+      }
+    }), _vm._v(" "), _c("span", [_vm._v(_vm._s(t.label))])]);
+  }), _vm._v(" "), _vm.target === "mawb" ? [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.awbCode,
+      expression: "awbCode"
+    }],
+    staticClass: "fx-input fx-extract__num",
+    attrs: {
+      maxlength: "3",
+      placeholder: "176",
+      "aria-label": "Airline prefix"
+    },
+    domProps: {
+      value: _vm.awbCode
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.awbCode = $event.target.value;
+      }
+    }
+  }), _vm._v(" "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("—")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.awbNo,
+      expression: "awbNo"
+    }],
+    staticClass: "fx-input fx-extract__num",
+    attrs: {
+      maxlength: "8",
+      placeholder: "10000008",
+      "aria-label": "AWB serial"
+    },
+    domProps: {
+      value: _vm.awbNo
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.awbNo = $event.target.value;
+      }
+    }
+  })] : _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.hawbNo,
+      expression: "hawbNo"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "House AWB number",
+      "aria-label": "House AWB number"
+    },
+    domProps: {
+      value: _vm.hawbNo
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.hawbNo = $event.target.value;
+      }
+    }
+  })], 2)]), _vm._v(" "), _c("section", {
+    staticClass: "fx-extract__step"
+  }, [_c("h3", {
+    staticClass: "fx-extract__h"
   }, [_vm._v("1 · Documents")]), _vm._v(" "), _c("div", {
     staticClass: "fx-drop fx-drop--slim",
     class: {
@@ -1575,7 +1828,33 @@ var render = function render() {
       }
     }), _vm._v(" "), doc.error ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e()], 1), _vm._v(" "), _c("td", [_c("select", {
+    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e()], 1), _vm._v(" "), _c("td", [doc.state === "staged" ? _c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          return _vm.extract(doc.uid);
+        }
+      }
+    }, [_vm._v("Extract")]) : doc.state === "reading" ? _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: ""
+      }
+    }, [_vm._v("Reading…")]) : _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.extract(doc.uid);
+        }
+      }
+    }, [_vm._v("Re-extract")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.remove(doc.uid);
+        }
+      }
+    }, [_vm._v("Remove")])]), _vm._v(" "), _c("td", [_c("select", {
       staticClass: "fx-input",
       attrs: {
         disabled: doc.state !== "ready"
@@ -1648,17 +1927,46 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n      " + _vm._s(_vm.lowConfidence.length) + " field(s) the extractor was unsure of:\n      " + _vm._s(_vm.lowConfidence.join(", ")) + ". Check them before this reaches a document.\n    ")]) : _vm._e(), _vm._v(" "), _c("button", {
+  }, [_vm._v("\n      " + _vm._s(_vm.lowConfidence.length) + " field(s) the extractor was unsure of:\n      " + _vm._s(_vm.lowConfidence.join(", ")) + ". Check them before this reaches a document.\n    ")]) : _vm._e(), _vm._v(" "), _vm._l(_vm.incomplete, function (row) {
+    return _c("p", {
+      key: row.party,
+      staticClass: "fx-warn",
+      attrs: {
+        role: "status"
+      }
+    }, [_c("strong", [_vm._v(_vm._s(row.party))]), _vm._v(" will not be saved — no\n      " + _vm._s(row.missing.join(", ")) + ". Add\n      "), _c("code", [_vm._v(_vm._s(row.party) + " " + _vm._s(row.missing[0]) + ":")]), _vm._v(" above, or fill it on the form\n      afterwards.\n    ")]);
+  }), _vm._v(" "), _vm.saveError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.saveError))]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-extract__actions"
+  }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: !_vm.anyResolved
+      disabled: !_vm.canSave || _vm.saving
     },
     on: {
+      click: _vm.saveDraft
+    }
+  }, [_vm._v(_vm._s(_vm.saving ? "Saving…" : "Save as draft"))]), _vm._v(" "), _vm.draftUrl ? [_c("a", {
+    staticClass: "fx-btn",
+    attrs: {
+      href: _vm.draftUrl
+    }
+  }, [_vm._v("Open in " + _vm._s(_vm.targetLabel) + " →")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
       click: function ($event) {
-        return _vm.$emit("apply", _vm.payload);
+        return _vm.$emit("generate-pdf", _vm.draftIdentity);
       }
     }
-  }, [_vm._v("Use these details")])])]);
+  }, [_vm._v("\n          Generate PDF\n        ")])] : _vm._e()], 2), _vm._v(" "), _vm.draftUrl ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      Saved as a draft. Open it to add rates and charges — extraction never supplies\n      those.\n    ")]) : _vm._e(), _vm._v(" "), !_vm.canSave ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      " + _vm._s(_vm.target === "mawb" ? "Enter the airline prefix and serial to save a draft." : "Enter the house AWB number to save a draft.") + "\n    ")]) : _vm._e()], 2)]);
 };
 var staticRenderFns = [function () {
   var _vm = this,
@@ -1672,6 +1980,12 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("State")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_c("span", {
+    staticClass: "fx-sr-only"
+  }, [_vm._v("Actions")])]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
@@ -1701,6 +2015,193 @@ var staticRenderFns = [function () {
 }];
 render._withStripped = true;
 
+
+/***/ }),
+
+/***/ "./resources/js/src/core/config/awbMapping.js":
+/*!****************************************************!*\
+  !*** ./resources/js/src/core/config/awbMapping.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "TARGETS": () => (/* binding */ TARGETS),
+/* harmony export */   "buildPayload": () => (/* binding */ buildPayload),
+/* harmony export */   "createEndpoint": () => (/* binding */ createEndpoint),
+/* harmony export */   "formRoute": () => (/* binding */ formRoute)
+/* harmony export */ });
+/**
+ * How an extracted or pasted field becomes an airway bill payload.
+ *
+ * 🔴 **ONE PLACE, because there are two targets.** A master (`/create-focusair`) and a
+ * house (`/create-houseway-bill`) take the same shape under different key prefixes —
+ * `ship_*` and `cons_*` are shared, the first box differs (`awb_code` + `awb_no` vs
+ * `hawb_no`). Mapping inline in the panel would mean writing the same field list twice and
+ * having them drift the first time either endpoint changes.
+ *
+ * ⚠️ **Nothing here invents a value.** A field the extractor did not find stays absent, so
+ * the form shows it empty rather than showing a default that looks like a reading. A
+ * plausible wrong consignee is the error that survives a glance and fails at customs.
+ */
+
+/** The party blocks, by target. Same fields, different prefixes. */
+const PARTY_KEYS = {
+  shipper: {
+    payloadKey: "shipper_address",
+    name: "ship_name",
+    address: "ship_address",
+    city: "ship_city",
+    state: "ship_state",
+    country: "ship_country",
+    postcode: "ship_post_code",
+    airport: "ship_airport_code",
+    phone: "ship_phone"
+  },
+  consignee: {
+    payloadKey: "consignee_address",
+    name: "cons_name",
+    address: "cons_address",
+    city: "cons_city",
+    state: "cons_state",
+    country: "cons_country",
+    postcode: "cons_post_code",
+    airport: "cons_airport_code",
+    phone: "cons_phone"
+  },
+  notify: {
+    payloadKey: "also_notify_address",
+    name: "also_name",
+    address: "also_address",
+    city: "also_city",
+    state: "also_state",
+    country: "also_country",
+    postcode: "also_post_code",
+    airport: "also_airport_code",
+    phone: "also_phone"
+  }
+};
+
+/** Unwrap `{value, confidence}` — or a bare value — to the value. */
+function raw(node) {
+  if (node === undefined || node === null) return null;
+  if (typeof node === "object" && "value" in node) return node.value;
+  return node;
+}
+
+/**
+ * `120x80x90` or `120 X 80 X 90` → one dimension line.
+ *
+ * ⚠️ Returns NULL rather than a partial line when it cannot read three numbers. A
+ * dimension line with a missing height is worse than no line: it prices and it prints.
+ */
+function dimensionLine(text, pieces) {
+  const parts = String(text || "").split(/\s*[xX*]\s*/).map(p => parseFloat(p));
+  if (parts.length < 3 || parts.some(n => isNaN(n))) return null;
+  return {
+    pcs: pieces || "",
+    wgt: "",
+    length: parts[0],
+    width: parts[1],
+    height: parts[2],
+    // CMT is what the live form defaults to; the operator can change it on the form.
+    unit: "CMT"
+  };
+}
+
+/**
+ * Build the payload for a target from resolved extraction fields.
+ *
+ * @param {"mawb"|"hawb"} target
+ * @param {object} fields   flat map of field key -> {value, confidence} or value
+ * @param {object} identity {awbCode, awbNo} for a master, {hawbNo} for a house
+ */
+function buildPayload(target, fields, identity) {
+  const payload = {};
+  payload.first_box = target === "mawb" ? {
+    awb_code: identity.awbCode,
+    awb_no: identity.awbNo,
+    consolidated_mawb: "false",
+    awb: "true"
+  } : {
+    hawb_no: identity.hawbNo
+  };
+
+  // ── Parties ───────────────────────────────────────────────────────────────
+  Object.keys(PARTY_KEYS).forEach(party => {
+    const keys = PARTY_KEYS[party];
+    const name = raw(fields[party]) || raw(fields[party + "_name"]);
+    if (!name) return;
+    const block = {};
+    block[keys.name] = name;
+    [["address", "_address"], ["city", "_city"], ["state", "_state"], ["country", "_country"], ["postcode", "_post_code"], ["airport", "_airport_code"], ["phone", "_phone"]].forEach(([slot, suffix]) => {
+      const value = raw(fields[party + suffix]);
+      if (value) block[keys[slot]] = value;
+    });
+    payload[keys.payloadKey] = block;
+  });
+
+  // ── Cargo ─────────────────────────────────────────────────────────────────
+  const pieces = raw(fields.pieces);
+  const weight = raw(fields.weight) || raw(fields.gross_weight);
+  const goods = raw(fields.goods) || raw(fields.description);
+  const dimensions = raw(fields.dimensions);
+  if (pieces || weight || goods || dimensions) {
+    const entry = {
+      pieces: pieces || "",
+      description: goods || "",
+      gross_weight: weight || "",
+      // Fields the AWB form owns and extraction never supplies. Sent empty rather than
+      // omitted because the controller reads them positionally on the entry.
+      rate_class: "",
+      uld_rate_class: "",
+      service_code: "",
+      commodity_item: "",
+      country_origin_goods: "",
+      slac: "",
+      weight_code: "K",
+      chargable_weight: "",
+      rate: "",
+      hsCodes: [],
+      uld_infos: [],
+      itemss: []
+    };
+    const line = dimensionLine(dimensions, pieces);
+    if (line) entry.itemss.push(line);
+    payload.entries = [entry];
+  }
+
+  // ── Totals ────────────────────────────────────────────────────────────────
+  // ⚠️ Only sent when BOTH are present: `totalAmountValume` requires volume AND amount,
+  // and amount is commercial — it never comes from a scanned packing list.
+  const volume = raw(fields.volume);
+  const amount = raw(fields.amount);
+  if (volume && amount) {
+    payload.totals = {
+      total_volume: volume,
+      total_amount: amount,
+      dimention_unit: "CMT"
+    };
+  }
+  return payload;
+}
+
+/** Where a saved draft lives, so the operator can be sent straight to it. */
+function formRoute(target) {
+  return target === "mawb" ? "/master-airway-bill" : "/house-way-bill";
+}
+
+/** Which endpoint creates it. */
+function createEndpoint(target) {
+  return target === "mawb" ? "/user/create-focusair" : "/user/create-houseway-bill";
+}
+const TARGETS = [{
+  key: "mawb",
+  label: "Master AWB"
+}, {
+  key: "hawb",
+  label: "House AWB"
+}];
 
 /***/ }),
 

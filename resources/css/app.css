@@ -760,3 +760,10 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 /* 🔴 The override is the one thing that silently outranks everything else, so it is
    the one thing marked. If every source were styled, the exception would not read as one. */
 .fx-extract__override { font-weight: 600; color: var(--status-warning); }
+
+.fx-extract__target { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-2); }
+.fx-extract__num { width: 8ch; text-align: center; }
+.fx-extract__actions { display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin-top: var(--space-3); }
+.fx-radio { display: inline-flex; align-items: center; gap: var(--space-1); cursor: pointer; }

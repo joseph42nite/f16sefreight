@@ -1309,14 +1309,38 @@ Step 6 is a long stretch of UI work, and the same rule applies as everywhere els
 
 > ⚠️ **Assert the drawer geometry in numbers, not classes.** `PRD.md` §4.3 specifies 60 px and exactly 50% — a test that only checks a CSS class passes while the layout is visibly wrong, which is the failure the spec exists to catch.
 
-### 8.4 Audit verification
+### 8.4 Audit verification ✅
 
-- Confirm `audit_logs` rejects UPDATE and DELETE at the database level
-- Confirm financial tables carry **no** `deleted_at` column
-- Confirm `bank_account_no` / `bank_ifsc_code` are unreadable in a raw `SELECT`
-- Confirm a `RESTRICT` violation fires when deleting a job with posted financials
+All four confirmed manually against the running database on **2026-09-01**, and then
+**encoded** so they stay true — `Checkpoint8AuditTest` (checks 2–4) and
+`SchemaConstraintsTest` (check 1). A manual pass proves the database was right once; every
+one of these is a single migration away from silently disappearing (a trigger dropped, a
+`softDeletes()` added to a ledger, a cast removed, a foreign key recreated without its
+`RESTRICT`), and none of those announce themselves.
 
-✅ **Checkpoint 8** — the full suite green, with the four audit checks confirmed manually against the running database.
+| # | Check | Result |
+|---|---|---|
+| 1 | `audit_logs` rejects UPDATE and DELETE at the database level | ✅ both refused with *"audit_logs is append-only"*, row untouched |
+| 2 | Financial tables carry **no** `deleted_at` | ✅ all 13 clean. The six tables that DO soft-delete are `companies`, `enquiries`, `job_entities`, `jobs`, `sea_containers`, `sea_shipment_details` — none financial |
+| 3 | `bank_account_no` / `bank_ifsc_code` unreadable in a raw `SELECT` | ✅ stored as Laravel encrypted payloads, no plaintext, and `$hidden` keeps them out of serialisation |
+| 4 | `RESTRICT` fires when deleting a job with posted financials | ✅ errno **1451** on both `accounts_invoices.job_id` and `accounts_purchase_vouchers.job_id` |
+
+🔴 **A verification that touches no rows proves nothing, and looks exactly like one that
+passed.** The first manual attempt at check 1 inserted a probe row that failed on a missing
+`company_id`; the UPDATE and DELETE that followed matched zero rows and returned success.
+The check was re-run against a real row. The same trap has a test-shaped form: in
+`Checkpoint8AuditTest` the `expectException` call comes **last**, because declared at the top
+of the method it is equally satisfied by a fixture insert throwing `QueryException` on a
+missing column — which is exactly what happened on that file's first run.
+
+⚠️ **`RESTRICT` guards the HARD delete only, and `jobs` uses soft deletes.** The
+application's ordinary delete path sets `deleted_at` and never trips the constraint — which
+is correct, since the row survives and the invoice still points at something real. Worth
+stating because *"RESTRICT protects the job"* over-reads easily into *"the app cannot remove
+a billed job"*, which is a different claim.
+
+✅ **Checkpoint 8** — the full suite green, with the four audit checks confirmed against the
+running database **and** encoded as tests.
 
 ---
 

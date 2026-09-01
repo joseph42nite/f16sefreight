@@ -166,6 +166,36 @@ class MailboxConnectionTest extends TestCase
         $this->assertStringContainsString('offline_access', $query['scope']);
     }
 
+    /**
+     * 🔴 AN UNCONFIGURED SERVER MUST EXPLAIN ITSELF, NOT 500. Before the Entra app
+     * registration exists `services.graph.client_id` is empty and building the
+     * authorization URL throws — which is the FIRST thing anyone hits on a fresh install.
+     * Found by opening the screen: it returned a 500 and the UI said "Something went
+     * wrong." Broken and unconfigured need different words, and different people to fix
+     * them.
+     */
+    public function test_an_unconfigured_graph_app_explains_itself(): void
+    {
+        config()->set('services.graph.client_id', null);
+
+        $response = $this->api()->postJson($this->url('/mailboxes/connect'), ['provider' => 'outlook']);
+
+        $response->assertStatus(503)->assertJsonPath('reason', 'provider_not_configured');
+        $this->assertStringContainsString('GRAPH_CLIENT_ID', $response->json('error'));
+    }
+
+    /** ⚠️ And the abandoned state is not left in the cache to be replayed later. */
+    public function test_a_failed_connect_does_not_leave_a_usable_state(): void
+    {
+        config()->set('services.graph.client_id', null);
+
+        $this->api()->postJson($this->url('/mailboxes/connect'), ['provider' => 'outlook'])
+            ->assertStatus(503);
+
+        $this->assertSame(0, MailboxConnection::withoutGlobalScopes()
+            ->where('agent_id', $this->branch->id)->count());
+    }
+
     /** Gmail is deferred with GAPS #15 and must be refused, not attempted. */
     public function test_gmail_cannot_be_connected_yet(): void
     {

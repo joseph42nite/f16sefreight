@@ -83,8 +83,27 @@ class MailboxController extends Controller
             'provider' => $data['provider'],
         ], now()->addMinutes(self::STATE_TTL_MINUTES));
 
+        // 🔴 AN UNCONFIGURED APP MUST EXPLAIN ITSELF, NOT 500. Until the Entra app
+        // registration exists, `services.graph.client_id` is empty and building the
+        // authorization URL throws — which is the FIRST thing anyone hits on a fresh
+        // install. A 500 there tells the operator the product is broken; it is not, it is
+        // unconfigured, and those need different words and different people to fix them.
+        try {
+            $url = $this->providers->for($data['provider'])->authorizationUrl($state);
+        } catch (Throwable $e) {
+            Cache::forget($this->stateKey($state));
+
+            return response()->json([
+                'error'  => 'Mailbox sign-in is not configured on this server yet. '
+                    . 'An administrator needs to register the app with Microsoft and set '
+                    . 'GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET and GRAPH_REDIRECT_URI.',
+                'reason' => 'provider_not_configured',
+                'detail' => $e->getMessage(),
+            ], 503);
+        }
+
         return response()->json([
-            'authorization_url' => $this->providers->for($data['provider'])->authorizationUrl($state),
+            'authorization_url' => $url,
             'expires_in'        => self::STATE_TTL_MINUTES * 60,
         ]);
     }

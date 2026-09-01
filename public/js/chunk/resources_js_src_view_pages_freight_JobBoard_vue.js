@@ -11,11 +11,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuedraggable */ "./node_modules/vuedraggable/dist/vuedraggable.umd.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vuedraggable__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -26,72 +27,247 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
-/* Mirrors App\Enums\JobStatus exactly. 'Lost' is deliberately absent — it is an
-   enquiry state, never a job one, and the database CHECK refuses it here. */
-const COLUMNS = ["Intake", "AI Extraction", "Verification", "Generation", "PDF Generated", "Sent to Airline", "Airline Confirmed", "Completed"];
 
-/* Cancelled is reachable only through the cancel endpoint, which demands a reason and
-   refuses when financial documents are posted. It is shown so the board is complete,
-   but it accepts no drops. */
-const TERMINAL = ["Cancelled"];
+/* Mirrors App\Enums\JobStatus. 'Lost' is deliberately absent — it is an enquiry state,
+   never a job one, and the database CHECK refuses it here. */
+const STATUSES = ["Intake", "AI Extraction", "Verification", "Generation", "PDF Generated", "Sent to Airline", "Airline Confirmed", "Completed", "Cancelled"];
+
+/**
+ * PRD §5.5: "Process View (4 columns, exactly)" —
+ * Processing → Awaiting Customer → In Transit → Completed.
+ *
+ * ❓ The PRD names the four columns and names the nine statuses, but never maps one to
+ * the other. The grouping below is INFERRED and flagged in GAPS.md #31. The genuinely
+ * ambiguous member is `PDF Generated`: a generated draft is what a customer approves,
+ * so it sits in Awaiting Customer — but it could equally be the tail of Processing.
+ *
+ * `entry` is the status a DROP sets. A column is a group, so dropping into it has to
+ * choose one, and the first stage of the group is the only defensible choice: it means
+ * "this shipment has reached this phase", not "it has finished it".
+ */
+const PROCESS = [{
+  key: "processing",
+  label: "Processing",
+  entry: "Intake",
+  statuses: ["Intake", "AI Extraction", "Verification", "Generation"]
+}, {
+  key: "awaiting",
+  label: "Awaiting Customer",
+  entry: "PDF Generated",
+  statuses: ["PDF Generated"]
+}, {
+  key: "transit",
+  label: "In Transit",
+  entry: "Sent to Airline",
+  statuses: ["Sent to Airline", "Airline Confirmed"]
+}, {
+  key: "done",
+  label: "Completed",
+  entry: "Completed",
+  terminal: true,
+  statuses: ["Completed", "Cancelled"]
+}];
+const POOL_KEY = "f16s_kanban_pool_collapsed";
+const FILTER_KEY = "f16s_kanban_filters";
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "JobBoard",
   components: {
     draggable: (vuedraggable__WEBPACK_IMPORTED_MODULE_0___default()),
-    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: () => ({
     rows: [],
+    pool: [],
+    staff: [],
+    operators: [],
+    view: "process",
     loading: true,
-    error: null
+    busy: false,
+    error: null,
+    poolCollapsed: false,
+    filters: {
+      opsId: "",
+      stage: "",
+      from: "",
+      to: ""
+    },
+    STATUSES,
+    PROCESS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["portalLabel", "can"])), {}, {
-    columns: () => COLUMNS.concat(TERMINAL),
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
     canMove() {
-      // Both roles that work the board may move a card. Re-checked server-side.
       return this.can(["pricing", "operations"], "tactical");
+    },
+    /* §9.4 — the cross-staff matrix is ABSENT for operations, not disabled. */
+    canBalance() {
+      return this.designation === "pricing" || this.designation === "boss";
     },
     grouped() {
       const out = {};
-      this.columns.forEach(c => {
-        out[c] = [];
+      PROCESS.forEach(c => {
+        out[c.key] = [];
       });
       this.rows.forEach(job => {
-        (out[job.status] = out[job.status] || []).push(job);
+        const col = PROCESS.find(c => c.statuses.indexOf(job.status) !== -1);
+        if (col) out[col.key].push(job);
       });
       return out;
+    },
+    activeChips() {
+      const chips = [];
+      if (this.filters.opsId) {
+        const name = this.filters.opsId === "__mine" ? "Mine" : (this.operators.find(o => String(o.id) === this.filters.opsId) || {}).name;
+        chips.push({
+          key: "opsId",
+          label: "Operator: " + (name || this.filters.opsId)
+        });
+      }
+      if (this.filters.stage) chips.push({
+        key: "stage",
+        label: "Stage: " + this.filters.stage
+      });
+      if (this.filters.from) chips.push({
+        key: "from",
+        label: "From " + this.filters.from
+      });
+      if (this.filters.to) chips.push({
+        key: "to",
+        label: "To " + this.filters.to
+      });
+      return chips;
+    },
+    /* Rows of the matrix: every distinct clearance date in the current result set. */
+    matrixDays() {
+      const days = {};
+      this.rows.forEach(j => {
+        if (j.planned_clearance_date) days[j.planned_clearance_date.slice(0, 10)] = true;
+      });
+      return Object.keys(days).sort();
     }
   }),
   created() {
+    this.restore();
     this.load();
   },
   methods: {
-    isTerminal: col => TERMINAL.indexOf(col) !== -1,
+    /* Persisted per user, per §9.3 — a board that forgets its filters on every visit
+       gets its filters set once and then abandoned. */
+    restore() {
+      try {
+        this.poolCollapsed = localStorage.getItem(POOL_KEY) === "1";
+        const saved = JSON.parse(localStorage.getItem(FILTER_KEY));
+        if (saved) this.filters = Object.assign(this.filters, saved);
+      } catch (e) {/* a corrupt preference must not stop the board rendering */}
+    },
+    persist() {
+      try {
+        localStorage.setItem(POOL_KEY, this.poolCollapsed ? "1" : "0");
+        localStorage.setItem(FILTER_KEY, JSON.stringify(this.filters));
+      } catch (e) {/* private mode — the board still works, it just forgets */}
+    },
+    togglePool() {
+      this.poolCollapsed = !this.poolCollapsed;
+      this.persist();
+    },
+    today() {
+      const d = new Date().toISOString().slice(0, 10);
+      this.filters.from = d;
+      this.filters.to = d;
+      this.load();
+    },
+    clearFilter(key) {
+      this.filters[key] = "";
+      this.load();
+    },
+    clearAll() {
+      this.filters = {
+        opsId: "",
+        stage: "",
+        from: "",
+        to: ""
+      };
+      this.load();
+    },
+    query() {
+      const p = [];
+      if (this.filters.opsId === "__mine") p.push("mine=1");else if (this.filters.opsId) p.push("ops_id=" + this.filters.opsId);
+      if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
+      if (this.filters.from) p.push("from=" + this.filters.from);
+      if (this.filters.to) p.push("to=" + this.filters.to);
+      return p.length ? "?" + p.join("&") : "";
+    },
     load() {
       this.loading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs").then(({
-        data
-      }) => {
-        this.rows = data.data || [];
+      this.persist();
+      Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs" + this.query()),
+      /* The pool is a SEPARATE query on purpose: it must not disappear because a
+         stage filter excluded it. An operator filters to find work, and the pool is
+         where unclaimed work lives. */
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs?unassigned=1")]).then(([board, pool]) => {
+        this.rows = board.data.data || [];
+        this.pool = pool.data.data || [];
+        this.error = null;
       }).catch(e => {
         this.error = this.readable(e);
       }).finally(() => {
         this.loading = false;
       });
     },
+    switchToStaff() {
+      this.view = "staff";
+      if (this.staff.length) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs/staff-load").then(({
+        data
+      }) => {
+        this.staff = data.operators || [];
+        this.operators = this.staff.map(o => ({
+          id: o.id,
+          name: o.name
+        }));
+      }).catch(e => {
+        this.error = this.readable(e);
+      });
+    },
+    matrixCell(day, opsId) {
+      return this.rows.filter(j => j.ops_id === opsId && (j.planned_clearance_date || "").slice(0, 10) === day);
+    },
+    /* SLA colouring, from the same urgency bands the OLI multiplier uses — one rule,
+       so the board and the load index cannot disagree about what "urgent" means. */
+    urgency(job) {
+      if (!job.planned_clearance_date) return "later";
+      const d = new Date(job.planned_clearance_date);
+      d.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const days = Math.round((d - today) / 86400000);
+      if (days <= 0) return "today";
+      if (days === 1) return "tomorrow";
+      return "later";
+    },
+    claim(job) {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/jobs/${job.id}/claim`, {}).then(() => this.load())
+      /* 409 is a real outcome, not a failure: someone got there first. */.catch(e => {
+        this.error = this.readable(e);
+        this.load();
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
     /**
      * A card landed in a new column.
      *
-     * The server is the authority: on any failure the board reloads rather than trying
-     * to reverse the move locally. An optimistic UI that guesses wrong leaves the
+     * The server is the authority: on any failure the board reloads rather than
+     * reversing the move locally. An optimistic UI that guesses wrong leaves the
      * operator looking at a status the shipment does not have.
      */
-    onChange(event, column) {
+    onMove(event, column) {
       if (!event.added) return;
       const job = event.added.element;
       const previous = job.status;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].put(`/jobs/${job.id}/status`, {
-        status: column
+        status: column.entry
       }).then(({
         data
       }) => {
@@ -100,11 +276,9 @@ const TERMINAL = ["Cancelled"];
       }).catch(e => {
         job.status = previous;
         this.error = this.readable(e);
-        this.load(); // resync from the source of truth
+        this.load();
       });
     },
-    /* §11.3 — surface the server's reason. The API returns a `reason` code precisely
-       so the UI can be specific rather than saying "something went wrong". */
     readable(e) {
       const d = e.response && e.response.data || {};
       return d.error || d.message || "Something went wrong.";
@@ -135,47 +309,284 @@ var render = function render() {
     staticClass: "fx-page-title"
   }, [_vm._v("Kanban")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm._v("\n      Confirmed shipments on "), _c("strong", [_vm._v(_vm._s(_vm.portalLabel || "all modes"))]), _vm._v(".\n      Drag a card to move it through the lifecycle.\n    ")])]), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("\n      Confirmed shipments on "), _c("strong", [_vm._v(_vm._s(_vm.portalLabel || "all modes"))]), _vm._v(".\n    ")])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("div", {
+    staticClass: "fx-segment",
+    attrs: {
+      role: "tablist",
+      "aria-label": "Board view"
+    }
+  }, [_c("button", {
+    staticClass: "fx-segment__btn",
+    class: {
+      "is-active": _vm.view === "process"
+    },
+    attrs: {
+      role: "tab",
+      "aria-selected": String(_vm.view === "process")
+    },
+    on: {
+      click: function ($event) {
+        _vm.view = "process";
+      }
+    }
+  }, [_vm._v("Process")]), _vm._v(" "), _vm.canBalance ? _c("button", {
+    staticClass: "fx-segment__btn",
+    class: {
+      "is-active": _vm.view === "staff"
+    },
+    attrs: {
+      role: "tab",
+      "aria-selected": String(_vm.view === "staff")
+    },
+    on: {
+      click: _vm.switchToStaff
+    }
+  }, [_vm._v("Staff")]) : _vm._e()]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Operator")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.opsId,
+      expression: "filters.opsId"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "opsId", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Everyone")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "__mine"
+    }
+  }, [_vm._v("Mine")]), _vm._v(" "), _vm._l(_vm.operators, function (o) {
+    return _c("option", {
+      key: o.id,
+      domProps: {
+        value: String(o.id)
+      }
+    }, [_vm._v(_vm._s(o.name))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Stage")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.stage,
+      expression: "filters.stage"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "stage", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.STATUSES, function (s) {
+    return _c("option", {
+      key: s,
+      domProps: {
+        value: s
+      }
+    }, [_vm._v(_vm._s(s))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Clears from")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.from,
+      expression: "filters.from"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.from
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "from", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("to")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.to,
+      expression: "filters.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.to
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: _vm.today
+    }
+  }, [_vm._v("Today")])]), _vm._v(" "), _vm.activeChips.length ? _c("div", {
+    staticClass: "fx-chips"
+  }, [_vm._l(_vm.activeChips, function (c) {
+    return _c("button", {
+      key: c.key,
+      staticClass: "fx-chip fx-chip--info fx-chip--removable",
+      on: {
+        click: function ($event) {
+          return _vm.clearFilter(c.key);
+        }
+      }
+    }, [_vm._v("\n      " + _vm._s(c.label) + " ✕\n    ")]);
+  }), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: _vm.clearAll
+    }
+  }, [_vm._v("Clear all")])], 2) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.error))]) : _c("div", {
+  }, [_vm._v(_vm._s(_vm.error))]) : [_c("section", {
+    staticClass: "fx-pool",
+    class: {
+      "is-collapsed": _vm.poolCollapsed
+    }
+  }, [_c("header", {
+    staticClass: "fx-pool__head"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: _vm.togglePool
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.poolCollapsed ? "[+]" : "[−]") + "\n        ")]), _vm._v(" "), _c("h2", {
+    staticClass: "fx-pool__title"
+  }, [_vm._v("Unassigned pool")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-board__count"
+  }, [_vm._v(_vm._s(_vm.pool.length))])]), _vm._v(" "), !_vm.poolCollapsed ? _c("div", {
+    staticClass: "fx-pool__scroller"
+  }, [!_vm.pool.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing waiting. Every job has an operator.")]) : _vm._e(), _vm._v(" "), _vm._l(_vm.pool, function (job) {
+    return _c("article", {
+      key: job.id,
+      staticClass: "fx-card fx-card--pool"
+    }, [_c("div", {
+      staticClass: "identifier fx-card__no"
+    }, [_vm._v(_vm._s(job.execution_job_no || "—"))]), _vm._v(" "), _c("StatusChip", {
+      attrs: {
+        value: job.status
+      }
+    }), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.claim(job);
+        }
+      }
+    }, [_vm._v("Assign to myself")])], 1);
+  })], 2) : _vm._e()]), _vm._v(" "), _vm.view === "process" ? _c("div", {
     staticClass: "fx-board"
-  }, _vm._l(_vm.columns, function (col) {
+  }, _vm._l(_vm.PROCESS, function (col) {
     return _c("section", {
-      key: col,
-      staticClass: "fx-board__col"
+      key: col.key,
+      staticClass: "fx-board__col fx-board__col--wide"
     }, [_c("h2", {
       staticClass: "fx-board__head"
-    }, [_vm._v("\n        " + _vm._s(col) + "\n        "), _c("span", {
+    }, [_vm._v("\n          " + _vm._s(col.label) + "\n          "), _c("span", {
       staticClass: "fx-board__count"
-    }, [_vm._v(_vm._s((_vm.grouped[col] || []).length))])]), _vm._v(" "), _c("draggable", {
+    }, [_vm._v(_vm._s((_vm.grouped[col.key] || []).length))])]), _vm._v(" "), _c("draggable", {
       staticClass: "fx-board__drop",
       attrs: {
-        list: _vm.grouped[col] || [],
+        list: _vm.grouped[col.key] || [],
         group: {
           name: "jobs",
-          pull: !_vm.isTerminal(col),
-          put: !_vm.isTerminal(col)
+          pull: !col.terminal,
+          put: !col.terminal
         },
         "ghost-class": "fx-card--ghost",
         disabled: !_vm.canMove
       },
       on: {
-        change: e => _vm.onChange(e, col)
+        change: e => _vm.onMove(e, col)
       }
-    }, _vm._l(_vm.grouped[col] || [], function (job) {
+    }, _vm._l(_vm.grouped[col.key] || [], function (job) {
       return _c("article", {
         key: job.id,
-        staticClass: "fx-card"
+        staticClass: "fx-card",
+        class: "fx-card--" + _vm.urgency(job)
       }, [_c("div", {
+        staticClass: "fx-card__top"
+      }, [_c("span", {
         staticClass: "identifier fx-card__no"
-      }, [_vm._v(_vm._s(job.execution_job_no || "—"))]), _vm._v(" "), _c("div", {
+      }, [_vm._v(_vm._s(job.execution_job_no || "—"))]), _vm._v(" "), _c("StatusChip", {
+        attrs: {
+          value: job.status
+        }
+      })], 1), _vm._v(" "), job.awb_number ? _c("div", {
+        staticClass: "identifier fx-card__meta"
+      }, [_vm._v(_vm._s(job.awb_number))]) : _vm._e(), _vm._v(" "), job.enquiry ? _c("div", {
+        staticClass: "fx-card__tags"
+      }, [job.enquiry.extracted_pieces ? _c("span", [_vm._v("📦 " + _vm._s(job.enquiry.extracted_pieces) + " pcs")]) : _vm._e(), _vm._v(" "), job.enquiry.extracted_weight ? _c("span", [_vm._v("\n                ⚖ "), _c("Figure", {
+        attrs: {
+          value: job.enquiry.extracted_weight,
+          kind: "weight"
+        }
+      })], 1) : _vm._e(), _vm._v(" "), job.enquiry.origin_code ? _c("span", {
+        staticClass: "identifier"
+      }, [_vm._v("\n                " + _vm._s(job.enquiry.origin_code) + " → " + _vm._s(job.enquiry.dest_code) + "\n              ")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _c("div", {
         staticClass: "fx-card__meta"
-      }, [job.planned_clearance_date ? _c("span", [_vm._v("\n              clears "), _c("Figure", {
+      }, [job.planned_clearance_date ? _c("span", [_vm._v("\n                clears "), _c("Figure", {
         attrs: {
           value: job.planned_clearance_date,
           kind: "date"
@@ -185,13 +596,62 @@ var render = function render() {
         attrs: {
           "aria-label": "No clearance date"
         }
-      })])]);
-    }), 0), _vm._v(" "), !(_vm.grouped[col] || []).length ? _c("p", {
-      staticClass: "fx-muted fx-board__empty"
-    }, [_vm._v("—")]) : _vm._e(), _vm._v(" "), _vm.isTerminal(col) ? _c("p", {
+      })]), _vm._v(" "), _c("div", {
+        staticClass: "fx-card__owners"
+      }, [_c("span", [_vm._v("ops " + _vm._s(job.ops_user ? job.ops_user.name : "—"))]), _vm._v(" "), _c("span", [_vm._v("pricing " + _vm._s(job.pricing_owner ? job.pricing_owner.name : "—"))])])]);
+    }), 0), _vm._v(" "), col.terminal ? _c("p", {
       staticClass: "fx-board__note"
-    }, [_vm._v("\n        Set from the job, not by dragging\n      ")]) : _vm._e()], 1);
-  }), 0)]);
+    }, [_vm._v("Set from the job, not by dragging")]) : _vm._e()], 1);
+  }), 0) : _c("div", {
+    staticClass: "fx-matrix-wrap"
+  }, [_c("table", {
+    staticClass: "fx-table fx-matrix"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Clears")]), _vm._v(" "), _vm._l(_vm.staff, function (o) {
+    return _c("th", {
+      key: o.id,
+      attrs: {
+        scope: "col"
+      }
+    }, [_vm._v("\n              " + _vm._s(o.name) + "\n              "), _vm._v(" "), _c("span", {
+      staticClass: "fx-oli",
+      class: {
+        "is-over": o.overloaded
+      }
+    }, [_vm._v("\n                OLI " + _vm._s(Number(o.oli).toFixed(1)) + "\n                "), o.overloaded ? [_vm._v(" ● OVERLOADED")] : _vm._e()], 2)]);
+  })], 2)]), _vm._v(" "), _c("tbody", _vm._l(_vm.matrixDays, function (day) {
+    return _c("tr", {
+      key: day
+    }, [_c("th", {
+      attrs: {
+        scope: "row"
+      }
+    }, [_c("Figure", {
+      attrs: {
+        value: day,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _vm._l(_vm.staff, function (o) {
+      return _c("td", {
+        key: o.id
+      }, [_vm._l(_vm.matrixCell(day, o.id), function (job) {
+        return _c("span", {
+          key: job.id,
+          staticClass: "fx-matrix__job identifier"
+        }, [_vm._v("\n                " + _vm._s(job.execution_job_no || job.id) + "\n              ")]);
+      }), _vm._v(" "), !_vm.matrixCell(day, o.id).length ? _c("span", {
+        staticClass: "is-empty",
+        attrs: {
+          "aria-label": "Nothing scheduled"
+        }
+      }) : _vm._e()], 2);
+    })], 2);
+  }), 0)]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-board__note"
+  }, [_vm._v("\n        The cap warns; it never blocks. A manager may have context the index lacks.\n      ")])])]], 2);
 };
 var staticRenderFns = [];
 render._withStripped = true;

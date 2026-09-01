@@ -1,10 +1,10 @@
 {
-    "/js/app.js": "/js/app.js?id=311c902708b6b6f40c87ead77949be7c",
-    "/js/manifest.js": "/js/manifest.js?id=f87b765d1e9ab7a3b4b8a87d72f4898b",
-    "/js/chunk/html2canvas.js": "/js/chunk/html2canvas.js?id=26ccbcaa02a89ece052e0950259d69ef",
-    "/vendor.css": "/vendor.css?id=2e85f30ebd66129fdcb06b817d4a0893",
-    "/vendor.js": "/vendor.js?id=5bfd4f17d5373ace88631cf934ea46f5",
-    "/common.css": "/common.css?id=99d083b404c8730d02eff918def4bca5",
-    "/js/chunk/common.js": "/js/chunk/common.js?id=4fc5d6da46bad6e099305a0f7fc83485",
-    "/css/app.css": "/css/app.css?id=c1d8a22ffa80880c056d3fa0666d5af5"
+    "/js/app.js": "/js/app.js",
+    "/js/manifest.js": "/js/manifest.js",
+    "/js/chunk/html2canvas.js": "/js/chunk/html2canvas.js?id=c61ccfc5e165caf4",
+    "/vendor.css": "/vendor.css",
+    "/vendor.js": "/vendor.js",
+    "/common.css": "/common.css",
+    "/js/chunk/common.js": "/js/chunk/common.js?id=25f140f9caadaf34",
+    "/css/app.css": "/css/app.css"
 }

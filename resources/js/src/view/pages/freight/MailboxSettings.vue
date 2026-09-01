@@ -46,7 +46,8 @@
                 <button
                   v-if="!c.disconnected_at"
                   class="fx-btn fx-btn--ghost"
-                  :disabled="busy === c.id"
+                  :disabled="busy === c.id || !canSync(c)"
+                  :title="canSync(c) ? 'Fetch new mail now' : 'Gmail ingestion is not built yet'"
                   @click="syncNow(c)"
                 >Sync now</button>
                 <button
@@ -115,7 +116,17 @@ export default {
         .finally(() => { this.loading = false; });
     },
     providerLabel(p) {
-      return p === "outlook" ? "Microsoft 365" : p;
+      /* ⚠️ A raw `gmail` in the column looked like a rendering bug the first time this
+         screen was opened against seeded data. Every provider gets a real name, and one
+         that has no ingestion yet says so where it is read. */
+      if (p === "outlook" || p === "microsoft") return "Microsoft 365";
+      if (p === "gmail" || p === "google") return "Gmail (not syncing yet)";
+      return p;
+    },
+    /* Gmail connections exist in seeded data but cannot sync — GAPS #15. Offering the
+       button anyway means the only way to learn that is to press it and read an error. */
+    canSync(c) {
+      return c.provider === "outlook" || c.provider === "microsoft";
     },
     /* One column, three sources of truth — the row is easier to read than three flags. */
     stateOf(c) {

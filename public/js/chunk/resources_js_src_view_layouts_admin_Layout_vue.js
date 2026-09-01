@@ -578,6 +578,74 @@ var render = function render() {
     staticClass: "menu-nav"
   }, [_c("router-link", {
     attrs: {
+      to: "/superadmin/monitor"
+    },
+    scopedSlots: _vm._u([{
+      key: "default",
+      fn: function ({
+        href,
+        navigate,
+        isActive,
+        isExactActive
+      }) {
+        return [_c("li", {
+          staticClass: "menu-item",
+          class: [isActive && "menu-item-active", isExactActive && "menu-item-active"],
+          attrs: {
+            "aria-haspopup": "true",
+            "data-menu-toggle": "hover"
+          }
+        }, [_c("a", {
+          staticClass: "menu-link",
+          attrs: {
+            href: href
+          },
+          on: {
+            click: navigate
+          }
+        }, [_c("i", {
+          staticClass: "menu-icon fas fa-heartbeat"
+        }), _vm._v(" "), _c("span", {
+          staticClass: "menu-text"
+        }, [_vm._v("Platform monitor")])])])];
+      }
+    }])
+  }), _vm._v(" "), _c("router-link", {
+    attrs: {
+      to: "/superadmin/support-desk"
+    },
+    scopedSlots: _vm._u([{
+      key: "default",
+      fn: function ({
+        href,
+        navigate,
+        isActive,
+        isExactActive
+      }) {
+        return [_c("li", {
+          staticClass: "menu-item",
+          class: [isActive && "menu-item-active", isExactActive && "menu-item-active"],
+          attrs: {
+            "aria-haspopup": "true",
+            "data-menu-toggle": "hover"
+          }
+        }, [_c("a", {
+          staticClass: "menu-link",
+          attrs: {
+            href: href
+          },
+          on: {
+            click: navigate
+          }
+        }, [_c("i", {
+          staticClass: "menu-icon fas fa-life-ring"
+        }), _vm._v(" "), _c("span", {
+          staticClass: "menu-text"
+        }, [_vm._v("Support desk")])])])];
+      }
+    }])
+  }), _vm._v(" "), _c("router-link", {
+    attrs: {
       to: "/superadmin/all-company"
     },
     scopedSlots: _vm._u([{

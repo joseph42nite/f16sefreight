@@ -6046,6 +6046,9 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-extract__actions { display: flex; flex-wrap: wrap; gap: var(--space-2);
   margin-top: var(--space-3); }
 .fx-radio { display: inline-flex; align-items: center; gap: var(--space-1); cursor: pointer; }
+.fx-field--inline { display: inline-flex; flex-direction: column; gap: 2px; }
+.fx-field--inline .fx-field__label { font-size: .6875rem; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-secondary); }
 
 @charset "UTF-8";
 html {

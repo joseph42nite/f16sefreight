@@ -100,7 +100,11 @@ export function buildPayload(target, fields, identity) {
 
   // ── Cargo ─────────────────────────────────────────────────────────────────
   const pieces = raw(fields.pieces);
-  const weight = raw(fields.weight) || raw(fields.gross_weight);
+  const weight = raw(fields.gross_weight) || raw(fields.weight);
+  // ⚠️ Chargeable is what the airline bills, and it is NOT the gross weight — on a light,
+  // bulky shipment it is the volumetric figure instead. Sending gross into both would
+  // under-bill every low-density consignment.
+  const chargeable = raw(fields.chargeable_weight);
   const goods = raw(fields.goods) || raw(fields.description);
   const dimensions = raw(fields.dimensions);
 

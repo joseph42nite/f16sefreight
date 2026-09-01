@@ -22,11 +22,25 @@
         </label>
 
         <template v-if="target === 'mawb'">
-          <input v-model="awbCode" class="fx-input fx-extract__num" maxlength="3" placeholder="176" aria-label="Airline prefix" />
+          <!--
+            ⚠️ Labelled, not placeholder-only. Grey placeholder digits in a number field
+            read as a value that is already filled in — the Save button then looks broken
+            rather than waiting for input.
+          -->
+          <label class="fx-field fx-field--inline">
+            <span class="fx-field__label">Prefix</span>
+            <input v-model="awbCode" class="fx-input fx-extract__num" maxlength="3" inputmode="numeric" />
+          </label>
           <span class="fx-muted">—</span>
-          <input v-model="awbNo" class="fx-input fx-extract__num" maxlength="8" placeholder="10000008" aria-label="AWB serial" />
+          <label class="fx-field fx-field--inline">
+            <span class="fx-field__label">Serial</span>
+            <input v-model="awbNo" class="fx-input fx-extract__num" maxlength="8" inputmode="numeric" />
+          </label>
         </template>
-        <input v-else v-model="hawbNo" class="fx-input" placeholder="House AWB number" aria-label="House AWB number" />
+        <label v-else class="fx-field fx-field--inline">
+          <span class="fx-field__label">House AWB number</span>
+          <input v-model="hawbNo" class="fx-input" />
+        </label>
       </div>
     </section>
 
@@ -138,7 +152,7 @@
         v-model="pasted"
         class="fx-input fx-extract__paste"
         rows="5"
-        placeholder="Shipper: Globex Exports Pvt Ltd&#10;Pieces: 14&#10;Weight: 698.5&#10;Dimensions: 120x80x90&#10;Goods: Machine parts"
+        :placeholder="PASTE_EXAMPLE"
       ></textarea>
 
       <p class="fx-muted">
@@ -256,8 +270,26 @@ import { buildPayload, createEndpoint, formRoute, TARGETS } from "@/core/config/
 const GROUPS = [
   { key: "parties", label: "Shipper & consignee", paths: ["shipper", "consignee"] },
   { key: "cargo", label: "Cargo — pieces, dimensions, description", paths: ["cargo", "piece_weight", "dimensions", "goods"] },
+  /* 🔴 Weights are their OWN group, because they come from their own document. Gross is
+     on the packing list, chargeable is what the airline bills, and the two disagreeing is
+     the normal case rather than an error — so they must be sourceable separately from the
+     pieces and description they usually sit beside. */
+  { key: "weights", label: "Weights — gross, volumetric, chargeable", paths: ["gross_weight", "volumetric_weight", "chargeable_weight", "volume"] },
   { key: "notify", label: "Notify party", paths: ["also_notify", "notify"] },
 ];
+
+/** Shown in the paste box, so the accepted labels are visible rather than documented. */
+const PASTE_EXAMPLE = [
+  "Shipper: Globex Exports Pvt Ltd",
+  "Shipper address: Plot 42/A, MIDC Andheri East",
+  "Shipper city: Mumbai",
+  "Consignee: Emirates Trading LLC",
+  "Pieces: 14",
+  "Gross weight: 698.5",
+  "Chargeable weight: 720",
+  "Dimensions: 120x80x90",
+  "Goods: Machine parts",
+].join("\n");
 
 /** What a pasted line may be called. Lower-cased, punctuation-insensitive. */
 /**
@@ -291,13 +323,28 @@ const PASTE_KEYS = {
   notify_country: ["notify country"],
 
   pieces: ["pieces", "pcs", "packages", "no of pieces"],
-  weight: ["weight", "gross weight", "kg", "gross"],
+
+  /* ⚠️ Three DIFFERENT weights, and conflating them misprices a shipment. Gross is what
+     it weighs; volumetric is what its size is worth (L×W×H ÷ 6000); chargeable is the
+     greater of the two, and is what the airline actually bills. A bare "weight" is
+     treated as gross, which is what a packing list means by it. */
+  gross_weight: ["gross weight", "gross", "weight", "kg", "actual weight"],
+  volumetric_weight: ["volumetric weight", "volume weight", "dim weight", "dimensional weight"],
+  chargeable_weight: ["chargeable weight", "chargable weight", "chg weight"],
+
   volume: ["volume", "cbm", "total volume"],
   dimensions: ["dimensions", "dims", "size", "measurement"],
   goods: ["goods", "description", "commodity", "nature of goods"],
 };
 
 /** What each party must carry before the endpoint will store it. */
+/** Unwrap `{value, confidence}` — or a bare value — to the value. */
+function raw(node) {
+  if (node === undefined || node === null) return null;
+  if (typeof node === "object" && "value" in node) return node.value;
+  return node;
+}
+
 const PARTY_REQUIRED = {
   shipper: ["address", "city", "state", "post_code", "country"],
   consignee: ["address", "city", "state", "post_code", "country"],
@@ -310,6 +357,7 @@ export default {
   data: () => ({
     GROUPS,
     TARGETS,
+    PASTE_EXAMPLE,
     target: "mawb",
     awbCode: "", awbNo: "", hawbNo: "",
     saving: false, saveError: null, draftUrl: null,
@@ -391,6 +439,44 @@ export default {
 
       return out;
     },
+    /**
+     * 🔴 VOLUMETRIC IS DERIVED, NEVER TYPED-AND-TRUSTED. `L×W×H ÷ 6000` is the IATA rule,
+     * and the airline recomputes it from the dimensions on the waybill regardless — so a
+     * hand-entered figure that disagrees with the dimension lines beside it is simply
+     * wrong, and wrong in a way that reprices the shipment at the counter.
+     *
+     * NULL when there are no dimensions: "not calculable" is a different answer from 0.
+     */
+    volumetric() {
+      const dims = raw(this.sourceField("dimensions", "cargo"));
+      if (!dims) return null;
+
+      const parts = String(dims).split(/\s*[xX*]\s*/).map((n) => parseFloat(n));
+      if (parts.length < 3 || parts.some((n) => isNaN(n))) return null;
+
+      const pieces = parseFloat(raw(this.sourceField("pieces", "cargo"))) || 1;
+
+      return Math.round(((parts[0] * parts[1] * parts[2] * pieces) / 6000) * 10) / 10;
+    },
+    /**
+     * The greater of gross and volumetric — what the airline bills.
+     *
+     * ⚠️ A pasted `Chargeable weight:` OVERRIDES this, because a negotiated or
+     * re-measured figure is a fact the operator has and the formula does not.
+     */
+    chargeable() {
+      const typed = raw(this.sourceField("chargeable_weight", "weights"));
+      if (typed) return typed;
+
+      const gross = parseFloat(raw(this.sourceField("gross_weight", "weights")));
+      const vol = this.volumetric;
+
+      if (isNaN(gross) && vol === null) return null;
+      if (isNaN(gross)) return vol;
+      if (vol === null) return gross;
+
+      return Math.max(gross, vol);
+    },
     targetLabel() {
       const t = TARGETS.find((x) => x.key === this.target);
       return t ? t.label : this.target;
@@ -457,6 +543,22 @@ export default {
     },
   },
   methods: {
+    /**
+     * One field, from the paste or from the document assigned to `groupKey`.
+     *
+     * 🔴 **Deliberately does NOT read `resolved`.** The derived weights are needed BY
+     * `resolved` (to summarise the Weights row), so reading it back would close a loop —
+     * `resolved` → volumetric → flatFields → `resolved` — which Vue renders as
+     * "Maximum call stack size exceeded" and a blank panel. Measured, on this component.
+     */
+    sourceField(key, groupKey) {
+      if (this.pastedFields[key] !== undefined) return this.pastedFields[key];
+
+      const uid = this.assignment[groupKey];
+      const doc = this.documents.find((d) => d.uid === uid);
+
+      return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
+    },
     onDrop(e) {
       this.dragging = false;
       this.add([...e.dataTransfer.files]);
@@ -593,9 +695,16 @@ export default {
         if (f.consignee) parts.push("→ " + f.consignee.value);
       } else if (group.key === "cargo") {
         if (f.pieces) parts.push(f.pieces.value + " pcs");
-        if (f.weight) parts.push(f.weight.value + " kg");
         if (f.dimensions) parts.push(f.dimensions.value);
         if (f.goods) parts.push(f.goods.value);
+      } else if (group.key === "weights") {
+        if (f.gross_weight) parts.push("gross " + f.gross_weight.value + " kg");
+
+        const vol = this.volumetric;
+        if (vol) parts.push("volumetric " + vol + " kg");
+
+        const chg = f.chargeable_weight ? f.chargeable_weight.value : this.chargeable;
+        if (chg) parts.push("chargeable " + chg + " kg");
       } else if (group.key === "notify") {
         if (f.notify) parts.push(f.notify.value);
       }
@@ -630,6 +739,12 @@ export default {
       const fields = { ...this.flatFields };
 
       this.incomplete.forEach((row) => { delete fields[row.party]; });
+
+      // The derived figures travel with the draft, so the form opens with the chargeable
+      // weight the panel showed rather than a blank the operator has to recompute.
+      if (this.chargeable !== null && !fields.chargeable_weight) {
+        fields.chargeable_weight = { value: this.chargeable, confidence: "high" };
+      }
 
       const payload = buildPayload(this.target, fields, {
         awbCode: this.awbCode, awbNo: this.awbNo, hawbNo: this.hawbNo,

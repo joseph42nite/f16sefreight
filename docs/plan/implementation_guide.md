@@ -746,6 +746,41 @@ Without `extraction_path` every extraction bills as vision, and text-selectable 
 
 ### 4.2 `PollMailboxes` daemon
 
+> 🟢 **DECIDED 2026-09-01 — MICROSOFT 365 / OUTLOOK FIRST, GOOGLE DEFERRED.** The owner has
+> deferred the Google CASA assessment (GAPS #15), so mail ingestion ships on **Microsoft
+> Graph** and Gmail arrives later behind the same interface.
+>
+> **This is not a workaround; the two providers genuinely differ in what they demand.**
+> Google's `gmail.*` scopes are RESTRICTED: a third-party CASA security audit by an approved
+> lab, a Letter of Validation, and **annual** recertification — weeks to months, and a real
+> budget line. Microsoft has no equivalent gate. Publisher verification is optional identity
+> verification affecting the consent prompt, not a security audit, and Microsoft 365
+> Certification applies to marketplace listings rather than an app a customer's own admin
+> installs.
+>
+> ⚠️ **The near-term case is even simpler than that.** If the client's mailboxes live in one
+> Microsoft 365 tenant, register a single-tenant Entra app and their Global Administrator
+> grants consent. No verification of any kind, no user cap, no interstitial.
+>
+> 🔴 **Application permissions default to EVERY mailbox in the tenant, and that must be
+> scoped down before go-live.** App-only `Mail.ReadWrite` reads every mailbox in the
+> organisation — a freight operator's HR and finance mail included. Constrain it with an
+> Exchange **Application Access Policy** (`New-ApplicationAccessPolicy`) or RBAC for
+> Applications, limited to the shared operational mailboxes. ⚠️ If a permission is granted
+> BOTH unscoped in Entra ID and resource-scoped in Application RBAC, the union wins and
+> there is effectively no scoping — the Entra grant must be removed.
+>
+> ⚠️ **Sending stays DELEGATED even on Graph** (`/me/sendMail`), for the reason already in
+> this section: replies leave the user's own mailbox so SPF/DKIM/DMARC remain the provider's
+> problem. App-only sending is for daemons, not for a reply a client will answer.
+>
+> **Build the provider behind an interface from the first line.** The three-tier thread
+> match, echo suppression, resumable backfill, lazy attachments and the SLA clock are all
+> provider-agnostic; only the delta cursor and the message shape are not. Gmail then lands
+> as a second implementation rather than a rewrite — and `mailbox_connections` already
+> carries a provider column, so nothing in the schema changes.
+
+
 `php artisan mailboxes:poll`, the **15-minute reconciliation sweep** registered in `Kernel.php` (push is primary — see below):
 
 - Skip connections where `is_active = false` (superadmin tier downgrade), where `disconnected_at IS NOT NULL` (the user removed their own mailbox), where `auth_state <> 'connected'`, or whose company tier is `core`. **All four conditions, every run** — the first two look alike and are not (`PRD.md` §3.3)
@@ -754,7 +789,7 @@ Without `extraction_path` every extraction bills as vision, and text-selectable 
 - **Evaluate domain-wide delegation before budgeting CASA** (`PRD.md` §5.2.1) — for Workspace tenants it removes the consent screen, the interstitial, the 100-user cap and the assessment. Both flows must exist regardless, since consumer Gmail cannot use DWD.
 - 🔴 **Push is primary; polling is the safety net.** Register Gmail Pub/Sub (`users.watch()`) and Graph change-notification subscriptions at connect time and drive sync from webhook deliveries. Polling drops to a **reconciliation sweep every 15 minutes**, not every minute — it exists to catch what push missed, not to be the mechanism. At 1,000 mailboxes minute-polling is ~1.44 M calls/day of which the overwhelming majority return nothing; push collapses that to near zero while *improving* latency from ≤60 s to ~1 s.
 - **Both paths converge on the same handler.** A webhook carries a notification, not the message — the handler still reads the delta cursor, so push and poll share one idempotent code path and a lost webhook simply means the sweep picks it up.
-- **Scopes:** Google **`gmail.modify`** + `gmail.send`; Microsoft **`Mail.ReadWrite`** + `Mail.Send` + `offline_access`. Read/write is required because the portal replaces the mail client (`PRD.md` §5.2.3). ⚠️ Still a **restricted** scope requiring CASA — but `gmail.readonly` already was, so widening costs nothing extra in compliance
+- **Scopes:** Microsoft **`Mail.ReadWrite`** + `Mail.Send` + `offline_access` (shipping first); Google **`gmail.modify`** + `gmail.send` (deferred with #15). Read/write is required because the portal replaces the mail client (`PRD.md` §5.2.3). ⚠️ The Google pair is **restricted** and needs CASA — but `gmail.readonly` already was, so widening costs nothing extra whenever that path is picked up. The Microsoft pair needs only tenant admin consent
 - 🔴 **Sync the whole mailbox, not the Inbox folder.** Graph `/me/messages/delta` (**not** `/mailFolders/inbox/messages/delta`); Gmail backfill query `in:anywhere`. A reply typed in Outlook lands in Sent Items only — inbox-scoped sync loses half of every conversation
 - **Thread matching is three-tier:** `provider_thread_id` (Gmail `threadId` / Graph `conversationId`) → `In-Reply-To`/`References` chain → normalised subject + participants within 30 days. **Never let tier 3 override tiers 1–2**
 - **Echo suppression:** persist the provider message id at send time with `sent_via_portal = true`; the unique `message_id` makes the Sent-folder echo an idempotent upsert that must **not** re-fire classification, SLA timers or notifications
@@ -789,10 +824,25 @@ protected function fiscalYear(): string {
 }
 ```
 
-Increment inside a transaction holding `SELECT … FOR UPDATE` on the `sequence_counters` row scoped `(agent_id, prefix, fiscal_year)`. **Do not use Redis locks for this** — the database row lock is authoritative. Reserve Redis locks for Plaid webhook deduplication and API idempotency.
+🔴 **SUPERSEDED 2026-08-31 — do not implement the `SELECT … FOR UPDATE` shape described
+here.** It deadlocks reliably under concurrency: `insertOrIgnore` on an EXISTING row takes a
+SHARED lock to check the duplicate key, which `FOR UPDATE` must then upgrade to EXCLUSIVE,
+so every concurrent minter holds S and waits for X. Measured at six of eight parallel
+processes failing with `SQLSTATE 40001`.
+
+Increment is now a SINGLE atomic `UPDATE … SET current_value = LAST_INSERT_ID(current_value + 1)`
+on the `sequence_counters` row scoped `(agent_id, prefix, fiscal_year)`, which takes X
+directly and has no upgrade to deadlock on, plus an insert-then-retry path for the first
+number of a fiscal year. **Do not use Redis locks for this** — the database row lock is
+authoritative. Reserve Redis locks for Plaid webhook deduplication and API idempotency.
+
+⚠️ **The retry belongs to the CALLER.** A deadlock aborts the whole transaction, so
+`increment()` cannot retry inside one it does not own — it rethrows when
+`DB::transactionLevel() > 0`, and every minting call site passes
+`EnquirySequenceService::DEADLOCK_ATTEMPTS` to `DB::transaction()`. See GAPS.md.
 
 ✅ **§4.3, §4.4, §4.5 and the `credits:grant-monthly` half of §4.7 built 2026-08-28.** Suite 100 → 117.
-- **`EnquirySequenceService`** closes `GAPS.md` #8: `insertOrIgnore` runs **before** `lockForUpdate()`, so the row always exists and the lock is a row lock, not the gap lock two branches could deadlock on when minting the first number of a fiscal year. It also **refuses to mint** when either document code is missing (#2), naming the branch and column — `ENQA--26-0001` can no longer reach a client.
+- **`EnquirySequenceService`** addressed `GAPS.md` #8 by running `insertOrIgnore` **before** `lockForUpdate()`. 🔴 **That fix was itself wrong and was replaced on 2026-08-31** — it avoided the gap lock but introduced a guaranteed S→X upgrade deadlock instead (see the correction above). The lesson kept: reasoning about a lock is not the same as contending for one, and no sequential test can tell the difference. It also **refuses to mint** when either document code is missing (#2), naming the branch and column — `ENQA--26-0001` can no longer reach a client.
 - **`credits:grant-monthly`** verified against all three of its rules: NULL allowance resolves from the tier (500 / 2000), a negotiated override survives untouched at 5000, an overdrawn tenant **resets** to full rather than accumulating, and a re-run is a no-op (one `monthly_grant` row per tenant, not two).
 - 🐞 **`PdfProcessingJob` was missing all six Freight OS columns from `$fillable`.** The migration added them in Batch 1b but the model was never updated, so every one was silently dropped on mass assignment and `CargoDataPromotionService` could not find its target. **Adding a column is only half the change.**
 - ✅ **`GAPS.md` #22 closed 2026-08-28 — the reserved system actor.** `audit_logs.user_id` is NOT NULL with an FK, but promotion, the credit grant and the sweeps run in queue workers with no acting user; promotion used to *skip* the audit row, leaving the change least witnessed by a human as the one unrecorded. Each tenant now has one reserved `users` row (`App\Services\SystemActor`) and **`App\Services\AuditLogger` is the single write path** — every audit call writes, attributing to the acting user when there is one and to the system actor when there is not.
@@ -903,7 +953,7 @@ php artisan tinker
 | `POST /api/inbox/threads/{id}/claim` | Atomic claim — `UPDATE … WHERE ops_id IS NULL`; **`409 Conflict`** if zero rows affected |
 | `POST /api/jobs/{id}/reply` | Policy-checked (`$this->authorize('reply', $job)`), sends through the connected mailbox as a threaded reply |
 | `POST /api/jobs/{id}/confirm-notification` | Releases a staged consent-gated draft |
-| **`POST /api/pdf-jobs/{id}/authorize-vision`** | Operator accepts the credit cost on a job parked at `awaiting_vision_consent`. Reserves 1 credit under `SELECT … FOR UPDATE`, then re-calls FastAPI with `allow_vision = true`. **`422` with `credits_exhausted` if the balance is at or below the overdraft floor — and no FastAPI call is made.** Rejects unless the job is in that exact state, so a double-click cannot charge twice |
+| **`POST /api/user/ocr-consent/{jobId}`** ⚠️ | *(This guide originally named it `POST /api/pdf-jobs/{id}/authorize-vision`. Built at the path shown, alongside the three existing `/api/user/ocr-*` routes, and taking `decision: accept\|decline` — the flow needs a DECLINE as much as an authorise, and `authorize-vision` has no room for one. Flagged rather than silently renamed.)* Operator accepts the credit cost on a job parked at `awaiting_vision_consent`. Reserves 1 credit under `SELECT … FOR UPDATE`, then re-calls FastAPI with `allow_vision = true`. **`422` with `credits_exhausted` if the balance is at or below the overdraft floor — and no FastAPI call is made.** Rejects unless the job is in that exact state, so a double-click cannot charge twice |
 | **`POST /api/pdf-jobs/{id}/decline-vision`** | Operator declines. Sets `cancelled`, deletes the temp PDF. Nothing was ever spent |
 | `POST /api/documents/{id}/share` | Creates a `document_share_links` row. Body: `requires_approval`, `expires_in_days` (default 14, **max 90**). Returns the raw token **once** — only its SHA-256 is stored |
 | `DELETE /api/documents/share/{id}` | Sets `revoked_at`. Immediate |
@@ -1268,9 +1318,28 @@ so the rule lives in one place.
 > with its `llm_usage_logs` row, and an end-to-end vision run. Those need the FastAPI
 > service; the spend decision around them does not, and is asserted.
 
-### 8.2 FastAPI tests (`pytest python/`)
+### 8.2 FastAPI tests (`pytest python/`) ⛔
 
 Mock parser tests against sample airway bills and vendor invoice texts, asserting schema validity and confidence scoring.
+
+> 🟢 **GAPS #29 is resolved (2026-09-01).** All four pinned versions exist on PyPI, install
+> into a clean venv, and `ocr_server:app` starts and answers `/health` with
+> `{"status":"ok"}`. They simply had not been published when the gap was measured.
+>
+> ⛔ **Still blocked, on GAPS #38 — a bigger problem than the pins were.**
+> `python/ocr_server.py` is 93 lines exposing exactly two routes, `/health` and `/extract`.
+> There is **no `/extract-unstructured`, no `allow_vision`, no `extraction_path` in any
+> response, and no reference to Gemma or Gemini anywhere in `python/`.**
+>
+> 🔴 Everything on the Laravel side is built and tested against a contract the parser does
+> not implement: `OcrRoutingService` routes unstructured documents to
+> `/extract-unstructured`, `ProcessPdfOcrJob` sends `allow_vision` and reads
+> `extraction_path` back, and the consent flow parks on `extraction_path = 'none'` — which
+> nothing can currently return. A Tactical or Command tenant uploading an invoice today
+> calls an endpoint that 404s and the job fails instead of parking for consent.
+>
+> There is nothing to write pytest against until that endpoint exists. The coordinate path
+> (`/extract`) does work and is what production uses today.
 
 ### 8.3 Frontend tests (`npm run test:unit`)
 

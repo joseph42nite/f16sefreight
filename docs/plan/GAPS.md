@@ -54,6 +54,27 @@
 
 ---
 
+## 🔴 FocusAir — found 2026-09-01 by putting demo data in
+
+The air document layer had **zero rows** in `air_way_bills` and `house_way_bills`. Three
+MAWBs were created through the real endpoint (`POST /api/user/create-focusair`) to see what
+connects to what. It mostly does not.
+
+| # | Finding | Detail |
+|---|---|---|
+| 39 | 🔴 **The AWB document is NEVER linked to its job.** `air_way_bills.job_id` is not written by any code path — `AirwayBillController` never sets it, and no other code does either. Meanwhile `JobController::cancel` *clears* it (`job_id → NULL`), so the detach releases a link nothing ever established | The operational half (enquiry → job → cost sheet → invoice → analytics) hangs off `jobs.id`. The document half (MAWB, HAWB, consolidation, PDF, XML, addresses) hangs off `air_way_bills.id`. **They are joined by nothing.** A job "has" an AWB only as loose text in `jobs.awb_number` |
+| 40 | 🔴 **And the two halves do not even agree on the number's FORMAT.** `jobs.awb_number` is `176-10000008` — `IcegateValidator` enforces `/^\d{3}-\d{8}$/`, hyphen required. `air_way_bills.id` is the code and number concatenated with **no** separator: `17610000008`. Joining them requires `REPLACE(awb_number,'-','')`, and nothing in the codebase does | So even the string link is not usable as-is. Whichever direction this is fixed, one side changes |
+| 41 | 🔴 **`create-focusair` writes everything, then 500s, if `status` is omitted.** `$status = $request->status` is NULL, `null != 'generate_pdf'` is true, so it updates `status => null` against a NOT NULL column — **after** every section has already been saved | The caller gets a 500 and cannot tell that the AWB was in fact created and populated. Measured: three AWBs exist, fully populated, from three requests that all returned 500 |
+| 42 | 🔴 **`AirwayBillController::store()` is not transactional at all** (zero `DB::transaction` in the file). Each section — first box, shipper, consignee, routing, consignment, charges, payment, totals — saves independently | Any failure part-way leaves a **half-written airway bill** plus an error response. For a document that goes to an airline and to customs, "saved up to routing, then failed" is a worse state than "not saved" |
+| 43 | ⚠️ **A direct flight 500s through the API.** `routingInformation()` reads `to_2`, `by_2`, `flight_2`, `date_2`, `to_3`, `by_3`, `flight_3`, `date_3` unconditionally, though the validator declares all eight `nullable`. Hidden in production only because the Vue form always sends them as empty strings | Any API client, integration or OCR-driven create with a single-leg routing crashes. The validator's contract and the code disagree |
+| 44 | 🔴 **The shipper/consignee address regex rejects ordinary real addresses.** `ship_address` is validated `/^[a-zA-Z0-9\s.,-]+$/` — no `/`, no `&`, no parentheses, no accents. Measured, all rejected: `Plot 42/A, MIDC Andheri East` · `Müller & Co., Hafenstrasse 12` · `Unit 5 (Rear), Dock Road` | Indian industrial addresses routinely carry `/`; European party names carry `&` and umlauts. This is the same instinct as the silent-truncation defect already fixed in both air forms — an allow-list built from what someone imagined an address looks like |
+
+⚠️ **`air_way_bills.shipper_id` / `consignee_id` are dead columns.** Addresses actually live
+in `way_bill_addresses`, keyed by `awb_id`; both id columns stayed NULL through a successful
+save. Not to be confused for the real link.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |
